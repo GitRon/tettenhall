@@ -1,6 +1,7 @@
 import logging
 import random
 from dataclasses import dataclass
+from typing import Literal, List
 
 from faker import Faker
 
@@ -8,9 +9,22 @@ from apps.skirmish.domain.helpers import DiceNotation
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class Faction:
     name: str
+
+
+@dataclass
+class Weapon:
+    name: str
+    damage = DiceNotation
+
+
+@dataclass
+class Armor:
+    name: str
+    defense = DiceNotation
 
 
 @dataclass

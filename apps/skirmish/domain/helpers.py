@@ -8,6 +8,9 @@ class DiceNotation:
     rolls: int
     sides: int
 
+    def __str__(self):
+        return f'{self.rolls}d{self.sides}'
+
     @property
     def result(self):
         result = 0
