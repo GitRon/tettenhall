@@ -1,0 +1,45 @@
+# you find the full empto-pre-commit-tools docu under:
+# https://pre-commit.com/
+
+repos:
+  - repo: https://github.com/ambv/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        args: [--check, --diff]
+        language_version: python3.10
+        stages: [push]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.3
+    hooks:
+      - id: isort
+        name: isort
+        args: [--profile, black, --check, --diff]
+        language_version: python3.10
+        stages: [push]
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [ flake8-bugbear, pep8-naming ]
+        args: [ --config=./setup.cfg, -v, --count ]
+        language_version: python3.10
+        stages: [ push ]
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+      - id: pyupgrade
+        args: [ --py310-plus ]
+        language_version: python3.10
+        stages: [ push ]
+
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.12.0
+    hooks:
+      - id: django-upgrade
+        args: [--target-version, "4.1"]
+        language_version: python3.10
+        stages: [ push ]

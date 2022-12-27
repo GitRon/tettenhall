@@ -1,36 +1,22 @@
 import itertools
-import logging
 
-from apps.skirmish.domain import commands, model
-from apps.skirmish.service import message_bus, handlers
-
-logger = logging.getLogger(__name__)
-
-COMMAND_HANDLERS = {
-    # commands.CreateRandomWarband: handlers.create_random_warband,
-    commands.DoSkirmish: handlers.do_skirmish,
-}
-EVENT_HANDLERS = {
-}
-
-message_bus = message_bus.MessageBus(command_handlers=COMMAND_HANDLERS, event_handlers=EVENT_HANDLERS)
-
+from apps.skirmish.domain.model.faction import Faction
+from apps.skirmish.domain.model.warrior import Warrior
+from apps.skirmish.services.fight import FightService
 
 # Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    # cmd = commands.CreateRandomWarband(no_warriors=5)
-    # message_bus.handle(cmd)
+if __name__ == "__main__":
+
+    english_faction = Faction(locale="en_UK")
+    danish_faction = Faction(locale="da_DK")
 
     warrior_list_1 = []
     for _ in itertools.repeat(None, 5):
-        warrior_list_1.append(model.Warrior.generate_random())
+        warrior_list_1.append(Warrior(faction=english_faction))
 
     warrior_list_2 = []
     for _ in itertools.repeat(None, 5):
-        warrior_list_2.append(model.Warrior.generate_random())
+        warrior_list_2.append(Warrior(faction=danish_faction))
 
-    cmd = commands.DoSkirmish(
-        player_warrior_list=warrior_list_1,
-        opponent_warrior_list=warrior_list_2,
-    )
-    message_bus.handle(cmd)
+    service = FightService(party_1=warrior_list_1, party_2=warrior_list_2)
+    service.process()
