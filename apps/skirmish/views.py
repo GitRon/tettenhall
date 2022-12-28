@@ -4,7 +4,7 @@ from django.views import generic
 
 from apps.skirmish.models.battle_log import BattleLog
 from apps.skirmish.models.faction import Faction
-from deprecated.skirmish.services.duel import DuelService
+from apps.skirmish.services.fight import FightService
 
 
 class SkirmishView(generic.TemplateView):
@@ -18,9 +18,9 @@ class SkirmishView(generic.TemplateView):
         context["battle_log"] = BattleLog.objects.all()
 
         # fixme temp
-        service = DuelService(
-            warrior_1=context["faction_1"].warriors.all().first(),
-            warrior_2=context["faction_2"].warriors.all().first(),
+        service = FightService(
+            party_1=context["faction_1"].warriors.all(),
+            party_2=context["faction_2"].warriors.all(),
         )
         service.process()
 

@@ -7,21 +7,14 @@ class WarriorQuestSet(models.QuerySet):
 
 
 class WarriorManager(manager.Manager):
-    def handle_damage_taken(self, obj, changed_by: int):
-        # No damage taken? Nothig to do here.
-        if not changed_by:
-            return obj
+    def reduce_current_health(self, obj, damage: int):
+        obj.current_health -= damage
+        obj.save()
 
-        # Update damage
-        obj.current_health -= changed_by
+        return obj
 
-        # Update condition
-        if obj.current_health < 0:
-            if obj.current_health < obj.max_health * -0.15:
-                obj.condition = self.model.ConditionChoices.CONDITION_DEAD
-            else:
-                obj.condition = self.model.ConditionChoices.CONDITION_UNCONSCIOUS
-
+    def set_condition(self, obj, condition: int):
+        obj.condition = condition
         obj.save()
 
         return obj

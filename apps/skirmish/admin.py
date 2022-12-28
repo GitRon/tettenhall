@@ -23,4 +23,12 @@ class ItemAdmin(admin.ModelAdmin):
 
 @admin.register(Warrior)
 class WarriorAdmin(admin.ModelAdmin):
-    list_display = ("name", "faction", "dexterity", "current_health", "max_health")
+    list_display = (
+        "name",
+        "faction",
+        "dexterity",
+        "condition",
+        "current_health",
+        "max_health",
+    )
+    list_filter = ("faction", "condition")
