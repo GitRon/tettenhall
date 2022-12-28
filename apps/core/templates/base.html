@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tettenhall - The Game</title>
+    <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
+</head>
+<body>
+<nav class="uk-navbar-container uk-margin" uk-navbar>
+    <div class="uk-navbar-left">
+        <a class="uk-navbar-item uk-logo uk-margin-left" href="/">Tettenhall</a>
+        <ul class="uk-navbar-nav">
+            <li>
+                <a href="{% url 'skirmish:skirmish-view' %}">
+                    <span class="uk-icon uk-margin-small-right"></span>
+                    Skirmish
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="uk-container-expand uk-margin-left uk-margin-right">
+    {% block content %}{% endblock %}
+</div>
+
+<script src="{% static 'uikit/dist/js/uikit.js' %}"></script>
+</body>
+</html>

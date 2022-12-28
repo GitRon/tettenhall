@@ -1,0 +1,10 @@
+<div class="uk-card uk-card-default uk-card-body">
+    {% include 'compontents/box_header.html' with title=faction.name %}
+    <div class="uk-text-left">
+        <ul class="uk-list uk-list-hyphen">
+            {% for warrior in faction.warriors.all %}
+                <li>{{ warrior }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

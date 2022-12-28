@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <div class="uk-child-width-expand@s uk-text-center " uk-grid>
+        <div>
+            {% include 'skirmish/faction/components/faction_box.html' with faction=faction_1 %}
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body">
+                {% include 'compontents/box_header.html' with title='Battle report' %}
+                <div id="battle-report-container"></div>
+            </div>
+        </div>
+        <div>
+            {% include 'skirmish/faction/components/faction_box.html' with faction=faction_2 %}
+        </div>
+    </div>
+
+{% endblock %}

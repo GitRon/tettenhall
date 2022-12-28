@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+Django = "==4.1.*"
 faker = "==15.*"
 
 [dev-packages]
