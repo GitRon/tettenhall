@@ -46,7 +46,7 @@ class DuelService:
 
         BattleLog.objects.create(
             message=f"{self.attacker} hits for {attack} damage and {self.defender} defends for {defense} resulting in "
-                    f"{damage} damage."
+            f"{damage} damage."
         )
 
         defender = Warrior.objects.reduce_current_health(
