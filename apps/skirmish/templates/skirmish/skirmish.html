@@ -2,12 +2,14 @@
 
 
 {% block content %}
-    <div class="uk-child-width-expand@s uk-text-center " uk-grid>
+    <h1>Skirmish</h1>
+
+    <div class="uk-grid-match uk-child-width-1-3@m" uk-grid>
         <div>
             {% include 'skirmish/faction/components/faction_box.html' with faction=faction_1 %}
         </div>
         <div>
-            <div class="uk-card uk-card-default uk-card-body">
+            <div class="uk-tile-muted uk-padding-large">
                 {% include 'compontents/box_header.html' with title='Battle report' %}
                 <div id="battle-report-container"></div>
             </div>
@@ -16,5 +18,4 @@
             {% include 'skirmish/faction/components/faction_box.html' with faction=faction_2 %}
         </div>
     </div>
-
 {% endblock %}

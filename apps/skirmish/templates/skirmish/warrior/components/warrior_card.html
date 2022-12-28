@@ -1,0 +1,23 @@
+<div class="uk-card uk-card-small uk-card-default">
+    <div class="uk-card-header">
+        <h3 class="uk-card-title">{{ warrior.name }}</h3>
+        <ul class="uk-subnav uk-subnav-divider uk-margin-remove-top">
+            <li>{{ warrior.faction }}</li>
+            <li>
+                <div class="uk-margin-top">
+                    <progress class="uk-progress" value="{{ warrior.current_health }}"
+                              max="{{ warrior.max_health }}"></progress>
+
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="uk-card-body">
+        <div>
+            <i class="fa-solid fa-wrench"></i> {{ warrior.weapon }}
+        </div>
+        <div>
+            <i class="fa-solid fa-shield"></i> {{ warrior.armor }}
+        </div>
+    </div>
+</div>
