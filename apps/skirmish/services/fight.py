@@ -1,0 +1,3 @@
+class FightService:
+
+    pass

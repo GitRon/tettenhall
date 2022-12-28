@@ -7,7 +7,7 @@ def dice_notation(value):
     r"""
     Validates the input to be in the format of "\dd\d", like "2d5".
     """
-    match = re.search(r"^\dd\d$", value)
+    match = re.search(r"^\d+d\d+$", value)
 
     if not match:
         raise ValidationError(

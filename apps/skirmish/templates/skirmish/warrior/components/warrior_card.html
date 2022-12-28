@@ -14,6 +14,21 @@
     </div>
     <div class="uk-card-body">
         <div>
+            {% if warrior.is_healthy %}
+                <p class="uk-text-success">
+                    <i class="fa-solid fa-feather-pointed"></i> Healthy
+                </p>
+            {% elif warrior.is_unconscious %}
+                <p class="uk-text-warning">
+                    <i class="fa-solid fa-moon"></i> Unconscious
+                </p>
+            {% else %}
+                <p class="uk-text-danger">
+                    <i class="fa-solid fa-skull"></i> Dead
+                </p>
+            {% endif %}
+        </div>
+        <div>
             <i class="fa-solid fa-wrench"></i> {{ warrior.weapon }}
         </div>
         <div>

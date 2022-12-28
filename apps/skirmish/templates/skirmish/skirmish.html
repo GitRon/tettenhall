@@ -11,7 +11,12 @@
         <div>
             <div class="uk-tile-muted uk-padding-large">
                 {% include 'compontents/box_header.html' with title='Battle report' %}
-                <div id="battle-report-container"></div>
+                <div id="battle-report-container"
+                     hx-get="{% url 'skirmish:battle-log-update-htmx' %}"
+                     hx-trigger="load, battleReportUpdate from:body"
+                     hx-target="this"
+                     hx-swap="innerHTML">
+                </div>
             </div>
         </div>
         <div>
