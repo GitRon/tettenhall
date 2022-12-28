@@ -20,5 +20,7 @@ urlpatterns = [
     # Default
     path("admin/", admin.site.urls),
     # Custom
-    path('skirmish/', include(('apps.skirmish.urls', 'skirmish'), namespace='skirmish')),
+    path(
+        "skirmish/", include(("apps.skirmish.urls", "skirmish"), namespace="skirmish")
+    ),
 ]

@@ -121,8 +121,8 @@ STATIC_URL = "static/"
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    str(BASE_DIR) + '/node_modules/',
-    str(BASE_DIR) + '/static/',
+    str(BASE_DIR) + "/node_modules/",
+    str(BASE_DIR) + "/static/",
 )
 
 
