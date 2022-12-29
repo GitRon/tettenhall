@@ -1,4 +1,7 @@
-<div class="uk-card uk-card-small uk-card-default draggable">
+<div class="uk-card uk-card-small uk-card-default draggable dropzone"
+     data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}"
+     hx-post="/fight-warriors-asdf"
+     hx-trigger="interactjs:dropWarrior from:body">
     <div class="uk-card-header">
         <h3 class="uk-card-title">{{ warrior.name }}</h3>
         <ul class="uk-subnav uk-subnav-divider uk-margin-remove-top">
@@ -7,7 +10,6 @@
                 <div class="uk-margin-top">
                     <progress class="uk-progress" value="{{ warrior.current_health }}"
                               max="{{ warrior.max_health }}"></progress>
-
                 </div>
             </li>
         </ul>

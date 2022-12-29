@@ -2,7 +2,7 @@
     {% include 'compontents/box_header.html' with title=faction.name %}
     <div class="uk-child-width-1-2@s uk-grid-small uk-grid-match" uk-grid>
         {% for warrior in faction.warriors.all %}
-            <div class="dropzone">
+            <div>
                 {% include 'skirmish/warrior/components/warrior_card.html' with warrior=warrior %}
             </div>
         {% endfor %}
