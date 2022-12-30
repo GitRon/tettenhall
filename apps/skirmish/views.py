@@ -54,7 +54,7 @@ class SkirmishFinishRoundView(generic.DetailView):
         for key, value in request.POST.items():
             if "warrior-action" in key:
                 try:
-                    warrior_id = re.search("\[(\d+)\]$", key).group(1)
+                    warrior_id = re.search(r"\[(\d+)\]$", key).group(1)
                 except IndexError:
                     raise ValueError("Malformed data sent.")
                 action_id = value
