@@ -15,12 +15,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 
 urlpatterns = [
     # Default
     path("admin/", admin.site.urls),
     # Custom
     path(
-        "skirmish/", include(("apps.skirmish.urls", "skirmish"), namespace="skirmish")
+        "", RedirectView.as_view(pattern_name="account:dashboard-view", permanent=False)
+    ),
+    path(
+        "account/", include(("apps.account.urls", "apps.account"), namespace="account")
+    ),
+    path(
+        "skirmish/",
+        include(("apps.skirmish.urls", "apps.skirmish"), namespace="skirmish"),
     ),
 ]

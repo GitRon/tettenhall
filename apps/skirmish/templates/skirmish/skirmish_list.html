@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Skirmishes</h1>
+
+    <table class="uk-table">
+        <caption>Caption</caption>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Player faction</th>
+            <th>Non-player faction</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for skirmish in object_list %}
+            <tr>
+                <td>{{ skirmish.name }}</td>
+                <td>{{ skirmish.player_faction }}</td>
+                <td>{{ skirmish.non_player_faction }}</td>
+                <td>
+                    <a href="{% url 'skirmish:skirmish-fight-view' skirmish.id %}"
+                       class="uk-button uk-button-default uk-button-small uk-button-danger">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

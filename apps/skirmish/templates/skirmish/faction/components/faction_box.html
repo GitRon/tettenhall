@@ -1,10 +1,11 @@
 <div class="uk-tile-default uk-padding-large">
     {% include 'compontents/box_header.html' with title=faction.name %}
-    <div class="uk-child-width-1-2@s uk-grid-small uk-grid-match" uk-grid>
-        {% for warrior in faction.warriors.all %}
-            <div>
-                {% include 'skirmish/warrior/components/warrior_card.html' with warrior=warrior %}
-            </div>
-        {% endfor %}
+    <div class="uk-child-width-1-2@s uk-grid-small uk-grid-match"
+         hx-get="{% url 'skirmish:faction-warrior-list-update-htmx' skirmish.id faction.id %}"
+         hx-trigger="updateFactionWarriorList from:body"
+         hx-target="this"
+         hx-swap="innerHTML"
+         uk-grid>
+        {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=faction.warriors.all is_player=is_player %}
     </div>
 </div>

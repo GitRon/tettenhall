@@ -8,17 +8,16 @@
     <title>Tettenhall - The Game</title>
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
-    <link rel="stylesheet" href="{% static 'css/draggable.css' %}">
 </head>
 <body>
 <nav class="uk-navbar-container uk-margin" uk-navbar>
     <div class="uk-navbar-left">
-        <a class="uk-navbar-item uk-logo uk-margin-left" href="/">Tettenhall</a>
+        <a class="uk-navbar-item uk-logo uk-margin-left" href="{% url 'account:dashboard-view' %}">Tettenhall</a>
         <ul class="uk-navbar-nav">
             <li>
-                <a href="{% url 'skirmish:skirmish-view' %}">
+                <a href="{% url 'skirmish:skirmish-list-view' %}">
                     <span class="uk-icon uk-margin-small-right"></span>
-                    Skirmish
+                    Skirmishes
                 </a>
             </li>
         </ul>
@@ -29,10 +28,25 @@
     {% block content %}{% endblock %}
 </div>
 
+<div id="hidden-box" class="uk-hidden"></div>
+
 {# todo no cdn #}
-<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-<script src="{% static 'js/draggable.js' %}"></script>
 <script src="{% static 'htmx.org/dist/htmx.js' %}"></script>
 <script src="{% static 'uikit/dist/js/uikit.js' %}"></script>
+<script type="text/javascript">
+    // Add CSRF token to HTMX plugin for being able to make AJAX calls
+    document.body.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    });
+    // Notifications
+    document.body.addEventListener("notification", function (e) {
+        UIkit.notification({
+            message: e.detail.value,
+            status: 'success',
+            pos: 'top-center',
+            timeout: 1000,
+        });
+    });
+</script>
 </body>
 </html>

@@ -3,12 +3,14 @@ from django.contrib import admin
 from apps.skirmish.models.battle_log import BattleLog
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
 
 @admin.register(BattleLog)
 class BattleLogAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("message", "skirmish", "created_at")
+    list_filter = ("skirmish",)
 
 
 @admin.register(Faction)
@@ -18,6 +20,11 @@ class FactionAdmin(admin.ModelAdmin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Skirmish)
+class SkirmishAdmin(admin.ModelAdmin):
     pass
 
 

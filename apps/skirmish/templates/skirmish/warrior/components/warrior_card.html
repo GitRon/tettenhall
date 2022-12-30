@@ -1,4 +1,4 @@
-<div class="uk-card uk-card-small uk-card-default draggable dropzone"
+<div class="uk-card uk-card-small uk-card-default"
      data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}"
      hx-post="/fight-warriors-asdf"
      hx-trigger="interactjs:dropWarrior from:body">
@@ -35,6 +35,21 @@
         </div>
         <div>
             <i class="fa-solid fa-shield"></i> {{ warrior.armor }}
+        </div>
+    </div>
+    <div class="uk-card-footer">
+        <div class="uk-form-controls">
+            {% if is_player %}
+                <label class="uk-form-label" for="warrior-action-{{ warrior.id }}">Action</label>
+                <select name="warrior-action[{{ warrior.id }}]" class="uk-select">
+                    <option value="1">Simple attack</option>
+                </select>
+            {% else %}
+                <label class="uk-form-label">
+                    Simple attack
+                    <input class="uk-hidden" value="1">
+                </label>
+            {% endif %}
         </div>
     </div>
 </div>
