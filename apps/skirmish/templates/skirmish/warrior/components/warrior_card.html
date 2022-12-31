@@ -39,15 +39,15 @@
     </div>
     <div class="uk-card-footer">
         <div class="uk-form-controls">
-            {% if is_player %}
+            {% if is_player and warrior.is_healthy %}
                 <label class="uk-form-label" for="warrior-action-{{ warrior.id }}">Action</label>
                 <select name="warrior-action[{{ warrior.id }}]" class="uk-select">
                     <option value="1">Simple attack</option>
                 </select>
-            {% else %}
+            {% elif not is_player and warrior.is_healthy %}
                 <label class="uk-form-label">
                     Simple attack
-                    <input class="uk-hidden" value="1">
+                    <input name="warrior-action[{{ warrior.id }}]" class="uk-hidden" value="1">
                 </label>
             {% endif %}
         </div>

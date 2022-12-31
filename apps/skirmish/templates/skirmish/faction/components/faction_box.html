@@ -6,6 +6,6 @@
          hx-target="this"
          hx-swap="innerHTML"
          uk-grid>
-        {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=faction.warriors.all is_player=is_player %}
+        {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=warrior_list is_player=is_player %}
     </div>
 </div>

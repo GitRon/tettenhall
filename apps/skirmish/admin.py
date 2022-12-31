@@ -3,8 +3,8 @@ from django.contrib import admin
 from apps.skirmish.models.battle_log import BattleLog
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
-from apps.skirmish.models.skirmish import Skirmish
-from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
+from apps.skirmish.models.warrior import Warrior, FightAction
 
 
 @admin.register(BattleLog)
@@ -23,8 +23,17 @@ class ItemAdmin(admin.ModelAdmin):
     pass
 
 
+class SkirmishWarriorRoundActionInline(admin.TabularInline):
+    model = SkirmishWarriorRoundAction
+
+
 @admin.register(Skirmish)
 class SkirmishAdmin(admin.ModelAdmin):
+    inlines = (SkirmishWarriorRoundActionInline,)
+
+
+@admin.register(FightAction)
+class FightActionAdmin(admin.ModelAdmin):
     pass
 
 

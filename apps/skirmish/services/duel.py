@@ -1,6 +1,6 @@
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
-from apps.skirmish.services.actions.action_1 import Action1Service
+from apps.skirmish.services.actions.simple_attack import SimpleAttackService
 from apps.skirmish.services.helpers.fight import FightHelper
 
 
@@ -28,6 +28,7 @@ class DuelService:
         else:
             action = self.action_2
 
+        # todo change to model object
         if action == 1:
-            service = Action1Service(self.skirmish, attacker, defender)
+            service = SimpleAttackService(self.skirmish, attacker, defender)
             service.process()

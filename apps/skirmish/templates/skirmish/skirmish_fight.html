@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Skirmish</h1>
+    <h1>{{ skirmish.name }}: Round {{ skirmish.current_round }}</h1>
 
     <div class="uk-grid-match uk-child-width-1-3@m" uk-grid>
         <div>
-            {% include 'skirmish/faction/components/faction_box.html' with faction=player_faction is_player=True %}
+            {% include 'skirmish/faction/components/faction_box.html' with faction=player_faction warrior_list=skirmish.player_warriors.all is_player=True %}
         </div>
         <div>
             <div class="uk-tile-muted uk-padding-large">
@@ -16,8 +16,9 @@
                     <div>
                         <button hx-post="{% url 'skirmish:skirmish-finish-round-view' object.id %}"
                                 hx-target="#hidden-box"
-                                hx-include="select"
+                                hx-include="select, input"
                                 class="uk-button uk-button-danger uk-float-right">
+                            {# todo hier die actions pro runde speichern -> runde muss hier noch irgendwo mit rein #}
                             Fight!
                         </button>
                         <div class="uk-clearfix"></div>
@@ -34,7 +35,7 @@
             </div>
         </div>
         <div>
-            {% include 'skirmish/faction/components/faction_box.html' with faction=non_player_faction is_player=False %}
+            {% include 'skirmish/faction/components/faction_box.html' with faction=non_player_faction warrior_list=skirmish.non_player_warriors.all is_player=False %}
         </div>
     </div>
 {% endblock %}

@@ -49,6 +49,9 @@ class SkirmishFinishRoundView(generic.DetailView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         # todo hier muss ich vorher noch die pärchen aufteilen, aktuell kämpfen hier noch alle
+        #  oder ich hole mir alle daten aus der db und speichere pro skirmish/runde die gewählte action...
+        #  das funktioniert aber nicht gut, da ich das nicht einfach so in die M2M warrior<->skirmish dranhängen kann
+        #  -> ist runde einfach nur eine zahl?
         print(request.POST)
         fighter_list = []
         for key, value in request.POST.items():
@@ -98,6 +101,7 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         faction = get_object_or_404(Faction, pk=self.kwargs.get("faction_id"))
 
         context = super().get_context_data(**kwargs)
+        # todo
         context["object_list"] = faction.warriors.all()
         context["is_player"] = skirmish.player_faction == faction
         return context

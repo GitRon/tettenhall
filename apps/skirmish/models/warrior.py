@@ -66,3 +66,15 @@ class Warrior(models.Model):
     @property
     def is_healthy(self):
         return self.condition == self.ConditionChoices.CONDITION_HEALTHY
+
+
+class FightAction(models.Model):
+    class TypeChoices(models.IntegerChoices):
+        ATTACK_SIMPLE = 1, "Simple attack"
+
+    type = models.PositiveSmallIntegerField(
+        "Type", choices=TypeChoices.choices, unique=True
+    )
+
+    def __str__(self):
+        return self.get_type_display()

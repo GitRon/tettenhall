@@ -7,7 +7,7 @@ from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
 
-class Action1Service:
+class SimpleAttackService:
     """
     Handles attacker attacking defender with action 1. # fixme needs to be dynamic at some point
     Determines one single hit in the fight between "warrior_1" and "warrior_2"
