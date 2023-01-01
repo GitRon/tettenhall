@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.skirmish.models.faction import Faction
-from apps.skirmish.models.warrior import Warrior, FightAction
+from apps.skirmish.models.warrior import FightAction, Warrior
 
 
 class SkirmishWarriorRoundAction(models.Model):

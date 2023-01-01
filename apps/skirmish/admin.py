@@ -4,7 +4,7 @@ from apps.skirmish.models.battle_log import BattleLog
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
 from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
-from apps.skirmish.models.warrior import Warrior, FightAction
+from apps.skirmish.models.warrior import FightAction, Warrior
 
 
 @admin.register(BattleLog)
