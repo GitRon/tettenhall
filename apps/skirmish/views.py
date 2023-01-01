@@ -2,12 +2,14 @@ import json
 import re
 
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.views import generic
 
+from apps.skirmish.forms import SkirmishWarriorRoundActionForm
 from apps.skirmish.models.battle_log import BattleLog
 from apps.skirmish.models.faction import Faction
-from apps.skirmish.models.skirmish import Skirmish
+from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.services.duel import DuelService
 
@@ -28,13 +30,15 @@ class SkirmishFightView(generic.DetailView):
         context["non_player_faction"] = self.object.non_player_faction
         context["battle_log"] = self.object.battle_logs.all()
 
-        # fixme temp
-        # service = FightService(
-        #     skirmish=self.object,
-        #     party_1=context["player_faction"].warriors.all(),
-        #     party_2=context["non_player_faction"].warriors.all(),
-        # )
-        # service.process()
+        context["skirmish_action_form"] = {}
+        for player_warrior in self.object.player_warriors.all():
+            context["skirmish_action_form"][
+                player_warrior.id
+            ] = SkirmishWarriorRoundActionForm(
+                skirmish_id=self.object.id,
+                warrior_id=player_warrior.id,
+                round=self.object.current_round,
+            )
 
         return context
 
@@ -104,4 +108,43 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         # todo
         context["object_list"] = faction.warriors.all()
         context["is_player"] = skirmish.player_faction == faction
+        # todo encapsulate properly as htmx snippet so we dont have this twice
+        context["skirmish_action_form"] = {}
+        for player_warrior in skirmish.player_warriors.all():
+            context["skirmish_action_form"][
+                player_warrior.id
+            ] = SkirmishWarriorRoundActionForm(
+                skirmish_id=skirmish.id,
+                warrior_id=player_warrior.id,
+                round=skirmish.current_round,
+            )
+
         return context
+
+
+class WarriorSkirmishActionCreateView(generic.CreateView):
+    model = SkirmishWarriorRoundAction
+    form_class = SkirmishWarriorRoundActionForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["skirmish_id"] = self.kwargs.get("skirmish_id")
+        kwargs["warrior_id"] = self.kwargs.get("warrior_id")
+        kwargs["round"] = self.kwargs.get("round")
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        warrior = get_object_or_404(Warrior, pk=self.kwargs.get("warrior_id"))
+        super().post(request, *args, **kwargs)
+        return redirect(
+            reverse(
+                "skirmish:faction-warrior-list-update-htmx",
+                kwargs={
+                    "skirmish_id": self.kwargs.get("skirmish_id"),
+                    "faction_id": warrior.faction.id,
+                },
+            )
+        )
+
+    def get_success_url(self):
+        return None

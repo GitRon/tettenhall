@@ -20,4 +20,9 @@ urlpatterns = [
         views.FactionWarriorListUpdateHtmxView.as_view(),
         name="faction-warrior-list-update-htmx",
     ),
+    path(
+        "<int:skirmish_id>/round/<int:round>/warrior/<int:warrior_id>/action/create/",
+        views.WarriorSkirmishActionCreateView.as_view(),
+        name="warrior-skirmish-round-action-create-htmx",
+    ),
 ]

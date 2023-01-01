@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.account",
     "apps.core",
     "apps.skirmish",
+    "crispy_forms",
 ]
 
 MIDDLEWARE = [
