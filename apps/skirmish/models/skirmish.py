@@ -5,16 +5,10 @@ from apps.skirmish.models.warrior import FightAction, Warrior
 
 
 class SkirmishWarriorRoundAction(models.Model):
-    skirmish = models.ForeignKey(
-        "Skirmish", verbose_name="Skirmish", on_delete=models.CASCADE
-    )
-    warrior = models.ForeignKey(
-        Warrior, verbose_name="Warrior", on_delete=models.CASCADE
-    )
+    skirmish = models.ForeignKey("Skirmish", verbose_name="Skirmish", on_delete=models.CASCADE)
+    warrior = models.ForeignKey(Warrior, verbose_name="Warrior", on_delete=models.CASCADE)
     round = models.PositiveSmallIntegerField("Round")
-    action = models.ForeignKey(
-        FightAction, verbose_name="Fight action", on_delete=models.CASCADE
-    )
+    action = models.ForeignKey(FightAction, verbose_name="Fight action", on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = "Skirmish warrior round action"

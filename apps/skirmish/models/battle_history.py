@@ -1,17 +1,15 @@
 from django.db import models
 
-from apps.skirmish.managers.battle_log import BattleLogManager
+from apps.skirmish.managers.battle_history import BattleHistoryManager
 from apps.skirmish.models.skirmish import Skirmish
 
 
-class BattleLog(models.Model):
+class BattleHistory(models.Model):
     message = models.TextField("Message")
-    skirmish = models.ForeignKey(
-        Skirmish, verbose_name="Skirmish", on_delete=models.CASCADE
-    )
+    skirmish = models.ForeignKey(Skirmish, verbose_name="Skirmish", on_delete=models.CASCADE)
     created_at = models.DateTimeField("Created at", auto_now_add=True)
 
-    objects = BattleLogManager()
+    objects = BattleHistoryManager()
 
     class Meta:
         verbose_name = "Battle log"

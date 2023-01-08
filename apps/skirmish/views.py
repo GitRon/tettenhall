@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.views import generic
 
 from apps.skirmish.forms import SkirmishWarriorRoundActionForm
-from apps.skirmish.models.battle_log import BattleLog
+from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
 from apps.skirmish.models.warrior import Warrior
@@ -32,9 +32,7 @@ class SkirmishFightView(generic.DetailView):
 
         context["skirmish_action_form"] = {}
         for player_warrior in self.object.player_warriors.all():
-            context["skirmish_action_form"][
-                player_warrior.id
-            ] = SkirmishWarriorRoundActionForm(
+            context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(
                 skirmish_id=self.object.id,
                 warrior_id=player_warrior.id,
                 round=self.object.current_round,
@@ -92,9 +90,21 @@ class SkirmishFinishRoundView(generic.DetailView):
         return response
 
 
-class BattleLogUpdateHtmxView(generic.ListView):
-    model = BattleLog
-    template_name = "skirmish/battle_log/htmx/_report_box.html"
+"""
+# todo
+    -> nach gespräch mit marius
+    duelservice:
+    - synchrone events in klassenliste sammeln und dann im skirmishroundaggreate/service abfrühstücken und persistieren
+    - SkirmishLog merkt sich die events und die eigentlichen texte werden on the fly generiert
+    - repository für skirmish?
+    - persistenz am ende der runde, dmait ich nicht mehrfach dinge speichern muss
+    - speichern kann dann atomic werden
+"""
+
+
+class BattleHistoryUpdateHtmxView(generic.ListView):
+    model = BattleHistory
+    template_name = "skirmish/battle_history/htmx/_report_box.html"
 
 
 class FactionWarriorListUpdateHtmxView(generic.TemplateView):
@@ -111,9 +121,7 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         # todo encapsulate properly as htmx snippet so we dont have this twice
         context["skirmish_action_form"] = {}
         for player_warrior in skirmish.player_warriors.all():
-            context["skirmish_action_form"][
-                player_warrior.id
-            ] = SkirmishWarriorRoundActionForm(
+            context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(
                 skirmish_id=skirmish.id,
                 warrior_id=player_warrior.id,
                 round=skirmish.current_round,

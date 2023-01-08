@@ -21,12 +21,8 @@ urlpatterns = [
     # Default
     path("admin/", admin.site.urls),
     # Custom
-    path(
-        "", RedirectView.as_view(pattern_name="account:dashboard-view", permanent=False)
-    ),
-    path(
-        "account/", include(("apps.account.urls", "apps.account"), namespace="account")
-    ),
+    path("", RedirectView.as_view(pattern_name="account:dashboard-view", permanent=False)),
+    path("account/", include(("apps.account.urls", "apps.account"), namespace="account")),
     path(
         "skirmish/",
         include(("apps.skirmish.urls", "apps.skirmish"), namespace="skirmish"),

@@ -12,9 +12,7 @@ class Warrior(models.Model):
         CONDITION_DEAD = 3, "dead"
 
     name = models.CharField("Name", max_length=100)
-    faction = models.ForeignKey(
-        Faction, verbose_name="Faction", on_delete=models.CASCADE
-    )
+    faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
     current_health = models.SmallIntegerField("Current health")
     max_health = models.PositiveSmallIntegerField("Maximum health")
@@ -72,9 +70,7 @@ class FightAction(models.Model):
     class TypeChoices(models.IntegerChoices):
         ATTACK_SIMPLE = 1, "Simple attack"
 
-    type = models.PositiveSmallIntegerField(
-        "Type", choices=TypeChoices.choices, unique=True
-    )
+    type = models.PositiveSmallIntegerField("Type", choices=TypeChoices.choices, unique=True)
 
     def __str__(self):
         return self.get_type_display()

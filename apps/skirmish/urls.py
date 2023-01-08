@@ -11,9 +11,9 @@ urlpatterns = [
         name="skirmish-finish-round-view",
     ),
     path(
-        "battle_log/update/",
-        views.BattleLogUpdateHtmxView.as_view(),
-        name="battle-log-update-htmx",
+        "battle/history/update/",
+        views.BattleHistoryUpdateHtmxView.as_view(),
+        name="battle-history-update-htmx",
     ),
     path(
         "<int:skirmish_id>/faction/<int:faction_id>/warrior-list/update/",

@@ -28,10 +28,7 @@ class FightService:
         while 1:
             random_value = random.random()
 
-            if (
-                warrior_1.dexterity / (warrior_1.dexterity + warrior_2.dexterity)
-                > random_value
-            ):
+            if warrior_1.dexterity / (warrior_1.dexterity + warrior_2.dexterity) > random_value:
                 attacker: Warrior = warrior_1
                 defender: Warrior = warrior_2
             else:
