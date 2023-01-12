@@ -60,5 +60,21 @@ class DuelService(EventSender):
         self.event_list += service.process()
 
         # Create battle history records
+        # todo https://www.cosmicpython.com/book/chapter_10_commands.html
+        #  http://www.cosmicpython.com/book/chapter_10_commands.html#events_vs_commands_table
+        #  handle_command() und handle_event()
+        # todo mache ich das in einem with transaction.atomic() block?
+        # event und command list -> dynamische imports aus jeder django app?
         battle_history_service = BattleHistoryService(skirmish=self.skirmish)
         battle_history_service.process(event_list=self.event_list)
+
+        """
+        - command muss ein direkter aufruf sein
+        - beim command muss sichergestellt sein, dass es ankommt, das system wartet auf den rückgabewert
+        - event handler rufen nur commads auf, die haben keine eigene logik
+        
+        - ProduktInWarenkorbGelegt -> Handler ruft Methode "versandkostenaktualisieren" auf, das berechnet und 
+        speichert die neuen VK und löst das Event "VersandkostenAktualisiert" aus. Die Command-Logik löst am Ende 
+        alle relevanten Events aus, dem ersten Event-Handler ist das latte, das will nur sicherstellen, DASS das 
+        Command ausgeführt wurde
+        """
