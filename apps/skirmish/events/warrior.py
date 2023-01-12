@@ -4,6 +4,8 @@ from apps.core.domain.events import SyncEvent
 from apps.skirmish.models.warrior import Warrior
 
 # todo past tense
+
+
 class WarriorAttacksWithDamage(SyncEvent):
     @dataclass
     class Context:

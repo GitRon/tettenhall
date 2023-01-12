@@ -72,9 +72,8 @@ class DuelService(EventSender):
         - command muss ein direkter aufruf sein
         - beim command muss sichergestellt sein, dass es ankommt, das system wartet auf den rückgabewert
         - event handler rufen nur commads auf, die haben keine eigene logik
-        
-        - ProduktInWarenkorbGelegt -> Handler ruft Methode "versandkostenaktualisieren" auf, das berechnet und 
-        speichert die neuen VK und löst das Event "VersandkostenAktualisiert" aus. Die Command-Logik löst am Ende 
-        alle relevanten Events aus, dem ersten Event-Handler ist das latte, das will nur sicherstellen, DASS das 
+        - ProduktInWarenkorbGelegt -> Handler ruft Methode "versandkostenaktualisieren" auf, das berechnet und
+        speichert die neuen VK und löst das Event "VersandkostenAktualisiert" aus. Die Command-Logik löst am Ende
+        alle relevanten Events aus, dem ersten Event-Handler ist das latte, das will nur sicherstellen, DASS das
         Command ausgeführt wurde
         """
