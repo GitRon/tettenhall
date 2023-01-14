@@ -1,28 +1,30 @@
 from dataclasses import dataclass
 
-from apps.core.domain.events import SyncEvent
+from apps.core.event_loop.messages import Event
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
-# todo past tense
 
-
-class WarriorAttacksWithDamage(SyncEvent):
+class WarriorAttackedWithDamage(Event):
     @dataclass
     class Context:
+        skirmish: Skirmish
         warrior: Warrior
         damage: int
 
 
-class WarriorDefendsDamage(SyncEvent):
+class WarriorDefendedDamage(Event):
     @dataclass
     class Context:
+        skirmish: Skirmish
         warrior: Warrior
         damage: int
 
 
-class WarriorTakesDamage(SyncEvent):
+class WarriorTookDamage(Event):
     @dataclass
     class Context:
+        skirmish: Skirmish
         attacker: Warrior
         attacker_damage: int
         defender: Warrior
@@ -30,8 +32,15 @@ class WarriorTakesDamage(SyncEvent):
         damage: int
 
 
-class WarriorIsIncapacitated(SyncEvent):
+class WarriorWasIncapacitated(Event):
     @dataclass
     class Context:
+        skirmish: Skirmish
         warrior: Warrior
-        condition: int
+
+
+class WarriorWasKilled(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        warrior: Warrior

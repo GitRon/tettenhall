@@ -1,3 +1,3 @@
-from apps.core.domain.events import SyncEventRegistry
+from apps.core.event_loop.registry import MessageRegistry
 
-event_registry = SyncEventRegistry()
+message_registry = MessageRegistry()

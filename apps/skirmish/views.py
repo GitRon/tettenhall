@@ -6,12 +6,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import generic
 
+from apps.core.event_loop.runner import handle_message
 from apps.skirmish.forms import SkirmishWarriorRoundActionForm
+from apps.skirmish.messages.commands.duel import DetermineAttacker
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
 from apps.skirmish.models.warrior import Warrior
-from apps.skirmish.services.duel import DuelService
 
 
 class SkirmishListView(generic.ListView):
@@ -69,21 +70,38 @@ class SkirmishFinishRoundView(generic.DetailView):
         warrior_1 = get_object_or_404(Warrior, pk=fighter_list[0]["warrior_id"])
         warrior_2 = get_object_or_404(Warrior, pk=fighter_list[1]["warrior_id"])
 
-        # Calculate fight
-        service = DuelService(
-            skirmish=self.object,
-            warrior_1=warrior_1,
-            warrior_2=warrior_2,
-            action_1=fighter_list[0]["action_id"],
-            action_2=fighter_list[1]["action_id"],
-        )
-        service.process()
+        # Start duel
+        try:
+            handle_message(
+                DetermineAttacker.generator(
+                    context_data={
+                        "skirmish": self.object,
+                        "warrior_1": warrior_1,
+                        "warrior_2": warrior_2,
+                        "action_1": int(fighter_list[0]["action_id"]),
+                        "action_2": int(fighter_list[1]["action_id"]),
+                    }
+                )
+            )
+
+            notification = "Round finished"
+        except Exception as e:
+            notification = str(e)
+
+        # service = DuelService(
+        #     skirmish=self.object,
+        #     warrior_1=warrior_1,
+        #     warrior_2=warrior_2,
+        #     action_1=fighter_list[0]["action_id"],
+        #     action_2=fighter_list[1]["action_id"],
+        # )
+        # service.process()
 
         response = HttpResponse()
         response["HX-Trigger"] = json.dumps(
             {
                 "battleReportUpdate": "-",
-                "notification": "Round finished",
+                "notification": notification,
                 "updateFactionWarriorList": "-",
             }
         )
