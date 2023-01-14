@@ -28,3 +28,9 @@ class RoundFinished(Event):
     @dataclass
     class Context:
         skirmish: Skirmish
+
+
+class SkirmishFinished(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish

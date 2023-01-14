@@ -1,12 +1,12 @@
 from apps.core.domain import message_registry
-from apps.skirmish.messages.commands.duel import DetermineAttacker
-from apps.skirmish.messages.events import duel, warrior
+from apps.skirmish.messages.commands.skirmish import DetermineAttacker
+from apps.skirmish.messages.events import skirmish, warrior
 from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
 
 
-@message_registry.register_event(event=duel.FighterPairsMatched)
-def handle_determine_attacker(context: duel.FighterPairsMatched.Context):
+@message_registry.register_event(event=skirmish.FighterPairsMatched)
+def handle_determine_attacker(context: skirmish.FighterPairsMatched.Context):
     return DetermineAttacker.generator(
         context_data={
             "skirmish": context.skirmish,
@@ -44,4 +44,4 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
     Warrior.objects.set_condition(obj=context.defender, condition=condition)
 
     if message:
-        return [message]
+        return message

@@ -20,7 +20,7 @@ class FactionAdmin(admin.ModelAdmin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("type", "price", "value", "owner")
 
 
 class SkirmishWarriorRoundActionInline(admin.TabularInline):
@@ -46,5 +46,7 @@ class WarriorAdmin(admin.ModelAdmin):
         "condition",
         "current_health",
         "max_health",
+        "weapon",
+        "armor",
     )
     list_filter = ("faction", "condition")

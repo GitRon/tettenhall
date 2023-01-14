@@ -30,4 +30,9 @@ urlpatterns = [
         views.SkirmishRoundUpdateHtmxView.as_view(),
         name="skirmish-round-update-htmx",
     ),
+    path(
+        "<int:pk>/fight-button/update",
+        views.SkirmishFightButtonUpdateHtmxView.as_view(),
+        name="skirmish-fight-button-update-htmx",
+    ),
 ]

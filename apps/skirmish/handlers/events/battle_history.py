@@ -1,5 +1,5 @@
 from apps.core.domain import message_registry
-from apps.skirmish.messages.events import duel, warrior
+from apps.skirmish.messages.events import skirmish, warrior
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.warrior import FightAction
 
@@ -13,8 +13,8 @@ def handle_log_warrior_takes_damage(context: warrior.WarriorTookDamage.Context):
     )
 
 
-@message_registry.register_event(event=duel.AttackerDefenderDecided)
-def handle_log_attacker_defender_decided(context: duel.AttackerDefenderDecided.Context):
+@message_registry.register_event(event=skirmish.AttackerDefenderDecided)
+def handle_log_attacker_defender_decided(context: skirmish.AttackerDefenderDecided.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"Warrior {context.attacker} is the attacker and warrior {context.defender} the defender and chooses "
@@ -35,4 +35,20 @@ def handle_log_warrior_death(context: warrior.WarriorWasKilled.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of the fight being killed.",
+    )
+
+
+@message_registry.register_event(event=skirmish.RoundFinished)
+def handle_log_round_finished(context: skirmish.RoundFinished.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"Round {context.skirmish.current_round} finished.",
+    )
+
+
+@message_registry.register_event(event=skirmish.SkirmishFinished)
+def handle_log_skirmish_finished(context: skirmish.SkirmishFinished.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"Skirmish finished. {context.skirmish.victorious_faction} won.",
     )

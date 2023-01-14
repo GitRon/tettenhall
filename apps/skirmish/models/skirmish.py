@@ -36,6 +36,14 @@ class Skirmish(models.Model):
         related_name="non_player_skirmishes",
         on_delete=models.CASCADE,
     )
+    victorious_faction = models.ForeignKey(
+        Faction,
+        verbose_name="Victorious faction",
+        related_name="victorious_skirmishes",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     player_warriors = models.ManyToManyField(
         Warrior,
         verbose_name="Player warriors",

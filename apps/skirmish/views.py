@@ -8,8 +8,8 @@ from django.views import generic
 from apps.core.event_loop.runner import handle_message
 from apps.core.utils import convert_string_based_two_level_dict_to_dict
 from apps.skirmish.forms import SkirmishWarriorRoundActionForm
-from apps.skirmish.messages.commands.duel import StartDuel
-from apps.skirmish.messages.events.duel import RoundFinished
+from apps.skirmish.messages.commands.skirmish import StartDuel
+from apps.skirmish.messages.events.skirmish import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
@@ -82,26 +82,20 @@ class SkirmishFinishRoundView(generic.DetailView):
                 "notification": "Round finished",
                 "updateFactionWarriorList": "-",
                 "updateSkirmishRound": "-",
+                "updateFightButton": "-",
             }
         )
         return response
 
 
-"""
-# todo
-    -> nach gespräch mit marius
-    duelservice:
-    - synchrone events in klassenliste sammeln und dann im skirmishroundaggreate/service abfrühstücken und persistieren
-    - SkirmishLog merkt sich die events und die eigentlichen texte werden on the fly generiert
-    - repository für skirmish?
-    - persistenz am ende der runde, dmait ich nicht mehrfach dinge speichern muss
-    - speichern kann dann atomic werden
-"""
-
-
 class SkirmishRoundUpdateHtmxView(generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish/htmx/_round.html"
+
+
+class SkirmishFightButtonUpdateHtmxView(generic.DetailView):
+    model = Skirmish
+    template_name = "skirmish/skirmish/htmx/_fight_button.html"
 
 
 class BattleHistoryUpdateHtmxView(generic.ListView):

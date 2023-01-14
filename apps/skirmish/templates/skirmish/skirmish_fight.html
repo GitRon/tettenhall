@@ -14,12 +14,7 @@
                         {% include 'compontents/box_header.html' with title='Battle report' %}
                     </div>
                     <div>
-                        <button hx-post="{% url 'skirmish:skirmish-finish-round-view' object.id %}"
-                                hx-target="#hidden-box"
-                                hx-include="select, input"
-                                class="uk-button uk-button-danger uk-float-right">
-                            Fight!
-                        </button>
+                        {% include 'skirmish/skirmish/htmx/_fight_button.html' with skirmish=object %}
                         <div class="uk-clearfix"></div>
                     </div>
                 </div>

@@ -1,16 +1,17 @@
 from apps.core.domain.random import DiceNotation
 from apps.core.event_loop.messages import Command, Event
-from apps.skirmish.messages.commands.duel import WarriorAttacksWarriorWithSimpleAttack
+from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarriorWithSimpleAttack
 from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage, WarriorDefendedDamage, WarriorTookDamage
 
 
 class SimpleAttackService:
-    message_list = []
+    message_list: list
     context: WarriorAttacksWarriorWithSimpleAttack.Context
 
     def __init__(self, context: [Command.Context, Event.Context]) -> None:
         super().__init__()
 
+        self.message_list = []
         self.context = context
 
     def _get_attack_value(self):

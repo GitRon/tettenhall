@@ -68,6 +68,9 @@ class MessageRegistry:
         """
         Detects message registries which have been registered via the "register_*" decorator.
         """
+        if len(self.command_dict) + len(self.event_dict) > 0:
+            return
+
         # Import all notification.pys in all installed apps to trigger notification class registration via decorator
         for app in settings.INSTALLED_APPS:
             if not app[:5] == "apps.":

@@ -24,8 +24,7 @@ class Warrior(models.Model):
 
     dexterity = models.PositiveSmallIntegerField("Dexterity")
 
-    # todo one2one relationship?
-    weapon = models.ForeignKey(
+    weapon = models.OneToOneField(
         Item,
         verbose_name="Weapon",
         related_name="warrior_weapons",
@@ -33,8 +32,7 @@ class Warrior(models.Model):
         blank=True,
         on_delete=models.CASCADE,
     )
-    # todo one2one relationship?
-    armor = models.ForeignKey(
+    armor = models.OneToOneField(
         Item,
         verbose_name="Armor",
         related_name="warrior_armor",

@@ -11,5 +11,9 @@ class SkirmishManager(manager.Manager):
         skirmish.current_round += 1
         return skirmish.save()
 
+    def set_victor(self, skirmish, victorious_faction):
+        skirmish.victorious_faction = victorious_faction
+        return skirmish.save()
+
 
 SkirmishManager = SkirmishManager.from_queryset(SkirmishQuestSet)

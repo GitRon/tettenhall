@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from apps.core.event_loop.messages import Command
+from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -37,3 +38,10 @@ class WarriorAttacksWarriorWithRiskyAttack(Command):
         skirmish: Skirmish
         attacker: Warrior
         defender: Warrior
+
+
+class WinSkirmish(Command):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        victorious_faction: Faction
