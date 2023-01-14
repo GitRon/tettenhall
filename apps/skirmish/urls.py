@@ -25,4 +25,9 @@ urlpatterns = [
         views.WarriorSkirmishActionCreateView.as_view(),
         name="warrior-skirmish-round-action-create-htmx",
     ),
+    path(
+        "<int:pk>/round/update",
+        views.SkirmishRoundUpdateHtmxView.as_view(),
+        name="skirmish-round-update-htmx",
+    ),
 ]

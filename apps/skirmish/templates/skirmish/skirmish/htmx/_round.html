@@ -1,0 +1,4 @@
+<div hx-get="{% url 'skirmish:skirmish-round-update-htmx' skirmish.id %}"
+     hx-trigger="updateSkirmishRound from:body">
+    <h1>{{ skirmish.name }}: Round {{ skirmish.current_round }}</h1>
+</div>

@@ -1,6 +1,7 @@
 from apps.core.domain import message_registry
 from apps.skirmish.messages.commands.duel import WarriorAttacksWarriorWithSimpleAttack
 from apps.skirmish.messages.events import duel
+from apps.skirmish.models.skirmish import Skirmish
 
 
 @message_registry.register_event(event=duel.AttackerDefenderDecided)
@@ -17,3 +18,8 @@ def handle_attacker_defender_decided(context: duel.AttackerDefenderDecided.Conte
     else:
         raise RuntimeError("Invalid attack action")
     return [command]
+
+
+@message_registry.register_event(event=duel.RoundFinished)
+def handle_round_finished(context: duel.RoundFinished.Context):
+    Skirmish.objects.increment_round(skirmish=context.skirmish)

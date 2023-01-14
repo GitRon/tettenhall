@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.skirmish.managers.skirmish import SkirmishManager
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.warrior import FightAction, Warrior
 
@@ -50,6 +51,8 @@ class Skirmish(models.Model):
         verbose_name="Warrior Round Actions",
         related_name="warrior_round_action_skirmishes",
     )
+
+    objects = SkirmishManager()
 
     class Meta:
         verbose_name = "Skirmish"

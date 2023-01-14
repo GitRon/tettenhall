@@ -12,3 +12,9 @@ class AttackerDefenderDecided(Event):
         attacker: Warrior
         defender: Warrior
         attack_action: int
+
+
+class RoundFinished(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish

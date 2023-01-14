@@ -6,12 +6,11 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class StartDuel(Command):
-    # todo das gibts noch nicht
     @dataclass
     class Context:
         skirmish: Skirmish
-        warrior_1: Warrior
-        warrior_2: Warrior
+        warrior_list_1: list[Warrior]
+        warrior_list_2: list[Warrior]
 
 
 class DetermineAttacker(Command):

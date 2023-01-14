@@ -9,6 +9,7 @@ from django.views import generic
 from apps.core.event_loop.runner import handle_message
 from apps.skirmish.forms import SkirmishWarriorRoundActionForm
 from apps.skirmish.messages.commands.duel import DetermineAttacker
+from apps.skirmish.messages.events.duel import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
@@ -71,38 +72,34 @@ class SkirmishFinishRoundView(generic.DetailView):
         warrior_2 = get_object_or_404(Warrior, pk=fighter_list[1]["warrior_id"])
 
         # Start duel
-        try:
-            handle_message(
-                DetermineAttacker.generator(
-                    context_data={
-                        "skirmish": self.object,
-                        "warrior_1": warrior_1,
-                        "warrior_2": warrior_2,
-                        "action_1": int(fighter_list[0]["action_id"]),
-                        "action_2": int(fighter_list[1]["action_id"]),
-                    }
-                )
+        handle_message(
+            DetermineAttacker.generator(
+                context_data={
+                    "skirmish": self.object,
+                    "warrior_1": warrior_1,
+                    "warrior_2": warrior_2,
+                    "action_1": int(fighter_list[0]["action_id"]),
+                    "action_2": int(fighter_list[1]["action_id"]),
+                }
             )
+        )
 
-            notification = "Round finished"
-        except Exception as e:
-            notification = str(e)
-
-        # service = DuelService(
-        #     skirmish=self.object,
-        #     warrior_1=warrior_1,
-        #     warrior_2=warrior_2,
-        #     action_1=fighter_list[0]["action_id"],
-        #     action_2=fighter_list[1]["action_id"],
-        # )
-        # service.process()
+        # Finish round
+        handle_message(
+            RoundFinished.generator(
+                context_data={
+                    "skirmish": self.object,
+                }
+            )
+        )
 
         response = HttpResponse()
         response["HX-Trigger"] = json.dumps(
             {
                 "battleReportUpdate": "-",
-                "notification": notification,
+                "notification": "Round finished",
                 "updateFactionWarriorList": "-",
+                "updateSkirmishRound": "-",
             }
         )
         return response
@@ -118,6 +115,11 @@ class SkirmishFinishRoundView(generic.DetailView):
     - persistenz am ende der runde, dmait ich nicht mehrfach dinge speichern muss
     - speichern kann dann atomic werden
 """
+
+
+class SkirmishRoundUpdateHtmxView(generic.DetailView):
+    model = Skirmish
+    template_name = "skirmish/skirmish/htmx/_round.html"
 
 
 class BattleHistoryUpdateHtmxView(generic.ListView):
