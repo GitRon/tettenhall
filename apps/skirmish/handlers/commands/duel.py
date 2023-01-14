@@ -1,11 +1,50 @@
 import random
 
 from apps.core.domain import message_registry
-from apps.core.domain.random import DiceNotation
 from apps.skirmish.messages.commands import duel
-from apps.skirmish.messages.events.duel import AttackerDefenderDecided
-from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage, WarriorDefendedDamage, WarriorTookDamage
+from apps.skirmish.messages.events.duel import AttackerDefenderDecided, FighterPairsMatched
 from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.services.fight_actions.risky_attack import RiskyAttackService
+from apps.skirmish.services.fight_actions.simple_attack import SimpleAttackService
+
+
+@message_registry.register_command(command=duel.StartDuel)
+def handle_assign_fighter_pairs(context: duel.StartDuel.Context) -> list:
+    message_list = []
+
+    # The larger list is always the first
+    if len(context.warrior_list_1) >= len(context.warrior_list_2):
+        warrior_list_1 = context.warrior_list_1
+        warrior_list_2 = context.warrior_list_2
+    else:
+        warrior_list_1 = context.warrior_list_2
+        warrior_list_2 = context.warrior_list_1
+
+    used_warriors_list_2 = []
+
+    for warrior_1, attack_action_1 in warrior_list_1.items():
+        # If list 2 is shorter, the warriors get matched again
+        # # todo change to: get just hit, and cannot try to attack (create different event)
+        if len(used_warriors_list_2) == len(warrior_list_2):
+            used_warriors_list_2 = []
+
+        warrior_2 = random.choice(list(warrior_list_2.keys()))
+        attack_action_2 = warrior_list_2[warrior_2]
+        used_warriors_list_2.append(warrior_2)
+
+        message_list.append(
+            FighterPairsMatched.generator(
+                context_data={
+                    "skirmish": context.skirmish,
+                    "warrior_1": Warrior.objects.get(id=warrior_1),
+                    "warrior_2": Warrior.objects.get(id=warrior_2),
+                    "attack_action_1": attack_action_1,
+                    "attack_action_2": attack_action_2,
+                }
+            )
+        )
+
+    return message_list
 
 
 @message_registry.register_command(command=duel.DetermineAttacker)
@@ -34,36 +73,16 @@ def handle_determine_attacker_and_defender(context: duel.DetermineAttacker.Conte
 
 
 @message_registry.register_command(command=duel.WarriorAttacksWarriorWithSimpleAttack)
-def handle_warrior_attacks_warrior_with_attack_action(
+def handle_warrior_attacks_warrior_with_simple_attack(
     context: duel.WarriorAttacksWarriorWithSimpleAttack.Context,
 ) -> list:
-    message_list = []
+    service = SimpleAttackService(context=context)
+    return service.process()
 
-    attack = DiceNotation(dice_string=context.attacker.weapon.value).result
-    message_list.append(
-        WarriorAttackedWithDamage.generator(
-            {"skirmish": context.skirmish, "warrior": context.attacker, "damage": attack}
-        )
-    )
 
-    defense = DiceNotation(dice_string=context.defender.armor.value).result
-    message_list.append(
-        WarriorDefendedDamage.generator({"skirmish": context.skirmish, "warrior": context.defender, "damage": defense})
-    )
-
-    damage = max(attack - defense, 0)
-
-    message_list.append(
-        WarriorTookDamage.generator(
-            {
-                "skirmish": context.skirmish,
-                "attacker": context.attacker,
-                "attacker_damage": attack,
-                "defender": context.defender,
-                "defender_damage": defense,
-                "damage": damage,
-            }
-        )
-    )
-
-    return message_list
+@message_registry.register_command(command=duel.WarriorAttacksWarriorWithRiskyAttack)
+def handle_warrior_attacks_warrior_with_risky_attack(
+    context: duel.WarriorAttacksWarriorWithRiskyAttack.Context,
+) -> list:
+    service = RiskyAttackService(context=context)
+    return service.process()

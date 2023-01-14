@@ -33,7 +33,9 @@ def handle_command(command: Command, queue: list[Message]):
             print(f"Handling command '{command.__class__.__name__}' with handler '{handler.__name__}'")
             if handler:
                 with transaction.atomic():
-                    queue.extend(handler(command.Context) or [])
+                    new_messages = handler(command.Context) or []
+                    new_messages = new_messages if isinstance(new_messages, list) else [new_messages]
+                    queue.extend(new_messages)
             # return result
         except Exception as e:
             print(f"Exception handling command {command.__class__.__name__}: {str(e)}")
@@ -47,7 +49,9 @@ def handle_event(event: Event, queue: list[Message]):
             print(f"Handling event '{event.__class__.__name__}' with handler '{handler.__name__}'")
             if handler:
                 with transaction.atomic():
-                    queue.extend(handler(event.Context) or [])
+                    new_messages = handler(event.Context) or []
+                    new_messages = new_messages if isinstance(new_messages, list) else [new_messages]
+                    queue.extend(new_messages)
         except Exception as e:
             print(f"Exception handling event {event.__class__.__name__}: {str(e)}")
             # continue

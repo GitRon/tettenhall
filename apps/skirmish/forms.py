@@ -1,51 +1,26 @@
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Div, Field, Layout, Submit
+from crispy_forms.layout import Div, Field, Layout
 from django import forms
-from django.urls import reverse
 
-from apps.skirmish.models.skirmish import SkirmishWarriorRoundAction
+from apps.skirmish.models.warrior import FightAction
 
 
-class SkirmishWarriorRoundActionForm(forms.ModelForm):
-    class Meta:
-        model = SkirmishWarriorRoundAction
-        fields = ("skirmish", "warrior", "round", "action")
-
+class SkirmishWarriorRoundActionForm(forms.Form):
     def __init__(self, *args, **kwargs):
-        skirmish_id = kwargs.pop("skirmish_id", None)
+        faction_id = kwargs.pop("faction_id", None)
         warrior_id = kwargs.pop("warrior_id", None)
-        skirmish_round = kwargs.pop("round", None)
+
+        field_name = f"warrior-fight-action[{faction_id}][{warrior_id}]"
+        # todo die daten muss ich per parser noch verarbeiten, aber wie?
 
         self.helper = FormHelper()
         self.helper.form_method = "post"
-        self.helper.form_action = reverse(
-            "skirmish:warrior-skirmish-round-action-create-htmx",
-            args=(skirmish_id, warrior_id, skirmish_round),
-        )
-        self.helper.attrs = {"hx-post": self.helper.form_action}
         self.helper.layout = Layout(
-            Div("skirmish", "warrior", "round", css_class="uk-hidden"),
-            Div(Field("action", css_class="uk-select")),
-            Div(
-                Submit(
-                    "submit",
-                    "Save",
-                    css_class="uk-button uk-button-primary uk-button-small",
-                ),
-                css_class="uk-margin",
-            ),
+            Div(Field(field_name, css_class="uk-select")),
         )
 
         super().__init__(*args, **kwargs)
 
-        self.fields["skirmish"].widget = forms.HiddenInput()
-        self.fields["skirmish"].initial = skirmish_id
-
-        self.fields["warrior"].widget = forms.HiddenInput()
-        self.fields["warrior"].initial = warrior_id
-
-        self.fields["round"].widget = forms.HiddenInput()
-        self.fields["round"].initial = skirmish_round
-
-        self.fields["action"].empty_label = None
-        self.fields["action"].label = ""
+        self.fields[field_name] = forms.ChoiceField(
+            label="", choices=FightAction.TypeChoices.choices, initial=FightAction.TypeChoices.SIMPLE_ATTACK
+        )

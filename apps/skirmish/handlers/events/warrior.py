@@ -1,7 +1,21 @@
 from apps.core.domain import message_registry
-from apps.skirmish.messages.events import warrior
+from apps.skirmish.messages.commands.duel import DetermineAttacker
+from apps.skirmish.messages.events import duel, warrior
 from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
+
+
+@message_registry.register_event(event=duel.FighterPairsMatched)
+def handle_determine_attacker(context: duel.FighterPairsMatched.Context):
+    return DetermineAttacker.generator(
+        context_data={
+            "skirmish": context.skirmish,
+            "warrior_1": context.warrior_1,
+            "warrior_2": context.warrior_2,
+            "action_1": context.attack_action_1,
+            "action_2": context.attack_action_2,
+        }
+    )
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)

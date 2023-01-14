@@ -9,8 +9,8 @@ class StartDuel(Command):
     @dataclass
     class Context:
         skirmish: Skirmish
-        warrior_list_1: list[Warrior]
-        warrior_list_2: list[Warrior]
+        warrior_list_1: dict[int]
+        warrior_list_2: dict[int]
 
 
 class DetermineAttacker(Command):
@@ -24,6 +24,14 @@ class DetermineAttacker(Command):
 
 
 class WarriorAttacksWarriorWithSimpleAttack(Command):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        attacker: Warrior
+        defender: Warrior
+
+
+class WarriorAttacksWarriorWithRiskyAttack(Command):
     @dataclass
     class Context:
         skirmish: Skirmish

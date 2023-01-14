@@ -68,7 +68,8 @@ class Warrior(models.Model):
 
 class FightAction(models.Model):
     class TypeChoices(models.IntegerChoices):
-        ATTACK_SIMPLE = 1, "Simple attack"
+        SIMPLE_ATTACK = 1, "Simple attack"
+        RISKY_ATTACK = 2, "Risky attack"
 
     type = models.PositiveSmallIntegerField("Type", choices=TypeChoices.choices, unique=True)
 

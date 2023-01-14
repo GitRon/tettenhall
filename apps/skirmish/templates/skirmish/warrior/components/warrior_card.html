@@ -2,9 +2,7 @@
 {% load l10n %}
 {% load crispy_forms_tags %}
 <div class="uk-card uk-card-small uk-card-default"
-     data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}"
-     hx-post="/fight-warriors-asdf"
-     hx-trigger="interactjs:dropWarrior from:body">
+     data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}">
     <div class="uk-card-header">
         <h3 class="uk-card-title">{{ warrior.name }}</h3>
         <ul class="uk-subnav uk-subnav-divider uk-margin-remove-top">
@@ -21,15 +19,15 @@
         <div>
             {% if warrior.is_healthy %}
                 <p class="uk-text-success">
-                    <i class="fa-solid fa-feather-pointed"></i> Healthy
+                    <i class="fa-solid fa-feather-pointed"></i> {{ warrior.get_condition_display }}
                 </p>
             {% elif warrior.is_unconscious %}
                 <p class="uk-text-warning">
-                    <i class="fa-solid fa-moon"></i> Unconscious
+                    <i class="fa-solid fa-moon"></i> {{ warrior.get_condition_display }}
                 </p>
             {% else %}
                 <p class="uk-text-danger">
-                    <i class="fa-solid fa-skull"></i> Dead
+                    <i class="fa-solid fa-skull"></i> {{ warrior.get_condition_display }}
                 </p>
             {% endif %}
         </div>
@@ -43,14 +41,13 @@
     <div class="uk-card-footer">
         <div class="uk-form-controls">
             {% if is_player and warrior.is_healthy %}
-                {# todo formular nicht anzeigen, wenn für diese runde bereits was gespeichert wurde #}
                 {% with form=skirmish_action_form|lookup:warrior.id %}
                     {% crispy form %}
                 {% endwith %}
             {% elif not is_player and warrior.is_healthy %}
                 <label class="uk-form-label">
                     Simple attack
-                    <input name="warrior-action[{{ warrior.id }}]" class="uk-hidden" value="1">
+                    <input name="warrior-fight-action[{{ warrior.faction.id }}][{{ warrior.id }}]" class="uk-hidden" value="1">
                 </label>
             {% endif %}
         </div>

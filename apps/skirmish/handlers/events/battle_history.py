@@ -1,6 +1,7 @@
 from apps.core.domain import message_registry
 from apps.skirmish.messages.events import duel, warrior
 from apps.skirmish.models.battle_history import BattleHistory
+from apps.skirmish.models.warrior import FightAction
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
@@ -16,7 +17,8 @@ def handle_log_warrior_takes_damage(context: warrior.WarriorTookDamage.Context):
 def handle_log_attacker_defender_decided(context: duel.AttackerDefenderDecided.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
-        message=f"Warrior {context.attacker} is the attacker and warrior {context.defender} the defender.",
+        message=f"Warrior {context.attacker} is the attacker and warrior {context.defender} the defender and chooses "
+        f"to attack with a {FightAction(type=context.attack_action).get_type_display()}.",
     )
 
 

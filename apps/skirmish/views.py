@@ -1,5 +1,4 @@
 import json
-import re
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -7,8 +6,9 @@ from django.urls import reverse
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
+from apps.core.utils import convert_string_based_two_level_dict_to_dict
 from apps.skirmish.forms import SkirmishWarriorRoundActionForm
-from apps.skirmish.messages.commands.duel import DetermineAttacker
+from apps.skirmish.messages.commands.duel import StartDuel
 from apps.skirmish.messages.events.duel import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.faction import Faction
@@ -35,9 +35,8 @@ class SkirmishFightView(generic.DetailView):
         context["skirmish_action_form"] = {}
         for player_warrior in self.object.player_warriors.all():
             context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(
-                skirmish_id=self.object.id,
+                faction_id=player_warrior.faction.id,
                 warrior_id=player_warrior.id,
-                round=self.object.current_round,
             )
 
         return context
@@ -52,39 +51,22 @@ class SkirmishFinishRoundView(generic.DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        # todo hier muss ich vorher noch die pärchen aufteilen, aktuell kämpfen hier noch alle
-        #  oder ich hole mir alle daten aus der db und speichere pro skirmish/runde die gewählte action...
-        #  das funktioniert aber nicht gut, da ich das nicht einfach so in die M2M warrior<->skirmish dranhängen kann
-        #  -> ist runde einfach nur eine zahl?
-        print(request.POST)
-        fighter_list = []
-        for key, value in request.POST.items():
-            if "warrior-action" in key:
-                try:
-                    warrior_id = re.search(r"\[(\d+)\]$", key).group(1)
-                except IndexError:
-                    raise ValueError("Malformed data sent.")
-                action_id = value
-                print(warrior_id, action_id)
-                fighter_list.append({"warrior_id": warrior_id, "action_id": action_id})
-
-        warrior_1 = get_object_or_404(Warrior, pk=fighter_list[0]["warrior_id"])
-        warrior_2 = get_object_or_404(Warrior, pk=fighter_list[1]["warrior_id"])
+        # todo datenübergabe sauberer gestalten
+        converted_data = convert_string_based_two_level_dict_to_dict(request.POST)
 
         # Start duel
         handle_message(
-            DetermineAttacker.generator(
+            StartDuel.generator(
                 context_data={
                     "skirmish": self.object,
-                    "warrior_1": warrior_1,
-                    "warrior_2": warrior_2,
-                    "action_1": int(fighter_list[0]["action_id"]),
-                    "action_2": int(fighter_list[1]["action_id"]),
+                    "warrior_list_1": converted_data["warrior-fight-action"][self.object.player_faction.id],
+                    "warrior_list_2": converted_data["warrior-fight-action"][self.object.non_player_faction.id],
                 }
             )
         )
 
         # Finish round
+        # todo add command if one list is dead, that skirmish will be closed
         handle_message(
             RoundFinished.generator(
                 context_data={
@@ -142,15 +124,15 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         context["skirmish_action_form"] = {}
         for player_warrior in skirmish.player_warriors.all():
             context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(
-                skirmish_id=skirmish.id,
+                faction_id=player_warrior.faction.id,
                 warrior_id=player_warrior.id,
-                round=skirmish.current_round,
             )
 
         return context
 
 
 class WarriorSkirmishActionCreateView(generic.CreateView):
+    # todo kann weg
     model = SkirmishWarriorRoundAction
     form_class = SkirmishWarriorRoundActionForm
 
