@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import manager
 
 
-class SkirmishQuestSet(models.QuerySet):
+class SkirmishQuerySet(models.QuerySet):
     pass
 
 
@@ -16,4 +16,4 @@ class SkirmishManager(manager.Manager):
         return skirmish.save()
 
 
-SkirmishManager = SkirmishManager.from_queryset(SkirmishQuestSet)
+SkirmishManager = SkirmishManager.from_queryset(SkirmishQuerySet)

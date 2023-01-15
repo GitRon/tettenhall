@@ -32,10 +32,10 @@
             {% endif %}
         </div>
         <div>
-            <i class="fa-solid fa-wrench"></i> {{ warrior.weapon }}
+            <i class="fa-solid fa-wrench"></i> {{ warrior.get_weapon_or_fallback }}
         </div>
         <div>
-            <i class="fa-solid fa-shield"></i> {{ warrior.armor }}
+            <i class="fa-solid fa-shield"></i> {{ warrior.get_armor_or_fallback }}
         </div>
     </div>
     <div class="uk-card-footer">

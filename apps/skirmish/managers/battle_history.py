@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import manager
 
 
-class BattleHistoryQuestSet(models.QuerySet):
+class BattleHistoryQuerySet(models.QuerySet):
     pass
 
 
@@ -14,4 +14,4 @@ class BattleHistoryManager(manager.Manager):
         )
 
 
-WarriorManager = BattleHistoryManager.from_queryset(BattleHistoryQuestSet)
+WarriorManager = BattleHistoryManager.from_queryset(BattleHistoryQuerySet)

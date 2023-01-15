@@ -2,23 +2,7 @@ from django.db import models
 
 from apps.skirmish.managers.skirmish import SkirmishManager
 from apps.skirmish.models.faction import Faction
-from apps.skirmish.models.warrior import FightAction, Warrior
-
-
-class SkirmishWarriorRoundAction(models.Model):
-    # todo das kann weg? weil ich die runde nicht persistiere?
-    skirmish = models.ForeignKey("Skirmish", verbose_name="Skirmish", on_delete=models.CASCADE)
-    warrior = models.ForeignKey(Warrior, verbose_name="Warrior", on_delete=models.CASCADE)
-    round = models.PositiveSmallIntegerField("Round")
-    action = models.ForeignKey(FightAction, verbose_name="Fight action", on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name = "Skirmish warrior round action"
-        verbose_name_plural = "Skirmish warrior round actions"
-        default_related_name = "skirmish_warrior_round_actions"
-
-    def __str__(self):
-        return f"{self.skirmish}: {self.warrior} ({self.round})"
+from apps.skirmish.models.warrior import Warrior
 
 
 class Skirmish(models.Model):
@@ -53,12 +37,6 @@ class Skirmish(models.Model):
         Warrior,
         verbose_name="Non-player warriors",
         related_name="non_player_skirmishes",
-    )
-    warrior_round_actions = models.ManyToManyField(
-        Warrior,
-        through=SkirmishWarriorRoundAction,
-        verbose_name="Warrior Round Actions",
-        related_name="warrior_round_action_skirmishes",
     )
 
     objects = SkirmishManager()

@@ -1,5 +1,5 @@
 from apps.core.domain import message_registry
-from apps.skirmish.messages.events import skirmish, warrior
+from apps.skirmish.messages.events import item, skirmish, warrior
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.warrior import FightAction
 
@@ -51,4 +51,12 @@ def handle_log_skirmish_finished(context: skirmish.SkirmishFinished.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"Skirmish finished. {context.skirmish.victorious_faction} won.",
+    )
+
+
+@message_registry.register_event(event=item.ItemDroppedAsLoot)
+def handle_log_item_dropped(context: item.ItemDroppedAsLoot.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} dropped the item '{context.item}'",
     )

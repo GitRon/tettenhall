@@ -1,8 +1,7 @@
 import json
 
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from django.shortcuts import get_object_or_404
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
@@ -12,8 +11,7 @@ from apps.skirmish.messages.commands.skirmish import StartDuel
 from apps.skirmish.messages.events.skirmish import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.faction import Faction
-from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
-from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.models.skirmish import Skirmish
 
 
 class SkirmishListView(generic.ListView):
@@ -111,10 +109,12 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         faction = get_object_or_404(Faction, pk=self.kwargs.get("faction_id"))
 
         context = super().get_context_data(**kwargs)
-        # todo
-        context["object_list"] = faction.warriors.all()
+        if faction == skirmish.player_faction:
+            context["object_list"] = skirmish.player_warriors.all()
+        else:
+            context["object_list"] = skirmish.non_player_warriors.all()
         context["is_player"] = skirmish.player_faction == faction
-        # todo encapsulate properly as htmx snippet so we dont have this twice
+        # todo encapsulate properly as htmx snippet so we don't have this twice
         context["skirmish_action_form"] = {}
         for player_warrior in skirmish.player_warriors.all():
             context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(
@@ -123,32 +123,3 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
             )
 
         return context
-
-
-class WarriorSkirmishActionCreateView(generic.CreateView):
-    # todo kann weg
-    model = SkirmishWarriorRoundAction
-    form_class = SkirmishWarriorRoundActionForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["skirmish_id"] = self.kwargs.get("skirmish_id")
-        kwargs["warrior_id"] = self.kwargs.get("warrior_id")
-        kwargs["round"] = self.kwargs.get("round")
-        return kwargs
-
-    def post(self, request, *args, **kwargs):
-        warrior = get_object_or_404(Warrior, pk=self.kwargs.get("warrior_id"))
-        super().post(request, *args, **kwargs)
-        return redirect(
-            reverse(
-                "skirmish:faction-warrior-list-update-htmx",
-                kwargs={
-                    "skirmish_id": self.kwargs.get("skirmish_id"),
-                    "faction_id": warrior.faction.id,
-                },
-            )
-        )
-
-    def get_success_url(self):
-        return None

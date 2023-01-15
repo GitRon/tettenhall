@@ -1,6 +1,7 @@
 from django.db import models
 
 from apps.core.validators import dice_notation
+from apps.skirmish.managers.item import ItemManager
 from apps.skirmish.models.faction import Faction
 
 
@@ -13,6 +14,8 @@ class Item(models.Model):
     price = models.PositiveSmallIntegerField("Price")
     value = models.CharField("Value", validators=[dice_notation], max_length=10)
     owner = models.ForeignKey(Faction, verbose_name="Owning faction", on_delete=models.CASCADE)
+
+    objects = ItemManager()
 
     class Meta:
         verbose_name = "Item"

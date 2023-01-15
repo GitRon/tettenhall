@@ -1,9 +1,10 @@
 from django.contrib import admin
+from django.db.models import Q, Subquery
 
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
-from apps.skirmish.models.skirmish import Skirmish, SkirmishWarriorRoundAction
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import FightAction, Warrior
 
 
@@ -20,16 +21,20 @@ class FactionAdmin(admin.ModelAdmin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ("type", "price", "value", "owner")
-
-
-class SkirmishWarriorRoundActionInline(admin.TabularInline):
-    model = SkirmishWarriorRoundAction
+    list_display = (
+        "type",
+        "price",
+        "value",
+        "owner",
+        "warrior_weapons",
+        "warrior_armor",
+    )
+    list_filter = ("type",)
 
 
 @admin.register(Skirmish)
 class SkirmishAdmin(admin.ModelAdmin):
-    inlines = (SkirmishWarriorRoundActionInline,)
+    pass
 
 
 @admin.register(FightAction)
@@ -50,3 +55,19 @@ class WarriorAdmin(admin.ModelAdmin):
         "armor",
     )
     list_filter = ("faction", "condition")
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields["weapon"].queryset = Item.objects.filter(
+            type=Item.TypeChoices.TYPE_WEAPON, owner=getattr(obj, "faction", None)
+        ).filter(
+            ~Q(warrior_weapons__in=Subquery(Warrior.objects.exclude(id=obj.id).values_list("id", flat=True)))
+            | Q(warrior_weapons__isnull=True)
+        )
+        form.base_fields["armor"].queryset = Item.objects.filter(
+            type=Item.TypeChoices.TYPE_ARMOR, owner=getattr(obj, "faction", None)
+        ).filter(
+            ~Q(warrior_armor__in=Subquery(Warrior.objects.exclude(id=obj.id).values_list("id", flat=True)))
+            | Q(warrior_armor__isnull=True)
+        )
+        return form

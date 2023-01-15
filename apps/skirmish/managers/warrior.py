@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import manager
 
 
-class WarriorQuestSet(models.QuerySet):
+class WarriorQuerySet(models.QuerySet):
     pass
 
 
@@ -19,5 +19,12 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def take_item_away(self, item):
+        """
+        Ensure that the given "item" is not being actively used by any warrior
+        """
+        self.filter(weapon=item).update(weapon=None)
+        self.filter(armor=item).update(armor=None)
 
-WarriorManager = WarriorManager.from_queryset(WarriorQuestSet)
+
+WarriorManager = WarriorManager.from_queryset(WarriorQuerySet)

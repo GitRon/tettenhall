@@ -1,11 +1,15 @@
 from django.db import models
 
+from apps.core.domain.random import DiceNotation
 from apps.skirmish.managers.warrior import WarriorManager
 from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
 
 
 class Warrior(models.Model):
+    NO_WEAPON_ATTACK = "1d3"
+    NO_ARMOR_DEFENSE = "1d3"
+
     class ConditionChoices(models.IntegerChoices):
         CONDITION_HEALTHY = 1, "Healthy"
         CONDITION_UNCONSCIOUS = 2, "Unconscious"
@@ -62,6 +66,26 @@ class Warrior(models.Model):
     @property
     def is_healthy(self):
         return self.condition == self.ConditionChoices.CONDITION_HEALTHY
+
+    def get_weapon_or_fallback(self):
+        return (
+            self.weapon
+            if self.weapon
+            else Item(type=Item.TypeChoices.TYPE_WEAPON, value=self.NO_WEAPON_ATTACK, owner=self.faction)
+        )
+
+    def get_armor_or_fallback(self):
+        return (
+            self.weapon
+            if self.weapon
+            else Item(type=Item.TypeChoices.TYPE_WEAPON, value=self.NO_ARMOR_DEFENSE, owner=self.faction)
+        )
+
+    def roll_attack(self):
+        return DiceNotation(dice_string=self.get_weapon_or_fallback().value).result
+
+    def roll_defense(self):
+        return DiceNotation(dice_string=self.get_armor_or_fallback().value).result
 
 
 class FightAction(models.Model):

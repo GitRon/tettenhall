@@ -1,4 +1,3 @@
-from apps.core.domain.random import DiceNotation
 from apps.core.event_loop.messages import Command, Event
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarriorWithSimpleAttack
 from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage, WarriorDefendedDamage, WarriorTookDamage
@@ -15,7 +14,7 @@ class SimpleAttackService:
         self.context = context
 
     def _get_attack_value(self):
-        attack = DiceNotation(dice_string=self.context.attacker.weapon.value).result
+        attack = self.context.attacker.roll_attack()
         self.message_list.append(
             WarriorAttackedWithDamage.generator(
                 {"skirmish": self.context.skirmish, "warrior": self.context.attacker, "damage": attack}
@@ -25,7 +24,7 @@ class SimpleAttackService:
         return attack
 
     def _get_defense_value(self):
-        defense = DiceNotation(dice_string=self.context.defender.armor.value).result
+        defense = self.context.attacker.roll_defense()
         self.message_list.append(
             WarriorDefendedDamage.generator(
                 {"skirmish": self.context.skirmish, "warrior": self.context.defender, "damage": defense}

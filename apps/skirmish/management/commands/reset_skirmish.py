@@ -24,4 +24,7 @@ class Command(BaseCommand):
             current_health=F("max_health"), condition=Warrior.ConditionChoices.CONDITION_HEALTHY
         )
 
+        skirmish.player_faction.stored_items.remove(*skirmish.player_faction.stored_items.all())
+        skirmish.non_player_faction.stored_items.remove(*skirmish.non_player_faction.stored_items.all())
+
         BattleHistory.objects.filter(skirmish=skirmish).delete()
