@@ -60,3 +60,11 @@ def handle_log_item_dropped(context: item.ItemDroppedAsLoot.Context):
         skirmish=context.skirmish,
         message=f"{context.warrior} dropped the item '{context.item}'",
     )
+
+
+@message_registry.register_event(event=warrior.WarriorWasCaptured)
+def handle_warrior_is_captured(context: warrior.WarriorWasCaptured.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} was captured and arrested.",
+    )

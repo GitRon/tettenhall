@@ -1,5 +1,6 @@
 from apps.core.domain import message_registry
 from apps.skirmish.messages.commands.skirmish import DetermineAttacker
+from apps.skirmish.messages.commands.warrior import WarriorIsCaptured
 from apps.skirmish.messages.events import skirmish, warrior
 from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
@@ -45,3 +46,30 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
 
     if message:
         return message
+
+
+@message_registry.register_event(event=skirmish.SkirmishFinished)
+def handle_capture_unsconcious_warriors(context: skirmish.SkirmishFinished.Context):
+    message_list = []
+
+    if context.skirmish.victorious_faction == context.skirmish.player_faction:
+        unsconcious_warrior_list = context.skirmish.non_player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+        )
+    else:
+        unsconcious_warrior_list = context.skirmish.player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+        )
+
+    for captured_warrior in unsconcious_warrior_list:
+        message_list.append(
+            WarriorIsCaptured.generator(
+                context_data={
+                    "skirmish": context.skirmish,
+                    "warrior": captured_warrior,
+                    "capturing_faction": context.skirmish.victorious_faction,
+                }
+            )
+        )
+
+    return message_list

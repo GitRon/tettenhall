@@ -76,9 +76,9 @@ class Warrior(models.Model):
 
     def get_armor_or_fallback(self):
         return (
-            self.weapon
-            if self.weapon
-            else Item(type=Item.TypeChoices.TYPE_WEAPON, value=self.NO_ARMOR_DEFENSE, owner=self.faction)
+            self.armor
+            if self.armor
+            else Item(type=Item.TypeChoices.TYPE_ARMOR, value=self.NO_ARMOR_DEFENSE, owner=self.faction)
         )
 
     def roll_attack(self):

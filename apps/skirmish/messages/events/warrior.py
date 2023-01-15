@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from apps.core.event_loop.messages import Event
+from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -44,3 +45,11 @@ class WarriorWasKilled(Event):
     class Context:
         skirmish: Skirmish
         warrior: Warrior
+
+
+class WarriorWasCaptured(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        warrior: Warrior
+        capturing_faction: Faction

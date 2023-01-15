@@ -11,5 +11,9 @@ class FactionManager(manager.Manager):
         faction.stored_items.add(item)
         return faction.save()
 
+    def add_captive(self, faction, warrior):
+        faction.captured_warriors.add(warrior)
+        return faction.save()
+
 
 FactionManager = FactionManager.from_queryset(FactionQuerySet)

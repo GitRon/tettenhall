@@ -29,7 +29,10 @@ class ItemAdmin(admin.ModelAdmin):
         "warrior_weapons",
         "warrior_armor",
     )
-    list_filter = ("type",)
+    list_filter = (
+        "type",
+        "owner",
+    )
 
 
 @admin.register(Skirmish)
