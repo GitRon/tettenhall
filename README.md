@@ -2,6 +2,10 @@
 
 ## Einfache Tasks
 
+### Layout
+
+* Neue Icon-Library: https://game-icons.net/ (kann einen Download)
+
 ### Skirmish
 
 * Kann ich bewusstlose Krieger gefangen nehmen am Ende des Kampfes -> Möglichkeit zum Seitenwechsel?
