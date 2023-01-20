@@ -8,14 +8,17 @@ class WarriorQuerySet(models.QuerySet):
 
 class WarriorManager(manager.Manager):
     def reduce_current_health(self, obj, damage: int):
+        obj.refresh_from_db()
         obj.current_health -= damage
-        obj.save()
+        obj.save(update_fields=("current_health",))
+
+        # self.filter(id=obj.id).update(current_health=F('current_health') - damage)
 
         return obj
 
     def set_condition(self, obj, condition: int):
         obj.condition = condition
-        obj.save()
+        obj.save(update_fields=("condition",))
 
         return obj
 
@@ -30,8 +33,9 @@ class WarriorManager(manager.Manager):
         """
         Drop morale to a minimum of zero
         """
+        obj.refresh_from_db()
         obj.current_morale = 0 if obj.current_morale - lost_morale < 0 else obj.current_morale - lost_morale
-        obj.save()
+        obj.save(update_fields=("current_morale",))
 
         return obj
 
@@ -39,11 +43,12 @@ class WarriorManager(manager.Manager):
         """
         Increase morale to a defined maximum
         """
+        obj.refresh_from_db()
         if obj.current_morale + increased_morale > obj.max_morale:
             obj.current_morale = obj.max_morale
         else:
             obj.current_morale = obj.current_morale + increased_morale
-        obj.save()
+        obj.save(update_fields=("current_morale",))
 
         return obj
 
@@ -51,8 +56,9 @@ class WarriorManager(manager.Manager):
         """
         Increase experience
         """
+        obj.refresh_from_db()
         obj.experience += experience
-        obj.save()
+        obj.save(update_fields=("experience",))
 
         return obj
 

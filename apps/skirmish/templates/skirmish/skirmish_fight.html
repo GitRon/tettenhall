@@ -21,7 +21,7 @@
                 <div class="uk-divider-icon"></div>
 
                 <div id="battle-report-container"
-                     hx-get="{% url 'skirmish:battle-history-update-htmx' %}"
+                     hx-get="{% url 'skirmish:battle-history-update-htmx' object.id %}"
                      hx-trigger="load, battleReportUpdate from:body"
                      hx-target="this"
                      hx-swap="innerHTML">

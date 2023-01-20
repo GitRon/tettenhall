@@ -4,6 +4,7 @@ from apps.skirmish import views
 
 urlpatterns = [
     path("", views.SkirmishListView.as_view(), name="skirmish-list-view"),
+    path("start/", views.SkirmishStartView.as_view(), name="skirmish-start-view"),
     path("<int:pk>/", views.SkirmishFightView.as_view(), name="skirmish-fight-view"),
     path(
         "<int:pk>/finish-round/",
@@ -11,7 +12,7 @@ urlpatterns = [
         name="skirmish-finish-round-view",
     ),
     path(
-        "battle/history/update/",
+        "<int:skirmish_id>/battle/history/update/",
         views.BattleHistoryUpdateHtmxView.as_view(),
         name="battle-history-update-htmx",
     ),

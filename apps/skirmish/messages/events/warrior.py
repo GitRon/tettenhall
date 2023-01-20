@@ -37,7 +37,10 @@ class WarriorDefendedAllDamage(Event):
     @dataclass
     class Context:
         skirmish: Skirmish
+        attacker: Warrior
+        attacker_damage: int
         defender: Warrior
+        defender_damage: int
 
 
 class WarriorWasIncapacitated(Event):

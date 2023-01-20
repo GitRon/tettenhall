@@ -24,6 +24,7 @@ urlpatterns = [
     path("", RedirectView.as_view(pattern_name="account:dashboard-view", permanent=False)),
     path("account/", include(("apps.account.urls", "apps.account"), namespace="account")),
     path("faction/", include(("apps.faction.urls", "apps.faction"), namespace="faction")),
+    path("finance/", include(("apps.finance.urls", "apps.finance"), namespace="finance")),
     path(
         "skirmish/",
         include(("apps.skirmish.urls", "apps.skirmish"), namespace="skirmish"),

@@ -29,7 +29,7 @@ class SimpleAttackService:
         return attack
 
     def _get_defense_value(self):
-        defense = self.context.attacker.roll_defense()
+        defense = self.context.defender.roll_defense()
         self.message_list.append(
             WarriorDefendedDamage.generator(
                 {"skirmish": self.context.skirmish, "warrior": self.context.defender, "damage": defense}
@@ -59,7 +59,10 @@ class SimpleAttackService:
                 WarriorDefendedAllDamage.generator(
                     {
                         "skirmish": self.context.skirmish,
+                        "attacker": self.context.attacker,
                         "defender": self.context.defender,
+                        "attacker_damage": attack,
+                        "defender_damage": defense,
                     }
                 )
             )

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Transactions</h1>
+
+    <table class="uk-table">
+        <thead>
+        <tr>
+            <th>Reason</th>
+            <th>Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for transaction in object_list %}
+            <tr>
+                <td>{{ transaction.reason }}</td>
+                <td>{{ transaction.amount }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

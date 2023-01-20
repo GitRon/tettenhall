@@ -1,7 +1,9 @@
 import json
+import random
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
@@ -12,6 +14,9 @@ from apps.skirmish.messages.commands.skirmish import StartDuel
 from apps.skirmish.messages.events.skirmish import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
+from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.services.generators.skirmish import SkirmishGenerator
+from apps.skirmish.services.generators.warrior import WarriorGenerator
 
 
 class SkirmishListView(generic.ListView):
@@ -40,6 +45,20 @@ class SkirmishFightView(generic.DetailView):
         return context
 
 
+class SkirmishStartView(generic.View):
+    def post(self, request, *args, **kwargs):
+        warrior_generator = WarriorGenerator(faction=Faction.objects.get(id=1))
+        skirmish_generator = SkirmishGenerator(
+            warriors_faction_1=Warrior.objects.filter(faction=2, condition=Warrior.ConditionChoices.CONDITION_HEALTHY),
+            warriors_faction_2=[warrior_generator.process() for x in range(random.randrange(3, 5))],
+        )
+        skirmish = skirmish_generator.process()
+
+        response = HttpResponse(status=200)
+        response["HX-Redirect"] = reverse("skirmish:skirmish-fight-view", kwargs={"pk": skirmish.id})
+        return response
+
+
 class SkirmishFinishRoundView(generic.DetailView):
     model = Skirmish
     http_method_names = ("post",)
@@ -64,7 +83,6 @@ class SkirmishFinishRoundView(generic.DetailView):
         )
 
         # Finish round
-        # todo add command if one list is dead, that skirmish will be closed
         handle_message(
             RoundFinished.generator(
                 context_data={
@@ -99,6 +117,9 @@ class SkirmishFightButtonUpdateHtmxView(generic.DetailView):
 class BattleHistoryUpdateHtmxView(generic.ListView):
     model = BattleHistory
     template_name = "skirmish/battle_history/htmx/_report_box.html"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
 
 
 class FactionWarriorListUpdateHtmxView(generic.TemplateView):

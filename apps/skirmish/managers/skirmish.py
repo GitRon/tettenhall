@@ -8,6 +8,7 @@ class SkirmishQuerySet(models.QuerySet):
 
 class SkirmishManager(manager.Manager):
     def increment_round(self, skirmish):
+        skirmish.refresh_from_db()
         skirmish.current_round += 1
         return skirmish.save()
 

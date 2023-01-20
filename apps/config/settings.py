@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.account",
     "apps.core",
     "apps.faction",
+    "apps.finance",
     "apps.skirmish",
     "crispy_forms",
 ]

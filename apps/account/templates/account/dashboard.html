@@ -3,4 +3,8 @@
 
 {% block content %}
     <h1>Dashboard</h1>
+
+    <button class="uk-button uk-button-primary" hx-post="{% url 'skirmish:skirmish-start-view' %}">
+        Look for trouble
+    </button>
 {% endblock %}

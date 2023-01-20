@@ -24,7 +24,7 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
     message_list = []
 
     # Reduce health
-    Warrior.objects.reduce_current_health(
+    context.defender = Warrior.objects.reduce_current_health(
         obj=context.defender,
         damage=context.damage,
     )
@@ -42,7 +42,7 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
 
     # Update condition
     # todo move to "reduce_current_health"
-    if context.defender.current_health < 0:
+    if context.defender.current_health <= 0:
         if context.defender.current_health < context.defender.max_health * -0.15:
             condition = Warrior.ConditionChoices.CONDITION_DEAD
             message_list.append(

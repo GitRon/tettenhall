@@ -17,7 +17,8 @@ def handle_log_warrior_takes_damage(context: warrior.WarriorTookDamage.Context):
 def handle_log_warrior_defends_all_damage(context: warrior.WarriorDefendedAllDamage.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
-        message=f"{context.defender} defended all damage.",
+        message=f"{context.defender} defended {context.attacker_damage} damage from {context.attacker} "
+        f"with {context.defender_damage} defense.",
     )
 
 
