@@ -2,7 +2,7 @@ from apps.core.domain import message_registry
 from apps.skirmish.messages.commands.skirmish import DetermineAttacker
 from apps.skirmish.messages.commands.warrior import CaptureWarrior, IncreaseMorale, ReduceMorale
 from apps.skirmish.messages.events import skirmish, warrior
-from apps.skirmish.messages.events.warrior import WarriorLostMorale, WarriorWasIncapacitated, WarriorWasKilled
+from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -61,20 +61,26 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
     return message_list
 
 
+@message_registry.register_event(event=warrior.WarriorHasFled)
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
-def handle_morale_drop_on_faction_on_incapacitated_warrior(context: warrior.WarriorWasIncapacitated.Context):
+@message_registry.register_event(event=warrior.WarriorWasKilled)
+def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(context: warrior.WarriorWasIncapacitated.Context):
     message_list = []
 
     if context.warrior.faction == context.skirmish.player_faction:
-        affected_warrior_list = context.skirmish.player_warriors.all()
+        affected_warrior_list = context.skirmish.player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+        )
     else:
-        affected_warrior_list = context.skirmish.non_player_warriors.all()
+        affected_warrior_list = context.skirmish.non_player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+        )
 
     # Every other warrior from the faction participating in this battle will lose 10% morale
     for affected_warrior in affected_warrior_list:
         if affected_warrior != context.warrior:
             message_list.append(
-                WarriorLostMorale.generator(
+                ReduceMorale.generator(
                     context_data={
                         "skirmish": context.skirmish,
                         "warrior": affected_warrior,
@@ -95,31 +101,6 @@ def handle_morale_increase_on_warriors_defends_all_damage(context: warrior.Warri
             "increased_morale": context.defender.max_morale * 0.1,
         }
     )
-
-
-@message_registry.register_event(event=warrior.WarriorWasKilled)
-def handle_morale_drop_on_faction_on_killed_warrior(context: warrior.WarriorWasKilled.Context):
-    message_list = []
-
-    if context.warrior.faction == context.skirmish.player_faction:
-        affected_warrior_list = context.skirmish.player_warriors.all()
-    else:
-        affected_warrior_list = context.skirmish.non_player_warriors.all()
-
-    # Every other warrior from the faction participating in this battle will lose 10% morale
-    for affected_warrior in affected_warrior_list:
-        if affected_warrior != context.warrior:
-            message_list.append(
-                WarriorLostMorale.generator(
-                    context_data={
-                        "skirmish": context.skirmish,
-                        "warrior": affected_warrior,
-                        "lost_morale": context.warrior.max_morale * 0.1,
-                    }
-                )
-            )
-
-    return message_list
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)

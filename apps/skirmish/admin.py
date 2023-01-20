@@ -64,13 +64,21 @@ class WarriorAdmin(admin.ModelAdmin):
         form.base_fields["weapon"].queryset = Item.objects.filter(
             type=Item.TypeChoices.TYPE_WEAPON, owner=getattr(obj, "faction", None)
         ).filter(
-            ~Q(warrior_weapons__in=Subquery(Warrior.objects.exclude(id=obj.id).values_list("id", flat=True)))
+            ~Q(
+                warrior_weapons__in=Subquery(
+                    Warrior.objects.exclude(id=getattr(obj, "id", -1)).values_list("id", flat=True)
+                )
+            )
             | Q(warrior_weapons__isnull=True)
         )
         form.base_fields["armor"].queryset = Item.objects.filter(
             type=Item.TypeChoices.TYPE_ARMOR, owner=getattr(obj, "faction", None)
         ).filter(
-            ~Q(warrior_armor__in=Subquery(Warrior.objects.exclude(id=obj.id).values_list("id", flat=True)))
+            ~Q(
+                warrior_armor__in=Subquery(
+                    Warrior.objects.exclude(id=getattr(obj, "id", -1)).values_list("id", flat=True)
+                )
+            )
             | Q(warrior_armor__isnull=True)
         )
         return form
