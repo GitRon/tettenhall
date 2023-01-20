@@ -1,6 +1,7 @@
 from apps.core.domain import message_registry
 from apps.faction.models.faction import Faction
 from apps.skirmish.messages.commands.item import WarriorDropsLoot
+from apps.skirmish.messages.commands.transaction import WarriorDropsSilver
 from apps.skirmish.messages.events import item, skirmish
 from apps.skirmish.models.item import Item
 from apps.skirmish.models.warrior import Warrior
@@ -33,6 +34,15 @@ def handle_distribute_loot(context: skirmish.SkirmishFinished.Context):
                     "skirmish": context.skirmish,
                     "warrior": warrior,
                     "new_owner": context.skirmish.victorious_faction,
+                }
+            )
+        )
+        message_list.append(
+            WarriorDropsSilver.generator(
+                context_data={
+                    "skirmish": context.skirmish,
+                    "warrior": warrior,
+                    "gaining_faction": context.skirmish.victorious_faction,
                 }
             )
         )

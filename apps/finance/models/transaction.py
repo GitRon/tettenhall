@@ -5,7 +5,7 @@ from apps.faction.models.faction import Faction
 
 class Transaction(models.Model):
     reason = models.CharField("Reason", max_length=100)
-    amount = models.DecimalField("Amount", max_digits=8, decimal_places=0)
+    amount = models.IntegerField("Amount")
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
     class Meta:

@@ -1,5 +1,5 @@
 from apps.core.domain import message_registry
-from apps.skirmish.messages.events import item, skirmish, warrior
+from apps.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.warrior import FightAction
 
@@ -108,4 +108,12 @@ def handle_warrior_gained_experience(context: warrior.WarriorGainedExperience.Co
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} gained {context.gained_experience} experience.",
+    )
+
+
+@message_registry.register_event(event=transaction.WarriorDroppedSilver)
+def handle_warrior_dropped_silver(context: transaction.WarriorDroppedSilver.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} dropped {context.amount} silver.",
     )
