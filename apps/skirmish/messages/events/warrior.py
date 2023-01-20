@@ -45,6 +45,7 @@ class WarriorWasIncapacitated(Event):
     class Context:
         skirmish: Skirmish
         warrior: Warrior
+        by_warrior: Warrior
 
 
 class WarriorHasFled(Event):
@@ -59,6 +60,7 @@ class WarriorWasKilled(Event):
     class Context:
         skirmish: Skirmish
         warrior: Warrior
+        by_warrior: Warrior
 
 
 class WarriorWasCaptured(Event):
@@ -83,3 +85,11 @@ class WarriorGainedMorale(Event):
         skirmish: Skirmish
         warrior: Warrior
         gained_morale: int
+
+
+class WarriorGainedExperience(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        warrior: Warrior
+        gained_experience: int

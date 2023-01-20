@@ -50,13 +50,13 @@
         <div class="uk-margin-bottom">
             <h2>Stored items</h2>
             {% for item in object.stored_items.all %}
-                <div class="uk-card uk-card-default uk-card-body">{{ item }}</div>
+                <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">{{ item }}</div>
             {% endfor %}
         </div>
         <div class="uk-margin-bottom">
             <h2>Captured warriors</h2>
             {% for warrior in object.captured_warriors.all %}
-                <div class="uk-card uk-card-default uk-card-body">{{ warrior }}</div>
+                <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">{{ warrior }}</div>
             {% endfor %}
         </div>
     </div>

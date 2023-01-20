@@ -100,3 +100,11 @@ def handle_warrior_has_fled(context: warrior.WarriorHasFled.Context):
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of morale and fled the field.",
     )
+
+
+@message_registry.register_event(event=warrior.WarriorGainedExperience)
+def handle_warrior_gained_experience(context: warrior.WarriorGainedExperience.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} gained {context.gained_experience} experience.",
+    )

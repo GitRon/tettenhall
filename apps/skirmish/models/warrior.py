@@ -25,6 +25,8 @@ class Warrior(models.Model):
     current_morale = models.SmallIntegerField("Current morale")
     max_morale = models.PositiveSmallIntegerField("Maximum morale")
 
+    experience = models.PositiveIntegerField("Experience", default=0)
+
     condition = models.PositiveSmallIntegerField(
         "Condition",
         choices=ConditionChoices.choices,

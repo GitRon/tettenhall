@@ -37,6 +37,7 @@ def handle_assign_fighter_pairs(context: skirmish.StartDuel.Context) -> list:
         attack_action_2 = warrior_list_2[warrior_2]
         used_warriors_list_2.append(warrior_2)
 
+        # todo hier stimmt was nicht, der player-warrior hat auch angegriffen
         if not double_warriors:
             message_list.append(
                 FighterPairsMatched.generator(

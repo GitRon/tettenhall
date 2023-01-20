@@ -28,3 +28,11 @@ class IncreaseMorale(Command):
         skirmish: Skirmish
         warrior: Warrior
         increased_morale: int
+
+
+class IncreaseExperience(Command):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        warrior: Warrior
+        increased_experience: int

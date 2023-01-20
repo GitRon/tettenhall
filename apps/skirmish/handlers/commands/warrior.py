@@ -2,6 +2,7 @@ from apps.core.domain import message_registry
 from apps.faction.models.faction import Faction
 from apps.skirmish.messages.commands import warrior
 from apps.skirmish.messages.events.warrior import (
+    WarriorGainedExperience,
     WarriorGainedMorale,
     WarriorHasFled,
     WarriorLostMorale,
@@ -65,5 +66,18 @@ def handle_warrior_increasing_morale(context: warrior.IncreaseMorale.Context):
             "skirmish": context.skirmish,
             "warrior": context.warrior,
             "gained_morale": context.increased_morale,
+        }
+    )
+
+
+@message_registry.register_command(command=warrior.IncreaseExperience)
+def handle_warrior_increasing_experience(context: warrior.IncreaseExperience.Context):
+    context.warrior = Warrior.objects.increase_experience(obj=context.warrior, experience=context.increased_experience)
+
+    return WarriorGainedExperience.generator(
+        context_data={
+            "skirmish": context.skirmish,
+            "warrior": context.warrior,
+            "gained_experience": context.increased_experience,
         }
     )

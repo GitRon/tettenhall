@@ -1,6 +1,6 @@
 from apps.core.domain import message_registry
 from apps.skirmish.messages.commands.skirmish import DetermineAttacker
-from apps.skirmish.messages.commands.warrior import CaptureWarrior, IncreaseMorale, ReduceMorale
+from apps.skirmish.messages.commands.warrior import CaptureWarrior, IncreaseExperience, IncreaseMorale, ReduceMorale
 from apps.skirmish.messages.events import skirmish, warrior
 from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
@@ -46,13 +46,23 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
         if context.defender.current_health < context.defender.max_health * -0.15:
             condition = Warrior.ConditionChoices.CONDITION_DEAD
             message_list.append(
-                WarriorWasKilled.generator(context_data={"skirmish": context.skirmish, "warrior": context.defender})
+                WarriorWasKilled.generator(
+                    context_data={
+                        "skirmish": context.skirmish,
+                        "warrior": context.defender,
+                        "by_warrior": context.attacker,
+                    }
+                )
             )
         else:
             condition = Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
             message_list.append(
                 WarriorWasIncapacitated.generator(
-                    context_data={"skirmish": context.skirmish, "warrior": context.defender}
+                    context_data={
+                        "skirmish": context.skirmish,
+                        "warrior": context.defender,
+                        "by_warrior": context.attacker,
+                    }
                 )
             )
 
@@ -64,7 +74,9 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
 @message_registry.register_event(event=warrior.WarriorHasFled)
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
 @message_registry.register_event(event=warrior.WarriorWasKilled)
-def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(context: warrior.WarriorWasIncapacitated.Context):
+def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
+    context: [warrior.WarriorHasFled.Context, warrior.WarriorWasIncapacitated.Context, warrior.WarriorWasKilled.Context]
+):
     message_list = []
 
     if context.warrior.faction == context.skirmish.player_faction:
@@ -90,6 +102,22 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(context: warrior.Wa
             )
 
     return message_list
+
+
+@message_registry.register_event(event=warrior.WarriorWasIncapacitated)
+@message_registry.register_event(event=warrior.WarriorWasKilled)
+def handle_experience_gain_on_warrior_incapacitation(
+    context: [warrior.WarriorWasIncapacitated.Context, warrior.WarriorWasKilled.Context]
+):
+    gained_experience = 25
+
+    return IncreaseExperience.generator(
+        context_data={
+            "skirmish": context.skirmish,
+            "warrior": context.by_warrior,
+            "increased_experience": gained_experience,
+        }
+    )
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
@@ -123,6 +151,35 @@ def handle_capture_unsconcious_warriors(context: skirmish.SkirmishFinished.Conte
                     "skirmish": context.skirmish,
                     "warrior": captured_warrior,
                     "capturing_faction": context.skirmish.victorious_faction,
+                }
+            )
+        )
+
+    return message_list
+
+
+@message_registry.register_event(event=skirmish.SkirmishFinished)
+def handle_experience_gain_after_battle_for_victor(context: skirmish.SkirmishFinished.Context):
+    message_list = []
+
+    gained_experience = 10
+
+    if context.skirmish.victorious_faction == context.skirmish.player_faction:
+        affected_warrior_qs = context.skirmish.player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+        )
+    else:
+        affected_warrior_qs = context.skirmish.non_player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+        )
+
+    for affected_warrior in affected_warrior_qs:
+        message_list.append(
+            IncreaseExperience.generator(
+                context_data={
+                    "skirmish": context.skirmish,
+                    "warrior": affected_warrior,
+                    "increased_experience": gained_experience,
                 }
             )
         )

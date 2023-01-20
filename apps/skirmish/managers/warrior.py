@@ -47,5 +47,14 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def increase_experience(self, obj, experience: int):
+        """
+        Increase experience
+        """
+        obj.experience += experience
+        obj.save()
+
+        return obj
+
 
 WarriorManager = WarriorManager.from_queryset(WarriorQuerySet)
