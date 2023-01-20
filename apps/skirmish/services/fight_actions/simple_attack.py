@@ -1,6 +1,11 @@
 from apps.core.event_loop.messages import Command, Event
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarriorWithSimpleAttack
-from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage, WarriorDefendedDamage, WarriorTookDamage
+from apps.skirmish.messages.events.warrior import (
+    WarriorAttackedWithDamage,
+    WarriorDefendedAllDamage,
+    WarriorDefendedDamage,
+    WarriorTookDamage,
+)
 
 
 class SimpleAttackService:
@@ -36,18 +41,28 @@ class SimpleAttackService:
     def _deal_damage(self, attack: int, defense: int):
         damage = max(attack - defense, 0)
 
-        self.message_list.append(
-            WarriorTookDamage.generator(
-                {
-                    "skirmish": self.context.skirmish,
-                    "attacker": self.context.attacker,
-                    "attacker_damage": attack,
-                    "defender": self.context.defender,
-                    "defender_damage": defense,
-                    "damage": damage,
-                }
+        if damage > 0:
+            self.message_list.append(
+                WarriorTookDamage.generator(
+                    {
+                        "skirmish": self.context.skirmish,
+                        "attacker": self.context.attacker,
+                        "attacker_damage": attack,
+                        "defender": self.context.defender,
+                        "defender_damage": defense,
+                        "damage": damage,
+                    }
+                )
             )
-        )
+        else:
+            self.message_list.append(
+                WarriorDefendedAllDamage.generator(
+                    {
+                        "skirmish": self.context.skirmish,
+                        "defender": self.context.defender,
+                    }
+                )
+            )
 
         return damage
 

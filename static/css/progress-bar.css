@@ -1,0 +1,23 @@
+.uk-progress.progress-green::-webkit-progress-value {
+  background-color: LightGreen;
+}
+
+.uk-progress.progress-green::-moz-progress-bar {
+  background-color: LightGreen;
+}
+
+.uk-progress.progress-green::-ms-fill {
+  background-color: LightGreen;
+}
+
+.uk-progress.progress-coral::-webkit-progress-value {
+  background-color: Coral;
+}
+
+.uk-progress.progress-coral::-moz-progress-bar {
+  background-color: Coral;
+}
+
+.uk-progress.progress-coral::-ms-fill {
+  background-color: Coral;
+}

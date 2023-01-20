@@ -26,5 +26,26 @@ class WarriorManager(manager.Manager):
         self.filter(weapon=item).update(weapon=None)
         self.filter(armor=item).update(armor=None)
 
+    def reduce_morale(self, obj, lost_morale: int):
+        """
+        Drop morale to a minimum of zero
+        """
+        obj.current_morale = 0 if obj.current_morale - lost_morale < 0 else obj.current_morale - lost_morale
+        obj.save()
+
+        return obj
+
+    def increase_morale(self, obj, increased_morale: int):
+        """
+        Increase morale to a defined maximum
+        """
+        if obj.current_morale + increased_morale > obj.max_morale:
+            obj.current_morale = obj.max_morale
+        else:
+            obj.current_morale = obj.current_morale + increased_morale
+        obj.save()
+
+        return obj
+
 
 WarriorManager = WarriorManager.from_queryset(WarriorQuerySet)

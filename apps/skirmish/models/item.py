@@ -1,8 +1,8 @@
 from django.db import models
 
 from apps.core.validators import dice_notation
+from apps.faction.models.faction import Faction
 from apps.skirmish.managers.item import ItemManager
-from apps.skirmish.models.faction import Faction
 
 
 class Item(models.Model):

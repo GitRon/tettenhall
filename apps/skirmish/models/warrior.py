@@ -1,8 +1,8 @@
 from django.db import models
 
 from apps.core.domain.random import DiceNotation
+from apps.faction.models.faction import Faction
 from apps.skirmish.managers.warrior import WarriorManager
-from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
 
 
@@ -13,13 +13,18 @@ class Warrior(models.Model):
     class ConditionChoices(models.IntegerChoices):
         CONDITION_HEALTHY = 1, "Healthy"
         CONDITION_UNCONSCIOUS = 2, "Unconscious"
-        CONDITION_DEAD = 3, "dead"
+        CONDITION_FLEEING = 3, "Fleeing"
+        CONDITION_DEAD = 4, "Dead"
 
     name = models.CharField("Name", max_length=100)
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
     current_health = models.SmallIntegerField("Current health")
     max_health = models.PositiveSmallIntegerField("Maximum health")
+
+    current_morale = models.SmallIntegerField("Current morale")
+    max_morale = models.PositiveSmallIntegerField("Maximum morale")
+
     condition = models.PositiveSmallIntegerField(
         "Condition",
         choices=ConditionChoices.choices,
@@ -62,6 +67,10 @@ class Warrior(models.Model):
     @property
     def is_unconscious(self):
         return self.condition == self.ConditionChoices.CONDITION_UNCONSCIOUS
+
+    @property
+    def is_fleeing(self):
+        return self.condition == self.ConditionChoices.CONDITION_FLEEING
 
     @property
     def is_healthy(self):

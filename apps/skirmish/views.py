@@ -6,11 +6,11 @@ from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
 from apps.core.utils import convert_string_based_two_level_dict_to_dict
+from apps.faction.models.faction import Faction
 from apps.skirmish.forms import SkirmishWarriorRoundActionForm
 from apps.skirmish.messages.commands.skirmish import StartDuel
 from apps.skirmish.messages.events.skirmish import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
-from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish
 
 

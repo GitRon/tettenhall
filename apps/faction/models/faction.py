@@ -7,12 +7,12 @@ class Faction(models.Model):
     name = models.CharField("Name", max_length=100)
     locale = models.CharField("Locale", max_length=10)
     stored_items = models.ManyToManyField(
-        "Item",
+        "skirmish.Item",
         verbose_name="Stored items",
         blank=True,
     )
     captured_warriors = models.ManyToManyField(
-        "Warrior",
+        "skirmish.Warrior",
         verbose_name="Captured warriors",
         blank=True,
     )

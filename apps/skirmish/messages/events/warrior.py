@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from apps.core.event_loop.messages import Event
-from apps.skirmish.models.faction import Faction
+from apps.faction.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -33,7 +33,21 @@ class WarriorTookDamage(Event):
         damage: int
 
 
+class WarriorDefendedAllDamage(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        defender: Warrior
+
+
 class WarriorWasIncapacitated(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        warrior: Warrior
+
+
+class WarriorHasFled(Event):
     @dataclass
     class Context:
         skirmish: Skirmish
@@ -53,3 +67,19 @@ class WarriorWasCaptured(Event):
         skirmish: Skirmish
         warrior: Warrior
         capturing_faction: Faction
+
+
+class WarriorLostMorale(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        warrior: Warrior
+        lost_morale: int
+
+
+class WarriorGainedMorale(Event):
+    @dataclass
+    class Context:
+        skirmish: Skirmish
+        warrior: Warrior
+        gained_morale: int

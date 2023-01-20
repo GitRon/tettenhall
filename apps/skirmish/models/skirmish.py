@@ -1,7 +1,7 @@
 from django.db import models
 
+from apps.faction.models.faction import Faction
 from apps.skirmish.managers.skirmish import SkirmishManager
-from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 
 

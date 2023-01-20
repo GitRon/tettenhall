@@ -13,6 +13,14 @@ def handle_log_warrior_takes_damage(context: warrior.WarriorTookDamage.Context):
     )
 
 
+@message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
+def handle_log_warrior_defends_all_damage(context: warrior.WarriorDefendedAllDamage.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.defender} defended all damage.",
+    )
+
+
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
 def handle_log_attacker_defender_decided(context: skirmish.AttackerDefenderDecided.Context):
     BattleHistory.objects.create_record(
@@ -67,4 +75,28 @@ def handle_warrior_is_captured(context: warrior.WarriorWasCaptured.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} was captured and arrested.",
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorGainedMorale)
+def handle_warrior_gains_morale(context: warrior.WarriorGainedMorale.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} gained {int(context.gained_morale)} morale.",
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorLostMorale)
+def handle_warrior_lost_morale(context: warrior.WarriorLostMorale.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} lost {int(context.lost_morale)} morale.",
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorHasFled)
+def handle_warrior_has_fled(context: warrior.WarriorHasFled.Context):
+    BattleHistory.objects.create_record(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} is out of morale and fled the field.",
     )

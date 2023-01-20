@@ -8,12 +8,20 @@
     <title>Tettenhall - The Game</title>
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
+    <link rel="stylesheet" href="{% static 'css/colors.css' %}">
+    <link rel="stylesheet" href="{% static 'css/progress-bar.css' %}">
 </head>
 <body>
 <nav class="uk-navbar-container uk-margin" uk-navbar>
     <div class="uk-navbar-left">
         <a class="uk-navbar-item uk-logo uk-margin-left" href="{% url 'account:dashboard-view' %}">Tettenhall</a>
         <ul class="uk-navbar-nav">
+            <li>
+                <a href="{% url 'faction:faction-detail-view' 2 %}">
+                    <span class="uk-icon uk-margin-small-right"></span>
+                    My faction
+                </a>
+            </li>
             <li>
                 <a href="{% url 'skirmish:skirmish-list-view' %}">
                     <span class="uk-icon uk-margin-small-right"></span>
@@ -30,7 +38,6 @@
 
 <div id="hidden-box" class="uk-hidden"></div>
 
-{# todo no cdn #}
 <script src="{% static 'htmx.org/dist/htmx.js' %}"></script>
 <script src="{% static 'uikit/dist/js/uikit.js' %}"></script>
 <script type="text/javascript">

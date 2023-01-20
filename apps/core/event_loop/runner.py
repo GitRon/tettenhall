@@ -30,8 +30,11 @@ def handle_command(command: Command, queue: list[Message]):
     for handler in handler_list:
         try:
             # todo warum ist der rückgabewert hier wichtig?
+            # todo logger bauen, den man über das django logging in den settings konfigurieren kann
+            #  context, request-datum, user etc.
             print(f"Handling command '{command.__class__.__name__}' ({command.uuid}) with handler '{handler.__name__}'")
             if handler:
+                # todo das sollte um das ganze handle_message
                 with transaction.atomic():
                     new_messages = handler(command.Context) or []
                     new_messages = new_messages if isinstance(new_messages, list) else [new_messages]

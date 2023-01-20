@@ -1,7 +1,7 @@
 from apps.core.domain import message_registry
+from apps.faction.models.faction import Faction
 from apps.skirmish.messages.commands.item import WarriorDropsLoot
 from apps.skirmish.messages.events import item, skirmish
-from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
 from apps.skirmish.models.warrior import Warrior
 

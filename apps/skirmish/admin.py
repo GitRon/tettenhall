@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.db.models import Q, Subquery
 
+from apps.faction.models.faction import Faction
 from apps.skirmish.models.battle_history import BattleHistory
-from apps.skirmish.models.faction import Faction
 from apps.skirmish.models.item import Item
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import FightAction, Warrior

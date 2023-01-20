@@ -18,10 +18,14 @@ class Command(BaseCommand):
         skirmish.save()
 
         skirmish.player_warriors.update(
-            current_health=F("max_health"), condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+            current_health=F("max_health"),
+            current_morale=F("max_morale"),
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY,
         )
         skirmish.non_player_warriors.update(
-            current_health=F("max_health"), condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+            current_health=F("max_health"),
+            current_morale=F("max_morale"),
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY,
         )
 
         skirmish.player_faction.stored_items.remove(*skirmish.player_faction.stored_items.all())

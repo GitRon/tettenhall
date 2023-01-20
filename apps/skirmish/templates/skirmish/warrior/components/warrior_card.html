@@ -9,27 +9,36 @@
             <li>{{ warrior.faction }}</li>
             <li>
                 <div class="uk-margin-top">
-                    <progress class="uk-progress" value="{{ warrior.current_health }}"
+                    <progress class="uk-progress progress-green" value="{{ warrior.current_health }}"
                               max="{{ warrior.max_health }}"></progress>
                 </div>
             </li>
         </ul>
     </div>
     <div class="uk-card-body">
-        <div>
-            {% if warrior.is_healthy %}
-                <p class="uk-text-success">
-                    <i class="fa-solid fa-feather-pointed"></i> {{ warrior.get_condition_display }}
-                </p>
-            {% elif warrior.is_unconscious %}
-                <p class="uk-text-warning">
-                    <i class="fa-solid fa-moon"></i> {{ warrior.get_condition_display }}
-                </p>
-            {% else %}
-                <p class="uk-text-danger">
-                    <i class="fa-solid fa-skull"></i> {{ warrior.get_condition_display }}
-                </p>
-            {% endif %}
+        <div uk-grid>
+            <div>
+                {% if warrior.is_healthy %}
+                    <p class="uk-text-success">
+                        <i class="fa-solid fa-feather-pointed"></i> {{ warrior.get_condition_display }}
+                    </p>
+                {% elif warrior.is_unconscious %}
+                    <p class="uk-text-warning">
+                        <i class="fa-solid fa-moon"></i> {{ warrior.get_condition_display }}
+                    </p>
+                {% elif warrior.is_fleeing %}
+                    <p class="uk-text-warning">
+                        <i class="fa-solid fa-person-running"></i> {{ warrior.get_condition_display }}
+                    </p>
+                {% else %}
+                    <p class="uk-text-danger">
+                        <i class="fa-solid fa-skull"></i> {{ warrior.get_condition_display }}
+                    </p>
+                {% endif %}
+            </div>
+            <div class="color-corale">
+                <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
+            </div>
         </div>
         <div>
             <i class="fa-solid fa-wrench"></i> {{ warrior.get_weapon_or_fallback }}
@@ -47,7 +56,8 @@
             {% elif not is_player and warrior.is_healthy %}
                 <label class="uk-form-label">
                     Simple attack
-                    <input name="warrior-fight-action[{{ warrior.faction.id }}][{{ warrior.id }}]" class="uk-hidden" value="1">
+                    <input name="warrior-fight-action[{{ warrior.faction.id }}][{{ warrior.id }}]" class="uk-hidden"
+                           value="1">
                 </label>
             {% endif %}
         </div>
