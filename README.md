@@ -3,6 +3,7 @@
 ## Next steps
 * Logging der Event-Queue
 * Morph swap htmx Fabi damit Formulare sich nicht ändern -> gewählte Action springt immer zurück
+* Sklaven / Gefangene als Sklaven verkaufen
 
 ## Einfache Tasks
 

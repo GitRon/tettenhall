@@ -22,7 +22,7 @@ class WarriorGenerator:
         self.faction = faction
 
     def process(self):
-        faker = Faker([self.faction.locale])
+        faker = Faker([self.faction.culture.locale])
 
         max_health = 0
         while max_health == 0:
@@ -45,6 +45,7 @@ class WarriorGenerator:
 
         warrior = Warrior.objects.create(
             name=faker.first_name_male(),
+            culture=self.faction.culture,
             faction=self.faction,
             current_health=max_health,
             max_health=max_health,

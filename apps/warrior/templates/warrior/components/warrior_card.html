@@ -38,6 +38,10 @@
             <div>
                 <table class="uk-table">
                     <tr>
+                        <td>Culture</td>
+                        <td>{{ warrior.culture.name }}</td>
+                    </tr>
+                    <tr>
                         <td>Weapon</td>
                         <td>{{ warrior.weapon|default_if_none:'-' }}</td>
                     </tr>

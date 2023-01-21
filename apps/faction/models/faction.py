@@ -1,11 +1,13 @@
 from django.db import models
 
+from apps.faction.models.culture import Culture
 from apps.skirmish.managers.faction import FactionManager
 
 
 class Faction(models.Model):
     name = models.CharField("Name", max_length=100)
-    locale = models.CharField("Locale", max_length=10)
+    culture = models.ForeignKey(Culture, verbose_name="Culture", on_delete=models.CASCADE)
+
     captured_warriors = models.ManyToManyField(
         "skirmish.Warrior",
         verbose_name="Captured warriors",

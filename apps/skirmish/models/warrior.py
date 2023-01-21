@@ -1,6 +1,7 @@
 from django.db import models
 
 from apps.core.domain.random import DiceNotation
+from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
@@ -18,6 +19,7 @@ class Warrior(models.Model):
         CONDITION_DEAD = 4, "Dead"
 
     name = models.CharField("Name", max_length=100)
+    culture = models.ForeignKey(Culture, verbose_name="Culture", on_delete=models.CASCADE)
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
     strength = models.PositiveSmallIntegerField("Strength")

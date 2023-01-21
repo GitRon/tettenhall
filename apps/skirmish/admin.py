@@ -28,6 +28,7 @@ class FightActionAdmin(admin.ModelAdmin):
 class WarriorAdmin(admin.ModelAdmin):
     list_display = (
         "name",
+        "culture",
         "faction",
         "dexterity",
         "condition",
