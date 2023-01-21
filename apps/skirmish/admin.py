@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.db.models import Q, Subquery
 
+from apps.item.models.item import Item
+from apps.item.models.item_type import ItemType
 from apps.skirmish.models.battle_history import BattleHistory
-from apps.skirmish.models.item import Item
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import FightAction, Warrior
 
@@ -11,22 +12,6 @@ from apps.skirmish.models.warrior import FightAction, Warrior
 class BattleHistoryAdmin(admin.ModelAdmin):
     list_display = ("message", "skirmish", "created_at")
     list_filter = ("skirmish",)
-
-
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display = (
-        "type",
-        "price",
-        "value",
-        "owner",
-        "warrior_weapon",
-        "warrior_armor",
-    )
-    list_filter = (
-        "type",
-        "owner",
-    )
 
 
 @admin.register(Skirmish)
@@ -56,7 +41,7 @@ class WarriorAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields["weapon"].queryset = Item.objects.filter(
-            type=Item.TypeChoices.TYPE_WEAPON, owner=getattr(obj, "faction", None)
+            type=ItemType.FunctionChoices.FUNCTION_WEAPON, owner=getattr(obj, "faction", None)
         ).filter(
             ~Q(
                 warrior_weapon__in=Subquery(
@@ -66,7 +51,7 @@ class WarriorAdmin(admin.ModelAdmin):
             | Q(warrior_weapon__isnull=True)
         )
         form.base_fields["armor"].queryset = Item.objects.filter(
-            type=Item.TypeChoices.TYPE_ARMOR, owner=getattr(obj, "faction", None)
+            type=ItemType.FunctionChoices.FUNCTION_ARMOR, owner=getattr(obj, "faction", None)
         ).filter(
             ~Q(
                 warrior_armor__in=Subquery(

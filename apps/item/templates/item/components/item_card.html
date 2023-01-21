@@ -3,13 +3,13 @@
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-auto">
                 {% if item.is_weapon %}
-                    <i class="fa-solid fa-screwdriver-wrench fa-2xl"></i>
+                    {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
                 {% else %}
-                    <i class="fa-solid fa-shield fa-2xl"></i>
+                    {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
                 {% endif %}
             </div>
             <div class="uk-width-expand">
-                <h3 class="uk-card-title uk-margin-remove-bottom">{{ item.get_type_display }}</h3>
+                <h3 class="uk-card-title uk-margin-remove-bottom">{{ item.type.get_function_display }}</h3>
                 <p class="uk-text-meta uk-margin-remove-top">
                     <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
                     <i class="fa-solid fa-meteor"></i> <i>{{ item.value }}</i>

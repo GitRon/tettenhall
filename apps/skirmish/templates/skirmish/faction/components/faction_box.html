@@ -1,5 +1,5 @@
 <div class="uk-tile-default uk-padding-large"> {# todo hx-ext="morph" #}
-    {% include 'compontents/box_header.html' with title=faction.name %}
+    {% include 'core/compontents/box_header.html' with title=faction.name %}
     <div class="uk-child-width-1-2@s uk-grid-small uk-grid-match"
          hx-get="{% url 'skirmish:faction-warrior-list-update-htmx' skirmish.id faction.id %}"
          hx-trigger="updateFactionWarriorList from:body"

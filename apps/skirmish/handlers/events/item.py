@@ -1,8 +1,8 @@
 from apps.core.domain import message_registry
+from apps.item.models.item import Item
 from apps.skirmish.messages.commands.item import WarriorDropsLoot
 from apps.skirmish.messages.commands.transaction import WarriorDropsSilver
 from apps.skirmish.messages.events import item, skirmish
-from apps.skirmish.models.item import Item
 from apps.skirmish.models.warrior import Warrior
 
 

@@ -2,8 +2,9 @@ from django.db import models
 
 from apps.core.domain.random import DiceNotation
 from apps.faction.models.faction import Faction
+from apps.item.models.item import Item
+from apps.item.models.item_type import ItemType
 from apps.skirmish.managers.warrior import WarriorManager
-from apps.skirmish.models.item import Item
 
 
 class Warrior(models.Model):
@@ -83,14 +84,22 @@ class Warrior(models.Model):
         return (
             self.weapon
             if self.weapon
-            else Item(type=Item.TypeChoices.TYPE_WEAPON, value=self.NO_WEAPON_ATTACK, owner=self.faction)
+            else Item(
+                type=ItemType.objects.get(function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+                value=self.NO_WEAPON_ATTACK,
+                owner=self.faction,
+            )
         )
 
     def get_armor_or_fallback(self):
         return (
             self.armor
             if self.armor
-            else Item(type=Item.TypeChoices.TYPE_ARMOR, value=self.NO_ARMOR_DEFENSE, owner=self.faction)
+            else Item(
+                type=ItemType.objects.get(function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+                value=self.NO_ARMOR_DEFENSE,
+                owner=self.faction,
+            )
         )
 
     def roll_attack(self):

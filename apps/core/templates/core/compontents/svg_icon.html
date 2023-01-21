@@ -1,0 +1,4 @@
+{% load static %}
+{% with url='svg/icons/'|add:icon_name|add:'.svg' %}
+    <img class="svg-icon {{ size }}" src="{% static url  %}" alt="{{ icon_name }}" uk-svg>
+{% endwith %}

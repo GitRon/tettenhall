@@ -22,3 +22,7 @@
 ### Konzeptionelles
 
 * Entity component system (Rustroguelike) -> Tipp von Andi
+
+### Quellen
+
+* Icons: game-icons.net

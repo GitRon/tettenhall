@@ -23,6 +23,6 @@ class Faction(models.Model):
         return self.name
 
     def get_all_items(self):
-        from apps.skirmish.models.item import Item
+        from apps.item.models.item import Item
 
         return Item.objects.filter(owner=self)

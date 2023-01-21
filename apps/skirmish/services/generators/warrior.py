@@ -3,7 +3,7 @@ import random
 from faker import Faker
 
 from apps.faction.models.faction import Faction
-from apps.skirmish.models.item import Item
+from apps.item.models.item_type import ItemType
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.services.generators.item import ItemGenerator
 
@@ -40,8 +40,8 @@ class WarriorGenerator:
         while dexterity == 0:
             dexterity = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), 0)
 
-        weapon_generator = ItemGenerator(faction=self.faction, item_type=Item.TypeChoices.TYPE_WEAPON)
-        armor_generator = ItemGenerator(faction=self.faction, item_type=Item.TypeChoices.TYPE_ARMOR)
+        weapon_generator = ItemGenerator(faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_WEAPON)
+        armor_generator = ItemGenerator(faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_ARMOR)
 
         warrior = Warrior.objects.create(
             name=faker.first_name_male(),
