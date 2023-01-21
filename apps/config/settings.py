@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.faction",
     "apps.finance",
     "apps.item",
+    "apps.marketplace",
     "apps.skirmish",
     "apps.warrior",
 ]

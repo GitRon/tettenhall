@@ -1,3 +1,4 @@
+{% load obsucrify %}
 {% load static %}
 <div class="uk-card uk-card-default uk-margin-bottom">
     <div class="uk-card-header">
@@ -10,8 +11,8 @@
                 <p class="uk-text-meta uk-margin-remove-top">
                     <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
                     <i class="fa-solid fa-heart"></i>
-                    <i>{{ warrior.current_health }}/{{ warrior.max_health }}</i>&nbsp;
-                    <i class="fa-solid fa-bolt"></i> <i>{{ warrior.max_morale }}</i>&nbsp;
+                    <i>{{ warrior.max_health|obscurify:20 }}</i>&nbsp;
+                    <i class="fa-solid fa-bolt"></i> <i>{{ warrior.max_morale|obscurify:10 }}</i>&nbsp;
                     <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
                 </p>
             </div>
@@ -22,27 +23,22 @@
             <div>
                 <table class="uk-table">
                     <tr>
-                        <td>Faction</td>
-                        <td>
-                            {{ warrior.faction.name }}
-                        </td>
+                        <td>Culture</td>
+                        <td>{{ warrior.culture.name }}</td>
                     </tr>
                     <tr>
                         <td>Strength</td>
-                        <td>{{ warrior.strength }}</td>
+                        <td>{{ warrior.strength|obscurify:10 }}</td>
                     </tr>
                     <tr>
                         <td>Dexterity</td>
-                        <td>{{ warrior.dexterity }}</td>
+                        <td>{{ warrior.dexterity|obscurify:10 }}</td>
                     </tr>
                 </table>
             </div>
             <div>
                 <table class="uk-table">
-                    <tr>
-                        <td>Culture</td>
-                        <td>{{ warrior.culture.name }}</td>
-                    </tr>
+
                     <tr>
                         <td>Weapon</td>
                         <td>{{ warrior.weapon|default_if_none:'-' }}</td>
@@ -56,6 +52,6 @@
         </div>
     </div>
     <div class="uk-card-footer">
-        <a href="#" class="uk-button uk-button-text">Detail</a>
+        <a href="#" class="uk-button uk-button-text">Recruit for {{ warrior.recruitment_price }} silver</a>
     </div>
 </div>

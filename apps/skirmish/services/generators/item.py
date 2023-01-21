@@ -14,7 +14,7 @@ class ItemGenerator:
     faction: Faction
     item_type: int
 
-    def __init__(self, faction: Faction, item_type: int) -> None:
+    def __init__(self, faction: Faction | None, item_type: int) -> None:
         super().__init__()
 
         self.faction = faction
@@ -35,7 +35,7 @@ class ItemGenerator:
         Dann Preis = x * (y + 1) / 2 * y z.B.
         Das * y am Ende, um Streuung reinzubringen
         """
-        price = pow(value_rolls * value_sides, 2)
+        price = pow(value_rolls * value_sides, 1.5)
 
         return Item.objects.create(
             type=ItemType.objects.get(function=self.item_type),

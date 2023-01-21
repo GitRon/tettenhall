@@ -20,7 +20,7 @@ class Warrior(models.Model):
 
     name = models.CharField("Name", max_length=100)
     culture = models.ForeignKey(Culture, verbose_name="Culture", on_delete=models.CASCADE)
-    faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
+    faction = models.ForeignKey(Faction, verbose_name="Faction", null=True, blank=True, on_delete=models.CASCADE)
 
     strength = models.PositiveSmallIntegerField("Strength")
     dexterity = models.PositiveSmallIntegerField("Dexterity")
@@ -32,6 +32,8 @@ class Warrior(models.Model):
     max_morale = models.PositiveSmallIntegerField("Maximum morale")
 
     experience = models.PositiveIntegerField("Experience", default=0)
+
+    recruitment_price = models.PositiveSmallIntegerField("Recruitment price", default=0)
 
     condition = models.PositiveSmallIntegerField(
         "Condition",

@@ -10,7 +10,7 @@ class Item(models.Model):
     type = models.ForeignKey(ItemType, verbose_name="Type", on_delete=models.CASCADE)
     price = models.PositiveSmallIntegerField("Price")
     value = models.CharField("Value", validators=[dice_notation], max_length=10)
-    owner = models.ForeignKey(Faction, verbose_name="Owning faction", on_delete=models.CASCADE)
+    owner = models.ForeignKey(Faction, verbose_name="Owning faction", null=True, blank=True, on_delete=models.CASCADE)
 
     objects = ItemManager()
 
