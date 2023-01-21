@@ -13,8 +13,8 @@ class WarriorGenerator:
     HEALTH_SIGMA = 10
     MORALE_MU = 10
     MORALE_SIGMA = 5
-    DEXTERITY_MU = 10
-    DEXTERITY_SIGMA = 10
+    STATS_MU = 10
+    STATS_SIGMA = 10
 
     faction: Faction
 
@@ -32,9 +32,13 @@ class WarriorGenerator:
         while max_morale == 0:
             max_morale = max(random.gauss(self.MORALE_MU, self.MORALE_SIGMA), 0)
 
+        strength = 0
+        while strength == 0:
+            strength = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), 0)
+
         dexterity = 0
         while dexterity == 0:
-            dexterity = max(random.gauss(self.DEXTERITY_MU, self.DEXTERITY_SIGMA), 0)
+            dexterity = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), 0)
 
         weapon_generator = ItemGenerator(faction=self.faction, item_type=Item.TypeChoices.TYPE_WEAPON)
         armor_generator = ItemGenerator(faction=self.faction, item_type=Item.TypeChoices.TYPE_ARMOR)
@@ -46,6 +50,7 @@ class WarriorGenerator:
             max_health=max_health,
             current_morale=max_morale,
             max_morale=max_morale,
+            strength=strength,
             dexterity=dexterity,
             weapon=weapon_generator.process(),
             armor=armor_generator.process(),

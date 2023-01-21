@@ -28,9 +28,6 @@ class Command(BaseCommand):
             condition=Warrior.ConditionChoices.CONDITION_HEALTHY,
         )
 
-        skirmish.player_faction.stored_items.remove(*skirmish.player_faction.stored_items.all())
-        skirmish.non_player_faction.stored_items.remove(*skirmish.non_player_faction.stored_items.all())
-
         skirmish.player_faction.captured_warriors.remove(*skirmish.player_faction.captured_warriors.all())
         skirmish.non_player_faction.captured_warriors.remove(*skirmish.non_player_faction.captured_warriors.all())
 

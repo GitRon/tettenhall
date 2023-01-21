@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,23 +18,28 @@
         <ul class="uk-navbar-nav">
             <li>
                 <a href="{% url 'faction:faction-detail-view' 2 %}">
-                    <span class="uk-icon uk-margin-small-right"></span>
                     My faction
                 </a>
             </li>
             <li>
                 <a href="{% url 'skirmish:skirmish-list-view' %}">
-                    <span class="uk-icon uk-margin-small-right"></span>
                     Skirmishes
                 </a>
             </li>
             <li>
                 <a href="{% url 'finance:transaction-list-view' 2 %}">
-                    <span class="uk-icon uk-margin-small-right"></span>
                     Finance
                 </a>
             </li>
         </ul>
+    </div>
+    <div class="uk-navbar-right uk-margin-right">
+        <ul class="uk-navbar-nav">
+            <li class="uk-active">
+                <a href="#">
+                    Finish week
+                </a>
+            </li>
     </div>
 </nav>
 

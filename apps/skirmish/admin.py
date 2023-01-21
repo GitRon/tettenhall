@@ -20,7 +20,7 @@ class ItemAdmin(admin.ModelAdmin):
         "price",
         "value",
         "owner",
-        "warrior_weapons",
+        "warrior_weapon",
         "warrior_armor",
     )
     list_filter = (
@@ -59,11 +59,11 @@ class WarriorAdmin(admin.ModelAdmin):
             type=Item.TypeChoices.TYPE_WEAPON, owner=getattr(obj, "faction", None)
         ).filter(
             ~Q(
-                warrior_weapons__in=Subquery(
+                warrior_weapon__in=Subquery(
                     Warrior.objects.exclude(id=getattr(obj, "id", -1)).values_list("id", flat=True)
                 )
             )
-            | Q(warrior_weapons__isnull=True)
+            | Q(warrior_weapon__isnull=True)
         )
         form.base_fields["armor"].queryset = Item.objects.filter(
             type=Item.TypeChoices.TYPE_ARMOR, owner=getattr(obj, "faction", None)

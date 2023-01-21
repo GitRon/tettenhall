@@ -12,6 +12,8 @@ class SimpleAttackService:
     message_list: list
     context: WarriorAttacksWarriorWithSimpleAttack.Context
 
+    BASE_COMPARE_STRENGTH = 10
+
     def __init__(self, context: [Command.Context, Event.Context]) -> None:
         super().__init__()
 
@@ -19,7 +21,10 @@ class SimpleAttackService:
         self.context = context
 
     def _get_attack_value(self):
-        attack = self.context.attacker.roll_attack()
+        # Attack will be at 100% for strength 10, otherwise less or greater
+        attack = int(
+            round(self.context.attacker.roll_attack() * self.context.attacker.strength / self.BASE_COMPARE_STRENGTH)
+        )
         self.message_list.append(
             WarriorAttackedWithDamage.generator(
                 {"skirmish": self.context.skirmish, "warrior": self.context.attacker, "damage": attack}

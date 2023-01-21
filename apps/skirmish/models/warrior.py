@@ -19,6 +19,9 @@ class Warrior(models.Model):
     name = models.CharField("Name", max_length=100)
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
+    strength = models.PositiveSmallIntegerField("Strength")
+    dexterity = models.PositiveSmallIntegerField("Dexterity")
+
     current_health = models.SmallIntegerField("Current health")
     max_health = models.PositiveSmallIntegerField("Maximum health")
 
@@ -33,12 +36,10 @@ class Warrior(models.Model):
         default=ConditionChoices.CONDITION_HEALTHY,
     )
 
-    dexterity = models.PositiveSmallIntegerField("Dexterity")
-
     weapon = models.OneToOneField(
         Item,
         verbose_name="Weapon",
-        related_name="warrior_weapons",
+        related_name="warrior_weapon",
         null=True,
         blank=True,
         on_delete=models.CASCADE,

@@ -1,5 +1,4 @@
 from apps.core.domain import message_registry
-from apps.faction.models.faction import Faction
 from apps.skirmish.messages.commands.item import WarriorDropsLoot
 from apps.skirmish.messages.commands.transaction import WarriorDropsSilver
 from apps.skirmish.messages.events import item, skirmish
@@ -55,8 +54,5 @@ def handle_looted_item_changes_ownership(context: item.ItemDroppedAsLoot.Context
     # Take item away from previous owner
     Warrior.objects.take_item_away(item=context.item)
 
-    # Set ownership in the item itself
+    # Set ownership in the item itself so it belongs to the winning faction
     Item.objects.update_ownership(item=context.item, new_owner=context.new_owner)
-
-    # Add item to winning faction item store
-    Faction.objects.aquire_loot(context.new_owner, item=context.item)

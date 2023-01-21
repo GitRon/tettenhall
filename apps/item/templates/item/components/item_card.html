@@ -1,0 +1,26 @@
+<div class="uk-card uk-card-default uk-margin-bottom">
+    <div class="uk-card-header">
+        <div class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-auto">
+                {% if item.is_weapon %}
+                    <i class="fa-solid fa-screwdriver-wrench fa-2xl"></i>
+                {% else %}
+                    <i class="fa-solid fa-shield fa-2xl"></i>
+                {% endif %}
+            </div>
+            <div class="uk-width-expand">
+                <h3 class="uk-card-title uk-margin-remove-bottom">{{ item.get_type_display }}</h3>
+                <p class="uk-text-meta uk-margin-remove-top">
+                    <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
+                    <i class="fa-solid fa-meteor"></i> <i>{{ item.value }}</i>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-body uk-text-left">
+        <p>Worn by: {{ item.worn_by|default_if_none:"-" }}</p>
+    </div>
+    <div class="uk-card-footer">
+        <a href="#" class="uk-button uk-button-text">Sell</a>
+    </div>
+</div>

@@ -6,11 +6,6 @@ from apps.skirmish.managers.faction import FactionManager
 class Faction(models.Model):
     name = models.CharField("Name", max_length=100)
     locale = models.CharField("Locale", max_length=10)
-    stored_items = models.ManyToManyField(
-        "skirmish.Item",
-        verbose_name="Stored items",
-        blank=True,
-    )
     captured_warriors = models.ManyToManyField(
         "skirmish.Warrior",
         verbose_name="Captured warriors",
@@ -26,3 +21,8 @@ class Faction(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_all_items(self):
+        from apps.skirmish.models.item import Item
+
+        return Item.objects.filter(owner=self)

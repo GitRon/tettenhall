@@ -9,6 +9,7 @@
             <th>Name</th>
             <th>Player faction</th>
             <th>Non-player faction</th>
+            <th>Victor</th>
             <th></th>
         </tr>
         </thead>
@@ -18,10 +19,17 @@
                 <td>{{ skirmish.name }}</td>
                 <td>{{ skirmish.player_faction }}</td>
                 <td>{{ skirmish.non_player_faction }}</td>
+                <td>{{ skirmish.victorious_faction|default_if_none:"-" }}</td>
                 <td>
-                    <a href="{% url 'skirmish:skirmish-fight-view' skirmish.id %}"
-                       class="uk-button uk-button-default uk-button-small uk-button-danger">
+                    {% if skirmish.victorious_faction %}
+                        <a href="{% url 'skirmish:skirmish-fight-view' skirmish.id %}"
+                           class="uk-button uk-button-default uk-button-small uk-button-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    {% else %}
+                        <a href="{% url 'skirmish:skirmish-fight-view' skirmish.id %}"
+                           class="uk-button uk-button-default uk-button-small uk-button-danger">
                         <i class="fa-solid fa-arrow-right"></i>
+                    {% endif %}
                     </a>
                 </td>
             </tr>

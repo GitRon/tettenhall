@@ -28,7 +28,7 @@ class ItemGenerator:
         while value_sides == 0:
             value_sides = int(round(max(random.gauss(self.VALUE_SIDES_MU, self.VALUE_SIDES_SIGMA), 0)))
 
-        price = value_rolls * value_sides * 2
+        price = pow(value_rolls * value_sides, 2)
 
         return Item.objects.create(
             type=self.item_type,

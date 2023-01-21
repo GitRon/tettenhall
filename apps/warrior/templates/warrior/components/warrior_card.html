@@ -1,0 +1,54 @@
+<div class="uk-card uk-card-default uk-margin-bottom">
+    <div class="uk-card-header">
+        <div class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-auto">
+                <i class="fa-solid fa-circle-user fa-2xl"></i>
+            </div>
+            <div class="uk-width-expand">
+                <h3 class="uk-card-title uk-margin-remove-bottom">{{ warrior.name }}</h3>
+                <p class="uk-text-meta uk-margin-remove-top">
+                    <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
+                    <i class="fa-solid fa-heart"></i>
+                    <i>{{ warrior.current_health }}/{{ warrior.max_health }}</i>&nbsp;
+                    <i class="fa-solid fa-bolt"></i> <i>{{ warrior.max_morale }}</i>&nbsp;
+                    <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-body uk-text-left">
+        <div class="uk-grid uk-child-width-expand@s" uk-grid>
+            <div>
+                <table class="uk-table">
+                    <tr>
+                        <td>Faction</td>
+                        <td>{{ warrior.faction.name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Strength</td>
+                        <td>{{ warrior.strength }}</td>
+                    </tr>
+                    <tr>
+                        <td>Dexterity</td>
+                        <td>{{ warrior.dexterity }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <table class="uk-table">
+                    <tr>
+                        <td>Weapon</td>
+                        <td>{{ warrior.weapon|default_if_none:'-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Armor</td>
+                        <td>{{ warrior.armor|default_if_none:'-' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-footer">
+        <a href="#" class="uk-button uk-button-text">Detail</a>
+    </div>
+</div>

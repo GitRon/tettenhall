@@ -24,3 +24,18 @@ class Item(models.Model):
 
     def __str__(self):
         return f"{self.get_type_display()} ({self.value}, {self.owner})"
+
+    @property
+    def is_weapon(self):
+        return self.type == self.TypeChoices.TYPE_WEAPON
+
+    @property
+    def is_armor(self):
+        return self.type == self.TypeChoices.TYPE_ARMOR
+
+    @property
+    def worn_by(self):
+        if self.type == self.TypeChoices.TYPE_WEAPON and self.warrior_weapon:
+            return self.warrior_weapon
+        elif self.type == self.TypeChoices.TYPE_ARMOR and self.warrior_armor:
+            return self.warrior_armor
