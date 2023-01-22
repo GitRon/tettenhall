@@ -6,7 +6,7 @@ from apps.item.models.item_type import ItemType
 
 @admin.register(ItemType)
 class ItemTypeAdmin(admin.ModelAdmin):
-    list_display = ("function", "svg_image_name")
+    list_display = ("name", "base_value", "function", "svg_image_name", "is_fallback")
 
 
 @admin.register(Item)

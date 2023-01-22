@@ -4,6 +4,7 @@
 * Logging der Event-Queue
 * Morph swap htmx Fabi damit Formulare sich nicht ändern -> gewählte Action springt immer zurück
 * Sklaven / Gefangene als Sklaven verkaufen
+* XP hat noch keinen Einfluss
 
 ## Einfache Tasks
 

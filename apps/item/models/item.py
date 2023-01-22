@@ -20,7 +20,7 @@ class Item(models.Model):
         default_related_name = "items"
 
     def __str__(self):
-        return f"{self.type.get_function_display()} {self.value}"
+        return f"{self.type.name} ({self.value})"
 
     @property
     def is_weapon(self):

@@ -42,7 +42,7 @@ class WarriorAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields["weapon"].queryset = Item.objects.filter(
-            type=ItemType.FunctionChoices.FUNCTION_WEAPON, owner=getattr(obj, "faction", None)
+            type__function=ItemType.FunctionChoices.FUNCTION_WEAPON, owner=getattr(obj, "faction", None)
         ).filter(
             ~Q(
                 warrior_weapon__in=Subquery(
@@ -52,7 +52,7 @@ class WarriorAdmin(admin.ModelAdmin):
             | Q(warrior_weapon__isnull=True)
         )
         form.base_fields["armor"].queryset = Item.objects.filter(
-            type=ItemType.FunctionChoices.FUNCTION_ARMOR, owner=getattr(obj, "faction", None)
+            type__function=ItemType.FunctionChoices.FUNCTION_ARMOR, owner=getattr(obj, "faction", None)
         ).filter(
             ~Q(
                 warrior_armor__in=Subquery(

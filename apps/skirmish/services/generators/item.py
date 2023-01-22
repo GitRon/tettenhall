@@ -37,8 +37,10 @@ class ItemGenerator:
         """
         price = pow(value_rolls * value_sides, 1.5)
 
+        # todo extend dice notation with modifier "2d4+2" -> this can be item quality then
+        #  -> items dont need a value anymore, they get it from the type
         return Item.objects.create(
-            type=ItemType.objects.get(function=self.item_type),
+            type=ItemType.objects.filter(function=self.item_type).exclude(is_fallback=True).order_by("?").first(),
             price=price,
             value=f"{value_rolls}d{value_sides}",
             owner=self.faction,

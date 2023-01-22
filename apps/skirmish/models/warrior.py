@@ -89,7 +89,7 @@ class Warrior(models.Model):
             self.weapon
             if self.weapon
             else Item(
-                type=ItemType.objects.get(function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+                type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
                 value=self.NO_WEAPON_ATTACK,
                 owner=self.faction,
             )
@@ -100,7 +100,7 @@ class Warrior(models.Model):
             self.armor
             if self.armor
             else Item(
-                type=ItemType.objects.get(function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+                type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
                 value=self.NO_ARMOR_DEFENSE,
                 owner=self.faction,
             )

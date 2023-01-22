@@ -42,10 +42,12 @@
             </div>
         </div>
         <div>
-            {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name %} {{ warrior.get_weapon_or_fallback }}
+            {% include 'core/compontents/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %}
+            {{ warrior.get_weapon_or_fallback }}
         </div>
         <div>
-            {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name %} {{ warrior.get_armor_or_fallback }}
+            {% include 'core/compontents/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %}
+            {{ warrior.get_armor_or_fallback }}
         </div>
     </div>
     <div class="uk-card-footer">
