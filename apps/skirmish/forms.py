@@ -2,7 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout
 from django import forms
 
-from apps.skirmish.models.warrior import FightAction
+from apps.skirmish.models.warrior import SkirmishAction
 
 
 class SkirmishWarriorRoundActionForm(forms.Form):
@@ -22,5 +22,5 @@ class SkirmishWarriorRoundActionForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.fields[field_name] = forms.ChoiceField(
-            label="", choices=FightAction.TypeChoices.choices, initial=FightAction.TypeChoices.SIMPLE_ATTACK
+            label="", choices=SkirmishAction.TypeChoices.choices, initial=SkirmishAction.TypeChoices.SIMPLE_ATTACK
         )

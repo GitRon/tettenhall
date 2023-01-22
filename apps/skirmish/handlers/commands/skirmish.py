@@ -5,8 +5,8 @@ from apps.skirmish.messages.commands import skirmish
 from apps.skirmish.messages.events.skirmish import AttackerDefenderDecided, FighterPairsMatched, SkirmishFinished
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
-from apps.skirmish.services.fight_actions.risky_attack import RiskyAttackService
-from apps.skirmish.services.fight_actions.simple_attack import SimpleAttackService
+from apps.skirmish.services.actions.risky_attack import RiskyAttackService
+from apps.skirmish.services.actions.simple_attack import SimpleAttackService
 
 
 @message_registry.register_command(command=skirmish.StartDuel)

@@ -1,15 +1,23 @@
 from django.db import models
 
-from apps.core.validators import dice_notation
 from apps.faction.models.faction import Faction
 from apps.item.managers.item import ItemManager
 from apps.item.models.item_type import ItemType
 
 
 class Item(models.Model):
+    class ConditionChoices(models.IntegerChoices):
+        CONDITION_RUSTY = 1, "Rusty"
+        CONDITION_CHEAP = 2, "Cheap"
+        CONDITION_TRADITIONAL = 3, "Traditional"
+        CONDITION_SUPERIOR = 4, "Superior"
+
+    condition = models.PositiveSmallIntegerField(
+        "Condition", choices=ConditionChoices.choices, default=ConditionChoices.CONDITION_TRADITIONAL
+    )
     type = models.ForeignKey(ItemType, verbose_name="Type", on_delete=models.CASCADE)
     price = models.PositiveSmallIntegerField("Price")
-    value = models.CharField("Value", validators=[dice_notation], max_length=10)
+    modifier = models.SmallIntegerField("Modifier", default=0, help_text='2d4+7 - this is the "7"')
     owner = models.ForeignKey(Faction, verbose_name="Owning faction", null=True, blank=True, on_delete=models.CASCADE)
 
     objects = ItemManager()
@@ -20,7 +28,13 @@ class Item(models.Model):
         default_related_name = "items"
 
     def __str__(self):
-        return f"{self.type.name} ({self.value})"
+        return f"{self.display_name} ({self.type.base_value}{self.get_modifier_as_string()})"
+
+    @property
+    def display_name(self):
+        if self.type.is_fallback:
+            return f"{self.type.name}"
+        return f"{self.get_condition_display()} {self.type.name}"
 
     @property
     def is_weapon(self):
@@ -36,3 +50,6 @@ class Item(models.Model):
             return self.warrior_weapon
         elif self.type.function == ItemType.FunctionChoices.FUNCTION_ARMOR and self.warrior_armor:
             return self.warrior_armor
+
+    def get_modifier_as_string(self):
+        return f"+{self.modifier}" if self.modifier >= 0 else f"{self.modifier}"

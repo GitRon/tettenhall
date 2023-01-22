@@ -3,7 +3,7 @@ import random
 from apps.core.event_loop.messages import Command, Event
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarriorWithRiskyAttack
 from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage
-from apps.skirmish.services.fight_actions.simple_attack import SimpleAttackService
+from apps.skirmish.services.actions.simple_attack import SimpleAttackService
 
 
 class RiskyAttackService(SimpleAttackService):

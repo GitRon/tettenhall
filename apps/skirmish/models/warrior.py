@@ -84,36 +84,36 @@ class Warrior(models.Model):
     def is_healthy(self):
         return self.condition == self.ConditionChoices.CONDITION_HEALTHY
 
-    def get_weapon_or_fallback(self):
+    def get_weapon_or_fallback(self) -> Item:
         return (
             self.weapon
             if self.weapon
             else Item(
                 type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
-                value=self.NO_WEAPON_ATTACK,
                 owner=self.faction,
             )
         )
 
-    def get_armor_or_fallback(self):
+    def get_armor_or_fallback(self) -> Item:
         return (
             self.armor
             if self.armor
             else Item(
                 type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
-                value=self.NO_ARMOR_DEFENSE,
                 owner=self.faction,
             )
         )
 
     def roll_attack(self):
-        return DiceNotation(dice_string=self.get_weapon_or_fallback().value).result
+        item = self.get_weapon_or_fallback()
+        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
 
     def roll_defense(self):
-        return DiceNotation(dice_string=self.get_armor_or_fallback().value).result
+        item = self.get_armor_or_fallback()
+        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
 
 
-class FightAction(models.Model):
+class SkirmishAction(models.Model):
     class TypeChoices(models.IntegerChoices):
         SIMPLE_ATTACK = 1, "Simple attack"
         RISKY_ATTACK = 2, "Risky attack"

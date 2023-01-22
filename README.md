@@ -1,10 +1,14 @@
 # Tettenhall
 
 ## Next steps
+
 * Logging der Event-Queue
 * Morph swap htmx Fabi damit Formulare sich nicht ändern -> gewählte Action springt immer zurück
 * Sklaven / Gefangene als Sklaven verkaufen
 * XP hat noch keinen Einfluss
+* Items kaufen und verkaufen (per Command im View)
+* Items ausrüsten (im Warrior) - per Formular ähnlich wie im Admin? Was, wenn ich ein Item von Warrior A zu B bringen
+  möchte? Aus- und wieder anziehen nervt vermutlich
 
 ## Einfache Tasks
 
@@ -14,12 +18,10 @@
 
 ### Skirmish
 
-* Kann ich bewusstlose Krieger gefangen nehmen am Ende des Kampfes -> Möglichkeit zum Seitenwechsel?
-* Moral -> eigene Warrior.condition wie "healthy"? Geflohen? Dann würde man da kein Loot bekommen, weil der weg ist
 * Passive/defensiv-stärkende Attack-Action?
-* XP sammeln und Effekte davon (mehr Schaden und Def? Eigenes Package innerhalb von Skirmish mit Events -> bekommt man
-  am Ende des Kampfes)
-
+* Fliehen
+* Gegner-KI für Kampfaktionen
+* Kampfaktion soll an Item hängen, Warrior bekommt eine Funktion, die entscheidet, was es im Select zu sehen gibt
 
 ### Konzeptionelles
 

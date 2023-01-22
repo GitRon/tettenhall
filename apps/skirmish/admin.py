@@ -5,7 +5,7 @@ from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
-from apps.skirmish.models.warrior import FightAction, Warrior
+from apps.skirmish.models.warrior import SkirmishAction, Warrior
 
 
 @admin.register(BattleHistory)
@@ -19,7 +19,7 @@ class SkirmishAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(FightAction)
+@admin.register(SkirmishAction)
 class FightActionAdmin(admin.ModelAdmin):
     pass
 

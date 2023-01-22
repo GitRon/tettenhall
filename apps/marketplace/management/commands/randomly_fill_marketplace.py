@@ -22,7 +22,9 @@ class Command(BaseCommand):
         no_warriors = random.randrange(2, 4)
         for _ in range(no_warriors):
             warrior_generator = WarriorGenerator(culture=Culture.objects.all().order_by("?").first(), faction=None)
-            marketplace.available_mercenaries.add(warrior_generator.process())
+            warrior = warrior_generator.process()
+            print(f"Warrior created: {warrior} ({warrior.culture})")
+            marketplace.available_mercenaries.add(warrior)
 
         no_items = random.randrange(4, 6)
         for _ in range(no_items):
@@ -31,4 +33,6 @@ class Command(BaseCommand):
             else:
                 item_generator = ItemGenerator(faction=None, item_type=ItemType.FunctionChoices.FUNCTION_ARMOR)
 
-            marketplace.available_items.add(item_generator.process())
+            item = item_generator.process()
+            print(f"Item created: {item}")
+            marketplace.available_items.add(item)

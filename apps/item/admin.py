@@ -13,8 +13,9 @@ class ItemTypeAdmin(admin.ModelAdmin):
 class ItemAdmin(admin.ModelAdmin):
     list_display = (
         "type",
+        "condition",
         "price",
-        "value",
+        "modifier",
         "owner",
         "warrior_weapon",
         "warrior_armor",

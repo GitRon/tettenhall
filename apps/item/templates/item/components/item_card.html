@@ -5,10 +5,13 @@
                 {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
             </div>
             <div class="uk-width-expand">
-                <h3 class="uk-card-title uk-margin-remove-bottom">{{ item.type.name }}</h3>
+                <h3 class="uk-card-title uk-margin-remove-bottom">
+                    {{ item.display_name }}
+                </h3>
                 <p class="uk-text-meta uk-margin-remove-top">
                     <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
-                    <i class="fa-solid fa-meteor"></i> <i>{{ item.value }}</i>
+                    {% include 'core/compontents/svg_icon.html' with icon_name='axe-sword' %}
+                    <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>
                 </p>
             </div>
         </div>
