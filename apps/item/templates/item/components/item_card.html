@@ -1,6 +1,7 @@
+{% load l10n %}
 <div class="uk-card uk-card-default uk-margin-bottom">
     <div class="uk-card-header">
-        <div class="uk-grid-small uk-flex-middle" uk-grid>
+        <div id="item-card-{{ item.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-auto">
                 {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
             </div>
@@ -20,6 +21,9 @@
         <p>Worn by: {{ item.worn_by|default_if_none:"-" }}</p>
     </div>
     <div class="uk-card-footer">
-        <a href="#" class="uk-button uk-button-text">Sell</a>
+        <a hx-post="{% url 'item:item-sell-view' item.id %}"
+           hx-target="#item-card-{{ item.id|unlocalize }}"
+           hx-swap="none"
+           class="uk-button uk-button-text">Sell</a>
     </div>
 </div>

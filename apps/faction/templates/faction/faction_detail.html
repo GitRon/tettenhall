@@ -22,16 +22,10 @@
             </div>
         </div>
         <div>
-            <h2>Warriors</h2>
-            {% for warrior in object.warriors.all %}
-                {% include 'warrior/components/warrior_card.html' with warrior=warrior %}
-            {% endfor %}
+            {% include "faction/warrior/components/warrior_list.html" with faction=object %}
         </div>
         <div class="uk-margin-bottom">
-            <h2>Items</h2>
-            {% for item in object.get_all_items %}
-                {% include 'item/components/item_card.html' with item=item %}
-            {% endfor %}
+            {% include "faction/item/components/item_list.html" with faction=object %}
         </div>
         <div class="uk-margin-bottom">
             <h2>Captured warriors</h2>

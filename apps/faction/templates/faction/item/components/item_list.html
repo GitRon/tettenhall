@@ -1,0 +1,7 @@
+<div hx-get="{% url 'faction:faction-item-list-htmx' faction.id %}"
+     hx-trigger="loadFactionItemList from:body">
+    <h2>Items</h2>
+    {% for item in faction.get_all_items %}
+        {% include 'item/components/item_card.html' with item=item %}
+    {% endfor %}
+</div>
