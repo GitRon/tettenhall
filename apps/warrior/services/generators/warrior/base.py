@@ -5,19 +5,21 @@ from faker import Faker
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.item.models.item_type import ItemType
+from apps.item.services.generators.item.base import BaseItemGenerator
 from apps.skirmish.models.warrior import Warrior
-from apps.skirmish.services.generators.item import ItemGenerator
 
 
-class WarriorGenerator:
-    XP_MU = 100
-    XP_SIGMA = 75
-    HEALTH_MU = 20
-    HEALTH_SIGMA = 10
-    MORALE_MU = 10
-    MORALE_SIGMA = 5
-    STATS_MU = 10
-    STATS_SIGMA = 10
+class BaseWarriorGenerator:
+    XP_MU: int
+    XP_SIGMA: int
+    HEALTH_MU: int
+    HEALTH_SIGMA: int
+    MORALE_MU: int
+    MORALE_SIGMA: int
+    STATS_MU: int
+    STATS_SIGMA: int
+
+    item_generator_class: type(BaseItemGenerator)
 
     culture: Culture
     faction: Faction
@@ -56,8 +58,12 @@ class WarriorGenerator:
             (((strength + dexterity) / self.STATS_MU) + (max_health / self.HEALTH_MU)) * base_recruitment_price
         )
 
-        weapon_generator = ItemGenerator(faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_WEAPON)
-        armor_generator = ItemGenerator(faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_ARMOR)
+        weapon_generator = self.item_generator_class(
+            faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_WEAPON
+        )
+        armor_generator = self.item_generator_class(
+            faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_ARMOR
+        )
 
         warrior = Warrior.objects.create(
             name=faker.first_name_male(),

@@ -15,8 +15,8 @@ from apps.skirmish.messages.events.skirmish import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
-from apps.skirmish.services.generators.skirmish import SkirmishGenerator
-from apps.skirmish.services.generators.warrior import WarriorGenerator
+from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
+from apps.warrior.services.generators.warrior.base import BaseWarriorGenerator
 
 
 class SkirmishListView(generic.ListView):
@@ -47,8 +47,8 @@ class SkirmishFightView(generic.DetailView):
 
 class SkirmishStartView(generic.View):
     def post(self, request, *args, **kwargs):
-        warrior_generator = WarriorGenerator(faction=Faction.objects.get(id=1))
-        skirmish_generator = SkirmishGenerator(
+        warrior_generator = BaseWarriorGenerator(faction=Faction.objects.get(id=1), culture=Faction.objects.get(id=1))
+        skirmish_generator = BaseSkirmishGenerator(
             warriors_faction_1=Warrior.objects.filter(faction=2, condition=Warrior.ConditionChoices.CONDITION_HEALTHY),
             warriors_faction_2=[warrior_generator.process() for x in range(random.randrange(3, 5))],
         )

@@ -6,18 +6,18 @@ from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 
 
-class ItemGenerator:
+class BaseItemGenerator:
     MODIFIER_ROLLS_MU = 2
     MODIFIER_ROLLS_SIGMA = 2
 
     faction: Faction
-    item_type: int
+    function: int
 
-    def __init__(self, faction: Faction | None, item_type: int) -> None:
+    def __init__(self, faction: Faction | None, item_function: int) -> None:
         super().__init__()
 
         self.faction = faction
-        self.item_type = item_type
+        self.function = item_function
 
     def _determine_condition(self, modifier: int) -> int:
         if modifier < self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
@@ -31,11 +31,14 @@ class ItemGenerator:
         else:
             raise RuntimeError("Invalid condition")
 
+    def _get_queryset_for_type(self):
+        return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")
+
     def process(self):
         # Modifier can be negative, DiceNotation class takes care of not dealing negative damage
         modifier = int(round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)))
 
-        item_type = ItemType.objects.filter(function=self.item_type).exclude(is_fallback=True).order_by("?").first()
+        item_type = self._get_queryset_for_type().first()
 
         dice_notation = DiceNotation(dice_string=item_type.base_value, modifier=modifier)
         price = dice_notation.expectancy_value * dice_notation.sides * max(modifier, 1)
