@@ -58,4 +58,3 @@ class Item(models.Model):
 
     def get_modifier_as_string(self):
         return f"+{self.modifier}" if self.modifier >= 0 else f"{self.modifier}"
-
