@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.core.domain.random import DiceNotation
 from apps.faction.models.faction import Faction
 from apps.item.managers.item import ItemManager
 from apps.item.models.item_type import ItemType
@@ -51,5 +52,10 @@ class Item(models.Model):
         elif self.type.function == ItemType.FunctionChoices.FUNCTION_ARMOR and self.warrior_armor:
             return self.warrior_armor
 
+    @property
+    def expectancy_value(self) -> float:
+        return DiceNotation(dice_string=self.type.base_value, modifier=self.modifier).expectancy_value
+
     def get_modifier_as_string(self):
         return f"+{self.modifier}" if self.modifier >= 0 else f"{self.modifier}"
+

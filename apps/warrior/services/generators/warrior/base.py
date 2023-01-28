@@ -59,10 +59,10 @@ class BaseWarriorGenerator:
         )
 
         weapon_generator = self.item_generator_class(
-            faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_WEAPON
+            faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_WEAPON
         )
         armor_generator = self.item_generator_class(
-            faction=self.faction, item_type=ItemType.FunctionChoices.FUNCTION_ARMOR
+            faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_ARMOR
         )
 
         warrior = Warrior.objects.create(

@@ -34,4 +34,4 @@ class DiceNotation:
 
     @property
     def expectancy_value(self) -> float:
-        return self.rolls * (self.sides + 1) / 2
+        return (self.rolls * (self.sides + 1) / 2) + self.modifier

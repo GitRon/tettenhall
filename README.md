@@ -3,6 +3,7 @@
 ## Next steps
 
 * Logging der Event-Queue
+* "Look for trouble" zu Liste von verschieden schweren Quests umbauen, die man annehmen kann (und Warriors zuweisen)
 * Morph swap htmx Fabi damit Formulare sich nicht ändern -> gewählte Action springt immer zurück
 * Sklaven / Gefangene als Sklaven verkaufen
 * XP hat noch keinen Einfluss
