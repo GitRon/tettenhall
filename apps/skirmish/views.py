@@ -46,6 +46,8 @@ class SkirmishFightView(generic.DetailView):
 
 
 class SkirmishStartView(generic.View):
+    http_method_names = ("post",)
+
     def post(self, request, *args, **kwargs):
         warrior_generator = BaseWarriorGenerator(faction=Faction.objects.get(id=1), culture=Faction.objects.get(id=1))
         skirmish_generator = BaseSkirmishGenerator(

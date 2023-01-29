@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "apps.quest",
     "apps.skirmish",
     "apps.warrior",
+    "apps.week",
 ]
 
 MIDDLEWARE = [

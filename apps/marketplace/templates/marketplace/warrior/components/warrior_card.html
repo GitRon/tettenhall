@@ -41,11 +41,11 @@
 
                     <tr>
                         <td>Weapon</td>
-                        <td>{{ warrior.weapon|default_if_none:'-' }}</td>
+                        <td>{{ warrior.weapon.display_name|default_if_none:'-' }}</td>
                     </tr>
                     <tr>
                         <td>Armor</td>
-                        <td>{{ warrior.armor|default_if_none:'-' }}</td>
+                        <td>{{ warrior.armor.display_name|default_if_none:'-' }}</td>
                     </tr>
                 </table>
             </div>

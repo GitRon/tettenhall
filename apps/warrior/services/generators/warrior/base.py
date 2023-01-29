@@ -57,6 +57,7 @@ class BaseWarriorGenerator:
         recruitment_price = int(
             (((strength + dexterity) / self.STATS_MU) + (max_health / self.HEALTH_MU)) * base_recruitment_price
         )
+        # todo item-wert noch zu recruitment preis dazuaddieren - oder die kommen immer ohne items?
 
         weapon_generator = self.item_generator_class(
             faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_WEAPON

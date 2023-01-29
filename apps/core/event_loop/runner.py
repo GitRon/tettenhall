@@ -4,9 +4,11 @@ from apps.core.domain import message_registry
 from apps.core.event_loop.messages import Command, Event, Message
 
 
-def handle_message(message: Message):
-    # results = []
-    queue = [message]
+def handle_message(message_list: Message | list[Message]):
+    if isinstance(message_list, list):
+        queue = message_list
+    else:
+        queue = [message_list]
 
     # Run auto-registry
     from apps.core.domain import message_registry
@@ -19,10 +21,8 @@ def handle_message(message: Message):
             handle_event(message, queue)
         elif isinstance(message, Command):
             handle_command(message, queue)
-            # results.append(cmd_result)
         else:
             raise Exception(f"{message} was not an Event or Command")
-    # return results
 
 
 def handle_command(command: Command, queue: list[Message]):

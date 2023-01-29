@@ -14,4 +14,4 @@ class BattleHistoryManager(manager.Manager):
         )
 
 
-WarriorManager = BattleHistoryManager.from_queryset(BattleHistoryQuerySet)
+BattleHistoryManager = BattleHistoryManager.from_queryset(BattleHistoryQuerySet)
