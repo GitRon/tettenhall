@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("faction", "0005_alter_faction_culture"),
         ("item", "0002_itemtype_alter_item_type"),

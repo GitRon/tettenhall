@@ -4,6 +4,8 @@
 
 * Handlers und Messages in ein Package pro App, damit die näher bei einander liegen
 * Logging der Event-Queue
+* Gehälter
+* Warriors heilen sich über das Rundenende
 * "Look for trouble" zu Liste von verschieden schweren Quests umbauen, die man annehmen kann (und Warriors zuweisen)
 * Level & Erfahrungspunkte haben noch keinen Einfluss
 * Morph swap htmx Fabi damit Formulare sich nicht ändern -> gewählte Action springt immer zurück

@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("faction", "0004_culture_remove_faction_locale_faction_culture"),
     ]

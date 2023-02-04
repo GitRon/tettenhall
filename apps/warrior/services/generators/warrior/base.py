@@ -20,6 +20,8 @@ class BaseWarriorGenerator:
     STATS_SIGMA: int
 
     item_generator_class: type(BaseItemGenerator)
+    chance_for_weapon = 1
+    chance_for_armor = 1
 
     culture: Culture
     faction: Faction
@@ -57,14 +59,22 @@ class BaseWarriorGenerator:
         recruitment_price = int(
             (((strength + dexterity) / self.STATS_MU) + (max_health / self.HEALTH_MU)) * base_recruitment_price
         )
-        # todo item-wert noch zu recruitment preis dazuaddieren - oder die kommen immer ohne items?
 
-        weapon_generator = self.item_generator_class(
-            faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_WEAPON
-        )
-        armor_generator = self.item_generator_class(
-            faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_ARMOR
-        )
+        if random.uniform(0, 1) <= self.chance_for_weapon:
+            weapon_generator = self.item_generator_class(
+                faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_WEAPON
+            )
+            weapon = weapon_generator.process()
+        else:
+            weapon = None
+
+        if random.uniform(0, 1) <= self.chance_for_armor:
+            armor_generator = self.item_generator_class(
+                faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_ARMOR
+            )
+            armor = armor_generator.process()
+        else:
+            armor = None
 
         warrior = Warrior.objects.create(
             name=faker.first_name_male(),
@@ -78,8 +88,8 @@ class BaseWarriorGenerator:
             strength=strength,
             dexterity=dexterity,
             recruitment_price=recruitment_price,
-            weapon=weapon_generator.process(),
-            armor=armor_generator.process(),
+            weapon=weapon,
+            armor=armor,
         )
 
         return warrior

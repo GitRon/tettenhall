@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("faction", "0005_alter_faction_culture"),
         ("skirmish", "0004_alter_warrior_armor_alter_warrior_weapon_delete_item"),

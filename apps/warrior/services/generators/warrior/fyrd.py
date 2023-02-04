@@ -13,3 +13,5 @@ class FyrdWarriorGenerator(BaseWarriorGenerator):
     STATS_SIGMA = 5
 
     item_generator_class = FyrdItemGenerator
+    chance_for_weapon = 0.8
+    chance_for_armor = 0.1

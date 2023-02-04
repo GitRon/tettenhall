@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("item", "0004_itemtype_base_value_itemtype_name"),
     ]

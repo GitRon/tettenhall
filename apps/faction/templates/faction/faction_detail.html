@@ -5,8 +5,9 @@
 
     <div class="uk-child-width-expand@s uk-text-center uk-grid-medium" uk-grid>
         <div>
-            <h2>Details</h2>
-            <div class="uk-card uk-card-default uk-card-body">
+            <h2>My faction</h2>
+            <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+                <h3>Details</h3>
                 <table class="uk-table">
                     <tbody>
                     <tr>
@@ -20,6 +21,7 @@
                     </tbody>
                 </table>
             </div>
+            {% include 'faction/warrior/components/fyrd_card.html' with faction=object %}
         </div>
         <div>
             {% include "faction/warrior/components/warrior_list.html" with faction=object %}

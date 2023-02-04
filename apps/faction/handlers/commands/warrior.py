@@ -1,0 +1,25 @@
+from apps.core.domain import message_registry
+from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
+from apps.faction.messages.events.warrior import WarriorWasDraftedFromFyrd
+from apps.faction.models.faction import Faction
+from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
+
+
+@message_registry.register_command(command=DraftWarriorFromFyrd)
+def handle_draft_warrior_from_fyrd(context: DraftWarriorFromFyrd.Context):
+    if context.faction.fyrd_reserve <= 0:
+        return None
+
+    # Create warrior
+    warrior_generator = FyrdWarriorGenerator(culture=context.faction.culture, faction=context.faction)
+    warrior = warrior_generator.process()
+
+    # Update reserve
+    Faction.objects.reduce_fyrd_reserve(faction=context.faction, drafted_warriors=1)
+
+    return WarriorWasDraftedFromFyrd.generator(
+        context_data={
+            "faction": context.faction,
+            "warrior": warrior,
+        }
+    )

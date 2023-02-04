@@ -6,7 +6,6 @@ import apps.core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("item", "0003_alter_item_owner"),
     ]

@@ -1,0 +1,18 @@
+<div id="fyrd-card" class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+    <h3>Fyrd</h3>
+    <table class="uk-table">
+        <tbody>
+        <tr>
+            <td>Reserve</td>
+            <td>{{ faction.fyrd_reserve }}</td>
+        </tr>
+        </tbody>
+    </table>
+    {% if faction.fyrd_reserve %}
+        <button hx-post="{% url 'faction:faction-draft-warrior-from-fyrd-view' faction.id %}"
+                hx-target="#fyrd-card"
+                hx-swap="outerHTML"
+                class="uk-button uk-button-primary">Draft warrior
+        </button>
+    {% endif %}
+</div>

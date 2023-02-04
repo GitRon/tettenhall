@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("item", "0003_alter_item_owner"),
         ("skirmish", "0006_alter_warrior_faction"),

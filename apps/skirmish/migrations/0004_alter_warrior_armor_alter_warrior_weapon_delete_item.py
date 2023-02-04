@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("item", "0001_initial"),
         ("skirmish", "0003_alter_warrior_weapon"),
