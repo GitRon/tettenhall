@@ -10,3 +10,11 @@ class FactionFyrdReserveReplenished(Event):
         faction: Faction
         new_recruitees: int
         week: int
+
+
+class WeeklyWarriorSalariesPaid(Event):
+    @dataclass
+    class Context:
+        faction: Faction
+        amount: int
+        week: int

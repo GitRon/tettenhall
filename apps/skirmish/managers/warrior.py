@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import manager
+from django.db.models import Sum, manager
 
 
 class WarriorQuerySet(models.QuerySet):
@@ -61,6 +61,16 @@ class WarriorManager(manager.Manager):
         obj.save(update_fields=("experience",))
 
         return obj
+
+    def get_weekly_salary_for_faction(self, faction) -> int:
+        """
+        Calculate the salary of all warriors working for "faction" not being dead.
+        """
+        return (
+            self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
+            .filter(faction=faction)
+            .aggregate(amount=Sum("weekly_salary"))["amount"]
+        )
 
 
 WarriorManager = WarriorManager.from_queryset(WarriorQuerySet)

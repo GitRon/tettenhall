@@ -1,12 +1,15 @@
 from django.db import models
 
 from apps.faction.models.faction import Faction
+from apps.finance.managers.transaction import TransactionManager
 
 
 class Transaction(models.Model):
     reason = models.CharField("Reason", max_length=100)
     amount = models.IntegerField("Amount")
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
+
+    objects = TransactionManager()
 
     class Meta:
         verbose_name = "Transaction"

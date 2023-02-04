@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
-from apps.faction.messages.commands.faction import ReplenishFyrdReserve
+from apps.faction.messages.commands.faction import PayWeeklyWarriorSalaries, ReplenishFyrdReserve
 from apps.faction.models.faction import Faction
 from apps.marketplace.messages.commands.item import RestockMarketplaceItems
 from apps.marketplace.messages.commands.warrior import RestockPubMercenaries
@@ -32,6 +32,7 @@ class FinishWeekView(generic.View):
                 RestockMarketplaceItems.generator(context_data={"marketplace": marketplace, "week": 1}),
                 RestockPubMercenaries.generator(context_data={"marketplace": marketplace, "week": 1}),
                 ReplenishFyrdReserve.generator(context_data={"faction": faction, "week": 1}),
+                PayWeeklyWarriorSalaries.generator(context_data={"faction": faction, "week": 1}),
             ]
         )
 

@@ -9,3 +9,10 @@ class ReplenishFyrdReserve(Command):
     class Context:
         faction: Faction
         week: int
+
+
+class PayWeeklyWarriorSalaries(Command):
+    @dataclass
+    class Context:
+        faction: Faction
+        week: int

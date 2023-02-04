@@ -88,6 +88,7 @@ class BaseWarriorGenerator:
             strength=strength,
             dexterity=dexterity,
             recruitment_price=recruitment_price,
+            weekly_salary=int(recruitment_price * 0.15),
             weapon=weapon,
             armor=armor,
         )
