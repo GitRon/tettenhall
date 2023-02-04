@@ -12,30 +12,5 @@
         </div>
     </div>
 
-    <div class="uk-child-width-1-4@s" uk-grid>
-        {% for message in player_week_logs %}
-            <div>
-                <div class="uk-card uk-card-default">
-                    <div class="uk-card-header">
-                        <div class="uk-grid-small uk-flex-middle" uk-grid>
-                            <div class="uk-width-expand">
-                                <h3 class="uk-card-title uk-margin-remove-bottom">
-                                    <i class="fa-solid fa-scroll"></i> {{ message.title }}
-                                </h3>
-                                <p class="uk-text-meta uk-margin-remove-top">
-                                    <time datetime="2016-04-01T19:00">Week #{{ message.week }}</time>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="uk-card-body">
-                        <p>{{ message.message }}</p>
-                    </div>
-                    <div class="uk-card-footer">
-                        <a href="#" class="uk-button uk-button-text">Acknowledge</a>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
+    {% include 'player-week-log/components/player_week_log_list.html' with object_list=player_week_logs faction=faction %}
 {% endblock %}
