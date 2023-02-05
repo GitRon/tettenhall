@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Warrior {{ object.name }} of {{ object.faction }}</h1>
+
+    <table class="uk-table">
+        <tbody>
+        <tr>
+            <td>Name</td>
+            <td>{{ object.name }}</td>
+        </tr>
+        <tr>
+            <td>Culture</td>
+            <td>{{ object.culture }}</td>
+        </tr>
+        <tr>
+            <td>Weapon</td>
+            <td>
+                {% include 'warrior/components/warrior_field_display.html' with object=object attribute='weapon' field_value=object.weapon %}
+            </td>
+        </tr>
+        <tr>
+            <td>Armor</td>
+            <td>
+                {% include 'warrior/components/warrior_field_display.html' with object=object attribute='armor' field_value=object.armor %}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+{% endblock %}

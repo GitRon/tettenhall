@@ -14,6 +14,7 @@
 * Items ausrüsten (im Warrior) - per Formular ähnlich wie im Admin? Was, wenn ich ein Item von Warrior A zu B bringen
   möchte? Aus- und wieder anziehen nervt vermutlich
 * Savegame-Logik von Sovereignty kopieren
+* Nicknames, je nachdem wie die Attribute ausfallen (Collum the Weak, Charles the Quick)
 
 ## Einfache Tasks
 
