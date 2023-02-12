@@ -16,3 +16,17 @@ class PayWeeklyWarriorSalaries(Command):
     class Context:
         faction: Faction
         week: int
+
+
+class DetermineWarriorsWithLowMorale(Command):
+    @dataclass
+    class Context:
+        faction: Faction
+        week: int
+
+
+class DetermineInjuredWarriors(Command):
+    @dataclass
+    class Context:
+        faction: Faction
+        week: int

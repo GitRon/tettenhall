@@ -12,7 +12,16 @@ class WarriorManager(manager.Manager):
         obj.current_health -= damage
         obj.save(update_fields=("current_health",))
 
-        # self.filter(id=obj.id).update(current_health=F('current_health') - damage)
+        return obj
+
+    def replenish_current_health(self, obj, healed_points: int):
+        obj.refresh_from_db()
+        obj.current_health += healed_points
+
+        if obj.current_health > obj.max_health:
+            obj.current_health = obj.max_health
+
+        obj.save(update_fields=("current_health",))
 
         return obj
 
@@ -28,6 +37,17 @@ class WarriorManager(manager.Manager):
         """
         self.filter(weapon=item).update(weapon=None)
         self.filter(armor=item).update(armor=None)
+
+    def replenish_current_morale(self, obj, recovered_morale_points: int):
+        obj.refresh_from_db()
+        obj.current_morale += recovered_morale_points
+
+        if obj.current_morale > obj.max_morale:
+            obj.current_morale = obj.max_morale
+
+        obj.save(update_fields=("current_morale",))
+
+        return obj
 
     def reduce_morale(self, obj, lost_morale: int):
         """

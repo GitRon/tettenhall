@@ -5,7 +5,12 @@ from django.urls import reverse
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
-from apps.faction.messages.commands.faction import PayWeeklyWarriorSalaries, ReplenishFyrdReserve
+from apps.faction.messages.commands.faction import (
+    DetermineInjuredWarriors,
+    DetermineWarriorsWithLowMorale,
+    PayWeeklyWarriorSalaries,
+    ReplenishFyrdReserve,
+)
 from apps.faction.models.faction import Faction
 from apps.marketplace.messages.commands.item import RestockMarketplaceItems
 from apps.marketplace.messages.commands.warrior import RestockPubMercenaries
@@ -20,11 +25,7 @@ class FinishWeekView(generic.View):
         # todo increment current week/year in savegame
 
         # todo what needs to happen:
-        #  - refresh player warrior morale
         #  - start quests / skirmishes?
-        #  - heal warriors
-        #  - refresh market item and warriors
-        #  - notifications for the dashboard / player
         marketplace = Marketplace.objects.all().first()
         # todo take faction from savegame
         faction = Faction.objects.get(id=2)
@@ -36,6 +37,8 @@ class FinishWeekView(generic.View):
                 RestockPubMercenaries.generator(context_data={"marketplace": marketplace, "week": 1}),
                 ReplenishFyrdReserve.generator(context_data={"faction": faction, "week": 1}),
                 PayWeeklyWarriorSalaries.generator(context_data={"faction": faction, "week": 1}),
+                DetermineWarriorsWithLowMorale.generator(context_data={"faction": faction, "week": 1}),
+                DetermineInjuredWarriors.generator(context_data={"faction": faction, "week": 1}),
             ]
         )
 
