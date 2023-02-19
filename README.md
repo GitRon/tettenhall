@@ -1,31 +1,42 @@
 # Tettenhall
 
-## Next steps
+## MVP
 
-* Handlers und Messages in ein Package pro App, damit die näher bei einander liegen
-* Logging der Event-Queue
-* Gehälter
-* Warriors heilen sich über das Rundenende
+### Dashboard / Generelles
+
 * "Look for trouble" zu Liste von verschieden schweren Quests umbauen, die man annehmen kann (und Warriors zuweisen)
-* Level & Erfahrungspunkte haben noch keinen Einfluss
-* Morph swap htmx Fabi damit Formulare sich nicht ändern -> gewählte Action springt immer zurück
-* Sklaven / Gefangene als Sklaven verkaufen
-* Items kaufen und verkaufen (per Command im View)
-* Items ausrüsten (im Warrior) - per Formular ähnlich wie im Admin? Was, wenn ich ein Item von Warrior A zu B bringen
-  möchte? Aus- und wieder anziehen nervt vermutlich
 * Savegame-Logik von Sovereignty kopieren
-* Nicknames, je nachdem wie die Attribute ausfallen (Collum the Weak, Charles the Quick)
+* Gefangen müssen sich auch heilen am Wochenende
+* Events, die Einfluss auf Krieger oder sonstiges haben (Max HP ändert etc.)
 
-## Einfache Tasks
+### Faction
+
+* Geld berechnen
+* Umgang mit "pleite" sein
+* Items kaufen und verkaufen (per Command im View)
+* Sklaven / Gefangene als Sklaven verkaufen oder rekrutieren
+
+### Finance
+* Übersicht der Fixkosten in der Woche (Gehälter... was noch?)
+
+### Warrior
+
+* Level & Erfahrungspunkte haben noch keinen Einfluss
+* Nicknames, je nachdem wie die Attribute ausfallen (Collum the Weak, Charles the Quick)
 
 ### Skirmish
 
 * Passive/defensiv-stärkende Attack-Action?
-* Fliehen
+* Fliehen als Aktion
 * Gegner-KI für Kampfaktionen
 * Kampfaktion soll an Item hängen, Warrior bekommt eine Funktion, die entscheidet, was es im Select zu sehen gibt
+* Morph swap htmx Fabi damit Formulare sich nicht ändern → gewählte Action springt immer zurück
 
-### Konzeptionelles
+### Technisches
+
+* Logging der Event-Queue
+
+## Konzeptionelles
 
 * Entity component system (Rustroguelike) -> Tipp von Andi
 
