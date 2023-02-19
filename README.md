@@ -16,9 +16,6 @@
 * Items kaufen und verkaufen (per Command im View)
 * Sklaven / Gefangene als Sklaven verkaufen oder rekrutieren
 
-### Finance
-* Übersicht der Fixkosten in der Woche (Gehälter... was noch?)
-
 ### Warrior
 
 * Level & Erfahrungspunkte haben noch keinen Einfluss
