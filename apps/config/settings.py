@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.marketplace",
     "apps.quest",
     "apps.skirmish",
+    "apps.training",
     "apps.warrior",
     "apps.week",
 ]

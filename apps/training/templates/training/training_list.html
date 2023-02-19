@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Training overview</h1>
+
+    <div uk-grid>
+        <div class="uk-width-2-3">
+            <table class="uk-table">
+                <thead>
+                <tr>
+                    <th>Warrior</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for warrior in faction.warriors.all %}
+                    <tr>
+                        <td>{{ warrior }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

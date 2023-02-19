@@ -20,6 +20,13 @@
 
 * Level & Erfahrungspunkte haben noch keinen Einfluss
 * Nicknames, je nachdem wie die Attribute ausfallen (Collum the Weak, Charles the Quick)
+* Training: 
+  * Wie mach ich das? Trainiert man Dinge, die dann Bonus auf Fähigkeiten geben?
+  * Pro Skill (Stärke, Dex, HP, Moral) ein Fortschrittsbalken?
+  * Was tut dann XP? Macht es einfach den Kämpfer besser bei den Attacken und Verteidigen?
+  * Oder kann man damit nur XP sammeln?
+  * Was ist, wenn ich das Training allgemein und nicht pro Krieger definiere? Und jeder, 
+    der nicht kämpft und gesund ist, das gleiche macht.
 
 ### Skirmish
 
