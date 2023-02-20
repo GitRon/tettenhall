@@ -23,13 +23,18 @@ class Warrior(models.Model):
     faction = models.ForeignKey(Faction, verbose_name="Faction", null=True, blank=True, on_delete=models.CASCADE)
 
     strength = models.PositiveSmallIntegerField("Strength")
+    strength_progress = models.PositiveSmallIntegerField("Strength progress", default=0)
+
     dexterity = models.PositiveSmallIntegerField("Dexterity")
+    dexterity_progress = models.PositiveSmallIntegerField("Dexterity progress", default=0)
 
     current_health = models.SmallIntegerField("Current health")
     max_health = models.PositiveSmallIntegerField("Maximum health")
+    health_progress = models.PositiveSmallIntegerField("Health progress", default=0)
 
     current_morale = models.SmallIntegerField("Current morale")
     max_morale = models.PositiveSmallIntegerField("Maximum morale")
+    morale_progress = models.PositiveSmallIntegerField("Morale progress", default=0)
 
     experience = models.PositiveIntegerField("Experience", default=0)
     weekly_salary = models.PositiveSmallIntegerField("Weekly salary", default=0)

@@ -18,6 +18,8 @@ class BaseWarriorGenerator:
     MORALE_SIGMA: int
     STATS_MU: int
     STATS_SIGMA: int
+    PROGRESS_MU: int
+    PROGRESS_SIGMA: int
 
     item_generator_class: type(BaseItemGenerator)
     chance_for_weapon = 1
@@ -41,17 +43,33 @@ class BaseWarriorGenerator:
         while max_health == 0:
             max_health = max(random.gauss(self.HEALTH_MU, self.HEALTH_SIGMA), 0)
 
+        health_progress = -1
+        while health_progress < 0 or health_progress > 100:
+            health_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
+
         max_morale = 0
         while max_morale == 0:
             max_morale = max(random.gauss(self.MORALE_MU, self.MORALE_SIGMA), 0)
+
+        morale_progress = -1
+        while morale_progress < 0 or morale_progress > 100:
+            morale_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
 
         strength = 0
         while strength == 0:
             strength = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), 0)
 
+        strength_progress = -1
+        while strength_progress < 0 or strength_progress > 100:
+            strength_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
+
         dexterity = 0
         while dexterity == 0:
             dexterity = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), 0)
+
+        dexterity_progress = -1
+        while dexterity_progress < 0 or dexterity_progress > 100:
+            dexterity_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
 
         base_recruitment_price = 0
         while base_recruitment_price == 0:
@@ -83,10 +101,14 @@ class BaseWarriorGenerator:
             experience=experience,
             current_health=max_health,
             max_health=max_health,
+            health_progress=health_progress,
             current_morale=max_morale,
             max_morale=max_morale,
+            morale_progress=morale_progress,
             strength=strength,
+            strength_progress=strength_progress,
             dexterity=dexterity,
+            dexterity_progress=dexterity_progress,
             recruitment_price=recruitment_price,
             weekly_salary=int(recruitment_price * 0.15),
             weapon=weapon,

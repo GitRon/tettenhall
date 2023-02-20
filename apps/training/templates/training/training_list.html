@@ -9,12 +9,28 @@
                 <thead>
                 <tr>
                     <th>Warrior</th>
+                    <th>Strength</th>
+                    <th>Dexterity</th>
+                    <th>Health</th>
+                    <th>Morale</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for warrior in faction.warriors.all %}
                     <tr>
-                        <td>{{ warrior }}</td>
+                        <td>{{ warrior.name }}</td>
+                        <td>
+                            <progress class="uk-progress" value="{{ warrior.strength_progress }}" max="100"></progress>
+                        </td>
+                        <td>
+                            <progress class="uk-progress" value="{{ warrior.dexterity_progress }}" max="100"></progress>
+                        </td>
+                        <td>
+                            <progress class="uk-progress" value="{{ warrior.health_progress }}" max="100"></progress>
+                        </td>
+                        <td>
+                            <progress class="uk-progress" value="{{ warrior.morale_progress }}" max="100"></progress>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

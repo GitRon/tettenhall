@@ -8,6 +8,8 @@
 * Savegame-Logik von Sovereignty kopieren
 * Gefangen müssen sich auch heilen am Wochenende
 * Events, die Einfluss auf Krieger oder sonstiges haben (Max HP ändert etc.)
+    * Event-Klasse, die man wie die Notifications registriert und die eine Wahrscheinlichkeit und einen Trigger haben,
+      wenn beides passt, wird es ausgeführt. So kann man super fix neue Events dazu bauen
 
 ### Faction
 
@@ -20,13 +22,17 @@
 
 * Level & Erfahrungspunkte haben noch keinen Einfluss
 * Nicknames, je nachdem wie die Attribute ausfallen (Collum the Weak, Charles the Quick)
-* Training: 
-  * Wie mach ich das? Trainiert man Dinge, die dann Bonus auf Fähigkeiten geben?
-  * Pro Skill (Stärke, Dex, HP, Moral) ein Fortschrittsbalken?
-  * Was tut dann XP? Macht es einfach den Kämpfer besser bei den Attacken und Verteidigen?
-  * Oder kann man damit nur XP sammeln?
-  * Was ist, wenn ich das Training allgemein und nicht pro Krieger definiere? Und jeder, 
-    der nicht kämpft und gesund ist, das gleiche macht.
+* Training:
+    * Wie mach ich das? Trainiert man Dinge, die dann Bonus auf Fähigkeiten geben?
+    * Pro Skill (Stärke, Dex, HP, Moral) ein Fortschrittsbalken?
+    * Was tut dann XP? Macht es einfach den Kämpfer besser bei den Attacken und Verteidigen?
+    * Oder kann man damit nur XP sammeln?
+    * Was ist, wenn ich das Training allgemein und nicht pro Krieger definiere? Und jeder,
+      der nicht kämpft und gesund ist, das gleiche macht.
+
+### Training
+* Trainingsart auswählen 
+* In der Woche Progress für alle Teilnehmer hinterlegen inkl. Punkt-Updates
 
 ### Skirmish
 

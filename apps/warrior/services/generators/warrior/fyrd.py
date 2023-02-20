@@ -11,6 +11,8 @@ class FyrdWarriorGenerator(BaseWarriorGenerator):
     MORALE_SIGMA = 3
     STATS_MU = 5
     STATS_SIGMA = 5
+    PROGRESS_MU = 50
+    PROGRESS_SIGMA = 50
 
     item_generator_class = FyrdItemGenerator
     chance_for_weapon = 0.8
