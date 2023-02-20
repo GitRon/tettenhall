@@ -11,6 +11,8 @@ class MercenaryWarriorGenerator(BaseWarriorGenerator):
     MORALE_SIGMA = 5
     STATS_MU = 10
     STATS_SIGMA = 10
+    PROGRESS_MU = 50
+    PROGRESS_SIGMA = 50
 
     item_generator_class = MercenaryItemGenerator
     chance_for_weapon = 0
