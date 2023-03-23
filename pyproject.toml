@@ -1,7 +1,48 @@
 [tool.black]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-line_length = 120
-known_first_party = 'apps'
+[tool.ruff]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = ["E", "F", "W", "N", "I", "B", "A", "DTZ", "DJ"]
+ignore = [
+    'N999',     # Project name contains underscore, not fixable
+    'A003',     # Django attributes shadow python builtins
+    'DJ001',    # Django model text-based fields shouldn't be nullable
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable =["E", "F", "W", "N", "I", "B", "A", "DTZ", "DJ"]
+unfixable = []
+
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "*/migrations/*"
+]
+
+# Same as Black.
+line-length = 120
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.10.
+target-version = "py310"
