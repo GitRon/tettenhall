@@ -9,7 +9,9 @@ class FactionQuerySet(models.QuerySet):
 class FactionManager(manager.Manager):
     def add_captive(self, faction, warrior):
         faction.captured_warriors.add(warrior)
-        return faction.save()
+
+    def remove_captive(self, faction, warrior):
+        faction.captured_warriors.remove(warrior)
 
     def replenish_fyrd_reserve(self, faction, new_recruitees: int):
         faction.refresh_from_db()

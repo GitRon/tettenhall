@@ -59,6 +59,18 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def reduce_max_morale(self, obj, lost_max_morale_in_percent: float):
+        """
+        Drop max morale to a minimum of zero
+        """
+        obj.refresh_from_db()
+        lost_morale = int(obj.max_morale * lost_max_morale_in_percent)
+        obj.max_morale = 0 if obj.max_morale - lost_morale < 0 else obj.max_morale - lost_morale
+        obj.current_morale = min(obj.current_morale, obj.max_morale)
+        obj.save(update_fields=("max_morale", "current_morale"))
+
+        return obj
+
     def increase_morale(self, obj, increased_morale: int):
         """
         Increase morale to a defined maximum
@@ -91,6 +103,16 @@ class WarriorManager(manager.Manager):
             .filter(faction=faction)
             .aggregate(amount=Sum("weekly_salary"))["amount"]
         )
+
+    def set_faction(self, obj, faction) -> int:
+        """
+        Set a new faction for the given warrior.
+        """
+        obj.refresh_from_db()
+        obj.faction = faction
+        obj.save(update_fields=("faction",))
+
+        return obj
 
 
 WarriorManager = WarriorManager.from_queryset(WarriorQuerySet)

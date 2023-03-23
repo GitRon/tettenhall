@@ -1,8 +1,15 @@
 import random
 
 from apps.core.domain import message_registry
+from apps.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
+from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
-from apps.warrior.messages.commands.warrior import HealInjuredWarrior, ReplenishWarriorMorale
+from apps.warrior.messages.commands.warrior import (
+    EnslaveCapturedWarrior,
+    HealInjuredWarrior,
+    RecruitCapturedWarrior,
+    ReplenishWarriorMorale,
+)
 from apps.warrior.messages.events.warrior import WarriorHealthHealed, WarriorMoraleReplenished
 
 
@@ -40,5 +47,39 @@ def handle_heal_injured_warrior(context: HealInjuredWarrior.Context):
             "warrior": context.warrior,
             "healed_points": healed_hp,
             "week": context.week,
+        }
+    )
+
+
+@message_registry.register_command(command=RecruitCapturedWarrior)
+def handle_recruit_captured_warrior(context: RecruitCapturedWarrior.Context):
+    # Set new faction
+    Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
+    # Remove from captured warriors
+    Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior)
+    # Reduce morale
+    Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=0.25)
+
+    return WarriorRecruited.generator(
+        context_data={
+            "warrior": context.warrior,
+            "faction": context.faction,
+            "recruitment_price": context.warrior.recruitment_price,
+        }
+    )
+
+
+@message_registry.register_command(command=EnslaveCapturedWarrior)
+def handle_enslave_captured_warrior(context: EnslaveCapturedWarrior.Context):
+    # Set new faction
+    Warrior.objects.set_faction(obj=context.warrior, faction=None)
+    # Remove from captured warriors
+    Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior)
+
+    return WarriorWasSoldIntoSlavery.generator(
+        context_data={
+            "warrior": context.warrior,
+            "selling_faction": context.faction,
+            "price": context.warrior.recruitment_price,
         }
     )

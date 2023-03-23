@@ -1,6 +1,6 @@
 from apps.core.domain import message_registry
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
-from apps.faction.messages.events.warrior import WarriorWasDraftedFromFyrd
+from apps.faction.messages.events.warrior import WarriorRecruited
 from apps.faction.models.faction import Faction
 from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
@@ -17,9 +17,10 @@ def handle_draft_warrior_from_fyrd(context: DraftWarriorFromFyrd.Context):
     # Update reserve
     Faction.objects.reduce_fyrd_reserve(faction=context.faction, drafted_warriors=1)
 
-    return WarriorWasDraftedFromFyrd.generator(
+    return WarriorRecruited.generator(
         context_data={
             "faction": context.faction,
             "warrior": warrior,
+            "recruitment_price": 0,
         }
     )

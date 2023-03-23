@@ -90,6 +90,10 @@ class Warrior(models.Model):
     def is_healthy(self):
         return self.condition == self.ConditionChoices.CONDITION_HEALTHY
 
+    @property
+    def slavery_selling_price(self):
+        return int(self.recruitment_price / 2)
+
     def get_weapon_or_fallback(self) -> Item:
         return (
             self.weapon

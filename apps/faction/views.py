@@ -25,6 +25,11 @@ class FactionWarriorListView(generic.DetailView):
     template_name = "faction/warrior/components/warrior_list.html"
 
 
+class FactionCapturedWarriorListView(generic.DetailView):
+    model = Faction
+    template_name = "faction/warrior/components/captured_warrior_list.html"
+
+
 class DraftWarriorFromFyrdView(generic.DetailView):
     model = Faction
     http_method_names = ("post",)

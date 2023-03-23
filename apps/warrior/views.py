@@ -1,8 +1,14 @@
-from django.shortcuts import render
+import json
+
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render
 from django.views import generic
 
+from apps.core.event_loop.runner import handle_message
+from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.forms.warrior import WarriorForm
+from apps.warrior.messages.commands.warrior import EnslaveCapturedWarrior, RecruitCapturedWarrior
 
 
 class WarriorDetailView(generic.DetailView):
@@ -33,3 +39,46 @@ class WarriorWeaponUpdateView(generic.UpdateView):
         context["attribute"] = self.htmx_field
         context["field_value"] = getattr(self.object, self.htmx_field)
         return context
+
+
+class WarriorRecruitCapturedView(generic.DetailView):
+    model = Warrior
+    http_method_names = ("post",)
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+        faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
+
+        handle_message(RecruitCapturedWarrior.generator(context_data={"faction": faction, "warrior": obj}))
+
+        response = HttpResponse(status=200)
+        response["HX-Trigger"] = json.dumps(
+            {
+                "notification": "Captured warrior joined your ranks",
+                "loadFactionWarriorList": "-",
+                "loadFactionCapturedWarriorList": "-",
+            }
+        )
+
+        return response
+
+
+class WarriorEnslaveCapturedView(generic.DetailView):
+    model = Warrior
+    http_method_names = ("post",)
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+        faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
+
+        handle_message(EnslaveCapturedWarrior.generator(context_data={"faction": faction, "warrior": obj}))
+
+        response = HttpResponse(status=200)
+        response["HX-Trigger"] = json.dumps(
+            {
+                "notification": "Captured warrior was sold into slavery",
+                "loadFactionCapturedWarriorList": "-",
+            }
+        )
+
+        return response

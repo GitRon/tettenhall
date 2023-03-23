@@ -57,6 +57,15 @@
         </div>
     </div>
     <div class="uk-card-footer">
-        <a href="{% url 'warrior:warrior-detail-view' warrior.id %}" class="uk-button uk-button-text">Detail</a>
+        {% if is_captured %}
+            <a hx-post="{% url 'warrior:warrior-recruit-captured-view' warrior.id faction.id %}"
+               class="uk-button uk-button-text">
+                Recruit for <i class="fa-solid fa-coins"></i> <i>0</i></a> /
+            <a hx-post="{% url 'warrior:warrior-enslave-captured-view' warrior.id faction.id %}"
+               class="uk-button uk-button-text">
+                Enslave for <i class="fa-solid fa-coins"></i> <i>{{ warrior.slavery_selling_price }}</i>&nbsp;</a>
+        {% else %}
+            <a href="{% url 'warrior:warrior-detail-view' warrior.id %}" class="uk-button uk-button-text">Detail</a>
+        {% endif %}
     </div>
 </div>

@@ -29,11 +29,8 @@
         <div class="uk-margin-bottom">
             {% include "faction/item/components/item_list.html" with faction=object %}
         </div>
-        <div class="uk-margin-bottom">
-            <h2>Captured warriors</h2>
-            {% for warrior in object.captured_warriors.all %}
-                {% include 'warrior/components/warrior_card.html' with warrior=warrior %}
-            {% endfor %}
+        <div class="uk-margin-bottom"
+            {% include "faction/warrior/components/captured_warrior_list.html" with faction=object %}
         </div>
     </div>
 {% endblock %}
