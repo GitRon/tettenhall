@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('skirmish', '0010_rename_dexterity_process_warrior_dexterity_progress_and_more'),
+        ("skirmish", "0010_rename_dexterity_process_warrior_dexterity_progress_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='warrior',
-            name='avatar_id',
-            field=models.PositiveSmallIntegerField(default=1, verbose_name='Avatar-ID'),
+            model_name="warrior",
+            name="avatar_id",
+            field=models.PositiveSmallIntegerField(default=1, verbose_name="Avatar-ID"),
         ),
     ]
