@@ -59,7 +59,7 @@ class MessageRegistry:
     def inject(self, func):
         @wraps(func)
         def decorated(*args, **kwargs):
-            new_args = args + (self.event_dict,)
+            new_args = (*args, self.event_dict)
             return func(*new_args, **kwargs)
 
         return decorated

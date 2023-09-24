@@ -15,7 +15,7 @@ class Transaction(models.Model):
         verbose_name = "Transaction"
         verbose_name_plural = "Transactions"
         default_related_name = "transaction"
-        ordering = ["id"]
+        ordering = ("id",)
 
     def __str__(self):
         return f"{self.reason} ({self.amount} Silver)"

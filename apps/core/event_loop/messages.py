@@ -15,7 +15,7 @@ class Message:
     @classmethod
     def generator(cls, context_data: dict):
         obj = cls(context_data=context_data)
-        print(f"Creating message '{cls.__name__}' ({obj.uuid}) with {str(context_data)}.")
+        print(f"Creating message '{cls.__name__}' ({obj.uuid}) with {context_data!s}.")
         return obj
 
     @classmethod
