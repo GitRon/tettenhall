@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <h1>Training overview</h1>
+    <div uk-grid>
+        <div class="uk-width-2-3">
+            {% crispy form %}
+        </div>
+    </div>
+{% endblock %}

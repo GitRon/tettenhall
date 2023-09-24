@@ -15,6 +15,8 @@ from apps.faction.models.faction import Faction
 from apps.marketplace.messages.commands.item import RestockMarketplaceItems
 from apps.marketplace.messages.commands.warrior import RestockPubMercenaries
 from apps.marketplace.models.marketplace import Marketplace
+from apps.training.messages.commands.training import TrainWarriors
+from apps.training.models.training import Training
 from apps.week.models.player_week_log import PlayerWeekLog
 
 
@@ -39,6 +41,10 @@ class FinishWeekView(generic.View):
                 PayWeeklyWarriorSalaries.generator(context_data={"faction": faction, "week": 1}),
                 DetermineWarriorsWithLowMorale.generator(context_data={"faction": faction, "week": 1}),
                 DetermineInjuredWarriors.generator(context_data={"faction": faction, "week": 1}),
+                # todo have a proper training QS (not here as well)
+                TrainWarriors.generator(
+                    context_data={"faction": faction, "training": Training.objects.all().first(), "week": 1}
+                ),
             ]
         )
 

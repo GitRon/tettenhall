@@ -4,6 +4,22 @@
     <h1>Training overview</h1>
 
     <div uk-grid>
+        <div>
+            {# todo make this dynamic #}
+            <a class="uk-button uk-button-primary" href="{% url 'training:training-edit-view' 1 %}">
+                Change training
+            </a>
+        </div>
+    </div>
+    <div uk-grid>
+        <div class="uk-width-2-3">
+            <div class="uk-alert-primary" uk-alert>
+                Current training: {{ current_training }}
+            </div>
+        </div>
+    </div>
+
+    <div uk-grid>
         <div class="uk-width-2-3">
             <table class="uk-table">
                 <thead>
@@ -20,15 +36,19 @@
                     <tr>
                         <td>{{ warrior.name }}</td>
                         <td>
+                            <span class="uk-badge uk-badge-success">{{ warrior.strength }}</span>
                             <progress class="uk-progress" value="{{ warrior.strength_progress }}" max="100"></progress>
                         </td>
                         <td>
+                            <span class="uk-badge">{{ warrior.dexterity }}</span>
                             <progress class="uk-progress" value="{{ warrior.dexterity_progress }}" max="100"></progress>
                         </td>
                         <td>
+                            <span class="uk-badge">{{ warrior.max_health }}</span>
                             <progress class="uk-progress" value="{{ warrior.health_progress }}" max="100"></progress>
                         </td>
                         <td>
+                            <span class="uk-badge">{{ warrior.max_morale }}</span>
                             <progress class="uk-progress" value="{{ warrior.morale_progress }}" max="100"></progress>
                         </td>
                     </tr>

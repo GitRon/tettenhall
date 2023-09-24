@@ -18,6 +18,9 @@ def handle_replenish_warrior_morale(context: ReplenishWarriorMorale.Context):
     # Morale is always filled up to the max
     recovered_morale = context.warrior.max_morale - context.warrior.current_morale
 
+    if recovered_morale == 0:
+        return None
+
     # Update warrior
     Warrior.objects.replenish_current_morale(obj=context.warrior, recovered_morale_points=recovered_morale)
 
@@ -38,6 +41,9 @@ def handle_heal_injured_warrior(context: HealInjuredWarrior.Context):
     healed_hp = min(
         random.randrange(1, max_recoverable_health_points), context.warrior.max_health - context.warrior.current_health
     )
+
+    if healed_hp == 0:
+        return None
 
     # Update warrior
     Warrior.objects.replenish_current_health(obj=context.warrior, healed_points=healed_hp)

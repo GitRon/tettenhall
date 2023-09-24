@@ -1,7 +1,12 @@
+import random
+
 from django.db import models
 
 
 class Training(models.Model):
+    TRAINING_IMPROVEMENT_MU = 15
+    TRAINING_IMPROVEMENT_SIGMA = 15
+
     class TrainingCategory(models.IntegerChoices):
         WEAPON_MASTERY = 1, "Weapon mastery"
         SWIFTNESS = 2, "Swiftness"
@@ -16,3 +21,20 @@ class Training(models.Model):
 
     def __str__(self):
         return f"{self.get_category_display()}"
+
+    def get_random_attribute_and_improvement_for_category(self, category: int) -> [str, int]:
+        """
+        Determine which attribute gets improved and by how much.
+        """
+        if category == self.TrainingCategory.WEAPON_MASTERY:
+            attribute = random.choice(("strength", "morale"))
+        elif category == self.TrainingCategory.SWIFTNESS:
+            attribute = random.choice(("dexterity",))
+        elif category == self.TrainingCategory.SHIELD_WALL:
+            attribute = random.choice(("health", "morale"))
+        else:
+            raise RuntimeError("Invalid training category provided.")
+
+        improvement = max(random.gauss(self.TRAINING_IMPROVEMENT_MU, self.TRAINING_IMPROVEMENT_SIGMA), 0)
+
+        return attribute, improvement
