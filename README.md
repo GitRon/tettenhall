@@ -41,6 +41,7 @@
 * Gegner-KI für Kampfaktionen
 * Kampfaktion soll an Item hängen, Warrior bekommt eine Funktion, die entscheidet, was es im Select zu sehen gibt
 * Morph swap htmx Fabi damit Formulare sich nicht ändern → gewählte Action springt immer zurück
+* Permanente Verletzungen
 
 ### Technisches
 
