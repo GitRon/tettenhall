@@ -2,20 +2,14 @@
 # https://pre-commit.com/
 
 repos:
-  - repo: https://github.com/ambv/black
-    rev: 23.9.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.11
     hooks:
-      - id: black
-        args: [--check, --diff]
-        language_version: python3.11
-        stages: [push]
-
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    # Ruff version.
-    rev: 'v0.0.291'
-    hooks:
+      # Run the Ruff linter.
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
+      # Run the Ruff formatter.
+      - id: ruff-format
 
   - repo: https://github.com/adamchainz/django-upgrade
     rev: 1.14.0

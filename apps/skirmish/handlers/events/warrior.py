@@ -75,7 +75,11 @@ def handle_reduce_health_and_update_condition(context: warrior.WarriorTookDamage
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
 @message_registry.register_event(event=warrior.WarriorWasKilled)
 def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
-    context: [warrior.WarriorHasFled.Context, warrior.WarriorWasIncapacitated.Context, warrior.WarriorWasKilled.Context]
+    context: [
+        warrior.WarriorHasFled.Context,
+        warrior.WarriorWasIncapacitated.Context,
+        warrior.WarriorWasKilled.Context,
+    ],
 ):
     message_list = []
 
@@ -107,7 +111,7 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
 @message_registry.register_event(event=warrior.WarriorWasKilled)
 def handle_experience_gain_on_warrior_incapacitation(
-    context: [warrior.WarriorWasIncapacitated.Context, warrior.WarriorWasKilled.Context]
+    context: [warrior.WarriorWasIncapacitated.Context, warrior.WarriorWasKilled.Context],
 ):
     gained_experience = 25
 

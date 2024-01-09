@@ -1,0 +1,23 @@
+{% load l10n %}
+<div class="uk-card uk-card-default uk-margin-bottom">
+    <div class="uk-card-header">
+        <div id="quest-card-{{ quest.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-expand">
+                <h3 class="uk-card-title uk-margin-remove-bottom">
+                    {{ quest.name }}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-body uk-text-left">
+        <p>Faction: {{ quest.faction }}</p>
+        <p>Difficulty: {{ quest.get_difficulty_display }}</p>
+    </div>
+    <div class="uk-card-footer">
+{#        <a hx-post="{% url 'quest:quest-accept-view' quest.id %}"#}
+{#           hx-target="#quest-card-{{ quest.id|unlocalize }}"#}
+{#           hx-swap="none"#}
+{#           class="uk-button uk-button-text">Accept</a>#}
+        Accept
+    </div>
+</div>

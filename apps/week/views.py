@@ -13,6 +13,7 @@ from apps.faction.messages.commands.faction import (
 )
 from apps.faction.models.faction import Faction
 from apps.marketplace.messages.commands.item import RestockMarketplaceItems
+from apps.marketplace.messages.commands.quest import OfferNewQuestsOnBoard
 from apps.marketplace.messages.commands.warrior import RestockPubMercenaries
 from apps.marketplace.models.marketplace import Marketplace
 from apps.training.messages.commands.training import TrainWarriors
@@ -37,6 +38,7 @@ class FinishWeekView(generic.View):
                 # todo brauch ich hier unbedingt die woche? ich könnte ja einfach am ende der runde alle alten schließen
                 RestockMarketplaceItems.generator(context_data={"marketplace": marketplace, "week": 1}),
                 RestockPubMercenaries.generator(context_data={"marketplace": marketplace, "week": 1}),
+                OfferNewQuestsOnBoard.generator(context_data={"marketplace": marketplace, "week": 1}),
                 ReplenishFyrdReserve.generator(context_data={"faction": faction, "week": 1}),
                 PayWeeklyWarriorSalaries.generator(context_data={"faction": faction, "week": 1}),
                 DetermineWarriorsWithLowMorale.generator(context_data={"faction": faction, "week": 1}),
