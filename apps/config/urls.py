@@ -27,6 +27,7 @@ urlpatterns = [
     path("finance/", include(("apps.finance.urls", "apps.finance"), namespace="finance")),
     path("item/", include(("apps.item.urls", "apps.item"), namespace="item")),
     path("marketplace/", include(("apps.marketplace.urls", "apps.marketplace"), namespace="marketplace")),
+    path("quest/", include(("apps.quest.urls", "apps.quest"), namespace="quest")),
     path(
         "skirmish/",
         include(("apps.skirmish.urls", "apps.skirmish"), namespace="skirmish"),
