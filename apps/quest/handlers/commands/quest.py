@@ -25,7 +25,7 @@ def handle_offer_quests(context: OfferNewQuestsOnBoard.Context):
 
 @message_registry.register_command(command=AcceptQuest)
 def handle_accept_quest(context: AcceptQuest.Context):
-    # todo get warriors from from
+    # todo get warriors from form
     # todo create player week log / other info for user
     warrior_list = []
     QuestContract.objects.create(quest=context.quest, warriors=warrior_list)
@@ -36,3 +36,6 @@ def handle_accept_quest(context: AcceptQuest.Context):
             "warriors": warrior_list,
         }
     )
+
+
+# todo: build quest list view and active quest

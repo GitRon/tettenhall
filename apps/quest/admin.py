@@ -6,7 +6,8 @@ from apps.quest.models.quest_contract import QuestContract
 
 @admin.register(Quest)
 class QuestAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("name", "faction", "difficulty")
+    list_filter = ("faction", "difficulty")
 
 
 @admin.register(QuestContract)

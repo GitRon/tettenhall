@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Quests</h1>
+
+    <table class="uk-table">
+        <thead>
+        <tr>
+            <th>Description</th>
+            <th>Difficulty</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for quest in object_list %}
+            <tr>
+                <td>{{ quest.name }}</td>
+                <td>{{ quest.get_difficulty_display }}</td>
+                <td>
+                    <a href="{% url 'quest:quest-detail-view' quest.id %}"
+                       class="uk-button uk-button-default uk-button-small uk-button-danger">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock content %}

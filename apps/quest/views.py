@@ -9,6 +9,22 @@ from apps.quest.messages.commands.quest import AcceptQuest
 from apps.quest.models.quest import Quest
 
 
+class QuestListView(generic.ListView):
+    model = Quest
+    template_name = "quest/quest_list.html"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(faction=2)
+
+
+class QuestDetailView(generic.DetailView):
+    model = Quest
+    template_name = "quest/quest_detail.html"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(faction=2)
+
+
 class QuestAcceptView(SingleObjectMixin, generic.View):
     model = Quest
     http_method_names = ("post",)
