@@ -1,6 +1,3 @@
-# you find the full empto-pre-commit-tools docu under:
-# https://pre-commit.com/
-
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.4

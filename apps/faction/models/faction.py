@@ -11,7 +11,12 @@ class Faction(models.Model):
         "Fyrd reserve", default=0, help_text="Number of warriors draft-able from the fyrd"
     )
     active_quest = models.ForeignKey(
-        "quest.QuestContract", verbose_name="Active Quest", on_delete=models.CASCADE, null=True, blank=True
+        "quest.QuestContract",
+        verbose_name="Active Quest",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="There can only be one active quest at a time.",
     )
 
     captured_warriors = models.ManyToManyField(

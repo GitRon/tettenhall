@@ -5,6 +5,7 @@ from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 
 from apps.core.event_loop.runner import handle_message
+from apps.faction.models.faction import Faction
 from apps.quest.forms.quest_accept import QuestAcceptForm
 from apps.quest.messages.commands.quest import AcceptQuest
 from apps.quest.models.quest import Quest
@@ -40,6 +41,7 @@ class QuestAcceptView(SingleObjectMixin, generic.FormView):
         handle_message(
             AcceptQuest.generator(
                 context_data={
+                    "accepting_faction": Faction.objects.get(id=2),
                     "quest": form.cleaned_data["quest"],
                     "assigned_warriors": form.cleaned_data["assigned_warriors"],
                 }

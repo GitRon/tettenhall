@@ -5,11 +5,17 @@
 
     <div uk-grid>
         <div>
+            {# todo: merge this logic with the active quest #}
+            {# todo: finish active quest when winning or losing a battle -> tie battles to quest contract #}
             <button class="uk-button uk-button-primary" hx-post="{% url 'skirmish:skirmish-start-view' %}">
                 Look for trouble
             </button>
         </div>
     </div>
+
+    {% if faction.active_quest %}
+        <div uk-alert><strong>Active quest:</strong> {{ faction.active_quest }}</div>
+    {% endif %}
 
     {% include 'player-week-log/components/player_week_log_list.html' with object_list=player_week_logs faction=faction %}
 {% endblock content %}

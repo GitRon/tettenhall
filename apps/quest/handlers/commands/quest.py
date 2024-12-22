@@ -32,7 +32,9 @@ def handle_accept_quest(context: AcceptQuest.Context):
 
     return QuestAccepted.generator(
         context_data={
+            "accepting_faction": context.accepting_faction,
             "quest": context.quest,
+            "quest_contract": quest_contract,
             "assigned_warriors": context.assigned_warriors,
         }
     )
