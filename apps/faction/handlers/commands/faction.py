@@ -19,7 +19,7 @@ def handle_replenish_fyrd_reserve(context: ReplenishFyrdReserve.Context):
     new_recruitees = random.randrange(0, 3)
 
     if new_recruitees == 0:
-        return
+        return None
 
     # Update faction
     Faction.objects.replenish_fyrd_reserve(faction=context.faction, new_recruitees=new_recruitees)

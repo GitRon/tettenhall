@@ -10,8 +10,7 @@ class TransactionQuerySet(models.QuerySet):
 
 class TransactionManager(manager.Manager):
     def create_transaction(self, reason: str, amount: int, faction: Faction):
-        transaction = self.create(reason=reason, amount=amount, faction=faction)
-        return transaction
+        return self.create(reason=reason, amount=amount, faction=faction)
 
 
 TransactionManager = TransactionManager.from_queryset(TransactionQuerySet)

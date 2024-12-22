@@ -22,11 +22,11 @@ def handle_message(message_list: Message | list[Message]):
         elif isinstance(message, Command):
             handle_command(message, queue)
         else:
-            raise Exception(f"{message} was not an Event or Command")
+            raise TypeError(f"{message} was not an Event or Command")
 
 
 def handle_command(command: Command, queue: list[Message]):
-    handler_list = message_registry.command_dict.get(command.__class__, list())
+    handler_list = message_registry.command_dict.get(command.__class__, list())  # noqa: C408
     for handler in handler_list:
         try:
             # todo warum ist der rückgabewert hier wichtig?
@@ -44,11 +44,11 @@ def handle_command(command: Command, queue: list[Message]):
             # return result
         except Exception as e:
             print(f"Exception handling command {command.__class__.__name__}: {e!s}")
-            raise e
+            raise e from e
 
 
 def handle_event(event: Event, queue: list[Message]):
-    handler_list = message_registry.event_dict.get(event.__class__, list())
+    handler_list = message_registry.event_dict.get(event.__class__, list())  # noqa: C408
     for handler in handler_list:
         try:
             print(f"Handling event '{event.__class__.__name__}' ({event.uuid}) with handler '{handler.__name__}'")
@@ -62,4 +62,4 @@ def handle_event(event: Event, queue: list[Message]):
         except Exception as e:
             print(f"Exception handling event {event.__class__.__name__}: {e!s}")
             # continue
-            raise e
+            raise e from e

@@ -94,7 +94,7 @@ class BaseWarriorGenerator:
         else:
             armor = None
 
-        warrior = Warrior.objects.create(
+        return Warrior.objects.create(
             name=faker.first_name_male(),
             culture=self.culture,
             faction=self.faction,
@@ -114,5 +114,3 @@ class BaseWarriorGenerator:
             weapon=weapon,
             armor=armor,
         )
-
-        return warrior

@@ -1,18 +1,78 @@
-[tool.black]
-line-length = 120
-
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["E", "F", "W", "N", "I", "B", "A", "DTZ", "DJ", "RUF", "UP"]
-ignore = [
+lint.select = [
+    "E",       # pycodestyle errors
+    "W",       # pycodestyle warnings
+    "F",       # Pyflakes
+    "N",       # pep8-naming
+    "I",       # isort
+    "B",       # flake8-bugbear
+    "A",       # flake8-builtins
+    "DTZ",     # flake8-datetimez
+    "DJ",      # flake8-django
+    "LOG",     # flake8-logging
+    "TID",     # flake8-tidy-imports
+    "Q",       # flake8-quotes
+    "RET",     # flake8-return
+    "RSE",     # flake8-raise
+    "RUF",     # Ruff-specific rules
+    "YTT",     # Avoid non-future-prove usages of "sys"
+    "C4",      # Checks for unnecessary conversions
+    "PIE",     # Bunch of useful rules
+    "SIM",     # Simplifies your code
+    "PERF",    # Perflint
+    "PGH",     # No all-purpose "# noqa" and eval validation
+    "UP",      # PyUpgrade
+    "PLR2004", # Magic numbers
+    "BLE",     # Checks for except clauses that catch all exceptions
+    "ANN401",  # Checks that function arguments are annotated with a more specific type than Any
+    "TRY",     # Clean try/except
+    "ERA",     # Commented out code
+    "INP"      # Ban PEP-420 implicit namespace packages
+]
+lint.ignore = [
     'N999',     # Project name contains underscore, not fixable
     'A003',     # Django attributes shadow python builtins
     'DJ001',    # Django model text-based fields shouldn't be nullable
+    'TRY003',   # Avoid specifying long messages outside the exception class
+    'PLR2004',  # Magic value used in comparison, consider replacing "x" with a constant variable
+    'ERA001',   # Found commented-out code
+    'PERF401',  # Use a list comprehension to create a transformed list
+    'SIM108',   # Use ternary operator
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable =["E", "F", "W", "N", "I", "B", "A", "DTZ", "DJ", "RUF", "UP"]
-unfixable = []
+lint.fixable = [
+    "E",       # pycodestyle errors
+    "W",       # pycodestyle warnings
+    "F",       # Pyflakes
+    "N",       # pep8-naming
+    "I",       # isort
+    "B",       # flake8-bugbear
+    "A",       # flake8-builtins
+    "DTZ",     # flake8-datetimez
+    "DJ",      # flake8-django
+    "LOG",     # flake8-logging
+    "TID",     # flake8-tidy-imports
+    "Q",       # flake8-quotes
+    "RET",     # flake8-return
+    "RSE",     # flake8-raise
+    "RUF",     # Ruff-specific rules
+    "YTT",     # Avoid non-future-prove usages of "sys"
+    "C4",      # Checks for unnecessary conversions
+    "PIE",     # Bunch of useful rules
+    "SIM",     # Simplifies your code
+    "PERF",    # Perflint
+    "PGH",     # No all-purpose "# noqa" and eval validation
+    "UP",      # PyUpgrade
+    "PLR2004", # Magic numbers
+    "BLE",     # Checks for except clauses that catch all exceptions
+    "ANN401",  # Checks that function arguments are annotated with a more specific type than Any
+    "TRY",     # Clean try/except
+    "ERA",     # Commented out code
+    "INP"      # Ban PEP-420 implicit namespace packages
+]
+lint.unfixable = []
 
 exclude = [
     ".bzr",
@@ -42,7 +102,7 @@ exclude = [
 line-length = 120
 
 # Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 # Assume Python 3.12.
 target-version = "py312"

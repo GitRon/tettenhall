@@ -1,3 +1,4 @@
+import contextlib
 import importlib
 import os
 from functools import wraps
@@ -73,7 +74,7 @@ class MessageRegistry:
 
         # Import all notification.pys in all installed apps to trigger notification class registration via decorator
         for app in settings.INSTALLED_APPS:
-            if not app[:5] == "apps.":
+            if app[:5] != "apps.":
                 continue
             custom_package = app.replace("apps.", "")
             for message_type in ["commands", "events"]:
@@ -81,10 +82,8 @@ class MessageRegistry:
                     for module in os.listdir(settings.APPS_DIR / custom_package / "handlers" / message_type):
                         if module[-3:] == ".py":
                             module_name = module.replace(".py", "")
-                            try:
+                            with contextlib.suppress(ModuleNotFoundError):
                                 importlib.import_module(f"{app}.handlers.{message_type}.{module_name}")
-                            except ModuleNotFoundError:
-                                pass
                 except FileNotFoundError:
                     pass
 

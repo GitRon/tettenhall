@@ -22,14 +22,13 @@ class BaseItemGenerator:
     def _determine_condition(self, modifier: int) -> int:
         if modifier < self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
             return Item.ConditionChoices.CONDITION_RUSTY
-        elif self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA <= modifier < self.MODIFIER_ROLLS_MU:
+        if self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA <= modifier < self.MODIFIER_ROLLS_MU:
             return Item.ConditionChoices.CONDITION_CHEAP
-        elif self.MODIFIER_ROLLS_MU <= modifier < self.MODIFIER_ROLLS_MU + self.MODIFIER_ROLLS_SIGMA:
+        if self.MODIFIER_ROLLS_MU <= modifier < self.MODIFIER_ROLLS_MU + self.MODIFIER_ROLLS_SIGMA:
             return Item.ConditionChoices.CONDITION_TRADITIONAL
-        elif modifier >= self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
+        if modifier >= self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
             return Item.ConditionChoices.CONDITION_SUPERIOR
-        else:
-            raise RuntimeError("Invalid condition")
+        raise RuntimeError("Invalid condition")
 
     def _get_queryset_for_type(self):
         return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")

@@ -23,3 +23,5 @@ def handle_warrior_drops_silver(context: transaction.WarriorDropsSilver.Context)
                 "amount": amount,
             }
         )
+
+    return []

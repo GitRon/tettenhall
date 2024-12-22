@@ -60,7 +60,7 @@ class WarriorForm(forms.ModelForm):
             owner_id=self.instance.faction,
         )
 
-        for _field_name, _field in self.fields.items():
+        for _field_name in self.fields:
             if _field_name == htmx_field:
                 self.fields[_field_name].label = ""
             else:

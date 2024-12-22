@@ -41,7 +41,9 @@ def handle_round_finished(context: skirmish.RoundFinished.Context):
         return WinSkirmish.generator(
             context_data={"skirmish": context.skirmish, "victorious_faction": context.skirmish.player_faction}
         )
-    elif not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+    if not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
         return WinSkirmish.generator(
             context_data={"skirmish": context.skirmish, "victorious_faction": context.skirmish.non_player_faction}
         )
+
+    return None

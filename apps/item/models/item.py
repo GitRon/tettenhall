@@ -49,8 +49,10 @@ class Item(models.Model):
     def worn_by(self):
         if self.type.function == ItemType.FunctionChoices.FUNCTION_WEAPON and self.warrior_weapon:
             return self.warrior_weapon
-        elif self.type.function == ItemType.FunctionChoices.FUNCTION_ARMOR and self.warrior_armor:
+        if self.type.function == ItemType.FunctionChoices.FUNCTION_ARMOR and self.warrior_armor:
             return self.warrior_armor
+
+        return None
 
     @property
     def expectancy_value(self) -> float:
