@@ -5,10 +5,10 @@ name = "pypi"
 
 [packages]
 Django = "==4.2.*"
-django-crispy-forms = "==1.14.*"
-faker = "==15.*"
+django-crispy-forms = "==2.3.*"
+faker = "==33.*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.12"

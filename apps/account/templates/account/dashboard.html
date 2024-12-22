@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 
-
 {% block content %}
     <h1>Dashboard</h1>
 
@@ -13,4 +12,4 @@
     </div>
 
     {% include 'player-week-log/components/player_week_log_list.html' with object_list=player_week_logs faction=faction %}
-{% endblock %}
+{% endblock content %}

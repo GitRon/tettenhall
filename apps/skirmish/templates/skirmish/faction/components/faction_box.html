@@ -4,7 +4,7 @@
          hx-get="{% url 'skirmish:faction-warrior-list-update-htmx' skirmish.id faction.id %}"
          hx-trigger="updateFactionWarriorList from:body"
          hx-target="this"
-         hx-swap="morph:innerHTML" {# todo morph is not keeping the form value -> remove?  #}
+         hx-swap="morph:innerHTML" {# todo morph is not keeping the form value -> remove? #}
          uk-grid>
         {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=warrior_list is_player=is_player %}
     </div>
