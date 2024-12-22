@@ -25,17 +25,14 @@ def handle_offer_quests(context: OfferNewQuestsOnBoard.Context):
 
 @message_registry.register_command(command=AcceptQuest)
 def handle_accept_quest(context: AcceptQuest.Context):
-    # todo get warriors from form
-    # todo create player week log / other info for user
-    warrior_list = []
-    QuestContract.objects.create(quest=context.quest, warriors=warrior_list)
+    # todo: create player week log / other info for user in event "QuestAccepted"?
+    # todo: remove quest from marketplace "available_quests" when it was accepted
+    quest_contract = QuestContract.objects.create(quest=context.quest)
+    quest_contract.assigned_warriors.set(context.assigned_warriors)
 
     return QuestAccepted.generator(
         context_data={
             "quest": context.quest,
-            "warriors": warrior_list,
+            "assigned_warriors": context.assigned_warriors,
         }
     )
-
-
-# todo: build quest list view and active quest

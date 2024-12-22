@@ -14,10 +14,7 @@
         <p>Difficulty: {{ quest.get_difficulty_display }}</p>
     </div>
     <div class="uk-card-footer">
-        {# todo this is a regular link #}
-        <a hx-post="{% url 'quest:quest-accept-view' quest.id %}"
-           hx-target="#quest-card-{{ quest.id|unlocalize }}"
-           hx-swap="none"
+        <a href="{% url 'quest:quest-accept-view' quest.id %}"
            class="uk-button uk-button-text">Accept</a>
     </div>
 </div>

@@ -1,6 +1,6 @@
 import json
 
-from django.http import HttpResponse
+from django.urls import reverse
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 
@@ -10,15 +10,7 @@ from apps.quest.messages.commands.quest import AcceptQuest
 from apps.quest.models.quest import Quest
 
 
-class QuestListView(generic.ListView):
-    model = Quest
-    template_name = "quest/quest_list.html"
-
-    def get_queryset(self):
-        return super().get_queryset().filter(faction=2)
-
-
-class QuestDetailView(SingleObjectMixin, generic.FormView):
+class QuestAcceptView(SingleObjectMixin, generic.FormView):
     model = Quest
     form_class = QuestAcceptForm
     template_name = "quest/quest_detail.html"
@@ -39,21 +31,21 @@ class QuestDetailView(SingleObjectMixin, generic.FormView):
         return context
 
     def get_queryset(self):
-        return super().get_queryset().filter(faction=2)
+        # Exclude quests that target my faction (can we do this somewhere else? Is this necessary?)
+        return super().get_queryset().exclude(faction=2)
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
 
-class QuestAcceptView(SingleObjectMixin, generic.View):
-    model = Quest
-    http_method_names = ("post",)
+        handle_message(
+            AcceptQuest.generator(
+                context_data={
+                    "quest": form.cleaned_data["quest"],
+                    "assigned_warriors": form.cleaned_data["assigned_warriors"],
+                }
+            )
+        )
 
-    def post(self, *args, **kwargs):
-        obj = self.get_object()
-
-        # todo we need a form here to select which warriors we want to send on this quest -> QuestDetailView
-
-        handle_message(AcceptQuest.generator(context_data={"quest": obj}))
-
-        response = HttpResponse(status=200)
         response["HX-Trigger"] = json.dumps(
             {
                 "loadFactionItemList": "-",
@@ -61,3 +53,6 @@ class QuestAcceptView(SingleObjectMixin, generic.View):
             }
         )
         return response
+
+    def get_success_url(self):
+        return reverse("marketplace:marketplace-view", args=(1,))

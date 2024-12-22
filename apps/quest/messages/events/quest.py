@@ -9,4 +9,4 @@ class QuestAccepted(Event):
     @dataclass
     class Context:
         quest: Quest
-        warriors: list[Warrior]
+        assigned_warriors: list[Warrior]

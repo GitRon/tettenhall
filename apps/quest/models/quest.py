@@ -11,6 +11,7 @@ class Quest(models.Model):
         DIFFICULTY_HARD = 2, "Hard"
 
     name = models.CharField("Name", max_length=50)
+    # todo: think about rename to "target_faction"
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
     difficulty = models.PositiveSmallIntegerField("Difficulty", choices=DifficultyChoices.choices)
 
