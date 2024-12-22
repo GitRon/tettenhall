@@ -1,24 +1,24 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
 {% block content %}
-    <h1>Quest: {{ object.name }}</h1>
+    <h1>Quest</h1>
 
-    <table class="uk-table">
-        <tbody>
-        <tr>
-            <td>Name</td>
-            <td>{{ object.name }}</td>
-        </tr>
-        <tr>
-            <td>Difficulty</td>
-            <td>{{ object.get_difficulty_display }}</td>
-        </tr>
-        <tr>
-            <td colspan="2">Select warriors to send</td>
-        </tr>
-        <tr>
-            <td colspan="2">Accept quest</td>
-        </tr>
-        </tbody>
-    </table>
+    <div class="uk-width-1-2">
+        <table class="uk-table">
+            <tbody>
+            <tr>
+                <td>Name</td>
+                <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+                <td>Difficulty</td>
+                <td>{{ object.get_difficulty_display }}</td>
+            </tr>
+            <tr>
+                <td colspan="2">{% crispy form %}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 {% endblock content %}
