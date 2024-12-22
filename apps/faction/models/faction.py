@@ -10,6 +10,9 @@ class Faction(models.Model):
     fyrd_reserve = models.PositiveSmallIntegerField(
         "Fyrd reserve", default=0, help_text="Number of warriors draft-able from the fyrd"
     )
+    active_quest = models.ForeignKey(
+        "quest.QuestContract", verbose_name="Active Quest", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     captured_warriors = models.ManyToManyField(
         "skirmish.Warrior",
