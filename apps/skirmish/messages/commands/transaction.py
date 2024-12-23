@@ -7,7 +7,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class WarriorDropsSilver(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior

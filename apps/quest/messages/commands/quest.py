@@ -7,7 +7,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class AcceptQuest(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         accepting_faction: Faction
         quest: Quest

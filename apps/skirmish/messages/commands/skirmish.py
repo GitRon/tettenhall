@@ -7,7 +7,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class StartDuel(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior_list_1: dict[int]
@@ -15,7 +15,7 @@ class StartDuel(Command):
 
 
 class DetermineAttacker(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior_1: Warrior
@@ -25,7 +25,7 @@ class DetermineAttacker(Command):
 
 
 class WarriorAttacksWarriorWithSimpleAttack(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         attacker: Warrior
@@ -33,7 +33,7 @@ class WarriorAttacksWarriorWithSimpleAttack(Command):
 
 
 class WarriorAttacksWarriorWithRiskyAttack(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         attacker: Warrior
@@ -41,7 +41,7 @@ class WarriorAttacksWarriorWithRiskyAttack(Command):
 
 
 class WinSkirmish(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         victorious_faction: Faction

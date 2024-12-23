@@ -6,7 +6,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class FighterPairsMatched(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior_1: Warrior
@@ -16,7 +16,7 @@ class FighterPairsMatched(Event):
 
 
 class AttackerDefenderDecided(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         attacker: Warrior
@@ -25,12 +25,12 @@ class AttackerDefenderDecided(Event):
 
 
 class RoundFinished(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
 
 
 class SkirmishFinished(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish

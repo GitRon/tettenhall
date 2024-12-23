@@ -5,7 +5,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class WarriorUpgradedSkill(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         training_category: int

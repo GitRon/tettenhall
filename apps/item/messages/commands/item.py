@@ -6,7 +6,7 @@ from apps.item.models.item import Item
 
 
 class SellItem(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         selling_faction: Faction
         item: Item

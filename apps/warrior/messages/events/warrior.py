@@ -5,7 +5,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class WarriorMoraleReplenished(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         recovered_morale: int
@@ -13,7 +13,7 @@ class WarriorMoraleReplenished(Event):
 
 
 class WarriorHealthHealed(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         healed_points: int

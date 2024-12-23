@@ -6,7 +6,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class WarriorRecruited(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         faction: Faction
@@ -15,7 +15,7 @@ class WarriorRecruited(Event):
 
 class WarriorWasSoldIntoSlavery(Event):
     # todo refactor all "sell X" event and pass generic context string for transaction title
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         selling_faction: Faction

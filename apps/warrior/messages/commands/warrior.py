@@ -6,28 +6,28 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class ReplenishWarriorMorale(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         week: int
 
 
 class HealInjuredWarrior(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         week: int
 
 
 class RecruitCapturedWarrior(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         faction: Faction
 
 
 class EnslaveCapturedWarrior(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         warrior: Warrior
         faction: Faction

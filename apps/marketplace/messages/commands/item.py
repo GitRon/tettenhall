@@ -5,7 +5,7 @@ from apps.marketplace.models.marketplace import Marketplace
 
 
 class RestockMarketplaceItems(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         marketplace: Marketplace
         week: int

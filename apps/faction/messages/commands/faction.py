@@ -5,28 +5,28 @@ from apps.faction.models.faction import Faction
 
 
 class ReplenishFyrdReserve(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         faction: Faction
         week: int
 
 
 class PayWeeklyWarriorSalaries(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         faction: Faction
         week: int
 
 
 class DetermineWarriorsWithLowMorale(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         faction: Faction
         week: int
 
 
 class DetermineInjuredWarriors(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         faction: Faction
         week: int

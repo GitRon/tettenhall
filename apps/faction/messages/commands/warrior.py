@@ -5,6 +5,6 @@ from apps.faction.models.faction import Faction
 
 
 class DraftWarriorFromFyrd(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         faction: Faction

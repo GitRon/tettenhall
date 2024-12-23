@@ -7,7 +7,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class CaptureWarrior(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -15,7 +15,7 @@ class CaptureWarrior(Command):
 
 
 class ReduceMorale(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -23,7 +23,7 @@ class ReduceMorale(Command):
 
 
 class IncreaseMorale(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -31,7 +31,7 @@ class IncreaseMorale(Command):
 
 
 class IncreaseExperience(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior

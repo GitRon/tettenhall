@@ -6,7 +6,7 @@ from apps.training.models.training import Training
 
 
 class TrainWarriors(Command):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         faction: Faction
         training: Training

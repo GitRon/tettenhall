@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DiceNotation:
     """
     Dice notation format: "2d4+7"

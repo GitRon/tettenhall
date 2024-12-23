@@ -8,7 +8,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class ItemDroppedAsLoot(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
