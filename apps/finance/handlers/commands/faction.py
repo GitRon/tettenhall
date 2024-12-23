@@ -13,6 +13,13 @@ def handle_warrior_weekly_salaries(context: PayWeeklyWarriorSalaries.Context) ->
         faction=context.faction, amount=-amount, reason=f"Salaries of {amount} silver paid in week {context.week}."
     )
 
-    return WeeklyWarriorSalariesPaid.generator(
-        context_data={"faction": context.faction, "amount": amount, "week": context.week}
-    )
+    # todo: sometimes we return a list, sometimes an object... is that correct?
+    return [
+        WeeklyWarriorSalariesPaid(
+            WeeklyWarriorSalariesPaid.Context(
+                faction=context.faction,
+                amount=amount,
+                week=context.week,
+            )
+        )
+    ]

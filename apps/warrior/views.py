@@ -49,7 +49,7 @@ class WarriorRecruitCapturedView(generic.DetailView):
         obj = self.get_object()
         faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
 
-        handle_message(RecruitCapturedWarrior.generator(context_data={"faction": faction, "warrior": obj}))
+        handle_message(RecruitCapturedWarrior(RecruitCapturedWarrior.Context(faction=faction, warrior=obj)))
 
         response = HttpResponse(status=200)
         response["HX-Trigger"] = json.dumps(
@@ -71,7 +71,7 @@ class WarriorEnslaveCapturedView(generic.DetailView):
         obj = self.get_object()
         faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
 
-        handle_message(EnslaveCapturedWarrior.generator(context_data={"faction": faction, "warrior": obj}))
+        handle_message(EnslaveCapturedWarrior(EnslaveCapturedWarrior.Context(faction=faction, warrior=obj)))
 
         response = HttpResponse(status=200)
         response["HX-Trigger"] = json.dumps(

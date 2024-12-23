@@ -76,21 +76,21 @@ class SkirmishFinishRoundView(generic.DetailView):
 
         # Start duel
         handle_message(
-            StartDuel.generator(
-                context_data={
-                    "skirmish": self.object,
-                    "warrior_list_1": converted_data["warrior-fight-action"][self.object.player_faction.id],
-                    "warrior_list_2": converted_data["warrior-fight-action"][self.object.non_player_faction.id],
-                }
+            StartDuel(
+                StartDuel.Context(
+                    skirmish=self.object,
+                    warrior_list_1=converted_data["warrior-fight-action"][self.object.player_faction.id],
+                    warrior_list_2=converted_data["warrior-fight-action"][self.object.non_player_faction.id],
+                )
             )
         )
 
         # Finish round
         handle_message(
-            RoundFinished.generator(
-                context_data={
-                    "skirmish": self.object,
-                }
+            RoundFinished(
+                RoundFinished.Context(
+                    skirmish=self.object,
+                )
             )
         )
 

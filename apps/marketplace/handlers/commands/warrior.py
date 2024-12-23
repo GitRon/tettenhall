@@ -19,4 +19,4 @@ def handle_restock_pub_mercenaries(context: RestockPubMercenaries.Context):
 
         context.marketplace.available_mercenaries.add(warrior)
 
-    return PubMercenariesRestocked.generator(context_data={"marketplace": context.marketplace, "week": context.week})
+    return PubMercenariesRestocked(PubMercenariesRestocked.Context(marketplace=context.marketplace, week=context.week))

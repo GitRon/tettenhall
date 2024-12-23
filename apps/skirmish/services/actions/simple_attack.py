@@ -26,8 +26,10 @@ class SimpleAttackService:
             round(self.context.attacker.roll_attack() * self.context.attacker.strength / self.BASE_COMPARE_STRENGTH)
         )
         self.message_list.append(
-            WarriorAttackedWithDamage.generator(
-                {"skirmish": self.context.skirmish, "warrior": self.context.attacker, "damage": attack}
+            WarriorAttackedWithDamage(
+                WarriorAttackedWithDamage.Context(
+                    skirmish=self.context.skirmish, warrior=self.context.attacker, damage=attack
+                )
             )
         )
 
@@ -36,8 +38,10 @@ class SimpleAttackService:
     def _get_defense_value(self):
         defense = self.context.defender.roll_defense()
         self.message_list.append(
-            WarriorDefendedDamage.generator(
-                {"skirmish": self.context.skirmish, "warrior": self.context.defender, "damage": defense}
+            WarriorDefendedDamage(
+                WarriorDefendedDamage.Context(
+                    skirmish=self.context.skirmish, warrior=self.context.defender, damage=defense
+                )
             )
         )
 
@@ -48,27 +52,27 @@ class SimpleAttackService:
 
         if damage > 0:
             self.message_list.append(
-                WarriorTookDamage.generator(
-                    {
-                        "skirmish": self.context.skirmish,
-                        "attacker": self.context.attacker,
-                        "attacker_damage": attack,
-                        "defender": self.context.defender,
-                        "defender_damage": defense,
-                        "damage": damage,
-                    }
+                WarriorTookDamage(
+                    WarriorTookDamage.Context(
+                        skirmish=self.context.skirmish,
+                        attacker=self.context.attacker,
+                        attacker_damage=attack,
+                        defender=self.context.defender,
+                        defender_damage=defense,
+                        damage=damage,
+                    )
                 )
             )
         else:
             self.message_list.append(
-                WarriorDefendedAllDamage.generator(
-                    {
-                        "skirmish": self.context.skirmish,
-                        "attacker": self.context.attacker,
-                        "defender": self.context.defender,
-                        "attacker_damage": attack,
-                        "defender_damage": defense,
-                    }
+                WarriorDefendedAllDamage(
+                    WarriorDefendedAllDamage.Context(
+                        skirmish=self.context.skirmish,
+                        attacker=self.context.attacker,
+                        defender=self.context.defender,
+                        attacker_damage=attack,
+                        defender_damage=defense,
+                    )
                 )
             )
 

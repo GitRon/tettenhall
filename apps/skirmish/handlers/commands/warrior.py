@@ -15,12 +15,12 @@ from apps.skirmish.models.warrior import Warrior
 def handle_warrior_is_captured(context: warrior.CaptureWarrior.Context):
     Faction.objects.add_captive(faction=context.capturing_faction, warrior=context.warrior)
 
-    return WarriorWasCaptured.generator(
-        context_data={
-            "skirmish": context.skirmish,
-            "warrior": context.warrior,
-            "capturing_faction": context.capturing_faction,
-        }
+    return WarriorWasCaptured(
+        WarriorWasCaptured.Context(
+            skirmish=context.skirmish,
+            warrior=context.warrior,
+            capturing_faction=context.capturing_faction,
+        )
     )
 
 
@@ -36,21 +36,21 @@ def handle_warrior_losing_morale(context: warrior.ReduceMorale.Context):
         )
 
         message_list.append(
-            WarriorHasFled.generator(
-                context_data={
-                    "skirmish": context.skirmish,
-                    "warrior": context.warrior,
-                }
+            WarriorHasFled(
+                WarriorHasFled.Context(
+                    skirmish=context.skirmish,
+                    warrior=context.warrior,
+                )
             )
         )
 
     message_list.append(
-        WarriorLostMorale.generator(
-            context_data={
-                "skirmish": context.skirmish,
-                "warrior": context.warrior,
-                "lost_morale": context.lost_morale,
-            }
+        WarriorLostMorale(
+            WarriorLostMorale.Context(
+                skirmish=context.skirmish,
+                warrior=context.warrior,
+                lost_morale=context.lost_morale,
+            )
         )
     )
 
@@ -61,12 +61,12 @@ def handle_warrior_losing_morale(context: warrior.ReduceMorale.Context):
 def handle_warrior_increasing_morale(context: warrior.IncreaseMorale.Context):
     context.warrior = Warrior.objects.increase_morale(obj=context.warrior, increased_morale=context.increased_morale)
 
-    return WarriorGainedMorale.generator(
-        context_data={
-            "skirmish": context.skirmish,
-            "warrior": context.warrior,
-            "gained_morale": context.increased_morale,
-        }
+    return WarriorGainedMorale(
+        WarriorGainedMorale.Context(
+            skirmish=context.skirmish,
+            warrior=context.warrior,
+            gained_morale=context.increased_morale,
+        )
     )
 
 
@@ -74,10 +74,10 @@ def handle_warrior_increasing_morale(context: warrior.IncreaseMorale.Context):
 def handle_warrior_increasing_experience(context: warrior.IncreaseExperience.Context):
     context.warrior = Warrior.objects.increase_experience(obj=context.warrior, experience=context.increased_experience)
 
-    return WarriorGainedExperience.generator(
-        context_data={
-            "skirmish": context.skirmish,
-            "warrior": context.warrior,
-            "gained_experience": context.increased_experience,
-        }
+    return WarriorGainedExperience(
+        WarriorGainedExperience.Context(
+            skirmish=context.skirmish,
+            warrior=context.warrior,
+            gained_experience=context.increased_experience,
+        )
     )

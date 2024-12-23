@@ -28,21 +28,21 @@ def handle_distribute_loot(context: skirmish.SkirmishFinished.Context):
 
     for warrior in warriors_dropping_loot_list:
         message_list.append(
-            WarriorDropsLoot.generator(
-                context_data={
-                    "skirmish": context.skirmish,
-                    "warrior": warrior,
-                    "new_owner": context.skirmish.victorious_faction,
-                }
+            WarriorDropsLoot(
+                WarriorDropsLoot.Context(
+                    skirmish=context.skirmish,
+                    warrior=warrior,
+                    new_owner=context.skirmish.victorious_faction,
+                )
             )
         )
         message_list.append(
-            WarriorDropsSilver.generator(
-                context_data={
-                    "skirmish": context.skirmish,
-                    "warrior": warrior,
-                    "gaining_faction": context.skirmish.victorious_faction,
-                }
+            WarriorDropsSilver(
+                WarriorDropsSilver.Context(
+                    skirmish=context.skirmish,
+                    warrior=warrior,
+                    gaining_faction=context.skirmish.victorious_faction,
+                )
             )
         )
 

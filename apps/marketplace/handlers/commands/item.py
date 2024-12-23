@@ -24,4 +24,6 @@ def handle_restock_marketplace_items(context: RestockMarketplaceItems.Context):
         item = item_generator.process()
         context.marketplace.available_items.add(item)
 
-    return MarketplaceItemsRestocked.generator(context_data={"marketplace": context.marketplace, "week": context.week})
+    return MarketplaceItemsRestocked(
+        MarketplaceItemsRestocked.Context(marketplace=context.marketplace, week=context.week)
+    )

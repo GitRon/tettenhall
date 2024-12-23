@@ -38,7 +38,7 @@ class DraftWarriorFromFyrdView(generic.DetailView):
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
 
-        handle_message(DraftWarriorFromFyrd.generator(context_data={"faction": obj}))
+        handle_message(DraftWarriorFromFyrd(DraftWarriorFromFyrd.Context(faction=obj)))
         response = render(request, self.template_name, {"faction": obj})
 
         response["HX-Trigger"] = json.dumps(

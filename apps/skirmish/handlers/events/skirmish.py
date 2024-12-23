@@ -13,20 +13,20 @@ from apps.skirmish.models.warrior import SkirmishAction, Warrior
 def handle_attacker_defender_decided(context: skirmish.AttackerDefenderDecided.Context):
     if context.attack_action == SkirmishAction.TypeChoices.SIMPLE_ATTACK:
         # todo move attack type to context
-        command = WarriorAttacksWarriorWithSimpleAttack.generator(
-            context_data={
-                "skirmish": context.skirmish,
-                "attacker": context.attacker,
-                "defender": context.defender,
-            }
+        command = WarriorAttacksWarriorWithSimpleAttack(
+            WarriorAttacksWarriorWithSimpleAttack.Context(
+                skirmish=context.skirmish,
+                attacker=context.attacker,
+                defender=context.defender,
+            )
         )
     elif context.attack_action == SkirmishAction.TypeChoices.RISKY_ATTACK:
-        command = WarriorAttacksWarriorWithRiskyAttack.generator(
-            context_data={
-                "skirmish": context.skirmish,
-                "attacker": context.attacker,
-                "defender": context.defender,
-            }
+        command = WarriorAttacksWarriorWithRiskyAttack(
+            WarriorAttacksWarriorWithRiskyAttack.Context(
+                skirmish=context.skirmish,
+                attacker=context.attacker,
+                defender=context.defender,
+            )
         )
     else:
         raise RuntimeError("Invalid attack action")
@@ -38,12 +38,12 @@ def handle_round_finished(context: skirmish.RoundFinished.Context):
     Skirmish.objects.increment_round(skirmish=context.skirmish)
 
     if not context.skirmish.non_player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
-        return WinSkirmish.generator(
-            context_data={"skirmish": context.skirmish, "victorious_faction": context.skirmish.player_faction}
+        return WinSkirmish(
+            WinSkirmish.Context(skirmish=context.skirmish, victorious_faction=context.skirmish.player_faction)
         )
     if not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
-        return WinSkirmish.generator(
-            context_data={"skirmish": context.skirmish, "victorious_faction": context.skirmish.non_player_faction}
+        return WinSkirmish(
+            WinSkirmish.Context(skirmish=context.skirmish, victorious_faction=context.skirmish.non_player_faction)
         )
 
     return None

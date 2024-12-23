@@ -39,12 +39,12 @@ class QuestAcceptView(SingleObjectMixin, generic.FormView):
         response = super().form_valid(form)
 
         handle_message(
-            AcceptQuest.generator(
-                context_data={
-                    "accepting_faction": Faction.objects.get(id=2),
-                    "quest": form.cleaned_data["quest"],
-                    "assigned_warriors": form.cleaned_data["assigned_warriors"],
-                }
+            AcceptQuest(
+                AcceptQuest.Context(
+                    accepting_faction=Faction.objects.get(id=2),
+                    quest=form.cleaned_data["quest"],
+                    assigned_warriors=form.cleaned_data["assigned_warriors"],
+                )
             )
         )
 

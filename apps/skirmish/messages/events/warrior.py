@@ -7,7 +7,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class WarriorAttackedWithDamage(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -15,7 +15,7 @@ class WarriorAttackedWithDamage(Event):
 
 
 class WarriorDefendedDamage(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -23,7 +23,7 @@ class WarriorDefendedDamage(Event):
 
 
 class WarriorTookDamage(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         attacker: Warrior
@@ -34,7 +34,7 @@ class WarriorTookDamage(Event):
 
 
 class WarriorDefendedAllDamage(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         attacker: Warrior
@@ -44,7 +44,7 @@ class WarriorDefendedAllDamage(Event):
 
 
 class WarriorWasIncapacitated(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -52,14 +52,14 @@ class WarriorWasIncapacitated(Event):
 
 
 class WarriorHasFled(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
 
 
 class WarriorWasKilled(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -67,7 +67,7 @@ class WarriorWasKilled(Event):
 
 
 class WarriorWasCaptured(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -75,7 +75,7 @@ class WarriorWasCaptured(Event):
 
 
 class WarriorLostMorale(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -83,7 +83,7 @@ class WarriorLostMorale(Event):
 
 
 class WarriorGainedMorale(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior
@@ -91,7 +91,7 @@ class WarriorGainedMorale(Event):
 
 
 class WarriorGainedExperience(Event):
-    @dataclass
+    @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         warrior: Warrior

@@ -36,17 +36,15 @@ class FinishWeekView(generic.View):
             [
                 # todo take week from save game
                 # todo brauch ich hier unbedingt die woche? ich könnte ja einfach am ende der runde alle alten schließen
-                RestockMarketplaceItems.generator(context_data={"marketplace": marketplace, "week": 1}),
-                RestockPubMercenaries.generator(context_data={"marketplace": marketplace, "week": 1}),
-                OfferNewQuestsOnBoard.generator(context_data={"marketplace": marketplace, "week": 1}),
-                ReplenishFyrdReserve.generator(context_data={"faction": faction, "week": 1}),
-                PayWeeklyWarriorSalaries.generator(context_data={"faction": faction, "week": 1}),
-                DetermineWarriorsWithLowMorale.generator(context_data={"faction": faction, "week": 1}),
-                DetermineInjuredWarriors.generator(context_data={"faction": faction, "week": 1}),
+                RestockMarketplaceItems(RestockMarketplaceItems.Context(marketplace=marketplace, week=1)),
+                RestockPubMercenaries(RestockPubMercenaries.Context(marketplace=marketplace, week=1)),
+                OfferNewQuestsOnBoard(OfferNewQuestsOnBoard.Context(marketplace=marketplace, week=1)),
+                ReplenishFyrdReserve(ReplenishFyrdReserve.Context(faction=faction, week=1)),
+                PayWeeklyWarriorSalaries(PayWeeklyWarriorSalaries.Context(faction=faction, week=1)),
+                DetermineWarriorsWithLowMorale(DetermineWarriorsWithLowMorale.Context(faction=faction, week=1)),
+                DetermineInjuredWarriors(DetermineInjuredWarriors.Context(faction=faction, week=1)),
                 # todo have a proper training QS (not here as well)
-                TrainWarriors.generator(
-                    context_data={"faction": faction, "training": Training.objects.all().first(), "week": 1}
-                ),
+                TrainWarriors(TrainWarriors.Context(faction=faction, training=Training.objects.all().first(), week=1)),
             ]
         )
 

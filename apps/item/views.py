@@ -16,7 +16,7 @@ class ItemSellView(SingleObjectMixin, generic.View):
     def post(self, *args, **kwargs):
         obj = self.get_object()
 
-        handle_message(SellItem.generator(context_data={"selling_faction": obj.owner, "item": obj}))
+        handle_message(SellItem(SellItem.Context(selling_faction=obj.owner, item=obj)))
 
         response = HttpResponse(status=200)
         response["HX-Trigger"] = json.dumps(

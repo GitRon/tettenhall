@@ -24,12 +24,12 @@ def handle_replenish_fyrd_reserve(context: ReplenishFyrdReserve.Context):
     # Update faction
     Faction.objects.replenish_fyrd_reserve(faction=context.faction, new_recruitees=new_recruitees)
 
-    return FactionFyrdReserveReplenished.generator(
-        context_data={
-            "faction": context.faction,
-            "new_recruitees": new_recruitees,
-            "week": context.week,
-        }
+    return FactionFyrdReserveReplenished(
+        FactionFyrdReserveReplenished.Context(
+            faction=context.faction,
+            new_recruitees=new_recruitees,
+            week=context.week,
+        )
     )
 
 
@@ -37,12 +37,12 @@ def handle_replenish_fyrd_reserve(context: ReplenishFyrdReserve.Context):
 def handle_determine_warriors_with_low_morale(context: DetermineWarriorsWithLowMorale.Context):
     warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
 
-    return FactionWarriorsWithLowMoraleDetermined.generator(
-        context_data={
-            "faction": context.faction,
-            "warrior_list": list(warrior_qs),
-            "week": context.week,
-        }
+    return FactionWarriorsWithLowMoraleDetermined(
+        FactionWarriorsWithLowMoraleDetermined.Context(
+            faction=context.faction,
+            warrior_list=list(warrior_qs),
+            week=context.week,
+        )
     )
 
 
@@ -56,11 +56,11 @@ def handle_determine_injured_warriors(context: DetermineInjuredWarriors.Context)
     event_list = []
     for warrior in warrior_qs:
         event_list.append(
-            HealInjuredWarrior.generator(
-                context_data={
-                    "warrior": warrior,
-                    "week": context.week,
-                }
+            HealInjuredWarrior(
+                HealInjuredWarrior.Context(
+                    warrior=warrior,
+                    week=context.week,
+                )
             )
         )
 

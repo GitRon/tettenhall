@@ -17,10 +17,10 @@ def handle_draft_warrior_from_fyrd(context: DraftWarriorFromFyrd.Context):
     # Update reserve
     Faction.objects.reduce_fyrd_reserve(faction=context.faction, drafted_warriors=1)
 
-    return WarriorRecruited.generator(
-        context_data={
-            "faction": context.faction,
-            "warrior": warrior,
-            "recruitment_price": 0,
-        }
+    return WarriorRecruited(
+        WarriorRecruited.Context(
+            faction=context.faction,
+            warrior=warrior,
+            recruitment_price=0,
+        )
     )

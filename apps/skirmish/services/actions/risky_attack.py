@@ -29,8 +29,10 @@ class RiskyAttackService(SimpleAttackService):
             attack = 0
 
         self.message_list.append(
-            WarriorAttackedWithDamage.generator(
-                {"skirmish": self.context.skirmish, "warrior": self.context.attacker, "damage": attack}
+            WarriorAttackedWithDamage(
+                WarriorAttackedWithDamage.Context(
+                    skirmish=self.context.skirmish, warrior=self.context.attacker, damage=attack
+                )
             )
         )
 

@@ -20,7 +20,7 @@ def handle_offer_quests(context: OfferNewQuestsOnBoard.Context):
         quest = quest_generator.process()
         context.marketplace.available_quests.add(quest)
 
-    return NewQuestsOffered.generator(context_data={"marketplace": context.marketplace, "week": context.week})
+    return NewQuestsOffered(NewQuestsOffered.Context(marketplace=context.marketplace, week=context.week))
 
 
 @message_registry.register_command(command=AcceptQuest)
@@ -30,11 +30,11 @@ def handle_accept_quest(context: AcceptQuest.Context):
     quest_contract = QuestContract.objects.create(quest=context.quest)
     quest_contract.assigned_warriors.set(context.assigned_warriors)
 
-    return QuestAccepted.generator(
-        context_data={
-            "accepting_faction": context.accepting_faction,
-            "quest": context.quest,
-            "quest_contract": quest_contract,
-            "assigned_warriors": context.assigned_warriors,
-        }
+    return QuestAccepted(
+        QuestAccepted.Context(
+            accepting_faction=context.accepting_faction,
+            quest=context.quest,
+            quest_contract=quest_contract,
+            assigned_warriors=context.assigned_warriors,
+        )
     )

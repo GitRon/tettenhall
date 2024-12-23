@@ -15,13 +15,15 @@ def handle_warrior_drops_silver(context: transaction.WarriorDropsSilver.Context)
             faction=context.gaining_faction, amount=amount, reason=f"Looted from {context.warrior}"
         )
 
-        return WarriorDroppedSilver.generator(
-            context_data={
-                "skirmish": context.skirmish,
-                "warrior": context.warrior,
-                "gaining_faction": context.gaining_faction,
-                "amount": amount,
-            }
-        )
+        return [
+            WarriorDroppedSilver(
+                WarriorDroppedSilver.Context(
+                    skirmish=context.skirmish,
+                    warrior=context.warrior,
+                    gaining_faction=context.gaining_faction,
+                    amount=amount,
+                )
+            )
+        ]
 
     return []

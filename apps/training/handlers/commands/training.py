@@ -37,13 +37,13 @@ def handle_replenish_fyrd_reserve(context: TrainWarriors.Context):
             setattr(warrior, attribute_progress_name, 0)
 
             event_list.append(
-                WarriorUpgradedSkill.generator(
-                    context_data={
-                        "warrior": warrior,
-                        "training_category": training_category,
-                        "changed_attribute": attribute,
-                        "week": context.week,
-                    }
+                WarriorUpgradedSkill(
+                    WarriorUpgradedSkill.Context(
+                        warrior=warrior,
+                        training_category=training_category,
+                        changed_attribute=attribute,
+                        week=context.week,
+                    )
                 )
             )
 

@@ -10,11 +10,11 @@ def handle_warriors_with_low_morale_determined(context: FactionWarriorsWithLowMo
     event_list = []
     for warrior in context.warrior_list:
         event_list.append(
-            ReplenishWarriorMorale.generator(
-                context_data={
-                    "warrior": warrior,
-                    "week": context.week,
-                }
+            ReplenishWarriorMorale(
+                ReplenishWarriorMorale.Context(
+                    warrior=warrior,
+                    week=context.week,
+                )
             )
         )
     return event_list

@@ -24,12 +24,12 @@ def handle_replenish_warrior_morale(context: ReplenishWarriorMorale.Context):
     # Update warrior
     Warrior.objects.replenish_current_morale(obj=context.warrior, recovered_morale_points=recovered_morale)
 
-    return WarriorMoraleReplenished.generator(
-        context_data={
-            "warrior": context.warrior,
-            "recovered_morale": recovered_morale,
-            "week": context.week,
-        }
+    return WarriorMoraleReplenished(
+        WarriorMoraleReplenished.Context(
+            warrior=context.warrior,
+            recovered_morale=recovered_morale,
+            week=context.week,
+        )
     )
 
 
@@ -48,12 +48,12 @@ def handle_heal_injured_warrior(context: HealInjuredWarrior.Context):
     # Update warrior
     Warrior.objects.replenish_current_health(obj=context.warrior, healed_points=healed_hp)
 
-    return WarriorHealthHealed.generator(
-        context_data={
-            "warrior": context.warrior,
-            "healed_points": healed_hp,
-            "week": context.week,
-        }
+    return WarriorHealthHealed(
+        WarriorHealthHealed.Context(
+            warrior=context.warrior,
+            healed_points=healed_hp,
+            week=context.week,
+        )
     )
 
 
@@ -66,12 +66,12 @@ def handle_recruit_captured_warrior(context: RecruitCapturedWarrior.Context):
     # Reduce morale
     Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=0.25)
 
-    return WarriorRecruited.generator(
-        context_data={
-            "warrior": context.warrior,
-            "faction": context.faction,
-            "recruitment_price": context.warrior.recruitment_price,
-        }
+    return WarriorRecruited(
+        WarriorRecruited.Context(
+            warrior=context.warrior,
+            faction=context.faction,
+            recruitment_price=context.warrior.recruitment_price,
+        )
     )
 
 
@@ -82,10 +82,10 @@ def handle_enslave_captured_warrior(context: EnslaveCapturedWarrior.Context):
     # Remove from captured warriors
     Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior)
 
-    return WarriorWasSoldIntoSlavery.generator(
-        context_data={
-            "warrior": context.warrior,
-            "selling_faction": context.faction,
-            "price": context.warrior.recruitment_price,
-        }
+    return WarriorWasSoldIntoSlavery(
+        WarriorWasSoldIntoSlavery.Context(
+            warrior=context.warrior,
+            selling_faction=context.faction,
+            price=context.warrior.recruitment_price,
+        )
     )

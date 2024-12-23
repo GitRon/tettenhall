@@ -12,25 +12,25 @@ def handle_warrior_drops_loot(context: item.WarriorDropsLoot.Context):
     # todo refine this logic
     if context.warrior.weapon and bool(random.getrandbits(1)):
         message_list.append(
-            ItemDroppedAsLoot.generator(
-                context_data={
-                    "skirmish": context.skirmish,
-                    "warrior": context.warrior,
-                    "item": context.warrior.weapon,
-                    "new_owner": context.new_owner,
-                }
+            ItemDroppedAsLoot(
+                ItemDroppedAsLoot.Context(
+                    skirmish=context.skirmish,
+                    warrior=context.warrior,
+                    item=context.warrior.weapon,
+                    new_owner=context.new_owner,
+                )
             )
         )
 
     if context.warrior.armor and bool(random.getrandbits(1)):
         message_list.append(
-            ItemDroppedAsLoot.generator(
-                context_data={
-                    "skirmish": context.skirmish,
-                    "warrior": context.warrior,
-                    "item": context.warrior.armor,
-                    "new_owner": context.new_owner,
-                }
+            ItemDroppedAsLoot(
+                ItemDroppedAsLoot.Context(
+                    skirmish=context.skirmish,
+                    warrior=context.warrior,
+                    item=context.warrior.armor,
+                    new_owner=context.new_owner,
+                )
             )
         )
 

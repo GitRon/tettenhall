@@ -40,25 +40,25 @@ def handle_assign_fighter_pairs(context: skirmish.StartDuel.Context) -> list:
         # todo hier stimmt was nicht, der player-warrior hat auch angegriffen
         if not double_warriors:
             message_list.append(
-                FighterPairsMatched.generator(
-                    context_data={
-                        "skirmish": context.skirmish,
-                        "warrior_1": Warrior.objects.get(id=warrior_1),
-                        "warrior_2": Warrior.objects.get(id=warrior_2),
-                        "attack_action_1": attack_action_1,
-                        "attack_action_2": attack_action_2,
-                    }
+                FighterPairsMatched(
+                    FighterPairsMatched.Context(
+                        skirmish=context.skirmish,
+                        warrior_1=Warrior.objects.get(id=warrior_1),
+                        warrior_2=Warrior.objects.get(id=warrior_2),
+                        attack_action_1=attack_action_1,
+                        attack_action_2=attack_action_2,
+                    )
                 )
             )
         else:
             message_list.append(
-                AttackerDefenderDecided.generator(
-                    context_data={
-                        "skirmish": context.skirmish,
-                        "attacker": Warrior.objects.get(id=warrior_1),
-                        "defender": Warrior.objects.get(id=warrior_2),
-                        "attack_action": attack_action_1,
-                    }
+                AttackerDefenderDecided(
+                    AttackerDefenderDecided.Context(
+                        skirmish=context.skirmish,
+                        attacker=Warrior.objects.get(id=warrior_1),
+                        defender=Warrior.objects.get(id=warrior_2),
+                        attack_action=attack_action_1,
+                    )
                 )
             )
 
@@ -78,14 +78,16 @@ def handle_determine_attacker_and_defender(context: skirmish.DetermineAttacker.C
         defender: Warrior = context.warrior_1
         attack_action = context.action_2
 
-    return AttackerDefenderDecided.generator(
-        context_data={
-            "skirmish": context.skirmish,
-            "attacker": attacker,
-            "defender": defender,
-            "attack_action": attack_action,
-        }
-    )
+    return [
+        AttackerDefenderDecided(
+            AttackerDefenderDecided.Context(
+                skirmish=context.skirmish,
+                attacker=attacker,
+                defender=defender,
+                attack_action=attack_action,
+            )
+        )
+    ]
 
 
 @message_registry.register_command(command=skirmish.WarriorAttacksWarriorWithSimpleAttack)
@@ -108,4 +110,4 @@ def handle_warrior_attacks_warrior_with_risky_attack(
 def handle_faction_wins_skirmish(context: skirmish.WinSkirmish.Context):
     Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction)
 
-    return SkirmishFinished.generator(context_data={"skirmish": context.skirmish})
+    return SkirmishFinished(SkirmishFinished.Context(skirmish=context.skirmish))

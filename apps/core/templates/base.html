@@ -77,6 +77,16 @@
             timeout: 1000,
         });
     });
+      document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
+        if (500 <= evt.detail.xhr.status && evt.detail.xhr.status < 600) {
+            UIkit.notification({
+                message: "An error has occured.",
+                status: 'danger',
+                pos: 'bottom-center',
+                timeout: 1000,
+            });
+        }
+    });
 </script>
 </body>
 </html>
