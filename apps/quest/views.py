@@ -31,10 +31,6 @@ class QuestAcceptView(SingleObjectMixin, generic.FormView):
         context["object"] = self.object
         return context
 
-    def get_queryset(self):
-        # Exclude quests that target my faction (can we do this somewhere else? Is this necessary?)
-        return super().get_queryset().exclude(faction=2)
-
     def form_valid(self, form):
         response = super().form_valid(form)
 

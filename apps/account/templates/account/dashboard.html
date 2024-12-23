@@ -7,6 +7,7 @@
         <div>
             {# todo: merge this logic with the active quest #}
             {# todo: finish active quest when winning or losing a battle -> tie battles to quest contract #}
+            {# todo: next round button disabled until all battles are fought? #}
             <button class="uk-button uk-button-primary" hx-post="{% url 'skirmish:skirmish-start-view' %}">
                 Look for trouble
             </button>
