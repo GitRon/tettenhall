@@ -16,5 +16,5 @@ class Marketplace(models.Model):
         verbose_name_plural = "Marketplaces"
         default_related_name = "marketplaces"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.town_name

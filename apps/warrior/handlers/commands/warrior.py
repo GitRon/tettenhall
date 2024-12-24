@@ -1,6 +1,7 @@
 import random
 
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Event
 from apps.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
@@ -14,7 +15,7 @@ from apps.warrior.messages.events.warrior import WarriorHealthHealed, WarriorMor
 
 
 @message_registry.register_command(command=ReplenishWarriorMorale)
-def handle_replenish_warrior_morale(context: ReplenishWarriorMorale.Context):
+def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale.Context) -> list[Event] | Event:
     # Morale is always filled up to the max
     recovered_morale = context.warrior.max_morale - context.warrior.current_morale
 
@@ -34,7 +35,7 @@ def handle_replenish_warrior_morale(context: ReplenishWarriorMorale.Context):
 
 
 @message_registry.register_command(command=HealInjuredWarrior)
-def handle_heal_injured_warrior(context: HealInjuredWarrior.Context):
+def handle_heal_injured_warrior(*, context: HealInjuredWarrior.Context) -> list[Event] | Event:
     max_recoverable_health_points = 10
 
     # Cap healed points at the maximum
@@ -58,7 +59,7 @@ def handle_heal_injured_warrior(context: HealInjuredWarrior.Context):
 
 
 @message_registry.register_command(command=RecruitCapturedWarrior)
-def handle_recruit_captured_warrior(context: RecruitCapturedWarrior.Context):
+def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior.Context) -> list[Event] | Event:
     # Set new faction
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
     # Remove from captured warriors
@@ -76,7 +77,7 @@ def handle_recruit_captured_warrior(context: RecruitCapturedWarrior.Context):
 
 
 @message_registry.register_command(command=EnslaveCapturedWarrior)
-def handle_enslave_captured_warrior(context: EnslaveCapturedWarrior.Context):
+def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior.Context) -> list[Event] | Event:
     # Set new faction
     Warrior.objects.set_faction(obj=context.warrior, faction=None)
     # Remove from captured warriors

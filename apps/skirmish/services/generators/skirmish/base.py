@@ -5,7 +5,7 @@ class BaseSkirmishGenerator:
     warriors_faction_1: list
     warriors_faction_2: list
 
-    def __init__(self, warriors_faction_1: list, warriors_faction_2: list) -> None:
+    def __init__(self, *, warriors_faction_1: list, warriors_faction_2: list) -> None:
         # todo refactor that i can pass a list and generate opponents or just create random opponents
         super().__init__()
 

@@ -1,6 +1,7 @@
 import random
 
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Event
 from apps.item.models.item_type import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.marketplace.messages.commands.item import RestockMarketplaceItems
@@ -8,7 +9,7 @@ from apps.marketplace.messages.events.item import MarketplaceItemsRestocked
 
 
 @message_registry.register_command(command=RestockMarketplaceItems)
-def handle_restock_marketplace_items(context: RestockMarketplaceItems.Context):
+def handle_restock_marketplace_items(*, context: RestockMarketplaceItems.Context) -> list[Event] | Event:
     # Clean up previous stock
     context.marketplace.available_items.all().delete()
 

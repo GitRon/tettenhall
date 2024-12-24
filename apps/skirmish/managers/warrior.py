@@ -7,14 +7,14 @@ class WarriorQuerySet(models.QuerySet):
 
 
 class WarriorManager(manager.Manager):
-    def reduce_current_health(self, obj, damage: int):
+    def reduce_current_health(self, *, obj, damage: int):
         obj.refresh_from_db()
         obj.current_health -= damage
         obj.save(update_fields=("current_health",))
 
         return obj
 
-    def replenish_current_health(self, obj, healed_points: int):
+    def replenish_current_health(self, *, obj, healed_points: int):
         obj.refresh_from_db()
         obj.current_health += healed_points
 
@@ -25,20 +25,20 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def set_condition(self, obj, condition: int):
+    def set_condition(self, *, obj, condition: int):
         obj.condition = condition
         obj.save(update_fields=("condition",))
 
         return obj
 
-    def take_item_away(self, item):
+    def take_item_away(self, *, item):
         """
         Ensure that the given "item" is not being actively used by any warrior
         """
         self.filter(weapon=item).update(weapon=None)
         self.filter(armor=item).update(armor=None)
 
-    def replenish_current_morale(self, obj, recovered_morale_points: int):
+    def replenish_current_morale(self, *, obj, recovered_morale_points: int):
         obj.refresh_from_db()
         obj.current_morale += recovered_morale_points
 
@@ -49,7 +49,7 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def reduce_morale(self, obj, lost_morale: int):
+    def reduce_morale(self, *, obj, lost_morale: int):
         """
         Drop morale to a minimum of zero
         """
@@ -59,7 +59,7 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def reduce_max_morale(self, obj, lost_max_morale_in_percent: float):
+    def reduce_max_morale(self, *, obj, lost_max_morale_in_percent: float):
         """
         Drop max morale to a minimum of zero
         """
@@ -71,7 +71,7 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def increase_morale(self, obj, increased_morale: int):
+    def increase_morale(self, *, obj, increased_morale: int):
         """
         Increase morale to a defined maximum
         """
@@ -84,7 +84,7 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def increase_experience(self, obj, experience: int):
+    def increase_experience(self, *, obj, experience: int):
         """
         Increase experience
         """
@@ -94,7 +94,7 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def get_weekly_salary_for_faction(self, faction) -> int:
+    def get_weekly_salary_for_faction(self, *, faction) -> int:
         """
         Calculate the salary of all warriors working for "faction" not being dead.
         """
@@ -104,7 +104,7 @@ class WarriorManager(manager.Manager):
             .aggregate(amount=Sum("weekly_salary"))["amount"]
         )
 
-    def set_faction(self, obj, faction) -> int:
+    def set_faction(self, *, obj, faction) -> int:
         """
         Set a new faction for the given warrior.
         """

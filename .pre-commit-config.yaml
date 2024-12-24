@@ -25,3 +25,9 @@ repos:
             charts/.*
             |.*\.py
           )$
+
+  - repo: https://github.com/ambient-innovation/boa-restrictor
+    rev: v1.2.1
+    hooks:
+      - id: boa-restrictor
+        args: [ --config=pyproject.toml ]

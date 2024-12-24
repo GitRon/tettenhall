@@ -16,13 +16,13 @@ class DiceNotation:
     sides: int
     modifier: int
 
-    def __init__(self, dice_string: str, modifier: int = 0):
+    def __init__(self, *, dice_string: str, modifier: int = 0):
         match = re.search(r"^(\d+)d(\d+)$", dice_string)
         self.rolls = int(match[1])
         self.sides = int(match[2])
         self.modifier = modifier
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.rolls}d{self.sides}"
 
     @property

@@ -19,5 +19,5 @@ class ItemType(models.Model):
         verbose_name_plural = "Item types"
         default_related_name = "item_types"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.get_function_display()})"

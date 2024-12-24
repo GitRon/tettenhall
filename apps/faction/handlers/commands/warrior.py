@@ -1,4 +1,5 @@
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Event
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.messages.events.warrior import WarriorRecruited
 from apps.faction.models.faction import Faction
@@ -6,7 +7,7 @@ from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)
-def handle_draft_warrior_from_fyrd(context: DraftWarriorFromFyrd.Context):
+def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd.Context) -> list[Event] | Event:
     if context.faction.fyrd_reserve <= 0:
         return None
 

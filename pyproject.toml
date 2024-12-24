@@ -74,6 +74,9 @@ lint.fixable = [
 ]
 lint.unfixable = []
 
+# Allow noqa's from "boa-restrictor" linter
+lint.external = ["PBR"]
+
 exclude = [
     ".bzr",
     ".direnv",
@@ -106,3 +109,17 @@ lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 # Assume Python 3.12.
 target-version = "py312"
+
+[tool.boa-restrictor]
+exclude = [
+    "PBR002",
+]
+
+[tool.boa-restrictor.per-file-excludes]
+"*/admin.py" = [
+    "PBR001",
+]
+"*/views.py" = [
+    "PBR001",
+    "PBR002",
+]

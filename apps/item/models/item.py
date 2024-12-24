@@ -28,7 +28,7 @@ class Item(models.Model):
         verbose_name_plural = "Items"
         default_related_name = "items"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.display_name} ({self.type.base_value}{self.get_modifier_as_string()})"
 
     @property

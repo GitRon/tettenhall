@@ -17,8 +17,8 @@ class MessageRegistry:
         self.command_dict: dict = {}
         self.event_dict: dict = {}
 
-    def register_command(self, command: Command):
-        def decorator(decoratee):
+    def register_command(self, command: Command):  # noqa: PBR001
+        def decorator(decoratee):  # noqa: PBR001
             # Ensure that registered message is of correct type
             if not (issubclass(command, Command)):
                 raise TypeError(
@@ -37,8 +37,8 @@ class MessageRegistry:
 
         return decorator
 
-    def register_event(self, event: Event):
-        def decorator(decoratee):
+    def register_event(self, event: Event):  # noqa: PBR001
+        def decorator(decoratee):  # noqa: PBR001
             # Ensure that registered message is of correct type
             if not (issubclass(event, Event)):
                 raise TypeError(
@@ -57,7 +57,7 @@ class MessageRegistry:
 
         return decorator
 
-    def inject(self, func):
+    def inject(self, func):  # noqa: PBR001
         @wraps(func)
         def decorated(*args, **kwargs):
             new_args = (*args, self.event_dict)

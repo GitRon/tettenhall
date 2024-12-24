@@ -7,7 +7,7 @@ class PlayerWeekLogQuerySet(models.QuerySet):
 
 
 class PlayerWeekLogManager(manager.Manager):
-    def create_record(self, title: str, message: str, week: int):
+    def create_record(self, *, title: str, message: str, week: int):
         return self.create(
             title=title,
             message=message,

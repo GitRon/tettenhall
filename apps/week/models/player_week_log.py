@@ -15,5 +15,5 @@ class PlayerWeekLog(models.Model):
         verbose_name_plural = "Player week logs"
         default_related_name = "player_week_logs"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message

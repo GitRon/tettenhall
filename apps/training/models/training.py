@@ -19,10 +19,10 @@ class Training(models.Model):
         verbose_name_plural = "Trainings"
         default_related_name = "trainings"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.get_category_display()}"
 
-    def get_random_attribute_and_improvement_for_category(self, category: int) -> [str, int]:
+    def get_random_attribute_and_improvement_for_category(self, *, category: int) -> [str, int]:
         """
         Determine which attribute gets improved and by how much.
         """

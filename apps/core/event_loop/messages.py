@@ -13,7 +13,7 @@ class Message:
             raise NotImplementedError
 
     @classmethod
-    def _from_dict_to_dataclass(cls, context_data: dict) -> "Message.Context":
+    def _from_dict_to_dataclass(cls, *, context_data: dict) -> "Message.Context":
         return cls.Context(
             **{
                 key: (context_data[key] if val.default == val.empty else context_data.get(key, val.default))
@@ -21,7 +21,7 @@ class Message:
             }
         )
 
-    def __init__(self, context: "Message.Context"):
+    def __init__(self, context: "Message.Context"):  # noqa: PBR001
         self.uuid = str(uuid.uuid4())
         if type(context) is not self.Context:
             raise RuntimeError(f"Context must be of type {self.__class__.__name__}.Context")

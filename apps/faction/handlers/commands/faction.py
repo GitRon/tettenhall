@@ -3,6 +3,7 @@ import random
 from django.db.models import F
 
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Event
 from apps.faction.messages.commands.faction import (
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
@@ -15,7 +16,7 @@ from apps.warrior.messages.commands.warrior import HealInjuredWarrior
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
-def handle_replenish_fyrd_reserve(context: ReplenishFyrdReserve.Context):
+def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve.Context) -> list[Event] | Event:
     new_recruitees = random.randrange(0, 3)
 
     if new_recruitees == 0:
@@ -34,7 +35,9 @@ def handle_replenish_fyrd_reserve(context: ReplenishFyrdReserve.Context):
 
 
 @message_registry.register_command(command=DetermineWarriorsWithLowMorale)
-def handle_determine_warriors_with_low_morale(context: DetermineWarriorsWithLowMorale.Context):
+def handle_determine_warriors_with_low_morale(
+    *, context: DetermineWarriorsWithLowMorale.Context
+) -> list[Event] | Event:
     warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
 
     return FactionWarriorsWithLowMoraleDetermined(
@@ -47,7 +50,7 @@ def handle_determine_warriors_with_low_morale(context: DetermineWarriorsWithLowM
 
 
 @message_registry.register_command(command=DetermineInjuredWarriors)
-def handle_determine_injured_warriors(context: DetermineInjuredWarriors.Context):
+def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors.Context) -> list[Event] | Event:
     # Get all injured but not dead warriors of "faction"
     warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
         current_health__lt=F("max_health")

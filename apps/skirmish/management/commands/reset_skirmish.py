@@ -7,7 +7,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class Command(BaseCommand):
-    def add_arguments(self, parser):
+    def add_arguments(self, *, parser):
         parser.add_argument("skirmish_id", nargs="+", type=int)
 
     def handle(self, *args, **options):

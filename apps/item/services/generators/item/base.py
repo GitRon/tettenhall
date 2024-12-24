@@ -1,5 +1,7 @@
 import random
 
+from django.db.models import QuerySet
+
 from apps.core.domain.random import DiceNotation
 from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
@@ -13,13 +15,13 @@ class BaseItemGenerator:
     faction: Faction
     function: int
 
-    def __init__(self, faction: Faction | None, item_function: int) -> None:
+    def __init__(self, *, faction: Faction | None, item_function: int) -> None:
         super().__init__()
 
         self.faction = faction
         self.function = item_function
 
-    def _determine_condition(self, modifier: int) -> int:
+    def _determine_condition(self, *, modifier: int) -> int:
         if modifier < self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
             return Item.ConditionChoices.CONDITION_RUSTY
         if self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA <= modifier < self.MODIFIER_ROLLS_MU:
@@ -30,7 +32,7 @@ class BaseItemGenerator:
             return Item.ConditionChoices.CONDITION_SUPERIOR
         raise RuntimeError("Invalid condition")
 
-    def _get_queryset_for_type(self):
+    def _get_queryset_for_type(self) -> QuerySet:
         return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")
 
     def process(self):

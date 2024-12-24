@@ -1,11 +1,12 @@
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Event
 from apps.skirmish.models.warrior import Warrior
 from apps.training.messages.commands.training import TrainWarriors
 from apps.training.messages.events.training import WarriorUpgradedSkill
 
 
 @message_registry.register_command(command=TrainWarriors)
-def handle_replenish_fyrd_reserve(context: TrainWarriors.Context):
+def handle_replenish_fyrd_reserve(*, context: TrainWarriors.Context) -> list[Event] | Event:
     training_category = context.training.category
     warriors_to_train = context.faction.warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
 

@@ -16,5 +16,5 @@ class BattleHistory(models.Model):
         verbose_name_plural = "Battle logs"
         default_related_name = "battle_logs"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message

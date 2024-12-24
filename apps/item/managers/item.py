@@ -7,7 +7,7 @@ class ItemQuerySet(models.QuerySet):
 
 
 class ItemManager(manager.Manager):
-    def update_ownership(self, item, new_owner):
+    def update_ownership(self, *, item, new_owner):
         from apps.skirmish.models.warrior import Warrior
 
         # Reset ownership

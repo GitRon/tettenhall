@@ -32,7 +32,7 @@ class Faction(models.Model):
         verbose_name_plural = "Factions"
         default_related_name = "factions"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def get_all_items(self):

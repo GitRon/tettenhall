@@ -5,7 +5,7 @@ from apps.skirmish.models.warrior import SkirmishAction
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
-def handle_log_warrior_takes_damage(context: warrior.WarriorTookDamage.Context):
+def handle_log_warrior_takes_damage(*, context: warrior.WarriorTookDamage.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.attacker} hits for {context.attacker_damage} damage and {context.defender} defends for "
@@ -14,7 +14,7 @@ def handle_log_warrior_takes_damage(context: warrior.WarriorTookDamage.Context):
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
-def handle_log_warrior_defends_all_damage(context: warrior.WarriorDefendedAllDamage.Context):
+def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.defender} defended {context.attacker_damage} damage from {context.attacker} "
@@ -23,7 +23,7 @@ def handle_log_warrior_defends_all_damage(context: warrior.WarriorDefendedAllDam
 
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
-def handle_log_attacker_defender_decided(context: skirmish.AttackerDefenderDecided.Context):
+def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"Warrior {context.attacker} is the attacker and warrior {context.defender} the defender and chooses "
@@ -32,7 +32,7 @@ def handle_log_attacker_defender_decided(context: skirmish.AttackerDefenderDecid
 
 
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
-def handle_log_warrior_incapacitation(context: warrior.WarriorWasIncapacitated.Context):
+def handle_log_warrior_incapacitation(*, context: warrior.WarriorWasIncapacitated.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of the fight being unconscious.",
@@ -40,7 +40,7 @@ def handle_log_warrior_incapacitation(context: warrior.WarriorWasIncapacitated.C
 
 
 @message_registry.register_event(event=warrior.WarriorWasKilled)
-def handle_log_warrior_death(context: warrior.WarriorWasKilled.Context):
+def handle_log_warrior_death(*, context: warrior.WarriorWasKilled.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of the fight being killed.",
@@ -48,7 +48,7 @@ def handle_log_warrior_death(context: warrior.WarriorWasKilled.Context):
 
 
 @message_registry.register_event(event=skirmish.RoundFinished)
-def handle_log_round_finished(context: skirmish.RoundFinished.Context):
+def handle_log_round_finished(*, context: skirmish.RoundFinished.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"Round {context.skirmish.current_round} finished.",
@@ -56,7 +56,7 @@ def handle_log_round_finished(context: skirmish.RoundFinished.Context):
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_log_skirmish_finished(context: skirmish.SkirmishFinished.Context):
+def handle_log_skirmish_finished(*, context: skirmish.SkirmishFinished.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"Skirmish finished. {context.skirmish.victorious_faction} won.",
@@ -64,7 +64,7 @@ def handle_log_skirmish_finished(context: skirmish.SkirmishFinished.Context):
 
 
 @message_registry.register_event(event=item.ItemDroppedAsLoot)
-def handle_log_item_dropped(context: item.ItemDroppedAsLoot.Context):
+def handle_log_item_dropped(*, context: item.ItemDroppedAsLoot.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} dropped the item '{context.item}'",
@@ -72,7 +72,7 @@ def handle_log_item_dropped(context: item.ItemDroppedAsLoot.Context):
 
 
 @message_registry.register_event(event=warrior.WarriorWasCaptured)
-def handle_warrior_is_captured(context: warrior.WarriorWasCaptured.Context):
+def handle_warrior_is_captured(*, context: warrior.WarriorWasCaptured.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} was captured and arrested.",
@@ -80,7 +80,7 @@ def handle_warrior_is_captured(context: warrior.WarriorWasCaptured.Context):
 
 
 @message_registry.register_event(event=warrior.WarriorGainedMorale)
-def handle_warrior_gains_morale(context: warrior.WarriorGainedMorale.Context):
+def handle_warrior_gains_morale(*, context: warrior.WarriorGainedMorale.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} gained {int(context.gained_morale)} morale.",
@@ -88,7 +88,7 @@ def handle_warrior_gains_morale(context: warrior.WarriorGainedMorale.Context):
 
 
 @message_registry.register_event(event=warrior.WarriorLostMorale)
-def handle_warrior_lost_morale(context: warrior.WarriorLostMorale.Context):
+def handle_warrior_lost_morale(*, context: warrior.WarriorLostMorale.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} lost {int(context.lost_morale)} morale.",
@@ -96,7 +96,7 @@ def handle_warrior_lost_morale(context: warrior.WarriorLostMorale.Context):
 
 
 @message_registry.register_event(event=warrior.WarriorHasFled)
-def handle_warrior_has_fled(context: warrior.WarriorHasFled.Context):
+def handle_warrior_has_fled(*, context: warrior.WarriorHasFled.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of morale and fled the field.",
@@ -104,7 +104,7 @@ def handle_warrior_has_fled(context: warrior.WarriorHasFled.Context):
 
 
 @message_registry.register_event(event=warrior.WarriorGainedExperience)
-def handle_warrior_gained_experience(context: warrior.WarriorGainedExperience.Context):
+def handle_warrior_gained_experience(*, context: warrior.WarriorGainedExperience.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} gained {context.gained_experience} experience.",
@@ -112,7 +112,7 @@ def handle_warrior_gained_experience(context: warrior.WarriorGainedExperience.Co
 
 
 @message_registry.register_event(event=transaction.WarriorDroppedSilver)
-def handle_warrior_dropped_silver(context: transaction.WarriorDroppedSilver.Context):
+def handle_warrior_dropped_silver(*, context: transaction.WarriorDroppedSilver.Context):
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"{context.warrior} dropped {context.amount} silver.",

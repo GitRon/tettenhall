@@ -14,7 +14,7 @@ class SimpleAttackService:
 
     BASE_COMPARE_STRENGTH = 10
 
-    def __init__(self, context: [Command.Context, Event.Context]) -> None:
+    def __init__(self, *, context: [Command.Context, Event.Context]) -> None:
         super().__init__()
 
         self.message_list = []
@@ -47,7 +47,7 @@ class SimpleAttackService:
 
         return defense
 
-    def _deal_damage(self, attack: int, defense: int):
+    def _deal_damage(self, *, attack: int, defense: int):
         damage = max(attack - defense, 0)
 
         if damage > 0:

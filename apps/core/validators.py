@@ -3,7 +3,7 @@ import re
 from django.core.exceptions import ValidationError
 
 
-def dice_notation(value):
+def dice_notation(*, value):
     r"""
     Validates the input to be in the format of "\dd\d", like "2d5".
     """

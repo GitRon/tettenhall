@@ -14,5 +14,5 @@ class QuestContract(models.Model):
         verbose_name_plural = "Quest contracts"
         default_related_name = "quest_contracts"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.quest.name}"

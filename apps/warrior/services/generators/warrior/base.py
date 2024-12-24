@@ -28,7 +28,7 @@ class BaseWarriorGenerator:
     culture: Culture
     faction: Faction
 
-    def __init__(self, culture: Culture, faction: Faction | None) -> None:
+    def __init__(self, *, culture: Culture, faction: Faction | None) -> None:
         self.culture = culture
         self.faction = faction
 

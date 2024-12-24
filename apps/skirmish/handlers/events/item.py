@@ -7,7 +7,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_distribute_loot(context: skirmish.SkirmishFinished.Context):
+def handle_distribute_loot(*, context: skirmish.SkirmishFinished.Context):
     message_list = []
 
     # The winner drops only items from dead warriors, the loser from all dead or incapacitated
@@ -50,7 +50,7 @@ def handle_distribute_loot(context: skirmish.SkirmishFinished.Context):
 
 
 @message_registry.register_event(event=item.ItemDroppedAsLoot)
-def handle_looted_item_changes_ownership(context: item.ItemDroppedAsLoot.Context):
+def handle_looted_item_changes_ownership(*, context: item.ItemDroppedAsLoot.Context):
     # Take item away from previous owner
     Warrior.objects.take_item_away(item=context.item)
 

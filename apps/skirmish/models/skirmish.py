@@ -46,5 +46,5 @@ class Skirmish(models.Model):
         verbose_name_plural = "Skirmishes"
         default_related_name = "skirmishes"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

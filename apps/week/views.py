@@ -1,5 +1,6 @@
 import json
 
+from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.urls import reverse
 from django.views import generic
@@ -24,7 +25,7 @@ from apps.week.models.player_week_log import PlayerWeekLog
 class FinishWeekView(generic.View):
     http_method_names = ("post",)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs) -> HttpResponse:
         # todo increment current week/year in savegame
 
         # todo what needs to happen:
@@ -57,11 +58,11 @@ class PlayerWeekLogListView(generic.ListView):
     model = PlayerWeekLog
     template_name = "player-week-log/components/player_week_log_list.html"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         # todo we have to filter for the save game/faction
         return super().get_queryset()
 
-    def get_context_data(self, *, object_list=None, **kwargs):
+    def get_context_data(self, *, object_list=None, **kwargs) -> dict:
         context = super().get_context_data(object_list=object_list, **kwargs)
         context["faction"] = Faction.objects.get(id=2)
         return context
@@ -71,7 +72,7 @@ class AcknowledgePlayerWeekLogView(generic.DeleteView):
     model = PlayerWeekLog
     http_method_names = ("delete",)
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs) -> HttpResponse:
         # todo add some validation when we have save games
 
         super().delete(request, *args, **kwargs)
@@ -84,5 +85,5 @@ class AcknowledgePlayerWeekLogView(generic.DeleteView):
         )
         return response
 
-    def get_success_url(self):
+    def get_success_url(self) -> None:
         return None

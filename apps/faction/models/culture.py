@@ -10,5 +10,5 @@ class Culture(models.Model):
         verbose_name_plural = "Cultures"
         default_related_name = "cultures"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

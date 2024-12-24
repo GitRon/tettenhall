@@ -72,7 +72,7 @@ class Warrior(models.Model):
         verbose_name_plural = "Warriors"
         default_related_name = "warriors"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     @property
@@ -135,5 +135,5 @@ class SkirmishAction(models.Model):
 
     type = models.PositiveSmallIntegerField("Type", choices=TypeChoices.choices, unique=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.get_type_display()

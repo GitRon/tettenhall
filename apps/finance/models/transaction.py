@@ -17,5 +17,5 @@ class Transaction(models.Model):
         default_related_name = "transaction"
         ordering = ("id",)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.reason} ({self.amount} Silver)"

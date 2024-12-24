@@ -20,5 +20,5 @@ class Quest(models.Model):
         verbose_name_plural = "Quests"
         default_related_name = "quests"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

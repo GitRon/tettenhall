@@ -7,12 +7,12 @@ class SkirmishQuerySet(models.QuerySet):
 
 
 class SkirmishManager(manager.Manager):
-    def increment_round(self, skirmish):
+    def increment_round(self, *, skirmish):
         skirmish.refresh_from_db()
         skirmish.current_round += 1
         return skirmish.save()
 
-    def set_victor(self, skirmish, victorious_faction):
+    def set_victor(self, *, skirmish, victorious_faction):
         skirmish.victorious_faction = victorious_faction
         return skirmish.save()
 

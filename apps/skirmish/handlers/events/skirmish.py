@@ -10,7 +10,7 @@ from apps.skirmish.models.warrior import SkirmishAction, Warrior
 
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
-def handle_attacker_defender_decided(context: skirmish.AttackerDefenderDecided.Context):
+def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided.Context):
     if context.attack_action == SkirmishAction.TypeChoices.SIMPLE_ATTACK:
         # todo move attack type to context
         command = WarriorAttacksWarriorWithSimpleAttack(
@@ -34,7 +34,7 @@ def handle_attacker_defender_decided(context: skirmish.AttackerDefenderDecided.C
 
 
 @message_registry.register_event(event=skirmish.RoundFinished)
-def handle_round_finished(context: skirmish.RoundFinished.Context):
+def handle_round_finished(*, context: skirmish.RoundFinished.Context):
     Skirmish.objects.increment_round(skirmish=context.skirmish)
 
     if not context.skirmish.non_player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():

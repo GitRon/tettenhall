@@ -1,6 +1,7 @@
 import random
 
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Event
 from apps.marketplace.messages.commands.quest import OfferNewQuestsOnBoard
 from apps.marketplace.messages.events.quest import NewQuestsOffered
 from apps.quest.messages.commands.quest import AcceptQuest
@@ -10,7 +11,7 @@ from apps.quest.services.generators.quest import QuestGenerator
 
 
 @message_registry.register_command(command=OfferNewQuestsOnBoard)
-def handle_offer_quests(context: OfferNewQuestsOnBoard.Context):
+def handle_offer_quests(*, context: OfferNewQuestsOnBoard.Context) -> list[Event] | Event:
     # Clean up previous quests
     context.marketplace.available_quests.all().delete()
 
@@ -24,7 +25,7 @@ def handle_offer_quests(context: OfferNewQuestsOnBoard.Context):
 
 
 @message_registry.register_command(command=AcceptQuest)
-def handle_accept_quest(context: AcceptQuest.Context):
+def handle_accept_quest(*, context: AcceptQuest.Context) -> list[Event] | Event:
     # todo: create player week log / other info for user in event "QuestAccepted"?
     quest_contract = QuestContract.objects.create(quest=context.quest)
     quest_contract.assigned_warriors.set(context.assigned_warriors)
