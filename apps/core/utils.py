@@ -1,7 +1,7 @@
 import re
 
 
-def convert_string_based_two_level_dict_to_dict(*, data: dict) -> dict:
+def convert_string_based_two_level_dict_to_dict(data: dict) -> dict:  # noqa: PBR001
     # todo build properly and generic
     new_dict = {}
     for key, value in data.items():
