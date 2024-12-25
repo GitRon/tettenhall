@@ -1,7 +1,7 @@
 from apps.core.domain import message_registry
 from apps.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.skirmish.models.battle_history import BattleHistory
-from apps.skirmish.models.warrior import SkirmishAction
+from apps.skirmish.models.skirmish_action import SkirmishAction
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)

@@ -110,6 +110,22 @@ lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Assume Python 3.12.
 target-version = "py312"
 
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = [
+  # Allow seemingly unused imports
+  "F401",
+]
+
+"**/tests/**/test_*.py" = [
+  # Allow boolean positional params in tests (for assertIs())
+  "FBT003",
+]
+
+"scripts/*.py" = [
+  # Checks for packages that are missing an __init__.py file
+  "INP001",
+]
+
 [tool.boa-restrictor]
 exclude = [
     "PBR002",

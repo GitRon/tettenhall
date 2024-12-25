@@ -6,7 +6,8 @@ from apps.skirmish.messages.commands.skirmish import (
 )
 from apps.skirmish.messages.events import skirmish
 from apps.skirmish.models.skirmish import Skirmish
-from apps.skirmish.models.warrior import SkirmishAction, Warrior
+from apps.skirmish.models.skirmish_action import SkirmishAction
+from apps.skirmish.models.warrior import Warrior
 
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)

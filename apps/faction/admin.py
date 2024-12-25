@@ -1,3 +1,4 @@
+from ambient_toolbox.admin.model_admins.classes import ReadOnlyAdmin
 from django.contrib import admin
 
 from apps.faction.models.culture import Culture
@@ -5,7 +6,7 @@ from apps.faction.models.faction import Faction
 
 
 @admin.register(Culture)
-class CultureAdmin(admin.ModelAdmin):
+class CultureAdmin(ReadOnlyAdmin):
     list_display = ("name", "locale")
 
 

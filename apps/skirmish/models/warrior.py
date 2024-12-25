@@ -126,14 +126,3 @@ class Warrior(models.Model):
     def roll_defense(self):
         item = self.get_armor_or_fallback()
         return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
-
-
-class SkirmishAction(models.Model):
-    class TypeChoices(models.IntegerChoices):
-        SIMPLE_ATTACK = 1, "Simple attack"
-        RISKY_ATTACK = 2, "Risky attack"
-
-    type = models.PositiveSmallIntegerField("Type", choices=TypeChoices.choices, unique=True)
-
-    def __str__(self) -> str:
-        return self.get_type_display()

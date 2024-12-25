@@ -9,8 +9,8 @@ from apps.skirmish.services.actions.simple_attack import SimpleAttackService
 class RiskyAttackService(SimpleAttackService):
     context: WarriorAttacksWarriorWithRiskyAttack.Context
 
-    def __init__(self, context: [Command.Context, Event.Context]) -> None:
-        super().__init__(context)
+    def __init__(self, *, context: [Command.Context, Event.Context]) -> None:
+        super().__init__(context=context)
 
         self.message_list = []
 

@@ -2,7 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout
 from django import forms
 
-from apps.skirmish.models.warrior import SkirmishAction
+from apps.skirmish.models.skirmish_action import SkirmishAction
 
 
 class SkirmishWarriorRoundActionForm(forms.Form):

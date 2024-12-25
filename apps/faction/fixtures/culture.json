@@ -1,0 +1,42 @@
+[
+  {
+    "model": "faction.culture",
+    "pk": 1,
+    "fields": {
+      "name": "Norse",
+      "locale": "no_NO"
+    }
+  },
+  {
+    "model": "faction.culture",
+    "pk": 2,
+    "fields": {
+      "name": "Danish",
+      "locale": "da_DK"
+    }
+  },
+  {
+    "model": "faction.culture",
+    "pk": 3,
+    "fields": {
+      "name": "Saxon",
+      "locale": "en_UK"
+    }
+  },
+  {
+    "model": "faction.culture",
+    "pk": 4,
+    "fields": {
+      "name": "Frisian",
+      "locale": "nl_NL"
+    }
+  },
+  {
+    "model": "faction.culture",
+    "pk": 5,
+    "fields": {
+      "name": "Irish",
+      "locale": "ga_IE"
+    }
+  }
+]

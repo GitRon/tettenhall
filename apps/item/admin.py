@@ -1,3 +1,4 @@
+from ambient_toolbox.admin.model_admins.classes import ReadOnlyAdmin
 from django.contrib import admin
 
 from apps.item.models.item import Item
@@ -5,7 +6,7 @@ from apps.item.models.item_type import ItemType
 
 
 @admin.register(ItemType)
-class ItemTypeAdmin(admin.ModelAdmin):
+class ItemTypeAdmin(ReadOnlyAdmin):
     list_display = ("name", "base_value", "function", "svg_image_name", "is_fallback")
 
 

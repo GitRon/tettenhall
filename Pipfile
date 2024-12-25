@@ -4,9 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-Django = "==4.2.*"
-django-crispy-forms = "==2.3.*"
-faker = "==33.*"
+Django = "~=4.2"
+ambient-toolbox = "~=11.6"
+django-crispy-forms = "~=2.3"
+faker = "~=33.1"
 
 [dev-packages]
 

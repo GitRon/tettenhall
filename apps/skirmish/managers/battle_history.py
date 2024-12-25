@@ -7,7 +7,7 @@ class BattleHistoryQuerySet(models.QuerySet):
 
 
 class BattleHistoryManager(manager.Manager):
-    def create_record(self, skirmish, message):
+    def create_record(self, *, skirmish, message):
         return self.create(
             skirmish=skirmish,
             message=message,

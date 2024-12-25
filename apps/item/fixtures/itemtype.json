@@ -1,0 +1,90 @@
+[
+  {
+    "model": "item.itemtype",
+    "pk": 1,
+    "fields": {
+      "name": "Short sword",
+      "function": 1,
+      "base_value": "2d3",
+      "svg_image_name": "gladius",
+      "is_fallback": false
+    }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 2,
+    "fields": {
+      "name": "Studded leather",
+      "function": 2,
+      "base_value": "2d3",
+      "svg_image_name": "leather-vest",
+      "is_fallback": false
+    }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 3,
+    "fields": {
+      "name": "Chain mail",
+      "function": 2,
+      "base_value": "3d4",
+      "svg_image_name": "chain-mail",
+      "is_fallback": false
+    }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 4,
+    "fields": {
+      "name": "Unarmed",
+      "function": 1,
+      "base_value": "1d3",
+      "svg_image_name": "fist",
+      "is_fallback": true
+    }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 5,
+    "fields": {
+      "name": "Unarmoured",
+      "function": 2,
+      "base_value": "1d2",
+      "svg_image_name": "broken-shield",
+      "is_fallback": true
+    }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 6,
+    "fields": {
+      "name": "Pitchfork",
+      "function": 1,
+      "base_value": "1d4",
+      "svg_image_name": "pitchfork",
+      "is_fallback": false
+    }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 7,
+    "fields": {
+      "name": "Battle axe",
+      "function": 1,
+      "base_value": "3d5",
+      "svg_image_name": "battle-axe",
+      "is_fallback": false
+    }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 8,
+    "fields": {
+      "name": "Spear",
+      "function": 1,
+      "base_value": "3d2",
+      "svg_image_name": "spear-feather",
+      "is_fallback": false
+    }
+  }
+]
