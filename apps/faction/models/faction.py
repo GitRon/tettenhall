@@ -13,7 +13,7 @@ class Faction(models.Model):
     active_quest = models.ForeignKey(
         "quest.QuestContract",
         verbose_name="Active Quest",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         help_text="There can only be one active quest at a time.",

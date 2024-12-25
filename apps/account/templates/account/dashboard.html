@@ -5,17 +5,22 @@
 
     <div uk-grid>
         <div>
-            {# todo: merge this logic with the active quest #}
-            {# todo: finish active quest when winning or losing a battle -> tie battles to quest contract #}
-            {# todo: next round button disabled until all battles are fought? #}
-            <button class="uk-button uk-button-primary" hx-post="{% url 'skirmish:skirmish-start-view' %}">
-                Look for trouble
-            </button>
+            {# TODO: merge this logic with the active quest #}
+            {# TODO: finish active quest when winning or losing a battle -> tie battles to quest contract #}
+            {# TODO: next round button disabled until all battles are fought? #}
         </div>
     </div>
 
     {% if faction.active_quest %}
-        <div uk-alert><strong>Active quest:</strong> {{ faction.active_quest }}</div>
+        <div uk-alert>
+            <div>
+                <strong>Active quest:</strong> {{ faction.active_quest }}
+            {# TODO: we need to set the newly created skirmish in the quest contract object #}
+{# <a class="uk-button uk-button-primary" href="{% url 'skirmish:skirmish-fight-view' faction.active_quest.skirmish %}"> #}
+{# Fight skirmish #}
+{# </a> #}
+            </div>
+        </div>
     {% endif %}
 
     {% include 'player-week-log/components/player_week_log_list.html' with object_list=player_week_logs faction=faction %}

@@ -5,6 +5,12 @@ from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
 
+class SkirmishCreated(Event):
+    @dataclass(kw_only=True)
+    class Context:
+        skirmish: Skirmish
+
+
 class FighterPairsMatched(Event):
     @dataclass(kw_only=True)
     class Context:

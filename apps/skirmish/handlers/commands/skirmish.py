@@ -3,11 +3,32 @@ import random
 from apps.core.domain import message_registry
 from apps.core.event_loop.messages import Event
 from apps.skirmish.messages.commands import skirmish
-from apps.skirmish.messages.events.skirmish import AttackerDefenderDecided, FighterPairsMatched, SkirmishFinished
+from apps.skirmish.messages.events.skirmish import (
+    AttackerDefenderDecided,
+    FighterPairsMatched,
+    SkirmishCreated,
+    SkirmishFinished,
+)
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.services.actions.risky_attack import RiskyAttackService
 from apps.skirmish.services.actions.simple_attack import SimpleAttackService
+from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
+
+
+@message_registry.register_command(command=skirmish.CreateSkirmish)
+def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[Event] | Event:
+    skirmish_generator = BaseSkirmishGenerator(
+        warriors_faction_1=context.warrior_list_1,
+        warriors_faction_2=context.warrior_list_2,
+    )
+    new_skirmish = skirmish_generator.process()
+
+    return SkirmishCreated(
+        context=SkirmishCreated.Context(
+            skirmish=new_skirmish,
+        )
+    )
 
 
 @message_registry.register_command(command=skirmish.StartDuel)

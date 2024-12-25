@@ -26,14 +26,13 @@ def handle_offer_quests(*, context: OfferNewQuestsOnBoard.Context) -> list[Event
 
 @message_registry.register_command(command=AcceptQuest)
 def handle_accept_quest(*, context: AcceptQuest.Context) -> list[Event] | Event:
-    quest_contract = QuestContract.objects.create(quest=context.quest)
-    quest_contract.assigned_warriors.set(context.assigned_warriors)
+    quest_contract = QuestContract.objects.create(faction=context.accepting_faction, quest=context.quest)
+    quest_contract.assigned_warriors.add(*context.assigned_warriors)
 
     return QuestAccepted(
         QuestAccepted.Context(
             accepting_faction=context.accepting_faction,
             quest=context.quest,
             quest_contract=quest_contract,
-            assigned_warriors=context.assigned_warriors,
         )
     )

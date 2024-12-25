@@ -1,9 +1,20 @@
 from dataclasses import dataclass
 
+from django.db.models import QuerySet
+
 from apps.core.event_loop.messages import Command
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
+
+
+class CreateSkirmish(Command):
+    @dataclass(kw_only=True)
+    class Context:
+        faction_1: Faction
+        faction_2: Faction
+        warrior_list_1: QuerySet[Warrior] | list[Warrior]
+        warrior_list_2: QuerySet[Warrior] | list[Warrior]
 
 
 class StartDuel(Command):

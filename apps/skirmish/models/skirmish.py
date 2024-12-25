@@ -38,14 +38,6 @@ class Skirmish(models.Model):
         verbose_name="Non-player warriors",
         related_name="non_player_skirmishes",
     )
-    quest_contract = models.ForeignKey(
-        "quest.QuestContract",
-        verbose_name="Quest contract",
-        related_name="skirmishes",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
 
     objects = SkirmishManager()
 

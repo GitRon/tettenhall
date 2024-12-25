@@ -12,7 +12,7 @@ class Quest(models.Model):
 
     name = models.CharField("Name", max_length=50)
     # TODO: think about rename to "target_faction"
-    faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
+    faction = models.ForeignKey(Faction, verbose_name="Target faction", on_delete=models.CASCADE)
     difficulty = models.PositiveSmallIntegerField("Difficulty", choices=DifficultyChoices.choices)
 
     class Meta:

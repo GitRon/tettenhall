@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 Django = "~=4.2"
 ambient-toolbox = "~=11.6"
-django-crispy-forms = "~=2.3"
+django-crispy-forms = "~=1.14"
 faker = "~=33.1"
 
 [dev-packages]
