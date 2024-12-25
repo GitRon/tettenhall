@@ -26,7 +26,6 @@ def handle_offer_quests(*, context: OfferNewQuestsOnBoard.Context) -> list[Event
 
 @message_registry.register_command(command=AcceptQuest)
 def handle_accept_quest(*, context: AcceptQuest.Context) -> list[Event] | Event:
-    # todo: create player week log / other info for user in event "QuestAccepted"?
     quest_contract = QuestContract.objects.create(quest=context.quest)
     quest_contract.assigned_warriors.set(context.assigned_warriors)
 

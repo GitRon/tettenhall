@@ -10,7 +10,7 @@ from apps.skirmish.messages.events.item import ItemDroppedAsLoot
 def handle_warrior_drops_loot(*, context: item.WarriorDropsLoot.Context) -> list[Event] | Event:
     message_list = []
     # 50% chance that weapon or armor is dropped
-    # todo refine this logic
+    # TODO: refine this logic
     if context.warrior.weapon and bool(random.getrandbits(1)):
         message_list.append(
             ItemDroppedAsLoot(

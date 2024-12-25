@@ -41,7 +41,7 @@ def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDam
     )
 
     # Update condition
-    # todo move to "reduce_current_health"
+    # TODO: move to "reduce_current_health"
     if context.defender.current_health <= 0:
         if context.defender.current_health < context.defender.max_health * -0.15:
             condition = Warrior.ConditionChoices.CONDITION_DEAD

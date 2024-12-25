@@ -4,14 +4,14 @@ from apps.faction.models.faction import Faction
 
 
 class Quest(models.Model):
-    # todo duration
+    # TODO: duration
 
     class DifficultyChoices(models.IntegerChoices):
         DIFFICULTY_EASY = 1, "Easy"
         DIFFICULTY_HARD = 2, "Hard"
 
     name = models.CharField("Name", max_length=50)
-    # todo: think about rename to "target_faction"
+    # TODO: think about rename to "target_faction"
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
     difficulty = models.PositiveSmallIntegerField("Difficulty", choices=DifficultyChoices.choices)
 

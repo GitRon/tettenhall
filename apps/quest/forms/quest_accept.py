@@ -35,4 +35,4 @@ class QuestAcceptForm(forms.ModelForm):
         self.fields["quest"].initial = quest_qs.first()
         self.fields["quest"].widget = forms.HiddenInput()
 
-        self.fields["assigned_warriors"].queryset = Warrior.objects.filter(faction=2)  # todo: exclude "busy" warriors
+        self.fields["assigned_warriors"].queryset = Warrior.objects.filter(faction=2)  # TODO: exclude "busy" warriors

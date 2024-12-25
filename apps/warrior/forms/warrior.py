@@ -17,7 +17,7 @@ class WarriorForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         # Ensure that only allowed fields can be rendered
-        # todo would be nicer to replace the original fields
+        # TODO: would be nicer to replace the original fields
         htmx_field = kwargs.pop("htmx_field", None)
         htmx_field = htmx_field if htmx_field in self.Meta.fields else None
 

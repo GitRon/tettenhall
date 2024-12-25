@@ -49,6 +49,7 @@ class SkirmishStartView(generic.View):
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs):
+        # TODO: move this to create skirmish command and here only load skirmish by id
         faction = Faction.objects.get(id=1)
         warrior_generator = MercenaryWarriorGenerator(faction=faction, culture=faction.culture)
         skirmish_generator = BaseSkirmishGenerator(
@@ -67,11 +68,11 @@ class SkirmishFinishRoundView(generic.DetailView):
     http_method_names = ("post",)
     object = None
 
-    # todo fixme use formset/something different
+    # TODO: fixme use formset/something different
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        # todo datenübergabe sauberer gestalten
+        # TODO: datenübergabe sauberer gestalten
         converted_data = convert_string_based_two_level_dict_to_dict(request.POST)
 
         # Start duel
@@ -138,7 +139,7 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         else:
             context["object_list"] = skirmish.non_player_warriors.all()
         context["is_player"] = skirmish.player_faction == faction
-        # todo encapsulate properly as htmx snippet so we don't have this twice
+        # TODO: encapsulate properly as htmx snippet so we don't have this twice
         context["skirmish_action_form"] = {}
         for player_warrior in skirmish.player_warriors.all():
             context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(

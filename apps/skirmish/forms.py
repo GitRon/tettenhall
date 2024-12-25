@@ -11,7 +11,7 @@ class SkirmishWarriorRoundActionForm(forms.Form):
         warrior_id = kwargs.pop("warrior_id", None)
 
         field_name = f"warrior-fight-action[{faction_id}][{warrior_id}]"
-        # todo die daten muss ich per parser noch verarbeiten, aber wie?
+        # TODO: die daten muss ich per parser noch verarbeiten, aber wie?
 
         self.helper = FormHelper()
         self.helper.form_method = "post"

@@ -26,17 +26,18 @@ class FinishWeekView(generic.View):
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs) -> HttpResponse:
-        # todo increment current week/year in savegame
+        # TODO: increment current week/year in savegame
 
-        # todo what needs to happen:
+        # TODO: what needs to happen:
         #  - start quests / skirmishes?
         marketplace = Marketplace.objects.all().first()
-        # todo take faction from savegame
+        # TODO: take faction from savegame
         faction = Faction.objects.get(id=2)
         handle_message(
             [
-                # todo take week from save game
-                # todo brauch ich hier unbedingt die woche? ich könnte ja einfach am ende der runde alle alten schließen
+                # TODO: take week from save game
+                # TODO: brauch ich hier unbedingt die woche? ich könnte ja einfach am ende der runde alle alten
+                #  schließen
                 RestockMarketplaceItems(RestockMarketplaceItems.Context(marketplace=marketplace, week=1)),
                 RestockPubMercenaries(RestockPubMercenaries.Context(marketplace=marketplace, week=1)),
                 OfferNewQuestsOnBoard(OfferNewQuestsOnBoard.Context(marketplace=marketplace, week=1)),
@@ -44,7 +45,7 @@ class FinishWeekView(generic.View):
                 PayWeeklyWarriorSalaries(PayWeeklyWarriorSalaries.Context(faction=faction, week=1)),
                 DetermineWarriorsWithLowMorale(DetermineWarriorsWithLowMorale.Context(faction=faction, week=1)),
                 DetermineInjuredWarriors(DetermineInjuredWarriors.Context(faction=faction, week=1)),
-                # todo have a proper training QS (not here as well)
+                # TODO: have a proper training QS (not here as well)
                 TrainWarriors(TrainWarriors.Context(faction=faction, training=Training.objects.all().first(), week=1)),
             ]
         )
@@ -59,7 +60,7 @@ class PlayerWeekLogListView(generic.ListView):
     template_name = "player-week-log/components/player_week_log_list.html"
 
     def get_queryset(self) -> QuerySet:
-        # todo we have to filter for the save game/faction
+        # TODO: we have to filter for the save game/faction
         return super().get_queryset()
 
     def get_context_data(self, *, object_list=None, **kwargs) -> dict:
@@ -73,7 +74,7 @@ class AcknowledgePlayerWeekLogView(generic.DeleteView):
     http_method_names = ("delete",)
 
     def delete(self, request, *args, **kwargs) -> HttpResponse:
-        # todo add some validation when we have save games
+        # TODO: add some validation when we have save games
 
         super().delete(request, *args, **kwargs)
 

@@ -12,10 +12,10 @@ class TrainingListView(generic.ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
-        # todo static player faction
+        # TODO: static player faction
         context["faction"] = Faction.objects.get(id=2)
 
-        # todo get training properly
+        # TODO: get training properly
         context["current_training"] = Training.objects.all().first()
         return context
 

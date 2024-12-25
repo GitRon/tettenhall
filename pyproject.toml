@@ -12,6 +12,7 @@ lint.select = [
     "DJ",      # flake8-django
     "LOG",     # flake8-logging
     "TID",     # flake8-tidy-imports
+    "TD",      # flake8-to-do
     "Q",       # flake8-quotes
     "RET",     # flake8-return
     "RSE",     # flake8-raise
@@ -39,6 +40,8 @@ lint.ignore = [
     'ERA001',   # Found commented-out code
     'PERF401',  # Use a list comprehension to create a transformed list
     'SIM108',   # Use ternary operator
+    'TD002',    # Missing author in To-do
+    'TD003',    # Missing issue link on the line following this To-do
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
@@ -54,6 +57,7 @@ lint.fixable = [
     "DJ",      # flake8-django
     "LOG",     # flake8-logging
     "TID",     # flake8-tidy-imports
+    "TD",      # flake8-to-do
     "Q",       # flake8-quotes
     "RET",     # flake8-return
     "RSE",     # flake8-raise

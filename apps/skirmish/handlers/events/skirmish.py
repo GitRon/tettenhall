@@ -13,7 +13,7 @@ from apps.skirmish.models.warrior import Warrior
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
 def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided.Context):
     if context.attack_action == SkirmishAction.TypeChoices.SIMPLE_ATTACK:
-        # todo move attack type to context
+        # TODO: move attack type to context
         command = WarriorAttacksWarriorWithSimpleAttack(
             WarriorAttacksWarriorWithSimpleAttack.Context(
                 skirmish=context.skirmish,

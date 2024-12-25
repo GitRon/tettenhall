@@ -29,12 +29,12 @@ def handle_command(command: Command, queue: list[Message]):  # noqa: PBR001
     handler_list = message_registry.command_dict.get(command.__class__, list())  # noqa: C408
     for handler in handler_list:
         try:
-            # todo warum ist der rückgabewert hier wichtig?
-            # todo logger bauen, den man über das django logging in den settings konfigurieren kann
+            # TODO: warum ist der rückgabewert hier wichtig?
+            # TODO: logger bauen, den man über das django logging in den settings konfigurieren kann
             #  context, request-datum, user etc.
             print(f"Handling command '{command.__class__.__name__}' ({command.uuid}) with handler '{handler.__name__}'")
             if handler:
-                # todo das sollte um das ganze handle_message
+                # TODO: das sollte um das ganze handle_message
                 with transaction.atomic():
                     new_messages = handler(context=command.Context) or []
                     new_messages = new_messages if isinstance(new_messages, list) else [new_messages]
