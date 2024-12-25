@@ -3,22 +3,16 @@
 {% block content %}
     <h1>Dashboard</h1>
 
-    <div uk-grid>
-        <div>
-            {# TODO: merge this logic with the active quest #}
-            {# TODO: finish active quest when winning or losing a battle -> tie battles to quest contract #}
-            {# TODO: next round button disabled until all battles are fought? #}
-        </div>
-    </div>
-
-    {% if faction.active_quest %}
+    {# TODO: next round button disabled until all battles are fought? #}
+    {# TODO: finish active quest when winning or losing a battle #}
+    {% if faction.active_quest and faction.active_quest.skirmish %}
         <div uk-alert>
             <div>
                 <strong>Active quest:</strong> {{ faction.active_quest }}
-            {# TODO: we need to set the newly created skirmish in the quest contract object #}
-{# <a class="uk-button uk-button-primary" href="{% url 'skirmish:skirmish-fight-view' faction.active_quest.skirmish %}"> #}
-{# Fight skirmish #}
-{# </a> #}
+                <a class="uk-button uk-button-primary"
+                   href="{% url 'skirmish:skirmish-fight-view' faction.active_quest.skirmish.id %}">
+                    Fight skirmish
+                </a>
             </div>
         </div>
     {% endif %}

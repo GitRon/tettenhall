@@ -19,6 +19,7 @@ from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerato
 @message_registry.register_command(command=skirmish.CreateSkirmish)
 def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[Event] | Event:
     skirmish_generator = BaseSkirmishGenerator(
+        name=context.name,
         warriors_faction_1=context.warrior_list_1,
         warriors_faction_2=context.warrior_list_2,
     )
@@ -27,6 +28,7 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[
     return SkirmishCreated(
         context=SkirmishCreated.Context(
             skirmish=new_skirmish,
+            quest_contract=context.quest_contract,
         )
     )
 

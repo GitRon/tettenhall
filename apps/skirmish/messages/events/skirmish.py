@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from apps.core.event_loop.messages import Event
+from apps.quest.models import QuestContract
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -9,6 +10,7 @@ class SkirmishCreated(Event):
     @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
+        quest_contract: QuestContract = None
 
 
 class FighterPairsMatched(Event):
