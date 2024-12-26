@@ -6,12 +6,13 @@ from apps.skirmish.models.warrior import Warrior
 
 
 class QuestContract(models.Model):
-    faction = models.ForeignKey(Faction, on_delete=models.CASCADE)
+    faction = models.ForeignKey(Faction, on_delete=models.CASCADE, help_text="Faction who signed up for the quest.")
     quest = models.ForeignKey(Quest, verbose_name="Quest", on_delete=models.CASCADE)
     assigned_warriors = models.ManyToManyField(Warrior, verbose_name="Assigned warriors")
-    skirmish = models.ForeignKey(
+    skirmish = models.OneToOneField(
         "skirmish.Skirmish",
         verbose_name="Related Skirmish",
+        related_name="quest_contract",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

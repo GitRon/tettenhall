@@ -3,7 +3,8 @@ from django.db.models import Sum, manager
 
 
 class WarriorQuerySet(models.QuerySet):
-    pass
+    def filter_healthy(self):
+        return self.filter(condition=self.model.ConditionChoices.CONDITION_HEALTHY)
 
 
 class WarriorManager(manager.Manager):

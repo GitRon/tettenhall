@@ -1,1 +1,2 @@
-<span class="uk-text-lead">{{ title }}</span>
+{# todo: warrior_list var is not very generic #}
+<span class="uk-text-lead">{{ title }} {% if warrior_list %}({{ warrior_list|length }}){% endif %}</span>

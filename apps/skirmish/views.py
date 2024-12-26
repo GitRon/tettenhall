@@ -49,7 +49,7 @@ class SkirmishFinishRoundView(generic.DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        # TODO: datenübergabe sauberer gestalten
+        # TODO: improve data handover
         converted_data = convert_string_based_two_level_dict_to_dict(request.POST)
 
         # Start duel

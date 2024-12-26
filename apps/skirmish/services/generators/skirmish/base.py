@@ -7,7 +7,6 @@ class BaseSkirmishGenerator:
     warriors_faction_2: list
 
     def __init__(self, *, name: str, warriors_faction_1: list, warriors_faction_2: list) -> None:
-        # TODO: refactor that i can pass a list and generate opponents or just create random opponents
         super().__init__()
 
         self.name = name
@@ -17,8 +16,8 @@ class BaseSkirmishGenerator:
     def process(self):
         skirmish = Skirmish.objects.create(
             name=self.name,
-            player_faction_id=2,
-            non_player_faction_id=1,
+            player_faction_id=self.warriors_faction_1[0].faction.id,
+            non_player_faction_id=self.warriors_faction_2[0].faction.id,
         )
 
         skirmish.player_warriors.add(*self.warriors_faction_1)

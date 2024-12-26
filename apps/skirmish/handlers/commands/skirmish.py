@@ -91,6 +91,10 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
 
 @message_registry.register_command(command=skirmish.DetermineAttacker)
 def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacker.Context) -> list[Event] | Event:
+    # TODO: bug: 2 warriors, the weak one is faster
+    #  -> it never ends because strong warrior never is able to hit but other one never makes damage
+    #  -> thous dexterity seems to be imba
+
     random_value = random.random()
 
     if context.warrior_1.dexterity / (context.warrior_1.dexterity + context.warrior_2.dexterity) > random_value:
