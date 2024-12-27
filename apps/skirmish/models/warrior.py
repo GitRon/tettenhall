@@ -80,23 +80,23 @@ class Warrior(models.Model):
         return f"img/warrior/avatars/avatar_{self.avatar_id}.jpg"
 
     @property
-    def is_dead(self):
+    def is_dead(self) -> bool:
         return self.condition == self.ConditionChoices.CONDITION_DEAD
 
     @property
-    def is_unconscious(self):
+    def is_unconscious(self) -> bool:
         return self.condition == self.ConditionChoices.CONDITION_UNCONSCIOUS
 
     @property
-    def is_fleeing(self):
+    def is_fleeing(self) -> bool:
         return self.condition == self.ConditionChoices.CONDITION_FLEEING
 
     @property
-    def is_healthy(self):
+    def is_healthy(self) -> bool:
         return self.condition == self.ConditionChoices.CONDITION_HEALTHY
 
     @property
-    def slavery_selling_price(self):
+    def slavery_selling_price(self) -> int:
         return int(self.recruitment_price / 2)
 
     def get_weapon_or_fallback(self) -> Item:
@@ -119,10 +119,10 @@ class Warrior(models.Model):
             )
         )
 
-    def roll_attack(self):
+    def roll_attack(self) -> int:
         item = self.get_weapon_or_fallback()
         return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
 
-    def roll_defense(self):
+    def roll_defense(self) -> int:
         item = self.get_armor_or_fallback()
         return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result

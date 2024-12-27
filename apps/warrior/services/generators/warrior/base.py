@@ -32,7 +32,7 @@ class BaseWarriorGenerator:
         self.culture = culture
         self.faction = faction
 
-    def process(self):
+    def process(self) -> Warrior:
         faker = Faker([self.culture.locale])
 
         experience = 0

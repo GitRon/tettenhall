@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Savegames</h1>
+
+    {% if current_savegame %}
+        <div uk-grid>
+            <div class="uk-width-2-3">
+                <div class="uk-alert-primary" uk-alert>
+                    Current savegame: <strong>{{ current_savegame.name }}</strong>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div uk-grid>
+        <div class="uk-width-2-3">
+            <table class="uk-table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Created by</th>
+                    <th>Created at</th>
+                    <th>Last saved at</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for savegame in object_list %}
+                    <tr>
+                        <td>{{ savegame.name }}</td>
+                        <td>{{ savegame.created_by.get_full_name }}</td>
+                        <td>{{ savegame.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
+                        <td>{# todo: load savegame #}load me</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock content %}

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.item",
     "apps.marketplace",
     "apps.quest",
+    "apps.savegame",
     "apps.skirmish",
     "apps.training",
     "apps.warrior",

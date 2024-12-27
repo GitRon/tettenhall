@@ -35,7 +35,7 @@ class FinishWeekView(generic.View):
         faction = Faction.objects.get(id=2)
         handle_message(
             [
-                # TODO: take week from save game
+                # TODO: take current week from save game
                 # TODO: brauch ich hier unbedingt die woche? ich könnte ja einfach am ende der runde alle alten
                 #  schließen
                 RestockMarketplaceItems(RestockMarketplaceItems.Context(marketplace=marketplace, week=1)),

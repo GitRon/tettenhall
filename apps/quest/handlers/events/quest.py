@@ -1,13 +1,14 @@
 import random
 
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Command
 from apps.quest.messages.events import quest
 from apps.skirmish.messages.commands.skirmish import CreateSkirmish
 from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
 @message_registry.register_event(event=quest.QuestAccepted)
-def handle_create_skirmish_for_quest_contract(*, context: quest.QuestAccepted.Context):
+def handle_create_skirmish_for_quest_contract(*, context: quest.QuestAccepted.Context) -> list[Command] | Command:
     accepting_faction = context.accepting_faction
     target_faction = context.quest.target_faction
     # TODO: all those warriors are naked... we need to give them equipment

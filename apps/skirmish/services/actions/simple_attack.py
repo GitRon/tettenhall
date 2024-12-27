@@ -20,7 +20,7 @@ class SimpleAttackService:
         self.message_list = []
         self.context = context
 
-    def _get_attack_value(self):
+    def _get_attack_value(self) -> int:
         # Attack will be at 100% for strength 10, otherwise less or greater
         attack = int(
             round(self.context.attacker.roll_attack() * self.context.attacker.strength / self.BASE_COMPARE_STRENGTH)
@@ -35,7 +35,7 @@ class SimpleAttackService:
 
         return attack
 
-    def _get_defense_value(self):
+    def _get_defense_value(self) -> int:
         defense = self.context.defender.roll_defense()
         self.message_list.append(
             WarriorDefendedDamage(
@@ -47,7 +47,7 @@ class SimpleAttackService:
 
         return defense
 
-    def _deal_damage(self, *, attack: int, defense: int):
+    def _deal_damage(self, *, attack: int, defense: int) -> int:
         damage = max(attack - defense, 0)
 
         if damage > 0:
@@ -78,7 +78,7 @@ class SimpleAttackService:
 
         return damage
 
-    def process(self):
+    def process(self) -> list[Event]:
         attack = self._get_attack_value()
         defense = self._get_defense_value()
         self._deal_damage(attack=attack, defense=defense)

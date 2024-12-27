@@ -4,5 +4,5 @@ register = template.Library()
 
 
 @register.filter
-def lookup(d, key):  # noqa: PBR001
+def lookup(d, key):  # noqa: PBR001, PBR002
     return d[key]

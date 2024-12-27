@@ -17,8 +17,8 @@ class MessageRegistry:
         self.command_dict: dict = {}
         self.event_dict: dict = {}
 
-    def register_command(self, command: Command):  # noqa: PBR001
-        def decorator(decoratee):  # noqa: PBR001
+    def register_command(self, command: Command):  # noqa: PBR001, PBR002
+        def decorator(decoratee):  # noqa: PBR001, PBR002
             # Ensure that registered message is of correct type
             if not (issubclass(command, Command)):
                 raise TypeError(
@@ -37,8 +37,8 @@ class MessageRegistry:
 
         return decorator
 
-    def register_event(self, event: Event):  # noqa: PBR001
-        def decorator(decoratee):  # noqa: PBR001
+    def register_event(self, event: Event):  # noqa: PBR001, PBR002
+        def decorator(decoratee):  # noqa: PBR001, PBR002
             # Ensure that registered message is of correct type
             if not (issubclass(event, Event)):
                 raise TypeError(
@@ -57,15 +57,15 @@ class MessageRegistry:
 
         return decorator
 
-    def inject(self, func):  # noqa: PBR001
+    def inject(self, func):  # noqa: PBR001, PBR002
         @wraps(func)
-        def decorated(*args, **kwargs):
+        def decorated(*args, **kwargs):  # noqa: PBR002
             new_args = (*args, self.event_dict)
             return func(*new_args, **kwargs)
 
         return decorated
 
-    def autodiscover(self):
+    def autodiscover(self) -> None:
         """
         Detects message registries which have been registered via the "register_*" decorator.
         """

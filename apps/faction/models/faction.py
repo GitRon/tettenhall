@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import QuerySet
 
 from apps.faction.managers.faction import FactionManager
 from apps.faction.models.culture import Culture
@@ -35,7 +36,7 @@ class Faction(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def get_all_items(self):
+    def get_all_items(self) -> QuerySet:
         from apps.item.models.item import Item
 
         return Item.objects.filter(owner=self)

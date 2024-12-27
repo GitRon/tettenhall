@@ -14,7 +14,7 @@ class RiskyAttackService(SimpleAttackService):
 
         self.message_list = []
 
-    def _get_attack_value(self):
+    def _get_attack_value(self) -> int:
         if bool(random.getrandbits(1)):
             # Attack will be at 100% for strength 10, otherwise less or greater
             attack = int(

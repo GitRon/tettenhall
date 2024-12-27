@@ -132,14 +132,17 @@ target-version = "py312"
 
 [tool.boa-restrictor]
 exclude = [
-    "PBR002",
 ]
 
 [tool.boa-restrictor.per-file-excludes]
 "*/admin.py" = [
     "PBR001",
+    "PBR002",
 ]
 "*/views.py" = [
     "PBR001",
     "PBR002",
+]
+"*/managers/*.py" = [
+    "PBR002",  # todo: enable this
 ]

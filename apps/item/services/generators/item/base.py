@@ -35,7 +35,7 @@ class BaseItemGenerator:
     def _get_queryset_for_type(self) -> QuerySet:
         return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")
 
-    def process(self):
+    def process(self) -> Item:
         # Modifier can be negative, DiceNotation class takes care of not dealing negative damage
         modifier = int(round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)))
 

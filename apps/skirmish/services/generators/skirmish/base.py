@@ -13,7 +13,7 @@ class BaseSkirmishGenerator:
         self.warriors_faction_1 = warriors_faction_1
         self.warriors_faction_2 = warriors_faction_2
 
-    def process(self):
+    def process(self) -> Skirmish:
         skirmish = Skirmish.objects.create(
             name=self.name,
             player_faction_id=self.warriors_faction_1[0].faction.id,

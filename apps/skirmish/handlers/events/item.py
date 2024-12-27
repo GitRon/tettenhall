@@ -1,4 +1,5 @@
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Command
 from apps.item.models.item import Item
 from apps.skirmish.messages.commands.item import WarriorDropsLoot
 from apps.skirmish.messages.commands.transaction import WarriorDropsSilver
@@ -7,7 +8,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_distribute_loot(*, context: skirmish.SkirmishFinished.Context):
+def handle_distribute_loot(*, context: skirmish.SkirmishFinished.Context) -> list[Command]:
     message_list = []
 
     # The winner drops only items from dead warriors, the loser from all dead or incapacitated

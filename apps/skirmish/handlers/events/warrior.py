@@ -1,4 +1,5 @@
 from apps.core.domain import message_registry
+from apps.core.event_loop.messages import Command
 from apps.skirmish.messages.commands.skirmish import DetermineAttacker
 from apps.skirmish.messages.commands.warrior import CaptureWarrior, IncreaseExperience, IncreaseMorale, ReduceMorale
 from apps.skirmish.messages.events import skirmish, warrior
@@ -7,7 +8,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 @message_registry.register_event(event=skirmish.FighterPairsMatched)
-def handle_determine_attacker(*, context: skirmish.FighterPairsMatched.Context):
+def handle_determine_attacker(*, context: skirmish.FighterPairsMatched.Context) -> Command:
     return DetermineAttacker(
         DetermineAttacker.Context(
             skirmish=context.skirmish,
@@ -20,7 +21,7 @@ def handle_determine_attacker(*, context: skirmish.FighterPairsMatched.Context):
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
-def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDamage.Context):
+def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDamage.Context) -> list[Command]:
     message_list = []
 
     # Reduce health
@@ -81,7 +82,7 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         warrior.WarriorWasIncapacitated.Context,
         warrior.WarriorWasKilled.Context,
     ],
-):
+) -> list[Command]:
     message_list = []
 
     if context.warrior.faction == context.skirmish.player_faction:
@@ -114,7 +115,7 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
 def handle_experience_gain_on_warrior_incapacitation(
     *,
     context: [warrior.WarriorWasIncapacitated.Context, warrior.WarriorWasKilled.Context],
-):
+) -> Command:
     gained_experience = 25
 
     return IncreaseExperience(
@@ -127,7 +128,9 @@ def handle_experience_gain_on_warrior_incapacitation(
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
-def handle_morale_increase_on_warriors_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage.Context):
+def handle_morale_increase_on_warriors_defends_all_damage(
+    *, context: warrior.WarriorDefendedAllDamage.Context
+) -> Command:
     return IncreaseMorale(
         IncreaseMorale.Context(
             skirmish=context.skirmish,
@@ -138,7 +141,7 @@ def handle_morale_increase_on_warriors_defends_all_damage(*, context: warrior.Wa
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_capture_unsconcious_warriors(*, context: skirmish.SkirmishFinished.Context):
+def handle_capture_unsconcious_warriors(*, context: skirmish.SkirmishFinished.Context) -> list[Command]:
     message_list = []
 
     if context.skirmish.victorious_faction == context.skirmish.player_faction:
@@ -165,7 +168,7 @@ def handle_capture_unsconcious_warriors(*, context: skirmish.SkirmishFinished.Co
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_experience_gain_after_battle_for_victor(*, context: skirmish.SkirmishFinished.Context):
+def handle_experience_gain_after_battle_for_victor(*, context: skirmish.SkirmishFinished.Context) -> list[Command]:
     message_list = []
 
     gained_experience = 10
