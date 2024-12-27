@@ -75,6 +75,7 @@ class PlayerWeekLogListView(generic.ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs) -> dict:
         context = super().get_context_data(object_list=object_list, **kwargs)
+        # TODO: get from current savegame
         context["faction"] = Faction.objects.get(id=2)
         return context
 

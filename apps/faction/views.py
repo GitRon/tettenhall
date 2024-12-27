@@ -57,7 +57,7 @@ class WeeklyCostOverview(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # TODO: player faction is still static here
+        # TODO: get from current savegame
         player_faction = Faction.objects.get(id=2)
         context["weekly_salary_amount"] = (
             player_faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)

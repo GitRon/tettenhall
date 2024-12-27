@@ -18,6 +18,10 @@ class SkirmishListView(generic.ListView):
     model = Skirmish
     template_name = "skirmish/skirmish_list.html"
 
+    def get_queryset(self):
+        # TODO: query for current savegame
+        return super().get_queryset()
+
 
 class SkirmishFightView(generic.DetailView):
     model = Skirmish

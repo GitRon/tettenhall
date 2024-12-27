@@ -12,7 +12,7 @@ class TrainingListView(generic.ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
-        # TODO: static player faction
+        # TODO: get from current savegame
         context["faction"] = Faction.objects.get(id=2)
 
         # TODO: get training properly

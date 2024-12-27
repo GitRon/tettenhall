@@ -37,6 +37,7 @@ class QuestAcceptView(SingleObjectMixin, generic.FormView):
         handle_message(
             AcceptQuest(
                 AcceptQuest.Context(
+                    # TODO: get from current savegame
                     accepting_faction=Faction.objects.get(id=2),
                     quest=form.cleaned_data["quest"],
                     assigned_warriors=form.cleaned_data["assigned_warriors"],
