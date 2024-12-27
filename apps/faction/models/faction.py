@@ -25,6 +25,7 @@ class Faction(models.Model):
         verbose_name="Captured warriors",
         blank=True,
     )
+    savegame = models.ForeignKey("savegame.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
 
     objects = FactionManager()
 

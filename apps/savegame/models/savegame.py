@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from apps.faction.models import Faction
+from apps.marketplace.models import Marketplace
 from apps.savegame.managers.savegame import SavegameManager
 
 
@@ -12,7 +13,12 @@ class Savegame(models.Model):
     lastmodified_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=False)
 
-    player_faction = models.ForeignKey(Faction, verbose_name="Player Faction", on_delete=models.CASCADE)
+    player_faction = models.OneToOneField(
+        Faction, verbose_name="Player Faction", on_delete=models.CASCADE, related_name="player_savegame"
+    )
+    marketplace = models.OneToOneField(
+        Marketplace, verbose_name="Marketplace", on_delete=models.CASCADE, related_name="savegame"
+    )
     current_week = models.PositiveSmallIntegerField("Current week", default=1)
 
     objects = SavegameManager()

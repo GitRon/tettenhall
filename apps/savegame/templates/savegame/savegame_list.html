@@ -19,6 +19,8 @@
                 <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Player faction</th>
+                    <th>Played weeks</th>
                     <th>Created by</th>
                     <th>Created at</th>
                     <th>Last saved at</th>
@@ -29,6 +31,8 @@
                 {% for savegame in object_list %}
                     <tr>
                         <td>{{ savegame.name }}</td>
+                        <td>{{ savegame.player_faction.name }}</td>
+                        <td>{{ savegame.current_week }}</td>
                         <td>{{ savegame.created_by.get_full_name }}</td>
                         <td>{{ savegame.created_at|date:"d.m.Y H:i" }}</td>
                         <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>

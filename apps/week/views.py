@@ -17,36 +17,46 @@ from apps.marketplace.messages.commands.item import RestockMarketplaceItems
 from apps.marketplace.messages.commands.quest import OfferNewQuestsOnBoard
 from apps.marketplace.messages.commands.warrior import RestockPubMercenaries
 from apps.marketplace.models.marketplace import Marketplace
+from apps.savegame.mixins import CurrentSavegameMixin
+from apps.savegame.models.savegame import Savegame
 from apps.training.messages.commands.training import TrainWarriors
 from apps.training.models.training import Training
 from apps.week.models.player_week_log import PlayerWeekLog
 
 
-class FinishWeekView(generic.View):
+class FinishWeekView(CurrentSavegameMixin, generic.View):
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs) -> HttpResponse:
-        # TODO: increment current week/year in savegame
+        # Fetch current savegame record
+        context_data = self.get_context_data()
+        current_savegame: Savegame = context_data["current_savegame"]
 
-        # TODO: what needs to happen:
-        #  - start quests / skirmishes?
+        # Increment current week
+        current_week = current_savegame.current_week + 1
+        current_savegame.current_week = current_week
+        current_savegame.save()
+
+        # Get placer faction
+        faction = current_savegame.player_faction
+
         marketplace = Marketplace.objects.all().first()
-        # TODO: take faction from savegame
-        faction = Faction.objects.get(id=2)
         handle_message(
             [
-                # TODO: take current week from save game
-                # TODO: brauch ich hier unbedingt die woche? ich könnte ja einfach am ende der runde alle alten
-                #  schließen
-                RestockMarketplaceItems(RestockMarketplaceItems.Context(marketplace=marketplace, week=1)),
-                RestockPubMercenaries(RestockPubMercenaries.Context(marketplace=marketplace, week=1)),
-                OfferNewQuestsOnBoard(OfferNewQuestsOnBoard.Context(marketplace=marketplace, week=1)),
-                ReplenishFyrdReserve(ReplenishFyrdReserve.Context(faction=faction, week=1)),
-                PayWeeklyWarriorSalaries(PayWeeklyWarriorSalaries.Context(faction=faction, week=1)),
-                DetermineWarriorsWithLowMorale(DetermineWarriorsWithLowMorale.Context(faction=faction, week=1)),
-                DetermineInjuredWarriors(DetermineInjuredWarriors.Context(faction=faction, week=1)),
+                # TODO: maybe close all previous messages? do we want to keep them?
+                RestockMarketplaceItems(RestockMarketplaceItems.Context(marketplace=marketplace, week=current_week)),
+                RestockPubMercenaries(RestockPubMercenaries.Context(marketplace=marketplace, week=current_week)),
+                OfferNewQuestsOnBoard(OfferNewQuestsOnBoard.Context(marketplace=marketplace, week=current_week)),
+                ReplenishFyrdReserve(ReplenishFyrdReserve.Context(faction=faction, week=current_week)),
+                PayWeeklyWarriorSalaries(PayWeeklyWarriorSalaries.Context(faction=faction, week=current_week)),
+                DetermineWarriorsWithLowMorale(
+                    DetermineWarriorsWithLowMorale.Context(faction=faction, week=current_week)
+                ),
+                DetermineInjuredWarriors(DetermineInjuredWarriors.Context(faction=faction, week=current_week)),
                 # TODO: have a proper training QS (not here as well)
-                TrainWarriors(TrainWarriors.Context(faction=faction, training=Training.objects.all().first(), week=1)),
+                TrainWarriors(
+                    TrainWarriors.Context(faction=faction, training=Training.objects.all().first(), week=current_week)
+                ),
             ]
         )
 

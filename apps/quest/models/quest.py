@@ -1,3 +1,5 @@
+import random
+
 from django.db import models
 
 from apps.faction.models.faction import Faction
@@ -30,4 +32,11 @@ class Quest(models.Model):
             return 3, 5
         if self.difficulty == self.DifficultyChoices.DIFFICULTY_HARD:
             return 4, 8
+        raise RuntimeError("Invalid difficulty choice.")
+
+    def calculate_loot(self) -> int:
+        if self.difficulty == self.DifficultyChoices.DIFFICULTY_EASY:
+            return random.randint(10, 100)
+        if self.difficulty == self.DifficultyChoices.DIFFICULTY_HARD:
+            return random.randint(75, 350)
         raise RuntimeError("Invalid difficulty choice.")

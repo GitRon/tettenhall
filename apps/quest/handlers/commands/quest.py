@@ -17,7 +17,7 @@ def handle_offer_quests(*, context: OfferNewQuestsOnBoard.Context) -> list[Event
 
     no_items = random.randrange(1, 4)
     for _ in range(no_items):
-        quest_generator = QuestGenerator()
+        quest_generator = QuestGenerator(savegame=context.marketplace.savegame)
         quest = quest_generator.process()
         context.marketplace.available_quests.add(quest)
 

@@ -2,12 +2,21 @@ import random
 
 from apps.faction.models.faction import Faction
 from apps.quest.models.quest import Quest
+from apps.savegame.models.savegame import Savegame
 
 
 class QuestGenerator:
-    def process(self) -> Quest:
-        faction_qs = Faction.objects.exclude(id=1).values_list("id", flat=True)
+    savegame: Savegame
 
+    def __init__(self, *, savegame: Savegame) -> None:
+        super().__init__()
+
+        self.savegame = savegame
+
+    def process(self) -> Quest:
+        faction_qs = Faction.objects.filter(savegame=self.savegame).exclude(id=self.savegame.player_faction.id)
+
+        # TODO: move to model?
         quest_name_list = (
             "Hunt down raiders",
             "Pillage village",
@@ -16,7 +25,11 @@ class QuestGenerator:
         )
 
         name = random.choice(quest_name_list)
-        faction_id = random.choice(faction_qs)
+        target_faction = random.choice(faction_qs)
         difficulty = random.choice(Quest.DifficultyChoices.choices)
 
-        return Quest.objects.create(name=name, faction_id=faction_id, difficulty=difficulty[0])
+        quest = Quest(name=name, target_faction=target_faction, difficulty=difficulty[0])
+        quest.loot = quest.calculate_loot()
+        quest.save()
+
+        return quest
