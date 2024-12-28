@@ -12,25 +12,22 @@ from apps.faction.messages.commands.faction import (
     PayWeeklyWarriorSalaries,
     ReplenishFyrdReserve,
 )
-from apps.faction.models.faction import Faction
 from apps.marketplace.messages.commands.item import RestockMarketplaceItems
 from apps.marketplace.messages.commands.quest import OfferNewQuestsOnBoard
 from apps.marketplace.messages.commands.warrior import RestockPubMercenaries
 from apps.marketplace.models.marketplace import Marketplace
-from apps.savegame.mixins import CurrentSavegameMixin
 from apps.savegame.models.savegame import Savegame
 from apps.training.messages.commands.training import TrainWarriors
 from apps.training.models.training import Training
 from apps.week.models.player_week_log import PlayerWeekLog
 
 
-class FinishWeekView(CurrentSavegameMixin, generic.View):
+class FinishWeekView(generic.View):
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs) -> HttpResponse:
         # Fetch current savegame record
-        context_data = self.get_context_data()
-        current_savegame: Savegame = context_data["current_savegame"]
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
 
         # Increment current week
         current_week = current_savegame.current_week + 1
@@ -70,19 +67,15 @@ class PlayerWeekLogListView(generic.ListView):
     template_name = "player-week-log/components/player_week_log_list.html"
 
     def get_queryset(self) -> QuerySet:
-        # TODO: we have to filter for the save game/faction
-        return super().get_queryset()
-
-    def get_context_data(self, *, object_list=None, **kwargs) -> dict:
-        context = super().get_context_data(object_list=object_list, **kwargs)
-        # TODO: get from current savegame
-        context["faction"] = Faction.objects.get(id=2)
-        return context
+        return super().get_queryset().for_user(user_id=self.request.user.id)
 
 
 class AcknowledgePlayerWeekLogView(generic.DeleteView):
     model = PlayerWeekLog
     http_method_names = ("delete",)
+
+    def get_queryset(self) -> QuerySet:
+        return super().get_queryset().for_user(user_id=self.request.user.id)
 
     def delete(self, request, *args, **kwargs) -> HttpResponse:
         # TODO: add some validation when we have save games

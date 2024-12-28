@@ -5,7 +5,8 @@ from apps.faction.models.faction import Faction
 
 
 class TransactionQuerySet(models.QuerySet):
-    pass
+    def for_user(self, *, user_id: int):
+        return self.filter(faction__player_savegame__created_by=user_id)
 
 
 class TransactionManager(manager.Manager):

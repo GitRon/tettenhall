@@ -9,6 +9,6 @@ class CurrentSavegameMixin:
         except AttributeError:
             context = {}
         # TODO: add user login
-        # context["current_savegame"]=Savegame.objects.get_for_user(user_id=self.request.user.id).get_active().first()
+        # context["current_savegame"]=Savegame.objects.get_current_savegame(user_id=self.request.user.id)
         context["current_savegame"] = Savegame.objects.all().get_active().first()
         return context

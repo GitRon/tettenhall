@@ -65,6 +65,8 @@ class Warrior(models.Model):
         on_delete=models.CASCADE,
     )
 
+    # TODO: no faction case needs to be tenant-aware (add FK  to savegame, also in generators)
+
     objects = WarriorManager()
 
     class Meta:

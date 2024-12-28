@@ -20,7 +20,7 @@
         {% if request.user.is_authenticated %}
             <ul class="uk-navbar-nav">
                 <li>
-                    <a href="{% url 'faction:faction-detail-view' 2 %}">
+                    <a href="{% url 'faction:faction-detail-view' current_savegame.player_faction.id %}">
                         My faction
                     </a>
                 </li>
@@ -35,12 +35,12 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'finance:transaction-list-view' 2 %}">
+                    <a href="{% url 'finance:transaction-list-view' current_savegame.player_faction.id %}">
                         Finance
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'marketplace:marketplace-view' 1 %}">
+                    <a href="{% url 'marketplace:marketplace-view' current_savegame.marketplace.id %}">
                         Marketplace
                     </a>
                 </li>

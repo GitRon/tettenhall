@@ -10,6 +10,7 @@ def handle_marketplace_mercenaries_restocked(*, context: PubMercenariesRestocked
         title=f"New mercenaries in the pub of {context.marketplace.town_name}!",
         message="Some fancy text",
         week=context.week,
+        faction_id=context.marketplace.savegame.player_faction_id,
     )
 
 
@@ -19,6 +20,7 @@ def handle_warrior_morale_replenished(*, context: WarriorMoraleReplenished.Conte
         title=f"Morale of warrior {context.warrior} was replenished to the maximum.",
         message="Some fancy text",
         week=context.week,
+        faction_id=context.warrior.faction_id,
     )
 
 
@@ -28,4 +30,5 @@ def handle_warrior_health_healed(*, context: WarriorHealthHealed.Context):
         title=f"Warrior {context.warrior} healed {context.healed_points} HP.",
         message="Some fancy text",
         week=context.week,
+        faction_id=context.warrior.faction_id,
     )

@@ -143,6 +143,9 @@ exclude = [
     "PBR001",
     "PBR002",
 ]
+"*/context_processors/*.py" = [
+    "PBR001",
+]
 "*/managers/*.py" = [
     "PBR002",  # todo: enable this
 ]

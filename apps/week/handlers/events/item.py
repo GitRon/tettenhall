@@ -9,4 +9,5 @@ def handle_marketplace_items_restocked(*, context: MarketplaceItemsRestocked.Con
         title=f"Marketplace {context.marketplace.town_name} has new stock!",
         message="Some fancy text",
         week=context.week,
+        faction_id=context.marketplace.savegame.player_faction_id,
     )

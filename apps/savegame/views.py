@@ -13,5 +13,5 @@ class SavegameListView(CurrentSavegameMixin, generic.ListView):
 
     def get_queryset(self):
         # TODO: add user login
-        # return Savegame.objects.get_for_user(user_id=self.request.user.id)
+        # return Savegame.objects.get_current_savegame(user_id=self.request.user.id)
         return Savegame.objects.all()

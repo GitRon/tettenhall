@@ -9,4 +9,5 @@ def handle_marketplace_mercenaries_restocked(*, context: WarriorUpgradedSkill.Co
         title=f"Your warrior {context.warrior.name} upgraded his {context.changed_attribute}!",
         message="Some fancy text",
         week=context.week,
+        faction_id=context.warrior.faction_id,
     )
