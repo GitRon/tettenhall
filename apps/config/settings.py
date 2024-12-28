@@ -60,6 +60,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
@@ -72,6 +73,8 @@ AUTHENTICATION_BACKENDS = [
     # Django ModelBackend is the default authentication backend.
     "django.contrib.auth.backends.ModelBackend",
 ]
+
+LOGIN_URL = "account:login-view"
 
 ROOT_URLCONF = "apps.config.urls"
 
