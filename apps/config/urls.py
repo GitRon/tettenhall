@@ -22,7 +22,7 @@ urlpatterns = [
     # Default
     path("admin/", admin.site.urls),
     # Custom
-    path("", RedirectView.as_view(pattern_name="account:dashboard-view", permanent=False)),
+    path("", RedirectView.as_view(pattern_name="account:login-view", permanent=False)),
     path("account/", include(("apps.account.urls", "apps.account"), namespace="account")),
     path("faction/", include(("apps.faction.urls", "apps.faction"), namespace="faction")),
     path("finance/", include(("apps.finance.urls", "apps.finance"), namespace="finance")),

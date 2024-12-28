@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import datetime
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     "apps.training",
     "apps.warrior",
     "apps.week",
+    "axes",
 ]
 
 MIDDLEWARE = [
@@ -60,6 +62,15 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
+    "axes.middleware.AxesMiddleware",
+]
+
+AUTHENTICATION_BACKENDS = [
+    # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    "axes.backends.AxesBackend",
+    # Django ModelBackend is the default authentication backend.
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 ROOT_URLCONF = "apps.config.urls"
@@ -141,3 +152,24 @@ STATICFILES_DIRS = (
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Axes config
+def axes_cooloff_time(request) -> datetime.timedelta:  # noqa: PBR001
+    # Ruff:E731 prevents assignment of lambda expression -> function required
+    return datetime.timedelta(0, LOGIN_TIMEDELTA)
+
+
+LOGIN_TIMEDELTA = 15 * 60
+LOGIN_COUNT = 3
+AXES_COOLOFF_TIME = axes_cooloff_time
+AXES_LOCKOUT_TEMPLATE = "account/login_lockout.html"
+AXES_LOGIN_FAILURE_LIMIT = LOGIN_COUNT
+AXES_USERNAME_FORM_FIELD = "username"
+AXES_CLEANUP_DAYS = 30
+# Block by Username only (i.e.: Same user different IP is still blocked, but different user same IP is not)
+AXES_LOCKOUT_PARAMETERS = ["username"]
+# Disable logging the IP-Address of failed login attempts by returning None for attempts to get the IP
+AXES_CLIENT_IP_CALLABLE = lambda x: None  # noqa: E731
+# Mask user-sensitive parameters in logging stream
+AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
