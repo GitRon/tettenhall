@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <h1>New savegame</h1>
+
+    <div class="uk-width-1-2">
+        <table class="uk-table">
+            <tbody>
+            <tr>
+                <td colspan="2">{% crispy form %}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock content %}

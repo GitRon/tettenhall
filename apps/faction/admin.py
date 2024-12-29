@@ -12,4 +12,5 @@ class CultureAdmin(ReadOnlyAdmin):
 
 @admin.register(Faction)
 class FactionAdmin(admin.ModelAdmin):
-    list_display = ("name", "culture")
+    list_display = ("name", "culture", "savegame")
+    list_filter = ("savegame",)

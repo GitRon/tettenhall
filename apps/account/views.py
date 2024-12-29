@@ -7,7 +7,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from apps.account.forms.login import LoginForm
-from apps.faction.models.faction import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.week.models.player_week_log import PlayerWeekLog
 
 
@@ -50,8 +50,8 @@ class DashboardView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # TODO: query for current savegame
-        context["player_week_logs"] = PlayerWeekLog.objects.all()
-        # TODO: get from current savegame
-        context["faction"] = Faction.objects.get(id=2)
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+
+        context["player_week_logs"] = PlayerWeekLog.objects.for_savegame(savegame_id=current_savegame.id)
+        context["faction"] = current_savegame.player_faction
         return context

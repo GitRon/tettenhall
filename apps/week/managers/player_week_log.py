@@ -3,8 +3,8 @@ from django.db.models import manager
 
 
 class PlayerWeekLogQuerySet(models.QuerySet):
-    def for_user(self, *, user_id: int):
-        return self.filter(savegame__created_by=user_id)
+    def for_savegame(self, *, savegame_id: int):
+        return self.filter(faction__savegame=savegame_id)
 
 
 class PlayerWeekLogManager(manager.Manager):

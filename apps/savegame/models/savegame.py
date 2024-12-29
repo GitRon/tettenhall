@@ -14,10 +14,18 @@ class Savegame(models.Model):
     is_active = models.BooleanField(default=False)
 
     player_faction = models.OneToOneField(
-        Faction, verbose_name="Player Faction", on_delete=models.CASCADE, related_name="player_savegame"
+        Faction,
+        verbose_name="Player Faction",
+        on_delete=models.CASCADE,
+        related_name="player_savegame",
+        null=True,
     )
     marketplace = models.OneToOneField(
-        Marketplace, verbose_name="Marketplace", on_delete=models.CASCADE, related_name="savegame"
+        Marketplace,
+        verbose_name="Marketplace",
+        on_delete=models.CASCADE,
+        related_name="savegame",
+        null=True,
     )
     current_week = models.PositiveSmallIntegerField("Current week", default=1)
 
