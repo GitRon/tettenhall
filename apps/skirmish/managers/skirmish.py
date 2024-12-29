@@ -3,7 +3,8 @@ from django.db.models import manager
 
 
 class SkirmishQuerySet(models.QuerySet):
-    pass
+    def for_savegame(self, *, savegame_id: int):
+        return self.filter(player_faction__savegame_id=savegame_id)
 
 
 class SkirmishManager(manager.Manager):

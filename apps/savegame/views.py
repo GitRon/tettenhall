@@ -1,9 +1,11 @@
 from django.urls import reverse_lazy
 from django.views import generic
 
+from apps.core.event_loop.runner import handle_message
 from apps.savegame.forms.create_savegame import SavegameCreateForm
 from apps.savegame.mixins import CurrentSavegameMixin
 from apps.savegame.models.savegame import Savegame
+from apps.week.messages.commands.week import PrepareWeek
 
 
 class SavegameListView(CurrentSavegameMixin, generic.ListView):
@@ -22,10 +24,20 @@ class SavegameCreateView(CurrentSavegameMixin, generic.FormView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        Savegame.objects.create_record(
+        savegame = Savegame.objects.create_record(
             town_name=form.cleaned_data["town_name"],
             faction_name=form.cleaned_data["faction_name"],
             faction_culture_id=form.cleaned_data["faction_culture"].id,
             created_by_id=self.request.user.id,
         )
+
+        # Prepare week
+        handle_message(
+            PrepareWeek(
+                PrepareWeek.Context(
+                    savegame=savegame,
+                )
+            )
+        )
+
         return response

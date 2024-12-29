@@ -2,10 +2,10 @@ import re
 
 
 def convert_string_based_two_level_dict_to_dict(data: dict) -> dict:  # noqa: PBR001
-    # TODO: build properly and generic
+    # TODO: build properly and generic -> maybe we can delete this
     new_dict = {}
     for key, value in data.items():
-        match = re.search(r"^([\w\-]+)\[(\w)+\]\[(\w+)\]$", key)
+        match = re.search(r"^([\w\-]+)\[(\d+)]\[(\d+)]$", key)
         if match:
             field_name = match.group(1)
             faction_id = int(match.group(2))

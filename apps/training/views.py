@@ -1,7 +1,7 @@
 from django.urls import reverse_lazy
 from django.views import generic
 
-from apps.faction.models.faction import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.training.forms import TrainingForm
 from apps.training.models.training import Training
 
@@ -12,8 +12,9 @@ class TrainingListView(generic.ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
-        # TODO: get from current savegame
-        context["faction"] = Faction.objects.get(id=2)
+
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        context["faction"] = current_savegame.player_faction
 
         # TODO: get training properly
         context["current_training"] = Training.objects.all().first()

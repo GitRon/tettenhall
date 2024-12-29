@@ -29,6 +29,7 @@ class QuestAcceptForm(forms.ModelForm):
         )
 
         quest_id = kwargs.pop("quest_id")
+        player_faction_id = kwargs.pop("player_faction_id")
 
         super().__init__(*args, **kwargs)
 
@@ -36,11 +37,11 @@ class QuestAcceptForm(forms.ModelForm):
         self.fields["quest"].initial = quest_qs.first()
         self.fields["quest"].widget = forms.HiddenInput()
 
-        # TODO: pass this from the view
-        faction = Faction.objects.get(id=2)
+        faction = Faction.objects.get(id=player_faction_id)
         self.fields["faction"].initial = faction
         self.fields["faction"].widget = forms.HiddenInput()
 
+        # TODO: exclude "busy" warriors
         self.fields["assigned_warriors"].queryset = Warrior.objects.filter_healthy().filter(
-            faction=2
-        )  # TODO: exclude "busy" warriors
+            faction=faction,
+        )

@@ -103,6 +103,7 @@ class WarriorManager(manager.Manager):
             self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
             .filter(faction=faction)
             .aggregate(amount=Sum("weekly_salary"))["amount"]
+            or 0
         )
 
     def set_faction(self, *, obj, faction) -> int:

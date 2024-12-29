@@ -7,6 +7,7 @@ from django.views import generic
 from apps.core.event_loop.runner import handle_message
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.models.faction import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -57,11 +58,15 @@ class WeeklyCostOverview(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # TODO: get from current savegame
-        player_faction = Faction.objects.get(id=2)
+        # Fetch current savegame record
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+
+        player_faction = current_savegame.player_faction
+        # TODO: put in manager
         context["weekly_salary_amount"] = (
-            player_faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
-            .aggregate(sum_weekly_salary=Sum("weekly_salary"))
-            .get("sum_weekly_salary", 0.0)
+            player_faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).aggregate(
+                sum_weekly_salary=Sum("weekly_salary")
+            )["sum_weekly_salary"]
+            or 0
         )
         return context

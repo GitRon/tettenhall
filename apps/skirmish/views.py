@@ -7,6 +7,7 @@ from django.views import generic
 from apps.core.event_loop.runner import handle_message
 from apps.core.utils import convert_string_based_two_level_dict_to_dict
 from apps.faction.models.faction import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.forms import SkirmishWarriorRoundActionForm
 from apps.skirmish.messages.commands.skirmish import StartDuel
 from apps.skirmish.messages.events.skirmish import RoundFinished
@@ -19,8 +20,8 @@ class SkirmishListView(generic.ListView):
     template_name = "skirmish/skirmish_list.html"
 
     def get_queryset(self):
-        # TODO: query for current savegame
-        return super().get_queryset()
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
 
 class SkirmishFightView(generic.DetailView):
