@@ -1,4 +1,7 @@
-from django.urls import reverse_lazy
+from http import HTTPStatus
+
+from django.http import HttpResponse
+from django.urls import reverse, reverse_lazy
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
@@ -40,4 +43,21 @@ class SavegameCreateView(CurrentSavegameMixin, generic.FormView):
             )
         )
 
+        return response
+
+
+class SavegameLoadView(generic.DetailView):
+    model = Savegame
+    http_method_names = ("post",)
+
+    def get_queryset(self):
+        return super().get_queryset().for_user(user_id=self.request.user.id)
+
+    def post(self, request, *args, **kwargs):
+        savegame = self.get_object()
+
+        Savegame.objects.activate_savegame(savegame=savegame)
+
+        response = HttpResponse(status=HTTPStatus.OK)
+        response["HX-Redirect"] = reverse("account:dashboard-view")
         return response

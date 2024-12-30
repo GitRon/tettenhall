@@ -47,7 +47,12 @@
                         <td>{{ savegame.created_by.get_full_name }}</td>
                         <td>{{ savegame.created_at|date:"d.m.Y H:i" }}</td>
                         <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
-                        <td>{# todo: load savegame #}load me</td>
+                        <td>
+                            <button hx-post="{% url "savegame:savegame-load-view" savegame.id %}"
+                                    class="uk-button uk-button-primary uk-button-small">
+                                Load
+                            </button>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

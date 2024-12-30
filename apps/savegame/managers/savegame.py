@@ -70,12 +70,18 @@ class SavegameManager(manager.Manager):
         ]
 
         # Set savegame as active savegame and set all others of the current user as inactive
-        self.get_active().for_user(user_id=created_by_id).update(is_active=False)
+        self.activate_savegame(savegame=savegame)
+
+        return savegame
+
+    def activate_savegame(self, *, savegame: "Savegame") -> None:
+        """
+        Set savegame as active savegame and set all others of the current user as inactive
+        """
+        self.get_active().for_user(user_id=savegame.created_by_id).update(is_active=False)
         savegame.is_active = True
 
         savegame.save()
-
-        return savegame
 
 
 SavegameManager = SavegameManager.from_queryset(SavegameQuerySet)

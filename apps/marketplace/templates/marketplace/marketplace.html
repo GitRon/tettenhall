@@ -7,7 +7,7 @@
         <div>
             <h2>Pub</h2>
             {% for warrior in object.available_mercenaries.all %}
-                {# todo use different cards here which obscurify most values #}
+                {# todo: use different cards here which obscurify most values #}
                 {% include 'marketplace/warrior/components/warrior_card.html' with warrior=warrior %}
             {% endfor %}
         </div>
