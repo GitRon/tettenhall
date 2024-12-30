@@ -3,16 +3,16 @@
 
 
 "@fortawesome/fontawesome-free@^6.2.1":
-  version "6.2.1"
-  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-6.2.1.tgz#344baf6ff9eaad7a73cff067d8c56bfc11ae5304"
-  integrity sha512-viouXhegu/TjkvYQoiRZK3aax69dGXxgEjpvZW81wIJdxm5Fnvp3VVIP4VHKqX4SvFw6qpmkILkD4RJWAdrt7A==
+  version "6.7.2"
+  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-6.7.2.tgz#8249de9b7e22fcb3ceb5e66090c30a1d5492b81a"
+  integrity sha512-JUOtgFW6k9u4Y+xeIaEiLr3+cjoUPiAuLXoyKOJSia6Duzb7pq+A76P9ZdPDoAoxHdHzq6gE9/jKBGXlZT8FbA==
 
-htmx.org@^1.8.4:
-  version "1.8.4"
-  resolved "https://registry.yarnpkg.com/htmx.org/-/htmx.org-1.8.4.tgz#d8f480d8a2010969a3f336696e1162ef58ec0b70"
-  integrity sha512-T+1Z9RAZpJ1Ia6cvpV67lstvJ5UQkNpUAulpyfxUCHYbzYcaUVQC/PrcIdPNRU9e1ii6Ec7EEw7GnenavOZB6g==
+htmx.org@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/htmx.org/-/htmx.org-2.0.4.tgz#74fce66b177eb59c6d251ecf1052a2478743bec9"
+  integrity sha512-HLxMCdfXDOJirs3vBZl/ZLoY+c7PfM4Ahr2Ad4YXh6d22T5ltbTXFFkpx9Tgb2vvmWFMbIc3LqN2ToNkZJvyYQ==
 
 uikit@^3.15.19:
-  version "3.15.19"
-  resolved "https://registry.yarnpkg.com/uikit/-/uikit-3.15.19.tgz#8ca6190463fba29a394b246fe6fc37b7a6fc4ec8"
-  integrity sha512-xYZOuLlejmttB+aSKBp71pNBcLtYau3skVfmMmtrY1Id5k/A5wFA6LzCofx7VLbHfXqLivZfQoL6DDKqYc+GkQ==
+  version "3.21.16"
+  resolved "https://registry.yarnpkg.com/uikit/-/uikit-3.21.16.tgz#b0f18d50354587cfcc3bcf1ec0259b620d7d4884"
+  integrity sha512-2spSziLkschoka/vv7tmLInCMrwFWxJ5t4cWop8XytXexSH1WIt/h1GFk9WhsDD9UQIe/FzUZ4axO4EeMtEd5w==
