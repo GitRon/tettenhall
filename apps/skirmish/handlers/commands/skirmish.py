@@ -47,6 +47,10 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
 
     used_warriors_list_2 = []
 
+    # Ensure that all lists contain warriors (todo: might be redundant at some point)
+    if len(warrior_list_1) == 0 or len(warrior_list_2) == 0:
+        return []
+
     # This flag indicates when warriors from list 1 are more numerous, and so they can attack the other side without
     # to decide who attacks first. Having more guys will result in a free attack.
     double_warriors = False

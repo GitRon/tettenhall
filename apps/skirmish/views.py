@@ -62,8 +62,8 @@ class SkirmishFinishRoundView(generic.DetailView):
             StartDuel(
                 StartDuel.Context(
                     skirmish=self.object,
-                    warrior_list_1=converted_data["warrior-fight-action"][self.object.player_faction.id],
-                    warrior_list_2=converted_data["warrior-fight-action"][self.object.non_player_faction.id],
+                    warrior_list_1=converted_data["warrior-fight-action"].get(self.object.player_faction.id, []),
+                    warrior_list_2=converted_data["warrior-fight-action"].get(self.object.non_player_faction.id, []),
                 )
             )
         )

@@ -52,6 +52,8 @@ class DashboardView(generic.TemplateView):
 
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        context["player_week_logs"] = PlayerWeekLog.objects.for_savegame(savegame_id=current_savegame.id)
+        context["player_week_logs"] = PlayerWeekLog.objects.for_savegame(savegame_id=current_savegame.id).order_by(
+            "-week"
+        )
         context["faction"] = current_savegame.player_faction
         return context

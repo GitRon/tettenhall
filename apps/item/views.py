@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 
 from django.http import HttpResponse
 from django.views import generic
@@ -18,7 +19,7 @@ class ItemSellView(SingleObjectMixin, generic.View):
 
         handle_message(SellItem(SellItem.Context(selling_faction=obj.owner, item=obj)))
 
-        response = HttpResponse(status=200)
+        response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
                 "loadFactionItemList": "-",

@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -51,7 +52,7 @@ class WarriorRecruitCapturedView(generic.DetailView):
 
         handle_message(RecruitCapturedWarrior(RecruitCapturedWarrior.Context(faction=faction, warrior=obj)))
 
-        response = HttpResponse(status=200)
+        response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
                 "notification": "Captured warrior joined your ranks",
@@ -73,7 +74,7 @@ class WarriorEnslaveCapturedView(generic.DetailView):
 
         handle_message(EnslaveCapturedWarrior(EnslaveCapturedWarrior.Context(faction=faction, warrior=obj)))
 
-        response = HttpResponse(status=200)
+        response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
                 "notification": "Captured warrior was sold into slavery",
