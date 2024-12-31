@@ -25,6 +25,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'marketplace:marketplace-view' current_savegame.marketplace.id %}">
+                        Marketplace
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'training:training-list-view' %}">
                         Training
                     </a>
@@ -40,8 +45,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'marketplace:marketplace-view' current_savegame.marketplace.id %}">
-                        Marketplace
+                    <a href="#">
+                        Estates {# todo: do i want this? #}
                     </a>
                 </li>
             </ul>
