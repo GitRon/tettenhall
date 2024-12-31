@@ -6,6 +6,7 @@ from django.db.models import manager
 
 from apps.faction.models import Culture, Faction
 from apps.marketplace.models import Marketplace
+from apps.training.models import Training
 
 if typing.TYPE_CHECKING:
     from apps.savegame.models.savegame import Savegame
@@ -50,7 +51,7 @@ class SavegameManager(manager.Manager):
             created_by_id=created_by_id,
         )
 
-        #       # Create player faction
+        # Create player faction
         player_faction = Faction.objects.create(
             name=faction_name,
             culture_id=faction_culture_id,
@@ -58,6 +59,9 @@ class SavegameManager(manager.Manager):
             fyrd_reserve=random.randint(2, 5),
         )
         savegame.player_faction = player_faction
+
+        # Create training object
+        Training.objects.create(category=random.choice(Training.TrainingCategory.choices)[0], faction=player_faction)
 
         # TODO: create faction generator
         [

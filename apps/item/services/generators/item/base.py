@@ -41,6 +41,7 @@ class BaseItemGenerator:
 
         item_type = self._get_queryset_for_type().first()
 
+        # TODO: sometimes "item_type" is None
         dice_notation = DiceNotation(dice_string=item_type.base_value, modifier=modifier)
         price = dice_notation.expectancy_value * dice_notation.sides * max(modifier, 1)
 

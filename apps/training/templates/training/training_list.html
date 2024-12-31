@@ -5,8 +5,7 @@
 
     <div uk-grid>
         <div>
-            {# todo: make this dynamic #}
-            <a class="uk-button uk-button-primary" href="{% url 'training:training-edit-view' 1 %}">
+            <a class="uk-button uk-button-primary" href="{% url 'training:training-edit-view' current_training.id %}">
                 Change training
             </a>
         </div>

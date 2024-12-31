@@ -2,8 +2,15 @@ import random
 
 from django.db import models
 
+from apps.faction.models import Faction
+from apps.training.managers.training import TrainingManager
+
 
 class Training(models.Model):
+    """
+    This model stores what will be trained in the current week.
+    """
+
     TRAINING_IMPROVEMENT_MU = 15
     TRAINING_IMPROVEMENT_SIGMA = 15
 
@@ -13,6 +20,9 @@ class Training(models.Model):
         SHIELD_WALL = 3, "Shield wall"
 
     category = models.PositiveSmallIntegerField("Category", choices=TrainingCategory.choices, unique=True)
+    faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
+
+    objects = TrainingManager()
 
     class Meta:
         verbose_name = "Training"

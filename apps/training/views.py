@@ -16,8 +16,7 @@ class TrainingListView(generic.ListView):
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
         context["faction"] = current_savegame.player_faction
 
-        # TODO: get training properly
-        context["current_training"] = Training.objects.all().first()
+        context["current_training"] = Training.objects.for_savegame(savegame_id=current_savegame.id).first()
         return context
 
 
