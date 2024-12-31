@@ -24,7 +24,7 @@
             {% include 'faction/warrior/components/fyrd_card.html' with faction=object %}
         </div>
         <div>
-            {% include "faction/warrior/components/warrior_list.html" with faction=object %}
+            {% include "faction/warrior/components/warrior_list.html" with faction=object warrior_list=warrior_list %}
         </div>
         <div class="uk-margin-bottom">
             {% include "faction/item/components/item_list.html" with faction=object %}

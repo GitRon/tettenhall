@@ -6,6 +6,12 @@ class WarriorQuerySet(models.QuerySet):
     def filter_healthy(self):
         return self.filter(condition=self.model.ConditionChoices.CONDITION_HEALTHY)
 
+    def exclude_dead(self):
+        return self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
+
+    def filter_faction(self, *, faction_id: int):
+        return self.filter(faction=faction_id)
+
 
 class WarriorManager(manager.Manager):
     def reduce_current_health(self, *, obj, damage: int):

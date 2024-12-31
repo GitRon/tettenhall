@@ -15,6 +15,11 @@ class FactionDetailView(generic.DetailView):
     model = Faction
     template_name = "faction/faction_detail.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["warrior_list"] = Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.id)
+        return context
+
 
 class FactionItemListView(generic.DetailView):
     model = Faction
@@ -24,6 +29,11 @@ class FactionItemListView(generic.DetailView):
 class FactionWarriorListView(generic.DetailView):
     model = Faction
     template_name = "faction/warrior/components/warrior_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["warrior_list"] = Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.id)
+        return context
 
 
 class FactionCapturedWarriorListView(generic.DetailView):

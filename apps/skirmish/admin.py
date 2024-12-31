@@ -18,7 +18,10 @@ class BattleHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(Skirmish)
 class SkirmishAdmin(admin.ModelAdmin):
-    pass
+    list_filter = (
+        "player_faction__savegame",
+        "victorious_faction",
+    )
 
 
 @admin.register(SkirmishAction)

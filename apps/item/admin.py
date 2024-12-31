@@ -24,4 +24,5 @@ class ItemAdmin(admin.ModelAdmin):
     list_filter = (
         "type",
         "owner",
+        "owner__savegame",
     )
