@@ -25,6 +25,10 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[
     )
     new_skirmish = skirmish_generator.process()
 
+    if context.quest_contract:
+        context.quest_contract.skirmish = new_skirmish
+        context.quest_contract.save()
+
     return SkirmishCreated(
         context=SkirmishCreated.Context(
             skirmish=new_skirmish,
