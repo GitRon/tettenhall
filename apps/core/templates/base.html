@@ -61,7 +61,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">{{ request.user }}</a>
+                    <a href="#">{{ current_savegame.player_faction }} / {{ request.user }}</a>
                     <div class="uk-navbar-dropdown">
                         <ul class="uk-nav uk-navbar-dropdown-nav">
                             <li><a href="{% url "savegame:savegame-list-view" %}">Savegames</a></li>
