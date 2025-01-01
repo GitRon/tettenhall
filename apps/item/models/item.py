@@ -26,6 +26,8 @@ class Item(models.Model):
     modifier = models.SmallIntegerField("Modifier", default=0, help_text='2d4+7 - this is the "7"')
     owner = models.ForeignKey(Faction, verbose_name="Owning faction", null=True, blank=True, on_delete=models.CASCADE)
 
+    savegame = models.ForeignKey("savegame.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
+
     objects = ItemManager()
 
     class Meta:
