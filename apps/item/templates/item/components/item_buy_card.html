@@ -1,0 +1,27 @@
+    {% load l10n %}
+<div class="uk-card uk-card-default uk-margin-bottom">
+    <div class="uk-card-header">
+        <div id="item-card-{{ item.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-auto">
+                {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
+            </div>
+            <div class="uk-width-expand">
+                <h3 class="uk-card-title uk-margin-remove-bottom">
+                    {{ item.display_name }}
+                </h3>
+                <p class="uk-text-meta uk-margin-remove-top">
+                    <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
+                    {% include 'core/compontents/svg_icon.html' with icon_name='axe-sword' %}
+                    <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>&nbsp;
+                    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value }}</i>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-footer">
+        <a hx-post="{% url 'item:item-buy-view' item.id %}"
+           hx-target="#item-card-{{ item.id|unlocalize }}"
+           hx-swap="none"
+           class="uk-button uk-button-text">Buy</a>
+    </div>
+</div>

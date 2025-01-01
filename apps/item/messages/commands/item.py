@@ -10,3 +10,11 @@ class SellItem(Command):
     class Context:
         selling_faction: Faction
         item: Item
+
+
+class BuyItem(Command):
+    @dataclass(kw_only=True)
+    class Context:
+        buying_faction: Faction
+        price: int
+        item: Item

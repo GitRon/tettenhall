@@ -13,6 +13,8 @@ class MessageRegistry:
     Singleton for registering messages classes in.
     """
 
+    # TODO: build a system check that validates that in handlers registered message (command/event) match the context
+
     def __init__(self):
         self.command_dict: dict = {}
         self.event_dict: dict = {}

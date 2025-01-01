@@ -11,3 +11,11 @@ class ItemSold(Event):
         selling_faction: Faction
         item: Item
         price: int
+
+
+class ItemBought(Event):
+    @dataclass(kw_only=True)
+    class Context:
+        buying_faction: Faction
+        item: Item
+        price: int

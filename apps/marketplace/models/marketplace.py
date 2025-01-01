@@ -6,6 +6,7 @@ from apps.quest.models.quest import Quest
 from apps.skirmish.models.warrior import Warrior
 
 
+# TODO: this is more like a town -> rename?
 class Marketplace(models.Model):
     town_name = models.CharField("Town name", max_length=100)
     available_items = models.ManyToManyField(Item, verbose_name="Available items", blank=True)

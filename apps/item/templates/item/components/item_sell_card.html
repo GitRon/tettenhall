@@ -1,4 +1,4 @@
-    {% load l10n %}
+{% load l10n %}
 <div class="uk-card uk-card-default uk-margin-bottom">
     <div class="uk-card-header">
         <div id="item-card-{{ item.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
@@ -25,8 +25,6 @@
         <a hx-post="{% url 'item:item-sell-view' item.id %}"
            hx-target="#item-card-{{ item.id|unlocalize }}"
            hx-swap="none"
-            {# TODO: implement buy items #}
-            {# TODO: card is reused for selling and buying -> fix this since they are not the same #}
-           class="uk-button uk-button-text">Sell (buy not implemented)</a>
+           class="uk-button uk-button-text">Sell</a>
     </div>
 </div>
