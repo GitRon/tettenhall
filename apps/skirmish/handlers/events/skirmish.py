@@ -1,6 +1,7 @@
 from apps.core.domain import message_registry
 from apps.core.event_loop.messages import Command
 from apps.skirmish.messages.commands.skirmish import (
+    WarriorAttacksWarriorWithFastAttack,
     WarriorAttacksWarriorWithRiskyAttack,
     WarriorAttacksWarriorWithSimpleAttack,
     WinSkirmish,
@@ -25,6 +26,14 @@ def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecide
     elif context.attack_action == SkirmishAction.TypeChoices.RISKY_ATTACK:
         command = WarriorAttacksWarriorWithRiskyAttack(
             WarriorAttacksWarriorWithRiskyAttack.Context(
+                skirmish=context.skirmish,
+                attacker=context.attacker,
+                defender=context.defender,
+            )
+        )
+    elif context.attack_action == SkirmishAction.TypeChoices.FAST_ATTACK:
+        command = WarriorAttacksWarriorWithFastAttack(
+            WarriorAttacksWarriorWithFastAttack.Context(
                 skirmish=context.skirmish,
                 attacker=context.attacker,
                 defender=context.defender,

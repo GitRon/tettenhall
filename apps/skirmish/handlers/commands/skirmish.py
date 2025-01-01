@@ -41,6 +41,9 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[
 def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[Event] | Event:
     message_list = []
 
+    # TODO: we need to start here looking at the skirmish actions to be able to affect pairing, defense etc,
+    #  not just attack value.
+
     # The larger list is always the first
     if len(context.warrior_list_1) >= len(context.warrior_list_2):
         warrior_list_1 = context.warrior_list_1
@@ -102,6 +105,7 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
     # TODO: bug: 2 warriors, the weak one is faster
     #  -> it never ends because strong warrior never is able to hit but other one never makes damage
     #  -> thous dexterity seems to be imba
+    #  -> maybe make the defender hit back immediately? So dex lets you hit first but you'll get a hit back?
 
     random_value = random.random()
 
@@ -140,6 +144,17 @@ def handle_warrior_attacks_warrior_with_risky_attack(
 ) -> list[Event] | Event:
     service = RiskyAttackService(context=context)
     return service.process()
+
+
+@message_registry.register_command(command=skirmish.WarriorAttacksWarriorWithFastAttack)
+def handle_warrior_attacks_warrior_with_fast_attack(
+    *,
+    context: skirmish.WarriorAttacksWarriorWithRiskyAttack.Context,
+) -> list[Event] | Event:
+    # TODO: implement me -> how can I alter the warrior matching here? too late, right?
+    # service = RiskyAttackService(context=context)
+    # return service.process()
+    return []
 
 
 @message_registry.register_command(command=skirmish.WinSkirmish)

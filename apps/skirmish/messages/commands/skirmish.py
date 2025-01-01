@@ -54,6 +54,14 @@ class WarriorAttacksWarriorWithRiskyAttack(Command):
         defender: Warrior
 
 
+class WarriorAttacksWarriorWithFastAttack(Command):
+    @dataclass(kw_only=True)
+    class Context:
+        skirmish: Skirmish
+        attacker: Warrior
+        defender: Warrior
+
+
 class WinSkirmish(Command):
     @dataclass(kw_only=True)
     class Context:

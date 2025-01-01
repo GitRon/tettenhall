@@ -12,5 +12,12 @@
     "fields": {
       "type": 2
     }
+  },
+  {
+    "model": "skirmish.skirmishaction",
+    "pk": 3,
+    "fields": {
+      "type": 3
+    }
   }
 ]

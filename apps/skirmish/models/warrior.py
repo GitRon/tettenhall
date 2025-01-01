@@ -8,6 +8,9 @@ from apps.item.models.item_type import ItemType
 from apps.skirmish.managers.warrior import WarriorManager
 
 
+# TODO: move to warrior app?
+# TODO: permanent injuries would be nice -> each has a modificator and reduces a value like HP or dex
+#  -> angle -> reduce dex, missing finger -> strength etc.
 class Warrior(models.Model):
     NO_WEAPON_ATTACK = "1d3"
     NO_ARMOR_DEFENSE = "1d3"
