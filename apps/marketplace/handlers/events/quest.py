@@ -1,14 +1,13 @@
 from apps.core.domain import message_registry
 from apps.core.event_loop.messages import Command
 from apps.marketplace.messages.commands.quest import OfferNewQuestsOnBoard
-from apps.marketplace.models.marketplace import Marketplace
 from apps.quest.messages.events.quest import QuestAccepted
 from apps.week.messages.events.week import WeekPrepared
 
 
 @message_registry.register_event(event=QuestAccepted)
 def handle_removed_accepted_quest_from_available_quests(*, context: QuestAccepted.Context):
-    marketplace = Marketplace.objects.all().first()
+    marketplace = context.quest.target_faction.savegame.marketplace
     marketplace.available_quests.remove(context.quest)
 
 
