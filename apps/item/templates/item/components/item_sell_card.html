@@ -3,7 +3,7 @@
     <div class="uk-card-header">
         <div id="item-card-{{ item.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-auto">
-                {% include 'core/compontents/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
+                {% include 'core/components/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
             </div>
             <div class="uk-width-expand">
                 <h3 class="uk-card-title uk-margin-remove-bottom">
@@ -11,7 +11,7 @@
                 </h3>
                 <p class="uk-text-meta uk-margin-remove-top">
                     <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
-                    {% include 'core/compontents/svg_icon.html' with icon_name='axe-sword' %}
+                    {% include 'core/components/svg_icon.html' with icon_name='axe-sword' %}
                     <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>&nbsp;
                     <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value }}</i>
                 </p>
