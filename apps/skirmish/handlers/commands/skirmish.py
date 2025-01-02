@@ -44,7 +44,9 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
     # TODO: we need to start here looking at the skirmish actions to be able to affect pairing, defense etc,
     #  not just attack value.
 
-    # The larger list is always the first
+    # TODO: make this work with SkirmishParticipant DCs instead of warrior lists
+
+    # The larger crowd is always starting
     if len(context.warrior_list_1) >= len(context.warrior_list_2):
         warrior_list_1 = context.warrior_list_1
         warrior_list_2 = context.warrior_list_2
@@ -53,10 +55,6 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
         warrior_list_2 = context.warrior_list_1
 
     used_warriors_list_2 = []
-
-    # Ensure that all lists contain warriors (todo: might be redundant at some point)
-    if len(warrior_list_1) == 0 or len(warrior_list_2) == 0:
-        return []
 
     # This flag indicates when warriors from list 1 are more numerous, and so they can attack the other side without
     # to decide who attacks first. Having more guys will result in a free attack.
@@ -72,7 +70,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
         attack_action_2 = warrior_list_2[warrior_2]
         used_warriors_list_2.append(warrior_2)
 
-        # TODO: hier stimmt was nicht, der player-warrior hat auch angegriffen
+        # TODO: hier stimmt was nicht, der player-warrior hat auch angegriffen -> oder ist das, weil es mehr sind?
         if not double_warriors:
             message_list.append(
                 FighterPairsMatched(

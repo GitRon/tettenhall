@@ -104,6 +104,12 @@ class Warrior(models.Model):
     def slavery_selling_price(self) -> int:
         return int(self.recruitment_price / 2)
 
+    def get_skirmish_actions(self) -> list[tuple]:
+        # TODO: show only the ones the warrior has depending on his level
+        from apps.skirmish.models import SkirmishAction
+
+        return SkirmishAction.TypeChoices.choices
+
     def get_weapon_or_fallback(self) -> Item:
         return (
             self.weapon

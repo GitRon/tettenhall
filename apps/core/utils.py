@@ -1,22 +1,14 @@
-import re
+from collections import defaultdict
 
 
-def convert_string_based_two_level_dict_to_dict(data: dict) -> dict:  # noqa: PBR001
-    # TODO: build properly and generic -> maybe we can delete this
-    new_dict = {}
-    for key, value in data.items():
-        match = re.search(r"^([\w\-]+)\[(\d+)]\[(\d+)]$", key)
-        if match:
-            field_name = match.group(1)
-            faction_id = int(match.group(2))
-            warrior_id = int(match.group(3))
-            skirmish_action = int(value)
-            if field_name not in new_dict:
-                new_dict[match.group(1)] = {}
-            if faction_id not in new_dict[field_name]:
-                new_dict[field_name][faction_id] = {}
-            if warrior_id not in new_dict[field_name][faction_id]:
-                new_dict[field_name][faction_id][warrior_id] = {}
-            new_dict[field_name][faction_id][warrior_id] = skirmish_action
+def querydict_to_nested_dict(querydict: dict, prefix: str) -> dict:
+    result = defaultdict(dict)
 
-    return new_dict
+    for key, value in querydict.items():
+        if key.startswith(prefix):
+            # Extract index and name
+            parts = key[len(prefix) :].strip("[]").split("][")
+            index, field_name = int(parts[0]), parts[1]
+            result[index][field_name] = value
+
+    return dict(result)

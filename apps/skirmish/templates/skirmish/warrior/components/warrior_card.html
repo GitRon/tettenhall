@@ -50,17 +50,23 @@
     </div>
     <div class="uk-card-footer">
         <div class="uk-form-controls">
-            {% if is_player and warrior.is_healthy %}
-                {% with form=skirmish_action_form|lookup:warrior.id %}
-                    {% crispy form %}
-                {% endwith %}
-            {% elif not is_player and warrior.is_healthy %}
-                <label class="uk-form-label">
-                    Simple attack
-                    <input name="warrior-fight-action[{{ warrior.faction.id }}][{{ warrior.id }}]" class="uk-hidden"
-                           value="1">
+        {% if warrior.is_healthy %}
+            {# todo: put this in a crispy-form? #}
+            <form method="post">
+                <label>
+                    {# todo: for the opponent, make this not a select but a hidden field with a text to show what the enemy will do (disabled & readonly won't work) #}
+                    <select class="uk-select" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][skirmish_action_id]">
+                        {% for action in warrior.get_skirmish_actions %}
+                            <option value="{{ action.0 }}">{{ action.1 }}</option>
+                        {% endfor %}
+                    </select>
                 </label>
-            {% endif %}
+                <input type="hidden" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][faction_id]"
+                       value="{{ warrior.faction.id }}">
+                <input type="hidden" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][warrior_id]"
+                       value="{{ warrior.id }}">
+            </form>
+        {% endif %}
         </div>
     </div>
 </div>

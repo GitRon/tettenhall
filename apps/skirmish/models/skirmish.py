@@ -8,6 +8,8 @@ from apps.skirmish.models.warrior import Warrior
 class Skirmish(models.Model):
     name = models.CharField("Name", max_length=100)
     current_round = models.PositiveSmallIntegerField("Current round", default=1)
+
+    # TODO: we could change this to attacker and defender and make AI factions fight themselves
     player_faction = models.ForeignKey(
         Faction,
         verbose_name="Player faction",

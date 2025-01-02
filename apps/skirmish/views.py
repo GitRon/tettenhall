@@ -1,18 +1,19 @@
 import json
+from http import HTTPStatus
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
-from apps.core.utils import convert_string_based_two_level_dict_to_dict
+from apps.core.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
 from apps.savegame.models.savegame import Savegame
-from apps.skirmish.forms import SkirmishWarriorRoundActionForm
 from apps.skirmish.messages.commands.skirmish import StartDuel
 from apps.skirmish.messages.events.skirmish import RoundFinished
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
+from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 
 
 class SkirmishListView(generic.ListView):
@@ -35,13 +36,6 @@ class SkirmishFightView(generic.DetailView):
         context["non_player_faction"] = self.object.non_player_faction
         context["battle_log"] = self.object.battle_logs.all()
 
-        context["skirmish_action_form"] = {}
-        for player_warrior in self.object.player_warriors.all():
-            context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(
-                faction_id=player_warrior.faction.id,
-                warrior_id=player_warrior.id,
-            )
-
         return context
 
 
@@ -50,20 +44,36 @@ class SkirmishFinishRoundView(generic.DetailView):
     http_method_names = ("post",)
     object = None
 
-    # TODO: fixme use formset/something different
-
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        # TODO: improve data handover
-        converted_data = convert_string_based_two_level_dict_to_dict(request.POST)
+        skirmish_participants = querydict_to_nested_dict(request.POST, "skirmish_participant")
+
+        player_warrior_participants = []
+        opposing_warrior_participants = []
+
+        for participant_data in skirmish_participants.values():
+            if int(participant_data["faction_id"]) == self.object.player_faction.id:
+                player_warrior_participants.append(
+                    SkirmishParticipant(**{key: int(value) for key, value in participant_data.items()})
+                )
+            elif int(participant_data["faction_id"]) == self.object.non_player_faction.id:
+                opposing_warrior_participants.append(
+                    SkirmishParticipant(**{key: int(value) for key, value in participant_data.items()})
+                )
+            else:
+                raise RuntimeError("Invalid faction ID in skirmish form.")
+
+        # Ensure that all lists contain warriors
+        if len(player_warrior_participants) == 0 or len(opposing_warrior_participants) == 0:
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # Start duel
         handle_message(
             StartDuel(
                 StartDuel.Context(
                     skirmish=self.object,
-                    warrior_list_1=converted_data["warrior-fight-action"].get(self.object.player_faction.id, []),
-                    warrior_list_2=converted_data["warrior-fight-action"].get(self.object.non_player_faction.id, []),
+                    warrior_list_1=player_warrior_participants,
+                    warrior_list_2=opposing_warrior_participants,
                 )
             )
         )
@@ -121,12 +131,5 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         else:
             context["object_list"] = skirmish.non_player_warriors.all()
         context["is_player"] = skirmish.player_faction == faction
-        # TODO: encapsulate properly as htmx snippet so we don't have this twice
-        context["skirmish_action_form"] = {}
-        for player_warrior in skirmish.player_warriors.all():
-            context["skirmish_action_form"][player_warrior.id] = SkirmishWarriorRoundActionForm(
-                faction_id=player_warrior.faction.id,
-                warrior_id=player_warrior.id,
-            )
 
         return context

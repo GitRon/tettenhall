@@ -1,5 +1,5 @@
 {% for warrior in object_list %}
     <div>
-        {% include 'skirmish/warrior/components/warrior_card.html' with warrior=warrior is_player=is_player %}
+        {% include 'skirmish/warrior/components/warrior_card.html' with warrior=warrior is_player=is_player warrior_index=forloop.counter0 %}
     </div>
 {% endfor %}
