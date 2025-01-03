@@ -25,8 +25,8 @@ class StartDuel(Command):
     @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
-        warrior_list_1: list[SkirmishParticipant]
-        warrior_list_2: list[SkirmishParticipant]
+        skirmish_participants_1: list[SkirmishParticipant]
+        skirmish_participants_2: list[SkirmishParticipant]
 
 
 class DetermineAttacker(Command):

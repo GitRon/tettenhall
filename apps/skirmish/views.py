@@ -11,6 +11,7 @@ from apps.faction.models.faction import Faction
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.messages.commands.skirmish import StartDuel
 from apps.skirmish.messages.events.skirmish import RoundFinished
+from apps.skirmish.models import Warrior
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
@@ -51,14 +52,26 @@ class SkirmishFinishRoundView(generic.DetailView):
         player_warrior_participants = []
         opposing_warrior_participants = []
 
+        # Since we want objects in our event queue, we query all warriors once to avoid unnecessary db hits
+        warrior_ids = []
+        for participant_data in skirmish_participants.values():
+            warrior_ids.append(participant_data["warrior_id"])
+        warriors = Warrior.objects.filter(id__in=warrior_ids)
+
         for participant_data in skirmish_participants.values():
             if int(participant_data["faction_id"]) == self.object.player_faction.id:
                 player_warrior_participants.append(
-                    SkirmishParticipant(**{key: int(value) for key, value in participant_data.items()})
+                    SkirmishParticipant(
+                        warrior=warriors.get(id=participant_data["warrior_id"]),
+                        skirmish_action=int(participant_data["skirmish_action"]),
+                    )
                 )
             elif int(participant_data["faction_id"]) == self.object.non_player_faction.id:
                 opposing_warrior_participants.append(
-                    SkirmishParticipant(**{key: int(value) for key, value in participant_data.items()})
+                    SkirmishParticipant(
+                        warrior=warriors.get(id=participant_data["warrior_id"]),
+                        skirmish_action=int(participant_data["skirmish_action"]),
+                    )
                 )
             else:
                 raise RuntimeError("Invalid faction ID in skirmish form.")
@@ -72,8 +85,8 @@ class SkirmishFinishRoundView(generic.DetailView):
             StartDuel(
                 StartDuel.Context(
                     skirmish=self.object,
-                    warrior_list_1=player_warrior_participants,
-                    warrior_list_2=opposing_warrior_participants,
+                    skirmish_participants_1=player_warrior_participants,
+                    skirmish_participants_2=opposing_warrior_participants,
                 )
             )
         )

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
+from apps.skirmish.models import Warrior
+
 
 @dataclass(kw_only=True)
 class SkirmishParticipant:
-    warrior_id: int
-    faction_id: int
-    skirmish_action_id: int  # TODO: if we go with choices, this will lose the "_id" suffix
+    warrior: Warrior
+    skirmish_action: int

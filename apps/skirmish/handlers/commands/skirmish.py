@@ -11,9 +11,11 @@ from apps.skirmish.messages.events.skirmish import (
 )
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.skirmish.services.actions.risky_attack import RiskyAttackService
 from apps.skirmish.services.actions.simple_attack import SimpleAttackService
 from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
+from apps.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 
 
 @message_registry.register_command(command=skirmish.CreateSkirmish)
@@ -41,45 +43,42 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[
 def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[Event] | Event:
     message_list = []
 
-    # TODO: we need to start here looking at the skirmish actions to be able to affect pairing, defense etc,
-    #  not just attack value.
+    # Determine larger group
+    assign_fighter_pairs_service = AssignFighterPairsService()
+    skirmish_participants_1, skirmish_participants_2 = assign_fighter_pairs_service.determine_attacker_and_defenders(
+        skirmish_participants_1=context.skirmish_participants_1, skirmish_participants_2=context.skirmish_participants_2
+    )
 
-    # TODO: make this work with SkirmishParticipant DCs instead of warrior lists
-
-    # The larger crowd is always starting
-    if len(context.warrior_list_1) >= len(context.warrior_list_2):
-        warrior_list_1 = context.warrior_list_1
-        warrior_list_2 = context.warrior_list_2
-    else:
-        warrior_list_1 = context.warrior_list_2
-        warrior_list_2 = context.warrior_list_1
-
-    used_warriors_list_2 = []
+    # Shuffle both lists to have more interaction going on
+    random.shuffle(skirmish_participants_1)
+    random.shuffle(skirmish_participants_2)
 
     # This flag indicates when warriors from list 1 are more numerous, and so they can attack the other side without
     # to decide who attacks first. Having more guys will result in a free attack.
-    double_warriors = False
-    # TODO: shuffle the list somehow so there is more interaction going on
-    for warrior_1, attack_action_1 in warrior_list_1.items():
-        # If list 2 is shorter, the warriors get matched again
-        if len(used_warriors_list_2) == len(warrior_list_2):
-            double_warriors = True
-            used_warriors_list_2 = []
+    used_warriors_from_list_2 = 0
+    free_attack_due_to_being_more_numerous = False
 
-        warrior_2 = random.choice(list(warrior_list_2.keys()))
-        attack_action_2 = warrior_list_2[warrior_2]
-        used_warriors_list_2.append(warrior_2)
+    # For every warrior in list 1...
+    participant_1: SkirmishParticipant
+    for participant_1 in skirmish_participants_1:
+        # If list 2 is shorter, list 1 warriors get matched again
+        if used_warriors_from_list_2 == len(skirmish_participants_2):
+            free_attack_due_to_being_more_numerous = True
 
-        # TODO: hier stimmt was nicht, der player-warrior hat auch angegriffen -> oder ist das, weil es mehr sind?
-        if not double_warriors:
+        # Fetch a random defender
+        # TODO: one warrior might get hit multiple times without the free attacks -> do we want this?
+        participant_2: SkirmishParticipant = random.choice(skirmish_participants_2)
+        used_warriors_from_list_2 += 1  # noqa: SIM113
+
+        if not free_attack_due_to_being_more_numerous:
             message_list.append(
                 FighterPairsMatched(
                     FighterPairsMatched.Context(
                         skirmish=context.skirmish,
-                        warrior_1=Warrior.objects.get(id=warrior_1),
-                        warrior_2=Warrior.objects.get(id=warrior_2),
-                        attack_action_1=attack_action_1,
-                        attack_action_2=attack_action_2,
+                        warrior_1=participant_1.warrior,
+                        warrior_2=participant_2.warrior,
+                        attack_action_1=participant_1.skirmish_action,
+                        attack_action_2=participant_2.skirmish_action,
                     )
                 )
             )
@@ -88,9 +87,9 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
                 AttackerDefenderDecided(
                     AttackerDefenderDecided.Context(
                         skirmish=context.skirmish,
-                        attacker=Warrior.objects.get(id=warrior_1),
-                        defender=Warrior.objects.get(id=warrior_2),
-                        attack_action=attack_action_1,
+                        attacker=participant_1.warrior,
+                        defender=participant_2.warrior,
+                        attack_action=participant_1.skirmish_action,
                     )
                 )
             )
