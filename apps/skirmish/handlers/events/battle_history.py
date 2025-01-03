@@ -1,7 +1,7 @@
 from apps.core.domain import message_registry
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.skirmish.models.battle_history import BattleHistory
-from apps.skirmish.models.skirmish_action import SkirmishAction
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
@@ -27,7 +27,7 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"Warrior {context.attacker} is the attacker and warrior {context.defender} the defender and chooses "
-        f"to attack with a {SkirmishAction(type=context.attack_action).get_type_display()}.",
+        f"to attack with a {SkirmishActionChoices(context.attack_action).label}.",
     )
 
 

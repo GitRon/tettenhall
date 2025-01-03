@@ -5,6 +5,7 @@ from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.managers.warrior import WarriorManager
 
 
@@ -106,9 +107,8 @@ class Warrior(models.Model):
 
     def get_skirmish_actions(self) -> list[tuple]:
         # TODO: show only the ones the warrior has depending on his level
-        from apps.skirmish.models import SkirmishAction
-
-        return SkirmishAction.TypeChoices.choices
+        # TODO: use XP to add more skirmish actions -> every level gets a fixed action to keep it simple
+        return SkirmishActionChoices.choices
 
     def get_weapon_or_fallback(self) -> Item:
         return (

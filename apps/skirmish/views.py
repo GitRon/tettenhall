@@ -46,6 +46,8 @@ class SkirmishFinishRoundView(generic.DetailView):
     object = None
 
     def post(self, request, *args, **kwargs):
+        # TODO: make enemy warriors chose a skirmish action
+
         self.object = self.get_object()
         skirmish_participants = querydict_to_nested_dict(request.POST, "skirmish_participant")
 

@@ -1,4 +1,3 @@
-from ambient_toolbox.admin.model_admins.classes import ReadOnlyAdmin
 from django.contrib import admin
 from django.db.models import Q, Subquery
 
@@ -6,7 +5,6 @@ from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
-from apps.skirmish.models.skirmish_action import SkirmishAction
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -22,11 +20,6 @@ class SkirmishAdmin(admin.ModelAdmin):
         "player_faction__savegame",
         "victorious_faction",
     )
-
-
-@admin.register(SkirmishAction)
-class SkirmishActionAdmin(ReadOnlyAdmin):
-    pass
 
 
 @admin.register(Warrior)

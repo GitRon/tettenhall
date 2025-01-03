@@ -1,5 +1,6 @@
 from apps.core.domain import message_registry
 from apps.core.event_loop.messages import Command
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.messages.commands.skirmish import (
     WarriorAttacksWarriorWithFastAttack,
     WarriorAttacksWarriorWithRiskyAttack,
@@ -8,13 +9,12 @@ from apps.skirmish.messages.commands.skirmish import (
 )
 from apps.skirmish.messages.events import skirmish
 from apps.skirmish.models.skirmish import Skirmish
-from apps.skirmish.models.skirmish_action import SkirmishAction
 from apps.skirmish.models.warrior import Warrior
 
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
 def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided.Context) -> Command:
-    if context.attack_action == SkirmishAction.TypeChoices.SIMPLE_ATTACK:
+    if context.attack_action == SkirmishActionChoices.SIMPLE_ATTACK:
         # TODO: move attack type to context
         command = WarriorAttacksWarriorWithSimpleAttack(
             WarriorAttacksWarriorWithSimpleAttack.Context(
@@ -23,7 +23,7 @@ def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecide
                 defender=context.defender,
             )
         )
-    elif context.attack_action == SkirmishAction.TypeChoices.RISKY_ATTACK:
+    elif context.attack_action == SkirmishActionChoices.RISKY_ATTACK:
         command = WarriorAttacksWarriorWithRiskyAttack(
             WarriorAttacksWarriorWithRiskyAttack.Context(
                 skirmish=context.skirmish,
@@ -31,7 +31,7 @@ def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecide
                 defender=context.defender,
             )
         )
-    elif context.attack_action == SkirmishAction.TypeChoices.FAST_ATTACK:
+    elif context.attack_action == SkirmishActionChoices.FAST_ATTACK:
         command = WarriorAttacksWarriorWithFastAttack(
             WarriorAttacksWarriorWithFastAttack.Context(
                 skirmish=context.skirmish,
