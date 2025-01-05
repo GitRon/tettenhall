@@ -21,12 +21,12 @@
             <ul class="uk-navbar-nav">
                 <li>
                     <a href="{% url 'faction:faction-detail-view' current_savegame.player_faction.id %}">
-                        My faction
+                        {{ current_savegame.player_faction }}
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'marketplace:marketplace-view' current_savegame.marketplace.id %}">
-                        Marketplace
+                        {{ current_savegame.marketplace.town_name }}
                     </a>
                 </li>
                 <li>
@@ -107,6 +107,15 @@
             });
         }
     });
+
+    {% for message in messages %}
+        UIkit.notification({
+            message: "{{ message|safe }}",
+            status: "{{ message.level_tag }}",
+            pos: 'top-center',
+            timeout: 1000,
+        });
+    {% endfor %}
 </script>
 </body>
 </html>

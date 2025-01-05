@@ -17,10 +17,16 @@ def handle_restock_marketplace_items(*, context: RestockMarketplaceItems.Context
     for _ in range(no_items):
         if bool(random.getrandbits(1)):
             item_generator = MercenaryItemGenerator(
-                faction=None, item_function=ItemType.FunctionChoices.FUNCTION_WEAPON
+                faction=None,
+                item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+                savegame_id=context.marketplace.savegame.id,
             )
         else:
-            item_generator = MercenaryItemGenerator(faction=None, item_function=ItemType.FunctionChoices.FUNCTION_ARMOR)
+            item_generator = MercenaryItemGenerator(
+                faction=None,
+                item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
+                savegame_id=context.marketplace.savegame.id,
+            )
 
         item = item_generator.process()
         context.marketplace.available_items.add(item)

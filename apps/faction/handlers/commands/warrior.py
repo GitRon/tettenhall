@@ -7,12 +7,14 @@ from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)
-def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd.Context) -> list[Event] | Event:
+def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd.Context) -> list[Event] | Event | None:
     if context.faction.fyrd_reserve <= 0:
         return None
 
     # Create warrior
-    warrior_generator = FyrdWarriorGenerator(culture=context.faction.culture, faction=context.faction)
+    warrior_generator = FyrdWarriorGenerator(
+        culture=context.faction.culture, faction=context.faction, savegame_id=context.faction.savegame_id
+    )
     warrior = warrior_generator.process()
 
     # Update reserve

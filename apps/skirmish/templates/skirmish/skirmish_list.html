@@ -9,6 +9,7 @@
             <th>Name</th>
             <th>Player faction</th>
             <th>Non-player faction</th>
+            <th>Rounds</th>
             <th>Victor</th>
             <th></th>
         </tr>
@@ -19,6 +20,7 @@
                 <td>{{ skirmish.name }}</td>
                 <td>{{ skirmish.player_faction }}</td>
                 <td>{{ skirmish.non_player_faction }}</td>
+                <td>{{ skirmish.current_round }}</td>
                 <td>{{ skirmish.victorious_faction|default_if_none:"-" }}</td>
                 <td>
                     {% if skirmish.victorious_faction %}

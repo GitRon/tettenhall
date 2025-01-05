@@ -1,0 +1,36 @@
+{% load i18n static %}
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>403 - Permission denied</title>
+    <style type="text/css">
+        body {
+            min-width: 600px;
+            width: 50%;
+            margin: 0 auto;
+            color: #5B5B5B;
+        }
+
+        div.error {
+
+        }
+
+        div.imprint, div.imprint a {
+            color: #5B5B5B;
+            margin-top: 0.2em;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+{% block body %}
+    <div class="error">
+        <h2>Error 403</h2>
+        <p>Permission denied.</p>
+    </div>
+{% endblock body %}
+</body>

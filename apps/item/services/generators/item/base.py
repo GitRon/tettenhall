@@ -14,12 +14,14 @@ class BaseItemGenerator:
 
     faction: Faction
     function: int
+    savegame_id: int
 
-    def __init__(self, *, faction: Faction | None, item_function: int) -> None:
+    def __init__(self, *, faction: Faction | None, item_function: int, savegame_id: int) -> None:
         super().__init__()
 
         self.faction = faction
         self.function = item_function
+        self.savegame_id = savegame_id
 
     def _determine_condition(self, *, modifier: int) -> int:
         if modifier < self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
@@ -52,5 +54,5 @@ class BaseItemGenerator:
             price=price,
             modifier=modifier,
             owner=self.faction,
-            savegame=self.faction.savegame,
+            savegame_id=self.savegame_id,
         )

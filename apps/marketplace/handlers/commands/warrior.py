@@ -15,7 +15,11 @@ def handle_restock_pub_mercenaries(*, context: RestockPubMercenaries.Context) ->
 
     no_warriors = random.randrange(2, 4)
     for _ in range(no_warriors):
-        warrior_generator = MercenaryWarriorGenerator(culture=Culture.objects.all().order_by("?").first(), faction=None)
+        warrior_generator = MercenaryWarriorGenerator(
+            culture=Culture.objects.all().order_by("?").first(),
+            faction=None,
+            savegame_id=context.marketplace.savegame.id,
+        )
         warrior = warrior_generator.process()
 
         context.marketplace.available_mercenaries.add(warrior)

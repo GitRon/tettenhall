@@ -12,7 +12,9 @@ def handle_create_skirmish_for_quest_contract(*, context: quest.QuestAccepted.Co
     accepting_faction = context.accepting_faction
     target_faction = context.quest.target_faction
     # TODO: all those warriors are naked... we need to give them equipment
-    warrior_generator = MercenaryWarriorGenerator(faction=target_faction, culture=target_faction.culture)
+    warrior_generator = MercenaryWarriorGenerator(
+        faction=target_faction, culture=target_faction.culture, savegame_id=context.accepting_faction.savegame_id
+    )
 
     return CreateSkirmish(
         context=CreateSkirmish.Context(

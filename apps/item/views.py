@@ -56,7 +56,6 @@ class ItemBuyView(SingleObjectMixin, generic.View):
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
-                # TODO: make item list reload itself
                 "loadMarketplaceItemList": "-",
             }
         )

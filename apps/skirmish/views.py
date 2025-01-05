@@ -1,8 +1,10 @@
 import json
 from http import HTTPStatus
 
-from django.http import HttpResponse
+from django.contrib import messages
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.views import generic
 
 from apps.core.event_loop.runner import handle_message
@@ -39,6 +41,20 @@ class SkirmishFightView(generic.DetailView):
 
         return context
 
+    def get(self, request, *args, **kwargs):
+        skirmish = self.get_object()
+        current_savegame = skirmish.player_faction.savegame
+        if (
+            self.model.objects.for_savegame(savegame_id=current_savegame.id)
+            .has_started()
+            .resolved()
+            .exclude(id=skirmish.id)
+            .exists()
+        ):
+            messages.add_message(request, messages.WARNING, "Please finish your other skirmishes first.")
+            return HttpResponseRedirect(reverse("skirmish:skirmish-list-view"))
+        return super().get(request, *args, **kwargs)
+
 
 class SkirmishFinishRoundView(generic.DetailView):
     model = Skirmish
@@ -46,7 +62,7 @@ class SkirmishFinishRoundView(generic.DetailView):
     object = None
 
     def post(self, request, *args, **kwargs):
-        # TODO: make enemy warriors chose a skirmish action
+        # TODO: make enemy warriors chose a skirmish action (in SkirmishFightView?)
 
         self.object = self.get_object()
         skirmish_participants = querydict_to_nested_dict(request.POST, "skirmish_participant")

@@ -19,7 +19,7 @@ class ReduceMorale(Command):
     class Context:
         skirmish: Skirmish
         warrior: Warrior
-        lost_morale: int
+        lost_morale: float
 
 
 class IncreaseMorale(Command):
@@ -35,4 +35,4 @@ class IncreaseExperience(Command):
     class Context:
         skirmish: Skirmish
         warrior: Warrior
-        increased_experience: int
+        increased_experience: float

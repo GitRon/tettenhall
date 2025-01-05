@@ -115,6 +115,7 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
         defender: Warrior = context.warrior_1
         attack_action = context.action_2
 
+    # TODO: do we want that the defender can retaliate after the attacker has hit him?
     return AttackerDefenderDecided(
         AttackerDefenderDecided.Context(
             skirmish=context.skirmish,

@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 
-def querydict_to_nested_dict(querydict: dict, prefix: str) -> dict:
+def querydict_to_nested_dict(*, querydict: dict, prefix: str) -> dict:
     result = defaultdict(dict)
 
     for key, value in querydict.items():

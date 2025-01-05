@@ -27,10 +27,12 @@ class BaseWarriorGenerator:
 
     culture: Culture
     faction: Faction
+    savegame_id: int
 
-    def __init__(self, *, culture: Culture, faction: Faction | None) -> None:
+    def __init__(self, *, culture: Culture, faction: Faction | None, savegame_id: int) -> None:
         self.culture = culture
         self.faction = faction
+        self.savegame_id = savegame_id
 
     def process(self) -> Warrior:
         faker = Faker([self.culture.locale])
@@ -80,7 +82,9 @@ class BaseWarriorGenerator:
 
         if random.uniform(0, 1) <= self.chance_for_weapon:
             weapon_generator = self.item_generator_class(
-                faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_WEAPON
+                faction=self.faction,
+                item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+                savegame_id=self.savegame_id,
             )
             weapon = weapon_generator.process()
         else:
@@ -88,7 +92,9 @@ class BaseWarriorGenerator:
 
         if random.uniform(0, 1) <= self.chance_for_armor:
             armor_generator = self.item_generator_class(
-                faction=self.faction, item_function=ItemType.FunctionChoices.FUNCTION_ARMOR
+                faction=self.faction,
+                item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
+                savegame_id=self.savegame_id,
             )
             armor = armor_generator.process()
         else:
@@ -98,6 +104,7 @@ class BaseWarriorGenerator:
             name=faker.first_name_male(),
             culture=self.culture,
             faction=self.faction,
+            savegame_id=self.savegame_id,
             experience=experience,
             current_health=max_health,
             max_health=max_health,
