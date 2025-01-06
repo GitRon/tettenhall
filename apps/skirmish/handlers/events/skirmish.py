@@ -1,22 +1,23 @@
 from apps.core.domain import message_registry
 from apps.core.event_loop.messages import Command
 from apps.skirmish.messages.commands.skirmish import (
+    WarriorAttacksWarrior,
     WinSkirmish,
 )
 from apps.skirmish.messages.events import skirmish
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
-from apps.skirmish.services.actions.utils import get_service_by_attack_action
 
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
 def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided.Context) -> Command:
-    attack_service_class = get_service_by_attack_action(attack_action=context.attack_action)
-    return attack_service_class.command(
-        attack_service_class.command.Context(
+    return WarriorAttacksWarrior(
+        WarriorAttacksWarrior.Context(
             skirmish=context.skirmish,
             attacker=context.attacker,
+            attacker_action=context.attacker_action,
             defender=context.defender,
+            defender_action=context.defender_action,
         )
     )
 

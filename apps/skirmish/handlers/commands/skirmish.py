@@ -12,12 +12,10 @@ from apps.skirmish.messages.events.skirmish import (
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
-from apps.skirmish.services.actions.fast_attack import FastAttackService
-from apps.skirmish.services.actions.risky_attack import RiskyAttackService
-from apps.skirmish.services.actions.simple_attack import SimpleAttackService
 from apps.skirmish.services.actions.utils import get_service_by_attack_action
 from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
 from apps.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
+from apps.skirmish.services.skirmish.damage import SkirmishDamageService
 
 
 @message_registry.register_command(command=skirmish.CreateSkirmish)
@@ -89,8 +87,9 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
                     AttackerDefenderDecided.Context(
                         skirmish=context.skirmish,
                         attacker=participant_1.warrior,
+                        attacker_action=participant_1.skirmish_action,
                         defender=participant_2.warrior,
-                        attack_action=participant_1.skirmish_action,
+                        defender_action=participant_2.skirmish_action,
                     )
                 )
             )
@@ -116,10 +115,12 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
         attacker: Warrior = context.warrior_1
         defender: Warrior = context.warrior_2
         attack_action = context.action_1
+        defend_action = context.action_2
     else:
         attacker: Warrior = context.warrior_2
         defender: Warrior = context.warrior_1
         attack_action = context.action_2
+        defend_action = context.action_1
 
     # TODO: do we want that the defender can retaliate after the attacker has hit him?
     #  -> might be a new attack action for higher levels like in battle brothers?
@@ -127,36 +128,25 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
         AttackerDefenderDecided.Context(
             skirmish=context.skirmish,
             attacker=attacker,
+            attacker_action=attack_action,
             defender=defender,
-            attack_action=attack_action,
+            defender_action=defend_action,
         )
     )
 
 
-@message_registry.register_command(command=skirmish.WarriorAttacksWarriorWithSimpleAttack)
-def handle_warrior_attacks_warrior_with_simple_attack(
+@message_registry.register_command(command=skirmish.WarriorAttacksWarrior)
+def handle_warrior_attacks_warrior(
     *,
-    context: skirmish.WarriorAttacksWarriorWithSimpleAttack.Context,
+    context: skirmish.WarriorAttacksWarrior.Context,
 ) -> list[Event] | Event:
-    service = SimpleAttackService(context=context)
-    return service.process()
-
-
-@message_registry.register_command(command=skirmish.WarriorAttacksWarriorWithRiskyAttack)
-def handle_warrior_attacks_warrior_with_risky_attack(
-    *,
-    context: skirmish.WarriorAttacksWarriorWithRiskyAttack.Context,
-) -> list[Event] | Event:
-    service = RiskyAttackService(context=context)
-    return service.process()
-
-
-@message_registry.register_command(command=skirmish.WarriorAttacksWarriorWithFastAttack)
-def handle_warrior_attacks_warrior_with_fast_attack(
-    *,
-    context: skirmish.WarriorAttacksWarriorWithRiskyAttack.Context,
-) -> list[Event] | Event:
-    service = FastAttackService(context=context)
+    service = SkirmishDamageService(
+        skirmish=context.skirmish,
+        attacker=context.attacker,
+        attacker_action=context.attacker_action,
+        defender=context.defender,
+        defender_action=context.defender_action,
+    )
     return service.process()
 
 

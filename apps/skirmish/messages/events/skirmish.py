@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from apps.core.event_loop.messages import Event
 from apps.quest.models import QuestContract
+from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -28,8 +29,9 @@ class AttackerDefenderDecided(Event):
     class Context:
         skirmish: Skirmish
         attacker: Warrior
+        attacker_action: SkirmishActionTypeHint
         defender: Warrior
-        attack_action: int
+        defender_action: SkirmishActionTypeHint
 
 
 class RoundFinished(Event):

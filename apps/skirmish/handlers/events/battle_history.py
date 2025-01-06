@@ -27,7 +27,7 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
     BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=f"Warrior {context.attacker} is the attacker and warrior {context.defender} the defender and chooses "
-        f"to attack with a {SkirmishActionChoices(context.attack_action).label}.",
+        f"to attack with a {SkirmishActionChoices(context.attacker_action).label}.",
     )
 
 

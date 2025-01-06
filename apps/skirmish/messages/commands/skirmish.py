@@ -5,6 +5,7 @@ from django.db.models import QuerySet
 from apps.core.event_loop.messages import Command
 from apps.faction.models.faction import Faction
 from apps.quest.models import QuestContract
+from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
@@ -34,29 +35,19 @@ class DetermineAttacker(Command):
     class Context:
         skirmish: Skirmish
         warrior_1: Warrior
-        action_1: int
+        action_1: SkirmishActionTypeHint
         warrior_2: Warrior
-        action_2: int
+        action_2: SkirmishActionTypeHint
 
 
-class AbstractWarriorAttacksWarriorWithAttack(Command):
+class WarriorAttacksWarrior(Command):
     @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
         attacker: Warrior
+        attacker_action: SkirmishActionTypeHint
         defender: Warrior
-
-
-class WarriorAttacksWarriorWithSimpleAttack(AbstractWarriorAttacksWarriorWithAttack):
-    pass
-
-
-class WarriorAttacksWarriorWithRiskyAttack(AbstractWarriorAttacksWarriorWithAttack):
-    pass
-
-
-class WarriorAttacksWarriorWithFastAttack(AbstractWarriorAttacksWarriorWithAttack):
-    pass
+        defender_action: SkirmishActionTypeHint
 
 
 class WinSkirmish(Command):
