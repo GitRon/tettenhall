@@ -39,7 +39,7 @@ class DetermineAttacker(Command):
         action_2: int
 
 
-class WarriorAttacksWarriorWithSimpleAttack(Command):
+class AbstractWarriorAttacksWarriorWithAttack(Command):
     @dataclass(kw_only=True)
     class Context:
         skirmish: Skirmish
@@ -47,20 +47,16 @@ class WarriorAttacksWarriorWithSimpleAttack(Command):
         defender: Warrior
 
 
-class WarriorAttacksWarriorWithRiskyAttack(Command):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        attacker: Warrior
-        defender: Warrior
+class WarriorAttacksWarriorWithSimpleAttack(AbstractWarriorAttacksWarriorWithAttack):
+    pass
 
 
-class WarriorAttacksWarriorWithFastAttack(Command):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        attacker: Warrior
-        defender: Warrior
+class WarriorAttacksWarriorWithRiskyAttack(AbstractWarriorAttacksWarriorWithAttack):
+    pass
+
+
+class WarriorAttacksWarriorWithFastAttack(AbstractWarriorAttacksWarriorWithAttack):
+    pass
 
 
 class WinSkirmish(Command):

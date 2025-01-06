@@ -3,7 +3,6 @@
 {% block content %}
     <h1>Dashboard</h1>
 
-    {# TODO: once a fight as started (round != 0/1, we can't open other fights #}
     {% if faction.active_quest and faction.active_quest.skirmish %}
         <div uk-alert>
             <div>

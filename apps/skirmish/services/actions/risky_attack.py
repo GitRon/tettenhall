@@ -1,20 +1,17 @@
 import random
 
-from apps.core.event_loop.messages import Command, Event
+from apps.core.event_loop.messages import Command
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarriorWithRiskyAttack
 from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage
-from apps.skirmish.services.actions.simple_attack import SimpleAttackService
+from apps.skirmish.services.actions.base import AttackService
 
 
-class RiskyAttackService(SimpleAttackService):
+class RiskyAttackService(AttackService):
+    command: Command = WarriorAttacksWarriorWithRiskyAttack
     context: WarriorAttacksWarriorWithRiskyAttack.Context
 
-    def __init__(self, *, context: [Command.Context, Event.Context]) -> None:
-        super().__init__(context=context)
-
-        self.message_list = []
-
     def _get_attack_value(self) -> int:
+        # Attack has 50% chance to miss
         if bool(random.getrandbits(1)):
             # Attack will be at 100% for strength 10, otherwise less or greater
             attack = int(

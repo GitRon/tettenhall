@@ -7,7 +7,7 @@ class AssignFighterPairsService:
     """
 
     @staticmethod
-    def determine_attacker_and_defenders(
+    def determine_larger_group(
         *, skirmish_participants_1: list[SkirmishParticipant], skirmish_participants_2: list[SkirmishParticipant]
     ) -> tuple[list[SkirmishParticipant], list[SkirmishParticipant]]:
         """

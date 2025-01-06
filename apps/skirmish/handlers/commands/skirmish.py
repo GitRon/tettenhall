@@ -12,8 +12,10 @@ from apps.skirmish.messages.events.skirmish import (
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.skirmish.services.actions.fast_attack import FastAttackService
 from apps.skirmish.services.actions.risky_attack import RiskyAttackService
 from apps.skirmish.services.actions.simple_attack import SimpleAttackService
+from apps.skirmish.services.actions.utils import get_service_by_attack_action
 from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
 from apps.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 
@@ -45,7 +47,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
 
     # Determine larger group
     assign_fighter_pairs_service = AssignFighterPairsService()
-    skirmish_participants_1, skirmish_participants_2 = assign_fighter_pairs_service.determine_attacker_and_defenders(
+    skirmish_participants_1, skirmish_participants_2 = assign_fighter_pairs_service.determine_larger_group(
         skirmish_participants_1=context.skirmish_participants_1, skirmish_participants_2=context.skirmish_participants_2
     )
 
@@ -66,7 +68,6 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
             free_attack_due_to_being_more_numerous = True
 
         # Fetch a random defender
-        # TODO: one warrior might get hit multiple times without the free attacks -> do we want this?
         participant_2: SkirmishParticipant = random.choice(skirmish_participants_2)
         used_warriors_from_list_2 += 1  # noqa: SIM113
 
@@ -99,14 +100,19 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
 
 @message_registry.register_command(command=skirmish.DetermineAttacker)
 def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacker.Context) -> list[Event] | Event:
-    # TODO: bug: 2 warriors, the weak one is faster
-    #  -> it never ends because strong warrior never is able to hit but other one never makes damage
-    #  -> thous dexterity seems to be imba
-    #  -> maybe make the defender hit back immediately? So dex lets you hit first but you'll get a hit back?
+    warrior_1_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_1)
+    warrior_2_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_2)
+
+    warrior_1_matching_points = warrior_1_attack_action_service_class.get_pair_matching_points(
+        warrior_dexterity=context.warrior_1.dexterity
+    )
+    warrior_2_matching_points = warrior_2_attack_action_service_class.get_pair_matching_points(
+        warrior_dexterity=context.warrior_2.dexterity
+    )
 
     random_value = random.random()
 
-    if context.warrior_1.dexterity / (context.warrior_1.dexterity + context.warrior_2.dexterity) > random_value:
+    if warrior_1_matching_points / (warrior_1_matching_points + warrior_2_matching_points) > random_value:
         attacker: Warrior = context.warrior_1
         defender: Warrior = context.warrior_2
         attack_action = context.action_1
@@ -116,6 +122,7 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
         attack_action = context.action_2
 
     # TODO: do we want that the defender can retaliate after the attacker has hit him?
+    #  -> might be a new attack action for higher levels like in battle brothers?
     return AttackerDefenderDecided(
         AttackerDefenderDecided.Context(
             skirmish=context.skirmish,
@@ -149,10 +156,8 @@ def handle_warrior_attacks_warrior_with_fast_attack(
     *,
     context: skirmish.WarriorAttacksWarriorWithRiskyAttack.Context,
 ) -> list[Event] | Event:
-    # TODO: implement me -> how can I alter the warrior matching here? too late, right?
-    # service = RiskyAttackService(context=context)
-    # return service.process()
-    return []
+    service = FastAttackService(context=context)
+    return service.process()
 
 
 @message_registry.register_command(command=skirmish.WinSkirmish)

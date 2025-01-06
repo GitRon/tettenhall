@@ -16,6 +16,13 @@ class BattleHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(Skirmish)
 class SkirmishAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "current_round",
+        "player_faction",
+        "non_player_faction",
+        "victorious_faction",
+    )
     list_filter = (
         "player_faction__savegame",
         "victorious_faction",
