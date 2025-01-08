@@ -3,7 +3,7 @@
 {% block content %}
     <h1>Dashboard</h1>
 
-    {% if faction.active_quest and faction.active_quest.skirmish %}
+    {% if faction.active_quest %}
         <div uk-alert>
             <div>
                 <strong>Active quest:</strong> {{ faction.active_quest }}

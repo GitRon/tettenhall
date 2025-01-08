@@ -12,6 +12,9 @@ class WarriorQuerySet(models.QuerySet):
     def filter_faction(self, *, faction_id: int):
         return self.filter(faction=faction_id)
 
+    def exclude_currently_busy(self):
+        return self.filter(player_skirmishes__victorious_faction__isnull=False).distinct()
+
 
 class WarriorManager(manager.Manager):
     def reduce_current_health(self, *, obj, damage: int):

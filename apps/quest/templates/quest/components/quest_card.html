@@ -15,8 +15,10 @@
         {# todo: don't show exact loot value #}
         <p>Loot: {{ quest.loot }}</p>
     </div>
-    <div class="uk-card-footer">
-        <a href="{% url 'quest:quest-accept-view' quest.id %}"
-           class="uk-button uk-button-text">Accept</a>
-    </div>
+    {% if quest.target_faction.active_quest %}
+        <div class="uk-card-footer">
+            <a href="{% url 'quest:quest-accept-view' quest.id %}"
+               class="uk-button uk-button-text">Accept</a>
+        </div>
+    {% endif %}
 </div>

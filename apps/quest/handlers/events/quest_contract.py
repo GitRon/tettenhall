@@ -1,4 +1,4 @@
-from django.db.models.fields.related_descriptors.ForwardManyToOneDescriptor import RelatedObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 
 from apps.core.domain import message_registry
 from apps.finance.models import Transaction
@@ -6,7 +6,7 @@ from apps.skirmish.messages.events import skirmish
 
 
 @message_registry.register_event(event=skirmish.SkirmishCreated)
-def handle_link_quest_contract_to_its_skirmish(*, context: skirmish.SkirmishCreated.Context):
+def handle_link_quest_contract_to_its_skirmish(*, context: skirmish.SkirmishCreated.Context) -> None:
     quest_contract = context.quest_contract
     quest_contract.skirmish = context.skirmish
     quest_contract.save()
@@ -17,7 +17,7 @@ def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished.Context) 
     victorious_faction = context.skirmish.victorious_faction
     try:
         quest_contract = context.skirmish.quest_contract
-    except RelatedObjectDoesNotExist:
+    except ObjectDoesNotExist:
         # There might be skirmishes with no assigned quest contract
         return
 
@@ -28,3 +28,7 @@ def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished.Context) 
             amount=quest_contract.quest.loot,
             reason=f"Quest {quest_contract.quest.name!r} finished! {quest_contract.quest.loot} silver looted.",
         )
+
+    # Unset active quest in faction
+    context.skirmish.player_faction.active_quest = None
+    context.skirmish.player_faction.save()

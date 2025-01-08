@@ -43,6 +43,7 @@ class WarriorAdmin(admin.ModelAdmin):
         "armor",
     )
     list_filter = ("faction", "condition")
+    search_fields = ("name",)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, **kwargs)
