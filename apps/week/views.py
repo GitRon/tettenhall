@@ -48,7 +48,8 @@ class PlayerWeekLogListView(generic.ListView):
     template_name = "player-week-log/components/player_week_log_list.html"
 
     def get_queryset(self) -> QuerySet:
-        return super().get_queryset().for_user(user_id=self.request.user.id)
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        return super().get_queryset().for_savegame(savegame_id=current_savegame)
 
 
 class AcknowledgePlayerWeekLogView(generic.DeleteView):
@@ -56,11 +57,10 @@ class AcknowledgePlayerWeekLogView(generic.DeleteView):
     http_method_names = ("delete",)
 
     def get_queryset(self) -> QuerySet:
-        return super().get_queryset().for_user(user_id=self.request.user.id)
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
     def delete(self, request, *args, **kwargs) -> HttpResponse:
-        # TODO: add some validation when we have save games
-
         super().delete(request, *args, **kwargs)
 
         response = HttpResponse(status=HTTPStatus.ACCEPTED)

@@ -8,7 +8,6 @@ from apps.week.models.player_week_log import PlayerWeekLog
 def handle_marketplace_mercenaries_restocked(*, context: PubMercenariesRestocked.Context):
     PlayerWeekLog.objects.create_record(
         title=f"New mercenaries in the pub of {context.marketplace.town_name}!",
-        message="Some fancy text",
         week=context.week,
         faction_id=context.marketplace.savegame.player_faction_id,
     )
@@ -18,7 +17,6 @@ def handle_marketplace_mercenaries_restocked(*, context: PubMercenariesRestocked
 def handle_warrior_morale_replenished(*, context: WarriorMoraleReplenished.Context):
     PlayerWeekLog.objects.create_record(
         title=f"Morale of warrior {context.warrior} was replenished to the maximum.",
-        message="Some fancy text",
         week=context.week,
         faction_id=context.warrior.faction_id,
     )
@@ -28,7 +26,6 @@ def handle_warrior_morale_replenished(*, context: WarriorMoraleReplenished.Conte
 def handle_warrior_health_healed(*, context: WarriorHealthHealed.Context):
     PlayerWeekLog.objects.create_record(
         title=f"Warrior {context.warrior} healed {context.healed_points} HP.",
-        message="Some fancy text",
         week=context.week,
         faction_id=context.warrior.faction_id,
     )

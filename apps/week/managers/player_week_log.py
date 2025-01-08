@@ -8,10 +8,9 @@ class PlayerWeekLogQuerySet(models.QuerySet):
 
 
 class PlayerWeekLogManager(manager.Manager):
-    def create_record(self, *, title: str, message: str, week: int, faction_id: int):
+    def create_record(self, *, title: str, week: int, faction_id: int):
         return self.create(
             title=title,
-            message=message,
             week=week,
             faction_id=faction_id,
         )

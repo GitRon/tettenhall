@@ -18,9 +18,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="uk-card-body">
-                    <p>{{ message.message }}</p>
-                </div>
                 <div class="uk-card-footer">
                     <a hx-delete="{% url 'week:player-week-log-remove-view' message.id %}"
                        hx-target="#message-card-{{ message.id|unlocalize }}"
