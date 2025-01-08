@@ -34,7 +34,8 @@ class QuestAcceptForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         quest_qs = Quest.objects.filter(id=quest_id)
-        self.fields["quest"].initial = quest_qs.first()
+        quest = quest_qs.first()
+        self.fields["quest"].initial = quest
         self.fields["quest"].widget = forms.HiddenInput()
 
         faction = Faction.objects.get(id=player_faction_id)
@@ -46,5 +47,5 @@ class QuestAcceptForm(forms.ModelForm):
             .filter(
                 faction=faction,
             )
-            .exclude_currently_busy()
+            .exclude_currently_busy(week=quest.target_faction.savegame.current_week)
         )

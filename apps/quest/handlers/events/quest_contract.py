@@ -21,6 +21,9 @@ def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished.Context) 
         # There might be skirmishes with no assigned quest contract
         return
 
+    # Unset active quest in faction
+    context.skirmish.player_faction.active_quests.remove(quest_contract)
+
     # If the player won the quest contracts skirmish, they get the loot
     if context.skirmish.quest_contract.faction == victorious_faction:
         Transaction.objects.create_transaction(
@@ -28,7 +31,3 @@ def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished.Context) 
             amount=quest_contract.quest.loot,
             reason=f"Quest {quest_contract.quest.name!r} finished! {quest_contract.quest.loot} silver looted.",
         )
-
-    # Unset active quest in faction
-    context.skirmish.player_faction.active_quest = None
-    context.skirmish.player_faction.save()

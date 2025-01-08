@@ -11,11 +11,9 @@ class Faction(models.Model):
     fyrd_reserve = models.PositiveSmallIntegerField(
         "Fyrd reserve", default=0, help_text="Number of warriors draft-able from the fyrd"
     )
-    active_quest = models.ForeignKey(
+    active_quests = models.ManyToManyField(
         "quest.QuestContract",
         verbose_name="Active Quest",
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         help_text="There can only be one active quest at a time.",
     )

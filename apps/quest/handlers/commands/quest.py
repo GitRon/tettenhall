@@ -26,7 +26,9 @@ def handle_offer_quests(*, context: OfferNewQuestsOnBoard.Context) -> list[Event
 
 @message_registry.register_command(command=AcceptQuest)
 def handle_accept_quest(*, context: AcceptQuest.Context) -> list[Event] | Event:
-    quest_contract = QuestContract.objects.create(faction=context.accepting_faction, quest=context.quest)
+    quest_contract = QuestContract.objects.create(
+        faction=context.accepting_faction, quest=context.quest, accepted_in_week=context.week
+    )
     quest_contract.assigned_warriors.add(*context.assigned_warriors)
 
     return QuestAccepted(

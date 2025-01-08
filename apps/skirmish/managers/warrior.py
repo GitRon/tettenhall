@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Sum, manager
+from django.db.models import Q, Sum, manager
 
 
 class WarriorQuerySet(models.QuerySet):
@@ -12,8 +12,11 @@ class WarriorQuerySet(models.QuerySet):
     def filter_faction(self, *, faction_id: int):
         return self.filter(faction=faction_id)
 
-    def exclude_currently_busy(self):
-        return self.filter(player_skirmishes__victorious_faction__isnull=False).distinct()
+    def exclude_currently_busy(self, *, week: int):
+        return self.filter(
+            Q(quest_contracts__isnull=True)
+            | Q(quest_contracts__skirmish__victorious_faction__isnull=False, quest_contracts__accepted_in_week=week)
+        )
 
 
 class WarriorManager(manager.Manager):

@@ -8,6 +8,7 @@ class SkirmishActionChoices(models.IntegerChoices):
     RISKY_ATTACK = 2, "Risky attack"
     FAST_ATTACK = 3, "Fast attack"
     DEFENSIVE_STANCE = 4, "Defensive stance"
+    # TODO: provide attack to incapacitate warriors more likely
 
 
 # Type hints

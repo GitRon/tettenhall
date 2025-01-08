@@ -12,3 +12,4 @@ class AcceptQuest(Command):
         accepting_faction: Faction
         quest: Quest
         assigned_warriors: list[Warrior]
+        week: int

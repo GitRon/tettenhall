@@ -1,4 +1,4 @@
-{% load l10n %}
+{% load l10n obsucrify %}
 <div class="uk-card uk-card-default uk-margin-bottom">
     <div class="uk-card-header">
         <div id="quest-card-{{ quest.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
@@ -13,12 +13,10 @@
         <p>Faction: {{ quest.target_faction }}</p>
         <p>Difficulty: {{ quest.get_difficulty_display }}</p>
         {# todo: don't show exact loot value #}
-        <p>Loot: {{ quest.loot }}</p>
+        <p>Loot: {{ quest.loot|obscurify:200 }}</p>
     </div>
-    {% if quest.target_faction.active_quest %}
         <div class="uk-card-footer">
             <a href="{% url 'quest:quest-accept-view' quest.id %}"
                class="uk-button uk-button-text">Accept</a>
         </div>
-    {% endif %}
 </div>

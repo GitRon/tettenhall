@@ -3,17 +3,17 @@
 {% block content %}
     <h1>Dashboard</h1>
 
-    {% if faction.active_quest %}
+    {% for active_quest in faction.active_quests.all %}
         <div uk-alert>
             <div>
-                <strong>Active quest:</strong> {{ faction.active_quest }}
+                <strong>Active quest:</strong> {{ active_quest }}
                 <a class="uk-button uk-button-primary"
-                   href="{% url 'skirmish:skirmish-fight-view' faction.active_quest.skirmish.id %}">
+                   href="{% url 'skirmish:skirmish-fight-view' active_quest.skirmish.id %}">
                     Fight skirmish
                 </a>
             </div>
         </div>
-    {% endif %}
+    {% endfor %}
 
     {% include 'player-week-log/components/player_week_log_list.html' with object_list=player_week_logs faction=faction %}
 {% endblock content %}
