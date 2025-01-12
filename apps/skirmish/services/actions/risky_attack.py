@@ -17,7 +17,7 @@ class RiskyAttackService(AttackService):
         else:
             attack = 0
 
-        # TODO: can we put this in the abstract class?
+        # TODO: can we put this in "AttackService"?
         self.message_list.append(
             WarriorAttackedWithDamage(
                 WarriorAttackedWithDamage.Context(skirmish=self.skirmish, warrior=self.warrior, damage=attack)
