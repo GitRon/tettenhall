@@ -14,6 +14,15 @@ def handle_link_quest_contract_to_its_skirmish(*, context: skirmish.SkirmishCrea
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
 def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished.Context) -> None:
+    # TODO: fixme
+    # TODO: commands dürfen nicht in anderen apps importiert werden, nur events
+    # TODO: commands machen explizit, wie services/BL miteinander redet, events sind für cross-app concerns
+    # emit command FinishQuestContract
+    #  -> QuestContractFinished emitted -> Transaction lauscht darauf, sonst würde ich das Command übergeben cross-app
+    #    -> CreateTransaction(reason="Quest finished", loot=543) für victorious faction, nicht nur für mich
+    #    -> Fraction hat Quest nicht mehr aktiv
+    #    -> ...
+
     victorious_faction = context.skirmish.victorious_faction
     try:
         quest_contract = context.skirmish.quest_contract
