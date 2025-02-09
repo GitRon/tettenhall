@@ -1,33 +1,30 @@
 from dataclasses import dataclass
 
-from apps.core.event_loop.messages import Command
+from queuebie.messages import Command
+
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 
 
+@dataclass(kw_only=True)
 class ReplenishWarriorMorale(Command):
-    @dataclass(kw_only=True)
-    class Context:
-        warrior: Warrior
-        week: int
+    warrior: Warrior
+    week: int
 
 
+@dataclass(kw_only=True)
 class HealInjuredWarrior(Command):
-    @dataclass(kw_only=True)
-    class Context:
-        warrior: Warrior
-        week: int
+    warrior: Warrior
+    week: int
 
 
+@dataclass(kw_only=True)
 class RecruitCapturedWarrior(Command):
-    @dataclass(kw_only=True)
-    class Context:
-        warrior: Warrior
-        faction: Faction
+    warrior: Warrior
+    faction: Faction
 
 
+@dataclass(kw_only=True)
 class EnslaveCapturedWarrior(Command):
-    @dataclass(kw_only=True)
-    class Context:
-        warrior: Warrior
-        faction: Faction
+    warrior: Warrior
+    faction: Faction

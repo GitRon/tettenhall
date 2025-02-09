@@ -1,19 +1,19 @@
 from django.core.exceptions import ObjectDoesNotExist
+from queuebie import message_registry
 
-from apps.core.domain import message_registry
 from apps.finance.models import Transaction
 from apps.skirmish.messages.events import skirmish
 
 
 @message_registry.register_event(event=skirmish.SkirmishCreated)
-def handle_link_quest_contract_to_its_skirmish(*, context: skirmish.SkirmishCreated.Context) -> None:
+def handle_link_quest_contract_to_its_skirmish(*, context: skirmish.SkirmishCreated) -> None:
     quest_contract = context.quest_contract
     quest_contract.skirmish = context.skirmish
     quest_contract.save()
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished.Context) -> None:
+def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished) -> None:
     # TODO: fixme
     # TODO: commands dürfen nicht in anderen apps importiert werden, nur events
     # TODO: commands machen explizit, wie services/BL miteinander redet, events sind für cross-app concerns

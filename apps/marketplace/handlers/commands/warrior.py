@@ -1,7 +1,8 @@
 import random
 
-from apps.core.domain import message_registry
-from apps.core.event_loop.messages import Event
+from queuebie import message_registry
+from queuebie.messages import Event
+
 from apps.faction.models.culture import Culture
 from apps.marketplace.messages.commands.warrior import RestockPubMercenaries
 from apps.marketplace.messages.events.warrior import PubMercenariesRestocked
@@ -9,7 +10,7 @@ from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorG
 
 
 @message_registry.register_command(command=RestockPubMercenaries)
-def handle_restock_pub_mercenaries(*, context: RestockPubMercenaries.Context) -> list[Event] | Event:
+def handle_restock_pub_mercenaries(*, context: RestockPubMercenaries) -> list[Event] | Event:
     # Clean up previous stock
     context.marketplace.available_mercenaries.all().delete()
 
@@ -24,4 +25,4 @@ def handle_restock_pub_mercenaries(*, context: RestockPubMercenaries.Context) ->
 
         context.marketplace.available_mercenaries.add(warrior)
 
-    return PubMercenariesRestocked(PubMercenariesRestocked.Context(marketplace=context.marketplace, week=context.week))
+    return PubMercenariesRestocked(marketplace=context.marketplace, week=context.week)

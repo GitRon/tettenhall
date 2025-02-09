@@ -3,8 +3,8 @@ from http import HTTPStatus
 from django.http import HttpResponse
 from django.urls import reverse, reverse_lazy
 from django.views import generic
+from queuebie.runner import handle_message
 
-from apps.core.event_loop.runner import handle_message
 from apps.savegame.forms.create_savegame import SavegameCreateForm
 from apps.savegame.mixins import CurrentSavegameMixin
 from apps.savegame.models.savegame import Savegame
@@ -37,9 +37,7 @@ class SavegameCreateView(CurrentSavegameMixin, generic.FormView):
         # Prepare week
         handle_message(
             PrepareWeek(
-                PrepareWeek.Context(
-                    savegame=savegame,
-                )
+                savegame=savegame,
             )
         )
 

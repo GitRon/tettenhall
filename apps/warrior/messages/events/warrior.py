@@ -1,20 +1,19 @@
 from dataclasses import dataclass
 
-from apps.core.event_loop.messages import Event
+from queuebie.messages import Event
+
 from apps.skirmish.models.warrior import Warrior
 
 
+@dataclass(kw_only=True)
 class WarriorMoraleReplenished(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        warrior: Warrior
-        recovered_morale: int
-        week: int
+    warrior: Warrior
+    recovered_morale: int
+    week: int
 
 
+@dataclass(kw_only=True)
 class WarriorHealthHealed(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        warrior: Warrior
-        healed_points: int
-        week: int
+    warrior: Warrior
+    healed_points: int
+    week: int

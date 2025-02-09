@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from apps.core.event_loop.messages import Event
+from queuebie.messages import Event
+
 from apps.marketplace.models.marketplace import Marketplace
 
 
+@dataclass(kw_only=True)
 class MarketplaceItemsRestocked(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        marketplace: Marketplace
-        week: int
+    marketplace: Marketplace
+    week: int

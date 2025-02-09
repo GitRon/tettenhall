@@ -4,8 +4,8 @@ from http import HTTPStatus
 from django.http import HttpResponse
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
+from queuebie.runner import handle_message
 
-from apps.core.event_loop.runner import handle_message
 from apps.finance.models import Transaction
 from apps.item.messages.commands.item import BuyItem, SellItem
 from apps.item.models.item import Item
@@ -19,7 +19,7 @@ class ItemSellView(SingleObjectMixin, generic.View):
     def post(self, *args, **kwargs):
         obj = self.get_object()
 
-        handle_message(SellItem(SellItem.Context(selling_faction=obj.owner, item=obj)))
+        handle_message(SellItem(selling_faction=obj.owner, item=obj))
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
@@ -49,9 +49,7 @@ class ItemBuyView(SingleObjectMixin, generic.View):
             )
             return response
 
-        handle_message(
-            BuyItem(BuyItem.Context(price=obj.price, item=obj, buying_faction=current_savegame.player_faction))
-        )
+        handle_message(BuyItem(price=obj.price, item=obj, buying_faction=current_savegame.player_faction))
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(

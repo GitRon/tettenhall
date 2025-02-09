@@ -1,6 +1,7 @@
 import random
 
-from apps.core.event_loop.messages import Command
+from queuebie.messages import Command
+
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
 from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage
 from apps.skirmish.services.actions.base import AttackService
@@ -18,10 +19,6 @@ class RiskyAttackService(AttackService):
             attack = 0
 
         # TODO: can we put this in "AttackService"?
-        self.message_list.append(
-            WarriorAttackedWithDamage(
-                WarriorAttackedWithDamage.Context(skirmish=self.skirmish, warrior=self.warrior, damage=attack)
-            )
-        )
+        self.message_list.append(WarriorAttackedWithDamage(skirmish=self.skirmish, warrior=self.warrior, damage=attack))
 
         return attack

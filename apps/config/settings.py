@@ -178,3 +178,7 @@ AXES_LOCKOUT_PARAMETERS = ["username"]
 AXES_CLIENT_IP_CALLABLE = lambda x: None  # noqa: E731
 # Mask user-sensitive parameters in logging stream
 AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
+
+# Queuebie
+QUEUEBIE_APP_BASE_PATH = BASE_DIR
+QUEUEBIE_STRICT_MODE = False

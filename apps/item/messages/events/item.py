@@ -1,21 +1,20 @@
 from dataclasses import dataclass
 
-from apps.core.event_loop.messages import Event
+from queuebie.messages import Event
+
 from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 
 
+@dataclass(kw_only=True)
 class ItemSold(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        selling_faction: Faction
-        item: Item
-        price: int
+    selling_faction: Faction
+    item: Item
+    price: int
 
 
+@dataclass(kw_only=True)
 class ItemBought(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        buying_faction: Faction
-        item: Item
-        price: int
+    buying_faction: Faction
+    item: Item
+    price: int

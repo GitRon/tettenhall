@@ -3,8 +3,8 @@ import json
 from django.urls import reverse
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
+from queuebie.runner import handle_message
 
-from apps.core.event_loop.runner import handle_message
 from apps.quest.forms.quest_accept import QuestAcceptForm
 from apps.quest.messages.commands.quest import AcceptQuest
 from apps.quest.models.quest import Quest
@@ -39,12 +39,10 @@ class QuestAcceptView(SingleObjectMixin, generic.FormView):
 
         handle_message(
             AcceptQuest(
-                AcceptQuest.Context(
-                    accepting_faction=self.current_savegame.player_faction,
-                    quest=form.cleaned_data["quest"],
-                    assigned_warriors=form.cleaned_data["assigned_warriors"],
-                    week=self.current_savegame.current_week,
-                )
+                accepting_faction=self.current_savegame.player_faction,
+                quest=form.cleaned_data["quest"],
+                assigned_warriors=form.cleaned_data["assigned_warriors"],
+                week=self.current_savegame.current_week,
             )
         )
 

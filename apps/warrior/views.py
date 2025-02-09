@@ -4,8 +4,8 @@ from http import HTTPStatus
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import generic
+from queuebie.runner import handle_message
 
-from apps.core.event_loop.runner import handle_message
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.forms.warrior import WarriorForm
@@ -50,7 +50,7 @@ class WarriorRecruitCapturedView(generic.DetailView):
         obj = self.get_object()
         faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
 
-        handle_message(RecruitCapturedWarrior(RecruitCapturedWarrior.Context(faction=faction, warrior=obj)))
+        handle_message(RecruitCapturedWarrior(faction=faction, warrior=obj))
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
@@ -72,7 +72,7 @@ class WarriorEnslaveCapturedView(generic.DetailView):
         obj = self.get_object()
         faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
 
-        handle_message(EnslaveCapturedWarrior(EnslaveCapturedWarrior.Context(faction=faction, warrior=obj)))
+        handle_message(EnslaveCapturedWarrior(faction=faction, warrior=obj))
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(

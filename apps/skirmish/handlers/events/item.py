@@ -1,5 +1,6 @@
-from apps.core.domain import message_registry
-from apps.core.event_loop.messages import Command
+from queuebie import message_registry
+from queuebie.messages import Command
+
 from apps.item.models.item import Item
 from apps.skirmish.messages.commands.item import WarriorDropsLoot
 from apps.skirmish.messages.commands.transaction import WarriorDropsSilver
@@ -8,7 +9,7 @@ from apps.skirmish.models.warrior import Warrior
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_distribute_loot(*, context: skirmish.SkirmishFinished.Context) -> list[Command]:
+def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Command]:
     message_list = []
 
     # The winner drops only items from dead warriors, the loser from all dead or incapacitated
@@ -30,20 +31,16 @@ def handle_distribute_loot(*, context: skirmish.SkirmishFinished.Context) -> lis
     for warrior in warriors_dropping_loot_list:
         message_list.append(
             WarriorDropsLoot(
-                WarriorDropsLoot.Context(
-                    skirmish=context.skirmish,
-                    warrior=warrior,
-                    new_owner=context.skirmish.victorious_faction,
-                )
+                skirmish=context.skirmish,
+                warrior=warrior,
+                new_owner=context.skirmish.victorious_faction,
             )
         )
         message_list.append(
             WarriorDropsSilver(
-                WarriorDropsSilver.Context(
-                    skirmish=context.skirmish,
-                    warrior=warrior,
-                    gaining_faction=context.skirmish.victorious_faction,
-                )
+                skirmish=context.skirmish,
+                warrior=warrior,
+                gaining_faction=context.skirmish.victorious_faction,
             )
         )
 
@@ -51,9 +48,9 @@ def handle_distribute_loot(*, context: skirmish.SkirmishFinished.Context) -> lis
 
 
 @message_registry.register_event(event=item.ItemDroppedAsLoot)
-def handle_looted_item_changes_ownership(*, context: item.ItemDroppedAsLoot.Context):
+def handle_looted_item_changes_ownership(*, context: item.ItemDroppedAsLoot):
     # Take item away from previous owner
     Warrior.objects.take_item_away(item=context.item)
 
-    # Set ownership in the item itself so it belongs to the winning faction
+    # Set ownership in the item itself, so it belongs to the winning faction
     Item.objects.update_ownership(item=context.item, new_owner=context.new_owner)

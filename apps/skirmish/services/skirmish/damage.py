@@ -1,4 +1,5 @@
-from apps.core.event_loop.messages import Event
+from queuebie.messages import Event
+
 from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.skirmish.messages.events.warrior import WarriorDefendedAllDamage, WarriorTookDamage
 from apps.skirmish.models import Skirmish, Warrior
@@ -39,26 +40,22 @@ class SkirmishDamageService:
         if damage > 0:
             self.message_list.append(
                 WarriorTookDamage(
-                    WarriorTookDamage.Context(
-                        skirmish=self.skirmish,
-                        attacker=self.attacker,
-                        attacker_damage=attack,
-                        defender=self.defender,
-                        defender_damage=defense,
-                        damage=damage,
-                    )
+                    skirmish=self.skirmish,
+                    attacker=self.attacker,
+                    attacker_damage=attack,
+                    defender=self.defender,
+                    defender_damage=defense,
+                    damage=damage,
                 )
             )
         else:
             self.message_list.append(
                 WarriorDefendedAllDamage(
-                    WarriorDefendedAllDamage.Context(
-                        skirmish=self.skirmish,
-                        attacker=self.attacker,
-                        defender=self.defender,
-                        attacker_damage=attack,
-                        defender_damage=defense,
-                    )
+                    skirmish=self.skirmish,
+                    attacker=self.attacker,
+                    defender=self.defender,
+                    attacker_damage=attack,
+                    defender_damage=defense,
                 )
             )
 

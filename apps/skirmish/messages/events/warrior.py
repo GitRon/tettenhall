@@ -1,98 +1,88 @@
 from dataclasses import dataclass
 
-from apps.core.event_loop.messages import Event
+from queuebie.messages import Event
+
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
 
+@dataclass(kw_only=True)
 class WarriorAttackedWithDamage(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        damage: int
+    skirmish: Skirmish
+    warrior: Warrior
+    damage: int
 
 
+@dataclass(kw_only=True)
 class WarriorDefendedDamage(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        damage: int
+    skirmish: Skirmish
+    warrior: Warrior
+    damage: int
 
 
+@dataclass(kw_only=True)
 class WarriorTookDamage(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        attacker: Warrior
-        attacker_damage: int
-        defender: Warrior
-        defender_damage: int
-        damage: int
+    skirmish: Skirmish
+    attacker: Warrior
+    attacker_damage: int
+    defender: Warrior
+    defender_damage: int
+    damage: int
 
 
+@dataclass(kw_only=True)
 class WarriorDefendedAllDamage(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        attacker: Warrior
-        attacker_damage: int
-        defender: Warrior
-        defender_damage: int
+    skirmish: Skirmish
+    attacker: Warrior
+    attacker_damage: int
+    defender: Warrior
+    defender_damage: int
 
 
+@dataclass(kw_only=True)
 class WarriorWasIncapacitated(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        by_warrior: Warrior
+    skirmish: Skirmish
+    warrior: Warrior
+    by_warrior: Warrior
 
 
+@dataclass(kw_only=True)
 class WarriorHasFled(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
+    skirmish: Skirmish
+    warrior: Warrior
 
 
+@dataclass(kw_only=True)
 class WarriorWasKilled(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        by_warrior: Warrior
+    skirmish: Skirmish
+    warrior: Warrior
+    by_warrior: Warrior
 
 
+@dataclass(kw_only=True)
 class WarriorWasCaptured(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        capturing_faction: Faction
+    skirmish: Skirmish
+    warrior: Warrior
+    capturing_faction: Faction
 
 
+@dataclass(kw_only=True)
 class WarriorLostMorale(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        lost_morale: int
+    skirmish: Skirmish
+    warrior: Warrior
+    lost_morale: int
 
 
+@dataclass(kw_only=True)
 class WarriorGainedMorale(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        gained_morale: int
+    skirmish: Skirmish
+    warrior: Warrior
+    gained_morale: int
 
 
+@dataclass(kw_only=True)
 class WarriorGainedExperience(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior: Warrior
-        gained_experience: int
+    skirmish: Skirmish
+    warrior: Warrior
+    gained_experience: int

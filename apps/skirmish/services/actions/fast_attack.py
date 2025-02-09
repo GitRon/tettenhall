@@ -1,4 +1,5 @@
-from apps.core.event_loop.messages import Command
+from queuebie.messages import Command
+
 from apps.skirmish.messages.commands.skirmish import (
     WarriorAttacksWarrior,
 )
@@ -21,11 +22,9 @@ class FastAttackService(AttackService):
 
         self.message_list.append(
             WarriorAttackedWithDamage(
-                WarriorAttackedWithDamage.Context(
-                    skirmish=self.skirmish,
-                    warrior=self.warrior,
-                    damage=attack,
-                )
+                skirmish=self.skirmish,
+                warrior=self.warrior,
+                damage=attack,
             )
         )
 
