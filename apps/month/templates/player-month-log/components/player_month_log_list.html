@@ -1,0 +1,36 @@
+{% load l10n %}
+<div hx-get="{% url 'month:player-month-log-list-view' %}"
+     hx-trigger="loadMessageList from:body"
+     hx-swap="outerHTML"
+     class="uk-child-width-1-4@s" uk-grid>
+    {% for message in object_list %}
+        <div id="message-card-{{ message.id|unlocalize }}">
+            <div class="uk-card uk-card-default">
+                <div class="uk-card-header">
+                    <div class="uk-grid-small uk-flex-middle" uk-grid>
+                        <div class="uk-width-expand">
+                            <h3 class="uk-card-title uk-margin-remove-bottom">
+                                <i class="fa-solid fa-scroll"></i> {{ message.title }}
+                            </h3>
+                            <p class="uk-text-meta uk-margin-remove-top">
+                                <time datetime="2016-04-01T19:00">Month #{{ message.month }}</time>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="uk-card-footer">
+                    <a hx-delete="{% url 'month:player-month-log-remove-view' message.id %}"
+                       hx-target="#message-card-{{ message.id|unlocalize }}"
+                       hx-swap="none"
+                       class="uk-button uk-button-text">Acknowledge</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="uk-card uk-card-default">
+            <div class="uk-card-header">
+                No messages yet.
+            </div>
+        </div>
+    {% endfor %}
+</div>

@@ -42,10 +42,12 @@ class BaseItemGenerator:
         modifier = int(round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)))
 
         item_type = self._get_queryset_for_type().first()
+        if not item_type:
+            raise RuntimeError("No item type found.")
 
         # TODO: sometimes "item_type" is None
         dice_notation = DiceNotation(dice_string=item_type.base_value, modifier=modifier)
-        price = dice_notation.expectancy_value * dice_notation.sides * max(modifier, 1)
+        price = abs(dice_notation.expectancy_value * dice_notation.sides * max(modifier, 1))
 
         # TODO: move in "create_record" method
         return Item.objects.create(

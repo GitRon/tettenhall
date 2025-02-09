@@ -4,14 +4,14 @@ from queuebie.messages import Command
 from apps.faction.messages.commands.faction import (
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
-    PayWeeklyWarriorSalaries,
+    PayMonthlyWarriorSalaries,
     ReplenishFyrdReserve,
 )
 from apps.faction.messages.events.faction import FactionWarriorsWithLowMoraleDetermined
 from apps.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.finance.models.transaction import Transaction
+from apps.month.messages.events.month import MonthPrepared
 from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
-from apps.week.messages.events.week import WeekPrepared
 
 
 @message_registry.register_event(event=FactionWarriorsWithLowMoraleDetermined)
@@ -21,7 +21,7 @@ def handle_warriors_with_low_morale_determined(*, context: FactionWarriorsWithLo
         event_list.append(
             ReplenishWarriorMorale(
                 warrior=warrior,
-                week=context.week,
+                month=context.month,
             )
         )
     return event_list
@@ -45,21 +45,21 @@ def handle_warrior_sold_into_slavery(*, context: WarriorWasSoldIntoSlavery) -> N
     )
 
 
-@message_registry.register_event(event=WeekPrepared)
-def handle_replenish_fyrd_reserve_for_new_week(*, context: WeekPrepared) -> list[Command]:
-    return [ReplenishFyrdReserve(faction=context.faction, week=context.current_week)]
+@message_registry.register_event(event=MonthPrepared)
+def handle_replenish_fyrd_reserve_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    return [ReplenishFyrdReserve(faction=context.faction, month=context.current_month)]
 
 
-@message_registry.register_event(event=WeekPrepared)
-def handle_pay_weekly_warrior_salaries_for_new_week(*, context: WeekPrepared) -> list[Command]:
-    return [PayWeeklyWarriorSalaries(faction=context.faction, week=context.current_week)]
+@message_registry.register_event(event=MonthPrepared)
+def handle_pay_monthly_warrior_salaries_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    return [PayMonthlyWarriorSalaries(faction=context.faction, month=context.current_month)]
 
 
-@message_registry.register_event(event=WeekPrepared)
-def handle_determine_warriors_with_low_morale_for_new_week(*, context: WeekPrepared) -> list[Command]:
-    return [DetermineWarriorsWithLowMorale(faction=context.faction, week=context.current_week)]
+@message_registry.register_event(event=MonthPrepared)
+def handle_determine_warriors_with_low_morale_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    return [DetermineWarriorsWithLowMorale(faction=context.faction, month=context.current_month)]
 
 
-@message_registry.register_event(event=WeekPrepared)
-def handle_determine_injured_warriors_for_new_week(*, context: WeekPrepared) -> list[Command]:
-    return [DetermineInjuredWarriors(faction=context.faction, week=context.current_week)]
+@message_registry.register_event(event=MonthPrepared)
+def handle_determine_injured_warriors_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    return [DetermineInjuredWarriors(faction=context.faction, month=context.current_month)]

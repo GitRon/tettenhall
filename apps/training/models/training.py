@@ -8,7 +8,7 @@ from apps.training.managers.training import TrainingManager
 
 class Training(models.Model):
     """
-    This model stores what will be trained in the current week.
+    This model stores what will be trained in the current month.
     """
 
     TRAINING_IMPROVEMENT_MU = 15

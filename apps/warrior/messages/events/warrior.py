@@ -9,11 +9,11 @@ from apps.skirmish.models.warrior import Warrior
 class WarriorMoraleReplenished(Event):
     warrior: Warrior
     recovered_morale: int
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)
 class WarriorHealthHealed(Event):
     warrior: Warrior
     healed_points: int
-    week: int
+    month: int

@@ -117,7 +117,7 @@ class BaseWarriorGenerator:
             dexterity=dexterity,
             dexterity_progress=dexterity_progress,
             recruitment_price=recruitment_price,
-            weekly_salary=int(recruitment_price * 0.15),
+            monthly_salary=int(recruitment_price * 0.15),
             weapon=weapon,
             armor=armor,
         )

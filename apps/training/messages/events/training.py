@@ -10,4 +10,4 @@ class WarriorUpgradedSkill(Event):
     warrior: Warrior
     training_category: int
     changed_attribute: str
-    week: int
+    month: int

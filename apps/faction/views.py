@@ -56,13 +56,14 @@ class DraftWarriorFromFyrdView(generic.DetailView):
             {
                 "notification": "New Warrior drafted",
                 "loadFactionWarriorList": "-",
+                "loadFactionItemList": "-",
             }
         )
 
         return response
 
 
-class WeeklyCostOverview(generic.DetailView):
+class MonthlyCostOverview(generic.DetailView):
     model = Faction
     template_name = "faction/faction/components/current_cost_card.html"
 
@@ -73,10 +74,10 @@ class WeeklyCostOverview(generic.DetailView):
 
         player_faction = current_savegame.player_faction
         # TODO: put in manager
-        context["weekly_salary_amount"] = (
+        context["monthly_salary_amount"] = (
             player_faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).aggregate(
-                sum_weekly_salary=Sum("weekly_salary")
-            )["sum_weekly_salary"]
+                sum_monthly_salary=Sum("monthly_salary")
+            )["sum_monthly_salary"]
             or 0
         )
         return context

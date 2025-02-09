@@ -12,10 +12,10 @@ class WarriorQuerySet(models.QuerySet):
     def filter_faction(self, *, faction_id: int):
         return self.filter(faction=faction_id)
 
-    def exclude_currently_busy(self, *, week: int):
+    def exclude_currently_busy(self, *, month: int):
         return self.filter(
             Q(quest_contracts__isnull=True)
-            | Q(quest_contracts__skirmish__victorious_faction__isnull=False, quest_contracts__accepted_in_week=week)
+            | Q(quest_contracts__skirmish__victorious_faction__isnull=False, quest_contracts__accepted_in_month=month)
         )
 
 
@@ -107,14 +107,14 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def get_weekly_salary_for_faction(self, *, faction) -> int:
+    def get_monthly_salary_for_faction(self, *, faction) -> int:
         """
         Calculate the salary of all warriors working for "faction" not being dead.
         """
         return (
             self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
             .filter(faction=faction)
-            .aggregate(amount=Sum("weekly_salary"))["amount"]
+            .aggregate(amount=Sum("monthly_salary"))["amount"]
             or 0
         )
 

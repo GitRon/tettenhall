@@ -22,13 +22,13 @@ def handle_offer_quests(*, context: OfferNewQuestsOnBoard) -> list[Event] | Even
         quest = quest_generator.process()
         context.marketplace.available_quests.add(quest)
 
-    return NewQuestsOffered(marketplace=context.marketplace, week=context.week)
+    return NewQuestsOffered(marketplace=context.marketplace, month=context.month)
 
 
 @message_registry.register_command(command=AcceptQuest)
 def handle_accept_quest(*, context: AcceptQuest) -> list[Event] | Event:
     quest_contract = QuestContract.objects.create(
-        faction=context.accepting_faction, quest=context.quest, accepted_in_week=context.week
+        faction=context.accepting_faction, quest=context.quest, accepted_in_month=context.month
     )
     quest_contract.assigned_warriors.add(*context.assigned_warriors)
 

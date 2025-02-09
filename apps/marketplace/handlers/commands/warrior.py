@@ -25,4 +25,4 @@ def handle_restock_pub_mercenaries(*, context: RestockPubMercenaries) -> list[Ev
 
         context.marketplace.available_mercenaries.add(warrior)
 
-    return PubMercenariesRestocked(marketplace=context.marketplace, week=context.week)
+    return PubMercenariesRestocked(marketplace=context.marketplace, month=context.month)

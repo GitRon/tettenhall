@@ -10,4 +10,4 @@ from apps.training.models.training import Training
 class TrainWarriors(Command):
     faction: Faction
     training: Training
-    week: int
+    month: int

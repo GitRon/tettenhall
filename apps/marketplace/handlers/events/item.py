@@ -3,7 +3,7 @@ from queuebie.messages import Command
 
 from apps.item.messages.events import item
 from apps.marketplace.messages.commands.item import RestockMarketplaceItems
-from apps.week.messages.events.week import WeekPrepared
+from apps.month.messages.events.month import MonthPrepared
 
 
 @message_registry.register_event(event=item.ItemSold)
@@ -18,6 +18,6 @@ def handle_remove_bought_item_from_marketplace(*, context: item.ItemBought):
     marketplace.available_items.remove(context.item)
 
 
-@message_registry.register_event(event=WeekPrepared)
-def handle_restock_items_in_marketplace_for_new_week(*, context: WeekPrepared) -> list[Command]:
-    return [RestockMarketplaceItems(marketplace=context.marketplace, week=context.current_week)]
+@message_registry.register_event(event=MonthPrepared)
+def handle_restock_items_in_marketplace_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    return [RestockMarketplaceItems(marketplace=context.marketplace, month=context.current_month)]

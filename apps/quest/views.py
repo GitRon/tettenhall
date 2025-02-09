@@ -42,7 +42,7 @@ class QuestAcceptView(SingleObjectMixin, generic.FormView):
                 accepting_faction=self.current_savegame.player_faction,
                 quest=form.cleaned_data["quest"],
                 assigned_warriors=form.cleaned_data["assigned_warriors"],
-                week=self.current_savegame.current_week,
+                month=self.current_savegame.current_month,
             )
         )
 

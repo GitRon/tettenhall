@@ -32,4 +32,4 @@ def handle_restock_marketplace_items(*, context: RestockMarketplaceItems) -> lis
         item = item_generator.process()
         context.marketplace.available_items.add(item)
 
-    return MarketplaceItemsRestocked(marketplace=context.marketplace, week=context.week)
+    return MarketplaceItemsRestocked(marketplace=context.marketplace, month=context.month)

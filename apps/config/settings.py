@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "apps.skirmish",
     "apps.training",
     "apps.warrior",
-    "apps.week",
+    "apps.month",
     "axes",
 ]
 

@@ -8,22 +8,22 @@ from apps.faction.models.faction import Faction
 @dataclass(kw_only=True)
 class ReplenishFyrdReserve(Command):
     faction: Faction
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)
-class PayWeeklyWarriorSalaries(Command):
+class PayMonthlyWarriorSalaries(Command):
     faction: Faction
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)
 class DetermineWarriorsWithLowMorale(Command):
     faction: Faction
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)
 class DetermineInjuredWarriors(Command):
     faction: Faction
-    week: int
+    month: int

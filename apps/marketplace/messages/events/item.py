@@ -8,4 +8,4 @@ from apps.marketplace.models.marketplace import Marketplace
 @dataclass(kw_only=True)
 class MarketplaceItemsRestocked(Event):
     marketplace: Marketplace
-    week: int
+    month: int

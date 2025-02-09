@@ -17,7 +17,7 @@
     <div class="uk-navbar-left">
         <a class="uk-navbar-item uk-logo uk-margin-left" href="{% url 'account:dashboard-view' %}">Tettenhall</a>
 
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and current_savegame %}
             <ul class="uk-navbar-nav">
                 <li>
                     <a href="{% url 'faction:faction-detail-view' current_savegame.player_faction.id %}">
@@ -54,14 +54,16 @@
     </div>
     <div class="uk-navbar-right uk-margin-right">
         <ul class="uk-navbar-nav">
-            {% if request.user.is_authenticated %}
+            {% if request.user.is_authenticated and current_savegame %}
                 <li class="uk-active">
-                    <a hx-post="{% url 'week:finish-week-view' %}">
-                        Finish week
+                    <a hx-post="{% url 'month:finish-month-view' %}">
+                        Finish month
                     </a>
                 </li>
+            {% endif %}
+            {% if request.user.is_authenticated %}
                 <li>
-                    <a href="#">{{ current_savegame.player_faction }} / {{ request.user }}</a>
+                    <a href="#">{{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}</a>
                     <div class="uk-navbar-dropdown">
                         <ul class="uk-nav uk-navbar-dropdown-nav">
                             <li><a href="{% url "savegame:savegame-list-view" %}">Savegames</a></li>

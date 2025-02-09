@@ -7,8 +7,8 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from apps.account.forms.login import LoginForm
+from apps.month.models.player_month_log import PlayerMonthLog
 from apps.savegame.models.savegame import Savegame
-from apps.week.models.player_week_log import PlayerWeekLog
 
 
 class LoginView(RequestInFormKwargsMixin, generic.FormView):
@@ -52,8 +52,10 @@ class DashboardView(generic.TemplateView):
 
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        context["player_week_logs"] = PlayerWeekLog.objects.for_savegame(savegame_id=current_savegame.id).order_by(
-            "-week"
-        )
-        context["faction"] = current_savegame.player_faction
+        if current_savegame:
+            context["player_month_logs"] = PlayerMonthLog.objects.for_savegame(
+                savegame_id=current_savegame.id
+            ).order_by("-month")
+            context["faction"] = current_savegame.player_faction
+
         return context

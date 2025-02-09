@@ -43,7 +43,7 @@ def handle_replenish_fyrd_reserve(*, context: TrainWarriors) -> list[Event] | Ev
                     warrior=warrior,
                     training_category=training_category,
                     changed_attribute=attribute,
-                    week=context.week,
+                    month=context.month,
                 )
             )
 

@@ -12,8 +12,8 @@ class Savegame(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     lastmodified_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=False)
-    current_week = models.PositiveSmallIntegerField(
-        "Current week", default=0, help_text="Week will be incremented after creation via Command"
+    current_month = models.PositiveSmallIntegerField(
+        "Current month", default=0, help_text="Month will be incremented after creation via Command"
     )
 
     player_faction = models.OneToOneField(

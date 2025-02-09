@@ -31,7 +31,7 @@ def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[
     return WarriorMoraleReplenished(
         warrior=context.warrior,
         recovered_morale=recovered_morale,
-        week=context.week,
+        month=context.month,
     )
 
 
@@ -53,7 +53,7 @@ def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> list[Event] |
     return WarriorHealthHealed(
         warrior=context.warrior,
         healed_points=healed_hp,
-        week=context.week,
+        month=context.month,
     )
 
 

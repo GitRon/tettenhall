@@ -10,18 +10,18 @@ from apps.skirmish.models.warrior import Warrior
 class FactionFyrdReserveReplenished(Event):
     faction: Faction
     new_recruitees: int
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)
-class WeeklyWarriorSalariesPaid(Event):
+class MonthlyWarriorSalariesPaid(Event):
     faction: Faction
     amount: int
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)
 class FactionWarriorsWithLowMoraleDetermined(Event):
     faction: Faction
     warrior_list: list[Warrior]
-    week: int
+    month: int

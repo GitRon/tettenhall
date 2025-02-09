@@ -28,7 +28,7 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> list[Even
     return FactionFyrdReserveReplenished(
         faction=context.faction,
         new_recruitees=new_recruitees,
-        week=context.week,
+        month=context.month,
     )
 
 
@@ -39,7 +39,7 @@ def handle_determine_warriors_with_low_morale(*, context: DetermineWarriorsWithL
     return FactionWarriorsWithLowMoraleDetermined(
         faction=context.faction,
         warrior_list=list(warrior_qs),
-        week=context.week,
+        month=context.month,
     )
 
 
@@ -55,7 +55,7 @@ def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> l
         event_list.append(
             HealInjuredWarrior(
                 warrior=warrior,
-                week=context.week,
+                month=context.month,
             )
         )
 

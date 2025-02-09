@@ -9,7 +9,7 @@ class QuestContract(models.Model):
     faction = models.ForeignKey(Faction, on_delete=models.CASCADE, help_text="Faction who signed up for the quest.")
     quest = models.ForeignKey(Quest, verbose_name="Quest", on_delete=models.CASCADE)
     assigned_warriors = models.ManyToManyField(Warrior, verbose_name="Assigned warriors")
-    accepted_in_week = models.PositiveSmallIntegerField("Accepted in week")
+    accepted_in_month = models.PositiveSmallIntegerField("Accepted in month")
     skirmish = models.OneToOneField(
         "skirmish.Skirmish",
         verbose_name="Related Skirmish",

@@ -5,10 +5,10 @@ from django.urls import reverse, reverse_lazy
 from django.views import generic
 from queuebie.runner import handle_message
 
+from apps.month.messages.commands.month import PrepareMonth
 from apps.savegame.forms.create_savegame import SavegameCreateForm
 from apps.savegame.mixins import CurrentSavegameMixin
 from apps.savegame.models.savegame import Savegame
-from apps.week.messages.commands.week import PrepareWeek
 
 
 class SavegameListView(CurrentSavegameMixin, generic.ListView):
@@ -34,9 +34,9 @@ class SavegameCreateView(CurrentSavegameMixin, generic.FormView):
             created_by_id=self.request.user.id,
         )
 
-        # Prepare week
+        # Prepare month
         handle_message(
-            PrepareWeek(
+            PrepareMonth(
                 savegame=savegame,
             )
         )

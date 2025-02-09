@@ -9,13 +9,13 @@ from apps.skirmish.models.warrior import Warrior
 @dataclass(kw_only=True)
 class ReplenishWarriorMorale(Command):
     warrior: Warrior
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)
 class HealInjuredWarrior(Command):
     warrior: Warrior
-    week: int
+    month: int
 
 
 @dataclass(kw_only=True)

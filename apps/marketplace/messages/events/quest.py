@@ -8,4 +8,4 @@ from apps.marketplace.models.marketplace import Marketplace
 @dataclass(kw_only=True)
 class NewQuestsOffered(Event):
     marketplace: Marketplace
-    week: int
+    month: int

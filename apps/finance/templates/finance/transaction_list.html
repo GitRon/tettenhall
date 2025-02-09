@@ -23,7 +23,7 @@
             </table>
         </div>
         <div class="uk-width-1-3">
-            <div hx-get="{% url 'faction:faction-weekly-costs-view' current_savegame.player_faction.id %}"
+            <div hx-get="{% url 'faction:faction-monthly-costs-view' current_savegame.player_faction.id %}"
                  hx-swap="innerHTML"
                  hx-trigger="load">
             </div>

@@ -44,7 +44,7 @@ class Warrior(models.Model):
     morale_progress = models.PositiveSmallIntegerField("Morale progress", default=0)
 
     experience = models.PositiveIntegerField("Experience", default=0)
-    weekly_salary = models.PositiveSmallIntegerField("Weekly salary", default=0)
+    monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
 
     recruitment_price = models.PositiveSmallIntegerField("Recruitment price", default=0)
 
