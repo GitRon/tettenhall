@@ -1,4 +1,5 @@
-from apps.core.event_loop.messages import Event
+from queuebie.messages import Event
+
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
 from apps.skirmish.messages.events.warrior import (
     WarriorAttackedWithDamage,
@@ -39,11 +40,9 @@ class AttackService:
         attack = int(round(self.warrior.roll_attack() * self.warrior.strength / self.BASE_COMPARE_STRENGTH))
         self.message_list.append(
             WarriorAttackedWithDamage(
-                WarriorAttackedWithDamage.Context(
-                    skirmish=self.skirmish,
-                    warrior=self.warrior,
-                    damage=attack,
-                )
+                skirmish=self.skirmish,
+                warrior=self.warrior,
+                damage=attack,
             )
         )
 
@@ -53,11 +52,9 @@ class AttackService:
         defense = self.warrior.roll_defense()
         self.message_list.append(
             WarriorDefendedDamage(
-                WarriorDefendedDamage.Context(
-                    skirmish=self.skirmish,
-                    warrior=self.warrior,
-                    damage=defense,
-                )
+                skirmish=self.skirmish,
+                warrior=self.warrior,
+                damage=defense,
             )
         )
 

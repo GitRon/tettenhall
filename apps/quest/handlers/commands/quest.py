@@ -1,7 +1,8 @@
 import random
 
-from apps.core.domain import message_registry
-from apps.core.event_loop.messages import Event
+from queuebie import message_registry
+from queuebie.messages import Event
+
 from apps.marketplace.messages.commands.quest import OfferNewQuestsOnBoard
 from apps.marketplace.messages.events.quest import NewQuestsOffered
 from apps.quest.messages.commands.quest import AcceptQuest
@@ -11,7 +12,7 @@ from apps.quest.services.generators.quest import QuestGenerator
 
 
 @message_registry.register_command(command=OfferNewQuestsOnBoard)
-def handle_offer_quests(*, context: OfferNewQuestsOnBoard.Context) -> list[Event] | Event:
+def handle_offer_quests(*, context: OfferNewQuestsOnBoard) -> list[Event] | Event:
     # Clean up previous quests
     context.marketplace.available_quests.all().delete()
 
@@ -21,20 +22,18 @@ def handle_offer_quests(*, context: OfferNewQuestsOnBoard.Context) -> list[Event
         quest = quest_generator.process()
         context.marketplace.available_quests.add(quest)
 
-    return NewQuestsOffered(NewQuestsOffered.Context(marketplace=context.marketplace, week=context.week))
+    return NewQuestsOffered(marketplace=context.marketplace, week=context.week)
 
 
 @message_registry.register_command(command=AcceptQuest)
-def handle_accept_quest(*, context: AcceptQuest.Context) -> list[Event] | Event:
+def handle_accept_quest(*, context: AcceptQuest) -> list[Event] | Event:
     quest_contract = QuestContract.objects.create(
         faction=context.accepting_faction, quest=context.quest, accepted_in_week=context.week
     )
     quest_contract.assigned_warriors.add(*context.assigned_warriors)
 
     return QuestAccepted(
-        QuestAccepted.Context(
-            accepting_faction=context.accepting_faction,
-            quest=context.quest,
-            quest_contract=quest_contract,
-        )
+        accepting_faction=context.accepting_faction,
+        quest=context.quest,
+        quest_contract=quest_contract,
     )

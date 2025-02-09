@@ -5,9 +5,10 @@ name = "pypi"
 
 [packages]
 Django = "~=5.1"
-ambient-toolbox = "~=11.6"
+ambient-toolbox = "~=12.1"
 django-axes = "~=7.0"
 django-crispy-forms = "~=1.14"
+django-queuebie = "~=0.1"
 faker = "~=33.1"
 
 [dev-packages]

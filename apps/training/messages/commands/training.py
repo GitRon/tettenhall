@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-from apps.core.event_loop.messages import Command
+from queuebie.messages import Command
+
 from apps.faction.models.faction import Faction
 from apps.training.models.training import Training
 
 
+@dataclass(kw_only=True)
 class TrainWarriors(Command):
-    @dataclass(kw_only=True)
-    class Context:
-        faction: Faction
-        training: Training
-        week: int
+    faction: Faction
+    training: Training
+    week: int

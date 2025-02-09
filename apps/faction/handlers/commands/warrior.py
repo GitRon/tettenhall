@@ -1,5 +1,6 @@
-from apps.core.domain import message_registry
-from apps.core.event_loop.messages import Event
+from queuebie import message_registry
+from queuebie.messages import Event
+
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.messages.events.warrior import WarriorRecruited
 from apps.faction.models.faction import Faction
@@ -7,7 +8,7 @@ from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)
-def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd.Context) -> list[Event] | Event | None:
+def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Event] | Event | None:
     if context.faction.fyrd_reserve <= 0:
         return None
 
@@ -21,9 +22,7 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd.Context) -> 
     Faction.objects.reduce_fyrd_reserve(faction=context.faction, drafted_warriors=1)
 
     return WarriorRecruited(
-        WarriorRecruited.Context(
-            faction=context.faction,
-            warrior=warrior,
-            recruitment_price=0,
-        )
+        faction=context.faction,
+        warrior=warrior,
+        recruitment_price=0,
     )

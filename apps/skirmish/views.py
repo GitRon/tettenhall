@@ -6,8 +6,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views import generic
+from queuebie.runner import handle_message
 
-from apps.core.event_loop.runner import handle_message
 from apps.core.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
 from apps.savegame.models.savegame import Savegame
@@ -101,20 +101,16 @@ class SkirmishFinishRoundView(generic.DetailView):
         # Start duel
         handle_message(
             StartDuel(
-                StartDuel.Context(
-                    skirmish=self.object,
-                    skirmish_participants_1=player_warrior_participants,
-                    skirmish_participants_2=opposing_warrior_participants,
-                )
+                skirmish=self.object,
+                skirmish_participants_1=player_warrior_participants,
+                skirmish_participants_2=opposing_warrior_participants,
             )
         )
 
         # Finish round
         handle_message(
             RoundFinished(
-                RoundFinished.Context(
-                    skirmish=self.object,
-                )
+                skirmish=self.object,
             )
         )
 

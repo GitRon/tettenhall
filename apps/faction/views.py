@@ -3,8 +3,8 @@ import json
 from django.db.models import Sum
 from django.shortcuts import render
 from django.views import generic
+from queuebie.runner import handle_message
 
-from apps.core.event_loop.runner import handle_message
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.models.faction import Faction
 from apps.savegame.models.savegame import Savegame
@@ -49,7 +49,7 @@ class DraftWarriorFromFyrdView(generic.DetailView):
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
 
-        handle_message(DraftWarriorFromFyrd(DraftWarriorFromFyrd.Context(faction=obj)))
+        handle_message(DraftWarriorFromFyrd(faction=obj))
         response = render(request, self.template_name, {"faction": obj})
 
         response["HX-Trigger"] = json.dumps(

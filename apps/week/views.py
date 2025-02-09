@@ -5,8 +5,8 @@ from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.urls import reverse
 from django.views import generic
+from queuebie.runner import handle_message
 
-from apps.core.event_loop.runner import handle_message
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models import Skirmish
 from apps.week.messages.commands.week import PrepareWeek
@@ -32,9 +32,7 @@ class FinishWeekView(generic.View):
 
         handle_message(
             PrepareWeek(
-                PrepareWeek.Context(
-                    savegame=current_savegame,
-                )
+                savegame=current_savegame,
             )
         )
 

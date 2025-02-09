@@ -1,7 +1,8 @@
 import random
 
-from apps.core.domain import message_registry
-from apps.core.event_loop.messages import Event
+from queuebie import message_registry
+from queuebie.messages import Event
+
 from apps.skirmish.messages.commands import skirmish
 from apps.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
@@ -19,7 +20,7 @@ from apps.skirmish.services.skirmish.damage import SkirmishDamageService
 
 
 @message_registry.register_command(command=skirmish.CreateSkirmish)
-def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[Event] | Event:
+def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
     skirmish_generator = BaseSkirmishGenerator(
         name=context.name,
         warriors_faction_1=context.warrior_list_1,
@@ -32,15 +33,13 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish.Context) -> list[
         context.quest_contract.save()
 
     return SkirmishCreated(
-        context=SkirmishCreated.Context(
-            skirmish=new_skirmish,
-            quest_contract=context.quest_contract,
-        )
+        skirmish=new_skirmish,
+        quest_contract=context.quest_contract,
     )
 
 
 @message_registry.register_command(command=skirmish.StartDuel)
-def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[Event] | Event:
+def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Event] | Event:
     message_list = []
 
     # Determine larger group
@@ -72,25 +71,21 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
         if not free_attack_due_to_being_more_numerous:
             message_list.append(
                 FighterPairsMatched(
-                    FighterPairsMatched.Context(
-                        skirmish=context.skirmish,
-                        warrior_1=participant_1.warrior,
-                        warrior_2=participant_2.warrior,
-                        attack_action_1=participant_1.skirmish_action,
-                        attack_action_2=participant_2.skirmish_action,
-                    )
+                    skirmish=context.skirmish,
+                    warrior_1=participant_1.warrior,
+                    warrior_2=participant_2.warrior,
+                    attack_action_1=participant_1.skirmish_action,
+                    attack_action_2=participant_2.skirmish_action,
                 )
             )
         else:
             message_list.append(
                 AttackerDefenderDecided(
-                    AttackerDefenderDecided.Context(
-                        skirmish=context.skirmish,
-                        attacker=participant_1.warrior,
-                        attacker_action=participant_1.skirmish_action,
-                        defender=participant_2.warrior,
-                        defender_action=participant_2.skirmish_action,
-                    )
+                    skirmish=context.skirmish,
+                    attacker=participant_1.warrior,
+                    attacker_action=participant_1.skirmish_action,
+                    defender=participant_2.warrior,
+                    defender_action=participant_2.skirmish_action,
                 )
             )
 
@@ -98,7 +93,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel.Context) -> list[
 
 
 @message_registry.register_command(command=skirmish.DetermineAttacker)
-def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacker.Context) -> list[Event] | Event:
+def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacker) -> list[Event] | Event:
     warrior_1_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_1)
     warrior_2_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_2)
 
@@ -123,20 +118,18 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
         defend_action = context.action_1
 
     return AttackerDefenderDecided(
-        AttackerDefenderDecided.Context(
-            skirmish=context.skirmish,
-            attacker=attacker,
-            attacker_action=attack_action,
-            defender=defender,
-            defender_action=defend_action,
-        )
+        skirmish=context.skirmish,
+        attacker=attacker,
+        attacker_action=attack_action,
+        defender=defender,
+        defender_action=defend_action,
     )
 
 
 @message_registry.register_command(command=skirmish.WarriorAttacksWarrior)
 def handle_warrior_attacks_warrior(
     *,
-    context: skirmish.WarriorAttacksWarrior.Context,
+    context: skirmish.WarriorAttacksWarrior,
 ) -> list[Event] | Event:
     service = SkirmishDamageService(
         skirmish=context.skirmish,
@@ -149,7 +142,7 @@ def handle_warrior_attacks_warrior(
 
 
 @message_registry.register_command(command=skirmish.WinSkirmish)
-def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish.Context) -> list[Event] | Event:
+def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event:
     Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction)
 
-    return SkirmishFinished(SkirmishFinished.Context(skirmish=context.skirmish))
+    return SkirmishFinished(skirmish=context.skirmish)

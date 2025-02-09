@@ -1,5 +1,6 @@
-from apps.core.domain import message_registry
-from apps.core.event_loop.messages import Command
+from queuebie import message_registry
+from queuebie.messages import Command
+
 from apps.faction.messages.commands.faction import (
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
@@ -14,24 +15,20 @@ from apps.week.messages.events.week import WeekPrepared
 
 
 @message_registry.register_event(event=FactionWarriorsWithLowMoraleDetermined)
-def handle_warriors_with_low_morale_determined(
-    *, context: FactionWarriorsWithLowMoraleDetermined.Context
-) -> list[Command]:
+def handle_warriors_with_low_morale_determined(*, context: FactionWarriorsWithLowMoraleDetermined) -> list[Command]:
     event_list = []
     for warrior in context.warrior_list:
         event_list.append(
             ReplenishWarriorMorale(
-                ReplenishWarriorMorale.Context(
-                    warrior=warrior,
-                    week=context.week,
-                )
+                warrior=warrior,
+                week=context.week,
             )
         )
     return event_list
 
 
 @message_registry.register_event(event=WarriorRecruited)
-def handle_warrior_recruited(*, context: WarriorRecruited.Context) -> None:
+def handle_warrior_recruited(*, context: WarriorRecruited) -> None:
     # Pay the money
     Transaction.objects.create_transaction(
         reason=f"{context.warrior} recruited", amount=-context.recruitment_price, faction=context.faction
@@ -39,7 +36,7 @@ def handle_warrior_recruited(*, context: WarriorRecruited.Context) -> None:
 
 
 @message_registry.register_event(event=WarriorWasSoldIntoSlavery)
-def handle_warrior_sold_into_slavery(*, context: WarriorWasSoldIntoSlavery.Context) -> None:
+def handle_warrior_sold_into_slavery(*, context: WarriorWasSoldIntoSlavery) -> None:
     # Pay the money
     Transaction.objects.create_transaction(
         reason=f"{context.warrior} was sold into slavery",
@@ -49,28 +46,20 @@ def handle_warrior_sold_into_slavery(*, context: WarriorWasSoldIntoSlavery.Conte
 
 
 @message_registry.register_event(event=WeekPrepared)
-def handle_replenish_fyrd_reserve_for_new_week(*, context: WeekPrepared.Context) -> list[Command]:
-    return [ReplenishFyrdReserve(ReplenishFyrdReserve.Context(faction=context.faction, week=context.current_week))]
+def handle_replenish_fyrd_reserve_for_new_week(*, context: WeekPrepared) -> list[Command]:
+    return [ReplenishFyrdReserve(faction=context.faction, week=context.current_week)]
 
 
 @message_registry.register_event(event=WeekPrepared)
-def handle_pay_weekly_warrior_salaries_for_new_week(*, context: WeekPrepared.Context) -> list[Command]:
-    return [
-        PayWeeklyWarriorSalaries(PayWeeklyWarriorSalaries.Context(faction=context.faction, week=context.current_week))
-    ]
+def handle_pay_weekly_warrior_salaries_for_new_week(*, context: WeekPrepared) -> list[Command]:
+    return [PayWeeklyWarriorSalaries(faction=context.faction, week=context.current_week)]
 
 
 @message_registry.register_event(event=WeekPrepared)
-def handle_determine_warriors_with_low_morale_for_new_week(*, context: WeekPrepared.Context) -> list[Command]:
-    return [
-        DetermineWarriorsWithLowMorale(
-            DetermineWarriorsWithLowMorale.Context(faction=context.faction, week=context.current_week)
-        )
-    ]
+def handle_determine_warriors_with_low_morale_for_new_week(*, context: WeekPrepared) -> list[Command]:
+    return [DetermineWarriorsWithLowMorale(faction=context.faction, week=context.current_week)]
 
 
 @message_registry.register_event(event=WeekPrepared)
-def handle_determine_injured_warriors_for_new_week(*, context: WeekPrepared.Context) -> list[Command]:
-    return [
-        DetermineInjuredWarriors(DetermineInjuredWarriors.Context(faction=context.faction, week=context.current_week))
-    ]
+def handle_determine_injured_warriors_for_new_week(*, context: WeekPrepared) -> list[Command]:
+    return [DetermineInjuredWarriors(faction=context.faction, week=context.current_week)]

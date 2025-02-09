@@ -1,46 +1,42 @@
 from dataclasses import dataclass
 
-from apps.core.event_loop.messages import Event
+from queuebie.messages import Event
+
 from apps.quest.models import QuestContract
 from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
 
+@dataclass(kw_only=True)
 class SkirmishCreated(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        quest_contract: QuestContract = None
+    skirmish: Skirmish
+    quest_contract: QuestContract = None
 
 
+@dataclass(kw_only=True)
 class FighterPairsMatched(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        warrior_1: Warrior
-        warrior_2: Warrior
-        attack_action_1: int
-        attack_action_2: int
+    skirmish: Skirmish
+    warrior_1: Warrior
+    warrior_2: Warrior
+    attack_action_1: int
+    attack_action_2: int
 
 
+@dataclass(kw_only=True)
 class AttackerDefenderDecided(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
-        attacker: Warrior
-        attacker_action: SkirmishActionTypeHint
-        defender: Warrior
-        defender_action: SkirmishActionTypeHint
+    skirmish: Skirmish
+    attacker: Warrior
+    attacker_action: SkirmishActionTypeHint
+    defender: Warrior
+    defender_action: SkirmishActionTypeHint
 
 
+@dataclass(kw_only=True)
 class RoundFinished(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
+    skirmish: Skirmish
 
 
+@dataclass(kw_only=True)
 class SkirmishFinished(Event):
-    @dataclass(kw_only=True)
-    class Context:
-        skirmish: Skirmish
+    skirmish: Skirmish

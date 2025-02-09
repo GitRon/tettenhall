@@ -2,7 +2,7 @@ import random
 
 from django.db.models import QuerySet
 
-from apps.core.domain.random import DiceNotation
+from apps.core.domain.dice import DiceNotation
 from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
