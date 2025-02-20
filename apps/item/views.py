@@ -18,8 +18,9 @@ class ItemSellView(SingleObjectMixin, generic.View):
 
     def post(self, *args, **kwargs):
         obj = self.get_object()
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        handle_message(SellItem(selling_faction=obj.owner, item=obj))
+        handle_message(SellItem(selling_faction=obj.owner, item=obj, month=current_savegame.current_month))
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
@@ -49,7 +50,14 @@ class ItemBuyView(SingleObjectMixin, generic.View):
             )
             return response
 
-        handle_message(BuyItem(price=obj.price, item=obj, buying_faction=current_savegame.player_faction))
+        handle_message(
+            BuyItem(
+                price=obj.price,
+                item=obj,
+                buying_faction=current_savegame.player_faction,
+                month=current_savegame.current_month,
+            )
+        )
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(

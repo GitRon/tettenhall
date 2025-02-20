@@ -41,6 +41,7 @@ def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Comman
                 skirmish=context.skirmish,
                 warrior=warrior,
                 gaining_faction=context.skirmish.victorious_faction,
+                month=context.month,
             )
         )
 

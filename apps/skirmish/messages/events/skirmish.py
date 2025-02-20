@@ -35,8 +35,10 @@ class AttackerDefenderDecided(Event):
 @dataclass(kw_only=True)
 class RoundFinished(Event):
     skirmish: Skirmish
+    month: int
 
 
 @dataclass(kw_only=True)
 class SkirmishFinished(Event):
     skirmish: Skirmish
+    month: int

@@ -22,9 +22,11 @@ class HealInjuredWarrior(Command):
 class RecruitCapturedWarrior(Command):
     warrior: Warrior
     faction: Faction
+    month: int
 
 
 @dataclass(kw_only=True)
 class EnslaveCapturedWarrior(Command):
     warrior: Warrior
     faction: Faction
+    month: int

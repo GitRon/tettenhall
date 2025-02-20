@@ -1,7 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from queuebie import message_registry
 
-from apps.finance.models import Transaction
 from apps.skirmish.messages.events import skirmish
 
 
@@ -23,7 +22,6 @@ def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished) -> None:
     #    -> Fraction hat Quest nicht mehr aktiv
     #    -> ...
 
-    victorious_faction = context.skirmish.victorious_faction
     try:
         quest_contract = context.skirmish.quest_contract
     except ObjectDoesNotExist:
@@ -31,12 +29,5 @@ def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished) -> None:
         return
 
     # Unset active quest in faction
+    # TODO: rename handler to reflect that we only do this now and nothing else
     context.skirmish.player_faction.active_quests.remove(quest_contract)
-
-    # If the player won the quest contracts skirmish, they get the loot
-    if context.skirmish.quest_contract.faction == victorious_faction:
-        Transaction.objects.create_transaction(
-            faction=victorious_faction,
-            amount=quest_contract.quest.loot,
-            reason=f"Quest {quest_contract.quest.name!r} finished! {quest_contract.quest.loot} silver looted.",
-        )

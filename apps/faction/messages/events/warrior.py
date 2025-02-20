@@ -11,6 +11,7 @@ class WarriorRecruited(Event):
     warrior: Warrior
     faction: Faction
     recruitment_price: int
+    month: int
 
 
 @dataclass(kw_only=True)
@@ -19,3 +20,4 @@ class WarriorWasSoldIntoSlavery(Event):
     warrior: Warrior
     selling_faction: Faction
     price: int
+    month: int

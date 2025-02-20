@@ -48,8 +48,9 @@ class DraftWarriorFromFyrdView(generic.DetailView):
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        handle_message(DraftWarriorFromFyrd(faction=obj))
+        handle_message(DraftWarriorFromFyrd(faction=obj, month=current_savegame.current_month))
         response = render(request, self.template_name, {"faction": obj})
 
         response["HX-Trigger"] = json.dumps(

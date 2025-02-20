@@ -145,4 +145,4 @@ def handle_warrior_attacks_warrior(
 def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event:
     Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction)
 
-    return SkirmishFinished(skirmish=context.skirmish)
+    return SkirmishFinished(skirmish=context.skirmish, month=context.month)

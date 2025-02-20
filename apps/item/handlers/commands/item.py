@@ -15,6 +15,7 @@ def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event:
         selling_faction=context.selling_faction,
         item=context.item,
         price=context.item.price,
+        month=context.month,
     )
 
 
@@ -27,4 +28,5 @@ def handle_buy_item(*, context: item.BuyItem) -> list[Event] | Event:
         buying_faction=context.buying_faction,
         item=context.item,
         price=context.price,
+        month=context.month,
     )

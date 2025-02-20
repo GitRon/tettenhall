@@ -63,6 +63,7 @@ class SkirmishFinishRoundView(generic.DetailView):
 
     def post(self, request, *args, **kwargs):
         # TODO: make enemy warriors chose a skirmish action (in SkirmishFightView?)
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
         self.object = self.get_object()
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
@@ -111,6 +112,7 @@ class SkirmishFinishRoundView(generic.DetailView):
         handle_message(
             RoundFinished(
                 skirmish=self.object,
+                month=current_savegame.current_month,
             )
         )
 

@@ -11,6 +11,7 @@ class ItemSold(Event):
     selling_faction: Faction
     item: Item
     price: int
+    month: int
 
 
 @dataclass(kw_only=True)
@@ -18,3 +19,4 @@ class ItemBought(Event):
     buying_faction: Faction
     item: Item
     price: int
+    month: int

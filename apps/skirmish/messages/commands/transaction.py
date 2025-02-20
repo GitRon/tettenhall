@@ -12,3 +12,4 @@ class WarriorDropsSilver(Command):
     skirmish: Skirmish
     warrior: Warrior
     gaining_faction: Faction
+    month: int

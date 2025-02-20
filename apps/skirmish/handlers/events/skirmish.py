@@ -26,8 +26,12 @@ def handle_round_finished(*, context: skirmish.RoundFinished) -> Command | None:
     Skirmish.objects.increment_round(skirmish=context.skirmish)
 
     if not context.skirmish.non_player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
-        return WinSkirmish(skirmish=context.skirmish, victorious_faction=context.skirmish.player_faction)
+        return WinSkirmish(
+            skirmish=context.skirmish, victorious_faction=context.skirmish.player_faction, month=context.month
+        )
     if not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
-        return WinSkirmish(skirmish=context.skirmish, victorious_faction=context.skirmish.non_player_faction)
+        return WinSkirmish(
+            skirmish=context.skirmish, victorious_faction=context.skirmish.non_player_faction, month=context.month
+        )
 
     return None

@@ -70,6 +70,7 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
         warrior=context.warrior,
         faction=context.faction,
         recruitment_price=context.warrior.recruitment_price,
+        month=context.month,
     )
 
 
@@ -84,4 +85,5 @@ def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior) -> list[
         warrior=context.warrior,
         selling_faction=context.faction,
         price=context.warrior.recruitment_price,
+        month=context.month,
     )

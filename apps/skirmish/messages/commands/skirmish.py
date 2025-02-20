@@ -50,3 +50,4 @@ class WarriorAttacksWarrior(Command):
 class WinSkirmish(Command):
     skirmish: Skirmish
     victorious_faction: Faction
+    month: int

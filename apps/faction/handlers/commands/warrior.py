@@ -25,4 +25,5 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
         faction=context.faction,
         warrior=warrior,
         recruitment_price=0,
+        month=context.month,
     )

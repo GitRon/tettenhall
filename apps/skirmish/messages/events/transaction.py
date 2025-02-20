@@ -13,3 +13,4 @@ class WarriorDroppedSilver(Event):
     warrior: Warrior
     gaining_faction: Faction
     amount: int
+    month: int

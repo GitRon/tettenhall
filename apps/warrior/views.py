@@ -7,6 +7,7 @@ from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.faction.models.faction import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.forms.warrior import WarriorForm
 from apps.warrior.messages.commands.warrior import EnslaveCapturedWarrior, RecruitCapturedWarrior
@@ -49,8 +50,9 @@ class WarriorRecruitCapturedView(generic.DetailView):
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
         faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        handle_message(RecruitCapturedWarrior(faction=faction, warrior=obj))
+        handle_message(RecruitCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
@@ -71,8 +73,9 @@ class WarriorEnslaveCapturedView(generic.DetailView):
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
         faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        handle_message(EnslaveCapturedWarrior(faction=faction, warrior=obj))
+        handle_message(EnslaveCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
