@@ -42,12 +42,12 @@
         },
         "django-axes": {
             "hashes": [
-                "sha256:16121bbb7bacf1ed83f23a4800ac168707ffce014407df1049aa4f2ea28d3d52",
-                "sha256:31832eff26735fd1c600b30d987eb848fea175e59b256da43f36fe205a474961"
+                "sha256:893dacce259d39e8cbcff655c61a008b3b827797c2f733f64fd9baf6bc7256e9",
+                "sha256:a96bd6cdca9fbcbd250cf5ce1d92bfc72f2ce64b928804d9802d30a090406c59"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.7'",
-            "version": "==7.0.1"
+            "version": "==7.0.2"
         },
         "django-crispy-forms": {
             "hashes": [

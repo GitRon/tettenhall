@@ -34,7 +34,10 @@ class WarriorManager(manager.Manager):
         if obj.current_health > obj.max_health:
             obj.current_health = obj.max_health
 
-        obj.save(update_fields=("current_health",))
+        if obj.current_health > 0:
+            obj.condition = obj.ConditionChoices.CONDITION_HEALTHY
+
+        obj.save(update_fields=("current_health", "condition"))
 
         return obj
 
