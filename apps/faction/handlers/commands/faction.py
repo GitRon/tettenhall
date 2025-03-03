@@ -5,14 +5,38 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.faction.messages.commands.faction import (
+    CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
     ReplenishFyrdReserve,
 )
-from apps.faction.messages.events.faction import FactionFyrdReserveReplenished, FactionWarriorsWithLowMoraleDetermined
+from apps.faction.messages.events.faction import (
+    FactionFyrdReserveReplenished,
+    FactionWarriorsWithLowMoraleDetermined,
+    NewFactionCreated,
+)
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
+
+
+@message_registry.register_command(command=CreateNewFaction)
+def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Event:
+    faction = Faction.objects.create(
+        name=context.name,
+        culture_id=context.culture_id,
+        savegame=context.savegame,
+        fyrd_reserve=random.randint(2, 5),
+    )
+
+    # Set player faction in savegame
+    if context.is_player_faction:
+        context.savegame.player_faction = faction
+        context.savegame.save()
+
+    return NewFactionCreated(
+        faction=faction,
+    )
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)

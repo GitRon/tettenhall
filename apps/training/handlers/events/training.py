@@ -1,10 +1,16 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
+from apps.faction.messages.events.faction import NewFactionCreated
 from apps.month.messages.events.month import MonthPrepared
 from apps.month.models.player_month_log import PlayerMonthLog
-from apps.training.messages.commands.training import TrainWarriors
+from apps.training.messages.commands.training import CreateNewTraining, TrainWarriors
 from apps.training.messages.events.training import WarriorUpgradedSkill
+
+
+@message_registry.register_event(event=NewFactionCreated)
+def handle_create_training_for_faction(*, context: NewFactionCreated) -> Command:
+    return CreateNewTraining(faction=context.faction)
 
 
 @message_registry.register_event(event=WarriorUpgradedSkill)

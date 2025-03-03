@@ -1,13 +1,25 @@
+import random
+
 from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.skirmish.models.warrior import Warrior
-from apps.training.messages.commands.training import TrainWarriors
-from apps.training.messages.events.training import WarriorUpgradedSkill
+from apps.training.messages.commands.training import CreateNewTraining, TrainWarriors
+from apps.training.messages.events.training import NewTrainingCreated, WarriorUpgradedSkill
+from apps.training.models import Training
+
+
+@message_registry.register_command(command=CreateNewTraining)
+def handle_create_training_for_new_faction(*, context: CreateNewTraining) -> list[Event] | Event:
+    training = Training.objects.create(
+        category=random.choice(Training.TrainingCategory.choices)[0], faction=context.faction
+    )
+
+    return NewTrainingCreated(training=training)
 
 
 @message_registry.register_command(command=TrainWarriors)
-def handle_replenish_fyrd_reserve(*, context: TrainWarriors) -> list[Event] | Event:
+def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] | Event:
     training_category = context.training.category
     warriors_to_train = context.faction.warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
 

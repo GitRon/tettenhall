@@ -1,15 +1,40 @@
+import random
+
 from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.faction.messages.commands.faction import (
+    CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
     PayMonthlyWarriorSalaries,
     ReplenishFyrdReserve,
 )
 from apps.faction.messages.events.faction import FactionWarriorsWithLowMoraleDetermined
+from apps.faction.models import Culture
 from apps.month.messages.events.month import MonthPrepared
+from apps.savegame.messages.events.savegame import NewSavegameCreated
 from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
+
+
+@message_registry.register_event(event=NewSavegameCreated)
+def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated) -> list[Command]:
+    return [
+        CreateNewFaction(
+            name=context.faction_name,
+            savegame=context.savegame,
+            culture_id=context.faction_culture_id,
+            is_player_faction=True,
+        )
+    ] + [
+        CreateNewFaction(
+            name=f"Faction {i+1}",
+            culture_id=random.choice(Culture.objects.all()).id,
+            savegame=context.savegame,
+            is_player_faction=False,
+        )
+        for i in range(random.randint(3, 5))
+    ]
 
 
 @message_registry.register_event(event=FactionWarriorsWithLowMoraleDetermined)

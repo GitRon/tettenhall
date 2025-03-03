@@ -13,6 +13,13 @@ class Marketplace(models.Model):
     available_mercenaries = models.ManyToManyField(Warrior, verbose_name="Available mercenaries", blank=True)
     available_quests = models.ManyToManyField(Quest, verbose_name="Available quests", blank=True)
 
+    savegame = models.OneToOneField(
+        "savegame.Savegame",
+        verbose_name="Savegame",
+        related_name="marketplace",
+        on_delete=models.CASCADE,
+    )
+
     objects = MarketplaceManager()
 
     class Meta:

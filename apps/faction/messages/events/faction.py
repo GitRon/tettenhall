@@ -7,6 +7,11 @@ from apps.skirmish.models.warrior import Warrior
 
 
 @dataclass(kw_only=True)
+class NewFactionCreated(Event):
+    faction: Faction
+
+
+@dataclass(kw_only=True)
 class FactionFyrdReserveReplenished(Event):
     faction: Faction
     new_recruitees: int
