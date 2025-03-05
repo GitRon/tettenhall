@@ -30,3 +30,9 @@ class FactionWarriorsWithLowMoraleDetermined(Event):
     faction: Faction
     warrior_list: list[Warrior]
     month: int
+
+
+@dataclass(kw_only=True)
+class NewLeaderWarriorSet(Event):
+    faction: Faction
+    warrior: Warrior

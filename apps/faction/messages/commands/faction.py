@@ -4,6 +4,7 @@ from queuebie.messages import Command
 
 from apps.faction.models.faction import Faction
 from apps.savegame.models.savegame import Savegame
+from apps.skirmish.models import Warrior
 
 
 @dataclass(kw_only=True)
@@ -36,3 +37,9 @@ class DetermineWarriorsWithLowMorale(Command):
 class DetermineInjuredWarriors(Command):
     faction: Faction
     month: int
+
+
+@dataclass(kw_only=True)
+class SetNewLeaderWarrior(Command):
+    warrior: Warrior
+    faction: Faction

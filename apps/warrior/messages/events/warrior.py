@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from queuebie.messages import Event
 
+from apps.faction.models import Faction
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -17,3 +18,9 @@ class WarriorHealthHealed(Event):
     warrior: Warrior
     healed_points: int
     month: int
+
+
+@dataclass(kw_only=True)
+class NewLeaderWarriorCreated(Event):
+    warrior: Warrior
+    faction: Faction

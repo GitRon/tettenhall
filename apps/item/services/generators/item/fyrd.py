@@ -9,9 +9,12 @@ class FyrdItemGenerator(BaseItemGenerator):
     MODIFIER_ROLLS_SIGMA = 2
 
     def _get_queryset_for_type(self) -> QuerySet:
-        # TODO: this will never return an armor because of the name WHERE, right?
-        return (
-            ItemType.objects.filter(function=self.function, name__in=["Pitchfork", "Spear"])
-            .exclude(is_fallback=True)
-            .order_by("?")
-        )
+        # TODO: this is ugly
+        if self.function == ItemType.FunctionChoices.FUNCTION_WEAPON:
+            return (
+                ItemType.objects.filter(function=self.function)
+                .filter(name__in=["Pitchfork", "Spear"])
+                .exclude(is_fallback=True)
+                .order_by("?")
+            )
+        return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")

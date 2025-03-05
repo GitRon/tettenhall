@@ -30,3 +30,8 @@ class EnslaveCapturedWarrior(Command):
     warrior: Warrior
     faction: Faction
     month: int
+
+
+@dataclass(kw_only=True)
+class CreateNewLeaderWarrior(Command):
+    faction: Faction
