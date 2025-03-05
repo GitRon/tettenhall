@@ -86,5 +86,16 @@
       "svg_image_name": "spear-feather",
       "is_fallback": false
     }
+  },
+  {
+    "model": "item.itemtype",
+    "pk": 9,
+    "fields": {
+      "name": "Long sword",
+      "function": 1,
+      "base_value": "4d4",
+      "svg_image_name": "gladius",
+      "is_fallback": false
+    }
   }
 ]

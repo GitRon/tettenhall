@@ -1,6 +1,7 @@
 import random
 
 from django.db import models
+from django.db.models import UniqueConstraint
 
 from apps.faction.models import Faction
 from apps.training.managers.training import TrainingManager
@@ -19,7 +20,7 @@ class Training(models.Model):
         SWIFTNESS = 2, "Swiftness"
         SHIELD_WALL = 3, "Shield wall"
 
-    category = models.PositiveSmallIntegerField("Category", choices=TrainingCategory.choices, unique=True)
+    category = models.PositiveSmallIntegerField("Category", choices=TrainingCategory.choices)
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
     objects = TrainingManager()
@@ -28,6 +29,7 @@ class Training(models.Model):
         verbose_name = "Training"
         verbose_name_plural = "Trainings"
         default_related_name = "trainings"
+        constraints = (UniqueConstraint(fields=("faction", "category"), name="unique_faction_category"),)
 
     def __str__(self) -> str:
         return f"{self.get_category_display()}"

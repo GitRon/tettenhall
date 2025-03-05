@@ -5,14 +5,40 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.faction.messages.commands.faction import (
+    CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
     ReplenishFyrdReserve,
+    SetNewLeaderWarrior,
 )
-from apps.faction.messages.events.faction import FactionFyrdReserveReplenished, FactionWarriorsWithLowMoraleDetermined
+from apps.faction.messages.events.faction import (
+    FactionFyrdReserveReplenished,
+    FactionWarriorsWithLowMoraleDetermined,
+    NewFactionCreated,
+    NewLeaderWarriorSet,
+)
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
+
+
+@message_registry.register_command(command=CreateNewFaction)
+def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Event:
+    faction = Faction.objects.create(
+        name=context.name,
+        culture_id=context.culture_id,
+        savegame=context.savegame,
+        fyrd_reserve=random.randint(2, 5),
+    )
+
+    # Set player faction in savegame
+    if context.is_player_faction:
+        context.savegame.player_faction = faction
+        context.savegame.save()
+
+    return NewFactionCreated(
+        faction=faction,
+    )
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
@@ -53,6 +79,7 @@ def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> l
     event_list = []
     for warrior in warrior_qs:
         event_list.append(
+            # TODO: this should be an event, not a command
             HealInjuredWarrior(
                 warrior=warrior,
                 month=context.month,
@@ -60,3 +87,11 @@ def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> l
         )
 
     return event_list
+
+
+@message_registry.register_command(command=SetNewLeaderWarrior)
+def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event] | Event:
+    context.faction.leader = context.warrior
+    context.faction.save()
+
+    return NewLeaderWarriorSet(faction=context.faction, warrior=context.warrior)

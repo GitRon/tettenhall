@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from apps.faction.models import Faction
-from apps.marketplace.models import Marketplace
 from apps.savegame.managers.savegame import SavegameManager
 
 
@@ -13,7 +12,7 @@ class Savegame(models.Model):
     lastmodified_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=False)
     current_month = models.PositiveSmallIntegerField(
-        "Current month", default=0, help_text="Month will be incremented after creation via Command"
+        "Current month", default=1, help_text="Month will be incremented after creation via Command"
     )
 
     player_faction = models.OneToOneField(
@@ -21,13 +20,6 @@ class Savegame(models.Model):
         verbose_name="Player Faction",
         on_delete=models.CASCADE,
         related_name="player_savegame",
-        null=True,
-    )
-    marketplace = models.OneToOneField(
-        Marketplace,
-        verbose_name="Marketplace",
-        on_delete=models.CASCADE,
-        related_name="savegame",
         null=True,
     )
 

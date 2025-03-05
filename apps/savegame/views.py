@@ -5,8 +5,8 @@ from django.urls import reverse, reverse_lazy
 from django.views import generic
 from queuebie.runner import handle_message
 
-from apps.month.messages.commands.month import PrepareMonth
 from apps.savegame.forms.create_savegame import SavegameCreateForm
+from apps.savegame.messages.commands.savegame import CreateNewSavegame
 from apps.savegame.mixins import CurrentSavegameMixin
 from apps.savegame.models.savegame import Savegame
 
@@ -27,18 +27,15 @@ class SavegameCreateView(CurrentSavegameMixin, generic.FormView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        savegame = Savegame.objects.create_record(
-            town_name=form.cleaned_data["town_name"],
-            faction_name=form.cleaned_data["faction_name"],
-            faction_culture_id=form.cleaned_data["faction_culture"].id,
-            created_by_id=self.request.user.id,
-        )
 
         # Prepare month
         handle_message(
-            PrepareMonth(
-                savegame=savegame,
-            )
+            CreateNewSavegame(
+                town_name=form.cleaned_data["town_name"],
+                faction_name=form.cleaned_data["faction_name"],
+                faction_culture_id=form.cleaned_data["faction_culture"].id,
+                created_by_id=self.request.user.id,
+            ),
         )
 
         return response

@@ -7,12 +7,14 @@ from apps.faction.messages.events.warrior import WarriorRecruited, WarriorWasSol
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.messages.commands.warrior import (
+    CreateNewLeaderWarrior,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
 )
-from apps.warrior.messages.events.warrior import WarriorHealthHealed, WarriorMoraleReplenished
+from apps.warrior.messages.events.warrior import NewLeaderWarriorCreated, WarriorHealthHealed, WarriorMoraleReplenished
+from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 
 
 @message_registry.register_command(command=ReplenishWarriorMorale)
@@ -86,4 +88,18 @@ def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior) -> list[
         selling_faction=context.faction,
         price=context.warrior.recruitment_price,
         month=context.month,
+    )
+
+
+@message_registry.register_command(command=CreateNewLeaderWarrior)
+def handle_create_new_leader_warrior(*, context: CreateNewLeaderWarrior) -> list[Event] | Event:
+    # Create warrior
+    warrior_generator = LeaderWarriorGenerator(
+        culture=context.faction.culture, faction=context.faction, savegame_id=context.faction.savegame_id
+    )
+    warrior = warrior_generator.process()
+
+    return NewLeaderWarriorCreated(
+        faction=context.faction,
+        warrior=warrior,
     )

@@ -17,6 +17,14 @@ class Faction(models.Model):
         blank=True,
         help_text="There can only be one active quest at a time.",
     )
+    leader = models.ForeignKey(
+        "skirmish.Warrior",
+        verbose_name="Leader",
+        related_name="leading_factions",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
 
     captured_warriors = models.ManyToManyField(
         "skirmish.Warrior",
