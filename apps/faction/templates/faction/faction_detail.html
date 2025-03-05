@@ -20,7 +20,7 @@
                     </tr>
                     <tr>
                         <td>Leader</td>
-                        <td>{{ object.leader }}</td>
+                        <td><a href="{% url "warrior:warrior-detail-view" object.leader.id %}">{{ object.leader }}</a></td>
                     </tr>
                     </tbody>
                 </table>

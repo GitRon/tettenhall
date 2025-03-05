@@ -2,7 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.faction.messages.events import warrior
-from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid
+from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, NewFactionCreated
 from apps.finance.messages.commands.transaction import CreateTransaction
 
 
@@ -36,3 +36,8 @@ def handle_pay_warrior_salaries(*, context: MonthlyWarriorSalariesPaid) -> Comma
         reason=f"Salaries paid in month {context.month}.",
         month=context.month,
     )
+
+
+@message_registry.register_event(event=NewFactionCreated)
+def handle_hand_out_starting_silver_for_new_factions(*, context: NewFactionCreated) -> Command:
+    return CreateTransaction(faction=context.faction, month=1, amount=1000, reason="Starting silver")

@@ -16,4 +16,4 @@ class LeaderWarriorGenerator(BaseWarriorGenerator):
 
     item_generator_class = LeaderItemGenerator
     chance_for_weapon = 1
-    chance_for_armor = 0.9
+    chance_for_armor = 1
