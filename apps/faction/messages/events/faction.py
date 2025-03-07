@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.faction.models.faction import Faction
+from apps.item.services.generators.item.base import BaseItemGenerator
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -36,3 +37,17 @@ class FactionWarriorsWithLowMoraleDetermined(Event):
 class NewLeaderWarriorSet(Event):
     faction: Faction
     warrior: Warrior
+
+
+@dataclass(kw_only=True)
+class RequestNewItemForTownShop(Event):
+    faction: Faction
+    generator_class: type[BaseItemGenerator]
+    item_function: int
+    month: int
+
+
+@dataclass(kw_only=True)
+class ItemWasAddedToShop(Event):
+    faction: Faction
+    month: int

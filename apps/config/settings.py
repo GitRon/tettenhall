@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     "apps.faction",
     "apps.finance",
     "apps.item",
-    "apps.marketplace",
     "apps.quest",
     "apps.savegame",
     "apps.skirmish",

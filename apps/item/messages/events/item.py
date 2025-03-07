@@ -7,6 +7,14 @@ from apps.item.models.item import Item
 
 
 @dataclass(kw_only=True)
+class ItemCreated(Event):
+    owner: Faction
+    faction: Faction
+    item: Item
+    month: int
+
+
+@dataclass(kw_only=True)
 class ItemSold(Event):
     selling_faction: Faction
     item: Item

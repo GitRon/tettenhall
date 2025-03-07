@@ -27,7 +27,6 @@ urlpatterns = [
     path("faction/", include(("apps.faction.urls", "apps.faction"), namespace="faction")),
     path("finance/", include(("apps.finance.urls", "apps.finance"), namespace="finance")),
     path("item/", include(("apps.item.urls", "apps.item"), namespace="item")),
-    path("marketplace/", include(("apps.marketplace.urls", "apps.marketplace"), namespace="marketplace")),
     path("quest/", include(("apps.quest.urls", "apps.quest"), namespace="quest")),
     path("savegame/", include(("apps.savegame.urls", "apps.savegame"), namespace="savegame")),
     path(

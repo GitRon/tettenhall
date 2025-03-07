@@ -5,19 +5,25 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.faction.messages.commands.faction import (
+    AddItemToTownShop,
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
     ReplenishFyrdReserve,
+    RestockTownShopItems,
     SetNewLeaderWarrior,
 )
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithLowMoraleDetermined,
+    ItemWasAddedToShop,
     NewFactionCreated,
     NewLeaderWarriorSet,
+    RequestNewItemForTownShop,
 )
 from apps.faction.models.faction import Faction
+from apps.item.models import ItemType
+from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
 
@@ -39,6 +45,44 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
     return NewFactionCreated(
         faction=faction,
     )
+
+
+@message_registry.register_command(command=RestockTownShopItems)
+def handle_restock_marketplace_items(*, context: RestockTownShopItems) -> list[Event] | Event:
+    # Clean up previous stock
+    context.faction.available_items.all().delete()
+
+    events = []
+
+    no_items = random.randrange(4, 6)
+    for _ in range(no_items):
+        if bool(random.getrandbits(1)):
+            events.append(
+                RequestNewItemForTownShop(
+                    faction=context.faction,
+                    generator_class=MercenaryItemGenerator,
+                    item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+                    month=context.month,
+                )
+            )
+        else:
+            events.append(
+                RequestNewItemForTownShop(
+                    faction=context.faction,
+                    generator_class=MercenaryItemGenerator,
+                    item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
+                    month=context.month,
+                )
+            )
+
+    return events
+
+
+@message_registry.register_command(command=AddItemToTownShop)
+def handle_add_item_to_shop(*, context: AddItemToTownShop) -> list[Event] | Event:
+    context.faction.available_items.add(context.item)
+
+    return ItemWasAddedToShop(faction=context.faction, month=context.month)
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
