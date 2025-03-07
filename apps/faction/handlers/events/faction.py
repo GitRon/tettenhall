@@ -1,5 +1,6 @@
 import random
 
+from faker import Faker
 from queuebie import message_registry
 from queuebie.messages import Command
 
@@ -19,6 +20,8 @@ from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
 
 @message_registry.register_event(event=NewSavegameCreated)
 def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated) -> list[Command]:
+    culture = Culture.objects.get_or_none(id=context.faction_culture_id)
+    faker = Faker([culture.locale])
     return [
         CreateNewFaction(
             name=context.faction_name,
@@ -28,12 +31,12 @@ def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated
         )
     ] + [
         CreateNewFaction(
-            name=f"Faction {i+1}",
+            name=faker.city(),
             culture_id=random.choice(Culture.objects.all()).id,
             savegame=context.savegame,
             is_player_faction=False,
         )
-        for i in range(random.randint(3, 5))
+        for _ in range(random.randint(3, 5))
     ]
 
 
