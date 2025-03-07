@@ -40,11 +40,11 @@
             </div>
         </div>
         <div>
-            {% include 'core/components/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %}
+            {% include 'common/components/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %}
             {{ warrior.get_weapon_or_fallback }}
         </div>
         <div>
-            {% include 'core/components/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %}
+            {% include 'common/components/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %}
             {{ warrior.get_armor_or_fallback }}
         </div>
     </div>

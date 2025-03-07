@@ -2,7 +2,7 @@ import typing
 
 from django.db import models
 
-from apps.core.domain.dice import DiceNotation
+from apps.common.domain.dice import DiceNotation
 from apps.faction.models.faction import Faction
 from apps.item.managers.item import ItemManager
 from apps.item.models.item_type import ItemType

@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.views import generic
 from queuebie.runner import handle_message
 
-from apps.core.utils import querydict_to_nested_dict
+from apps.common.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.messages.commands.skirmish import StartDuel

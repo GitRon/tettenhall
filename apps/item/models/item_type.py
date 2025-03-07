@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.core.validators import dice_notation
+from apps.common.validators import dice_notation
 
 
 class ItemType(models.Model):

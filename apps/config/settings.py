@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "crispy_forms",
     "apps.account",
-    "apps.core",
+    "apps.common",
     "apps.faction",
     "apps.finance",
     "apps.item",
