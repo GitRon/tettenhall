@@ -49,6 +49,7 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
 
 @message_registry.register_command(command=RestockTownShopItems)
 def handle_restock_marketplace_items(*, context: RestockTownShopItems) -> list[Event] | Event:
+    # TODO: in item.py?
     # Clean up previous stock
     context.faction.available_items.all().delete()
 
@@ -80,6 +81,7 @@ def handle_restock_marketplace_items(*, context: RestockTownShopItems) -> list[E
 
 @message_registry.register_command(command=AddItemToTownShop)
 def handle_add_item_to_shop(*, context: AddItemToTownShop) -> list[Event] | Event:
+    # TODO: in item.py?
     context.faction.available_items.add(context.item)
 
     return ItemWasAddedToShop(faction=context.faction, month=context.month)

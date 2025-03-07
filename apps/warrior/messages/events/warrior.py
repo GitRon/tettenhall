@@ -24,3 +24,9 @@ class WarriorHealthHealed(Event):
 class NewLeaderWarriorCreated(Event):
     warrior: Warrior
     faction: Faction
+
+
+@dataclass(kw_only=True)
+class WarriorCreated(Event):
+    warrior: Warrior
+    faction: Faction

@@ -8,3 +8,6 @@ from apps.warrior.messages.events.warrior import NewLeaderWarriorCreated
 @message_registry.register_event(event=NewLeaderWarriorCreated)
 def handle_set_new_leader_for_faction(*, context: NewLeaderWarriorCreated) -> Command:
     return SetNewLeaderWarrior(faction=context.faction, warrior=context.warrior)
+
+
+# TODO: listen to "WarriorCreated" event and spawn "AddWarriorToPub" command

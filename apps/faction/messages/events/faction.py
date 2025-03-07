@@ -41,6 +41,7 @@ class NewLeaderWarriorSet(Event):
 
 @dataclass(kw_only=True)
 class RequestNewItemForTownShop(Event):
+    # TODO: item.py?
     faction: Faction
     generator_class: type[BaseItemGenerator]
     item_function: int
@@ -49,5 +50,6 @@ class RequestNewItemForTownShop(Event):
 
 @dataclass(kw_only=True)
 class ItemWasAddedToShop(Event):
+    # TODO: item.py?
     faction: Faction
     month: int

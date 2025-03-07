@@ -1,10 +1,38 @@
+import random
+
 from queuebie import message_registry
 from queuebie.messages import Event
 
-from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
-from apps.faction.messages.events.warrior import WarriorRecruited
+from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
+from apps.faction.messages.events.warrior import RequestWarriorForPub, TownMercenariesRestocked, WarriorRecruited
+from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
+from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
+
+
+@message_registry.register_command(command=RestockTownMercenaries)
+def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[Event] | Event:
+    # Clean up previous stock
+    context.faction.available_mercenaries.all().delete()
+
+    events = []
+
+    no_warriors = random.randrange(2, 4)
+    for _ in range(no_warriors):
+        events.append(
+            RequestWarriorForPub(
+                faction=None,
+                culture=Culture.objects.all().order_by("?").first(),
+                generator_class=MercenaryWarriorGenerator,
+                month=context.month,
+            )
+        )
+
+        # TODO: reimplement me
+        # context.marketplace.available_mercenaries.add(warrior)
+
+    return TownMercenariesRestocked(faction=context.faction, month=context.month)
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)
