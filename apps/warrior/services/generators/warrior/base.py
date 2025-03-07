@@ -16,6 +16,7 @@ class BaseWarriorGenerator:
     HEALTH_SIGMA: int
     MORALE_MU: int
     MORALE_SIGMA: int
+    # TODO: ensure that both stats are never zero
     STATS_MU: int
     STATS_SIGMA: int
     PROGRESS_MU: int
