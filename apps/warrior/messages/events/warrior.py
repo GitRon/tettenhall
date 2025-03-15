@@ -30,3 +30,4 @@ class NewLeaderWarriorCreated(Event):
 class WarriorCreated(Event):
     warrior: Warrior
     faction: Faction
+    month: int

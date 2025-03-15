@@ -3,7 +3,9 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Event
 
+from apps.faction.messages.commands.faction import AddWarriorToPub
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
+from apps.faction.messages.events.faction import WarriorWasAddedToPub
 from apps.faction.messages.events.warrior import RequestWarriorForPub, TownMercenariesRestocked, WarriorRecruited
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
@@ -29,10 +31,14 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
             )
         )
 
-        # TODO: reimplement me
-        # context.marketplace.available_mercenaries.add(warrior)
-
     return TownMercenariesRestocked(faction=context.faction, month=context.month)
+
+
+@message_registry.register_command(command=AddWarriorToPub)
+def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Event:
+    context.faction.available_mercenaries.add(context.warrior)
+
+    return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)

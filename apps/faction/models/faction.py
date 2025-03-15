@@ -37,9 +37,15 @@ class Faction(models.Model):
     savegame = models.ForeignKey("savegame.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
 
     town_name = models.CharField("Town name", max_length=100)
-    available_items = models.ManyToManyField(Item, verbose_name="Available items", blank=True)
-    available_mercenaries = models.ManyToManyField(Warrior, verbose_name="Available mercenaries", blank=True)
-    available_quests = models.ManyToManyField(Quest, verbose_name="Available quests", blank=True)
+    available_items = models.ManyToManyField(
+        Item, verbose_name="Available items", related_name="available_shop_items", blank=True
+    )
+    available_mercenaries = models.ManyToManyField(
+        Warrior, verbose_name="Available mercenaries", related_name="available_pub_mercenaries", blank=True
+    )
+    available_quests = models.ManyToManyField(
+        Quest, verbose_name="Available quests", related_name="available_town_quests", blank=True
+    )
 
     objects = FactionManager()
 

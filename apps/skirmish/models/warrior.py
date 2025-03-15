@@ -2,7 +2,6 @@ from django.db import models
 
 from apps.common.domain.dice import DiceNotation
 from apps.faction.models.culture import Culture
-from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
@@ -24,7 +23,9 @@ class Warrior(models.Model):
 
     name = models.CharField("Name", max_length=100)
     culture = models.ForeignKey(Culture, verbose_name="Culture", on_delete=models.CASCADE)
-    faction = models.ForeignKey(Faction, verbose_name="Faction", null=True, blank=True, on_delete=models.CASCADE)
+    faction = models.ForeignKey(
+        "faction.Faction", verbose_name="Faction", null=True, blank=True, on_delete=models.CASCADE
+    )
     savegame = models.ForeignKey("savegame.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
 
     avatar_id = models.PositiveSmallIntegerField("Avatar-ID", default=1)

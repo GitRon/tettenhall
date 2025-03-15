@@ -57,3 +57,10 @@ class AddItemToTownShop(Command):
     faction: Faction
     item: Item
     month: int
+
+
+@dataclass(kw_only=True)
+class AddWarriorToPub(Command):
+    faction: Faction
+    warrior: Warrior
+    month: int

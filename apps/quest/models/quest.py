@@ -2,8 +2,6 @@ import random
 
 from django.db import models
 
-from apps.faction.models.faction import Faction
-
 
 class Quest(models.Model):
     class DifficultyChoices(models.IntegerChoices):
@@ -12,7 +10,7 @@ class Quest(models.Model):
 
     name = models.CharField("Name", max_length=50)
     loot = models.PositiveSmallIntegerField("Loot (in silver)")
-    target_faction = models.ForeignKey(Faction, verbose_name="Target faction", on_delete=models.CASCADE)
+    target_faction = models.ForeignKey("faction.Faction", verbose_name="Target faction", on_delete=models.CASCADE)
     difficulty = models.PositiveSmallIntegerField("Difficulty", choices=DifficultyChoices.choices)
 
     class Meta:

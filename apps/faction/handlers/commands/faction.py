@@ -84,7 +84,7 @@ def handle_add_item_to_shop(*, context: AddItemToTownShop) -> list[Event] | Even
     # TODO: in item.py?
     context.faction.available_items.add(context.item)
 
-    return ItemWasAddedToShop(faction=context.faction, month=context.month)
+    return ItemWasAddedToShop(faction=context.faction, item=context.item, month=context.month)
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.faction.models.faction import Faction
+from apps.item.models import Item
 from apps.item.services.generators.item.base import BaseItemGenerator
 from apps.skirmish.models.warrior import Warrior
 
@@ -52,4 +53,13 @@ class RequestNewItemForTownShop(Event):
 class ItemWasAddedToShop(Event):
     # TODO: item.py?
     faction: Faction
+    item: Item
+    month: int
+
+
+@dataclass(kw_only=True)
+class WarriorWasAddedToPub(Event):
+    # TODO: warrior.py?
+    faction: Faction
+    warrior: Warrior
     month: int

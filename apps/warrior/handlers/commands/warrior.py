@@ -108,6 +108,7 @@ def handle_create_new_warrior(*, context: CreateWarrior) -> list[Event] | Event:
     return WarriorCreated(
         faction=context.faction,
         warrior=warrior,
+        month=context.month,
     )
 
 
