@@ -18,12 +18,6 @@ class RequestWarriorForPub(Event):
 
 
 @dataclass(kw_only=True)
-class TownMercenariesRestocked(Event):
-    faction: Faction
-    month: int
-
-
-@dataclass(kw_only=True)
 class WarriorRecruited(Event):
     warrior: Warrior
     faction: Faction

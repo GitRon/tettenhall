@@ -6,7 +6,7 @@ from queuebie.messages import Event
 from apps.faction.messages.commands.faction import AddWarriorToPub
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
 from apps.faction.messages.events.faction import WarriorWasAddedToPub
-from apps.faction.messages.events.warrior import RequestWarriorForPub, TownMercenariesRestocked, WarriorRecruited
+from apps.faction.messages.events.warrior import RequestWarriorForPub, WarriorRecruited
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
@@ -31,7 +31,7 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
             )
         )
 
-    return TownMercenariesRestocked(faction=context.faction, month=context.month)
+    return events
 
 
 @message_registry.register_command(command=AddWarriorToPub)
