@@ -9,6 +9,7 @@ from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
+    RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
     SetNewLeaderWarrior,
@@ -19,6 +20,7 @@ from apps.faction.messages.events.faction import (
     ItemWasAddedToShop,
     NewFactionCreated,
     NewLeaderWarriorSet,
+    QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
 from apps.faction.models.faction import Faction
@@ -76,6 +78,7 @@ def handle_restock_marketplace_items(*, context: RestockTownShopItems) -> list[E
                 )
             )
 
+        # TODO: create event to show the user that we've finished and let user log listend to it
     return events
 
 
@@ -85,6 +88,14 @@ def handle_add_item_to_shop(*, context: AddItemToTownShop) -> list[Event] | Even
     context.faction.available_items.add(context.item)
 
     return ItemWasAddedToShop(faction=context.faction, item=context.item, month=context.month)
+
+
+@message_registry.register_command(command=RemoveQuestFromBulletinBoard)
+def handle_remove_quest_from_bulletin_board(*, context: RemoveQuestFromBulletinBoard) -> Event:
+    # TODO: in quest.py?
+    context.faction.available_quests.remove(context.quest)
+
+    return QuestWasRemovedFromBulletinBoard(faction=context.faction, quest=context.quest, month=context.month)
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)

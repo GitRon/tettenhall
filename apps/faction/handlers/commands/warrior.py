@@ -30,6 +30,7 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
                 month=context.month,
             )
         )
+        # TODO: create event to show the user that we've finished and let user log listend to it
 
     return events
 
