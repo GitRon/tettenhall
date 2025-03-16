@@ -14,6 +14,7 @@ def handle_create_leader_for_new_faction(*, context: NewFactionCreated) -> Comma
 @message_registry.register_event(event=RequestWarriorForPub)
 def handle_request_warrior_for_pub(*, context: RequestWarriorForPub) -> Command:
     return CreateWarrior(
+        savegame=context.savegame,
         faction=context.faction,
         culture=context.culture,
         generator_class=context.generator_class,

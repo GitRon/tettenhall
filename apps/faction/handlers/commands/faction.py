@@ -50,7 +50,7 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
 
 
 @message_registry.register_command(command=RestockTownShopItems)
-def handle_restock_marketplace_items(*, context: RestockTownShopItems) -> list[Event] | Event:
+def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] | Event:
     # TODO: in item.py?
     # Clean up previous stock
     context.faction.available_items.all().delete()

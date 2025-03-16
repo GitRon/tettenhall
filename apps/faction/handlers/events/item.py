@@ -16,18 +16,18 @@ def handle_item_created_for_shop(*, context: item.ItemCreated) -> Command | None
 
 
 @message_registry.register_event(event=item.ItemSold)
-def handle_add_sold_item_to_marketplace(*, context: item.ItemSold) -> Command:
+def handle_add_sold_item_to_shop(*, context: item.ItemSold) -> Command:
     context.selling_faction.available_items.add(context.item)
     # TODO: this is wrong. we need a command for the change.
 
 
 @message_registry.register_event(event=item.ItemBought)
-def handle_remove_bought_item_from_marketplace(*, context: item.ItemBought) -> Command:
+def handle_remove_bought_item_from_shop(*, context: item.ItemBought) -> Command:
     context.buying_faction.available_items.remove(context.item)
     # TODO: this is wrong. we need a command for the change.
 
 
 @message_registry.register_event(event=NewFactionCreated)
 @message_registry.register_event(event=MonthPrepared)
-def handle_restock_items_in_marketplace_for_new_month(*, context: MonthPrepared | NewFactionCreated) -> Command:
+def handle_restock_items_in_shop_for_new_month(*, context: MonthPrepared | NewFactionCreated) -> Command:
     return RestockTownShopItems(faction=context.faction, month=context.current_month)

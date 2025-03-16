@@ -101,11 +101,12 @@ def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior) -> list[
 def handle_create_new_warrior(*, context: CreateWarrior) -> list[Event] | Event:
     # Create warrior
     warrior_generator = context.generator_class(
-        culture=context.faction.culture, faction=context.faction, savegame_id=context.faction.savegame_id
+        culture=context.culture, faction=context.faction, savegame_id=context.savegame.id
     )
     warrior = warrior_generator.process()
 
     return WarriorCreated(
+        savegame=context.savegame,
         faction=context.faction,
         warrior=warrior,
         month=context.month,

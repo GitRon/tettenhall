@@ -1,18 +1,18 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Marketplace in {{ object.town_name }}</h1>
+    <h1>Town square in {{ object.town_name }}</h1>
 
     <div class="uk-child-width-expand@s uk-text-center uk-grid-medium" uk-grid>
         <div>
             <h2>Pub</h2>
             {% for warrior in object.available_mercenaries.all %}
                 {# todo: use different cards here which obscurify most values #}
-                {% include 'marketplace/warrior/components/warrior_card.html' with warrior=warrior %}
+                {% include 'faction/warrior/components/pub_warrior_card.html' with warrior=warrior %}
             {% endfor %}
         </div>
         <div class="uk-margin-bottom">
-            {% include "marketplace/item/components/item_list.html" with item_list=object.available_items.all %}
+            {% include "faction/item/components/shop_item_list.html" with item_list=object.available_items.all %}
         </div>
         <div class="uk-margin-bottom">
             <h2>Board</h2>

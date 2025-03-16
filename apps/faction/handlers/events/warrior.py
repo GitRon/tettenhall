@@ -15,7 +15,9 @@ def handle_set_new_leader_for_faction(*, context: NewLeaderWarriorCreated) -> Co
 
 @message_registry.register_event(event=WarriorCreated)
 def handle_add_new_warrior_to_faction_pub(*, context: WarriorCreated) -> Command:
-    return AddWarriorToPub(faction=context.faction, warrior=context.warrior, month=context.month)
+    return AddWarriorToPub(
+        savegame=context.savegame, faction=context.faction, warrior=context.warrior, month=context.month
+    )
 
 
 @message_registry.register_event(event=NewFactionCreated)

@@ -6,6 +6,6 @@ from apps.month.models import PlayerMonthLog
 
 @message_registry.register_event(event=MonthPrepared)
 def handle_close_all_previous_messages(*, context: MonthPrepared):
-    PlayerMonthLog.objects.for_savegame(savegame_id=context.marketplace.savegame.id).filter(
+    PlayerMonthLog.objects.for_savegame(savegame_id=context.faction.savegame.id).filter(
         month__lt=context.current_month
     ).delete()

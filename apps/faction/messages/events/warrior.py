@@ -4,6 +4,7 @@ from queuebie.messages import Event
 
 from apps.faction.models import Culture
 from apps.faction.models.faction import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.services.generators.warrior.base import BaseWarriorGenerator
 
@@ -11,6 +12,7 @@ from apps.warrior.services.generators.warrior.base import BaseWarriorGenerator
 @dataclass(kw_only=True)
 class RequestWarriorForPub(Event):
     # TODO: this is a command and not an event by name -> maybe just use commands? seems legit
+    savegame: Savegame
     faction: Faction | None
     # TODO: faction reicht nicht aus, ich möchte ja auch für andere factions des savegames warriors im pool haben
     culture: Culture

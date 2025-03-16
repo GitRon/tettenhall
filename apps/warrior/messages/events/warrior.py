@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.faction.models import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -29,5 +30,6 @@ class NewLeaderWarriorCreated(Event):
 @dataclass(kw_only=True)
 class WarriorCreated(Event):
     warrior: Warrior
+    savegame: Savegame
     faction: Faction
     month: int

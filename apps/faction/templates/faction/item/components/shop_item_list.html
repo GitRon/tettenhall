@@ -1,5 +1,5 @@
-<div hx-get="{% url 'marketplace:marketplace-item-list-htmx' marketplace.id %}"
-     hx-trigger="loadMarketplaceItemList from:body">
+<div hx-get="{% url 'faction:shop-item-list-htmx' faction.id %}"
+     hx-trigger="loadShopItemList from:body">
     <h2>Shop</h2>
     {% for item in item_list %}
         {% include 'item/components/item_buy_card.html' with item=item %}

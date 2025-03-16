@@ -14,7 +14,6 @@ def handle_prepare_month(*, context: PrepareMonth) -> list[Event] | Event:
     context.savegame.save()
 
     return MonthPrepared(
-        marketplace=context.savegame.marketplace,
         faction=context.savegame.player_faction,
         # TODO: store this months training somewhere -> in savegame?
         training=Training.objects.all().first(),

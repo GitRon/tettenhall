@@ -20,13 +20,13 @@
         {% if request.user.is_authenticated and current_savegame %}
             <ul class="uk-navbar-nav">
                 <li>
-                    <a href="{% url 'faction:faction-detail-view' current_savegame.player_faction.id %}">
+                    <a href="{% url 'faction:faction-detail-view' current_savegame.player_faction_id %}">
                         {{ current_savegame.player_faction }}
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'marketplace:marketplace-view' current_savegame.marketplace.id %}">
-                        {{ current_savegame.marketplace.town_name }}
+                    <a href="{% url 'faction:town-square-view' current_savegame.player_faction_id %}">
+                        {{ current_savegame.player_faction.town_name }}
                     </a>
                 </li>
                 <li>
@@ -40,7 +40,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'finance:transaction-list-view' current_savegame.player_faction.id %}">
+                    <a href="{% url 'finance:transaction-list-view' current_savegame.player_faction_id %}">
                         Finance
                     </a>
                 </li>

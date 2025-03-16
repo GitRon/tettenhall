@@ -11,7 +11,7 @@ def handle_create_item(*, context: item.CreateItem) -> list[Event] | Event:
     generator = context.generator_class(
         faction=None,
         item_function=context.item_function,
-        savegame_id=context.owner.savegame_id,
+        savegame_id=context.faction.savegame_id,
     )
 
     new_item = generator.process()

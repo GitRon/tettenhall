@@ -24,6 +24,7 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
     for _ in range(no_warriors):
         events.append(
             RequestWarriorForPub(
+                savegame=context.faction.savegame,
                 faction=None,
                 culture=Culture.objects.all().order_by("?").first(),
                 generator_class=MercenaryWarriorGenerator,
@@ -37,7 +38,7 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
 
 @message_registry.register_command(command=AddWarriorToPub)
 def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Event:
-    context.faction.available_mercenaries.add(context.warrior)
+    context.savegame.player_faction.available_mercenaries.add(context.warrior)
 
     return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)
 

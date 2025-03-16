@@ -62,6 +62,7 @@ class AddItemToTownShop(Command):
 
 @dataclass(kw_only=True)
 class AddWarriorToPub(Command):
+    savegame: Savegame
     faction: Faction
     warrior: Warrior
     month: int
