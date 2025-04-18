@@ -34,7 +34,7 @@ class Quest(models.Model):
 
     def calculate_loot(self) -> int:
         if self.difficulty == self.DifficultyChoices.DIFFICULTY_EASY:
-            return random.randint(10, 100)
+            return random.randint(150, 350)
         if self.difficulty == self.DifficultyChoices.DIFFICULTY_HARD:
-            return random.randint(75, 350)
+            return random.randint(250, 750)
         raise RuntimeError("Invalid difficulty choice.")
