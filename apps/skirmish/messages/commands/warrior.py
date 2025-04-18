@@ -8,6 +8,13 @@ from apps.skirmish.models.warrior import Warrior
 
 
 @dataclass(kw_only=True)
+class StoreLastUsedSkirmishAction(Command):
+    skirmish: Skirmish
+    warrior: Warrior
+    skirmish_action: int
+
+
+@dataclass(kw_only=True)
 class CaptureWarrior(Command):
     skirmish: Skirmish
     warrior: Warrior

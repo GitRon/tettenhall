@@ -2,7 +2,13 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.skirmish.messages.commands.skirmish import DetermineAttacker
-from apps.skirmish.messages.commands.warrior import CaptureWarrior, IncreaseExperience, IncreaseMorale, ReduceMorale
+from apps.skirmish.messages.commands.warrior import (
+    CaptureWarrior,
+    IncreaseExperience,
+    IncreaseMorale,
+    ReduceMorale,
+    StoreLastUsedSkirmishAction,
+)
 from apps.skirmish.messages.events import skirmish, warrior
 from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
@@ -17,6 +23,22 @@ def handle_determine_attacker(*, context: skirmish.FighterPairsMatched) -> Comma
         action_1=context.attack_action_1,
         action_2=context.attack_action_2,
     )
+
+
+@message_registry.register_event(event=skirmish.AttackerDefenderDecided)
+def handle_store_last_used_skirmish_action(*, context: skirmish.AttackerDefenderDecided) -> list[Command]:
+    return [
+        StoreLastUsedSkirmishAction(
+            skirmish=context.skirmish,
+            warrior=context.attacker,
+            skirmish_action=context.attacker_action,
+        ),
+        StoreLastUsedSkirmishAction(
+            skirmish=context.skirmish,
+            warrior=context.defender,
+            skirmish_action=context.defender_action,
+        ),
+    ]
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)

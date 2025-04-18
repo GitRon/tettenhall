@@ -51,16 +51,26 @@
     <div class="uk-card-footer">
         <div class="uk-form-controls">
         {% if warrior.is_healthy %}
-            {# todo: put this in a crispy-form? #}
+            {# todo: put this in a crispy-form? maybe later, might be hard to create forms in the view #}
             <form method="post">
-                <label>
-                    {# todo: for the opponent, make this not a select but a hidden field with a text to show what the enemy will do (disabled & readonly won't work) #}
-                    <select class="uk-select" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][skirmish_action]">
-                        {% for action in warrior.get_skirmish_actions %}
-                            <option value="{{ action.0 }}">{{ action.1 }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
+                {% if is_player %}
+                    <label>
+                        {# todo: for the opponent, make this not a select but a hidden field with a text to show what the enemy will do (disabled & readonly won't work) #}
+                        <select class="uk-select" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][skirmish_action]">
+                            {% for action in warrior.get_skirmish_actions %}
+                                <option value="{{ action.0 }}" {% if warrior.last_used_skirmish_action == action.0 %}selected="selected"{% endif %}>{{ action.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                {% else %}
+                    {% with warrior_skirmish_action=warrior.decide_skirmish_action %}
+                        <label>
+                            <select class="uk-select" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][skirmish_action]">
+                                <option value="{{ warrior_skirmish_action.0 }}" selected="selected">{{ warrior_skirmish_action.1 }}</option>
+                            </select>
+                        </label>
+                    {% endwith %}
+                {% endif %}
                 <input type="hidden" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][faction_id]"
                        value="{{ warrior.faction.id }}">
                 <input type="hidden" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][warrior_id]"

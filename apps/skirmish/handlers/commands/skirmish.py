@@ -119,7 +119,11 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
 
     random_value = random.random()
 
-    if warrior_1_matching_points / (warrior_1_matching_points + warrior_2_matching_points) > random_value:
+    # Catch edge case that both have zero values
+    if (
+        warrior_1_matching_points + warrior_2_matching_points == 0
+        or warrior_1_matching_points / (warrior_1_matching_points + warrior_2_matching_points) > random_value
+    ):
         attacker: Warrior = context.warrior_1
         defender: Warrior = context.warrior_2
         attack_action = context.action_1

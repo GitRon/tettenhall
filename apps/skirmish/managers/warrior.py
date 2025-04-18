@@ -13,10 +13,10 @@ class WarriorQuerySet(models.QuerySet):
         return self.filter(faction=faction_id)
 
     def exclude_currently_busy(self, *, month: int):
-        return self.filter(
-            Q(quest_contracts__isnull=True)
-            | Q(quest_contracts__skirmish__victorious_faction__isnull=False, quest_contracts__accepted_in_month=month)
-        )
+        """
+        A warrior can fight now if either he has never fought a battle before or he didn't fight in the given week.
+        """
+        return self.filter(Q(quest_contracts__isnull=True) | ~Q(quest_contracts__accepted_in_month=month))
 
 
 class WarriorManager(manager.Manager):

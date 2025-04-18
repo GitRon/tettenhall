@@ -29,6 +29,7 @@ def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Comman
     warriors_dropping_loot_list = [*winner_warrior_list, *loser_warrior_list]
 
     for warrior in warriors_dropping_loot_list:
+        # TODO: this doesn't make sense. when my guy dies, we lose money? why do we have two commands here?
         message_list.append(
             WarriorDropsLoot(
                 skirmish=context.skirmish,

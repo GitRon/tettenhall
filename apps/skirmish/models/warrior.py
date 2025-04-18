@@ -6,6 +6,7 @@ from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.managers.warrior import WarriorManager
+from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 
 
 # TODO: move to warrior app?
@@ -48,6 +49,10 @@ class Warrior(models.Model):
     monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
 
     recruitment_price = models.PositiveSmallIntegerField("Recruitment price", default=0)
+
+    last_used_skirmish_action = models.PositiveSmallIntegerField(
+        choices=SkirmishActionChoices.choices, blank=True, null=True
+    )
 
     condition = models.PositiveSmallIntegerField(
         "Condition",
@@ -110,6 +115,10 @@ class Warrior(models.Model):
         # TODO: show only the ones the warrior has depending on his level
         # TODO: use XP to add more skirmish actions -> every level gets a fixed action to keep it simple
         return SkirmishActionChoices.choices
+
+    def decide_skirmish_action(self) -> [int, str]:
+        service = SkirmishActionDecisionService(warrior=self)
+        return service.process()
 
     def get_weapon_or_fallback(self) -> Item:
         return (

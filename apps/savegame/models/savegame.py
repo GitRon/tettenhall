@@ -5,6 +5,7 @@ from apps.faction.models import Faction
 from apps.savegame.managers.savegame import SavegameManager
 
 
+# TODO: can't remove a savegame via the admin due to FK issues
 class Savegame(models.Model):
     name = models.CharField("Name", max_length=75)
     created_by = models.ForeignKey(User, verbose_name="Created by", on_delete=models.CASCADE)
