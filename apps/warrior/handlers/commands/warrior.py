@@ -8,12 +8,18 @@ from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
+    CreateWarrior,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
 )
-from apps.warrior.messages.events.warrior import NewLeaderWarriorCreated, WarriorHealthHealed, WarriorMoraleReplenished
+from apps.warrior.messages.events.warrior import (
+    NewLeaderWarriorCreated,
+    WarriorCreated,
+    WarriorHealthHealed,
+    WarriorMoraleReplenished,
+)
 from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 
 
@@ -71,7 +77,8 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
     return WarriorRecruited(
         warrior=context.warrior,
         faction=context.faction,
-        recruitment_price=context.warrior.recruitment_price,
+        # Recruiting a captured warrior is always for free
+        recruitment_price=0,
         month=context.month,
     )
 
@@ -87,6 +94,22 @@ def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior) -> list[
         warrior=context.warrior,
         selling_faction=context.faction,
         price=context.warrior.recruitment_price,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=CreateWarrior)
+def handle_create_new_warrior(*, context: CreateWarrior) -> list[Event] | Event:
+    # Create warrior
+    warrior_generator = context.generator_class(
+        culture=context.culture, faction=context.faction, savegame_id=context.savegame.id
+    )
+    warrior = warrior_generator.process()
+
+    return WarriorCreated(
+        savegame=context.savegame,
+        faction=context.faction,
+        warrior=warrior,
         month=context.month,
     )
 

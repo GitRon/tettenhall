@@ -3,7 +3,6 @@ import typing
 from django.db import models
 
 from apps.common.domain.dice import DiceNotation
-from apps.faction.models.faction import Faction
 from apps.item.managers.item import ItemManager
 from apps.item.models.item_type import ItemType
 
@@ -24,7 +23,9 @@ class Item(models.Model):
     type = models.ForeignKey(ItemType, verbose_name="Type", on_delete=models.CASCADE)
     price = models.PositiveSmallIntegerField("Price")
     modifier = models.SmallIntegerField("Modifier", default=0, help_text='2d4+7 - this is the "7"')
-    owner = models.ForeignKey(Faction, verbose_name="Owning faction", null=True, blank=True, on_delete=models.CASCADE)
+    owner = models.ForeignKey(
+        "faction.Faction", verbose_name="Owning faction", null=True, blank=True, on_delete=models.CASCADE
+    )
 
     savegame = models.ForeignKey("savegame.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
 

@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     "apps.faction",
     "apps.finance",
     "apps.item",
-    "apps.marketplace",
     "apps.quest",
     "apps.savegame",
     "apps.skirmish",
@@ -53,6 +52,9 @@ INSTALLED_APPS = [
     "apps.month",
     "axes",
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ["django_removals"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -181,4 +183,5 @@ AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
 
 # Queuebie
 QUEUEBIE_APP_BASE_PATH = BASE_DIR
+# TODO: Fix handlers so we can enable this
 QUEUEBIE_STRICT_MODE = False

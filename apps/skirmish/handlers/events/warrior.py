@@ -2,7 +2,13 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.skirmish.messages.commands.skirmish import DetermineAttacker
-from apps.skirmish.messages.commands.warrior import CaptureWarrior, IncreaseExperience, IncreaseMorale, ReduceMorale
+from apps.skirmish.messages.commands.warrior import (
+    CaptureWarrior,
+    IncreaseExperience,
+    IncreaseMorale,
+    ReduceMorale,
+    StoreLastUsedSkirmishAction,
+)
 from apps.skirmish.messages.events import skirmish, warrior
 from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
@@ -19,11 +25,28 @@ def handle_determine_attacker(*, context: skirmish.FighterPairsMatched) -> Comma
     )
 
 
+@message_registry.register_event(event=skirmish.AttackerDefenderDecided)
+def handle_store_last_used_skirmish_action(*, context: skirmish.AttackerDefenderDecided) -> list[Command]:
+    return [
+        StoreLastUsedSkirmishAction(
+            skirmish=context.skirmish,
+            warrior=context.attacker,
+            skirmish_action=context.attacker_action,
+        ),
+        StoreLastUsedSkirmishAction(
+            skirmish=context.skirmish,
+            warrior=context.defender,
+            skirmish_action=context.defender_action,
+        ),
+    ]
+
+
 @message_registry.register_event(event=warrior.WarriorTookDamage)
 def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDamage) -> list[Command]:
     message_list = []
 
     # Reduce health
+    # TODO: events with database access aren't allowed
     context.defender = Warrior.objects.reduce_current_health(
         obj=context.defender,
         damage=context.damage,
@@ -34,7 +57,7 @@ def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDam
         ReduceMorale(
             skirmish=context.skirmish,
             warrior=context.defender,
-            lost_morale=context.defender.max_morale * 0.1,
+            lost_morale=round(context.defender.max_morale * 0.1),
         )
     )
 
@@ -94,7 +117,7 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
                 ReduceMorale(
                     skirmish=context.skirmish,
                     warrior=affected_warrior,
-                    lost_morale=context.warrior.max_morale * 0.1,
+                    lost_morale=round(context.warrior.max_morale * 0.1),
                 )
             )
 
@@ -117,12 +140,18 @@ def handle_experience_gain_on_warrior_incapacitation(
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
-def handle_morale_increase_on_warriors_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command:
-    return IncreaseMorale(
-        skirmish=context.skirmish,
-        warrior=context.defender,
-        increased_morale=context.defender.max_morale * 0.1,
-    )
+def handle_morale_increase_on_warriors_defends_all_damage(
+    *, context: warrior.WarriorDefendedAllDamage
+) -> Command | None:
+    increased_morale = round(context.defender.max_morale * 0.1)
+
+    if increased_morale > 0:
+        return IncreaseMorale(
+            skirmish=context.skirmish,
+            warrior=context.defender,
+            increased_morale=increased_morale,
+        )
+    return None
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)

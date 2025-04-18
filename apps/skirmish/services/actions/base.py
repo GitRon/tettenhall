@@ -37,7 +37,7 @@ class AttackService:
 
     def get_attack_value(self) -> int:
         # Attack will be at 100% for strength 10, otherwise less or greater
-        attack = int(round(self.warrior.roll_attack() * self.warrior.strength / self.BASE_COMPARE_STRENGTH))
+        attack = round(self.warrior.roll_attack() * self.warrior.strength / self.BASE_COMPARE_STRENGTH)
         self.message_list.append(
             WarriorAttackedWithDamage(
                 skirmish=self.skirmish,

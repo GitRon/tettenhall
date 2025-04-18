@@ -55,4 +55,4 @@ class QuestAcceptView(SingleObjectMixin, generic.FormView):
         return response
 
     def get_success_url(self):
-        return reverse("marketplace:marketplace-view", args=(self.current_savegame.marketplace_id,))
+        return reverse("faction:town-square-view", args=(self.current_savegame.player_faction_id,))

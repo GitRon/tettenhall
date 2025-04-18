@@ -4,14 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-Django = "~=5.1"
+Django = "~=5.2"
 ambient-toolbox = "~=12.1"
 django-axes = "~=7.0"
 django-crispy-forms = "~=1.14"
-django-queuebie = "~=0.1"
+django-queuebie = "~=0.2"
 faker = "~=33.1"
 
 [dev-packages]
+django-removals = "*"
 
 [requires]
 python_version = "3.12"

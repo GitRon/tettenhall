@@ -62,7 +62,7 @@ class ItemBuyView(SingleObjectMixin, generic.View):
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
-                "loadMarketplaceItemList": "-",
+                "loadShopItemList": "-",
             }
         )
         return response

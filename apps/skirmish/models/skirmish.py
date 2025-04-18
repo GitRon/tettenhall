@@ -1,6 +1,5 @@
 from django.db import models
 
-from apps.faction.models.faction import Faction
 from apps.skirmish.managers.skirmish import SkirmishManager
 from apps.skirmish.models.warrior import Warrior
 
@@ -11,19 +10,19 @@ class Skirmish(models.Model):
 
     # TODO: we could change this to attacker and defender and make AI factions fight themselves
     player_faction = models.ForeignKey(
-        Faction,
+        "faction.Faction",
         verbose_name="Player faction",
         related_name="player_skirmishes",
         on_delete=models.CASCADE,
     )
     non_player_faction = models.ForeignKey(
-        Faction,
+        "faction.Faction",
         verbose_name="Non-player faction",
         related_name="non_player_skirmishes",
         on_delete=models.CASCADE,
     )
     victorious_faction = models.ForeignKey(
-        Faction,
+        "faction.Faction",
         verbose_name="Victorious faction",
         related_name="victorious_skirmishes",
         on_delete=models.CASCADE,

@@ -2,11 +2,11 @@ from django.db import models
 
 from apps.common.domain.dice import DiceNotation
 from apps.faction.models.culture import Culture
-from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.managers.warrior import WarriorManager
+from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 
 
 # TODO: move to warrior app?
@@ -24,7 +24,9 @@ class Warrior(models.Model):
 
     name = models.CharField("Name", max_length=100)
     culture = models.ForeignKey(Culture, verbose_name="Culture", on_delete=models.CASCADE)
-    faction = models.ForeignKey(Faction, verbose_name="Faction", null=True, blank=True, on_delete=models.CASCADE)
+    faction = models.ForeignKey(
+        "faction.Faction", verbose_name="Faction", null=True, blank=True, on_delete=models.CASCADE
+    )
     savegame = models.ForeignKey("savegame.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
 
     avatar_id = models.PositiveSmallIntegerField("Avatar-ID", default=1)
@@ -47,6 +49,10 @@ class Warrior(models.Model):
     monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
 
     recruitment_price = models.PositiveSmallIntegerField("Recruitment price", default=0)
+
+    last_used_skirmish_action = models.PositiveSmallIntegerField(
+        choices=SkirmishActionChoices.choices, blank=True, null=True
+    )
 
     condition = models.PositiveSmallIntegerField(
         "Condition",
@@ -109,6 +115,10 @@ class Warrior(models.Model):
         # TODO: show only the ones the warrior has depending on his level
         # TODO: use XP to add more skirmish actions -> every level gets a fixed action to keep it simple
         return SkirmishActionChoices.choices
+
+    def decide_skirmish_action(self) -> [int, str]:
+        service = SkirmishActionDecisionService(warrior=self)
+        return service.process()
 
     def get_weapon_or_fallback(self) -> Item:
         return (

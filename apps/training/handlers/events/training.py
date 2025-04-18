@@ -2,8 +2,8 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.faction.messages.events.faction import NewFactionCreated
+from apps.month.messages.commands.month import CreatePlayerMonthLog
 from apps.month.messages.events.month import MonthPrepared
-from apps.month.models.player_month_log import PlayerMonthLog
 from apps.training.messages.commands.training import CreateNewTraining, TrainWarriors
 from apps.training.messages.events.training import WarriorUpgradedSkill
 
@@ -14,11 +14,11 @@ def handle_create_training_for_faction(*, context: NewFactionCreated) -> Command
 
 
 @message_registry.register_event(event=WarriorUpgradedSkill)
-def handle_marketplace_mercenaries_restocked(*, context: WarriorUpgradedSkill):
-    PlayerMonthLog.objects.create_record(
+def handle_pub_mercenaries_restocked(*, context: WarriorUpgradedSkill) -> Command:
+    return CreatePlayerMonthLog(
         title=f"Your warrior {context.warrior.name} upgraded his {context.changed_attribute}!",
         month=context.month,
-        faction_id=context.warrior.faction_id,
+        faction=context.warrior.faction,
     )
 
 

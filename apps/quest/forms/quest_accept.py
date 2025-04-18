@@ -48,4 +48,5 @@ class QuestAcceptForm(forms.ModelForm):
                 faction=faction,
             )
             .exclude_currently_busy(month=quest.target_faction.savegame.current_month)
+            .distinct()
         )

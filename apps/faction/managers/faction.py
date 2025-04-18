@@ -3,7 +3,8 @@ from django.db.models import manager
 
 
 class FactionQuerySet(models.QuerySet):
-    pass
+    def for_savegame(self, *, savegame_id: int):
+        return self.filter(savegame=savegame_id)
 
 
 class FactionManager(manager.Manager):

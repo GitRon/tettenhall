@@ -4,6 +4,7 @@ from queuebie.messages import Event
 from apps.faction.models.faction import Faction
 from apps.skirmish.messages.commands import warrior
 from apps.skirmish.messages.events.warrior import (
+    LastUsedSkirmishActionStored,
     WarriorGainedExperience,
     WarriorGainedMorale,
     WarriorHasFled,
@@ -13,9 +14,23 @@ from apps.skirmish.messages.events.warrior import (
 from apps.skirmish.models.warrior import Warrior
 
 
+@message_registry.register_command(command=warrior.StoreLastUsedSkirmishAction)
+def handle_store_last_used_skirmish_action(*, context: warrior.StoreLastUsedSkirmishAction) -> list[Event] | Event:
+    context.warrior.last_used_skirmish_action = context.skirmish_action
+    context.warrior.save()
+
+    return LastUsedSkirmishActionStored(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        skirmish_action=context.skirmish_action,
+    )
+
+
 @message_registry.register_command(command=warrior.CaptureWarrior)
 def handle_warrior_is_captured(*, context: warrior.CaptureWarrior) -> list[Event] | Event:
     Faction.objects.add_captive(faction=context.capturing_faction, warrior=context.warrior)
+    context.warrior.faction = None
+    context.warrior.save()
 
     return WarriorWasCaptured(
         skirmish=context.skirmish,
@@ -42,13 +57,14 @@ def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event
             )
         )
 
-    message_list.append(
-        WarriorLostMorale(
-            skirmish=context.skirmish,
-            warrior=context.warrior,
-            lost_morale=context.lost_morale,
+    if context.lost_morale > 0:
+        message_list.append(
+            WarriorLostMorale(
+                skirmish=context.skirmish,
+                warrior=context.warrior,
+                lost_morale=context.lost_morale,
+            )
         )
-    )
 
     return message_list
 

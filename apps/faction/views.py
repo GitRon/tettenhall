@@ -82,3 +82,26 @@ class MonthlyCostOverview(generic.DetailView):
             or 0
         )
         return context
+
+
+class TownSquareView(generic.DetailView):
+    model = Faction
+    template_name = "faction/town_square.html"
+
+    def get_queryset(self):
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        return super().get_queryset().for_savegame(savegame_id=current_savegame)
+
+
+class FactionShopItemListView(generic.DetailView):
+    model = Faction
+    template_name = "faction/item/components/shop_item_list.html"
+
+    def get_queryset(self):
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        return super().get_queryset().for_savegame(savegame_id=current_savegame)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["item_list"] = self.object.available_items.all()
+        return context

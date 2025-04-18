@@ -2,8 +2,26 @@ from dataclasses import dataclass
 
 from queuebie.messages import Command
 
+from apps.faction.models import Culture
 from apps.faction.models.faction import Faction
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
+from apps.warrior.services.generators.warrior.base import BaseWarriorGenerator
+
+
+@dataclass(kw_only=True)
+class CreateWarrior(Command):
+    savegame: Savegame
+    faction: Faction
+    culture: Culture
+    generator_class: type[BaseWarriorGenerator]
+    month: int
+
+
+@dataclass(kw_only=True)
+class CreateNewLeaderWarrior(Command):
+    # TODO: entweder mach ich alle so oder ich nutze hier das generische event mit generator_class?
+    faction: Faction
 
 
 @dataclass(kw_only=True)
@@ -30,8 +48,3 @@ class EnslaveCapturedWarrior(Command):
     warrior: Warrior
     faction: Faction
     month: int
-
-
-@dataclass(kw_only=True)
-class CreateNewLeaderWarrior(Command):
-    faction: Faction
