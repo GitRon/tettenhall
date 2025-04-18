@@ -9,6 +9,7 @@ from apps.skirmish.models.warrior import Warrior
 from apps.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
     CreateWarrior,
+    DropWarriorItems,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     RecruitCapturedWarrior,
@@ -18,6 +19,7 @@ from apps.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
     WarriorCreated,
     WarriorHealthHealed,
+    WarriorItemsDropped,
     WarriorMoraleReplenished,
 )
 from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
@@ -128,3 +130,22 @@ def handle_create_new_leader_warrior(*, context: CreateNewLeaderWarrior) -> list
         faction=context.faction,
         warrior=warrior,
     )
+
+
+@message_registry.register_command(command=DropWarriorItems)
+def handle_drop_warrior_items(*, context: DropWarriorItems) -> Event | None:
+    items = [context.warrior.weapon, context.warrior.armor]
+
+    if len(items) > 0:
+        context.warrior.weapon = None
+        context.warrior.armor = None
+        context.warrior.save()
+
+        # TODO: we should add the items to the skirmish and the winner gets them
+        return WarriorItemsDropped(
+            skirmish=context.skirmish,
+            warrior=context.warrior,
+            items=items,
+        )
+
+    return None

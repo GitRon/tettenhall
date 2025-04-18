@@ -3,6 +3,7 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Event
 
+from apps.quest.models import QuestContract
 from apps.skirmish.messages.commands import skirmish
 from apps.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
@@ -163,7 +164,19 @@ def handle_warrior_attacks_warrior(
 def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event:
     Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction)
 
-    return SkirmishFinished(skirmish=context.skirmish, month=context.month)
+    try:
+        quest_contract = context.skirmish.quest_contract
+        quest_name = quest_contract.quest.name
+        quest_loot = quest_contract.quest.loot
+    except QuestContract.ObjectDoesNotExist:
+        # There might be skirmishes with no assigned quest contract
+        # TODO: this shouldn't be handled here that explicitly -> model method?
+        quest_name = None
+        quest_loot = 0
+
+    return SkirmishFinished(
+        skirmish=context.skirmish, month=context.month, quest_name=quest_name, quest_loot=quest_loot
+    )
 
 
 @message_registry.register_command(command=skirmish.FinishRound)

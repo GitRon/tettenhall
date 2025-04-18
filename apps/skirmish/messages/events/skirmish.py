@@ -43,4 +43,6 @@ class RoundFinished(Event):
 @dataclass(kw_only=True)
 class SkirmishFinished(Event):
     skirmish: Skirmish
+    quest_name: str
+    quest_loot: int
     month: int
