@@ -23,6 +23,7 @@ def handle_accept_quest(*, context: AcceptQuest) -> list[Event] | Event:
     )
     quest_contract.assigned_warriors.add(*context.assigned_warriors)
     context.accepting_faction.active_quests.add(quest_contract)
+    context.accepting_faction.available_quests.remove(quest_contract.quest)
 
     return QuestAccepted(
         accepting_faction=context.accepting_faction,

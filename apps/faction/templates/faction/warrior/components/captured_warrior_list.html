@@ -1,6 +1,7 @@
 <div hx-get="{% url 'faction:faction-captured-warrior-list-htmx' faction.id %}"
      hx-trigger="loadFactionCapturedWarriorList from:body">
     <h2>Captured warriors</h2>
+    {# todo: captured warriors never heal HP #}
     {% for warrior in faction.captured_warriors.all %}
         {% include 'warrior/components/warrior_card.html' with warrior=warrior faction=faction is_captured=True %}
     {% endfor %}

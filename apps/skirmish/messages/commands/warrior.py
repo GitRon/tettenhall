@@ -18,14 +18,14 @@ class CaptureWarrior(Command):
 class ReduceMorale(Command):
     skirmish: Skirmish
     warrior: Warrior
-    lost_morale: float
+    lost_morale: int
 
 
 @dataclass(kw_only=True)
 class IncreaseMorale(Command):
     skirmish: Skirmish
     warrior: Warrior
-    increased_morale: float
+    increased_morale: int
 
 
 @dataclass(kw_only=True)

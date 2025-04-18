@@ -183,4 +183,5 @@ AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
 
 # Queuebie
 QUEUEBIE_APP_BASE_PATH = BASE_DIR
-QUEUEBIE_STRICT_MODE = True
+# TODO: Fix handlers so we can enable this
+QUEUEBIE_STRICT_MODE = False

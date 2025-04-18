@@ -42,13 +42,14 @@ def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event
             )
         )
 
-    message_list.append(
-        WarriorLostMorale(
-            skirmish=context.skirmish,
-            warrior=context.warrior,
-            lost_morale=context.lost_morale,
+    if context.lost_morale > 0:
+        message_list.append(
+            WarriorLostMorale(
+                skirmish=context.skirmish,
+                warrior=context.warrior,
+                lost_morale=context.lost_morale,
+            )
         )
-    )
 
     return message_list
 

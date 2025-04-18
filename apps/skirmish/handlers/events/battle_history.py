@@ -28,7 +28,7 @@ def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAll
 def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
-        message=f"Warrior {context.attacker} is the attacker and warrior {context.defender} the defender and chooses "
+        message=f"{context.attacker} is the attacker and {context.defender} the defender and chooses "
         f"to attack with a {SkirmishActionChoices(context.attacker_action).label}.",
     )
 

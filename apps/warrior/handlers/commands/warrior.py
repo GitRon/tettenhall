@@ -77,7 +77,8 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
     return WarriorRecruited(
         warrior=context.warrior,
         faction=context.faction,
-        recruitment_price=context.warrior.recruitment_price,
+        # Recruiting a captured warrior is always for free
+        recruitment_price=0,
         month=context.month,
     )
 

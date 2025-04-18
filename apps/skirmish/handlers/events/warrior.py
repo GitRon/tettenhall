@@ -24,6 +24,7 @@ def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDam
     message_list = []
 
     # Reduce health
+    # TODO: events with database access aren't allowed
     context.defender = Warrior.objects.reduce_current_health(
         obj=context.defender,
         damage=context.damage,
@@ -34,7 +35,7 @@ def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDam
         ReduceMorale(
             skirmish=context.skirmish,
             warrior=context.defender,
-            lost_morale=context.defender.max_morale * 0.1,
+            lost_morale=round(context.defender.max_morale * 0.1),
         )
     )
 
@@ -94,7 +95,7 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
                 ReduceMorale(
                     skirmish=context.skirmish,
                     warrior=affected_warrior,
-                    lost_morale=context.warrior.max_morale * 0.1,
+                    lost_morale=round(context.warrior.max_morale * 0.1),
                 )
             )
 
@@ -117,12 +118,18 @@ def handle_experience_gain_on_warrior_incapacitation(
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
-def handle_morale_increase_on_warriors_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command:
-    return IncreaseMorale(
-        skirmish=context.skirmish,
-        warrior=context.defender,
-        increased_morale=context.defender.max_morale * 0.1,
-    )
+def handle_morale_increase_on_warriors_defends_all_damage(
+    *, context: warrior.WarriorDefendedAllDamage
+) -> Command | None:
+    increased_morale = round(context.defender.max_morale * 0.1)
+
+    if increased_morale > 0:
+        return IncreaseMorale(
+            skirmish=context.skirmish,
+            warrior=context.defender,
+            increased_morale=increased_morale,
+        )
+    return None
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
