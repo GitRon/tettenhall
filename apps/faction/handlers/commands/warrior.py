@@ -3,12 +3,13 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Event
 
-from apps.faction.messages.commands.faction import AddWarriorToPub
+from apps.faction.messages.commands.faction import AddWarriorToPub, PayMonthlyWarriorSalaries
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
-from apps.faction.messages.events.faction import WarriorWasAddedToPub
+from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, WarriorWasAddedToPub
 from apps.faction.messages.events.warrior import RequestWarriorForPub, WarriorRecruited
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
+from apps.skirmish.models import Warrior
 from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
@@ -61,5 +62,16 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
         faction=context.faction,
         warrior=warrior,
         recruitment_price=0,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=PayMonthlyWarriorSalaries)
+def handle_warrior_monthly_salaries(*, context: PayMonthlyWarriorSalaries) -> list[Event] | Event:
+    amount = Warrior.objects.get_monthly_salary_for_faction(faction=context.faction)
+
+    return MonthlyWarriorSalariesPaid(
+        faction=context.faction,
+        amount=amount,
         month=context.month,
     )

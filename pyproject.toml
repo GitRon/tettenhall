@@ -79,7 +79,7 @@ lint.fixable = [
 lint.unfixable = []
 
 # Allow noqa's from "boa-restrictor" linter
-lint.external = ["PBR"]
+lint.external = ["PBR", "DBR"]
 
 exclude = [
     ".bzr",
@@ -132,6 +132,8 @@ target-version = "py312"
 
 [tool.boa-restrictor]
 exclude = [
+    "PBR005",
+    "DBR002",
 ]
 
 [tool.boa-restrictor.per-file-excludes]

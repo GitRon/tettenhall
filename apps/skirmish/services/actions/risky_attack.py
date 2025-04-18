@@ -14,7 +14,7 @@ class RiskyAttackService(AttackService):
         # Attack has 50% chance to miss
         if bool(random.getrandbits(1)):
             # Attack will be at 100% for strength 10, otherwise less or greater
-            attack = int(round(self.warrior.roll_attack() * 2 * self.warrior.strength / self.BASE_COMPARE_STRENGTH))
+            attack = round(self.warrior.roll_attack() * 2 * self.warrior.strength / self.BASE_COMPARE_STRENGTH)
         else:
             attack = 0
 

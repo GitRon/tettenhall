@@ -39,7 +39,7 @@ class BaseItemGenerator:
 
     def process(self) -> Item:
         # Modifier can be negative, DiceNotation class takes care of not dealing negative damage
-        modifier = int(round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)))
+        modifier = round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA))
 
         item_type = self._get_queryset_for_type().first()
         if not item_type:
