@@ -24,7 +24,6 @@ from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorG
 
 @message_registry.register_command(command=skirmish.CreateSkirmish)
 def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
-    # TODO: all those warriors are naked... we need to give them equipment
     if context.warrior_list_2:
         warrior_list_2 = context.warrior_list_2
     else:

@@ -69,7 +69,7 @@ def handle_log_skirmish_finished(*, context: skirmish.SkirmishFinished) -> Comma
 def handle_log_item_dropped(*, context: item.ItemDroppedAsLoot) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
-        message=f"{context.warrior} dropped the item '{context.item}'",
+        message=f"{context.warrior} dropped the item '{context.item_name}'",
     )
 
 

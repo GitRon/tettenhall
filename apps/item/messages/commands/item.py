@@ -6,6 +6,7 @@ from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 from apps.item.services.generators.item.base import BaseItemGenerator
 from apps.savegame.models.savegame import Savegame
+from apps.skirmish.models import Warrior
 
 
 @dataclass(kw_only=True)
@@ -31,3 +32,10 @@ class BuyItem(Command):
     price: int
     item: Item
     month: int
+
+
+@dataclass(kw_only=True)
+class ChangeOwnership(Command):
+    previous_owner: Warrior
+    item: Item
+    new_owner: Faction

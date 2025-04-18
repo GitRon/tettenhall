@@ -13,4 +13,5 @@ class ItemDroppedAsLoot(Event):
     skirmish: Skirmish
     warrior: Warrior
     item: Item
+    item_name: str
     new_owner: Faction
