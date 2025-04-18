@@ -3,6 +3,7 @@ from queuebie.messages import Event
 
 from apps.faction.models.faction import Faction
 from apps.skirmish.messages.commands import warrior
+from apps.skirmish.messages.commands.warrior import ReduceHealth
 from apps.skirmish.messages.events.warrior import (
     LastUsedSkirmishActionStored,
     WarriorGainedExperience,
@@ -10,6 +11,8 @@ from apps.skirmish.messages.events.warrior import (
     WarriorHasFled,
     WarriorLostMorale,
     WarriorWasCaptured,
+    WarriorWasIncapacitated,
+    WarriorWasKilled,
 )
 from apps.skirmish.models.warrior import Warrior
 
@@ -37,6 +40,38 @@ def handle_warrior_is_captured(*, context: warrior.CaptureWarrior) -> list[Event
         warrior=context.warrior,
         capturing_faction=context.capturing_faction,
     )
+
+
+@message_registry.register_command(command=ReduceHealth)
+def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
+    message_list = []
+
+    context.warrior = Warrior.objects.reduce_current_health(obj=context.warrior, damage=context.lost_health)
+
+    # Update condition
+    if context.warrior.current_health <= 0:
+        if context.warrior.current_health < context.warrior.max_health * -0.15:
+            condition = Warrior.ConditionChoices.CONDITION_DEAD
+            message_list.append(
+                WarriorWasKilled(
+                    skirmish=context.skirmish,
+                    warrior=context.warrior,
+                    by_warrior=context.attacker,
+                )
+            )
+        else:
+            condition = Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+            message_list.append(
+                WarriorWasIncapacitated(
+                    skirmish=context.skirmish,
+                    warrior=context.warrior,
+                    by_warrior=context.attacker,
+                )
+            )
+
+        Warrior.objects.set_condition(obj=context.warrior, condition=condition)
+
+    return message_list
 
 
 @message_registry.register_command(command=warrior.ReduceMorale)

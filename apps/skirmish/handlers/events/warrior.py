@@ -6,11 +6,11 @@ from apps.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    ReduceHealth,
     ReduceMorale,
     StoreLastUsedSkirmishAction,
 )
 from apps.skirmish.messages.events import skirmish, warrior
-from apps.skirmish.messages.events.warrior import WarriorWasIncapacitated, WarriorWasKilled
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -43,49 +43,21 @@ def handle_store_last_used_skirmish_action(*, context: skirmish.AttackerDefender
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
 def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDamage) -> list[Command]:
-    message_list = []
-
-    # Reduce health
-    # TODO: events with database access aren't allowed
-    context.defender = Warrior.objects.reduce_current_health(
-        obj=context.defender,
-        damage=context.damage,
-    )
-
-    # Taking damages causes loss of 10% morale
-    message_list.append(
+    return [
+        # Reduce health
+        ReduceHealth(
+            skirmish=context.skirmish,
+            warrior=context.defender,
+            attacker=context.attacker,
+            lost_health=context.damage,
+        ),
+        # Taking damages causes loss of 10% morale
         ReduceMorale(
             skirmish=context.skirmish,
             warrior=context.defender,
             lost_morale=round(context.defender.max_morale * 0.1),
-        )
-    )
-
-    # Update condition
-    # TODO: move to "reduce_current_health"
-    if context.defender.current_health <= 0:
-        if context.defender.current_health < context.defender.max_health * -0.15:
-            condition = Warrior.ConditionChoices.CONDITION_DEAD
-            message_list.append(
-                WarriorWasKilled(
-                    skirmish=context.skirmish,
-                    warrior=context.defender,
-                    by_warrior=context.attacker,
-                )
-            )
-        else:
-            condition = Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
-            message_list.append(
-                WarriorWasIncapacitated(
-                    skirmish=context.skirmish,
-                    warrior=context.defender,
-                    by_warrior=context.attacker,
-                )
-            )
-
-        Warrior.objects.set_condition(obj=context.defender, condition=condition)
-
-    return message_list
+        ),
+    ]
 
 
 @message_registry.register_event(event=warrior.WarriorHasFled)

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from queuebie.messages import Event
 
+from apps.faction.models import Faction
 from apps.quest.models import QuestContract
 from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.skirmish.models.skirmish import Skirmish
@@ -35,6 +36,7 @@ class AttackerDefenderDecided(Event):
 @dataclass(kw_only=True)
 class RoundFinished(Event):
     skirmish: Skirmish
+    victor: Faction | None
     month: int
 
 

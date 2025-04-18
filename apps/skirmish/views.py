@@ -11,8 +11,7 @@ from queuebie.runner import handle_message
 from apps.common.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
 from apps.savegame.models.savegame import Savegame
-from apps.skirmish.messages.commands.skirmish import StartDuel
-from apps.skirmish.messages.events.skirmish import RoundFinished
+from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.skirmish.models import Warrior
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
@@ -110,7 +109,7 @@ class SkirmishFinishRoundView(generic.DetailView):
 
         # Finish round
         handle_message(
-            RoundFinished(
+            FinishRound(
                 skirmish=self.object,
                 month=current_savegame.current_month,
             )

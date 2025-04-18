@@ -47,6 +47,12 @@ class WarriorAttacksWarrior(Command):
 
 
 @dataclass(kw_only=True)
+class FinishRound(Command):
+    skirmish: Skirmish
+    month: int
+
+
+@dataclass(kw_only=True)
 class WinSkirmish(Command):
     skirmish: Skirmish
     victorious_faction: Faction

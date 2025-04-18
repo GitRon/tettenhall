@@ -22,6 +22,14 @@ class CaptureWarrior(Command):
 
 
 @dataclass(kw_only=True)
+class ReduceHealth(Command):
+    skirmish: Skirmish
+    warrior: Warrior
+    attacker: Warrior
+    lost_health: int
+
+
+@dataclass(kw_only=True)
 class ReduceMorale(Command):
     skirmish: Skirmish
     warrior: Warrior

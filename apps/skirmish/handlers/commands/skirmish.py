@@ -7,6 +7,7 @@ from apps.skirmish.messages.commands import skirmish
 from apps.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FighterPairsMatched,
+    RoundFinished,
     SkirmishCreated,
     SkirmishFinished,
 )
@@ -163,3 +164,18 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction)
 
     return SkirmishFinished(skirmish=context.skirmish, month=context.month)
+
+
+@message_registry.register_command(command=skirmish.FinishRound)
+def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event:
+    # Increment round
+    Skirmish.objects.increment_round(skirmish=context.skirmish)
+
+    # Check if one faction has been defeated
+    victor = None
+    if not context.skirmish.non_player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+        victor = context.skirmish.player_faction
+    if not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+        victor = context.skirmish.non_player_faction
+
+    return RoundFinished(skirmish=context.skirmish, victor=victor, month=context.month)
