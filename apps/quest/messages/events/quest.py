@@ -17,6 +17,7 @@ class NewQuestCreated(Event):
 @dataclass(kw_only=True)
 class QuestAccepted(Event):
     accepting_faction: Faction
+    target_faction: Faction
     quest: Quest
     quest_contract: QuestContract
     month: int

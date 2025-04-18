@@ -22,9 +22,11 @@ def handle_accept_quest(*, context: AcceptQuest) -> list[Event] | Event:
         faction=context.accepting_faction, quest=context.quest, accepted_in_month=context.month
     )
     quest_contract.assigned_warriors.add(*context.assigned_warriors)
+    context.accepting_faction.active_quests.add(quest_contract)
 
     return QuestAccepted(
         accepting_faction=context.accepting_faction,
+        target_faction=context.quest.target_faction,
         quest=context.quest,
         quest_contract=quest_contract,
         month=context.month,

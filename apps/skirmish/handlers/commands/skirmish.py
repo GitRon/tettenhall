@@ -17,14 +17,27 @@ from apps.skirmish.services.actions.utils import get_service_by_attack_action
 from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
 from apps.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 from apps.skirmish.services.skirmish.damage import SkirmishDamageService
+from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
 @message_registry.register_command(command=skirmish.CreateSkirmish)
 def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
+    # TODO: all those warriors are naked... we need to give them equipment
+    if context.warrior_list_2:
+        warrior_list_2 = context.warrior_list_2
+    else:
+        warrior_generator = MercenaryWarriorGenerator(
+            faction=context.faction_2, culture=context.faction_2.culture, savegame_id=context.faction_1.savegame_id
+        )
+        warrior_list_2 = [
+            warrior_generator.process()
+            for _ in range(random.randrange(*context.quest_contract.quest.get_min_max_number_of_opponents()))
+        ]
+
     skirmish_generator = BaseSkirmishGenerator(
         name=context.name,
         warriors_faction_1=context.warrior_list_1,
-        warriors_faction_2=context.warrior_list_2,
+        warriors_faction_2=warrior_list_2,
     )
     new_skirmish = skirmish_generator.process()
 

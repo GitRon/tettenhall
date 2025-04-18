@@ -17,7 +17,7 @@ class CreateSkirmish(Command):
     faction_1: Faction
     faction_2: Faction
     warrior_list_1: QuerySet[Warrior] | list[Warrior]
-    warrior_list_2: QuerySet[Warrior] | list[Warrior]
+    warrior_list_2: QuerySet[Warrior] | list[Warrior] | None
     quest_contract: QuestContract = None
 
 
