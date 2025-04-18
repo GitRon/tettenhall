@@ -12,24 +12,8 @@ from apps.skirmish.models.warrior import Warrior
 def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Command]:
     message_list = []
 
-    # The winner drops only items from dead warriors, the loser from all dead or incapacitated
-    if context.skirmish.victorious_faction == context.skirmish.player_faction:
-        winner_warrior_list = context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_DEAD)
-        loser_warrior_list = context.skirmish.non_player_warriors.filter(
-            condition__in=[Warrior.ConditionChoices.CONDITION_UNCONSCIOUS, Warrior.ConditionChoices.CONDITION_DEAD]
-        )
-    else:
-        winner_warrior_list = context.skirmish.non_player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_DEAD
-        )
-        loser_warrior_list = context.skirmish.player_warriors.filter(
-            condition__in=[Warrior.ConditionChoices.CONDITION_UNCONSCIOUS, Warrior.ConditionChoices.CONDITION_DEAD]
-        )
-
-    warriors_dropping_loot_list = [*winner_warrior_list, *loser_warrior_list]
-
-    for warrior in warriors_dropping_loot_list:
-        # TODO: this doesn't make sense. when my guy dies, we lose money? why do we have two commands here?
+    for warrior in context.incapacitated_warriors:
+        # Reassign items
         message_list.append(
             WarriorDropsLoot(
                 skirmish=context.skirmish,
@@ -37,6 +21,7 @@ def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Comman
                 new_owner=context.skirmish.victorious_faction,
             )
         )
+        # Give out money
         message_list.append(
             WarriorDropsSilver(
                 skirmish=context.skirmish,

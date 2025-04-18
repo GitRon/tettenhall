@@ -174,8 +174,43 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         quest_name = None
         quest_loot = 0
 
+    # The winner keeps the items from his dead warriors, but since it's easier they get "reassigned" to the victor,
+    # thus himself.
+    # Therefore, we reassign all dead victorious warriors items and all non-healthy defeated ones
+    incapacitated_warriors = [
+        *context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_DEAD),
+        *context.skirmish.non_player_warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_HEALTHY),
+    ]
+
+    # Fetch a list of unconscious, defeated warriors
+    if context.skirmish.victorious_faction == context.skirmish.player_faction:
+        defeated_unconscious_warriors = context.skirmish.non_player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+        )
+    else:
+        defeated_unconscious_warriors = context.skirmish.player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+        )
+
+    # Fetch list of victorious, conscious warriors
+    if context.skirmish.victorious_faction == context.skirmish.player_faction:
+        victorious_conscious_warriors = context.skirmish.player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+        )
+    else:
+        victorious_conscious_warriors = context.skirmish.non_player_warriors.filter(
+            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
+        )
+
+    # We need to evaluate the QS to avoid hitting the DB in the events
     return SkirmishFinished(
-        skirmish=context.skirmish, month=context.month, quest_name=quest_name, quest_loot=quest_loot
+        skirmish=context.skirmish,
+        incapacitated_warriors=incapacitated_warriors,
+        defeated_unconscious_warriors=list(defeated_unconscious_warriors),
+        victorious_conscious_warriors=list(victorious_conscious_warriors),
+        month=context.month,
+        quest_name=quest_name,
+        quest_loot=quest_loot,
     )
 
 

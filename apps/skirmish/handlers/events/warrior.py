@@ -11,7 +11,6 @@ from apps.skirmish.messages.commands.warrior import (
     StoreLastUsedSkirmishAction,
 )
 from apps.skirmish.messages.events import skirmish, warrior
-from apps.skirmish.models.warrior import Warrior
 
 
 @message_registry.register_event(event=skirmish.FighterPairsMatched)
@@ -123,19 +122,10 @@ def handle_morale_increase_on_warriors_defends_all_damage(
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_capture_unsconcious_warriors(*, context: skirmish.SkirmishFinished) -> list[Command]:
+def handle_capture_unconscious_warriors(*, context: skirmish.SkirmishFinished) -> list[Command]:
     message_list = []
 
-    if context.skirmish.victorious_faction == context.skirmish.player_faction:
-        unsconcious_warrior_list = context.skirmish.non_player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
-        )
-    else:
-        unsconcious_warrior_list = context.skirmish.player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
-        )
-
-    for captured_warrior in unsconcious_warrior_list:
+    for captured_warrior in context.defeated_unconscious_warriors:
         message_list.append(
             CaptureWarrior(
                 skirmish=context.skirmish,
@@ -153,20 +143,11 @@ def handle_experience_gain_after_battle_for_victor(*, context: skirmish.Skirmish
 
     gained_experience = 10
 
-    if context.skirmish.victorious_faction == context.skirmish.player_faction:
-        affected_warrior_qs = context.skirmish.player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
-        )
-    else:
-        affected_warrior_qs = context.skirmish.non_player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
-        )
-
-    for affected_warrior in affected_warrior_qs:
+    for victorious_warrior in context.victorious_conscious_warriors:
         message_list.append(
             IncreaseExperience(
                 skirmish=context.skirmish,
-                warrior=affected_warrior,
+                warrior=victorious_warrior,
                 increased_experience=gained_experience,
             )
         )
