@@ -10,6 +10,7 @@ from apps.skirmish.models.warrior import Warrior
 @dataclass(kw_only=True)
 class WarriorMoraleReplenished(Event):
     warrior: Warrior
+    faction: Faction
     recovered_morale: int
     month: int
 
@@ -17,6 +18,7 @@ class WarriorMoraleReplenished(Event):
 @dataclass(kw_only=True)
 class WarriorHealthHealed(Event):
     warrior: Warrior
+    faction: Faction
     healed_points: int
     month: int
 

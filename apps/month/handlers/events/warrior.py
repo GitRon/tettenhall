@@ -19,5 +19,5 @@ def handle_warrior_health_healed(*, context: WarriorHealthHealed) -> Command:
     return CreatePlayerMonthLog(
         title=f"Warrior {context.warrior} healed {context.healed_points} HP.",
         month=context.month,
-        faction=context.warrior.faction,
+        faction=context.faction,
     )

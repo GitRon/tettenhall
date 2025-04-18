@@ -18,6 +18,7 @@ class ItemCreated(Event):
 class ItemSold(Event):
     selling_faction: Faction
     item: Item
+    item_name: str
     price: int
     month: int
 
@@ -26,5 +27,6 @@ class ItemSold(Event):
 class ItemBought(Event):
     buying_faction: Faction
     item: Item
+    item_name: str
     price: int
     month: int

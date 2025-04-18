@@ -5,7 +5,6 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.faction.messages.commands.faction import (
-    AddItemToTownShop,
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
@@ -17,7 +16,6 @@ from apps.faction.messages.commands.faction import (
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithLowMoraleDetermined,
-    ItemWasAddedToShop,
     NewFactionCreated,
     NewLeaderWarriorSet,
     QuestWasRemovedFromBulletinBoard,
@@ -80,14 +78,6 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
 
         # TODO: create event to show the user that we've finished and let user log listend to it
     return events
-
-
-@message_registry.register_command(command=AddItemToTownShop)
-def handle_add_item_to_shop(*, context: AddItemToTownShop) -> list[Event] | Event:
-    # TODO: in item.py?
-    context.faction.available_items.add(context.item)
-
-    return ItemWasAddedToShop(faction=context.faction, item=context.item, month=context.month)
 
 
 @message_registry.register_command(command=RemoveQuestFromBulletinBoard)

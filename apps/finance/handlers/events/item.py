@@ -9,7 +9,7 @@ from apps.item.messages.events import item
 def handle_item_sold(*, context: item.ItemSold) -> Command:
     # Give out the money
     return CreateTransaction(
-        reason=f"{context.item} sold",
+        reason=f"{context.item_name} sold",
         amount=context.price,
         faction=context.selling_faction,
         month=context.month,
@@ -20,7 +20,7 @@ def handle_item_sold(*, context: item.ItemSold) -> Command:
 def handle_item_bought(*, context: item.ItemBought) -> Command:
     # Pay for item
     return CreateTransaction(
-        reason=f"{context.item} bought",
+        reason=f"{context.item_name} bought",
         amount=-context.price,
         faction=context.buying_faction,
         month=context.month,

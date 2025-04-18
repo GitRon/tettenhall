@@ -32,6 +32,7 @@ def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event:
     return ItemSold(
         selling_faction=context.selling_faction,
         item=context.item,
+        item_name=context.item.display_name,
         price=context.item.price,
         month=context.month,
     )
@@ -45,6 +46,7 @@ def handle_buy_item(*, context: item.BuyItem) -> list[Event] | Event:
     return ItemBought(
         buying_faction=context.buying_faction,
         item=context.item,
+        item_name=context.item.display_name,
         price=context.price,
         month=context.month,
     )
