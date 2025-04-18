@@ -73,14 +73,10 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
 ) -> list[Command]:
     message_list = []
 
-    if context.warrior.faction == context.skirmish.player_faction:
-        affected_warrior_list = context.skirmish.player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
-        )
+    if context.warrior.faction_id == context.skirmish.player_faction_id:
+        affected_warrior_list = context.skirmish.player_warriors.all()
     else:
-        affected_warrior_list = context.skirmish.non_player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
-        )
+        affected_warrior_list = context.skirmish.non_player_warriors.all()
 
     # Every other warrior from the faction participating in this battle will lose 10% morale
     for affected_warrior in affected_warrior_list:

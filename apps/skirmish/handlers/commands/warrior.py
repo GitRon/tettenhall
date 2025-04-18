@@ -78,6 +78,10 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
 def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event] | Event:
     message_list = []
 
+    # Only health warriors lose morale
+    if context.warrior.condition != Warrior.ConditionChoices.CONDITION_HEALTHY:
+        return message_list
+
     context.warrior = Warrior.objects.reduce_morale(obj=context.warrior, lost_morale=context.lost_morale)
 
     if context.warrior.current_morale <= 0:

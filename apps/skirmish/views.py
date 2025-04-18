@@ -64,7 +64,13 @@ class SkirmishFinishRoundView(generic.DetailView):
         # TODO: make enemy warriors chose a skirmish action (in SkirmishFightView?)
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        self.object = self.get_object()
+        self.object = (
+            self.model.objects.filter(id=self.kwargs.get("pk"))
+            .prefetch_related("player_warriors", "non_player_warriors")
+            .first()
+        )
+        if not self.object:
+            return HttpResponse(status=HTTPStatus.NOT_FOUND)
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
 
         player_warrior_participants = []
