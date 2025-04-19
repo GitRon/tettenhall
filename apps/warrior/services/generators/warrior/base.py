@@ -19,6 +19,7 @@ class BaseWarriorGenerator:
     # TODO: ensure that both stats are never zero
     STATS_MU: int
     STATS_SIGMA: int
+    STATS_MIN: int
     PROGRESS_MU: int
     PROGRESS_SIGMA: int
 
@@ -60,7 +61,7 @@ class BaseWarriorGenerator:
 
         strength = 0
         while strength == 0:
-            strength = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), 0)
+            strength = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), self.STATS_MIN)
 
         strength_progress = -1
         while strength_progress < 0 or strength_progress > 100:
@@ -68,7 +69,7 @@ class BaseWarriorGenerator:
 
         dexterity = 0
         while dexterity == 0:
-            dexterity = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), 0)
+            dexterity = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), self.STATS_MIN)
 
         dexterity_progress = -1
         while dexterity_progress < 0 or dexterity_progress > 100:

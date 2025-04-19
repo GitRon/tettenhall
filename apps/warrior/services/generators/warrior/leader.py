@@ -11,6 +11,7 @@ class LeaderWarriorGenerator(BaseWarriorGenerator):
     MORALE_SIGMA = 3
     STATS_MU = 8
     STATS_SIGMA = 3
+    STATS_MIN = 4
     PROGRESS_MU = 50
     PROGRESS_SIGMA = 50
 

@@ -53,12 +53,12 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
     # Clean up previous stock
     context.faction.available_items.all().delete()
 
-    events = []
+    message_list = []
 
     no_items = random.randrange(4, 6)
     for _ in range(no_items):
         if bool(random.getrandbits(1)):
-            events.append(
+            message_list.append(
                 RequestNewItemForTownShop(
                     faction=context.faction,
                     generator_class=MercenaryItemGenerator,
@@ -67,7 +67,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                 )
             )
         else:
-            events.append(
+            message_list.append(
                 RequestNewItemForTownShop(
                     faction=context.faction,
                     generator_class=MercenaryItemGenerator,
@@ -76,8 +76,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                 )
             )
 
-        # TODO: create event to show the user that we've finished and let user log listend to it
-    return events
+    return message_list
 
 
 @message_registry.register_command(command=RemoveQuestFromBulletinBoard)

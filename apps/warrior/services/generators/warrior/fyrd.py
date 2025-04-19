@@ -11,6 +11,7 @@ class FyrdWarriorGenerator(BaseWarriorGenerator):
     MORALE_SIGMA = 3
     STATS_MU = 5
     STATS_SIGMA = 5
+    STATS_MIN = 1
     PROGRESS_MU = 50
     PROGRESS_SIGMA = 50
 

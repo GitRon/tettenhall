@@ -57,7 +57,7 @@ class Faction(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def get_all_items(self) -> QuerySet:
+    def get_all_unoccupied_items(self) -> QuerySet:
         from apps.item.models.item import Item
 
-        return Item.objects.filter(owner=self)
+        return Item.objects.filter(owner=self, warrior_weapon__isnull=True, warrior_armor__isnull=True)

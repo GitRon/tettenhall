@@ -35,6 +35,7 @@ class WarriorAdmin(admin.ModelAdmin):
         "name",
         "culture",
         "faction",
+        "strength",
         "dexterity",
         "condition",
         "current_health",
@@ -42,7 +43,7 @@ class WarriorAdmin(admin.ModelAdmin):
         "weapon",
         "armor",
     )
-    list_filter = ("faction", "condition")
+    list_filter = ("faction", "savegame", "condition")
     search_fields = ("name",)
 
     def get_form(self, request, obj=None, change=False, **kwargs):

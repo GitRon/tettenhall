@@ -21,6 +21,7 @@ def handle_buy_item_for_faction(*, context: RemoveItemFromTownShop) -> Event:
 
 @message_registry.register_command(command=AddItemToTownShop)
 def handle_sell_item_from_faction(*, context: AddItemToTownShop) -> Event:
-    context.faction.available_items.remove(context.item)
+    context.item.owner = None
+    context.item.save()
 
     return ItemWasAddedToShop(faction=context.faction, item=context.item, month=context.month)
