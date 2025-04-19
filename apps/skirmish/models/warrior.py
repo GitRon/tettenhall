@@ -87,6 +87,9 @@ class Warrior(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    # TODO: add property when a certain value is really high to add a nickname like "Victor the Fast"
+    #  (good and bad cases)
+
     @property
     def avatar_url(self) -> str:
         return f"img/warrior/avatars/avatar_{self.avatar_id}.jpg"
