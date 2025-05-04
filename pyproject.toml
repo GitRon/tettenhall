@@ -151,3 +151,15 @@ exclude = [
 "*/managers/*.py" = [
     "PBR002",  # todo: enable this
 ]
+
+[tool.pytest.ini_options]
+# Django settings module
+DJANGO_SETTINGS_MODULE = "apps.config.settings"
+# Python paths to search for tests
+python_files = "test_*.py"
+# Test paths
+testpaths = ["apps"]
+# Display detailed test information
+addopts = "--verbose --no-header --strict-markers"
+# Fail on warnings
+filterwarnings = ["error"]

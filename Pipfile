@@ -10,6 +10,9 @@ django-axes = "~=7.0"
 django-crispy-forms = "~=1.14"
 django-queuebie = "~=0.2"
 faker = "~=33.1"
+pytest = "~=8.3"
+pytest-django = "~=4.11"
+factory-boy = "~=3.3"
 
 [dev-packages]
 django-removals = "*"
