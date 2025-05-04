@@ -92,7 +92,10 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 # Custom
+                "apps.finance.context_processors.get_current_balance",
                 "apps.savegame.context_processors.current_savegame.current_savegame",
+                "apps.skirmish.context_processors.get_open_skirmishes",
+                "apps.warrior.context_processors.get_current_amount_warriors",
             ],
         },
     },

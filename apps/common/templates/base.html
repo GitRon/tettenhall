@@ -46,10 +46,15 @@
                 </li>
                 <li>
                     <a href="#">
-                        Estates {# todo: do i want this? #}
+                        Estates {# todo: implement me #}
                     </a>
                 </li>
             </ul>
+            <div class="uk-navbar-item">
+                <span >{% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}</span>
+                <span >{% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}</span>
+                <span >{% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}</span>
+            </div>
         {% endif %}
     </div>
     <div class="uk-navbar-right uk-margin-right">

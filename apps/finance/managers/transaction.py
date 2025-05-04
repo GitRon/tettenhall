@@ -15,6 +15,7 @@ class TransactionManager(manager.Manager):
         return self.create(reason=reason, amount=amount, faction=faction, month=month)
 
     def current_balance(self, *, savegame_id: int) -> int:
+        # TODO: this is not multi-tenant ready
         return self.for_savegame(savegame_id=savegame_id).aggregate(sum_amount=Sum("amount"))["sum_amount"] or 0
 
 
