@@ -51,6 +51,7 @@
                 </li>
             </ul>
             <div class="uk-navbar-item">
+                {# todo: this needs to update itself when we do things with HTMX #}
                 <span >{% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}</span>
                 <span >{% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}</span>
                 <span >{% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}</span>
