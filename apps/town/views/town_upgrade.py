@@ -1,15 +1,16 @@
 from django.views import generic
 
 from apps.savegame.models.savegame import Savegame
+from apps.town.models import Town
 
 
-class TownUpgradeView(generic.TemplateView):
+class TownUpgradeView(generic.DetailView):
+    model = Town
     template_name = "town/town_upgrade.html"
 
-    def get_context_data(self, *, object_list=None, **kwargs) -> dict:
-        context = super().get_context_data(object_list=object_list, **kwargs)
+    def get_object(self, queryset=...):
+        return super().get_queryset().first()
 
+    def get_queryset(self):
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        context["faction"] = current_savegame.player_faction
-
-        return context
+        return Town.objects.for_savegame(savegame_id=current_savegame.id)

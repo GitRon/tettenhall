@@ -4,8 +4,55 @@
     <h1>Town upgrade</h1>
 
     <div uk-grid>
-        <div class="uk-width-2-3">
-            Stuff
+        <div class="uk-width-1-3">
+            Hall
+        </div>
+        <div class="uk-width-1-3">
+            {{ object.get_hall_display }} (Level {{ object.hall }})
+        </div>
+        <div class="uk-width-1-3">
+            {% if object.hall < 3 %}
+                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+            {% endif %}
+        </div>
+    </div>
+    <div uk-grid>
+        <div class="uk-width-1-3">
+            Weaponsmith
+        </div>
+        <div class="uk-width-1-3">
+            {{ object.get_weaponsmith_display }} (Level {{ object.weaponsmith }})
+        </div>
+        <div class="uk-width-1-3">
+            {% if object.weaponsmith < 3 %}
+                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+            {% endif %}
+        </div>
+    </div>
+    <div uk-grid>
+        <div class="uk-width-1-3">
+            Marketplace
+        </div>
+        <div class="uk-width-1-3">
+            {{ object.get_marketplace_display }} (Level {{ object.marketplace }})
+        </div>
+        <div class="uk-width-1-3">
+            {% if object.marketplace < 3 %}
+                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+            {% endif %}
+        </div>
+    </div>
+    <div uk-grid>
+        <div class="uk-width-1-3">
+            Sanctuary
+        </div>
+        <div class="uk-width-1-3">
+            {{ object.get_sanctuary_display }} (Level {{ object.sanctuary }})
+        </div>
+        <div class="uk-width-1-3">
+            {% if object.sanctuary < 3 %}
+                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+            {% endif %}
         </div>
     </div>
 {% endblock content %}
