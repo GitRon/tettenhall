@@ -1,0 +1,1 @@
+from .town import Town

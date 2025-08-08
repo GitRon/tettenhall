@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import datetime
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     "apps.quest",
     "apps.savegame",
     "apps.skirmish",
+    "apps.town",
     "apps.training",
     "apps.warrior",
     "apps.month",
@@ -188,3 +190,8 @@ AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
 QUEUEBIE_APP_BASE_PATH = BASE_DIR
 # TODO: Fix handlers so we can enable this
 QUEUEBIE_STRICT_MODE = True
+
+
+# Hide development server warning
+# https://docs.djangoproject.com/en/stable/ref/django-admin/#envvar-DJANGO_RUNSERVER_HIDE_WARNING
+os.environ["DJANGO_RUNSERVER_HIDE_WARNING"] = "true"
