@@ -12,7 +12,9 @@
         </div>
         <div class="uk-width-1-3">
             {% if object.hall < 3 %}
-                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+                <button hx-post="{% url "town:upgrade-building-view" "hall" %}" class="uk-button uk-button-primary">
+                    Upgrade
+                </button>
             {% endif %}
         </div>
     </div>
@@ -25,7 +27,9 @@
         </div>
         <div class="uk-width-1-3">
             {% if object.weaponsmith < 3 %}
-                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+                <button hx-post="{% url "town:upgrade-building-view" "weaponsmith" %}"
+                        class="uk-button uk-button-primary">Upgrade
+                </button>
             {% endif %}
         </div>
     </div>
@@ -38,7 +42,9 @@
         </div>
         <div class="uk-width-1-3">
             {% if object.marketplace < 3 %}
-                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+                <button hx-post="{% url "town:upgrade-building-view" "marketplace" %}"
+                        class="uk-button uk-button-primary">Upgrade
+                </button>
             {% endif %}
         </div>
     </div>
@@ -51,7 +57,9 @@
         </div>
         <div class="uk-width-1-3">
             {% if object.sanctuary < 3 %}
-                <a href="#" class="uk-button uk-button-primary">Upgrade</a>
+                <button hx-post="{% url "town:upgrade-building-view" "sanctuary" %}"
+                        class="uk-button uk-button-primary">Upgrade
+                </button>
             {% endif %}
         </div>
     </div>
