@@ -8,6 +8,7 @@ from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
+    EarnMoneyFromBuildings,
     PayMonthlyWarriorSalaries,
     ReplenishFyrdReserve,
 )
@@ -61,6 +62,11 @@ def handle_replenish_fyrd_reserve_for_new_month(*, context: MonthPrepared) -> li
 @message_registry.register_event(event=MonthPrepared)
 def handle_pay_monthly_warrior_salaries_for_new_month(*, context: MonthPrepared) -> Command:
     return PayMonthlyWarriorSalaries(faction=context.faction, month=context.current_month)
+
+
+@message_registry.register_event(event=MonthPrepared)
+def handle_earn_money_from_buildings_for_new_month(*, context: MonthPrepared) -> Command:
+    return EarnMoneyFromBuildings(faction=context.faction, month=context.current_month)
 
 
 @message_registry.register_event(event=MonthPrepared)

@@ -1,15 +1,17 @@
-import random
-
 from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.faction.messages.commands.faction import AddWarriorToPub, PayMonthlyWarriorSalaries
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
-from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, WarriorWasAddedToPub
+from apps.faction.messages.events.faction import (
+    MonthlyWarriorSalariesPaid,
+    WarriorWasAddedToPub,
+)
 from apps.faction.messages.events.warrior import RequestWarriorForPub, WarriorRecruited
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.skirmish.models import Warrior
+from apps.town.buildings.hall import Hall
 from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
@@ -21,8 +23,11 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
 
     events = []
 
-    no_warriors = random.randrange(2, 4)
-    for _ in range(no_warriors):
+    # Get hall building
+    hall_type = context.faction.town.hall
+    hall_building = Hall.get_building_by_type(hall_type=hall_type)
+
+    for _ in range(hall_building.AVAILABLE_MERCENARIES):
         events.append(
             RequestWarriorForPub(
                 savegame=context.faction.savegame,

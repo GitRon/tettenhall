@@ -8,6 +8,7 @@ from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithLowMorale,
+    EarnMoneyFromBuildings,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -16,6 +17,7 @@ from apps.faction.messages.commands.faction import (
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithLowMoraleDetermined,
+    MonthlyBuildingMoneyEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
     QuestWasRemovedFromBulletinBoard,
@@ -25,6 +27,7 @@ from apps.faction.models.faction import Faction
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
+from apps.town.buildings.hall import Hall
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
 
 
@@ -141,3 +144,16 @@ def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event
     context.faction.save()
 
     return NewLeaderWarriorSet(faction=context.faction, warrior=context.warrior)
+
+
+@message_registry.register_command(command=EarnMoneyFromBuildings)
+def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event:
+    # Get hall building
+    hall_type = context.faction.town.hall
+    hall_building = Hall.get_building_by_type(hall_type=hall_type)
+
+    return MonthlyBuildingMoneyEarned(
+        faction=context.faction,
+        amount=hall_building.REVENUE_PER_ROUND,
+        month=context.month,
+    )
