@@ -7,7 +7,11 @@ from apps.town.messages.events.town import TownBuildingUpgraded
 
 @message_registry.register_command(command=UpgradeTownBuilding)
 def handle_upgrade_town_building(*, context: UpgradeTownBuilding) -> list[Event] | Event:
+    # Update building level
     setattr(context.town, context.building_type, context.new_level)
+    # Updated last construction date
+    context.town.last_constructed_building_at = context.month
+    # Persist changes
     context.town.save()
 
     return TownBuildingUpgraded(

@@ -22,6 +22,34 @@ class TownUpgradeView(generic.DetailView):
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
         return Town.objects.for_savegame(savegame_id=current_savegame.id)
 
+    def get_context_data(self, **kwargs):
+        town = self.get_object()
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+
+        has_already_built = town.last_constructed_building_at == current_savegame.current_month
+
+        context = super().get_context_data(**kwargs)
+        context.update({"has_already_built": has_already_built})
+
+        building_costs_hall = Hall.get_building_by_type(
+            hall_type=min(town.hall + 1, Town.HallChoices.HALL_LARGE)
+        ).BUILDING_COSTS
+        # TODO: add building costs
+        building_costs_weaponsmith = 0
+        building_costs_marketplace = 0
+        building_costs_sanctuary = 0
+
+        context.update(
+            {
+                "building_costs_hall": building_costs_hall,
+                "building_costs_weaponsmith": building_costs_weaponsmith,
+                "building_costs_marketplace": building_costs_marketplace,
+                "building_costs_sanctuary": building_costs_sanctuary,
+            }
+        )
+
+        return context
+
 
 class UpgradeBuildingView(generic.DetailView):
     model = Town
@@ -47,6 +75,7 @@ class UpgradeBuildingView(generic.DetailView):
             messages.add_message(request, messages.WARNING, "You already have the maximum building level.")
 
             # TODO: encapsulate this logic somewhere so we don't need to return this n times
+            #  -> create validation service
             response = HttpResponse()
             response["HX-Redirect"] = reverse("town:town-upgrade-view")
             return response
@@ -60,7 +89,12 @@ class UpgradeBuildingView(generic.DetailView):
             response["HX-Redirect"] = reverse("town:town-upgrade-view")
             return response
 
-        # TODO: ensure only one upgrade per building per year - add last_construction month to town model
+        if town.last_constructed_building_at == current_savegame.current_month:
+            messages.add_message(request, messages.WARNING, "You've already commissioned a building this month.")
+
+            response = HttpResponse()
+            response["HX-Redirect"] = reverse("town:town-upgrade-view")
+            return response
 
         handle_message(
             UpgradeTownBuilding(

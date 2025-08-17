@@ -37,6 +37,9 @@ class Town(models.Model):
     sanctuary = models.PositiveSmallIntegerField(
         choices=SanctuaryChoices.choices, default=SanctuaryChoices.SANCTUARY_NONE
     )
+    last_constructed_building_at = models.PositiveSmallIntegerField(
+        help_text="Month the last building was commissioned", default=1
+    )
 
     objects = TownManager()
 
