@@ -25,7 +25,7 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
 
     # Get hall building
     hall_type = context.faction.town.hall
-    hall_building = Hall.get_building_by_type(hall_type=hall_type)
+    hall_building = Hall.get_building_by_type(building_type=hall_type)
 
     for _ in range(hall_building.AVAILABLE_MERCENARIES):
         events.append(

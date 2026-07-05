@@ -1,6 +1,9 @@
 .idea
 *.sqlite3
 
+__pycache__/
+*.pyc
+
 **/node_modules/**
 
 yarn-error.log

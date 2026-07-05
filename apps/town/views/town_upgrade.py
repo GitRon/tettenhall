@@ -32,7 +32,7 @@ class TownUpgradeView(generic.DetailView):
         context.update({"has_already_built": has_already_built})
 
         building_costs_hall = Hall.get_building_by_type(
-            hall_type=min(town.hall + 1, Town.HallChoices.HALL_LARGE)
+            building_type=min(town.hall + 1, Town.HallChoices.HALL_LARGE)
         ).BUILDING_COSTS
         # TODO: add building costs
         building_costs_weaponsmith = 0
@@ -81,7 +81,7 @@ class UpgradeBuildingView(generic.DetailView):
             return response
 
         # TODO: make this generic based on "building_type"
-        desired_building = Hall.get_building_by_type(hall_type=current_building_level + 1)
+        desired_building = Hall.get_building_by_type(building_type=current_building_level + 1)
         if current_silver_balance < desired_building.BUILDING_COSTS:
             messages.add_message(request, messages.WARNING, "You don't have the silver to pay for the building.")
 

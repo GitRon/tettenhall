@@ -150,7 +150,7 @@ def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event
 def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event:
     # Get hall building
     hall_type = context.faction.town.hall
-    hall_building = Hall.get_building_by_type(hall_type=hall_type)
+    hall_building = Hall.get_building_by_type(building_type=hall_type)
 
     return MonthlyBuildingMoneyEarned(
         faction=context.faction,

@@ -1,23 +1,24 @@
+from apps.town.buildings.base import Building
 from apps.town.models import Town
 
 
-class Hall:
+class Hall(Building):
     REVENUE_PER_ROUND = 0
     AVAILABLE_MERCENARIES = 0
 
     BUILDING_COSTS = 0
 
     @classmethod
-    def get_building_by_type(cls, *, hall_type: int) -> "Hall":
-        if hall_type == Town.HallChoices.HALL_NONE:
+    def get_building_by_type(cls, *, building_type: int) -> "Hall":
+        if building_type == Town.HallChoices.HALL_NONE:
             return NoHall()
-        if hall_type == Town.HallChoices.HALL_SMALL:
+        if building_type == Town.HallChoices.HALL_SMALL:
             return SmallHall()
-        if hall_type == Town.HallChoices.HALL_MEDIUM:
+        if building_type == Town.HallChoices.HALL_MEDIUM:
             return MediumHall()
-        if hall_type == Town.HallChoices.HALL_LARGE:
+        if building_type == Town.HallChoices.HALL_LARGE:
             return LargeHall()
-        raise RuntimeError(f"Unknown hall type: {hall_type}")
+        raise RuntimeError(f"Unknown hall type: {building_type}")
 
 
 class NoHall(Hall):
