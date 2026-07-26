@@ -79,12 +79,6 @@ def test_skirmish_finish_round_view_advances_the_round(logged_in_client, current
     assert skirmish.current_round == 2
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Known defect: post() queries Skirmish.objects directly and never touches the scoped "
-    "queryset, so any skirmish id from the URL fights another player's skirmish. Drop this marker "
-    "once views.py routes the lookup through get_queryset().",
-)
 @pytest.mark.django_db
 def test_skirmish_finish_round_view_cannot_finish_a_round_of_another_savegame(logged_in_client, current_savegame):
     other_skirmish = SkirmishFactory()
@@ -214,12 +208,6 @@ def test_faction_warrior_list_update_htmx_view_lists_the_warriors_of_the_non_pla
     assert list(response.context["object_list"]) == [opposing_warrior]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Known defect: the view resolves skirmish and faction with a bare get_object_or_404() and "
-    "never scopes to the current savegame, so the ids from the URL expose another player's warriors. "
-    "Drop this marker once views.py scopes the lookup.",
-)
 @pytest.mark.django_db
 def test_faction_warrior_list_update_htmx_view_cannot_list_warriors_of_another_savegame(
     logged_in_client, current_savegame
