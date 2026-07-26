@@ -9,6 +9,11 @@ def get_open_skirmishes(request) -> dict:  # noqa: PBR001
     # Fetch current savegame record
     current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
 
+    # A user without an active savegame - a fresh account, for instance - has no skirmishes yet.
+    # The templates only render this inside a "current_savegame" check anyway.
+    if current_savegame is None:
+        return {}
+
     open_skirmishes = Skirmish.objects.for_savegame(savegame_id=current_savegame.id).unresolved()
 
     return {"open_skirmishes": open_skirmishes}
