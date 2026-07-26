@@ -9,10 +9,11 @@ from queuebie.runner import handle_message
 from apps.finance.models import Transaction
 from apps.item.messages.commands.item import BuyItem, SellItem
 from apps.item.models.item import Item
+from apps.savegame.mixins import SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 
 
-class ItemSellView(SingleObjectMixin, generic.View):
+class ItemSellView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
     model = Item
     http_method_names = ("post",)
 
@@ -32,7 +33,7 @@ class ItemSellView(SingleObjectMixin, generic.View):
         return response
 
 
-class ItemBuyView(SingleObjectMixin, generic.View):
+class ItemBuyView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
     model = Item
     http_method_names = ("post",)
 

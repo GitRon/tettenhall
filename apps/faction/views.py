@@ -7,11 +7,12 @@ from queuebie.runner import handle_message
 
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.models.faction import Faction
+from apps.savegame.mixins import SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 
 
-class FactionDetailView(generic.DetailView):
+class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/faction_detail.html"
 
@@ -21,12 +22,12 @@ class FactionDetailView(generic.DetailView):
         return context
 
 
-class FactionItemListView(generic.DetailView):
+class FactionItemListView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/item/components/item_list.html"
 
 
-class FactionWarriorListView(generic.DetailView):
+class FactionWarriorListView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/warrior/components/warrior_list.html"
 
@@ -36,12 +37,12 @@ class FactionWarriorListView(generic.DetailView):
         return context
 
 
-class FactionCapturedWarriorListView(generic.DetailView):
+class FactionCapturedWarriorListView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/warrior/components/captured_warrior_list.html"
 
 
-class DraftWarriorFromFyrdView(generic.DetailView):
+class DraftWarriorFromFyrdView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     http_method_names = ("post",)
     template_name = "faction/warrior/components/fyrd_card.html"
@@ -64,7 +65,7 @@ class DraftWarriorFromFyrdView(generic.DetailView):
         return response
 
 
-class MonthlyCostOverview(generic.DetailView):
+class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/faction/components/current_cost_card.html"
 

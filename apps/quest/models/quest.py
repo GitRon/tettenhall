@@ -2,6 +2,8 @@ import random
 
 from django.db import models
 
+from apps.quest.managers.quest import QuestManager
+
 
 class Quest(models.Model):
     class DifficultyChoices(models.IntegerChoices):
@@ -12,6 +14,8 @@ class Quest(models.Model):
     loot = models.PositiveSmallIntegerField("Loot (in silver)")
     target_faction = models.ForeignKey("faction.Faction", verbose_name="Target faction", on_delete=models.CASCADE)
     difficulty = models.PositiveSmallIntegerField("Difficulty", choices=DifficultyChoices.choices)
+
+    objects = QuestManager()
 
     class Meta:
         verbose_name = "Quest"

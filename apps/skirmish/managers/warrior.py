@@ -3,6 +3,9 @@ from django.db.models import Q, Sum, manager
 
 
 class WarriorQuerySet(models.QuerySet):
+    def for_savegame(self, *, savegame_id: int):
+        return self.filter(savegame_id=savegame_id)
+
     def filter_healthy(self):
         return self.filter(condition=self.model.ConditionChoices.CONDITION_HEALTHY)
 

@@ -10,6 +10,7 @@ from queuebie.runner import handle_message
 
 from apps.common.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
+from apps.savegame.mixins import SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.skirmish.models import Warrior
@@ -27,7 +28,7 @@ class SkirmishListView(generic.ListView):
         return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
 
-class SkirmishFightView(generic.DetailView):
+class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish_fight.html"
 
@@ -55,7 +56,7 @@ class SkirmishFightView(generic.DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class SkirmishFinishRoundView(generic.DetailView):
+class SkirmishFinishRoundView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     http_method_names = ("post",)
     object = None
@@ -134,12 +135,12 @@ class SkirmishFinishRoundView(generic.DetailView):
         return response
 
 
-class SkirmishRoundUpdateHtmxView(generic.DetailView):
+class SkirmishRoundUpdateHtmxView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish/htmx/_round.html"
 
 
-class SkirmishFightButtonUpdateHtmxView(generic.DetailView):
+class SkirmishFightButtonUpdateHtmxView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish/htmx/_fight_button.html"
 

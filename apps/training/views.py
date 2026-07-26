@@ -1,12 +1,13 @@
 from django.urls import reverse_lazy
 from django.views import generic
 
+from apps.savegame.mixins import SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.training.forms import TrainingForm
 from apps.training.models.training import Training
 
 
-class TrainingListView(generic.ListView):
+class TrainingListView(SavegameScopedQuerysetMixin, generic.ListView):
     model = Training
     template_name = "training/training_list.html"
 
@@ -20,7 +21,7 @@ class TrainingListView(generic.ListView):
         return context
 
 
-class TrainingEditView(generic.UpdateView):
+class TrainingEditView(SavegameScopedQuerysetMixin, generic.UpdateView):
     model = Training
     form_class = TrainingForm
     template_name = "training/training_edit.html"

@@ -7,18 +7,19 @@ from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.faction.models.faction import Faction
+from apps.savegame.mixins import SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.forms.warrior import WarriorForm
 from apps.warrior.messages.commands.warrior import EnslaveCapturedWarrior, RecruitCapturedWarrior
 
 
-class WarriorDetailView(generic.DetailView):
+class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Warrior
     template_name = "warrior/warrior_detail.html"
 
 
-class WarriorWeaponUpdateView(generic.UpdateView):
+class WarriorWeaponUpdateView(SavegameScopedQuerysetMixin, generic.UpdateView):
     model = Warrior
     form_class = WarriorForm
     template_name = "warrior/components/warrior_field_edit.html"
@@ -43,7 +44,7 @@ class WarriorWeaponUpdateView(generic.UpdateView):
         return context
 
 
-class WarriorRecruitCapturedView(generic.DetailView):
+class WarriorRecruitCapturedView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Warrior
     http_method_names = ("post",)
 
@@ -66,7 +67,7 @@ class WarriorRecruitCapturedView(generic.DetailView):
         return response
 
 
-class WarriorEnslaveCapturedView(generic.DetailView):
+class WarriorEnslaveCapturedView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Warrior
     http_method_names = ("post",)
 

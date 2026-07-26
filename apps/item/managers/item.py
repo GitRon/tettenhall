@@ -3,7 +3,8 @@ from django.db.models import manager
 
 
 class ItemQuerySet(models.QuerySet):
-    pass
+    def for_savegame(self, *, savegame_id: int):
+        return self.filter(savegame_id=savegame_id)
 
 
 class ItemManager(manager.Manager):
