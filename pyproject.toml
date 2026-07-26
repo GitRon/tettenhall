@@ -151,6 +151,13 @@ exclude = [
 "*/managers/*.py" = [
     "PBR002",  # todo: enable this
 ]
+# pytest injects fixtures as positional arguments, so keyword-only signatures are impossible here
+"conftest.py" = [
+    "PBR001",
+]
+"*/tests/*" = [
+    "PBR001",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "apps.config.settings_test"

@@ -90,7 +90,7 @@ class TownSquareView(generic.DetailView):
 
     def get_queryset(self):
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        return super().get_queryset().for_savegame(savegame_id=current_savegame)
+        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
 
 class FactionShopItemListView(generic.DetailView):
@@ -99,7 +99,7 @@ class FactionShopItemListView(generic.DetailView):
 
     def get_queryset(self):
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        return super().get_queryset().for_savegame(savegame_id=current_savegame)
+        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

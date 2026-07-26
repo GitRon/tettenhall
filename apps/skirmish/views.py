@@ -149,7 +149,16 @@ class BattleHistoryUpdateHtmxView(generic.ListView):
     template_name = "skirmish/battle_history/htmx/_report_box.html"
 
     def get_queryset(self):
-        return super().get_queryset().filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
+        # Scope to the current savegame, otherwise any skirmish id from the URL would expose
+        # another player's battle history
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+
+        return (
+            super()
+            .get_queryset()
+            .for_savegame(savegame_id=current_savegame.id)
+            .filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
+        )
 
 
 class FactionWarriorListUpdateHtmxView(generic.TemplateView):
