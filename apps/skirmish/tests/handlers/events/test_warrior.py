@@ -10,7 +10,7 @@ from apps.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
-    ReduceMorale,
+    ReduceMoraleOfRemainingWarriors,
 )
 from apps.skirmish.messages.events.skirmish import SkirmishFinished
 from apps.skirmish.messages.events.warrior import (
@@ -23,47 +23,44 @@ from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
-@pytest.mark.django_db
-def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_hits_the_comrades_of_a_fleeing_warrior():
-    skirmish = SkirmishFactory()
-    fleeing_warrior = WarriorFactory(faction=skirmish.player_faction, max_morale=20)
-    comrade = WarriorFactory(faction=skirmish.player_faction)
-    skirmish.player_warriors.add(fleeing_warrior, comrade)
+def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_fleeing_warrior():
+    """
+    One test per registered message: the handler is registered for three of them, and the mapping
+    is all it does - the participants get read in the command handler, since strict mode blocks
+    database access here.
+    """
+    skirmish = SkirmishFactory.build()
+    fleeing_warrior = WarriorFactory.build(faction=skirmish.player_faction)
 
     result = handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         context=WarriorHasFled(skirmish=skirmish, warrior=fleeing_warrior)
     )
 
-    assert result == [ReduceMorale(skirmish=skirmish, warrior=comrade, lost_morale=2)]
+    assert result == ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=fleeing_warrior)
 
 
-@pytest.mark.django_db
-def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_hits_the_comrades_of_an_incapacitated_enemy():
-    skirmish = SkirmishFactory()
-    incapacitated_warrior = WarriorFactory(faction=skirmish.non_player_faction, max_morale=20)
-    comrade = WarriorFactory(faction=skirmish.non_player_faction)
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    skirmish.non_player_warriors.add(incapacitated_warrior, comrade)
+def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_an_incapacitated_warrior():
+    skirmish = SkirmishFactory.build()
+    incapacitated_warrior = WarriorFactory.build(faction=skirmish.non_player_faction)
+    attacker = WarriorFactory.build(faction=skirmish.player_faction)
 
     result = handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         context=WarriorWasIncapacitated(skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker)
     )
 
-    assert result == [ReduceMorale(skirmish=skirmish, warrior=comrade, lost_morale=2)]
+    assert result == ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=incapacitated_warrior)
 
 
-@pytest.mark.django_db
-def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_skips_the_killed_warrior_himself():
-    skirmish = SkirmishFactory()
-    killed_warrior = WarriorFactory(faction=skirmish.player_faction, max_morale=20)
-    killer = WarriorFactory(faction=skirmish.non_player_faction)
-    skirmish.player_warriors.add(killed_warrior)
+def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_killed_warrior():
+    skirmish = SkirmishFactory.build()
+    killed_warrior = WarriorFactory.build(faction=skirmish.player_faction)
+    killer = WarriorFactory.build(faction=skirmish.non_player_faction)
 
     result = handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
     )
 
-    assert result == []
+    assert result == ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=killed_warrior)
 
 
 @pytest.mark.django_db

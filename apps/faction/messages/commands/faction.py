@@ -18,6 +18,14 @@ class CreateNewFaction(Command):
 
 
 @dataclass(kw_only=True)
+class CreateFactionsForNewSavegame(Command):
+    savegame: Savegame
+    faction_name: str
+    town_name: str
+    faction_culture_id: int
+
+
+@dataclass(kw_only=True)
 class ReplenishFyrdReserve(Command):
     faction: Faction
     month: int

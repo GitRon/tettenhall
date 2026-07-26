@@ -1,10 +1,12 @@
 import random
 
 from django.db.models import F
+from faker import Faker
 from queuebie import message_registry
 from queuebie.messages import Command, Event
 
 from apps.faction.messages.commands.faction import (
+    CreateFactionsForNewSavegame,
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
@@ -21,11 +23,43 @@ from apps.faction.messages.events.faction import (
     QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
+from apps.faction.models import Culture
 from apps.faction.models.faction import Faction
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
+
+
+@message_registry.register_command(command=CreateFactionsForNewSavegame)
+def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSavegame) -> list[Command]:
+    """
+    Turns a fresh savegame into a populated one: the player's faction plus a few rivals.
+
+    This reads cultures from the database, which is why it is a command handler - the event handler
+    emitting it runs under strict mode's database blocker.
+    """
+    culture = Culture.objects.get_or_none(id=context.faction_culture_id)
+    faker = Faker([culture.locale])
+
+    return [
+        CreateNewFaction(
+            name=context.faction_name,
+            town_name=context.town_name,
+            savegame=context.savegame,
+            culture_id=context.faction_culture_id,
+            is_player_faction=True,
+        )
+    ] + [
+        CreateNewFaction(
+            name=faker.city(),
+            town_name=faker.city(),
+            culture_id=random.choice(Culture.objects.all()).id,
+            savegame=context.savegame,
+            is_player_faction=False,
+        )
+        for _ in range(random.randint(3, 5))
+    ]
 
 
 @message_registry.register_command(command=CreateNewFaction)

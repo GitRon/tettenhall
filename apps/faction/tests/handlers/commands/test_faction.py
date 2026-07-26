@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.faction.handlers.commands.faction import (
+    handle_create_factions_for_new_savegame,
     handle_create_new_faction,
     handle_determine_injured_warriors,
     handle_determine_warriors_with_reduced_morale,
@@ -10,6 +11,7 @@ from apps.faction.handlers.commands.faction import (
     handle_restock_shop_items,
 )
 from apps.faction.messages.commands.faction import (
+    CreateFactionsForNewSavegame,
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
@@ -214,3 +216,39 @@ def test_handle_determine_warriors_with_reduced_morale_skips_dead_warriors():
     )
 
     assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[], month=3)
+
+
+@pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_starts_with_the_player_faction():
+    savegame = SavegameFactory()
+    culture = CultureFactory()
+
+    with mock.patch("apps.faction.handlers.commands.faction.random.randint", return_value=3):
+        result = handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=culture.id
+            )
+        )
+
+    assert result[0] == CreateNewFaction(
+        name="Wessex", town_name="Winchester", savegame=savegame, culture_id=culture.id, is_player_faction=True
+    )
+
+
+@pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_adds_the_drawn_number_of_rival_factions():
+    savegame = SavegameFactory()
+    culture = CultureFactory()
+
+    with mock.patch("apps.faction.handlers.commands.faction.random.randint", return_value=3):
+        result = handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=culture.id
+            )
+        )
+
+    assert len(result) == 4
+    assert result[3].is_player_faction is False
+    # Rival factions get a generated town of their own instead of the player's
+    assert result[3].town_name != ""
+    assert result[3].town_name != "Winchester"
