@@ -34,18 +34,15 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
             continue
 
         attribute_progress_name = f"{attribute}_progress"
-        current_value = getattr(warrior, attribute_progress_name)
-        new_value = current_value + improvement
+        new_value = getattr(warrior, attribute_progress_name) + improvement
+        updated_fields = [attribute_progress_name]
+
         # Progress bar full -> skill upgrade
         if new_value >= 100:
-            new_value = 0
-            if attribute in ("morale", "health"):
-                max_attribute_name = f"max_{attribute}"
-                current_max_value = getattr(warrior, max_attribute_name)
-                setattr(warrior, max_attribute_name, current_max_value + 1)
-            else:
-                current_max_value = getattr(warrior, attribute)
-                setattr(warrior, attribute, current_max_value + 1)
+            # "morale" and "health" grow their maximum, the others the attribute itself
+            upgraded_attribute_name = f"max_{attribute}" if attribute in ("morale", "health") else attribute
+            setattr(warrior, upgraded_attribute_name, getattr(warrior, upgraded_attribute_name) + 1)
+            updated_fields.append(upgraded_attribute_name)
 
             # Reset progress bar after upgrade
             setattr(warrior, attribute_progress_name, 0)
@@ -61,8 +58,10 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
 
         # Update on the progress bar
         else:
-            setattr(warrior, attribute_progress_name, current_value + improvement)
+            setattr(warrior, attribute_progress_name, new_value)
 
-        warrior.save()
+        # Only the fields touched above: a full save would write back everything else this instance
+        # still holds from before
+        warrior.save(update_fields=updated_fields)
 
     return event_list
