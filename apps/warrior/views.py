@@ -44,13 +44,31 @@ class WarriorWeaponUpdateView(SavegameScopedQuerysetMixin, generic.UpdateView):
         return context
 
 
-class WarriorRecruitCapturedView(SavegameScopedQuerysetMixin, generic.DetailView):
+class CapturedWarriorActionMixin(SavegameScopedQuerysetMixin):
+    """
+    Resolves the faction holding a captured warrior.
+
+    Both facts have to be verified: the faction id arrives in the URL, so it could point at another
+    player's faction, and "remove_captive()" is a silent no-op for a warrior that was never
+    captured - without the check, a player could enslave his own warriors for silver.
+    """
+
+    def get_captor_faction(self, *, warrior: Warrior) -> Faction:
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+
+        return get_object_or_404(
+            Faction.objects.for_savegame(savegame_id=current_savegame.id).filter(captured_warriors=warrior),
+            pk=self.kwargs["faction_id"],
+        )
+
+
+class WarriorRecruitCapturedView(CapturedWarriorActionMixin, generic.DetailView):
     model = Warrior
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
-        faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
+        faction = self.get_captor_faction(warrior=obj)
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
         handle_message(RecruitCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
@@ -67,13 +85,13 @@ class WarriorRecruitCapturedView(SavegameScopedQuerysetMixin, generic.DetailView
         return response
 
 
-class WarriorEnslaveCapturedView(SavegameScopedQuerysetMixin, generic.DetailView):
+class WarriorEnslaveCapturedView(CapturedWarriorActionMixin, generic.DetailView):
     model = Warrior
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
-        faction = get_object_or_404(Faction, pk=kwargs["faction_id"])
+        faction = self.get_captor_faction(warrior=obj)
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
         handle_message(EnslaveCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))

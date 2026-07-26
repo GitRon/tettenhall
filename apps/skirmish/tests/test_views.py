@@ -1,8 +1,155 @@
 import pytest
 from django.urls import reverse
 
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.skirmish.tests.factories.warrior import WarriorFactory
+
+
+@pytest.mark.django_db
+def test_skirmish_list_view_lists_the_skirmishes_of_the_current_savegame(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-list-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["skirmish_list"]) == [skirmish]
+
+
+@pytest.mark.django_db
+def test_skirmish_list_view_hides_a_skirmish_of_another_savegame(logged_in_client, current_savegame):
+    SkirmishFactory()
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-list-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["skirmish_list"]) == []
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_shows_the_skirmish(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["object"] == skirmish
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_cannot_show_a_skirmish_of_another_savegame(logged_in_client, current_savegame):
+    other_skirmish = SkirmishFactory()
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-view", kwargs={"pk": other_skirmish.pk}))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_advances_the_round(logged_in_client, current_savegame):
+    """
+    Flow test: no mocking inside the chain, so this runs the real queue and asserts the end state.
+
+    Combat itself is random, but a single round cannot decide the skirmish here: the fallback weapon
+    deals at most 3 damage against 20 health, so both warriors stay healthy and only the round
+    counter settles.
+    """
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    opposing_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+    skirmish.player_warriors.add(player_warrior)
+    skirmish.non_player_warriors.add(opposing_warrior)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": skirmish.player_faction_id,
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            "skirmish_participant[1][faction_id]": skirmish.non_player_faction_id,
+            "skirmish_participant[1][warrior_id]": opposing_warrior.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 200
+    assert "HX-Trigger" in response
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 2
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="Known defect: post() queries Skirmish.objects directly and never touches the scoped "
+    "queryset, so any skirmish id from the URL fights another player's skirmish. Drop this marker "
+    "once views.py routes the lookup through get_queryset().",
+)
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_cannot_finish_a_round_of_another_savegame(logged_in_client, current_savegame):
+    other_skirmish = SkirmishFactory()
+    other_player_warrior = WarriorFactory(faction=other_skirmish.player_faction)
+    other_opposing_warrior = WarriorFactory(faction=other_skirmish.non_player_faction)
+    other_skirmish.player_warriors.add(other_player_warrior)
+    other_skirmish.non_player_warriors.add(other_opposing_warrior)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": other_skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": other_skirmish.player_faction_id,
+            "skirmish_participant[0][warrior_id]": other_player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            "skirmish_participant[1][faction_id]": other_skirmish.non_player_faction_id,
+            "skirmish_participant[1][warrior_id]": other_opposing_warrior.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 404
+    other_skirmish.refresh_from_db()
+    assert other_skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_round_update_htmx_view_shows_the_skirmish(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-round-update-htmx", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["object"] == skirmish
+
+
+@pytest.mark.django_db
+def test_skirmish_round_update_htmx_view_cannot_show_a_skirmish_of_another_savegame(logged_in_client, current_savegame):
+    other_skirmish = SkirmishFactory()
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-round-update-htmx", kwargs={"pk": other_skirmish.pk}))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_button_update_htmx_view_shows_the_skirmish(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-button-update-htmx", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["object"] == skirmish
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_button_update_htmx_view_cannot_show_a_skirmish_of_another_savegame(
+    logged_in_client, current_savegame
+):
+    other_skirmish = SkirmishFactory()
+
+    response = logged_in_client.get(
+        reverse("skirmish:skirmish-fight-button-update-htmx", kwargs={"pk": other_skirmish.pk})
+    )
+
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -27,3 +174,65 @@ def test_battle_history_update_htmx_view_hides_history_of_another_savegame(logge
 
     assert response.status_code == 200
     assert list(response.context["battlehistory_list"]) == []
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_update_htmx_view_lists_the_warriors_of_the_player_faction(
+    logged_in_client, current_savegame
+):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    skirmish.player_warriors.add(player_warrior)
+
+    response = logged_in_client.get(
+        reverse(
+            "skirmish:faction-warrior-list-update-htmx",
+            kwargs={"skirmish_id": skirmish.pk, "faction_id": skirmish.player_faction_id},
+        )
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["object_list"]) == [player_warrior]
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_update_htmx_view_lists_the_warriors_of_the_non_player_faction(
+    logged_in_client, current_savegame
+):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    opposing_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+    skirmish.non_player_warriors.add(opposing_warrior)
+
+    response = logged_in_client.get(
+        reverse(
+            "skirmish:faction-warrior-list-update-htmx",
+            kwargs={"skirmish_id": skirmish.pk, "faction_id": skirmish.non_player_faction_id},
+        )
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["object_list"]) == [opposing_warrior]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="Known defect: the view resolves skirmish and faction with a bare get_object_or_404() and "
+    "never scopes to the current savegame, so the ids from the URL expose another player's warriors. "
+    "Drop this marker once views.py scopes the lookup.",
+)
+@pytest.mark.django_db
+def test_faction_warrior_list_update_htmx_view_cannot_list_warriors_of_another_savegame(
+    logged_in_client, current_savegame
+):
+    other_skirmish = SkirmishFactory()
+    other_warrior = WarriorFactory(faction=other_skirmish.player_faction)
+    other_skirmish.player_warriors.add(other_warrior)
+
+    response = logged_in_client.get(
+        reverse(
+            "skirmish:faction-warrior-list-update-htmx",
+            kwargs={"skirmish_id": other_skirmish.pk, "faction_id": other_skirmish.player_faction_id},
+        )
+    )
+
+    assert response.status_code == 404
