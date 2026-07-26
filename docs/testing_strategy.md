@@ -184,6 +184,22 @@ The suite runs on **pytest** + **pytest-django** with **factory_boy** for test d
 - Keep shared setup minimal and function-scoped. The more objects a fixture creates, the less isolated
   the tests using it become.
 
+#### Reference data is the one exception
+
+`Culture` and `ItemType` are lookup tables, not test data. They ship as fixtures
+(`apps/faction/fixtures/culture.json`, `apps/item/fixtures/itemtype.json`) and every environment has
+them. The generators query them — `FyrdItemGenerator` even filters weapons by name — so without them
+item and warrior generation raises `RuntimeError`.
+
+The root `conftest.py` therefore loads both fixtures once per session via `django_db_setup`. **Don't
+hand-seed cultures or item types**, and don't build look-alikes: a test that creates its own
+`ItemType(name="Spear")` passes while asserting nothing about the data the game actually ships.
+
+Use a factory for these two only when a test needs a *specific* variant that the fixtures don't
+contain (a fallback type, say). Note the flip side: reference tables are **not empty** in tests, so
+never assume a query over them returns exactly the rows you created. A handler picking
+`Culture.objects.all().order_by("?").first()` really does return one of five.
+
 ### Mocking
 
 **Mocking first-party code is strongly discouraged.** It is a last resort, not a technique to reach for

@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.management import call_command
 from django.test import Client
 from queuebie import message_registry
 from queuebie.settings import get_queuebie_cache_key
@@ -18,6 +19,20 @@ def _reset_queuebie_registry() -> None:
     cache.delete(get_queuebie_cache_key())
     message_registry.command_dict = {}
     message_registry.event_dict = {}
+
+
+@pytest.fixture(scope="session")
+def django_db_setup(django_db_setup, django_db_blocker):
+    """
+    Loads the reference data every environment ships with.
+
+    Cultures and item types are lookup tables living in fixtures, not something a test creates:
+    the item and warrior generators query them by name, so without them generation raises. Loading
+    them once per session keeps tests working against the same reference data as production
+    instead of hand-seeding look-alikes.
+    """
+    with django_db_blocker.unblock():
+        call_command("loaddata", "culture", "itemtype")
 
 
 @pytest.fixture
