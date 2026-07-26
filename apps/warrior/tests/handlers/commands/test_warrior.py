@@ -1,9 +1,11 @@
+from unittest import mock
+
 import pytest
 
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warrior.handlers.commands.warrior import handle_replenish_warrior_morale
-from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
-from apps.warrior.messages.events.warrior import WarriorMoraleReplenished
+from apps.warrior.handlers.commands.warrior import handle_heal_injured_warrior, handle_replenish_warrior_morale
+from apps.warrior.messages.commands.warrior import HealInjuredWarrior, ReplenishWarriorMorale
+from apps.warrior.messages.events.warrior import WarriorHealthHealed, WarriorMoraleReplenished
 
 
 @pytest.mark.django_db
@@ -22,5 +24,39 @@ def test_handle_replenish_warrior_morale_does_nothing_on_full_morale():
     warrior = WarriorFactory(current_morale=20, max_morale=20)
 
     result = handle_replenish_warrior_morale(context=ReplenishWarriorMorale(warrior=warrior, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_heal_injured_warrior_heals_rolled_amount():
+    warrior = WarriorFactory(current_health=5, max_health=20)
+
+    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=5):
+        result = handle_heal_injured_warrior(context=HealInjuredWarrior(warrior=warrior, month=3))
+
+    assert result == WarriorHealthHealed(warrior=warrior, faction=warrior.faction, healed_points=5, month=3)
+    warrior.refresh_from_db()
+    assert warrior.current_health == 10
+
+
+@pytest.mark.django_db
+def test_handle_heal_injured_warrior_caps_healing_at_the_maximum():
+    warrior = WarriorFactory(current_health=18, max_health=20)
+
+    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=5):
+        result = handle_heal_injured_warrior(context=HealInjuredWarrior(warrior=warrior, month=3))
+
+    assert result == WarriorHealthHealed(warrior=warrior, faction=warrior.faction, healed_points=2, month=3)
+    warrior.refresh_from_db()
+    assert warrior.current_health == 20
+
+
+@pytest.mark.django_db
+def test_handle_heal_injured_warrior_at_full_health():
+    warrior = WarriorFactory(current_health=20, max_health=20)
+
+    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=5):
+        result = handle_heal_injured_warrior(context=HealInjuredWarrior(warrior=warrior, month=3))
 
     assert result is None
