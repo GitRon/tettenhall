@@ -25,6 +25,7 @@ def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated
     return [
         CreateNewFaction(
             name=context.faction_name,
+            town_name=context.town_name,
             savegame=context.savegame,
             culture_id=context.faction_culture_id,
             is_player_faction=True,
@@ -32,6 +33,7 @@ def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated
     ] + [
         CreateNewFaction(
             name=faker.city(),
+            town_name=faker.city(),
             culture_id=random.choice(Culture.objects.all()).id,
             savegame=context.savegame,
             is_player_faction=False,

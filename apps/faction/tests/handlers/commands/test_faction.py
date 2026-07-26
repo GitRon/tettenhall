@@ -38,12 +38,19 @@ def test_handle_create_new_faction_for_player_faction():
 
     with mock.patch("apps.faction.handlers.commands.faction.random.randint", return_value=4):
         result = handle_create_new_faction(
-            context=CreateNewFaction(name="Wessex", culture_id=culture.id, savegame=savegame, is_player_faction=True)
+            context=CreateNewFaction(
+                name="Wessex",
+                town_name="Winchester",
+                culture_id=culture.id,
+                savegame=savegame,
+                is_player_faction=True,
+            )
         )
 
     assert result == NewFactionCreated(faction=Faction.objects.get(name="Wessex"), current_month=5)
     savegame.refresh_from_db()
     assert savegame.player_faction == result.faction
+    assert result.faction.town_name == "Winchester"
 
 
 @pytest.mark.django_db
@@ -53,7 +60,13 @@ def test_handle_create_new_faction_for_non_player_faction():
 
     with mock.patch("apps.faction.handlers.commands.faction.random.randint", return_value=4):
         result = handle_create_new_faction(
-            context=CreateNewFaction(name="Mercia", culture_id=culture.id, savegame=savegame, is_player_faction=False)
+            context=CreateNewFaction(
+                name="Mercia",
+                town_name="Tamworth",
+                culture_id=culture.id,
+                savegame=savegame,
+                is_player_faction=False,
+            )
         )
 
     assert result.faction.fyrd_reserve == 4

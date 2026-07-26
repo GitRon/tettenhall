@@ -11,6 +11,7 @@ from apps.skirmish.models import Warrior
 @dataclass(kw_only=True)
 class CreateNewFaction(Command):
     name: str
+    town_name: str
     culture_id: int
     savegame: Savegame
     is_player_faction: bool

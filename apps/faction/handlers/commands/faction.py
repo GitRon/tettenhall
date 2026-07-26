@@ -32,6 +32,7 @@ from apps.warrior.messages.commands.warrior import HealInjuredWarrior
 def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Event:
     faction = Faction.objects.create(
         name=context.name,
+        town_name=context.town_name,
         culture_id=context.culture_id,
         savegame=context.savegame,
         fyrd_reserve=random.randint(2, 5),

@@ -29,7 +29,7 @@ def test_handle_create_player_faction_for_new_savegame_starts_with_the_player_fa
         )
 
     assert result[0] == CreateNewFaction(
-        name="Wessex", savegame=savegame, culture_id=culture.id, is_player_faction=True
+        name="Wessex", town_name="Winchester", savegame=savegame, culture_id=culture.id, is_player_faction=True
     )
 
 
@@ -47,6 +47,9 @@ def test_handle_create_player_faction_for_new_savegame_adds_the_drawn_number_of_
 
     assert len(result) == 4
     assert result[3].is_player_faction is False
+    # Rival factions get a generated town of their own instead of the player's
+    assert result[3].town_name != ""
+    assert result[3].town_name != "Winchester"
 
 
 def test_handle_warriors_with_low_morale_determined_with_warriors():
