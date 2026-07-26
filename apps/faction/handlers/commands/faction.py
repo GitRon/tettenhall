@@ -2,12 +2,12 @@ import random
 
 from django.db.models import F
 from queuebie import message_registry
-from queuebie.messages import Event
+from queuebie.messages import Command, Event
 
 from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
-    DetermineWarriorsWithLowMorale,
+    DetermineWarriorsWithReducedMorale,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -15,7 +15,7 @@ from apps.faction.messages.commands.faction import (
 )
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
-    FactionWarriorsWithLowMoraleDetermined,
+    FactionWarriorsWithReducedMoraleDetermined,
     NewFactionCreated,
     NewLeaderWarriorSet,
     QuestWasRemovedFromBulletinBoard,
@@ -90,7 +90,7 @@ def handle_remove_quest_from_bulletin_board(*, context: RemoveQuestFromBulletinB
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
-def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> list[Event] | Event:
+def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | None:
     new_recruitees = random.randrange(0, 3)
 
     if new_recruitees == 0:
@@ -106,11 +106,15 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> list[Even
     )
 
 
-@message_registry.register_command(command=DetermineWarriorsWithLowMorale)
-def handle_determine_warriors_with_low_morale(*, context: DetermineWarriorsWithLowMorale) -> list[Event] | Event:
-    warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+@message_registry.register_command(command=DetermineWarriorsWithReducedMorale)
+def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsWithReducedMorale) -> Event:
+    # Only warriors below their maximum have anything to recover - replenishing the rest would be
+    # a no-op further down the chain
+    warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
+        current_morale__lt=F("max_morale")
+    )
 
-    return FactionWarriorsWithLowMoraleDetermined(
+    return FactionWarriorsWithReducedMoraleDetermined(
         faction=context.faction,
         warrior_list=list(warrior_qs),
         month=context.month,
@@ -118,7 +122,7 @@ def handle_determine_warriors_with_low_morale(*, context: DetermineWarriorsWithL
 
 
 @message_registry.register_command(command=DetermineInjuredWarriors)
-def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> list[Event] | Event:
+def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> list[Command]:
     # Get all injured but not dead warriors of "faction"
     warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
         current_health__lt=F("max_health")

@@ -221,8 +221,10 @@ def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event
     # Check if one faction has been defeated
     victor = None
     if not context.skirmish.non_player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+        # Checked first on purpose: if both sides are wiped out in the same round, the tie goes to
+        # the player
         victor = context.skirmish.player_faction
-    if not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+    elif not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
         victor = context.skirmish.non_player_faction
 
     return RoundFinished(skirmish=context.skirmish, victor=victor, month=context.month)

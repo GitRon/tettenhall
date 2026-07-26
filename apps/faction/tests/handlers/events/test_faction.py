@@ -4,10 +4,10 @@ import pytest
 
 from apps.faction.handlers.events.faction import (
     handle_create_player_faction_for_new_savegame,
-    handle_warriors_with_low_morale_determined,
+    handle_warriors_with_reduced_morale_determined,
 )
 from apps.faction.messages.commands.faction import CreateNewFaction
-from apps.faction.messages.events.faction import FactionWarriorsWithLowMoraleDetermined
+from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
 from apps.faction.tests.factories.culture import CultureFactory
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.savegame.messages.events.savegame import NewSavegameCreated
@@ -52,22 +52,22 @@ def test_handle_create_player_faction_for_new_savegame_adds_the_drawn_number_of_
     assert result[3].town_name != "Winchester"
 
 
-def test_handle_warriors_with_low_morale_determined_with_warriors():
+def test_handle_warriors_with_reduced_morale_determined_with_warriors():
     faction = FactionFactory.build()
     warrior = WarriorFactory.build(faction=faction)
 
-    result = handle_warriors_with_low_morale_determined(
-        context=FactionWarriorsWithLowMoraleDetermined(faction=faction, warrior_list=[warrior], month=3)
+    result = handle_warriors_with_reduced_morale_determined(
+        context=FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[warrior], month=3)
     )
 
     assert result == [ReplenishWarriorMorale(warrior=warrior, month=3)]
 
 
-def test_handle_warriors_with_low_morale_determined_without_warriors():
+def test_handle_warriors_with_reduced_morale_determined_without_warriors():
     faction = FactionFactory.build()
 
-    result = handle_warriors_with_low_morale_determined(
-        context=FactionWarriorsWithLowMoraleDetermined(faction=faction, warrior_list=[], month=3)
+    result = handle_warriors_with_reduced_morale_determined(
+        context=FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[], month=3)
     )
 
     assert result == []

@@ -106,3 +106,23 @@ def test_handle_progress_warrior_training_upgrades_maximum_value_on_full_progres
     warrior.refresh_from_db()
     assert warrior.max_morale == 21
     assert warrior.morale_progress == 0
+
+
+@pytest.mark.django_db
+def test_handle_progress_warrior_training_stores_a_rounded_improvement():
+    """
+    The progress bar is a positive small integer, so a float improvement would not survive a
+    refresh from the database.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
+    training = TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    with (
+        mock.patch("apps.training.models.training.random.choice", return_value="strength"),
+        mock.patch("apps.training.models.training.random.gauss", return_value=30.6),
+    ):
+        handle_progress_warrior_training(context=TrainWarriors(faction=faction, training=training, month=6))
+
+    warrior.refresh_from_db()
+    assert warrior.strength_progress == 71

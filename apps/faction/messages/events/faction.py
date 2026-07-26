@@ -29,7 +29,7 @@ class MonthlyWarriorSalariesPaid(Event):
 
 
 @dataclass(kw_only=True)
-class FactionWarriorsWithLowMoraleDetermined(Event):
+class FactionWarriorsWithReducedMoraleDetermined(Event):
     faction: Faction
     warrior_list: list[Warrior]
     month: int

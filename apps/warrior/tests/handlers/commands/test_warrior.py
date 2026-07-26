@@ -60,3 +60,18 @@ def test_handle_heal_injured_warrior_at_full_health():
         result = handle_heal_injured_warrior(context=HealInjuredWarrior(warrior=warrior, month=3))
 
     assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_heal_injured_warrior_can_roll_the_maximum():
+    """
+    randrange() excludes its upper bound, so the maximum recoverable amount needs the "+ 1" to be
+    reachable at all.
+    """
+    warrior = WarriorFactory(current_health=1, max_health=20)
+
+    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=10) as mocked_randrange:
+        result = handle_heal_injured_warrior(context=HealInjuredWarrior(warrior=warrior, month=3))
+
+    mocked_randrange.assert_called_once_with(1, 11)
+    assert result.healed_points == 10

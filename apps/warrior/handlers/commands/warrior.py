@@ -45,12 +45,14 @@ def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[
 
 
 @message_registry.register_command(command=HealInjuredWarrior)
-def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> list[Event] | Event:
+def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
     max_recoverable_health_points = 10
 
-    # Cap healed points at the maximum
+    # Cap healed points at the maximum. randrange() excludes its upper bound, so it needs the "+ 1"
+    # for "max_recoverable_health_points" to be reachable at all.
     healed_hp = min(
-        random.randrange(1, max_recoverable_health_points), context.warrior.max_health - context.warrior.current_health
+        random.randrange(1, max_recoverable_health_points + 1),
+        context.warrior.max_health - context.warrior.current_health,
     )
 
     if healed_hp == 0:

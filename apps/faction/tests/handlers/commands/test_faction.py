@@ -5,17 +5,20 @@ import pytest
 from apps.faction.handlers.commands.faction import (
     handle_create_new_faction,
     handle_determine_injured_warriors,
+    handle_determine_warriors_with_reduced_morale,
     handle_replenish_fyrd_reserve,
     handle_restock_shop_items,
 )
 from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
+    DetermineWarriorsWithReducedMorale,
     ReplenishFyrdReserve,
     RestockTownShopItems,
 )
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionWarriorsWithReducedMoraleDetermined,
     NewFactionCreated,
     RequestNewItemForTownShop,
 )
@@ -179,3 +182,35 @@ def test_handle_determine_injured_warriors_ignores_dead_warriors():
     result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=dead_warrior.faction, month=3))
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_determine_warriors_with_reduced_morale_skips_warriors_at_full_morale():
+    faction = FactionFactory()
+    warrior_with_reduced_morale = WarriorFactory(faction=faction, current_morale=5, max_morale=20)
+    WarriorFactory(faction=faction, current_morale=20, max_morale=20)
+
+    result = handle_determine_warriors_with_reduced_morale(
+        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
+    )
+
+    assert result == FactionWarriorsWithReducedMoraleDetermined(
+        faction=faction, warrior_list=[warrior_with_reduced_morale], month=3
+    )
+
+
+@pytest.mark.django_db
+def test_handle_determine_warriors_with_reduced_morale_skips_dead_warriors():
+    faction = FactionFactory()
+    WarriorFactory(
+        faction=faction,
+        current_morale=5,
+        max_morale=20,
+        condition=Warrior.ConditionChoices.CONDITION_DEAD,
+    )
+
+    result = handle_determine_warriors_with_reduced_morale(
+        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
+    )
+
+    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[], month=3)

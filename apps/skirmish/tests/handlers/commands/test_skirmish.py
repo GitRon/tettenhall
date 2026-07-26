@@ -398,3 +398,23 @@ def test_handle_finish_round_declares_the_non_player_faction_the_victor():
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
     assert result == RoundFinished(skirmish=skirmish, victor=skirmish.non_player_faction, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_finish_round_declares_the_player_faction_the_victor_on_a_mutual_wipeout():
+    """
+    Both sides going down in the same round is decided in the player's favour.
+    """
+    skirmish = SkirmishFactory()
+    dead_player_warrior = WarriorFactory(
+        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+    dead_enemy_warrior = WarriorFactory(
+        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+    skirmish.player_warriors.add(dead_player_warrior)
+    skirmish.non_player_warriors.add(dead_enemy_warrior)
+
+    result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
+
+    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.player_faction, month=3)

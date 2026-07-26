@@ -30,7 +30,7 @@ class PayMonthlyWarriorSalaries(Command):
 
 
 @dataclass(kw_only=True)
-class DetermineWarriorsWithLowMorale(Command):
+class DetermineWarriorsWithReducedMorale(Command):
     faction: Faction
     month: int
 

@@ -7,11 +7,11 @@ from queuebie.messages import Command
 from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
-    DetermineWarriorsWithLowMorale,
+    DetermineWarriorsWithReducedMorale,
     PayMonthlyWarriorSalaries,
     ReplenishFyrdReserve,
 )
-from apps.faction.messages.events.faction import FactionWarriorsWithLowMoraleDetermined
+from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
 from apps.faction.models import Culture
 from apps.month.messages.events.month import MonthPrepared
 from apps.savegame.messages.events.savegame import NewSavegameCreated
@@ -42,8 +42,10 @@ def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated
     ]
 
 
-@message_registry.register_event(event=FactionWarriorsWithLowMoraleDetermined)
-def handle_warriors_with_low_morale_determined(*, context: FactionWarriorsWithLowMoraleDetermined) -> list[Command]:
+@message_registry.register_event(event=FactionWarriorsWithReducedMoraleDetermined)
+def handle_warriors_with_reduced_morale_determined(
+    *, context: FactionWarriorsWithReducedMoraleDetermined
+) -> list[Command]:
     event_list = []
     for warrior in context.warrior_list:
         event_list.append(
@@ -66,8 +68,8 @@ def handle_pay_monthly_warrior_salaries_for_new_month(*, context: MonthPrepared)
 
 
 @message_registry.register_event(event=MonthPrepared)
-def handle_determine_warriors_with_low_morale_for_new_month(*, context: MonthPrepared) -> list[Command]:
-    return [DetermineWarriorsWithLowMorale(faction=context.faction, month=context.current_month)]
+def handle_determine_warriors_with_reduced_morale_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    return [DetermineWarriorsWithReducedMorale(faction=context.faction, month=context.current_month)]
 
 
 @message_registry.register_event(event=MonthPrepared)
