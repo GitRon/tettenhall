@@ -61,13 +61,6 @@ class AddWarriorToPub(Command):
 
 
 @dataclass(kw_only=True)
-class AddQuestToBulletinBoard(Command):
-    faction: Faction
-    quest: Quest
-    month: int
-
-
-@dataclass(kw_only=True)
 class RemoveQuestFromBulletinBoard(Command):
     faction: Faction
     quest: Quest

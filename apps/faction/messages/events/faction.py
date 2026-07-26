@@ -11,6 +11,7 @@ from apps.skirmish.models.warrior import Warrior
 @dataclass(kw_only=True)
 class NewFactionCreated(Event):
     faction: Faction
+    current_month: int
 
 
 @dataclass(kw_only=True)
@@ -54,14 +55,6 @@ class WarriorWasAddedToPub(Event):
     # TODO: warrior.py?
     faction: Faction
     warrior: Warrior
-    month: int
-
-
-@dataclass(kw_only=True)
-class QuestWasAddedToBulletinBoard(Event):
-    # TODO: quest.py?
-    faction: Faction
-    quest: Quest
     month: int
 
 

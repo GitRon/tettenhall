@@ -44,6 +44,7 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
 
     return NewFactionCreated(
         faction=faction,
+        current_month=context.savegame.current_month,
     )
 
 
