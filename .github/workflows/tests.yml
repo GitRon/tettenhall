@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch makes the previous run pointless.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Installed before setup-python so its "pipenv" cache backend can find the executable.
+      - name: Install pipenv
+        run: pipx install pipenv
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: Pipfile
+          cache: pipenv
+
+      # "pipenv sync" installs the locked versions only, so it silently uses a stale lock.
+      - name: Check Pipfile.lock is in sync with Pipfile
+        run: pipenv verify
+
+      - name: Install dependencies
+        run: pipenv sync --dev
+
+      # Coverage config lives in pyproject.toml and fails the run below 100% branch coverage.
+      - name: Run tests
+        run: pipenv run pytest --cov
