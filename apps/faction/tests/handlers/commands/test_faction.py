@@ -7,6 +7,7 @@ from apps.faction.handlers.commands.faction import (
     handle_create_new_faction,
     handle_determine_injured_warriors,
     handle_determine_warriors_with_reduced_morale,
+    handle_remove_quest_from_bulletin_board,
     handle_replenish_fyrd_reserve,
     handle_restock_shop_items,
 )
@@ -15,6 +16,7 @@ from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
+    RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
 )
@@ -22,6 +24,7 @@ from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithReducedMoraleDetermined,
     NewFactionCreated,
+    QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
 from apps.faction.models.faction import Faction
@@ -30,6 +33,7 @@ from apps.faction.tests.factories.faction import FactionFactory
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.item.tests.factories.item import ItemFactory
+from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -129,6 +133,20 @@ def test_handle_restock_shop_items_removes_previous_stock():
         handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
     assert faction.available_items.count() == 0
+
+
+@pytest.mark.django_db
+def test_handle_remove_quest_from_bulletin_board_takes_the_quest_off_the_board():
+    faction = FactionFactory()
+    quest = QuestFactory(target_faction=FactionFactory(savegame=faction.savegame))
+    faction.available_quests.add(quest)
+
+    result = handle_remove_quest_from_bulletin_board(
+        context=RemoveQuestFromBulletinBoard(faction=faction, quest=quest, month=3)
+    )
+
+    assert result == QuestWasRemovedFromBulletinBoard(faction=faction, quest=quest, month=3)
+    assert list(faction.available_quests.all()) == []
 
 
 @pytest.mark.django_db

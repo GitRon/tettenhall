@@ -6,12 +6,11 @@ Tettenhall is a Django 5.2 browser game built around a CQRS-style message bus
 
 ## Project docs
 
-Read these before working in the area they cover — they are normative, not background reading.
+Read this before working in the area it covers — it is normative, not background reading.
 
 | Doc | Read it when |
 |---|---|
 | [`docs/testing_strategy.md`](docs/testing_strategy.md) | **Always, before writing or changing any test, factory, fixture or test setting.** |
-| [`docs/testing_roadmap.md`](docs/testing_roadmap.md) | Picking up work on the test suite: what is left, and the things that are expensive to rediscover. |
 
 ## Testing
 
@@ -47,6 +46,10 @@ Run the suite with `pytest`, with coverage via `pytest --cov`.
   a handler directly in a test bypasses that check.
 - Concrete return annotations are *not* required; the registry tests parse actual message instantiations
   out of the syntax tree instead, because an annotation can lie and the code cannot.
+- **A savegame has exactly one player.** Rival factions are NPCs, so a rival reading "another faction's"
+  data is not a leak. The pub belongs to the player, which is why `handle_add_warrior_to_pub` targets
+  `savegame.player_faction` deliberately. `Transaction.for_savegame()` follows the same rule and filters
+  `faction__player_savegame` — only the player faction's money counts.
 
 ## Conventions
 

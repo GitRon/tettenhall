@@ -1,8 +1,28 @@
+from unittest import mock
+
 import pytest
 from django.urls import reverse
 
 from apps.account.tests.factories.user import UserFactory
 from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
+
+
+@pytest.mark.django_db
+def test_login_view_sends_an_authenticated_user_to_the_dashboard(logged_in_client):
+    response = logged_in_client.get(reverse("account:login-view"))
+
+    assert response.status_code == 302
+    assert response.url == reverse("account:dashboard-view")
+
+
+@pytest.mark.django_db
+def test_login_view_refuses_a_locked_out_user(client):
+    # Third-party boundary: reproducing an axes lockout would mean driving its bookkeeping instead
+    # of testing this view
+    with mock.patch("apps.account.views.AxesProxyHandler.is_locked", return_value=True):
+        response = client.get(reverse("account:login-view"))
+
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

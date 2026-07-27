@@ -30,9 +30,8 @@ class BaseItemGenerator:
             return Item.ConditionChoices.CONDITION_CHEAP
         if self.MODIFIER_ROLLS_MU <= modifier < self.MODIFIER_ROLLS_MU + self.MODIFIER_ROLLS_SIGMA:
             return Item.ConditionChoices.CONDITION_TRADITIONAL
-        if modifier >= self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
-            return Item.ConditionChoices.CONDITION_SUPERIOR
-        raise RuntimeError("Invalid condition")
+        # Everything the checks above didn't claim is above the traditional range
+        return Item.ConditionChoices.CONDITION_SUPERIOR
 
     def _get_queryset_for_type(self) -> QuerySet:
         return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")

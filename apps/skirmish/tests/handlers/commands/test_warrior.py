@@ -3,18 +3,59 @@ import pytest
 from apps.skirmish.handlers.commands.warrior import (
     handle_reduce_morale_of_remaining_warriors,
     handle_reduce_warrior_health,
+    handle_warrior_increasing_experience,
+    handle_warrior_increasing_morale,
+    handle_warrior_is_captured,
     handle_warrior_losing_morale,
 )
-from apps.skirmish.messages.commands.warrior import ReduceHealth, ReduceMorale, ReduceMoraleOfRemainingWarriors
+from apps.skirmish.messages.commands.warrior import (
+    CaptureWarrior,
+    IncreaseExperience,
+    IncreaseMorale,
+    ReduceHealth,
+    ReduceMorale,
+    ReduceMoraleOfRemainingWarriors,
+)
 from apps.skirmish.messages.events.warrior import (
+    WarriorGainedExperience,
+    WarriorGainedMorale,
     WarriorHasFled,
     WarriorLostMorale,
+    WarriorWasCaptured,
     WarriorWasIncapacitated,
     WarriorWasKilled,
 )
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+
+
+@pytest.mark.django_db
+def test_handle_warrior_is_captured_hands_the_warrior_to_the_victor():
+    skirmish = SkirmishFactory()
+    captured_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+
+    result = handle_warrior_is_captured(
+        context=CaptureWarrior(skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.player_faction)
+    )
+
+    assert result == WarriorWasCaptured(
+        skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.player_faction
+    )
+    assert list(skirmish.player_faction.captured_warriors.all()) == [captured_warrior]
+
+
+@pytest.mark.django_db
+def test_handle_warrior_is_captured_takes_the_warrior_out_of_his_faction():
+    skirmish = SkirmishFactory()
+    captured_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+
+    handle_warrior_is_captured(
+        context=CaptureWarrior(skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.player_faction)
+    )
+
+    captured_warrior.refresh_from_db()
+    assert captured_warrior.faction is None
 
 
 @pytest.mark.django_db
@@ -153,3 +194,31 @@ def test_handle_reduce_morale_of_remaining_warriors_skips_the_warrior_himself():
     )
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_warrior_increasing_morale_adds_the_gained_points():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.player_faction, current_morale=10, max_morale=20)
+
+    result = handle_warrior_increasing_morale(
+        context=IncreaseMorale(skirmish=skirmish, warrior=warrior, increased_morale=5)
+    )
+
+    assert result == WarriorGainedMorale(skirmish=skirmish, warrior=warrior, gained_morale=5)
+    warrior.refresh_from_db()
+    assert warrior.current_morale == 15
+
+
+@pytest.mark.django_db
+def test_handle_warrior_increasing_experience_adds_the_gained_points():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.player_faction, experience=100)
+
+    result = handle_warrior_increasing_experience(
+        context=IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=25)
+    )
+
+    assert result == WarriorGainedExperience(skirmish=skirmish, warrior=warrior, gained_experience=25)
+    warrior.refresh_from_db()
+    assert warrior.experience == 125

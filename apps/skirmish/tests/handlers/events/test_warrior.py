@@ -3,24 +3,51 @@ import pytest
 from apps.skirmish.handlers.events.warrior import (
     handle_capture_unconscious_warriors,
     handle_experience_gain_after_battle_for_victor,
+    handle_experience_gain_on_warrior_incapacitation,
     handle_morale_drop_on_faction_on_warrior_is_out_of_fight,
     handle_morale_increase_on_warriors_defends_all_damage,
+    handle_reduce_health_and_update_condition,
 )
 from apps.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    ReduceHealth,
+    ReduceMorale,
     ReduceMoraleOfRemainingWarriors,
 )
 from apps.skirmish.messages.events.skirmish import SkirmishFinished
 from apps.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
     WarriorHasFled,
+    WarriorTookDamage,
     WarriorWasIncapacitated,
     WarriorWasKilled,
 )
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+
+
+def test_handle_reduce_health_and_update_condition_costs_the_defender_health_and_morale():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build()
+    defender = WarriorFactory.build(max_morale=20)
+
+    result = handle_reduce_health_and_update_condition(
+        context=WarriorTookDamage(
+            skirmish=skirmish,
+            attacker=attacker,
+            attacker_damage=7,
+            defender=defender,
+            defender_damage=2,
+            damage=5,
+        )
+    )
+
+    assert result == [
+        ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=5),
+        ReduceMorale(skirmish=skirmish, warrior=defender, lost_morale=2),
+    ]
 
 
 def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_fleeing_warrior():
@@ -61,6 +88,33 @@ def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_killed_w
     )
 
     assert result == ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=killed_warrior)
+
+
+def test_handle_experience_gain_on_warrior_incapacitation_for_an_incapacitated_warrior():
+    """
+    One test per registered message: the handler is registered for two of them.
+    """
+    skirmish = SkirmishFactory.build()
+    incapacitated_warrior = WarriorFactory.build(faction=skirmish.non_player_faction)
+    attacker = WarriorFactory.build(faction=skirmish.player_faction)
+
+    result = handle_experience_gain_on_warrior_incapacitation(
+        context=WarriorWasIncapacitated(skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker)
+    )
+
+    assert result == IncreaseExperience(skirmish=skirmish, warrior=attacker, increased_experience=25)
+
+
+def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior():
+    skirmish = SkirmishFactory.build()
+    killed_warrior = WarriorFactory.build(faction=skirmish.non_player_faction)
+    killer = WarriorFactory.build(faction=skirmish.player_faction)
+
+    result = handle_experience_gain_on_warrior_incapacitation(
+        context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
+    )
+
+    assert result == IncreaseExperience(skirmish=skirmish, warrior=killer, increased_experience=25)
 
 
 @pytest.mark.django_db

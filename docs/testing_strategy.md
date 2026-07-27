@@ -253,6 +253,12 @@ The blocker is applied by `handle_message()`. Call a handler directly and it is 
 **flow tests only**. That event handlers stay free of database writes has to be enforced by review —
 it is not something unit tests get for free.
 
+`BlockDatabaseAccess` patches the cursor, so it blocks **reads as well as writes**: any query inside
+an event handler fails, and `QUEUEBIE_STRICT_MODE = True` holds in `settings.py`, not only in tests.
+Passing a queryset into a message is fine, because it stays lazy until a command handler consumes
+it; iterating it or calling `.get()` on it inside the event handler is not. Two of the fatal defects
+found while writing this suite were exactly that.
+
 ## Coverage
 
 Business logic is **not** confined to `handlers/`:
@@ -278,8 +284,9 @@ run, so a missing `else` and an unexercised loop-exit both pass unnoticed. Branc
 
 Run it with `pytest --cov`.
 
-Until the suite is complete this gate fails by design. That is the ratchet working, not a
-misconfiguration — don't lower `fail_under` to turn a red run green.
+The suite meets the gate. Keep it there — don't lower `fail_under` to turn a red run green, and
+don't reach for `# pragma: no cover`. A line that cannot be reached is dead code; delete it instead.
+Several branches in this codebase turned out to be exactly that.
 
 Views **are** measured. They are thin enough that the one-test-per-view rule above reaches 100% on its
 own, so there is no reason to exempt them.

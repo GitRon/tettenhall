@@ -1,6 +1,7 @@
 import pytest
 from django.urls import reverse
 
+from apps.faction.tests.factories.faction import FactionFactory
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -44,6 +45,17 @@ def test_skirmish_fight_view_cannot_show_a_skirmish_of_another_savegame(logged_i
     response = logged_in_client.get(reverse("skirmish:skirmish-fight-view", kwargs={"pk": other_skirmish.pk}))
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_sends_the_player_back_with_another_skirmish_running(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    SkirmishFactory(player_faction=current_savegame.player_faction, current_round=2)
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 302
+    assert response.url == reverse("skirmish:skirmish-list-view")
 
 
 @pytest.mark.django_db
@@ -102,6 +114,44 @@ def test_skirmish_finish_round_view_cannot_finish_a_round_of_another_savegame(lo
     assert response.status_code == 404
     other_skirmish.refresh_from_db()
     assert other_skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_rejects_a_faction_outside_the_skirmish(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    skirmish.player_warriors.add(player_warrior)
+    uninvolved_faction = FactionFactory(savegame=current_savegame)
+
+    with pytest.raises(RuntimeError, match="Invalid faction ID in skirmish form."):
+        logged_in_client.post(
+            reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+            data={
+                "skirmish_participant[0][faction_id]": uninvolved_faction.pk,
+                "skirmish_participant[0][warrior_id]": player_warrior.pk,
+                "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            },
+        )
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_one_sided_round(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    skirmish.player_warriors.add(player_warrior)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": skirmish.player_faction_id,
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
 
 
 @pytest.mark.django_db
