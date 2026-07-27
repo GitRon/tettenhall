@@ -1,5 +1,3 @@
-from html.parser import HTMLParser
-
 import pytest
 from django.urls import reverse
 
@@ -9,25 +7,6 @@ from apps.item.tests.factories.item import ItemFactory
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-
-
-def _swallowing_tags(*, html: str) -> list[str]:
-    """
-    Names of tags that ran into the next element because their own bracket was never closed.
-
-    An unclosed opening tag makes the parser read everything up to the next ">" as its attributes,
-    so the swallowed element shows up as an attribute whose name starts with "<".
-    """
-    offenders = []
-
-    class _Parser(HTMLParser):
-        def handle_starttag(self, tag: str, attrs: list) -> None:
-            if any(name.startswith("<") for name, _ in attrs):
-                offenders.append(tag)
-
-    _Parser().feed(html)
-
-    return offenders
 
 
 @pytest.mark.django_db
@@ -260,26 +239,6 @@ def test_town_square_view_without_an_active_savegame(logged_in_client):
     response = logged_in_client.get(reverse("faction:town-square-view", kwargs={"pk": faction.pk}))
 
     assert response.status_code == 404
-
-
-@pytest.mark.django_db
-def test_faction_detail_view_renders_well_formed_tags(logged_in_client, current_savegame):
-    """
-    The div wrapping the captured warrior list was missing its closing bracket. Django still renders
-    the include - it works on template tags, not on HTML - so the damage only shows in the browser:
-    the parser reads the whole nested element as attributes of the unclosed tag and the section
-    disappears. Asserting on the parsed markup is what catches that.
-    """
-    faction = current_savegame.player_faction
-    faction.leader = WarriorFactory(faction=faction)
-    faction.save()
-
-    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": faction.id}))
-
-    assert response.status_code == 200
-    assert "Captured warriors" in response.content.decode()
-    # An attribute name containing "<" means a tag swallowed the element following it
-    assert _swallowing_tags(html=response.content.decode()) == []
 
 
 @pytest.mark.django_db

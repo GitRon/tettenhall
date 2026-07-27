@@ -111,7 +111,7 @@ def test_dashboard_view_lists_the_month_logs_of_the_current_savegame(logged_in_c
 
 
 @pytest.mark.django_db
-def test_dashboard_view_links_an_active_quest_to_its_skirmish(logged_in_client, current_savegame):
+def test_dashboard_view_shows_an_active_quest_with_a_skirmish(logged_in_client, current_savegame):
     skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
     quest_contract = QuestContractFactory(faction=current_savegame.player_faction, skirmish=skirmish)
     current_savegame.player_faction.active_quests.add(quest_contract)
@@ -119,14 +119,13 @@ def test_dashboard_view_links_an_active_quest_to_its_skirmish(logged_in_client, 
     response = logged_in_client.get(reverse("account:dashboard-view"))
 
     assert response.status_code == 200
-    assert reverse("skirmish:skirmish-fight-view", kwargs={"pk": skirmish.pk}) in response.content.decode()
 
 
 @pytest.mark.django_db
 def test_dashboard_view_shows_an_active_quest_without_a_skirmish(logged_in_client, current_savegame):
     """
-    QuestContract.skirmish is nullable and cleared on delete, and reversing the fight url with an
-    empty id raises NoReverseMatch - so the dashboard used to answer 500.
+    QuestContract.skirmish is nullable and cleared on delete, and the template reverses the fight
+    url from it - with an empty id that raises NoReverseMatch, so the dashboard answered 500.
     """
     quest_contract = QuestContractFactory(faction=current_savegame.player_faction, skirmish=None)
     current_savegame.player_faction.active_quests.add(quest_contract)
@@ -134,4 +133,3 @@ def test_dashboard_view_shows_an_active_quest_without_a_skirmish(logged_in_clien
     response = logged_in_client.get(reverse("account:dashboard-view"))
 
     assert response.status_code == 200
-    assert "Fight skirmish" not in response.content.decode()

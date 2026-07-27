@@ -199,6 +199,29 @@ def test_skirmish_finish_round_view_rejects_a_non_numeric_action(logged_in_clien
 
 
 @pytest.mark.django_db
+def test_skirmish_finish_round_view_rejects_a_non_numeric_participant_index(logged_in_client, current_savegame):
+    """
+    The participant index is part of the field name, so it is request body too. Parsing happens
+    before the view validates anything, so a hand-crafted index used to raise instead of answering.
+    """
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    skirmish.player_warriors.add(player_warrior)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[abc][warrior_id]": player_warrior.pk,
+            "skirmish_participant[abc][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
 def test_skirmish_finish_round_view_rejects_a_participant_without_a_warrior_id(logged_in_client, current_savegame):
     skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
     player_warrior = WarriorFactory(faction=skirmish.player_faction)

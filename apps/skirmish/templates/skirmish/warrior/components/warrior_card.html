@@ -53,11 +53,11 @@
         {% if warrior.is_healthy %}
             {# todo: put this in a crispy-form? maybe later, might be hard to create forms in the view #}
             <form method="post">
-                {# todo: the participant index below concatenates faction id and warrior index, so faction 1/index 10 and faction 11/index 0 both produce "110" - querydict_to_nested_dict keys on that int, so one participant silently overwrites the other. Needs a delimiter here and in the parser. #}
+                {# The warrior id is the participant key: it is unique within a skirmish, so it needs no separator. Concatenating faction id and loop index did - faction 1/index 10 and faction 11/index 0 both produced "110", and one participant silently overwrote the other. No faction is posted: the view reads the sides off the skirmish rosters, since a posted one can lie and "warrior.faction" changes the moment a captive is recruited. #}
                 {% if is_player %}
                     <label>
                         {# todo: for the opponent, make this not a select but a hidden field with a text to show what the enemy will do (disabled & readonly won't work) #}
-                        <select class="uk-select" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][skirmish_action]">
+                        <select class="uk-select" name="skirmish_participant[{{ warrior.id }}][skirmish_action]">
                             {% for action in warrior.get_skirmish_actions %}
                                 <option value="{{ action.0 }}" {% if warrior.last_used_skirmish_action == action.0 %}selected="selected"{% endif %}>{{ action.1 }}</option>
                             {% endfor %}
@@ -66,15 +66,13 @@
                 {% else %}
                     {% with warrior_skirmish_action=warrior.decide_skirmish_action %}
                         <label>
-                            <select class="uk-select" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][skirmish_action]">
+                            <select class="uk-select" name="skirmish_participant[{{ warrior.id }}][skirmish_action]">
                                 <option value="{{ warrior_skirmish_action.0 }}" selected="selected">{{ warrior_skirmish_action.1 }}</option>
                             </select>
                         </label>
                     {% endwith %}
                 {% endif %}
-                <input type="hidden" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][faction_id]"
-                       value="{{ warrior.faction.id }}">
-                <input type="hidden" name="skirmish_participant[{{ warrior.faction.id }}{{ warrior_index }}][warrior_id]"
+                <input type="hidden" name="skirmish_participant[{{ warrior.id }}][warrior_id]"
                        value="{{ warrior.id }}">
             </form>
         {% endif %}
