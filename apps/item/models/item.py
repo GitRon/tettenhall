@@ -55,9 +55,10 @@ class Item(models.Model):
 
     @property
     def worn_by(self) -> typing.Optional["Warrior"]:
-        if self.type.function == ItemType.FunctionChoices.FUNCTION_WEAPON and self.warrior_weapon:
+        # Reverse one-to-one access raises instead of being falsy when nobody wears the item
+        if self.is_weapon and hasattr(self, "warrior_weapon"):
             return self.warrior_weapon
-        if self.type.function == ItemType.FunctionChoices.FUNCTION_ARMOR and self.warrior_armor:
+        if self.is_armor and hasattr(self, "warrior_armor"):
             return self.warrior_armor
 
         return None
