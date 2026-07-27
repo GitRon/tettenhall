@@ -1,6 +1,7 @@
 import json
 from http import HTTPStatus
 
+from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
@@ -16,6 +17,13 @@ from apps.savegame.models.savegame import Savegame
 class ItemSellView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
     model = Item
     http_method_names = ("post",)
+
+    def get_queryset(self) -> QuerySet:
+        # Only the player's own items can be sold. Being in the right savegame is not enough: the
+        # shop and the rival factions have items in it too, and selling those would pay them.
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+
+        return super().get_queryset().filter(owner=current_savegame.player_faction if current_savegame else None)
 
     def post(self, *args, **kwargs):
         obj = self.get_object()
@@ -36,6 +44,11 @@ class ItemSellView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View)
 class ItemBuyView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
     model = Item
     http_method_names = ("post",)
+
+    def get_queryset(self) -> QuerySet:
+        # Only items on sale, meaning unowned ones. Otherwise any item id of the savegame would do,
+        # including the equipment of a rival faction.
+        return super().get_queryset().filter(owner__isnull=True)
 
     def post(self, *args, **kwargs):
         obj = self.get_object()

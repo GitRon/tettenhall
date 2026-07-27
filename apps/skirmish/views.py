@@ -2,7 +2,7 @@ import json
 from http import HTTPStatus
 
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -20,13 +20,9 @@ from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 
 
-class SkirmishListView(generic.ListView):
+class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
     model = Skirmish
     template_name = "skirmish/skirmish_list.html"
-
-    def get_queryset(self):
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
 
 class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
@@ -153,21 +149,14 @@ class SkirmishFightButtonUpdateHtmxView(SavegameScopedQuerysetMixin, generic.Det
     template_name = "skirmish/skirmish/htmx/_fight_button.html"
 
 
-class BattleHistoryUpdateHtmxView(generic.ListView):
+class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView):
     model = BattleHistory
     template_name = "skirmish/battle_history/htmx/_report_box.html"
 
-    def get_queryset(self):
-        # Scope to the current savegame, otherwise any skirmish id from the URL would expose
-        # another player's battle history
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-
-        return (
-            super()
-            .get_queryset()
-            .for_savegame(savegame_id=current_savegame.id)
-            .filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
-        )
+    def get_queryset(self) -> QuerySet:
+        # The mixin scopes to the current savegame, otherwise any skirmish id from the URL would
+        # expose another player's battle history
+        return super().get_queryset().filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
 
 
 class FactionWarriorListUpdateHtmxView(generic.TemplateView):

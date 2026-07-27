@@ -3,6 +3,7 @@ import json
 import pytest
 from django.urls import reverse
 
+from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.models import Transaction
 from apps.finance.tests.factories.transaction import TransactionFactory
 from apps.item.tests.factories.item import ItemFactory
@@ -105,3 +106,34 @@ def test_item_buy_view_cannot_buy_an_item_of_another_savegame(logged_in_client, 
     assert response.status_code == 404
     other_item.refresh_from_db()
     assert other_item.owner is None
+
+
+@pytest.mark.django_db
+def test_item_sell_view_cannot_sell_an_item_of_a_rival_faction(logged_in_client, current_savegame):
+    """
+    Being in the same savegame is not enough - selling a rival's item would pay the rival.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_item = ItemFactory(savegame=current_savegame, owner=rival_faction)
+
+    response = logged_in_client.post(reverse("item:item-sell-view", kwargs={"pk": rival_item.pk}))
+
+    assert response.status_code == 404
+    rival_item.refresh_from_db()
+    assert rival_item.owner == rival_faction
+
+
+@pytest.mark.django_db
+def test_item_buy_view_cannot_buy_an_item_that_is_not_on_sale(logged_in_client, current_savegame):
+    """
+    Only unowned items sit in the shop, so an owned one must not be buyable by id.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_item = ItemFactory(savegame=current_savegame, owner=rival_faction, price=120)
+
+    response = logged_in_client.post(reverse("item:item-buy-view", kwargs={"pk": rival_item.pk}))
+
+    assert response.status_code == 404
+    rival_item.refresh_from_db()
+    assert rival_item.owner == rival_faction

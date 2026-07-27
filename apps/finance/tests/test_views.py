@@ -33,3 +33,14 @@ def test_transaction_list_view_hides_transactions_of_other_savegames(logged_in_c
     assert response.status_code == 200
     assert list(response.context["object_list"]) == []
     assert response.context["current_balance"] == 0
+
+
+@pytest.mark.django_db
+def test_transaction_list_view_without_an_active_savegame(logged_in_client):
+    """
+    The balance used to be read off the savegame unguarded, so the page answered with a 500.
+    """
+    response = logged_in_client.get(reverse("finance:transaction-list-view", kwargs={"faction_id": 1}))
+
+    assert response.status_code == 200
+    assert response.context["current_balance"] == 0

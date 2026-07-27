@@ -85,22 +85,14 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         return context
 
 
-class TownSquareView(generic.DetailView):
+class TownSquareView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/town_square.html"
 
-    def get_queryset(self):
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
-
-class FactionShopItemListView(generic.DetailView):
+class FactionShopItemListView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/item/components/shop_item_list.html"
-
-    def get_queryset(self):
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

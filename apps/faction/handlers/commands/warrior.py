@@ -39,6 +39,10 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
 
 @message_registry.register_command(command=AddWarriorToPub)
 def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Event:
+    # The pub belongs to the player, and there is only one player per savegame, so this is the right
+    # target. It does mean that restocking a rival faction - which happens on NewFactionCreated -
+    # adds mercenaries here too, so a fresh savegame starts with more of them than a monthly restock
+    # produces. Fixing that means not requesting pub warriors for rival factions in the first place.
     context.savegame.player_faction.available_mercenaries.add(context.warrior)
 
     return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)

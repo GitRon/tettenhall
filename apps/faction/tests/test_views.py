@@ -192,3 +192,30 @@ def test_faction_shop_item_list_view_hides_factions_of_other_savegames(logged_in
     response = logged_in_client.get(reverse("faction:shop-item-list-htmx", kwargs={"pk": foreign_faction.id}))
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_town_square_view_without_an_active_savegame(logged_in_client):
+    """
+    Answering 404 rather than a server error: the mixin narrows to nothing when there is no savegame.
+    """
+    faction = FactionFactory()
+
+    response = logged_in_client.get(reverse("faction:town-square-view", kwargs={"pk": faction.pk}))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_shows_a_faction_without_a_leader(logged_in_client, current_savegame):
+    """
+    Faction.leader is nullable, and reversing the warrior url with no id raises NoReverseMatch.
+    """
+    current_savegame.player_faction.leader = None
+    current_savegame.player_faction.save()
+
+    response = logged_in_client.get(
+        reverse("faction:faction-detail-view", kwargs={"pk": current_savegame.player_faction.pk})
+    )
+
+    assert response.status_code == 200
