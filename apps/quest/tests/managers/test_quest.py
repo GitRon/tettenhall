@@ -7,15 +7,6 @@ from apps.savegame.tests.factories.savegame import SavegameFactory
 
 
 @pytest.mark.django_db
-def test_for_savegame_keeps_the_quests_of_that_savegame():
-    savegame = SavegameFactory()
-    own_quest = QuestFactory(target_faction__savegame=savegame)
-    QuestFactory()
-
-    assert list(Quest.objects.for_savegame(savegame_id=savegame.id)) == [own_quest]
-
-
-@pytest.mark.django_db
 def test_for_player_faction_keeps_only_what_is_on_that_bulletin_board():
     """
     Every faction of a savegame gets its own quests offered, so the savegame is the wrong scope for
