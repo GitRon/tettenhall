@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Too many login attempts</h1>
+    <p class="uk-text-lead">
+        This account has been locked after {{ failure_limit }} failed attempts. Please try again in a few
+        minutes, or contact the support if you cannot get back in.
+    </p>
+{% endblock content %}
