@@ -123,15 +123,18 @@ def test_skirmish_finish_round_view_rejects_a_faction_outside_the_skirmish(logge
     skirmish.player_warriors.add(player_warrior)
     uninvolved_faction = FactionFactory(savegame=current_savegame)
 
-    with pytest.raises(RuntimeError, match="Invalid faction ID in skirmish form."):
-        logged_in_client.post(
-            reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
-            data={
-                "skirmish_participant[0][faction_id]": uninvolved_faction.pk,
-                "skirmish_participant[0][warrior_id]": player_warrior.pk,
-                "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
-            },
-        )
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": uninvolved_faction.pk,
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
 
 
 @pytest.mark.django_db

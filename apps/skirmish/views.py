@@ -103,7 +103,9 @@ class SkirmishFinishRoundView(SavegameScopedQuerysetMixin, generic.DetailView):
                     )
                 )
             else:
-                raise RuntimeError("Invalid faction ID in skirmish form.")
+                # The faction ids arrive in the request body, so a hand-crafted one naming a faction
+                # outside this skirmish is bad input rather than a server error
+                return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # Ensure that all lists contain warriors
         if len(player_warrior_participants) == 0 or len(opposing_warrior_participants) == 0:

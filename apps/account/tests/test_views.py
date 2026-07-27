@@ -1,5 +1,3 @@
-from unittest import mock
-
 import pytest
 from django.urls import reverse
 
@@ -13,16 +11,6 @@ def test_login_view_sends_an_authenticated_user_to_the_dashboard(logged_in_clien
 
     assert response.status_code == 302
     assert response.url == reverse("account:dashboard-view")
-
-
-@pytest.mark.django_db
-def test_login_view_refuses_a_locked_out_user(client):
-    # Third-party boundary: reproducing an axes lockout would mean driving its bookkeeping instead
-    # of testing this view
-    with mock.patch("apps.account.views.AxesProxyHandler.is_locked", return_value=True):
-        response = client.get(reverse("account:login-view"))
-
-    assert response.status_code == 403
 
 
 @pytest.mark.django_db
@@ -55,6 +43,40 @@ def test_login_view_rejects_a_wrong_password(client):
 
     assert response.status_code == 200
     assert "_auth_user_id" not in client.session
+
+
+@pytest.mark.django_db
+def test_login_view_locks_the_account_after_three_failed_attempts(client):
+    """
+    End to end through axes, since AXES_LOCKOUT_TEMPLATE used to point at a template that did not
+    exist - so the third attempt raised TemplateDoesNotExist and answered 500.
+    """
+    user = UserFactory(email="guthrum@danelaw.test")
+    user.set_password("very-secret")
+    user.save()
+    credentials = {"email": "guthrum@danelaw.test", "password": "wrong-password"}
+
+    client.post(reverse("account:login-view"), data=credentials)
+    client.post(reverse("account:login-view"), data=credentials)
+    response = client.post(reverse("account:login-view"), data=credentials)
+
+    # 429, not 403: that is what AXES_HTTP_RESPONSE_CODE defaults to
+    assert response.status_code == 429
+    assert "_auth_user_id" not in client.session
+
+
+@pytest.mark.django_db
+def test_login_view_spends_one_attempt_at_a_time_on_an_unknown_email(client):
+    """
+    The form informed axes on top of LoginView.form_invalid() doing the same, so an unknown email
+    spent two of the three allowed failures per attempt and locked out after two tries.
+    """
+    credentials = {"email": "nobody@tettenhall.test", "password": "wrong-password"}
+
+    client.post(reverse("account:login-view"), data=credentials)
+    response = client.post(reverse("account:login-view"), data=credentials)
+
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
