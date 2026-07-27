@@ -14,10 +14,13 @@ class TrainingListView(SavegameScopedQuerysetMixin, generic.ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
 
+        # A user without an active savegame has neither, and dereferencing it answered the page
+        # with a server error
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        context["faction"] = current_savegame.player_faction
-
-        context["current_training"] = Training.objects.for_savegame(savegame_id=current_savegame.id).first()
+        context["faction"] = current_savegame.player_faction if current_savegame else None
+        context["current_training"] = (
+            Training.objects.for_savegame(savegame_id=current_savegame.id).first() if current_savegame else None
+        )
         return context
 
 

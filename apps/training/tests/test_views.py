@@ -62,3 +62,15 @@ def test_training_edit_view_cannot_change_a_training_of_another_savegame(logged_
     assert response.status_code == 404
     foreign_training.refresh_from_db()
     assert foreign_training.category == Training.TrainingCategory.WEAPON_MASTERY
+
+
+@pytest.mark.django_db
+def test_training_list_view_without_an_active_savegame(logged_in_client):
+    """
+    Neither the faction nor a training exists then, and the template reversed the edit url with an
+    empty id.
+    """
+    response = logged_in_client.get(reverse("training:training-list-view"))
+
+    assert response.status_code == 200
+    assert response.context["current_training"] is None

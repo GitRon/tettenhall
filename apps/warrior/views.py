@@ -1,7 +1,7 @@
 import json
 from http import HTTPStatus
 
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import generic
 from queuebie.runner import handle_message
@@ -26,9 +26,17 @@ class WarriorWeaponUpdateView(SavegameScopedQuerysetMixin, generic.UpdateView):
     object = None
     htmx_field = None
 
+    def dispatch(self, request, *args, **kwargs):
+        # The attribute is a free URL segment, and the form raises on anything it doesn't render -
+        # which is a 404, not a server error
+        self.htmx_field = kwargs.get("htmx_attribute")
+        if self.htmx_field not in WarriorForm.Meta.fields:
+            raise Http404("Unknown warrior attribute.")
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        self.htmx_field = self.kwargs.get("htmx_attribute", None)
         kwargs["htmx_field"] = self.htmx_field
         return kwargs
 

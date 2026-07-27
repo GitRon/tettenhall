@@ -194,3 +194,18 @@ def test_warrior_recruit_captured_view_cannot_recruit_into_a_faction_of_another_
     assert response.status_code == 404
     captive.refresh_from_db()
     assert captive.faction == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warrior_weapon_update_view_rejects_an_unknown_attribute(logged_in_client, current_savegame):
+    """
+    The attribute is a free URL segment, so a hand-typed one used to reach a RuntimeError in the
+    form and answer 500 where 404 belongs.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(
+        reverse("warrior:warrior-partial-update-view", kwargs={"pk": warrior.pk, "htmx_attribute": "name"})
+    )
+
+    assert response.status_code == 404

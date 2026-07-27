@@ -90,3 +90,10 @@ def test_acknowledge_player_month_log_view_cannot_remove_a_log_of_another_savega
 
     assert response.status_code == 404
     assert PlayerMonthLog.objects.filter(pk=foreign_log.pk).exists() is True
+
+
+@pytest.mark.django_db
+def test_finish_month_view_without_an_active_savegame(logged_in_client):
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 404
