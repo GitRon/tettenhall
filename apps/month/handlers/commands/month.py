@@ -18,7 +18,9 @@ def handle_prepare_month(*, context: PrepareMonth) -> Event:
         faction=context.savegame.player_faction,
         savegame=context.savegame,
         # TODO: store this months training somewhere -> in savegame?
-        training=Training.objects.all().first(),
+        # Scoped to this savegame: an unrestricted lookup picks whatever row happens to be first and
+        # would train the player's warriors according to another player's training
+        training=Training.objects.for_savegame(savegame_id=context.savegame.id).first(),
         current_month=current_month,
     )
 
