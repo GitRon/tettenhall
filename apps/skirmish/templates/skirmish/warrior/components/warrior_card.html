@@ -53,6 +53,7 @@
         {% if warrior.is_healthy %}
             {# todo: put this in a crispy-form? maybe later, might be hard to create forms in the view #}
             <form method="post">
+                {# todo: the participant index below concatenates faction id and warrior index, so faction 1/index 10 and faction 11/index 0 both produce "110" - querydict_to_nested_dict keys on that int, so one participant silently overwrites the other. Needs a delimiter here and in the parser. #}
                 {% if is_player %}
                     <label>
                         {# todo: for the opponent, make this not a select but a hidden field with a text to show what the enemy will do (disabled & readonly won't work) #}

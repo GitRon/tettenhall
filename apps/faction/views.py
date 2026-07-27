@@ -7,7 +7,7 @@ from queuebie.runner import handle_message
 
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.models.faction import Faction
-from apps.savegame.mixins import SavegameScopedQuerysetMixin
+from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 
@@ -42,7 +42,9 @@ class FactionCapturedWarriorListView(SavegameScopedQuerysetMixin, generic.Detail
     template_name = "faction/warrior/components/captured_warrior_list.html"
 
 
-class DraftWarriorFromFyrdView(SavegameScopedQuerysetMixin, generic.DetailView):
+class DraftWarriorFromFyrdView(PlayerFactionScopedQuerysetMixin, generic.DetailView):
+    # Drafting is a write on the faction from the URL, so being in the current savegame is not
+    # enough - that would draft into a rival faction and spend its fyrd reserve
     model = Faction
     http_method_names = ("post",)
     template_name = "faction/warrior/components/fyrd_card.html"

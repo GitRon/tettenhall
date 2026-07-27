@@ -12,7 +12,8 @@ from apps.training.models import Training
 class MonthPrepared(Event):
     faction: Faction
     savegame: Savegame
-    training: Training
+    # None when the player faction has no training row yet - consumers have to guard
+    training: Training | None
     current_month: int
 
 

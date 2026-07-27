@@ -8,11 +8,11 @@ from queuebie.runner import handle_message
 from apps.quest.forms.quest_accept import QuestAcceptForm
 from apps.quest.messages.commands.quest import AcceptQuest
 from apps.quest.models.quest import Quest
-from apps.savegame.mixins import SavegameScopedQuerysetMixin
+from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 
 
-class QuestAcceptView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.FormView):
+class QuestAcceptView(PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.FormView):
     model = Quest
     form_class = QuestAcceptForm
     template_name = "quest/quest_detail.html"
@@ -41,7 +41,9 @@ class QuestAcceptView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.Fo
         handle_message(
             AcceptQuest(
                 accepting_faction=self.current_savegame.player_faction,
-                quest=form.cleaned_data["quest"],
+                # The scoped object from the URL, not the posted field: the latter is a hidden
+                # input and naming someone else's quest in it must not accept that quest
+                quest=self.object,
                 assigned_warriors=form.cleaned_data["assigned_warriors"],
                 month=self.current_savegame.current_month,
             )
