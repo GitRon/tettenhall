@@ -37,6 +37,12 @@ class ReduceMorale(Command):
 
 
 @dataclass(kw_only=True)
+class ReduceMoraleOfRemainingWarriors(Command):
+    skirmish: Skirmish
+    warrior: Warrior
+
+
+@dataclass(kw_only=True)
 class IncreaseMorale(Command):
     skirmish: Skirmish
     warrior: Warrior

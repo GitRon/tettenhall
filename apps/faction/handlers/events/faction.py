@@ -1,47 +1,35 @@
-import random
-
-from faker import Faker
 from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.faction.messages.commands.faction import (
-    CreateNewFaction,
+    CreateFactionsForNewSavegame,
     DetermineInjuredWarriors,
-    DetermineWarriorsWithLowMorale,
+    DetermineWarriorsWithReducedMorale,
     PayMonthlyWarriorSalaries,
     ReplenishFyrdReserve,
 )
-from apps.faction.messages.events.faction import FactionWarriorsWithLowMoraleDetermined
-from apps.faction.models import Culture
+from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
 from apps.month.messages.events.month import MonthPrepared
 from apps.savegame.messages.events.savegame import NewSavegameCreated
 from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
 
 
 @message_registry.register_event(event=NewSavegameCreated)
-def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated) -> list[Command]:
-    culture = Culture.objects.get_or_none(id=context.faction_culture_id)
-    faker = Faker([culture.locale])
-    return [
-        CreateNewFaction(
-            name=context.faction_name,
-            savegame=context.savegame,
-            culture_id=context.faction_culture_id,
-            is_player_faction=True,
-        )
-    ] + [
-        CreateNewFaction(
-            name=faker.city(),
-            culture_id=random.choice(Culture.objects.all()).id,
-            savegame=context.savegame,
-            is_player_faction=False,
-        )
-        for _ in range(random.randint(3, 5))
-    ]
+def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated) -> Command:
+    # Naming the rival factions needs the cultures from the database, and strict mode blocks
+    # database access in event handlers, so the command handler does the reading
+    return CreateFactionsForNewSavegame(
+        savegame=context.savegame,
+        faction_name=context.faction_name,
+        town_name=context.town_name,
+        faction_culture_id=context.faction_culture_id,
+    )
 
 
-@message_registry.register_event(event=FactionWarriorsWithLowMoraleDetermined)
-def handle_warriors_with_low_morale_determined(*, context: FactionWarriorsWithLowMoraleDetermined) -> list[Command]:
+@message_registry.register_event(event=FactionWarriorsWithReducedMoraleDetermined)
+def handle_warriors_with_reduced_morale_determined(
+    *, context: FactionWarriorsWithReducedMoraleDetermined
+) -> list[Command]:
     event_list = []
     for warrior in context.warrior_list:
         event_list.append(
@@ -64,8 +52,8 @@ def handle_pay_monthly_warrior_salaries_for_new_month(*, context: MonthPrepared)
 
 
 @message_registry.register_event(event=MonthPrepared)
-def handle_determine_warriors_with_low_morale_for_new_month(*, context: MonthPrepared) -> list[Command]:
-    return [DetermineWarriorsWithLowMorale(faction=context.faction, month=context.current_month)]
+def handle_determine_warriors_with_reduced_morale_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    return [DetermineWarriorsWithReducedMorale(faction=context.faction, month=context.current_month)]
 
 
 @message_registry.register_event(event=MonthPrepared)
