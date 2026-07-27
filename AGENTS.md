@@ -11,6 +11,7 @@ Read these before working in the area they cover — they are normative, not bac
 | Doc | Read it when |
 |---|---|
 | [`docs/testing_strategy.md`](docs/testing_strategy.md) | **Always, before writing or changing any test, factory, fixture or test setting.** |
+| [`docs/testing_roadmap.md`](docs/testing_roadmap.md) | Picking up work on the test suite: what is left, and the things that are expensive to rediscover. |
 
 ## Testing
 
