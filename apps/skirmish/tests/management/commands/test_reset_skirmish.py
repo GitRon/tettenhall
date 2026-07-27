@@ -1,6 +1,7 @@
 import pytest
 from django.core.management import call_command
 
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -8,7 +9,7 @@ from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.fixture
-def fought_skirmish(db):
+def fought_skirmish(db) -> Skirmish:
     """
     A skirmish in the state the developer tool is meant to undo: fought, decided and logged.
     """
