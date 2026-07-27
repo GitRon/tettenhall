@@ -167,7 +167,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         quest_contract = context.skirmish.quest_contract
         quest_name = quest_contract.quest.name
         quest_loot = quest_contract.quest.loot
-    except QuestContract.ObjectDoesNotExist:
+    except QuestContract.DoesNotExist:
         # There might be skirmishes with no assigned quest contract
         # TODO: this shouldn't be handled here that explicitly -> model method?
         quest_name = None
@@ -221,8 +221,10 @@ def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event
     # Check if one faction has been defeated
     victor = None
     if not context.skirmish.non_player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+        # Checked first on purpose: if both sides are wiped out in the same round, the tie goes to
+        # the player
         victor = context.skirmish.player_faction
-    if not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+    elif not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
         victor = context.skirmish.non_player_faction
 
     return RoundFinished(skirmish=context.skirmish, victor=victor, month=context.month)

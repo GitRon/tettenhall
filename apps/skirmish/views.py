@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 from django.contrib import messages
+from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -10,24 +11,20 @@ from queuebie.runner import handle_message
 
 from apps.common.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
+from apps.savegame.mixins import SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
-from apps.skirmish.models import Warrior
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 
 
-class SkirmishListView(generic.ListView):
+class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
     model = Skirmish
     template_name = "skirmish/skirmish_list.html"
 
-    def get_queryset(self):
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
-
-class SkirmishFightView(generic.DetailView):
+class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish_fight.html"
 
@@ -55,7 +52,7 @@ class SkirmishFightView(generic.DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class SkirmishFinishRoundView(generic.DetailView):
+class SkirmishFinishRoundView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     http_method_names = ("post",)
     object = None
@@ -64,8 +61,11 @@ class SkirmishFinishRoundView(generic.DetailView):
         # TODO: make enemy warriors chose a skirmish action (in SkirmishFightView?)
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
+        # Through the scoped queryset, otherwise the id from the URL would be enough to fight
+        # another player's skirmish
         self.object = (
-            self.model.objects.filter(id=self.kwargs.get("pk"))
+            self.get_queryset()
+            .filter(id=self.kwargs.get("pk"))
             .prefetch_related("player_warriors", "non_player_warriors")
             .first()
         )
@@ -76,29 +76,37 @@ class SkirmishFinishRoundView(generic.DetailView):
         player_warrior_participants = []
         opposing_warrior_participants = []
 
-        # Since we want objects in our event queue, we query all warriors once to avoid unnecessary db hits
-        warrior_ids = []
-        for participant_data in skirmish_participants.values():
-            warrior_ids.append(participant_data["warrior_id"])
-        warriors = Warrior.objects.filter(id__in=warrior_ids)
+        # Every value here arrives in the request body, so anything missing or non-numeric is bad
+        # input rather than a server error. The posted "faction_id" is deliberately not read: see
+        # the side assignment below.
+        try:
+            participants = [
+                (int(participant_data["warrior_id"]), int(participant_data["skirmish_action"]))
+                for participant_data in skirmish_participants.values()
+            ]
+        except (KeyError, ValueError):
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-        for participant_data in skirmish_participants.values():
-            if int(participant_data["faction_id"]) == self.object.player_faction.id:
-                player_warrior_participants.append(
-                    SkirmishParticipant(
-                        warrior=warriors.get(id=participant_data["warrior_id"]),
-                        skirmish_action=int(participant_data["skirmish_action"]),
-                    )
-                )
-            elif int(participant_data["faction_id"]) == self.object.non_player_faction.id:
-                opposing_warrior_participants.append(
-                    SkirmishParticipant(
-                        warrior=warriors.get(id=participant_data["warrior_id"]),
-                        skirmish_action=int(participant_data["skirmish_action"]),
-                    )
-                )
+        # Which side a warrior fights on comes from this skirmish's own rosters. Not from the posted
+        # "faction_id", which is client-supplied - naming the opposing faction there put an enemy
+        # warrior into the player's line-up, attacking its own side. And not from "warrior.faction"
+        # either, which is what the template fills that field with: it changes the moment a captive
+        # is recruited, so it disagrees with the roster the warrior actually fights in.
+        # Both relations are prefetched above, so this costs no extra queries, and keying by id
+        # means a warrior listed twice cannot produce a duplicate-row lookup error.
+        player_roster = {warrior.id: warrior for warrior in self.object.player_warriors.all()}
+        opposing_roster = {warrior.id: warrior for warrior in self.object.non_player_warriors.all()}
+
+        for warrior_id, skirmish_action in participants:
+            if warrior_id in player_roster:
+                warrior, side = player_roster[warrior_id], player_warrior_participants
+            elif warrior_id in opposing_roster:
+                warrior, side = opposing_roster[warrior_id], opposing_warrior_participants
             else:
-                raise RuntimeError("Invalid faction ID in skirmish form.")
+                # A warrior id naming someone who is not fighting this skirmish
+                return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+
+            side.append(SkirmishParticipant(warrior=warrior, skirmish_action=skirmish_action))
 
         # Ensure that all lists contain warriors
         if len(player_warrior_participants) == 0 or len(opposing_warrior_participants) == 0:
@@ -134,21 +142,23 @@ class SkirmishFinishRoundView(generic.DetailView):
         return response
 
 
-class SkirmishRoundUpdateHtmxView(generic.DetailView):
+class SkirmishRoundUpdateHtmxView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish/htmx/_round.html"
 
 
-class SkirmishFightButtonUpdateHtmxView(generic.DetailView):
+class SkirmishFightButtonUpdateHtmxView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish/htmx/_fight_button.html"
 
 
-class BattleHistoryUpdateHtmxView(generic.ListView):
+class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView):
     model = BattleHistory
     template_name = "skirmish/battle_history/htmx/_report_box.html"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
+        # The mixin scopes to the current savegame, otherwise any skirmish id from the URL would
+        # expose another player's battle history
         return super().get_queryset().filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
 
 
@@ -156,8 +166,18 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
     template_name = "skirmish/faction/htmx/_warrior_list.html"
 
     def get_context_data(self, **kwargs):
-        skirmish = get_object_or_404(Skirmish, pk=self.kwargs.get("skirmish_id"))
-        faction = get_object_or_404(Faction, pk=self.kwargs.get("faction_id"))
+        # Both ids arrive in the URL: the skirmish has to belong to the current savegame, and the
+        # faction has to be one of the two fighting it - otherwise an unrelated faction would fall
+        # through to the non-player branch below and be shown those warriors
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        skirmish = get_object_or_404(
+            Skirmish.objects.for_savegame(savegame_id=current_savegame.id if current_savegame else None),
+            pk=self.kwargs.get("skirmish_id"),
+        )
+        faction = get_object_or_404(
+            Faction.objects.filter(id__in=(skirmish.player_faction_id, skirmish.non_player_faction_id)),
+            pk=self.kwargs.get("faction_id"),
+        )
 
         context = super().get_context_data(**kwargs)
         if faction == skirmish.player_faction:

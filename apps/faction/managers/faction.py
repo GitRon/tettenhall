@@ -6,6 +6,9 @@ class FactionQuerySet(models.QuerySet):
     def for_savegame(self, *, savegame_id: int):
         return self.filter(savegame=savegame_id)
 
+    def for_player_faction(self, *, faction_id: int):
+        return self.filter(id=faction_id)
+
 
 class FactionManager(manager.Manager):
     def add_captive(self, *, faction, warrior):

@@ -18,7 +18,14 @@ def handle_prepare_month(*, context: PrepareMonth) -> Event:
         faction=context.savegame.player_faction,
         savegame=context.savegame,
         # TODO: store this months training somewhere -> in savegame?
-        training=Training.objects.all().first(),
+        # Scoped to the player's own faction: every faction of the savegame owns a training row, so
+        # scoping to the savegame would still train the player's warriors by whichever row happens
+        # to come first. Stays None when there is no row - the consumer handles that.
+        training=(
+            Training.objects.for_player_faction(faction_id=context.savegame.player_faction_id).first()
+            if context.savegame.player_faction_id
+            else None
+        ),
         current_month=current_month,
     )
 

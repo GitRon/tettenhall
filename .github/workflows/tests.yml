@@ -1,0 +1,66 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch makes the previous run pointless.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Installed before setup-python so its "pipenv" cache backend can find the executable.
+      # Pinned on purpose: the Pipfile hash recorded in Pipfile.lock is computed by pipenv itself
+      # and the algorithm changed after 2025.0.4, so an unpinned "latest" fails the verify step
+      # below against a perfectly good lock file. Bump this together with the lock.
+      - name: Install pipenv
+        run: pipx install pipenv==2025.0.4
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: Pipfile
+          cache: pipenv
+
+      # "pipenv sync" installs the locked versions only, so it silently uses a stale lock.
+      - name: Check Pipfile.lock is in sync with Pipfile
+        run: pipenv verify
+
+      - name: Install dependencies
+        run: pipenv sync --dev
+
+      # Coverage config lives in pyproject.toml and fails the run below 100% branch coverage.
+      - name: Run tests
+        run: pipenv run pytest --cov
+
+  pre-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: Pipfile
+
+      # The hooks build their own isolated environments, which is the slow part of a cold run.
+      - name: Cache the hook environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      # Same hooks as the local commit hook: ruff, django-upgrade, djade and boa-restrictor.
+      - name: Run the hooks
+        run: pre-commit run --all-files --show-diff-on-failure

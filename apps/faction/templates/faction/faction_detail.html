@@ -20,7 +20,14 @@
                     </tr>
                     <tr>
                         <td>Leader</td>
-                        <td><a href="{% url "warrior:warrior-detail-view" object.leader.id %}">{{ object.leader }}</a></td>
+                        {# A faction can be without a leader, and reversing the url with no id raises #}
+                        <td>
+                            {% if object.leader %}
+                                <a href="{% url "warrior:warrior-detail-view" object.leader.id %}">{{ object.leader }}</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                     </tr>
                     </tbody>
                 </table>
@@ -33,7 +40,7 @@
         <div class="uk-margin-bottom">
             {% include "faction/item/components/item_list.html" with faction=object %}
         </div>
-        <div class="uk-margin-bottom"
+        <div class="uk-margin-bottom">
             {% include "faction/warrior/components/captured_warrior_list.html" with faction=object %}
         </div>
     </div>

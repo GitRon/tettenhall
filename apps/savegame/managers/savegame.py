@@ -20,7 +20,9 @@ class SavegameManager(manager.Manager):
         """
         Set all other savegames of this savegames user to inactive
         """
-        return self.exclude(id=savegame_id, created_by=user_id).update(is_active=False)
+        # Scope to the user first: a combined exclude() would only skip this very savegame and
+        # deactivate the savegames of everybody else
+        return self.for_user(user_id=user_id).exclude(id=savegame_id).update(is_active=False)
 
     def get_current_savegame(self, *, user_id: int) -> typing.Optional["Savegame"]:
         """
