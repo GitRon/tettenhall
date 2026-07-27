@@ -36,3 +36,35 @@ def test_handle_prepare_month_takes_the_training_of_its_own_savegame():
     result = handle_prepare_month(context=PrepareMonth(savegame=savegame))
 
     assert result.training == own_training
+
+
+@pytest.mark.django_db
+def test_handle_prepare_month_takes_the_training_of_the_player_faction():
+    """
+    Every faction of the savegame owns a training row, so scoping to the savegame is not enough:
+    the rival's row is created first here and would win a "first()" over the whole savegame.
+    """
+    savegame = SavegameFactory(current_month=4)
+    rival_faction = FactionFactory(savegame=savegame)
+    TrainingFactory(faction=rival_faction)
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    own_training = TrainingFactory(faction=savegame.player_faction)
+
+    result = handle_prepare_month(context=PrepareMonth(savegame=savegame))
+
+    assert result.training == own_training
+
+
+@pytest.mark.django_db
+def test_handle_prepare_month_without_a_player_faction():
+    """
+    The training lookup needs a faction id. Reachable before the faction is set up, and the month
+    still has to advance instead of answering with a 500.
+    """
+    savegame = SavegameFactory(current_month=4, player_faction=None)
+
+    result = handle_prepare_month(context=PrepareMonth(savegame=savegame))
+
+    assert result.training is None
+    assert result.current_month == 5

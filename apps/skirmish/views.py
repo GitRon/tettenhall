@@ -2,7 +2,7 @@ import json
 from http import HTTPStatus
 
 from django.contrib import messages
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -14,7 +14,6 @@ from apps.faction.models.faction import Faction
 from apps.savegame.mixins import SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
-from apps.skirmish.models import Warrior
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
@@ -77,35 +76,37 @@ class SkirmishFinishRoundView(SavegameScopedQuerysetMixin, generic.DetailView):
         player_warrior_participants = []
         opposing_warrior_participants = []
 
-        # Since we want objects in our event queue, we query all warriors once to avoid unnecessary db hits.
-        # Restricted to the participants of this skirmish: the ids arrive in the request body, so an
-        # unrestricted lookup would let a warrior from another savegame join the battle.
-        warrior_ids = []
-        for participant_data in skirmish_participants.values():
-            warrior_ids.append(participant_data["warrior_id"])
-        warriors = Warrior.objects.filter(
-            Q(player_skirmishes=self.object) | Q(non_player_skirmishes=self.object), id__in=warrior_ids
-        )
+        # Every value here arrives in the request body, so anything missing or non-numeric is bad
+        # input rather than a server error. The posted "faction_id" is deliberately not read: see
+        # the side assignment below.
+        try:
+            participants = [
+                (int(participant_data["warrior_id"]), int(participant_data["skirmish_action"]))
+                for participant_data in skirmish_participants.values()
+            ]
+        except (KeyError, ValueError):
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-        for participant_data in skirmish_participants.values():
-            if int(participant_data["faction_id"]) == self.object.player_faction.id:
-                player_warrior_participants.append(
-                    SkirmishParticipant(
-                        warrior=warriors.get(id=participant_data["warrior_id"]),
-                        skirmish_action=int(participant_data["skirmish_action"]),
-                    )
-                )
-            elif int(participant_data["faction_id"]) == self.object.non_player_faction.id:
-                opposing_warrior_participants.append(
-                    SkirmishParticipant(
-                        warrior=warriors.get(id=participant_data["warrior_id"]),
-                        skirmish_action=int(participant_data["skirmish_action"]),
-                    )
-                )
+        # Which side a warrior fights on comes from this skirmish's own rosters. Not from the posted
+        # "faction_id", which is client-supplied - naming the opposing faction there put an enemy
+        # warrior into the player's line-up, attacking its own side. And not from "warrior.faction"
+        # either, which is what the template fills that field with: it changes the moment a captive
+        # is recruited, so it disagrees with the roster the warrior actually fights in.
+        # Both relations are prefetched above, so this costs no extra queries, and keying by id
+        # means a warrior listed twice cannot produce a duplicate-row lookup error.
+        player_roster = {warrior.id: warrior for warrior in self.object.player_warriors.all()}
+        opposing_roster = {warrior.id: warrior for warrior in self.object.non_player_warriors.all()}
+
+        for warrior_id, skirmish_action in participants:
+            if warrior_id in player_roster:
+                warrior, side = player_roster[warrior_id], player_warrior_participants
+            elif warrior_id in opposing_roster:
+                warrior, side = opposing_roster[warrior_id], opposing_warrior_participants
             else:
-                # The faction ids arrive in the request body, so a hand-crafted one naming a faction
-                # outside this skirmish is bad input rather than a server error
+                # A warrior id naming someone who is not fighting this skirmish
                 return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+
+            side.append(SkirmishParticipant(warrior=warrior, skirmish_action=skirmish_action))
 
         # Ensure that all lists contain warriors
         if len(player_warrior_participants) == 0 or len(opposing_warrior_participants) == 0:

@@ -21,6 +21,24 @@ class SavegameScopedQuerysetMixin:
         return super().get_queryset().for_savegame(savegame_id=current_savegame.id)
 
 
+class PlayerFactionScopedQuerysetMixin:
+    """
+    Restricts a view's queryset to the current savegame's player faction.
+
+    Stricter than SavegameScopedQuerysetMixin and the right choice whenever the view acts on
+    something the player owns: a savegame holds the player's faction plus its rivals, so scoping
+    to the savegame still lets the id from the URL reach a rival's objects. The model's queryset
+    has to provide "for_player_faction()".
+    """
+
+    def get_queryset(self) -> QuerySet:
+        current_savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        if current_savegame is None or current_savegame.player_faction_id is None:
+            return super().get_queryset().none()
+
+        return super().get_queryset().for_player_faction(faction_id=current_savegame.player_faction_id)
+
+
 class CurrentSavegameMixin(ContextMixin):
     """
     Adds the current savegame to the context.

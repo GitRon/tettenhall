@@ -70,6 +70,7 @@ def test_item_buy_view_buys_the_item_for_the_player_faction(logged_in_client, cu
 def test_item_buy_view_announces_the_changed_shop_list_to_htmx(logged_in_client, current_savegame):
     TransactionFactory(faction=current_savegame.player_faction, amount=500)
     item = ItemFactory(savegame=current_savegame, price=120)
+    current_savegame.player_faction.available_items.add(item)
 
     response = logged_in_client.post(reverse("item:item-buy-view", kwargs={"pk": item.pk}))
 
@@ -83,6 +84,7 @@ def test_item_buy_view_refuses_to_buy_without_enough_silver(logged_in_client, cu
     """
     TransactionFactory(faction=current_savegame.player_faction, amount=50)
     item = ItemFactory(savegame=current_savegame, price=120)
+    current_savegame.player_faction.available_items.add(item)
 
     response = logged_in_client.post(reverse("item:item-buy-view", kwargs={"pk": item.pk}))
 
@@ -126,7 +128,7 @@ def test_item_sell_view_cannot_sell_an_item_of_a_rival_faction(logged_in_client,
 @pytest.mark.django_db
 def test_item_buy_view_cannot_buy_an_item_that_is_not_on_sale(logged_in_client, current_savegame):
     """
-    Only unowned items sit in the shop, so an owned one must not be buyable by id.
+    An item somebody owns is not on the shop shelf, so it must not be buyable by id.
     """
     TransactionFactory(faction=current_savegame.player_faction, amount=500)
     rival_faction = FactionFactory(savegame=current_savegame)
@@ -137,3 +139,46 @@ def test_item_buy_view_cannot_buy_an_item_that_is_not_on_sale(logged_in_client, 
     assert response.status_code == 404
     rival_item.refresh_from_db()
     assert rival_item.owner == rival_faction
+
+
+@pytest.mark.django_db
+def test_item_buy_view_cannot_buy_the_equipment_of_a_pub_mercenary(logged_in_client, current_savegame):
+    """
+    "Unowned" is not the same as "for sale": a mercenary waiting in the pub carries its weapons
+    without a faction owning them, and buying one of those disarms the mercenary.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+    mercenary_weapon = ItemFactory(savegame=current_savegame, owner=None, price=120)
+
+    response = logged_in_client.post(reverse("item:item-buy-view", kwargs={"pk": mercenary_weapon.pk}))
+
+    assert response.status_code == 404
+    mercenary_weapon.refresh_from_db()
+    assert mercenary_weapon.owner is None
+
+
+@pytest.mark.django_db
+def test_item_buy_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    There is no shop to buy from yet, and the shelf lookup needs a faction id - so this narrows to
+    nothing rather than answering with a server error.
+    """
+    item = ItemFactory(savegame=savegame_without_player_faction, price=120)
+
+    response = logged_in_client.post(reverse("item:item-buy-view", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 404
+    item.refresh_from_db()
+    assert item.owner is None
+
+
+@pytest.mark.django_db
+def test_item_sell_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    Nothing belongs to the player yet, so the player-faction scoping narrows to nothing.
+    """
+    item = ItemFactory(savegame=savegame_without_player_faction)
+
+    response = logged_in_client.post(reverse("item:item-sell-view", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 404

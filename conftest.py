@@ -67,6 +67,18 @@ def current_savegame(user) -> Savegame:
 
 
 @pytest.fixture
+def savegame_without_player_faction(user) -> Savegame:
+    """
+    The active savegame of the logged-in user, before its player faction exists.
+
+    A reachable state rather than a contrived one: the savegame row is created first and the faction
+    only afterwards. Every view scoped to the player faction has to narrow to nothing here instead
+    of dereferencing a missing faction and answering with a 500.
+    """
+    return SavegameFactory(created_by=user, player_faction=None)
+
+
+@pytest.fixture
 def queuebie_registry():
     """
     Provides a freshly autodiscovered handler registry.

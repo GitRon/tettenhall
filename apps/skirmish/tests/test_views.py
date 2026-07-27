@@ -117,17 +117,97 @@ def test_skirmish_finish_round_view_cannot_finish_a_round_of_another_savegame(lo
 
 
 @pytest.mark.django_db
-def test_skirmish_finish_round_view_rejects_a_faction_outside_the_skirmish(logged_in_client, current_savegame):
+def test_skirmish_finish_round_view_takes_the_sides_from_the_roster_not_the_posted_faction(
+    logged_in_client, current_savegame
+):
+    """
+    "faction_id" is client-supplied. Naming the player's faction for an enemy warrior used to put
+    that warrior into the player's line-up, where it attacked its own side; the rosters of the
+    skirmish decide instead, so the round runs as a normal two-sided one.
+    """
     skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
     player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    opposing_warrior = WarriorFactory(faction=skirmish.non_player_faction)
     skirmish.player_warriors.add(player_warrior)
-    uninvolved_faction = FactionFactory(savegame=current_savegame)
+    skirmish.non_player_warriors.add(opposing_warrior)
 
     response = logged_in_client.post(
         reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
         data={
-            "skirmish_participant[0][faction_id]": uninvolved_faction.pk,
+            "skirmish_participant[0][faction_id]": skirmish.player_faction_id,
             "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            # Lying about the side of the enemy warrior
+            "skirmish_participant[1][faction_id]": skirmish.player_faction_id,
+            "skirmish_participant[1][warrior_id]": opposing_warrior.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 200
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 2
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_rejects_a_warrior_outside_the_skirmish(logged_in_client, current_savegame):
+    """
+    The warrior ids arrive in the request body, so one naming somebody who is not fighting this
+    skirmish is bad input rather than a server error.
+    """
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    skirmish.player_warriors.add(player_warrior)
+    uninvolved_faction = FactionFactory(savegame=current_savegame)
+    uninvolved_warrior = WarriorFactory(faction=uninvolved_faction)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": skirmish.player_faction_id,
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            "skirmish_participant[1][faction_id]": uninvolved_faction.pk,
+            "skirmish_participant[1][warrior_id]": uninvolved_warrior.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_rejects_a_non_numeric_action(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    skirmish.player_warriors.add(player_warrior)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": skirmish.player_faction_id,
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": "charge",
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_rejects_a_participant_without_a_warrior_id(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    skirmish.player_warriors.add(player_warrior)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": skirmish.player_faction_id,
             "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
         },
     )

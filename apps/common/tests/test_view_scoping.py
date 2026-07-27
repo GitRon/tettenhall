@@ -17,14 +17,14 @@ from django.db.models import Model
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.list import MultipleObjectMixin
 
-from apps.savegame.mixins import SavegameScopedQuerysetMixin
+from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 
 # Reaching for a manager directly is fine when the statement narrows the result itself: through one
 # of the scoping queryset methods, by passing the current savegame, or by constraining it to
 # "self.object", which came from the scoped queryset. Substring matching keeps this readable at the
 # price of some slack - a statement merely mentioning one of these passes.
-SCOPING_EXPRESSIONS = ("for_savegame", "for_user", "current_savegame", "self.object")
+SCOPING_EXPRESSIONS = ("for_savegame", "for_player_faction", "for_user", "current_savegame", "self.object")
 
 # Views which deliberately don't scope by savegame. Every entry needs a reason.
 UNSCOPED_VIEWS: frozenset[str] = frozenset(
@@ -167,7 +167,7 @@ def test_scoped_views_do_not_bypass_their_own_queryset():
     scoped_view_names = {
         view_class.__name__
         for view_class in _project_view_classes()
-        if issubclass(view_class, SavegameScopedQuerysetMixin)
+        if issubclass(view_class, SavegameScopedQuerysetMixin | PlayerFactionScopedQuerysetMixin)
     }
     violations = []
 
