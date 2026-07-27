@@ -4,6 +4,7 @@ from http import HTTPStatus
 from django.http import HttpResponse
 from django.urls import reverse
 from django.views import generic
+from django.views.generic.detail import SingleObjectMixin
 from queuebie.runner import handle_message
 
 from apps.month.messages.commands.month import PrepareMonth
@@ -48,12 +49,19 @@ class PlayerMonthLogListView(SavegameScopedQuerysetMixin, generic.ListView):
     template_name = "player-month-log/components/player_month_log_list.html"
 
 
-class AcknowledgePlayerMonthLogView(SavegameScopedQuerysetMixin, generic.DeleteView):
+class AcknowledgePlayerMonthLogView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
+    """
+    Not a DeleteView: since Django 4.0 that one deletes in form_valid() on POST, so for this
+    htmx-driven DELETE none of its form machinery runs. Inheriting it only meant that
+    DeletionMixin.delete() built an HttpResponseRedirect to the success url this view does not
+    have, which was then thrown away.
+    """
+
     model = PlayerMonthLog
     http_method_names = ("delete",)
 
     def delete(self, request, *args, **kwargs) -> HttpResponse:
-        super().delete(request, *args, **kwargs)
+        self.get_object().delete()
 
         response = HttpResponse(status=HTTPStatus.ACCEPTED)
         response["HX-Trigger"] = json.dumps(
@@ -62,6 +70,3 @@ class AcknowledgePlayerMonthLogView(SavegameScopedQuerysetMixin, generic.DeleteV
             }
         )
         return response
-
-    def get_success_url(self) -> None:
-        return None

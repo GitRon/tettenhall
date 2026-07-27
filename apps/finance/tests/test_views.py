@@ -10,9 +10,7 @@ from apps.savegame.tests.factories.savegame import SavegameFactory
 def test_transaction_list_view_lists_the_transactions_of_the_player_faction(logged_in_client, current_savegame):
     transaction = TransactionFactory(faction=current_savegame.player_faction, amount=250)
 
-    response = logged_in_client.get(
-        reverse("finance:transaction-list-view", kwargs={"faction_id": current_savegame.player_faction.id})
-    )
+    response = logged_in_client.get(reverse("finance:transaction-list-view"))
 
     assert response.status_code == 200
     assert list(response.context["object_list"]) == [transaction]
@@ -26,9 +24,7 @@ def test_transaction_list_view_hides_transactions_of_other_savegames(logged_in_c
     other_savegame.save()
     TransactionFactory(faction=other_savegame.player_faction, amount=999)
 
-    response = logged_in_client.get(
-        reverse("finance:transaction-list-view", kwargs={"faction_id": current_savegame.player_faction.id})
-    )
+    response = logged_in_client.get(reverse("finance:transaction-list-view"))
 
     assert response.status_code == 200
     assert list(response.context["object_list"]) == []
@@ -40,7 +36,7 @@ def test_transaction_list_view_without_an_active_savegame(logged_in_client):
     """
     The balance used to be read off the savegame unguarded, so the page answered with a 500.
     """
-    response = logged_in_client.get(reverse("finance:transaction-list-view", kwargs={"faction_id": 1}))
+    response = logged_in_client.get(reverse("finance:transaction-list-view"))
 
     assert response.status_code == 200
     assert response.context["current_balance"] == 0
