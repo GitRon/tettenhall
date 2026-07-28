@@ -33,12 +33,17 @@ class QuestAcceptForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
+        # Both fields are hidden inputs, so their querysets have to do the validating: left at the
+        # default "everything" a hand-edited value would name another player's quest or faction
         quest_qs = Quest.objects.filter(id=quest_id)
         quest = quest_qs.first()
+        self.fields["quest"].queryset = quest_qs
         self.fields["quest"].initial = quest
         self.fields["quest"].widget = forms.HiddenInput()
 
-        faction = Faction.objects.get(id=player_faction_id)
+        faction_qs = Faction.objects.filter(id=player_faction_id)
+        faction = faction_qs.get()
+        self.fields["faction"].queryset = faction_qs
         self.fields["faction"].initial = faction
         self.fields["faction"].widget = forms.HiddenInput()
 

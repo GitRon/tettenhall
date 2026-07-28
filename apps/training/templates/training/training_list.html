@@ -5,9 +5,13 @@
 
     <div uk-grid>
         <div>
-            <a class="uk-button uk-button-primary" href="{% url 'training:training-edit-view' current_training.id %}">
-                Change training
-            </a>
+            {# Without a training there is no id to reverse the url with #}
+            {% if current_training %}
+                <a class="uk-button uk-button-primary"
+                   href="{% url 'training:training-edit-view' current_training.id %}">
+                    Change training
+                </a>
+            {% endif %}
         </div>
     </div>
     <div uk-grid>

@@ -19,16 +19,19 @@
 
         {% if request.user.is_authenticated and current_savegame %}
             <ul class="uk-navbar-nav">
-                <li>
-                    <a href="{% url 'faction:faction-detail-view' current_savegame.player_faction_id %}">
-                        {{ current_savegame.player_faction }}
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'faction:town-square-view' current_savegame.player_faction_id %}">
-                        {{ current_savegame.player_faction.town_name }}
-                    </a>
-                </li>
+                {# A savegame can be without a player faction, and reversing these urls with no id raises #}
+                {% if current_savegame.player_faction_id %}
+                    <li>
+                        <a href="{% url 'faction:faction-detail-view' current_savegame.player_faction_id %}">
+                            {{ current_savegame.player_faction }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'faction:town-square-view' current_savegame.player_faction_id %}">
+                            {{ current_savegame.player_faction.town_name }}
+                        </a>
+                    </li>
+                {% endif %}
                 <li>
                     <a href="{% url 'town:town-upgrade-view' %}">
                         Town upgrades
@@ -45,7 +48,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'finance:transaction-list-view' current_savegame.player_faction_id %}">
+                    <a href="{% url 'finance:transaction-list-view' %}">
                         Finance
                     </a>
                 </li>

@@ -11,9 +11,18 @@ from apps.skirmish.models import Warrior
 @dataclass(kw_only=True)
 class CreateNewFaction(Command):
     name: str
+    town_name: str
     culture_id: int
     savegame: Savegame
     is_player_faction: bool
+
+
+@dataclass(kw_only=True)
+class CreateFactionsForNewSavegame(Command):
+    savegame: Savegame
+    faction_name: str
+    town_name: str
+    faction_culture_id: int
 
 
 @dataclass(kw_only=True)
@@ -35,7 +44,7 @@ class EarnMoneyFromBuildings(Command):
 
 
 @dataclass(kw_only=True)
-class DetermineWarriorsWithLowMorale(Command):
+class DetermineWarriorsWithReducedMorale(Command):
     faction: Faction
     month: int
 
@@ -63,13 +72,6 @@ class AddWarriorToPub(Command):
     savegame: Savegame
     faction: Faction
     warrior: Warrior
-    month: int
-
-
-@dataclass(kw_only=True)
-class AddQuestToBulletinBoard(Command):
-    faction: Faction
-    quest: Quest
     month: int
 
 

@@ -45,12 +45,14 @@ def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[
 
 
 @message_registry.register_command(command=HealInjuredWarrior)
-def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> list[Event] | Event:
+def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
     max_recoverable_health_points = 10
 
-    # Cap healed points at the maximum
+    # Cap healed points at the maximum. randrange() excludes its upper bound, so it needs the "+ 1"
+    # for "max_recoverable_health_points" to be reachable at all.
     healed_hp = min(
-        random.randrange(1, max_recoverable_health_points), context.warrior.max_health - context.warrior.current_health
+        random.randrange(1, max_recoverable_health_points + 1),
+        context.warrior.max_health - context.warrior.current_health,
     )
 
     if healed_hp == 0:
@@ -128,23 +130,3 @@ def handle_create_new_leader_warrior(*, context: CreateNewLeaderWarrior) -> list
         faction=context.faction,
         warrior=warrior,
     )
-
-
-# TODO: seems we don't need this since we have "handle_distribute_loot()" where the items are given to the victor
-#  if so, we can remove the command and event DropWarriorItems/WarriorItemsDropped
-# @message_registry.register_command(command=DropWarriorItems)
-# def handle_drop_warrior_items(*, context: DropWarriorItems) -> Event | None:
-#     items = [context.warrior.weapon, context.warrior.armor]
-#
-#     if len(items) > 0:
-#         context.warrior.weapon = None
-#         context.warrior.armor = None
-#         context.warrior.save()
-#
-#         return WarriorItemsDropped(
-#             skirmish=context.skirmish,
-#             warrior=context.warrior,
-#             items=items,
-#         )
-#
-#     return None

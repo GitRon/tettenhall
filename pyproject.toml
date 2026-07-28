@@ -155,3 +155,38 @@ exclude = [
 "*/managers/*.py" = [
     "PBR002",  # todo: enable this
 ]
+# pytest injects fixtures as positional arguments, so keyword-only signatures are impossible here
+"conftest.py" = [
+    "PBR001",
+]
+"*/tests/*" = [
+    "PBR001",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "apps.config.settings_test"
+python_files = ["test_*.py"]
+testpaths = ["apps"]
+
+[tool.coverage.run]
+# Branch coverage, not just statement coverage: an "if" counts as covered as soon as its body ran,
+# so a missing "else" and an unexercised loop exit would both pass unnoticed.
+branch = true
+source = ["apps"]
+omit = [
+    "*/migrations/*",  # Generated
+    "*/messages/*",    # Dataclasses, no logic
+    "*/tests/*",       # The tests themselves
+    "apps/config/*",   # Settings, wsgi/asgi
+    "*/admin.py",      # Framework declarations
+    "*/apps.py",       # Framework declarations
+]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

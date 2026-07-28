@@ -7,3 +7,11 @@ __pycache__/
 **/node_modules/**
 
 yarn-error.log
+
+__pycache__/
+*.py[cod]
+
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/

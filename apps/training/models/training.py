@@ -34,7 +34,7 @@ class Training(models.Model):
     def __str__(self) -> str:
         return f"{self.get_category_display()}"
 
-    def get_random_attribute_and_improvement_for_category(self, *, category: int) -> [str, int]:
+    def get_random_attribute_and_improvement_for_category(self, *, category: int) -> tuple[str, int]:
         """
         Determine which attribute gets improved and by how much.
         """
@@ -47,6 +47,8 @@ class Training(models.Model):
         else:
             raise RuntimeError("Invalid training category provided.")
 
-        improvement = max(random.gauss(self.TRAINING_IMPROVEMENT_MU, self.TRAINING_IMPROVEMENT_SIGMA), 0)
+        # Rounded to an int: the improvement ends up in a progress bar stored as a positive small
+        # integer, so a float would only survive until the next refresh from the database
+        improvement = max(round(random.gauss(self.TRAINING_IMPROVEMENT_MU, self.TRAINING_IMPROVEMENT_SIGMA)), 0)
 
         return attribute, improvement

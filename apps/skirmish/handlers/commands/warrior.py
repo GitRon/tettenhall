@@ -1,9 +1,9 @@
 from queuebie import message_registry
-from queuebie.messages import Event
+from queuebie.messages import Command, Event
 
 from apps.faction.models.faction import Faction
 from apps.skirmish.messages.commands import warrior
-from apps.skirmish.messages.commands.warrior import ReduceHealth
+from apps.skirmish.messages.commands.warrior import ReduceHealth, ReduceMorale
 from apps.skirmish.messages.events.warrior import (
     LastUsedSkirmishActionStored,
     WarriorGainedExperience,
@@ -15,6 +15,28 @@ from apps.skirmish.messages.events.warrior import (
     WarriorWasKilled,
 )
 from apps.skirmish.models.warrior import Warrior
+
+
+@message_registry.register_command(command=warrior.ReduceMoraleOfRemainingWarriors)
+def handle_reduce_morale_of_remaining_warriors(*, context: warrior.ReduceMoraleOfRemainingWarriors) -> list[Command]:
+    if context.warrior.faction_id == context.skirmish.player_faction_id:
+        affected_warrior_list = context.skirmish.player_warriors.all()
+    else:
+        affected_warrior_list = context.skirmish.non_player_warriors.all()
+
+    # Every other warrior from the faction participating in this battle will lose 10% morale
+    message_list = []
+    for affected_warrior in affected_warrior_list:
+        if affected_warrior != context.warrior:
+            message_list.append(
+                ReduceMorale(
+                    skirmish=context.skirmish,
+                    warrior=affected_warrior,
+                    lost_morale=round(context.warrior.max_morale * 0.1),
+                )
+            )
+
+    return message_list
 
 
 @message_registry.register_command(command=warrior.StoreLastUsedSkirmishAction)

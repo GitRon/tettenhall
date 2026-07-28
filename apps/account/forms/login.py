@@ -1,9 +1,9 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Fieldset, Layout, Submit
 from django import forms
-from django.contrib.auth import authenticate, user_login_failed
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 
 class LoginForm(forms.Form):
@@ -44,15 +44,18 @@ class LoginForm(forms.Form):
         if email and password:
             try:
                 user = User.objects.get(email=email)
-            except ObjectDoesNotExist as e:
-                user_login_failed.send(sender=User, request=self.request, credentials={"username": email})
+            except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
+                # "User.email" carries no uniqueness constraint, so two accounts can share an address.
+                # There is no single user to authenticate then, which is a failed login and not a 500.
+                # Informing axes is the view's job: LoginView.form_invalid() sends "user_login_failed"
+                # for every invalid form, so doing it here as well spent two of the three allowed
+                # failures per attempt.
                 raise forms.ValidationError("Invalid email/password combination") from e
 
+            # Inactive users never make it past "authenticate()" either, so this covers them too
             self.user_cache = authenticate(request=self.request, username=user.username, password=password)
 
             if self.user_cache is None:
                 raise forms.ValidationError("Invalid email/password combination")
-            if not self.user_cache.is_active:
-                raise forms.ValidationError("Your account was locked. Please contact the support.")
 
         return self.cleaned_data

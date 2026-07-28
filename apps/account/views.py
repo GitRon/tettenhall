@@ -1,8 +1,7 @@
 from ambient_toolbox.view_layer.views import RequestInFormKwargsMixin
-from axes.handlers.proxy import AxesProxyHandler
 from django.contrib.auth import login, logout, user_login_failed
 from django.contrib.auth.models import User
-from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views import generic
 
@@ -19,9 +18,10 @@ class LoginView(RequestInFormKwargsMixin, generic.FormView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return HttpResponseRedirect(self.get_success_url())
-        if AxesProxyHandler.is_locked(request):
-            return HttpResponseForbidden("Too many access attempt. Please try again later.")
 
+        # No lockout check here: axes identifies the client by AXES_USERNAME_FORM_FIELD, which this
+        # form does not post, so the check never matched. AxesMiddleware answers a locked-out POST
+        # with AXES_LOCKOUT_TEMPLATE anyway.
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):

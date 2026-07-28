@@ -18,6 +18,13 @@ from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorG
 
 @message_registry.register_command(command=RestockTownMercenaries)
 def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[Event] | Event:
+    # Only the player's town has a pub that can be visited, and the mercenaries this requests are
+    # generated without a faction of their own, so handle_add_warrior_to_pub can only ever stock
+    # that one. Restocking a rival - which NewFactionCreated does for each of them - would add its
+    # mercenaries to the player's pub on top of the player's own restock.
+    if context.faction.savegame.player_faction_id != context.faction.id:
+        return []
+
     # Clean up previous stock
     context.faction.available_mercenaries.all().delete()
 
@@ -44,6 +51,9 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
 
 @message_registry.register_command(command=AddWarriorToPub)
 def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Event:
+    # The pub belongs to the player, and there is only one player per savegame, so this is the right
+    # target - the warrior arrives here without a faction of its own. handle_restock_pub_mercenaries
+    # only requests these for the player faction, so nothing else ends up in this pub.
     context.savegame.player_faction.available_mercenaries.add(context.warrior)
 
     return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)

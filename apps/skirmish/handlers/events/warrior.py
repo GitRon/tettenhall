@@ -8,6 +8,7 @@ from apps.skirmish.messages.commands.warrior import (
     IncreaseMorale,
     ReduceHealth,
     ReduceMorale,
+    ReduceMoraleOfRemainingWarriors,
     StoreLastUsedSkirmishAction,
 )
 from apps.skirmish.messages.events import skirmish, warrior
@@ -69,26 +70,10 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         warrior.WarriorWasIncapacitated,
         warrior.WarriorWasKilled,
     ],
-) -> list[Command]:
-    message_list = []
-
-    if context.warrior.faction_id == context.skirmish.player_faction_id:
-        affected_warrior_list = context.skirmish.player_warriors.all()
-    else:
-        affected_warrior_list = context.skirmish.non_player_warriors.all()
-
-    # Every other warrior from the faction participating in this battle will lose 10% morale
-    for affected_warrior in affected_warrior_list:
-        if affected_warrior != context.warrior:
-            message_list.append(
-                ReduceMorale(
-                    skirmish=context.skirmish,
-                    warrior=affected_warrior,
-                    lost_morale=round(context.warrior.max_morale * 0.1),
-                )
-            )
-
-    return message_list
+) -> Command:
+    # Determining who is affected needs the participants of the skirmish, and strict mode blocks
+    # database access in event handlers, so the command handler does the reading
+    return ReduceMoraleOfRemainingWarriors(skirmish=context.skirmish, warrior=context.warrior)
 
 
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)

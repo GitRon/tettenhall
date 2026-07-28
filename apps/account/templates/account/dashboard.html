@@ -7,10 +7,13 @@
         <div uk-alert>
             <div>
                 <strong>Active quest:</strong> {{ active_quest }}
-                <a class="uk-button uk-button-primary"
-                   href="{% url 'skirmish:skirmish-fight-view' active_quest.skirmish.id %}">
-                    Fight skirmish
-                </a>
+                {# The skirmish is nullable (SET_NULL on delete), and reversing the url with no id raises #}
+                {% if active_quest.skirmish_id %}
+                    <a class="uk-button uk-button-primary"
+                       href="{% url 'skirmish:skirmish-fight-view' active_quest.skirmish_id %}">
+                        Fight skirmish
+                    </a>
+                {% endif %}
             </div>
         </div>
     {% endfor %}

@@ -24,4 +24,9 @@ def handle_pub_mercenaries_restocked(*, context: WarriorUpgradedSkill) -> Comman
 
 @message_registry.register_event(event=MonthPrepared)
 def handle_training_of_warriors_for_new_month(*, context: MonthPrepared) -> list[Command]:
+    # A savegame whose player faction has no training row has nothing to train, and the command
+    # handler dereferences "training" unguarded - finishing the month would answer with a 500
+    if context.training is None:
+        return []
+
     return [TrainWarriors(faction=context.faction, training=context.training, month=context.current_month)]

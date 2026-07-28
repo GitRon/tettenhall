@@ -1,13 +1,15 @@
 import random
 
 from django.db.models import F
+from faker import Faker
 from queuebie import message_registry
-from queuebie.messages import Event
+from queuebie.messages import Command, Event
 
 from apps.faction.messages.commands.faction import (
+    CreateFactionsForNewSavegame,
     CreateNewFaction,
     DetermineInjuredWarriors,
-    DetermineWarriorsWithLowMorale,
+    DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
@@ -16,29 +18,68 @@ from apps.faction.messages.commands.faction import (
 )
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
-    FactionWarriorsWithLowMoraleDetermined,
+    FactionWarriorsWithReducedMoraleDetermined,
     MonthlyBuildingMoneyEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
     QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
+from apps.faction.models import Culture
 from apps.faction.models.faction import Faction
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
 from apps.town.buildings.hall import Hall
+from apps.town.models import Town
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
+
+
+@message_registry.register_command(command=CreateFactionsForNewSavegame)
+def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSavegame) -> list[Command]:
+    """
+    Turns a fresh savegame into a populated one: the player's faction plus a few rivals.
+
+    This reads cultures from the database, which is why it is a command handler - the event handler
+    emitting it runs under strict mode's database blocker.
+    """
+    culture = Culture.objects.get_or_none(id=context.faction_culture_id)
+    faker = Faker([culture.locale])
+
+    return [
+        CreateNewFaction(
+            name=context.faction_name,
+            town_name=context.town_name,
+            savegame=context.savegame,
+            culture_id=context.faction_culture_id,
+            is_player_faction=True,
+        )
+    ] + [
+        CreateNewFaction(
+            name=faker.city(),
+            town_name=faker.city(),
+            culture_id=random.choice(Culture.objects.all()).id,
+            savegame=context.savegame,
+            is_player_faction=False,
+        )
+        for _ in range(random.randint(3, 5))
+    ]
 
 
 @message_registry.register_command(command=CreateNewFaction)
 def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Event:
     faction = Faction.objects.create(
         name=context.name,
+        town_name=context.town_name,
         culture_id=context.culture_id,
         savegame=context.savegame,
         fyrd_reserve=random.randint(2, 5),
     )
+
+    # A faction always has exactly one town, so it is part of creating one rather than a reaction to
+    # it: several handlers of NewFactionCreated already read faction.town, and an event handler
+    # emitting a CreateTown command would land in the same batch as those, with no guaranteed order
+    Town.objects.create(faction=faction, last_constructed_building_at=context.savegame.current_month)
 
     # Set player faction in savegame
     if context.is_player_faction:
@@ -47,6 +88,7 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
 
     return NewFactionCreated(
         faction=faction,
+        current_month=context.savegame.current_month,
     )
 
 
@@ -91,7 +133,7 @@ def handle_remove_quest_from_bulletin_board(*, context: RemoveQuestFromBulletinB
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
-def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> list[Event] | Event:
+def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | None:
     new_recruitees = random.randrange(0, 3)
 
     if new_recruitees == 0:
@@ -107,11 +149,15 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> list[Even
     )
 
 
-@message_registry.register_command(command=DetermineWarriorsWithLowMorale)
-def handle_determine_warriors_with_low_morale(*, context: DetermineWarriorsWithLowMorale) -> list[Event] | Event:
-    warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+@message_registry.register_command(command=DetermineWarriorsWithReducedMorale)
+def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsWithReducedMorale) -> Event:
+    # Only warriors below their maximum have anything to recover - replenishing the rest would be
+    # a no-op further down the chain
+    warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
+        current_morale__lt=F("max_morale")
+    )
 
-    return FactionWarriorsWithLowMoraleDetermined(
+    return FactionWarriorsWithReducedMoraleDetermined(
         faction=context.faction,
         warrior_list=list(warrior_qs),
         month=context.month,
@@ -119,7 +165,7 @@ def handle_determine_warriors_with_low_morale(*, context: DetermineWarriorsWithL
 
 
 @message_registry.register_command(command=DetermineInjuredWarriors)
-def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> list[Event] | Event:
+def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> list[Command]:
     # Get all injured but not dead warriors of "faction"
     warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
         current_health__lt=F("max_health")

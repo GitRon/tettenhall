@@ -3,7 +3,16 @@ from django.db.models import manager
 
 
 class ItemQuerySet(models.QuerySet):
-    pass
+    def for_savegame(self, *, savegame_id: int):
+        return self.filter(savegame_id=savegame_id)
+
+    def for_player_faction(self, *, faction_id: int):
+        return self.filter(owner_id=faction_id)
+
+    def on_sale_at(self, *, faction_id: int):
+        # Shop membership is the town's "available_items", not a missing owner: the equipment of
+        # the pub mercenaries is unowned too, and that is not for sale
+        return self.filter(available_shop_items=faction_id)
 
 
 class ItemManager(manager.Manager):
