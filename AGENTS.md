@@ -1,91 +1,34 @@
-# Agent guide
+# Tettenhall
 
-Tettenhall is a Django 5.2 browser game built around a CQRS-style message bus
-([django-queuebie](https://pypi.org/project/django-queuebie/)). Python 3.12, dependencies via `pipenv`
-(`Pipfile`), SQLite, ruff + boa-restrictor for linting.
+A Django browser game about Anglo-Saxon factions, built around a CQRS-style message bus.
 
-## Project docs
+Every doc below is normative for what it covers, not background reading. **Read the relevant one before
+touching that area** — do not infer the conventions from whatever code happens to be nearby.
 
-Read these before working in the area they cover — they are normative, not background reading.
+## Documentation
 
-| Doc | Read it when |
-|---|---|
-| [`docs/testing_strategy.md`](docs/testing_strategy.md) | **Always, before writing or changing any test, factory, fixture or test setting.** |
-| [`docs/message_system.md`](docs/message_system.md) | **Always, before adding or editing a message, a handler, or anything dispatched through the bus.** |
+### Contributing
 
-## Testing
+- [Local setup](docs/contributing/setup.md) — stack, dependencies, running the app and the suite
+- [Linting](docs/contributing/linting.md) — ruff, boa-restrictor, pre-commit
+- [Settings](docs/contributing/settings.md) — application vs test settings, queuebie configuration
+- [Commit messages](docs/contributing/commit-messages.md)
 
-**`docs/testing_strategy.md` is the single source of truth for tests.** Do not infer the conventions from
-whatever tests happen to be nearby, and do not fall back on generic Django testing habits — this project
-deviates from them deliberately. In particular the doc settles:
+### Architecture
 
-- **pytest + pytest-django + factory_boy.** Plain test functions, plain `assert`, no `unittest.TestCase`,
-  no `setUpTestData`, no `self.assertEqual`.
-- **Never create model instances directly in a test.** Factories only, in
-  `apps/<app>/tests/factories/<model>.py`.
-- **Mocking first-party code is strongly discouraged** — last resort, and it needs a comment saying why.
-- **100% branch coverage** is the gate. Until the suite is complete it fails by design; never lower
-  `fail_under` to make a red run green.
-- Where the interesting bugs actually are (wiring and message-contract bugs, which no amount of unit
-  testing catches) and the four registry tests that cover them.
+- [Where code goes](docs/patterns/app-layout.md) — app layout and which layer holds business logic
+- [The message bus](docs/patterns/message-bus.md) — commands vs events, the golden rule, dispatching
+- [Writing a handler](docs/patterns/handlers.md) — signature, registration, return values
+- [Adding a new flow](docs/patterns/adding-a-flow.md) — the end-to-end checklist
+- [Strict mode](docs/patterns/strict-mode.md) — what it enforces, and where it does not
+- [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
+- [Town buildings](docs/patterns/town-buildings.md) — where the game-balance numbers live
 
-Setup already in place: `[tool.pytest.ini_options]` and `[tool.coverage.*]` in `pyproject.toml`,
-`apps/config/settings_test.py`, and the `queuebie_registry` fixture in the root `conftest.py`.
+### Testing
 
-Run the suite with `pytest`, with coverage via `pytest --cov`.
-
-## Architecture notes
-
-**`docs/message_system.md` is the single source of truth for the bus** — the command/event contract, the
-handler signature, the directory layout messages and handlers must follow, and the checklist for adding a
-new flow. The points worth keeping in mind everywhere:
-
-- Each app owns `messages/` (commands + events) and `handlers/` (`commands/`, `events/`). Business logic
-  also lives in `services/`, `managers/`, `models/` and `domain/` — roughly 45% of it sits outside
-  `handlers/`, so don't treat `handlers/` as the whole story.
-- **Command handlers do the work and emit Events; event handlers react and emit Commands.**
-- Handlers take their message **keyword-only**: `handle_something(context=my_message)`. They return a bare
-  message, a list of messages, or `None`; `handle_message()` normalises all three.
-- Messages are `@dataclass(kw_only=True)` and carry Django **model instances**, not IDs.
-- `QUEUEBIE_STRICT_MODE = True`. It rejects cross-app command handler registration at import time, and
-  blocks database access in event handlers — but only when they run through `handle_message()`, so calling
-  a handler directly in a test bypasses that check.
-- Concrete return annotations are *not* required; the registry tests parse actual message instantiations
-  out of the syntax tree instead, because an annotation can lie and the code cannot.
-- **A savegame has exactly one player.** Rival factions are NPCs, so a rival reading "another faction's"
-  data is not a leak. The pub belongs to the player, which is why `handle_add_warrior_to_pub` targets
-  `savegame.player_faction` deliberately. `Transaction.for_savegame()` follows the same rule and filters
-  `faction__player_savegame` — only the player faction's money counts.
-
-### Town buildings
-
-Every faction owns exactly one `Town`, created together with the faction in `handle_create_new_faction`.
-The town stores only a level per building; `apps/town/buildings/` turns a level back into the variant
-holding that level's numbers, and `BUILDINGS` in its `__init__.py` maps the town field to the family.
-
-- **Every game-balance number lives in `apps/town/buildings/`** — building costs and each building's
-  effect. Don't hardcode a number in a handler that a building should own; the handler reads the
-  constant. Each building owns exactly one lever: hall → income + pub mercenary slots, weaponsmith →
-  shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling.
-- Level 0 is a *baseline*, not "no effect": a town without a hall still earns a little, and one without
-  a market still holds three stalls. The `No…` class names are about the building, not the effect.
-- Costs escalate (roughly ×2.3 then ×2) while effects grow by less, so the top level of a building is
-  deliberately a poor investment on its effect alone.
-- **NPC factions never build.** `MonthPrepared` fans out to every faction and each one gets its hall
-  income, but nothing upgrades a rival's town, so every building effect is a player-only power curve.
-
-## Conventions
-
-- `ruff` and `boa-restrictor` are configured in `pyproject.toml`; respect the line length of 120.
-- Settings live in `apps/config/settings.py`, test settings in `apps/config/settings_test.py`.
-
-### Commit messages
-
-Keep them short and to the point — a single capitalized subject line describing what the commit does, no
-trailing period. Match the existing history:
-
-- A noun phrase naming the change (`Hall effects`, `Display buildings`) or a past-tense/`Added …` phrase
-  (`Added navbar todo`, `Fixed empty town shop bug`).
-- Join two related changes with `&` (`UI & Validation`, `Min warrior stats & town shop fix`).
-- No body, prefix, or issue tag unless a change genuinely needs explaining; then add a blank line and a
-  couple of sentences.
+- [Testing strategy](docs/patterns/testing-strategy.md) — what to test, at which level
+- [Test conventions](docs/patterns/testing-conventions.md) — layout, naming, assertions
+- [Test data](docs/patterns/testing-data.md) — factories and reference data
+- [Mocking](docs/patterns/mocking.md) — first-party mocks are a review finding
+- [Coverage](docs/patterns/coverage.md) — the 100% branch gate
+- [Registry tests](docs/patterns/registry-tests.md) — the four tests covering the message wiring

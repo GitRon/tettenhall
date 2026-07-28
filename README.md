@@ -1,6 +1,13 @@
 # Tettenhall
 
+A Django browser game about Anglo-Saxon factions, built around a CQRS-style message bus.
+
+Documentation lives in [`docs/`](docs/), indexed in [AGENTS.md](AGENTS.md). The rest of this file is the
+open backlog.
+
 ## Setup
+
+See [local setup](docs/contributing/setup.md).
 
 * Load all fixtures
 * Create superuser
