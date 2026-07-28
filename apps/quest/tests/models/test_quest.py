@@ -27,7 +27,7 @@ def test_get_min_max_number_of_opponents_for_a_hard_quest():
 def test_get_min_max_number_of_opponents_for_an_unknown_difficulty():
     quest = QuestFactory.build(difficulty=99)
 
-    with pytest.raises(RuntimeError, match="Invalid difficulty choice."):
+    with pytest.raises(RuntimeError, match="Invalid difficulty choice"):
         quest.get_min_max_number_of_opponents()
 
 
@@ -55,5 +55,5 @@ def test_calculate_loot_for_a_hard_quest():
 def test_calculate_loot_for_an_unknown_difficulty():
     quest = QuestFactory.build(difficulty=99)
 
-    with pytest.raises(RuntimeError, match="Invalid difficulty choice."):
+    with pytest.raises(RuntimeError, match="Invalid difficulty choice"):
         quest.calculate_loot()

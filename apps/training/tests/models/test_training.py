@@ -49,7 +49,7 @@ def test_get_random_attribute_and_improvement_for_category_shield_wall(training)
 
 
 def test_get_random_attribute_and_improvement_for_category_unknown_category(training):
-    with pytest.raises(RuntimeError, match="Invalid training category provided."):
+    with pytest.raises(RuntimeError, match="Invalid training category provided"):
         training.get_random_attribute_and_improvement_for_category(category=99)
 
 
