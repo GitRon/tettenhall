@@ -22,7 +22,8 @@ def test_item_sell_view_sells_the_item_of_the_player_faction(logged_in_client, c
     assert response.status_code == 200
     item.refresh_from_db()
     assert item.owner is None
-    assert Transaction.objects.filter(faction=current_savegame.player_faction, amount=120).exists()
+    # A town without a market of its own only gets 40% of the list price
+    assert Transaction.objects.filter(faction=current_savegame.player_faction, amount=48).exists()
 
 
 @pytest.mark.django_db

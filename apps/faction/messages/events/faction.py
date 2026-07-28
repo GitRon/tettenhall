@@ -55,6 +55,7 @@ class RequestNewItemForTownShop(Event):
     generator_class: type[BaseItemGenerator]
     item_function: int
     month: int
+    quality_bonus: int = 0
 
 
 @dataclass(kw_only=True)

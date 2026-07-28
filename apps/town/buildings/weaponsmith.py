@@ -2,10 +2,18 @@ from apps.town.buildings.base import Building
 
 
 class Weaponsmith(Building):
+    """
+    Drives the quality of the gear the town shop stocks.
+
+    The bonus is added to the item generator's modifier roll, which raises the item's damage and its
+    price and pushes it up the condition ladder. How *many* items the shop holds is the
+    marketplace's business.
+    """
+
     BUILDING_NAME = "weaponsmith"
     BUILDING_LABEL = "Weaponsmith"
 
-    AVAILABLE_ITEMS = 0
+    QUALITY_BONUS = 0
 
     BUILDING_COSTS = 0
 
@@ -15,24 +23,24 @@ class Weaponsmith(Building):
 
 
 class NoWeaponsmith(Weaponsmith):
-    AVAILABLE_ITEMS = 1
+    QUALITY_BONUS = 0
 
     BUILDING_COSTS = 0
 
 
 class SmallWeaponsmith(Weaponsmith):
-    AVAILABLE_ITEMS = 2
+    QUALITY_BONUS = 1
 
-    BUILDING_COSTS = 1000
+    BUILDING_COSTS = 750
 
 
 class MediumWeaponsmith(Weaponsmith):
-    AVAILABLE_ITEMS = 3
+    QUALITY_BONUS = 2
 
-    BUILDING_COSTS = 2000
+    BUILDING_COSTS = 1750
 
 
 class LargeWeaponsmith(Weaponsmith):
-    AVAILABLE_ITEMS = 4
+    QUALITY_BONUS = 3
 
-    BUILDING_COSTS = 3000
+    BUILDING_COSTS = 3500

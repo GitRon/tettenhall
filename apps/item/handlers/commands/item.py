@@ -5,6 +5,7 @@ from apps.item.messages.commands import item
 from apps.item.messages.events.item import ItemBought, ItemCreated, ItemSold, OwnershipChanged
 from apps.item.models.item import Item
 from apps.skirmish.models import Warrior
+from apps.town.buildings.marketplace import Marketplace
 
 
 @message_registry.register_command(command=item.CreateItem)
@@ -13,6 +14,7 @@ def handle_create_item(*, context: item.CreateItem) -> list[Event] | Event:
         faction=None,
         item_function=context.item_function,
         savegame_id=context.faction.savegame_id,
+        quality_bonus=context.quality_bonus,
     )
 
     new_item = generator.process()
@@ -30,11 +32,15 @@ def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event:
     # Remove ownership of item
     Item.objects.update_ownership(item=context.item, new_owner=None)
 
+    # The item keeps its list price and goes back on the shelf at it, so a poor market means selling
+    # something and buying it back is a loss
+    marketplace = Marketplace.get_building_by_type(building_type=context.selling_faction.town.marketplace)
+
     return ItemSold(
         selling_faction=context.selling_faction,
         item=context.item,
         item_name=context.item.display_name,
-        price=context.item.price,
+        price=round(context.item.price * marketplace.SELL_RATIO),
         month=context.month,
     )
 

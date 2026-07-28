@@ -31,6 +31,8 @@ from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
 from apps.town.buildings.hall import Hall
+from apps.town.buildings.marketplace import Marketplace
+from apps.town.buildings.weaponsmith import Weaponsmith
 from apps.town.models import Town
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
 
@@ -100,8 +102,11 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
 
     message_list = []
 
-    no_items = random.randrange(4, 6)
-    for _ in range(no_items):
+    # The market decides how many stalls there are, the weaponsmith how good their wares
+    marketplace = Marketplace.get_building_by_type(building_type=context.faction.town.marketplace)
+    weaponsmith = Weaponsmith.get_building_by_type(building_type=context.faction.town.weaponsmith)
+
+    for _ in range(marketplace.AVAILABLE_ITEMS):
         if bool(random.getrandbits(1)):
             message_list.append(
                 RequestNewItemForTownShop(
@@ -109,6 +114,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                     generator_class=MercenaryItemGenerator,
                     item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
                     month=context.month,
+                    quality_bonus=weaponsmith.QUALITY_BONUS,
                 )
             )
         else:
@@ -118,6 +124,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                     generator_class=MercenaryItemGenerator,
                     item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
                     month=context.month,
+                    quality_bonus=weaponsmith.QUALITY_BONUS,
                 )
             )
 

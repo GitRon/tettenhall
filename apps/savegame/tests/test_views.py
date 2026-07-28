@@ -33,7 +33,8 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     with (
         # Draws the number of rival factions and the fyrd reserve of every faction
         mock.patch("apps.faction.handlers.commands.faction.random.randint", return_value=3),
-        # Draws the number of shop items, pub mercenaries and bulletin board quests per faction
+        # Draws the number of bulletin board quests per faction. Shop items and pub mercenaries are
+        # not drawn at all any more - the market and the hall decide those.
         mock.patch("apps.faction.handlers.commands.faction.random.randrange", return_value=2),
     ):
         response = logged_in_client.post(
@@ -50,7 +51,8 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     # The player faction plus the three drawn rivals
     assert Faction.objects.filter(savegame=savegame).count() == 4
     assert savegame.player_faction.leader is not None
-    assert savegame.player_faction.available_items.count() == 2
+    # Three stalls in a town without a market of its own
+    assert savegame.player_faction.available_items.count() == 3
     assert savegame.player_faction.available_quests.count() == 2
 
 

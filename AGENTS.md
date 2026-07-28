@@ -57,6 +57,23 @@ new flow. The points worth keeping in mind everywhere:
   `savegame.player_faction` deliberately. `Transaction.for_savegame()` follows the same rule and filters
   `faction__player_savegame` — only the player faction's money counts.
 
+### Town buildings
+
+Every faction owns exactly one `Town`, created together with the faction in `handle_create_new_faction`.
+The town stores only a level per building; `apps/town/buildings/` turns a level back into the variant
+holding that level's numbers, and `BUILDINGS` in its `__init__.py` maps the town field to the family.
+
+- **Every game-balance number lives in `apps/town/buildings/`** — building costs and each building's
+  effect. Don't hardcode a number in a handler that a building should own; the handler reads the
+  constant. Each building owns exactly one lever: hall → income + pub mercenary slots, weaponsmith →
+  shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling.
+- Level 0 is a *baseline*, not "no effect": a town without a hall still earns a little, and one without
+  a market still holds three stalls. The `No…` class names are about the building, not the effect.
+- Costs escalate (roughly ×2.3 then ×2) while effects grow by less, so the top level of a building is
+  deliberately a poor investment on its effect alone.
+- **NPC factions never build.** `MonthPrepared` fans out to every faction and each one gets its hall
+  income, but nothing upgrades a rival's town, so every building effect is a player-only power curve.
+
 ## Conventions
 
 - `ruff` and `boa-restrictor` are configured in `pyproject.toml`; respect the line length of 120.

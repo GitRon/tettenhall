@@ -2,9 +2,18 @@ from apps.town.buildings.base import Building
 
 
 class Sanctuary(Building):
-    # TODO: what a sanctuary grants per level is still open, so the variants only carry their costs
+    """
+    Drives how fast injured warriors recover between months.
+
+    The points are the upper bound of the monthly healing roll, not a flat amount, so a level raises
+    the ceiling rather than guaranteeing it. Mercenaries carry around 20 maximum health, which is
+    what makes the Great Sanctuary able to mend one in a single month.
+    """
+
     BUILDING_NAME = "sanctuary"
     BUILDING_LABEL = "Sanctuary"
+
+    MAX_HEALING_POINTS = 0
 
     BUILDING_COSTS = 0
 
@@ -14,16 +23,24 @@ class Sanctuary(Building):
 
 
 class NoSanctuary(Sanctuary):
+    MAX_HEALING_POINTS = 4
+
     BUILDING_COSTS = 0
 
 
 class SmallSanctuary(Sanctuary):
-    BUILDING_COSTS = 1000
+    MAX_HEALING_POINTS = 8
+
+    BUILDING_COSTS = 750
 
 
 class MediumSanctuary(Sanctuary):
-    BUILDING_COSTS = 2000
+    MAX_HEALING_POINTS = 14
+
+    BUILDING_COSTS = 1750
 
 
 class LargeSanctuary(Sanctuary):
-    BUILDING_COSTS = 3000
+    MAX_HEALING_POINTS = 20
+
+    BUILDING_COSTS = 3500

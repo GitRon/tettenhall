@@ -35,7 +35,7 @@ def test_town_upgrade_view_offers_the_costs_of_the_next_level(logged_in_client, 
 
     assert response.status_code == 200
     # A Mead Hall is standing, so the Great Hall is what the page offers next
-    assert _building(response, "hall")["costs"] == 2000
+    assert _building(response, "hall")["costs"] == 2100
 
 
 @pytest.mark.django_db
@@ -62,7 +62,7 @@ def test_town_upgrade_view_keeps_naming_a_price_at_the_maximum_level(logged_in_c
 
     response = logged_in_client.get(reverse("town:town-upgrade-view"))
 
-    assert _building(response, "hall")["costs"] == 3000
+    assert _building(response, "hall")["costs"] == 4200
 
 
 @pytest.mark.django_db
@@ -101,7 +101,7 @@ def test_upgrade_building_view_upgrades_the_building(logged_in_client, current_s
     town = current_savegame.player_faction.town
     town.last_constructed_building_at = 0
     town.save()
-    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+    TransactionFactory(faction=current_savegame.player_faction, amount=900)
 
     response = logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 
@@ -115,7 +115,7 @@ def test_upgrade_building_view_charges_the_building_costs(logged_in_client, curr
     town = current_savegame.player_faction.town
     town.last_constructed_building_at = 0
     town.save()
-    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+    TransactionFactory(faction=current_savegame.player_faction, amount=900)
 
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 
@@ -126,19 +126,19 @@ def test_upgrade_building_view_charges_the_building_costs(logged_in_client, curr
 def test_upgrade_building_view_charges_the_costs_of_the_building_it_upgrades(logged_in_client, current_savegame):
     """
     Every building used to be priced through the hall, so the page advertised a weaponsmith at 0
-    silver while the upgrade charged the hall's 1000.
+    silver while the upgrade charged the hall's price instead.
     """
     town = current_savegame.player_faction.town
     town.weaponsmith = Town.WeaponsmithChoices.WEAPONSMITH_MEDIUM
     town.last_constructed_building_at = 0
     town.save()
-    TransactionFactory(faction=current_savegame.player_faction, amount=3000)
+    TransactionFactory(faction=current_savegame.player_faction, amount=3500)
 
     page = logged_in_client.get(reverse("town:town-upgrade-view"))
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "weaponsmith"}))
 
-    # A Master Forge costs 3000, so the advertised price is what leaves the purse
-    assert _building(page, "weaponsmith")["costs"] == 3000
+    # A Master Forge costs 3500, so the advertised price is what leaves the purse
+    assert _building(page, "weaponsmith")["costs"] == 3500
     assert Transaction.objects.current_balance(savegame_id=current_savegame.id) == 0
 
 
@@ -147,7 +147,7 @@ def test_upgrade_building_view_upgrades_a_building_other_than_the_hall(logged_in
     town = current_savegame.player_faction.town
     town.last_constructed_building_at = 0
     town.save()
-    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+    TransactionFactory(faction=current_savegame.player_faction, amount=900)
 
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "sanctuary"}))
 
@@ -191,7 +191,7 @@ def test_upgrade_building_view_with_a_building_already_commissioned_this_month(l
     town = current_savegame.player_faction.town
     town.last_constructed_building_at = current_savegame.current_month
     town.save()
-    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+    TransactionFactory(faction=current_savegame.player_faction, amount=900)
 
     response = logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 
@@ -231,7 +231,7 @@ def test_upgrade_building_view_does_not_upgrade_a_town_of_another_savegame(logge
     savegame = SavegameFactory(created_by=user)
     savegame.player_faction = FactionFactory(savegame=savegame)
     savegame.save()
-    TransactionFactory(faction=savegame.player_faction, amount=1000)
+    TransactionFactory(faction=savegame.player_faction, amount=900)
 
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 

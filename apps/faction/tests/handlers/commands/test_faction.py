@@ -85,12 +85,10 @@ def test_handle_create_new_faction_for_non_player_faction():
 
 @pytest.mark.django_db
 def test_handle_restock_shop_items_requests_weapons():
-    faction = FactionFactory()
+    # A market place holds four stalls
+    faction = FactionFactory(town__marketplace=1)
 
-    with (
-        mock.patch("apps.faction.handlers.commands.faction.random.randrange", return_value=4),
-        mock.patch("apps.faction.handlers.commands.faction.random.getrandbits", return_value=1),
-    ):
+    with mock.patch("apps.faction.handlers.commands.faction.random.getrandbits", return_value=1):
         result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
     expected_message = RequestNewItemForTownShop(
@@ -98,18 +96,16 @@ def test_handle_restock_shop_items_requests_weapons():
         generator_class=MercenaryItemGenerator,
         item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
         month=3,
+        quality_bonus=0,
     )
     assert result == [expected_message] * 4
 
 
 @pytest.mark.django_db
 def test_handle_restock_shop_items_requests_armor():
-    faction = FactionFactory()
+    faction = FactionFactory(town__marketplace=1)
 
-    with (
-        mock.patch("apps.faction.handlers.commands.faction.random.randrange", return_value=4),
-        mock.patch("apps.faction.handlers.commands.faction.random.getrandbits", return_value=0),
-    ):
+    with mock.patch("apps.faction.handlers.commands.faction.random.getrandbits", return_value=0):
         result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
     expected_message = RequestNewItemForTownShop(
@@ -117,8 +113,32 @@ def test_handle_restock_shop_items_requests_armor():
         generator_class=MercenaryItemGenerator,
         item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
         month=3,
+        quality_bonus=0,
     )
     assert result == [expected_message] * 4
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_stocks_as_many_items_as_the_market_has_stalls():
+    """
+    The stock size used to be a dice roll between four and five, so no building had a say in it.
+    """
+    faction = FactionFactory(town__marketplace=3)
+
+    result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    # A High market holds eight, against the three a town without a market manages
+    assert len(result) == 8
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_passes_the_quality_of_the_weaponsmith():
+    faction = FactionFactory(town__weaponsmith=3)
+
+    result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    # A Master Forge adds three to every modifier roll in the shop
+    assert {message.quality_bonus for message in result} == {3}
 
 
 @pytest.mark.django_db

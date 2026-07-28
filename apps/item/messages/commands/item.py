@@ -17,6 +17,7 @@ class CreateItem(Command):
     item_function: int
     savegame: Savegame
     month: int
+    quality_bonus: int = 0
 
 
 @dataclass(kw_only=True)
