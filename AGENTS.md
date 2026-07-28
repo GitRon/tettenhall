@@ -1,34 +1,19 @@
-# Tettenhall
+# Agent guide
 
-A Django browser game about Anglo-Saxon factions, built around a CQRS-style message bus.
+Tettenhall is a Django browser game about Anglo-Saxon factions, built around a CQRS-style message bus.
 
-Every doc below is normative for what it covers, not background reading. **Read the relevant one before
-touching that area** — do not infer the conventions from whatever code happens to be nearby.
+**[README.md](README.md) indexes every doc.** It is the map — there is deliberately no second list here to
+drift out of step with it.
 
-## Documentation
+The docs are normative for the areas they cover, not background reading. Read the relevant one *before*
+touching that area, and do not infer the conventions from whatever code happens to be nearby: this project
+deviates from the Django defaults on purpose in several places.
 
-### Contributing
+Four where getting it wrong is both expensive and silent:
 
-- [Local setup](docs/contributing/setup.md) — stack, dependencies, running the app and the suite
-- [Linting](docs/contributing/linting.md) — ruff, boa-restrictor, pre-commit
-- [Settings](docs/contributing/settings.md) — application vs test settings, queuebie configuration
-- [Commit messages](docs/contributing/commit-messages.md)
-
-### Architecture
-
-- [Where code goes](docs/patterns/app-layout.md) — app layout and which layer holds business logic
-- [The message bus](docs/patterns/message-bus.md) — commands vs events, the golden rule, dispatching
-- [Writing a handler](docs/patterns/handlers.md) — signature, registration, return values
-- [Adding a new flow](docs/patterns/adding-a-flow.md) — the end-to-end checklist
-- [Strict mode](docs/patterns/strict-mode.md) — what it enforces, and where it does not
-- [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
-- [Town buildings](docs/patterns/town-buildings.md) — where the game-balance numbers live
-
-### Testing
-
-- [Testing strategy](docs/patterns/testing-strategy.md) — what to test, at which level
-- [Test conventions](docs/patterns/testing-conventions.md) — layout, naming, assertions
-- [Test data](docs/patterns/testing-data.md) — factories and reference data
-- [Mocking](docs/patterns/mocking.md) — first-party mocks are a review finding
-- [Coverage](docs/patterns/coverage.md) — the 100% branch gate
-- [Registry tests](docs/patterns/registry-tests.md) — the four tests covering the message wiring
+| Before you… | Read |
+|---|---|
+| write or change any test, factory, fixture or test setting | [Testing strategy](docs/patterns/testing-strategy.md) |
+| add or edit a message, a handler, or anything dispatched through the bus | [The message bus](docs/patterns/message-bus.md) |
+| touch a view that resolves a model object | [Savegame scoping](docs/patterns/savegame-scoping.md) |
+| change a game-balance number | [Town buildings](docs/patterns/town-buildings.md) |

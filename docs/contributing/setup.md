@@ -7,6 +7,7 @@ Dependencies are managed with `pipenv` from the `Pipfile`:
 ```bash
 pipenv install --dev
 pipenv run python manage.py migrate
+pipenv run python manage.py createsuperuser
 pipenv run python manage.py runserver
 ```
 
