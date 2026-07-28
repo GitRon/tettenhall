@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Town upgrade</h1>
+
+    <div class="uk-child-width-1-2@m uk-grid-medium" uk-grid>
+        {% for building in building_list %}
+            <div>
+                <div class="uk-card uk-card-default uk-margin-bottom">
+                    <div class="uk-card-header">
+                        <h3 class="uk-card-title uk-margin-remove-bottom">{{ building.label }}</h3>
+                        <p class="uk-text-meta uk-margin-remove-top">
+                            {{ building.level_display }} (level {{ building.level }} of {{ building.max_level }})
+                        </p>
+                    </div>
+                    <div class="uk-card-body">
+                        <table class="uk-table uk-table-small uk-table-divider uk-margin-remove">
+                            <tbody>
+                                {% for effect in building.effect_list %}
+                                    <tr>
+                                        <td class="uk-text-meta">{{ effect.label }}</td>
+                                        <td class="uk-text-nowrap">{{ effect.current }}</td>
+                                        {% if building.level < building.max_level %}
+                                            <td class="uk-text-nowrap uk-text-emphasis">&rarr; {{ effect.next }}</td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="uk-card-footer">
+                        {% if building.level >= building.max_level %}
+                            <button class="uk-button uk-button-primary" disabled>Max level reached</button>
+                        {% elif has_already_built %}
+                            <button class="uk-button uk-button-primary" disabled>Already constructing a building this
+                                month</button>
+                        {% elif not building.can_afford %}
+                            <button class="uk-button uk-button-primary" disabled>{{ building.next_level_display }} costs
+                                {{ building.costs }} silver</button>
+                        {% else %}
+                            <button hx-post="{% url "town:upgrade-building-view" building.building_type %}"
+                                    class="uk-button uk-button-primary">Build {{ building.next_level_display }} for
+                                {{ building.costs }} silver
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock content %}

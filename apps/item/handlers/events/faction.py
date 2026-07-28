@@ -14,4 +14,5 @@ def handle_request_new_item_for_town_shop(*, context: RequestNewItemForTownShop)
         item_function=context.item_function,
         generator_class=context.generator_class,
         month=context.month,
+        quality_bonus=context.quality_bonus,
     )

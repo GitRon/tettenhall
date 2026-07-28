@@ -39,18 +39,14 @@ UNSCOPED_VIEWS: frozenset[str] = frozenset(
 def _project_view_classes() -> list[type]:
     """
     Every view class defined by the project itself.
+
+    Goes through the same file list as the checks below, so an app keeping its views in a package
+    rather than a single "views.py" is covered here too instead of being skipped silently.
     """
-    base_path = Path(settings.BASE_DIR).resolve()
     view_classes = []
 
-    for app_config in apps.get_app_configs():
-        if base_path not in Path(app_config.path).resolve().parents:
-            continue
-
-        try:
-            module = importlib.import_module(f"{app_config.name}.views")
-        except ModuleNotFoundError:
-            continue
+    for file in _view_module_files():
+        module = importlib.import_module(_module_path_for(file=file))
 
         for attribute in vars(module).values():
             if inspect.isclass(attribute) and attribute.__module__ == module.__name__:
@@ -87,17 +83,31 @@ def _project_app_configs() -> list:
 
 
 def _module_path_for(*, file: Path) -> str:
-    return ".".join(file.resolve().relative_to(Path(settings.BASE_DIR).resolve()).with_suffix("").parts)
+    parts = file.resolve().relative_to(Path(settings.BASE_DIR).resolve()).with_suffix("").parts
+
+    # A package's "__init__" is the package itself; importing it under its own name would hand back a
+    # second copy of the module and defeat the identity check on "attribute.__module__" below
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+
+    return ".".join(parts)
 
 
 def _view_module_files() -> list[Path]:
+    """
+    Every module a view class can be defined in.
+
+    "views/**/*.py" rather than "views/*.py", and "__init__.py" is kept rather than filtered: a view
+    put straight into "views/__init__.py" or into a nested subpackage would otherwise be collected by
+    nothing and escape all three checks below.
+    """
     files = []
     for app_config in _project_app_configs():
         app_path = Path(app_config.path).resolve()
         files.extend(sorted(app_path.glob("views.py")))
-        files.extend(sorted(app_path.glob("views/*.py")))
+        files.extend(sorted(app_path.glob("views/**/*.py")))
 
-    return [file for file in files if file.stem != "__init__"]
+    return files
 
 
 def _resolve(*, node: ast.expr, module) -> object | None:

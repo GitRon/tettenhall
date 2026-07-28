@@ -1,57 +1,42 @@
 # Tettenhall
 
-## Setup
+A Django browser game about Anglo-Saxon factions, built around a CQRS-style message bus.
 
-* Load all fixtures
-* Create superuser
+## Documentation
 
-## MVP
+Each doc is normative for the area it covers. Read the relevant one before working in that area rather than
+inferring the conventions from nearby code.
 
-### Dashboard / Generelles
+### Getting started
 
-* Gefangen müssen sich auch heilen am Wochenende
-* Events, die Einfluss auf Krieger oder sonstiges haben (Max HP ändert etc.)
-    * Event-Klasse, die man wie die Notifications registriert und die eine Wahrscheinlichkeit und einen Trigger haben,
-      wenn beides passt, wird es ausgeführt. So kann man super fix neue Events dazu bauen
+- [Local setup](docs/contributing/setup.md) — stack, dependencies, running the app and the suite
+- [Linting](docs/contributing/linting.md) — ruff, boa-restrictor, pre-commit
+- [Settings](docs/contributing/settings.md) — application vs test settings, queuebie configuration
+- [Commit messages](docs/contributing/commit-messages.md)
 
-### Faction
+### Architecture
 
-* Umgang mit "pleite" sein
-* Items kaufen und verkaufen (per Command im View)
+- [Where code goes](docs/patterns/app-layout.md) — app layout and which layer holds business logic
+- [The message bus](docs/patterns/message-bus.md) — commands vs events, the golden rule, dispatching
+- [Writing a handler](docs/patterns/handlers.md) — signature, registration, return values
+- [Adding a new flow](docs/patterns/adding-a-flow.md) — the end-to-end checklist
+- [Strict mode](docs/patterns/strict-mode.md) — what it enforces, and where it does not
+- [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
+- [Town buildings](docs/patterns/town-buildings.md) — where the game-balance numbers live
 
-### Warrior
+### Testing
 
-* Level & Erfahrungspunkte haben noch keinen Einfluss
-* Nicknames, je nachdem wie die Attribute ausfallen (Collum the Weak, Charles the Quick)
-* Training:
-    * Wie mache ich das? Trainiert man Dinge, die dann Bonus auf Fähigkeiten geben?
-    * Pro Skill (Stärke, Dex, HP, Moral) ein Fortschrittsbalken?
-    * Was tut dann XP? Macht es einfach den Kämpfer besser bei den Attacken und Verteidigen?
-    * Oder kann man damit nur XP sammeln?
-    * Was ist, wenn ich das Training allgemein und nicht pro Krieger definiere? Und jeder,
-      der nicht kämpft und gesund ist, das gleiche macht.
+- [Testing strategy](docs/patterns/testing-strategy.md) — what to test, at which level
+- [Test conventions](docs/patterns/testing-conventions.md) — layout, naming, assertions
+- [Test data](docs/patterns/testing-data.md) — factories and reference data
+- [Mocking](docs/patterns/mocking.md) — first-party mocks are a review finding
+- [Coverage](docs/patterns/coverage.md) — the 100% branch gate
+- [Registry tests](docs/patterns/registry-tests.md) — the four tests covering the message wiring
 
-### Training
-* Trainingsart auswählen und im Savegame hinterlegen
-* In der Woche Progress für alle Teilnehmer hinterlegen inkl. Punkt-Updates
+### Planning
 
-### Skirmish
+- [Backlog](docs/collaboration/backlog.md) — open ideas and unfinished work
 
-* Passive/defensiv-stärkende Attack-Action?
-* Fliehen als Aktion
-* Gegner-KI für Kampfaktionen
-* Kampfaktion soll an Item hängen, Warrior bekommt eine Funktion, die entscheidet, was es im Select zu sehen gibt
-* Morph swap htmx Fabi damit Formulare sich nicht ändern → gewählte Action springt immer zurück
-* Permanente Verletzungen
+## Credits
 
-### Technisches
-
-* Logging der Event-Queue
-
-## Konzeptionelles
-
-* Entity component system (Rustroguelike) -> Tipp von Andi
-
-### Quellen
-
-* Icons: game-icons.net
+Icons: [game-icons.net](https://game-icons.net)

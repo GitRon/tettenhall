@@ -10,6 +10,7 @@ from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
+    EarnMoneyFromBuildings,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -18,6 +19,7 @@ from apps.faction.messages.commands.faction import (
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithReducedMoraleDetermined,
+    MonthlyBuildingMoneyEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
     QuestWasRemovedFromBulletinBoard,
@@ -28,6 +30,10 @@ from apps.faction.models.faction import Faction
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
+from apps.town.buildings.hall import Hall
+from apps.town.buildings.marketplace import Marketplace
+from apps.town.buildings.weaponsmith import Weaponsmith
+from apps.town.models import Town
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
 
 
@@ -72,6 +78,12 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
         fyrd_reserve=random.randint(2, 5),
     )
 
+    # A faction always has exactly one town, so it is part of creating one rather than a reaction to
+    # it: several handlers of NewFactionCreated already read faction.town, and an event handler
+    # emitting a CreateTown command would land in the same batch as those, with no guaranteed order.
+    # "last_constructed_building_at" stays at its 0 default so the player can build in month 1.
+    Town.objects.create(faction=faction)
+
     # Set player faction in savegame
     if context.is_player_faction:
         context.savegame.player_faction = faction
@@ -91,8 +103,11 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
 
     message_list = []
 
-    no_items = random.randrange(4, 6)
-    for _ in range(no_items):
+    # The market decides how many stalls there are, the weaponsmith how good their wares
+    marketplace = Marketplace.get_building_by_type(building_type=context.faction.town.marketplace)
+    weaponsmith = Weaponsmith.get_building_by_type(building_type=context.faction.town.weaponsmith)
+
+    for _ in range(marketplace.AVAILABLE_ITEMS):
         if bool(random.getrandbits(1)):
             message_list.append(
                 RequestNewItemForTownShop(
@@ -100,6 +115,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                     generator_class=MercenaryItemGenerator,
                     item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
                     month=context.month,
+                    quality_bonus=weaponsmith.QUALITY_BONUS,
                 )
             )
         else:
@@ -109,6 +125,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                     generator_class=MercenaryItemGenerator,
                     item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
                     month=context.month,
+                    quality_bonus=weaponsmith.QUALITY_BONUS,
                 )
             )
 
@@ -181,3 +198,16 @@ def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event
     context.faction.save()
 
     return NewLeaderWarriorSet(faction=context.faction, warrior=context.warrior)
+
+
+@message_registry.register_command(command=EarnMoneyFromBuildings)
+def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event:
+    # Get hall building
+    hall_type = context.faction.town.hall
+    hall_building = Hall.get_building_by_type(building_type=hall_type)
+
+    return MonthlyBuildingMoneyEarned(
+        faction=context.faction,
+        amount=hall_building.REVENUE_PER_ROUND,
+        month=context.month,
+    )

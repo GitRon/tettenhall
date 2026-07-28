@@ -29,6 +29,13 @@ class MonthlyWarriorSalariesPaid(Event):
 
 
 @dataclass(kw_only=True)
+class MonthlyBuildingMoneyEarned(Event):
+    faction: Faction
+    amount: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class FactionWarriorsWithReducedMoraleDetermined(Event):
     faction: Faction
     warrior_list: list[Warrior]
@@ -48,6 +55,7 @@ class RequestNewItemForTownShop(Event):
     generator_class: type[BaseItemGenerator]
     item_function: int
     month: int
+    quality_bonus: int = 0
 
 
 @dataclass(kw_only=True)

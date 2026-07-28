@@ -145,6 +145,10 @@ exclude = [
     "PBR001",
     "PBR002",
 ]
+"*/views/*.py" = [
+    "PBR001",
+    "PBR002",
+]
 "*/context_processors/*.py" = [
     "PBR001",
 ]

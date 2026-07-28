@@ -68,10 +68,26 @@ def test_handle_heal_injured_warrior_can_roll_the_maximum():
     randrange() excludes its upper bound, so the maximum recoverable amount needs the "+ 1" to be
     reachable at all.
     """
-    warrior = WarriorFactory(current_health=1, max_health=20)
+    # A Shrine mends up to 8 points a month
+    warrior = WarriorFactory(current_health=1, max_health=20, faction__town__sanctuary=1)
 
-    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=10) as mocked_randrange:
+    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=8) as mocked_randrange:
         result = handle_heal_injured_warrior(context=HealInjuredWarrior(warrior=warrior, month=3))
 
-    mocked_randrange.assert_called_once_with(1, 11)
-    assert result.healed_points == 10
+    mocked_randrange.assert_called_once_with(1, 9)
+    assert result.healed_points == 8
+
+
+@pytest.mark.django_db
+def test_handle_heal_injured_warrior_heals_further_with_a_larger_sanctuary():
+    """
+    The sanctuary sets the ceiling of the monthly healing roll, so the building is what decides how
+    fast a warrior comes back.
+    """
+    warrior = WarriorFactory(current_health=1, max_health=30, faction__town__sanctuary=3)
+
+    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=1) as mocked_randrange:
+        handle_heal_injured_warrior(context=HealInjuredWarrior(warrior=warrior, month=3))
+
+    # A Great Sanctuary reaches 20 points, against the 4 a town without one manages
+    mocked_randrange.assert_called_once_with(1, 21)

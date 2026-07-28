@@ -15,13 +15,19 @@ class BaseItemGenerator:
     faction: Faction
     function: int
     savegame_id: int
+    quality_bonus: int
 
-    def __init__(self, *, faction: Faction | None, item_function: int, savegame_id: int) -> None:
+    def __init__(
+        self, *, faction: Faction | None, item_function: int, savegame_id: int, quality_bonus: int = 0
+    ) -> None:
         super().__init__()
 
         self.faction = faction
         self.function = item_function
         self.savegame_id = savegame_id
+        # Added to the modifier roll, so a better forge shifts an item up the condition ladder
+        # instead of re-centring it: the condition thresholds stay on the generator's own mean
+        self.quality_bonus = quality_bonus
 
     def _determine_condition(self, *, modifier: int) -> int:
         if modifier < self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
@@ -38,7 +44,7 @@ class BaseItemGenerator:
 
     def process(self) -> Item:
         # Modifier can be negative, DiceNotation class takes care of not dealing negative damage
-        modifier = round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA))
+        modifier = round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)) + self.quality_bonus
 
         item_type = self._get_queryset_for_type().first()
         if not item_type:

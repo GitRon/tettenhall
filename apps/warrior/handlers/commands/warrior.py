@@ -6,6 +6,7 @@ from queuebie.messages import Event
 from apps.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
+from apps.town.buildings.sanctuary import Sanctuary
 from apps.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
     CreateWarrior,
@@ -46,7 +47,9 @@ def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[
 
 @message_registry.register_command(command=HealInjuredWarrior)
 def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
-    max_recoverable_health_points = 10
+    # How far the town's sanctuary can mend a warrior in one month
+    sanctuary = Sanctuary.get_building_by_type(building_type=context.warrior.faction.town.sanctuary)
+    max_recoverable_health_points = sanctuary.MAX_HEALING_POINTS
 
     # Cap healed points at the maximum. randrange() excludes its upper bound, so it needs the "+ 1"
     # for "max_recoverable_health_points" to be reachable at all.

@@ -38,6 +38,12 @@ class PayMonthlyWarriorSalaries(Command):
 
 
 @dataclass(kw_only=True)
+class EarnMoneyFromBuildings(Command):
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
 class DetermineWarriorsWithReducedMorale(Command):
     faction: Faction
     month: int

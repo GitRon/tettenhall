@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from apps.item.models.item import Item
@@ -45,3 +47,40 @@ def test_process_without_a_matching_item_type():
 
     with pytest.raises(RuntimeError, match="No item type found."):
         generator.process()
+
+
+@pytest.mark.django_db
+def test_process_lifts_the_item_by_the_quality_bonus():
+    """
+    The condition thresholds sit on the generator's own mean, so the bonus has to be added to the
+    roll rather than raising that mean - raising it would move the thresholds along with it and
+    leave the condition distribution exactly as it was.
+    """
+    generator = BaseItemGenerator(
+        faction=None,
+        item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+        savegame_id=SavegameFactory().id,
+        quality_bonus=3,
+    )
+
+    # Rolling the mean of 2 plus the bonus of 3 lands above the superior threshold of 4
+    with mock.patch("apps.item.services.generators.item.base.random.gauss", return_value=2):
+        result = generator.process()
+
+    assert result.modifier == 5
+    assert result.condition == Item.ConditionChoices.CONDITION_SUPERIOR
+
+
+@pytest.mark.django_db
+def test_process_without_a_quality_bonus():
+    generator = BaseItemGenerator(
+        faction=None,
+        item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+        savegame_id=SavegameFactory().id,
+    )
+
+    with mock.patch("apps.item.services.generators.item.base.random.gauss", return_value=2):
+        result = generator.process()
+
+    assert result.modifier == 2
+    assert result.condition == Item.ConditionChoices.CONDITION_TRADITIONAL

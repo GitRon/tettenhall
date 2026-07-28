@@ -1,5 +1,3 @@
-from unittest import mock
-
 import pytest
 
 from apps.faction.handlers.commands.warrior import handle_draft_warrior_from_fyrd, handle_restock_pub_mercenaries
@@ -9,17 +7,18 @@ from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.skirmish.models import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+from apps.town.models import Town
 from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
-def _player_faction() -> Faction:
+def _player_faction(*, hall: int = Town.HallChoices.HALL_NONE) -> Faction:
     """
     A faction its own savegame points to as the player's.
 
     FactionFactory leaves "savegame.player_faction" unset, and only the player's town has a pub to
     restock, so a plain factory faction is skipped by the handler.
     """
-    faction = FactionFactory()
+    faction = FactionFactory(town__hall=hall)
     faction.savegame.player_faction = faction
     faction.savegame.save()
 
@@ -27,11 +26,11 @@ def _player_faction() -> Faction:
 
 
 @pytest.mark.django_db
-def test_handle_restock_pub_mercenaries_requests_one_warrior_per_drawn_slot():
-    faction = _player_faction()
+def test_handle_restock_pub_mercenaries_requests_one_warrior_per_hall_slot():
+    # A Great Hall offers two mercenary slots
+    faction = _player_faction(hall=Town.HallChoices.HALL_MEDIUM)
 
-    with mock.patch("apps.faction.handlers.commands.warrior.random.randrange", return_value=2):
-        result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
+    result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
 
     assert len(result) == 2
     assert result[0] == RequestWarriorForPub(
@@ -49,8 +48,7 @@ def test_handle_restock_pub_mercenaries_removes_previous_stock():
     faction = _player_faction()
     faction.available_mercenaries.add(WarriorFactory(faction=faction))
 
-    with mock.patch("apps.faction.handlers.commands.warrior.random.randrange", return_value=2):
-        handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
+    handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
 
     assert faction.available_mercenaries.count() == 0
 
@@ -66,8 +64,7 @@ def test_handle_restock_pub_mercenaries_skips_a_rival_faction():
     previous_stock = WarriorFactory(faction=rival_faction)
     rival_faction.available_mercenaries.add(previous_stock)
 
-    with mock.patch("apps.faction.handlers.commands.warrior.random.randrange", return_value=2):
-        result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=rival_faction, month=3))
+    result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=rival_faction, month=3))
 
     assert result == []
     # Bailing out before the clean-up, so the rival keeps whatever it had

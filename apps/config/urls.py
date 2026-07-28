@@ -34,6 +34,7 @@ urlpatterns = [
         include(("apps.skirmish.urls", "apps.skirmish"), namespace="skirmish"),
     ),
     path("training/", include(("apps.training.urls", "apps.training"), namespace="training")),
+    path("town/", include(("apps.town.urls", "apps.town"), namespace="town")),
     path("warrior/", include(("apps.warrior.urls", "apps.month"), namespace="warrior")),
     path("month/", include(("apps.month.urls", "apps.month"), namespace="month")),
 ]
