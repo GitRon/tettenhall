@@ -48,6 +48,16 @@ def test_town_upgrade_view_does_not_show_a_town_of_another_savegame(logged_in_cl
 
 
 @pytest.mark.django_db
+def test_town_upgrade_view_without_an_active_savegame(logged_in_client):
+    """
+    The town used to be dereferenced unguarded, so the page answered with a 500.
+    """
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_upgrade_building_view_upgrades_the_building(logged_in_client, current_savegame):
     """
     Flow test: no mocking inside the chain, so this runs the real upgrade and asserts the end state.
@@ -131,6 +141,13 @@ def test_upgrade_building_view_with_an_unknown_building_type(logged_in_client, c
 
     assert response.status_code == 404
     assert current_savegame.player_faction.town.faction_id == current_savegame.player_faction_id
+
+
+@pytest.mark.django_db
+def test_upgrade_building_view_without_an_active_savegame(logged_in_client):
+    response = logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
+
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

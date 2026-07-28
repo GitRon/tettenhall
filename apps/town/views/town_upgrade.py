@@ -17,14 +17,27 @@ from apps.town.models import Town
 BUILDING_TYPES = ("hall", "weaponsmith", "marketplace", "sanctuary")
 
 
-class TownUpgradeView(PlayerFactionScopedQuerysetMixin, generic.DetailView):
+class PlayerTownMixin(PlayerFactionScopedQuerysetMixin):
+    """
+    Resolves the single town the current player owns.
+
+    The URL carries no id, so the scoped queryset holds exactly that town - and nothing at all
+    before the player has an active savegame with a faction, which both views used to walk into and
+    answer with a server error.
+    """
+
+    def get_object(self, queryset=None) -> Town:
+        # Going through "self" rather than "super()" is what keeps the scoping applied
+        town = self.get_queryset().first()
+        if town is None:
+            raise Http404("The current savegame has no town.")
+
+        return town
+
+
+class TownUpgradeView(PlayerTownMixin, generic.DetailView):
     model = Town
     template_name = "town/town_upgrade.html"
-
-    def get_object(self, queryset=None):
-        # This is the player's own town and the URL carries no id, so the scoped queryset holds
-        # exactly it. Going through "self" rather than "super()" is what keeps the scoping applied.
-        return self.get_queryset().first()
 
     def get_context_data(self, **kwargs):
         town = self.object
@@ -55,12 +68,9 @@ class TownUpgradeView(PlayerFactionScopedQuerysetMixin, generic.DetailView):
         return context
 
 
-class UpgradeBuildingView(PlayerFactionScopedQuerysetMixin, generic.DetailView):
+class UpgradeBuildingView(PlayerTownMixin, generic.DetailView):
     model = Town
     http_method_names = ("post",)
-
-    def get_object(self, queryset=None):
-        return self.get_queryset().first()
 
     def post(self, request, *args, **kwargs):
         building_type = self.kwargs["building_type"]
