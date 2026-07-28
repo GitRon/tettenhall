@@ -1,4 +1,18 @@
 import abc
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True, kw_only=True)
+class BuildingEffect:
+    """
+    One lever a building level grants, ready to be put in front of the player.
+
+    A label and a value rather than a finished sentence: the numbers are the building's own business,
+    while the phrasing and the layout around them are the template's.
+    """
+
+    label: str
+    value: str
 
 
 class Building(abc.ABC):
@@ -23,6 +37,19 @@ class Building(abc.ABC):
 
         A method rather than a class attribute because the variants are defined below their family
         class, so the names only resolve once this is called.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def get_effects(cls) -> tuple[BuildingEffect, ...]:
+        """
+        What the level this variant stands for grants, in display order.
+
+        Implemented once on the family class and reading the constants through "cls", so a new level
+        describes itself out of the numbers it declares. Every variant of a family answers with the
+        same labels in the same order - the upgrade page reads a level and the one above it side by
+        side.
         """
         raise NotImplementedError
 

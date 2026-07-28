@@ -1,5 +1,6 @@
 import pytest
 
+from apps.town.buildings.base import BuildingEffect
 from apps.town.buildings.weaponsmith import (
     LargeWeaponsmith,
     MediumWeaponsmith,
@@ -46,3 +47,9 @@ def test_get_levels_matches_the_model_choices():
     display and the admin cannot handle.
     """
     assert len(Weaponsmith.get_levels()) == len(Town.WeaponsmithChoices)
+
+
+def test_get_effects_names_the_quality_bonus():
+    result = SmallWeaponsmith.get_effects()
+
+    assert result == (BuildingEffect(label="Quality of the shop's wares", value="+1"),)

@@ -58,3 +58,13 @@ class Town(models.Model):
 
     def __str__(self) -> str:
         return f"{self.faction.name}"
+
+    def get_building_level_display(self, *, building_type: str, level: int) -> str:
+        """
+        The name a building level goes by, for any level rather than only the one standing.
+
+        Django generates "get_<field>_display()" for the value in the column, while the upgrade page
+        also names the level it offers next. Reading the names off the field keeps that page from
+        holding a second copy of them that can drift from the column.
+        """
+        return dict(self._meta.get_field(building_type).choices)[level]

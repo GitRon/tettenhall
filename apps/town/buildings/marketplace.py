@@ -1,4 +1,4 @@
-from apps.town.buildings.base import Building
+from apps.town.buildings.base import Building, BuildingEffect
 
 
 class Marketplace(Building):
@@ -27,6 +27,13 @@ class Marketplace(Building):
     @classmethod
     def get_levels(cls) -> tuple[type[Building], ...]:
         return (NoMarketplace, SmallMarketplace, MediumMarketplace, LargeMarketplace)
+
+    @classmethod
+    def get_effects(cls) -> tuple[BuildingEffect, ...]:
+        return (
+            BuildingEffect(label="Paid when selling an item", value=f"{cls.SELL_PERCENTAGE}% of its price"),
+            BuildingEffect(label="Items in the shop", value=str(cls.AVAILABLE_ITEMS)),
+        )
 
 
 class NoMarketplace(Marketplace):

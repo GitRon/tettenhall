@@ -37,6 +37,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         town = self.object
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_silver_balance = Transaction.objects.current_balance(savegame_id=current_savegame.id)
 
         has_already_built = town.last_constructed_building_at == current_savegame.current_month
 
@@ -50,14 +51,33 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
             # variant above the largest one
             next_level = min(current_level + 1, building_class.get_max_level())
 
+            current_building = building_class.get_building_by_type(building_type=current_level)
+            next_building = building_class.get_building_by_type(building_type=next_level)
+
+            level_display = town.get_building_level_display(building_type=building_type, level=current_level)
+            next_level_display = town.get_building_level_display(building_type=building_type, level=next_level)
+
             building_list.append(
                 {
                     "building_type": building_type,
                     "label": building_class.BUILDING_LABEL,
                     "level": current_level,
-                    "level_display": getattr(town, f"get_{building_type}_display")(),
+                    "level_display": level_display,
                     "max_level": building_class.get_max_level(),
-                    "costs": building_class.get_building_by_type(building_type=next_level).BUILDING_COSTS,
+                    "next_level_display": next_level_display,
+                    "costs": next_building.BUILDING_COSTS,
+                    # What the money buys, level by level. The player is choosing between four prices
+                    # and the levels are deliberately not worth them on the numbers alone, so the
+                    # numbers are what the decision needs.
+                    "effect_list": [
+                        {"label": effect.label, "current": effect.value, "next": upgraded_effect.value}
+                        for effect, upgraded_effect in zip(
+                            current_building.get_effects(), next_building.get_effects(), strict=True
+                        )
+                    ],
+                    # Answering a click with a warning that fades after a second is no way to price a
+                    # building, so an unaffordable one says so on the button instead
+                    "can_afford": current_silver_balance >= next_building.BUILDING_COSTS,
                 }
             )
 
@@ -97,16 +117,18 @@ class UpgradeBuildingView(PlayerTownMixin, generic.DetailView):
             response["HX-Redirect"] = reverse("town:town-upgrade-view")
             return response
 
-        desired_building = building_class.get_building_by_type(building_type=current_building_level + 1)
-        if current_silver_balance < desired_building.BUILDING_COSTS:
-            messages.add_message(request, messages.WARNING, "You don't have the silver to pay for the building.")
+        # Checked before the price: both guards can apply at once, and the month is the one the player
+        # cannot do anything about until it is over, so it is the one worth reporting
+        if town.last_constructed_building_at == current_savegame.current_month:
+            messages.add_message(request, messages.WARNING, "You've already commissioned a building this month.")
 
             response = HttpResponse()
             response["HX-Redirect"] = reverse("town:town-upgrade-view")
             return response
 
-        if town.last_constructed_building_at == current_savegame.current_month:
-            messages.add_message(request, messages.WARNING, "You've already commissioned a building this month.")
+        desired_building = building_class.get_building_by_type(building_type=current_building_level + 1)
+        if current_silver_balance < desired_building.BUILDING_COSTS:
+            messages.add_message(request, messages.WARNING, "You don't have the silver to pay for the building.")
 
             response = HttpResponse()
             response["HX-Redirect"] = reverse("town:town-upgrade-view")

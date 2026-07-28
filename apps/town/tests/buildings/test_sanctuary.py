@@ -1,5 +1,6 @@
 import pytest
 
+from apps.town.buildings.base import BuildingEffect
 from apps.town.buildings.sanctuary import (
     LargeSanctuary,
     MediumSanctuary,
@@ -46,3 +47,9 @@ def test_get_levels_matches_the_model_choices():
     display and the admin cannot handle.
     """
     assert len(Sanctuary.get_levels()) == len(Town.SanctuaryChoices)
+
+
+def test_get_effects_names_the_healing_ceiling():
+    result = SmallSanctuary.get_effects()
+
+    assert result == (BuildingEffect(label="Healed per month at most", value="8 health points"),)

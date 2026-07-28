@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
@@ -36,6 +37,49 @@ def test_town_upgrade_view_offers_the_costs_of_the_next_level(logged_in_client, 
     assert response.status_code == 200
     # A Mead Hall is standing, so the Great Hall is what the page offers next
     assert _building(response, "hall")["costs"] == 2100
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_names_the_level_it_offers_next(logged_in_client, current_savegame):
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert _building(response, "hall")["next_level_display"] == "Mead Hall"
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_puts_the_effects_of_both_levels_next_to_each_other(logged_in_client, current_savegame):
+    """
+    A price on its own says nothing about whether the building is worth it, and the top levels
+    deliberately are not on their effect alone.
+    """
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert _building(response, "hall")["effect_list"] == [
+        {"label": "Monthly income", "current": "50 silver", "next": "300 silver"},
+        {"label": "Mercenaries in the pub", "current": "1", "next": "1"},
+    ]
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_with_enough_silver_for_the_next_level(logged_in_client, current_savegame):
+    TransactionFactory(faction=current_savegame.player_faction, amount=900)
+
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert _building(response, "hall")["can_afford"] is True
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_without_enough_silver_for_the_next_level(logged_in_client, current_savegame):
+    """
+    The page disables the button, so the price is answered before the click rather than by a warning
+    notification that fades after a second.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=899)
+
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert _building(response, "hall")["can_afford"] is False
 
 
 @pytest.mark.django_db
@@ -187,6 +231,23 @@ def test_upgrade_building_view_with_a_building_already_commissioned_this_month(l
     assert response.status_code == 200
     town.refresh_from_db()
     assert town.hall == Town.HallChoices.HALL_NONE
+
+
+@pytest.mark.django_db
+def test_upgrade_building_view_reports_the_month_before_the_missing_silver(logged_in_client, current_savegame):
+    """
+    Both guards apply to a player who has built this month and cannot pay either. Reporting the price
+    sent them off to raise silver they cannot spend until the month is over.
+    """
+    town = current_savegame.player_faction.town
+    town.last_constructed_building_at = current_savegame.current_month
+    town.save()
+
+    response = logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
+
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [
+        "You've already commissioned a building this month."
+    ]
 
 
 @pytest.mark.django_db

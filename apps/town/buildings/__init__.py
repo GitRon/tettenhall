@@ -1,4 +1,4 @@
-from apps.town.buildings.base import Building
+from apps.town.buildings.base import Building, BuildingEffect
 from apps.town.buildings.hall import Hall
 from apps.town.buildings.marketplace import Marketplace
 from apps.town.buildings.sanctuary import Sanctuary

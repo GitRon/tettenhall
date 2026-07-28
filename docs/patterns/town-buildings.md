@@ -16,11 +16,16 @@ holding that level's numbers:
 - `BUILDINGS` in `apps/town/buildings/__init__.py` maps the town field name to the family class. It is
   both the dispatch table and the whitelist for the upgrade URL; a building missing from it cannot be
   upgraded.
+- `get_effects()` describes a level for the player, as `BuildingEffect(label, value)` pairs. It is
+  implemented once per family and reads the variant's constants through `cls`, so a new level describes
+  itself. **Every variant of a family has to answer with the same labels in the same order** — the upgrade
+  page reads a level and the one above it side by side and zips the two `strict=True`.
 
 ## Rules
 
 - **Every game-balance number lives in `apps/town/buildings/`** — the building costs and each building's
   effect. Don't hardcode a number in a handler that a building should own; the handler reads the constant.
+  The upgrade page names the effects too, and reads them from the same place through `get_effects()`.
 - **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots, weaponsmith →
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling.
 - **Level 0 is a baseline, not "no effect"**: a town without a hall still earns a little, and one without
@@ -36,6 +41,10 @@ holding that level's numbers:
   overlapping requests both pass the view's check, and the command handler returning `None` for the
   loser is what keeps the player from being charged twice. Don't turn that back into a
   read-modify-save.
+- **The month guard is reported before the price.** Both can apply to the same click, and the month is the
+  one the player cannot do anything about until it is over — naming the price instead sends them off to
+  raise silver they may not spend yet. The price is a disabled button on the page anyway, so a click
+  reaching the view at all means the page was stale.
 - **A faction without a town breaks four separate flows** (month advance, item sale, shop restock,
   warrior healing), all with `Town.DoesNotExist`. Anything that creates factions outside
   `handle_create_new_faction` — a data migration, a fixture, a management command — has to create the

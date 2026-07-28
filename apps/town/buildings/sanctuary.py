@@ -1,4 +1,4 @@
-from apps.town.buildings.base import Building
+from apps.town.buildings.base import Building, BuildingEffect
 
 
 class Sanctuary(Building):
@@ -20,6 +20,11 @@ class Sanctuary(Building):
     @classmethod
     def get_levels(cls) -> tuple[type[Building], ...]:
         return (NoSanctuary, SmallSanctuary, MediumSanctuary, LargeSanctuary)
+
+    @classmethod
+    def get_effects(cls) -> tuple[BuildingEffect, ...]:
+        # A ceiling on the monthly roll rather than a promise, so the wording has to stay vague
+        return (BuildingEffect(label="Healed per month at most", value=f"{cls.MAX_HEALING_POINTS} health points"),)
 
 
 class NoSanctuary(Sanctuary):

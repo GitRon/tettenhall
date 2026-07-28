@@ -1,5 +1,6 @@
 import pytest
 
+from apps.town.buildings.base import BuildingEffect
 from apps.town.buildings.hall import Hall, LargeHall, MediumHall, NoHall, SmallHall
 from apps.town.models import Town
 
@@ -40,3 +41,12 @@ def test_get_levels_matches_the_model_choices():
     display and the admin cannot handle.
     """
     assert len(Hall.get_levels()) == len(Town.HallChoices)
+
+
+def test_get_effects_names_the_income_and_the_mercenary_slots():
+    result = SmallHall.get_effects()
+
+    assert result == (
+        BuildingEffect(label="Monthly income", value="300 silver"),
+        BuildingEffect(label="Mercenaries in the pub", value="1"),
+    )

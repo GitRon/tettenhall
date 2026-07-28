@@ -1,4 +1,4 @@
-from apps.town.buildings.base import Building
+from apps.town.buildings.base import Building, BuildingEffect
 
 
 class Hall(Building):
@@ -20,6 +20,13 @@ class Hall(Building):
     @classmethod
     def get_levels(cls) -> tuple[type[Building], ...]:
         return (NoHall, SmallHall, MediumHall, LargeHall)
+
+    @classmethod
+    def get_effects(cls) -> tuple[BuildingEffect, ...]:
+        return (
+            BuildingEffect(label="Monthly income", value=f"{cls.REVENUE_PER_ROUND} silver"),
+            BuildingEffect(label="Mercenaries in the pub", value=str(cls.AVAILABLE_MERCENARIES)),
+        )
 
 
 class NoHall(Hall):

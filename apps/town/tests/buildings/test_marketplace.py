@@ -1,5 +1,6 @@
 import pytest
 
+from apps.town.buildings.base import BuildingEffect
 from apps.town.buildings.marketplace import (
     LargeMarketplace,
     Marketplace,
@@ -46,3 +47,12 @@ def test_get_levels_matches_the_model_choices():
     display and the admin cannot handle.
     """
     assert len(Marketplace.get_levels()) == len(Town.MarketChoices)
+
+
+def test_get_effects_names_the_resale_share_and_the_stock_size():
+    result = SmallMarketplace.get_effects()
+
+    assert result == (
+        BuildingEffect(label="Paid when selling an item", value="55% of its price"),
+        BuildingEffect(label="Items in the shop", value="4"),
+    )

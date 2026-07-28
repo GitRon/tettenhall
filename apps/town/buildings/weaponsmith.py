@@ -1,4 +1,4 @@
-from apps.town.buildings.base import Building
+from apps.town.buildings.base import Building, BuildingEffect
 
 
 class Weaponsmith(Building):
@@ -20,6 +20,10 @@ class Weaponsmith(Building):
     @classmethod
     def get_levels(cls) -> tuple[type[Building], ...]:
         return (NoWeaponsmith, SmallWeaponsmith, MediumWeaponsmith, LargeWeaponsmith)
+
+    @classmethod
+    def get_effects(cls) -> tuple[BuildingEffect, ...]:
+        return (BuildingEffect(label="Quality of the shop's wares", value=f"+{cls.QUALITY_BONUS}"),)
 
 
 class NoWeaponsmith(Weaponsmith):
