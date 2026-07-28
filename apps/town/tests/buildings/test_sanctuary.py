@@ -1,0 +1,39 @@
+import pytest
+
+from apps.town.buildings.sanctuary import (
+    LargeSanctuary,
+    MediumSanctuary,
+    NoSanctuary,
+    Sanctuary,
+    SmallSanctuary,
+)
+from apps.town.models import Town
+
+
+def test_get_building_by_type_without_a_sanctuary():
+    result = Sanctuary.get_building_by_type(building_type=Town.SanctuaryChoices.SANCTUARY_NONE)
+
+    assert isinstance(result, NoSanctuary)
+
+
+def test_get_building_by_type_small():
+    result = Sanctuary.get_building_by_type(building_type=Town.SanctuaryChoices.SANCTUARY_SMALL)
+
+    assert isinstance(result, SmallSanctuary)
+
+
+def test_get_building_by_type_medium():
+    result = Sanctuary.get_building_by_type(building_type=Town.SanctuaryChoices.SANCTUARY_MEDIUM)
+
+    assert isinstance(result, MediumSanctuary)
+
+
+def test_get_building_by_type_large():
+    result = Sanctuary.get_building_by_type(building_type=Town.SanctuaryChoices.SANCTUARY_LARGE)
+
+    assert isinstance(result, LargeSanctuary)
+
+
+def test_get_building_by_type_unknown_level():
+    with pytest.raises(RuntimeError, match="Unknown sanctuary type: 4"):
+        Sanctuary.get_building_by_type(building_type=4)

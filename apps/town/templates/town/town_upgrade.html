@@ -3,81 +3,26 @@
 {% block content %}
     <h1>Town upgrade</h1>
 
-    <div uk-grid>
-        {# todo: extract this card into a partial #}
-        <div class="uk-width-1-3">
-            Hall
+    {% for building in building_list %}
+        <div uk-grid>
+            <div class="uk-width-1-3">
+                {{ building.label }}
+            </div>
+            <div class="uk-width-1-3">
+                {{ building.level_display }} (Level {{ building.level }})
+            </div>
+            <div class="uk-width-1-3">
+                {% if building.level >= building.max_level %}
+                    <button class="uk-button uk-button-primary" disabled>Max level reached</button>
+                {% elif has_already_built %}
+                    <button class="uk-button uk-button-primary" disabled>Already constructing a building this
+                        month</button>
+                {% else %}
+                    <button hx-post="{% url "town:upgrade-building-view" building.building_type %}"
+                            class="uk-button uk-button-primary">Upgrade for {{ building.costs }} silver
+                    </button>
+                {% endif %}
+            </div>
         </div>
-        <div class="uk-width-1-3">
-            {{ object.get_hall_display }} (Level {{ object.hall }})
-        </div>
-        <div class="uk-width-1-3">
-            {% if object.hall == 3 %}
-                <button class="uk-button uk-button-primary" disabled>Max level reached</button>
-            {% elif has_already_built %}
-                <button class="uk-button uk-button-primary" disabled>Already constructing a building this month</button>
-            {% else %}
-                <button hx-post="{% url "town:upgrade-building-view" "hall" %}" class="uk-button uk-button-primary">
-                    Upgrade for {{ building_costs_hall }} silver
-                </button>
-            {% endif %}
-        </div>
-    </div>
-    <div uk-grid>
-        <div class="uk-width-1-3">
-            Weaponsmith
-        </div>
-        <div class="uk-width-1-3">
-            {{ object.get_weaponsmith_display }} (Level {{ object.weaponsmith }})
-        </div>
-        <div class="uk-width-1-3">
-            {% if object.weaponsmith == 3 %}
-                <button class="uk-button uk-button-primary" disabled>Max level reached</button>
-            {% elif has_already_built %}
-                <button class="uk-button uk-button-primary" disabled>Already constructing a building this month</button>
-            {% else %}
-                <button hx-post="{% url "town:upgrade-building-view" "weaponsmith" %}"
-                        class="uk-button uk-button-primary">Upgrade for {{ building_costs_weaponsmith }} silver
-                </button>
-            {% endif %}
-        </div>
-    </div>
-    <div uk-grid>
-        <div class="uk-width-1-3">
-            Marketplace
-        </div>
-        <div class="uk-width-1-3">
-            {{ object.get_marketplace_display }} (Level {{ object.marketplace }})
-        </div>
-        <div class="uk-width-1-3">
-            {% if object.marketplace == 3 %}
-                <button class="uk-button uk-button-primary" disabled>Max level reached</button>
-            {% elif has_already_built %}
-                <button class="uk-button uk-button-primary" disabled>Already constructing a building this month</button>
-            {% else %}
-                <button hx-post="{% url "town:upgrade-building-view" "marketplace" %}"
-                        class="uk-button uk-button-primary">Upgrade for {{ building_costs_marketplace }} silver
-                </button>
-            {% endif %}
-        </div>
-    </div>
-    <div uk-grid>
-        <div class="uk-width-1-3">
-            Sanctuary
-        </div>
-        <div class="uk-width-1-3">
-            {{ object.get_sanctuary_display }} (Level {{ object.sanctuary }})
-        </div>
-        <div class="uk-width-1-3">
-            {% if object.sanctuary == 3 %}
-                <button class="uk-button uk-button-primary" disabled>Max level reached</button>
-            {% elif has_already_built %}
-                <button class="uk-button uk-button-primary" disabled>Already constructing a building this month</button>
-            {% else %}
-                <button hx-post="{% url "town:upgrade-building-view" "sanctuary" %}"
-                        class="uk-button uk-button-primary">Upgrade for {{ building_costs_sanctuary }} silver
-                </button>
-            {% endif %}
-        </div>
-    </div>
+    {% endfor %}
 {% endblock content %}

@@ -8,6 +8,15 @@ from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.town.models import Town
 
 
+def _building(response, building_type: str) -> dict:
+    """
+    The entry the page renders for one building.
+    """
+    return next(
+        building for building in response.context["building_list"] if building["building_type"] == building_type
+    )
+
+
 @pytest.mark.django_db
 def test_town_upgrade_view_shows_the_town_of_the_player_faction(logged_in_client, current_savegame):
     response = logged_in_client.get(reverse("town:town-upgrade-view"))
@@ -17,7 +26,7 @@ def test_town_upgrade_view_shows_the_town_of_the_player_faction(logged_in_client
 
 
 @pytest.mark.django_db
-def test_town_upgrade_view_offers_the_costs_of_the_next_hall(logged_in_client, current_savegame):
+def test_town_upgrade_view_offers_the_costs_of_the_next_level(logged_in_client, current_savegame):
     town = current_savegame.player_faction.town
     town.hall = Town.HallChoices.HALL_SMALL
     town.save()
@@ -26,7 +35,34 @@ def test_town_upgrade_view_offers_the_costs_of_the_next_hall(logged_in_client, c
 
     assert response.status_code == 200
     # A Mead Hall is standing, so the Great Hall is what the page offers next
-    assert response.context["building_costs_hall"] == 2000
+    assert _building(response, "hall")["costs"] == 2000
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_offers_every_building(logged_in_client, current_savegame):
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert [building["building_type"] for building in response.context["building_list"]] == [
+        "hall",
+        "weaponsmith",
+        "marketplace",
+        "sanctuary",
+    ]
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_keeps_naming_a_price_at_the_maximum_level(logged_in_client, current_savegame):
+    """
+    The next level is capped at the top one, which would otherwise be looked up one above the
+    largest variant.
+    """
+    town = current_savegame.player_faction.town
+    town.hall = Town.HallChoices.HALL_LARGE
+    town.save()
+
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert _building(response, "hall")["costs"] == 3000
 
 
 @pytest.mark.django_db
@@ -84,6 +120,39 @@ def test_upgrade_building_view_charges_the_building_costs(logged_in_client, curr
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 
     assert Transaction.objects.current_balance(savegame_id=current_savegame.id) == 0
+
+
+@pytest.mark.django_db
+def test_upgrade_building_view_charges_the_costs_of_the_building_it_upgrades(logged_in_client, current_savegame):
+    """
+    Every building used to be priced through the hall, so the page advertised a weaponsmith at 0
+    silver while the upgrade charged the hall's 1000.
+    """
+    town = current_savegame.player_faction.town
+    town.weaponsmith = Town.WeaponsmithChoices.WEAPONSMITH_MEDIUM
+    town.last_constructed_building_at = 0
+    town.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=3000)
+
+    page = logged_in_client.get(reverse("town:town-upgrade-view"))
+    logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "weaponsmith"}))
+
+    # A Master Forge costs 3000, so the advertised price is what leaves the purse
+    assert _building(page, "weaponsmith")["costs"] == 3000
+    assert Transaction.objects.current_balance(savegame_id=current_savegame.id) == 0
+
+
+@pytest.mark.django_db
+def test_upgrade_building_view_upgrades_a_building_other_than_the_hall(logged_in_client, current_savegame):
+    town = current_savegame.player_faction.town
+    town.last_constructed_building_at = 0
+    town.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "sanctuary"}))
+
+    town.refresh_from_db()
+    assert town.sanctuary == Town.SanctuaryChoices.SANCTUARY_SMALL
 
 
 @pytest.mark.django_db

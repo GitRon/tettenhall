@@ -1,23 +1,17 @@
 from apps.town.buildings.base import Building
-from apps.town.models import Town
 
 
 class Weaponsmith(Building):
+    BUILDING_NAME = "weaponsmith"
+    BUILDING_LABEL = "Weaponsmith"
+
     AVAILABLE_ITEMS = 0
 
     BUILDING_COSTS = 0
 
     @classmethod
-    def get_building_by_type(cls, *, building_type: int) -> "Weaponsmith":
-        if building_type == Town.WeaponsmithChoices.WEAPONSMITH_NONE:
-            return NoWeaponsmith()
-        if building_type == Town.WeaponsmithChoices.WEAPONSMITH_SMALL:
-            return SmallWeaponsmith()
-        if building_type == Town.WeaponsmithChoices.WEAPONSMITH_MEDIUM:
-            return MediumWeaponsmith()
-        if building_type == Town.WeaponsmithChoices.WEAPONSMITH_LARGE:
-            return LargeWeaponsmith()
-        raise RuntimeError(f"Unknown weaponsmith type: {building_type}")
+    def get_levels(cls) -> tuple[type[Building], ...]:
+        return (NoWeaponsmith, SmallWeaponsmith, MediumWeaponsmith, LargeWeaponsmith)
 
 
 class NoWeaponsmith(Weaponsmith):

@@ -7,14 +7,9 @@ from queuebie.runner import handle_message
 from apps.finance.models import Transaction
 from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
-from apps.town.buildings.hall import Hall
+from apps.town.buildings import BUILDINGS
 from apps.town.messages.commands.town import UpgradeTownBuilding
 from apps.town.models import Town
-
-# The building levels live in these four fields, and the type to upgrade arrives as a free string
-# from the URL. Without this list "getattr"/"setattr" would reach any attribute of the town - and
-# posting "faction_id" would hand the town to another faction.
-BUILDING_TYPES = ("hall", "weaponsmith", "marketplace", "sanctuary")
 
 
 class PlayerTownMixin(PlayerFactionScopedQuerysetMixin):
@@ -48,22 +43,25 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
         context = super().get_context_data(**kwargs)
         context.update({"has_already_built": has_already_built})
 
-        building_costs_hall = Hall.get_building_by_type(
-            building_type=min(town.hall + 1, Town.HallChoices.HALL_LARGE)
-        ).BUILDING_COSTS
-        # TODO: add building costs
-        building_costs_weaponsmith = 0
-        building_costs_marketplace = 0
-        building_costs_sanctuary = 0
+        building_list = []
+        for building_type, building_class in BUILDINGS.items():
+            current_level = getattr(town, building_type)
+            # Capped at the maximum so the last level can still name a price instead of asking for a
+            # variant above the largest one
+            next_level = min(current_level + 1, building_class.get_max_level())
 
-        context.update(
-            {
-                "building_costs_hall": building_costs_hall,
-                "building_costs_weaponsmith": building_costs_weaponsmith,
-                "building_costs_marketplace": building_costs_marketplace,
-                "building_costs_sanctuary": building_costs_sanctuary,
-            }
-        )
+            building_list.append(
+                {
+                    "building_type": building_type,
+                    "label": building_class.BUILDING_LABEL,
+                    "level": current_level,
+                    "level_display": getattr(town, f"get_{building_type}_display")(),
+                    "max_level": building_class.get_max_level(),
+                    "costs": building_class.get_building_by_type(building_type=next_level).BUILDING_COSTS,
+                }
+            )
+
+        context.update({"building_list": building_list})
 
         return context
 
@@ -73,10 +71,14 @@ class UpgradeBuildingView(PlayerTownMixin, generic.DetailView):
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs):
+        # The building arrives as a free string from the URL, and its name is what "getattr" and the
+        # handler's "setattr" address on the town. Without this lookup posting "faction_id" would
+        # hand the town to another faction.
         building_type = self.kwargs["building_type"]
-        if building_type not in BUILDING_TYPES:
+        if building_type not in BUILDINGS:
             raise Http404(f"Unknown building type: {building_type}")
 
+        building_class = BUILDINGS[building_type]
         town = self.get_object()
 
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
@@ -84,9 +86,9 @@ class UpgradeBuildingView(PlayerTownMixin, generic.DetailView):
 
         current_building_level = getattr(town, building_type)
 
-        # The largest hall is the last level there is, so this has to stop one below it - asking for
-        # the next one up would leave "get_building_by_type" without a match
-        if current_building_level >= Town.HallChoices.HALL_LARGE:
+        # The top level is the last one there is, so this has to stop there - asking for the next one
+        # up would leave "get_building_by_type" without a match
+        if current_building_level >= building_class.get_max_level():
             messages.add_message(request, messages.WARNING, "You already have the maximum building level.")
 
             # TODO: encapsulate this logic somewhere so we don't need to return this n times
@@ -95,8 +97,7 @@ class UpgradeBuildingView(PlayerTownMixin, generic.DetailView):
             response["HX-Redirect"] = reverse("town:town-upgrade-view")
             return response
 
-        # TODO: make this generic based on "building_type"
-        desired_building = Hall.get_building_by_type(building_type=current_building_level + 1)
+        desired_building = building_class.get_building_by_type(building_type=current_building_level + 1)
         if current_silver_balance < desired_building.BUILDING_COSTS:
             messages.add_message(request, messages.WARNING, "You don't have the silver to pay for the building.")
 
