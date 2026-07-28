@@ -134,6 +134,12 @@ target-version = "py312"
 exclude = [
     "PBR005",
     "DBR002",
+    # The "_list"/"_qs" suffix is the house convention here, and some of the names are not ours to
+    # rename anyway ("object_list" is Django's, "command_dict"/"event_dict" are queuebie's)
+    "PBR007",
+    # The loops that trip this are all in the registry and view-scoping meta-tests, which iterate
+    # over every handler and every view by construction - that is the point of those tests
+    "PBR008",
 ]
 
 [tool.boa-restrictor.per-file-excludes]

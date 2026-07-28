@@ -45,7 +45,7 @@ def test_determine_condition_above_the_expected_range(item_generator):
 def test_process_without_a_matching_item_type():
     generator = BaseItemGenerator(faction=None, item_function=99, savegame_id=SavegameFactory().id)
 
-    with pytest.raises(RuntimeError, match="No item type found."):
+    with pytest.raises(RuntimeError, match="No item type found"):
         generator.process()
 
 
