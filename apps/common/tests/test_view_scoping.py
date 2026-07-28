@@ -39,18 +39,14 @@ UNSCOPED_VIEWS: frozenset[str] = frozenset(
 def _project_view_classes() -> list[type]:
     """
     Every view class defined by the project itself.
+
+    Goes through the same file list as the checks below, so an app keeping its views in a package
+    rather than a single "views.py" is covered here too instead of being skipped silently.
     """
-    base_path = Path(settings.BASE_DIR).resolve()
     view_classes = []
 
-    for app_config in apps.get_app_configs():
-        if base_path not in Path(app_config.path).resolve().parents:
-            continue
-
-        try:
-            module = importlib.import_module(f"{app_config.name}.views")
-        except ModuleNotFoundError:
-            continue
+    for file in _view_module_files():
+        module = importlib.import_module(_module_path_for(file=file))
 
         for attribute in vars(module).values():
             if inspect.isclass(attribute) and attribute.__module__ == module.__name__:

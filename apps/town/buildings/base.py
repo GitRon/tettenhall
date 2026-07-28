@@ -7,4 +7,4 @@ class Building(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def get_building_by_type(cls, *, building_type: int) -> "Building":
-        pass
+        raise NotImplementedError
