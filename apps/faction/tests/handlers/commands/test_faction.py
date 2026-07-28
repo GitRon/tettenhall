@@ -7,6 +7,7 @@ from apps.faction.handlers.commands.faction import (
     handle_create_new_faction,
     handle_determine_injured_warriors,
     handle_determine_warriors_with_reduced_morale,
+    handle_earn_money_from_buildings,
     handle_remove_quest_from_bulletin_board,
     handle_replenish_fyrd_reserve,
     handle_restock_shop_items,
@@ -16,6 +17,7 @@ from apps.faction.messages.commands.faction import (
     CreateNewFaction,
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
+    EarnMoneyFromBuildings,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -23,6 +25,7 @@ from apps.faction.messages.commands.faction import (
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithReducedMoraleDetermined,
+    MonthlyBuildingMoneyEarned,
     NewFactionCreated,
     QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
@@ -290,3 +293,23 @@ def test_handle_create_factions_for_new_savegame_adds_the_drawn_number_of_rival_
     # Rival factions get a generated town of their own instead of the player's
     assert result[3].town_name != ""
     assert result[3].town_name != "Winchester"
+
+
+@pytest.mark.django_db
+def test_handle_earn_money_from_buildings_pays_the_revenue_of_the_hall():
+    # A Great Hall brings in 550 silver a month
+    faction = FactionFactory(town__hall=2)
+
+    result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
+
+    assert result == MonthlyBuildingMoneyEarned(faction=faction, amount=550, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_earn_money_from_buildings_without_a_hall():
+    faction = FactionFactory()
+
+    result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
+
+    # A town without a hall still trickles in a baseline
+    assert result == MonthlyBuildingMoneyEarned(faction=faction, amount=50, month=3)

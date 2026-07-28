@@ -41,7 +41,10 @@ class Town(models.Model):
         choices=SanctuaryChoices.choices, default=SanctuaryChoices.SANCTUARY_NONE
     )
     last_constructed_building_at = models.PositiveSmallIntegerField(
-        help_text="Month the last building was commissioned", default=1
+        # Months count from 1, so 0 is "nothing built yet". Defaulting to 1 made the once-per-month
+        # guard fire on a brand-new town and left the whole first month unbuildable.
+        help_text="Month the last building was commissioned, 0 if none was",
+        default=0,
     )
 
     # TODO: training grounds might be interesting as well for faster learning?

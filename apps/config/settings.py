@@ -194,4 +194,6 @@ QUEUEBIE_STRICT_MODE = True
 
 # Hide development server warning
 # https://docs.djangoproject.com/en/stable/ref/django-admin/#envvar-DJANGO_RUNSERVER_HIDE_WARNING
-os.environ["DJANGO_RUNSERVER_HIDE_WARNING"] = "true"
+# setdefault, not assignment: this runs in every process importing the settings, and an operator who
+# set the variable deliberately - or who wants the warning - should win over an import side effect
+os.environ.setdefault("DJANGO_RUNSERVER_HIDE_WARNING", "true")

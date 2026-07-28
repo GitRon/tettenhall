@@ -80,8 +80,9 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
 
     # A faction always has exactly one town, so it is part of creating one rather than a reaction to
     # it: several handlers of NewFactionCreated already read faction.town, and an event handler
-    # emitting a CreateTown command would land in the same batch as those, with no guaranteed order
-    Town.objects.create(faction=faction, last_constructed_building_at=context.savegame.current_month)
+    # emitting a CreateTown command would land in the same batch as those, with no guaranteed order.
+    # "last_constructed_building_at" stays at its 0 default so the player can build in month 1.
+    Town.objects.create(faction=faction)
 
     # Set player faction in savegame
     if context.is_player_faction:

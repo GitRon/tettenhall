@@ -28,7 +28,18 @@ holding that level's numbers:
 - **Costs escalate faster than effects** (roughly ×2.3 then ×2), so the top level of a building is
   deliberately a poor investment on its effect alone — the Large Hall is worth it for the third mercenary
   slot, not the revenue.
-- **Only one building per month**, guarded by `Town.last_constructed_building_at`.
+- **Only one building per month**, guarded by `Town.last_constructed_building_at`. Months count from
+  1, so **0 means "nothing built yet"** — a town created with the current month in that field cannot
+  build for the rest of it, which is why a new town leaves the field at its default.
+- **The guard is enforced twice on purpose.** The view checks it to give the player a message, and
+  `handle_upgrade_town_building` re-checks it as a single conditional `UPDATE ... WHERE`. Two
+  overlapping requests both pass the view's check, and the command handler returning `None` for the
+  loser is what keeps the player from being charged twice. Don't turn that back into a
+  read-modify-save.
+- **A faction without a town breaks four separate flows** (month advance, item sale, shop restock,
+  warrior healing), all with `Town.DoesNotExist`. Anything that creates factions outside
+  `handle_create_new_faction` — a data migration, a fixture, a management command — has to create the
+  town too.
 
 ## Known gaps
 

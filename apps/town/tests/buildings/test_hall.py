@@ -31,3 +31,12 @@ def test_get_building_by_type_large():
 def test_get_building_by_type_unknown_level():
     with pytest.raises(RuntimeError, match="Unknown hall type: 4"):
         Hall.get_building_by_type(building_type=4)
+
+
+def test_get_levels_matches_the_model_choices():
+    """
+    The level is written straight into a choices-constrained column and Django validates choices only
+    in forms, so a variant added here without its counterpart on the model would store a level the
+    display and the admin cannot handle.
+    """
+    assert len(Hall.get_levels()) == len(Town.HallChoices)

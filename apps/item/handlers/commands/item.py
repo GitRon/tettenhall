@@ -36,11 +36,16 @@ def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event:
     # something and buying it back is a loss
     marketplace = Marketplace.get_building_by_type(building_type=context.selling_faction.town.marketplace)
 
+    # Integer arithmetic throughout, rounded down: a float share would make the payout depend on
+    # binary representation error. The floor of one silver keeps the cheapest items from being
+    # handed over for nothing.
+    payout = max(context.item.price * marketplace.SELL_PERCENTAGE // 100, 1)
+
     return ItemSold(
         selling_faction=context.selling_faction,
         item=context.item,
         item_name=context.item.display_name,
-        price=round(context.item.price * marketplace.SELL_RATIO),
+        price=payout,
         month=context.month,
     )
 

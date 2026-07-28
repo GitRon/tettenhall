@@ -8,14 +8,18 @@ class Marketplace(Building):
     Buying stays at the full list price, so the ratio is the spread between the two: without a market
     of your own you are fleeced, and selling something back is always a loss.
 
-    Priced below the other buildings because the resale ratio is worth little in silver at current
+    Priced below the other buildings because the resale share is worth little in silver at current
     item prices - the stock size is the real draw.
+
+    The share is a whole percentage rather than a float: a float ratio makes the payout depend on
+    binary representation error, so 110 silver at 55% and 90 at 85% round to opposite sides of the
+    same half and two sales at the same advertised share differ by a silver.
     """
 
     BUILDING_NAME = "marketplace"
     BUILDING_LABEL = "Marketplace"
 
-    SELL_RATIO = 0.0
+    SELL_PERCENTAGE = 0
     AVAILABLE_ITEMS = 0
 
     BUILDING_COSTS = 0
@@ -26,28 +30,28 @@ class Marketplace(Building):
 
 
 class NoMarketplace(Marketplace):
-    SELL_RATIO = 0.4
+    SELL_PERCENTAGE = 40
     AVAILABLE_ITEMS = 3
 
     BUILDING_COSTS = 0
 
 
 class SmallMarketplace(Marketplace):
-    SELL_RATIO = 0.55
+    SELL_PERCENTAGE = 55
     AVAILABLE_ITEMS = 4
 
     BUILDING_COSTS = 600
 
 
 class MediumMarketplace(Marketplace):
-    SELL_RATIO = 0.7
+    SELL_PERCENTAGE = 70
     AVAILABLE_ITEMS = 6
 
     BUILDING_COSTS = 1400
 
 
 class LargeMarketplace(Marketplace):
-    SELL_RATIO = 0.85
+    SELL_PERCENTAGE = 85
     AVAILABLE_ITEMS = 8
 
     BUILDING_COSTS = 2800

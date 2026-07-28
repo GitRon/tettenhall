@@ -99,8 +99,6 @@ def test_upgrade_building_view_upgrades_the_building(logged_in_client, current_s
     Flow test: no mocking inside the chain, so this runs the real upgrade and asserts the end state.
     """
     town = current_savegame.player_faction.town
-    town.last_constructed_building_at = 0
-    town.save()
     TransactionFactory(faction=current_savegame.player_faction, amount=900)
 
     response = logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
@@ -112,9 +110,6 @@ def test_upgrade_building_view_upgrades_the_building(logged_in_client, current_s
 
 @pytest.mark.django_db
 def test_upgrade_building_view_charges_the_building_costs(logged_in_client, current_savegame):
-    town = current_savegame.player_faction.town
-    town.last_constructed_building_at = 0
-    town.save()
     TransactionFactory(faction=current_savegame.player_faction, amount=900)
 
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
@@ -130,7 +125,6 @@ def test_upgrade_building_view_charges_the_costs_of_the_building_it_upgrades(log
     """
     town = current_savegame.player_faction.town
     town.weaponsmith = Town.WeaponsmithChoices.WEAPONSMITH_MEDIUM
-    town.last_constructed_building_at = 0
     town.save()
     TransactionFactory(faction=current_savegame.player_faction, amount=3500)
 
@@ -145,8 +139,6 @@ def test_upgrade_building_view_charges_the_costs_of_the_building_it_upgrades(log
 @pytest.mark.django_db
 def test_upgrade_building_view_upgrades_a_building_other_than_the_hall(logged_in_client, current_savegame):
     town = current_savegame.player_faction.town
-    town.last_constructed_building_at = 0
-    town.save()
     TransactionFactory(faction=current_savegame.player_faction, amount=900)
 
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "sanctuary"}))
@@ -163,7 +155,6 @@ def test_upgrade_building_view_at_the_maximum_level(logged_in_client, current_sa
     """
     town = current_savegame.player_faction.town
     town.hall = Town.HallChoices.HALL_LARGE
-    town.last_constructed_building_at = 0
     town.save()
 
     response = logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
@@ -176,8 +167,6 @@ def test_upgrade_building_view_at_the_maximum_level(logged_in_client, current_sa
 @pytest.mark.django_db
 def test_upgrade_building_view_without_enough_silver(logged_in_client, current_savegame):
     town = current_savegame.player_faction.town
-    town.last_constructed_building_at = 0
-    town.save()
 
     response = logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 
@@ -225,9 +214,8 @@ def test_upgrade_building_view_does_not_upgrade_a_town_of_another_savegame(logge
     Without the scoping the oldest town in the table is the one that gets built up - and paid for
     out of the current player's purse.
     """
-    # Created first, so an unscoped lookup picks this one, and left ready to be built on so nothing
-    # but the scoping stands between the request and it
-    foreign_faction = FactionFactory(town__last_constructed_building_at=0)
+    # Created first, so an unscoped lookup picks this one up instead of the player's
+    foreign_faction = FactionFactory()
     savegame = SavegameFactory(created_by=user)
     savegame.player_faction = FactionFactory(savegame=savegame)
     savegame.save()
@@ -235,5 +223,9 @@ def test_upgrade_building_view_does_not_upgrade_a_town_of_another_savegame(logge
 
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 
+    # The player's own town is the one that moves - asserting only that the foreign town stands still
+    # would also hold if the view had stopped upgrading anything at all
+    savegame.player_faction.town.refresh_from_db()
+    assert savegame.player_faction.town.hall == Town.HallChoices.HALL_SMALL
     foreign_faction.town.refresh_from_db()
     assert foreign_faction.town.hall == Town.HallChoices.HALL_NONE
