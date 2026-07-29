@@ -4,6 +4,15 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def delete_faction_less_transactions(apps, schema_editor) -> None:  # noqa: PBR001 (RunPython calls this positionally)
+    """
+    The column used to be nullable, and the admin form let it stay empty, so old databases hold
+    ledger rows belonging to nobody. A balance is a question about one faction, so those rows can
+    never be read again - dropping them is what makes the NOT NULL below applicable at all.
+    """
+    apps.get_model("finance", "Transaction").objects.filter(faction__isnull=True).delete()
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("faction", "0002_initial"),
@@ -11,6 +20,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(delete_faction_less_transactions, migrations.RunPython.noop),
         migrations.AlterField(
             model_name="transaction",
             name="faction",

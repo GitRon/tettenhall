@@ -9,8 +9,8 @@ from apps.savegame.tests.factories.savegame import SavegameFactory
 @pytest.mark.django_db
 def test_for_faction_excludes_the_transactions_of_rival_factions():
     """
-    Every faction of a savegame keeps its own purse, so scoping by savegame would hand the player
-    the rivals' silver as well.
+    Every faction of a savegame keeps its own purse, so a balance is a question about one faction and
+    a savegame-wide sum would hand the player the rivals' silver as well.
     """
     savegame = SavegameFactory()
     player_faction = FactionFactory(savegame=savegame)
@@ -42,20 +42,6 @@ def test_current_balance_sums_up_the_amounts_of_that_faction():
     TransactionFactory(faction=faction, amount=-100)
 
     assert Transaction.objects.current_balance(faction_id=faction.id) == 150
-
-
-@pytest.mark.django_db
-def test_current_balance_ignores_the_silver_of_a_rival_faction():
-    """
-    The regression NPC factions would otherwise introduce: rivals earn and spend in the very same
-    savegame, so their transactions must not turn up in the player's balance.
-    """
-    savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    TransactionFactory(faction=player_faction, amount=250)
-    TransactionFactory(faction=FactionFactory(savegame=savegame), amount=999)
-
-    assert Transaction.objects.current_balance(faction_id=player_faction.id) == 250
 
 
 @pytest.mark.django_db

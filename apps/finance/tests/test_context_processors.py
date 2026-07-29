@@ -34,13 +34,14 @@ def test_get_current_balance_ignores_the_transactions_of_rival_factions(rf, user
 @pytest.mark.django_db
 def test_get_current_balance_without_a_player_faction(rf, savegame_without_player_faction, user):
     """
-    The savegame row exists before its faction does, and this runs on every authenticated render,
-    so it has to answer with no balance at all rather than dereference the missing faction.
+    The savegame row exists before its faction does, and this runs on every authenticated render, so
+    it has to answer with an empty purse rather than dereference the missing faction. Leaving the key
+    out is not an option: base.html renders the amount behind a "current_savegame" check only.
     """
     request = rf.get("/")
     request.user = user
 
-    assert get_current_balance(request) == {}
+    assert get_current_balance(request) == {"current_balance": 0}
 
 
 @pytest.mark.django_db
@@ -52,4 +53,4 @@ def test_get_current_balance_without_an_active_savegame(rf, user):
     request = rf.get("/")
     request.user = user
 
-    assert get_current_balance(request) == {}
+    assert get_current_balance(request) == {"current_balance": 0}
