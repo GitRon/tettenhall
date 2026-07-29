@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Tettenhall - The Game</title>
+    <link rel="icon" href="{% static 'svg/icons/crossed_swords.svg' %}" type="image/svg+xml">
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
     <link rel="stylesheet" href="{% static 'css/colors.css' %}">
@@ -52,11 +53,15 @@
                         Finance
                     </a>
                 </li>
-                <li>
-                    <a href="#">
-                        Estates {# todo: implement me #}
-                    </a>
-                </li>
+                {# todo: implement estates, then put this entry back. A nav link to "#" reads as a #}
+                {# feature that is merely broken, so it stays out until there is a page behind it. #}
+                {% comment %}
+                    <li>
+                        <a href="#">
+                            Estates
+                        </a>
+                    </li>
+                {% endcomment %}
             </ul>
             <div class="uk-navbar-item">
                 {# todo: this needs to update itself when we do things with HTMX #}
@@ -116,7 +121,7 @@
     document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
         if (500 <= evt.detail.xhr.status && evt.detail.xhr.status < 600) {
             UIkit.notification({
-                message: "An error has occured.",
+                message: "An error has occurred.",
                 status: 'danger',
                 pos: 'bottom-center',
                 timeout: 1000,

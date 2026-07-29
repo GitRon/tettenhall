@@ -27,16 +27,18 @@ def test_get_current_amount_warriors_without_an_active_savegame(rf, user):
     request = rf.get("/")
     request.user = user
 
-    assert get_current_amount_warriors(request) == {}
+    assert list(get_current_amount_warriors(request)["faction_warriors"]) == []
 
 
 @pytest.mark.django_db
 def test_get_current_amount_warriors_without_a_player_faction(rf, user):
     """
-    A savegame carries no player faction until one has been created for it.
+    A savegame carries no player faction until one has been created for it. Leaving the key out is
+    not an option: base.html renders the count behind a "current_savegame" check only, so the navbar
+    would show a warrior icon followed by nothing.
     """
     SavegameFactory(created_by=user, player_faction=None)
     request = rf.get("/")
     request.user = user
 
-    assert get_current_amount_warriors(request) == {}
+    assert list(get_current_amount_warriors(request)["faction_warriors"]) == []

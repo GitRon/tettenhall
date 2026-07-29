@@ -19,10 +19,10 @@ class Town(models.Model):
 
     # TODO: upgrading works, but the levels grant nothing yet
     class MarketChoices(models.IntegerChoices):
-        MARKET_NONE = 0, "No market place"
-        MARKET_SMALL = 1, "Market place"
-        MARKET_MEDIUM = 2, "Trading post"
-        MARKET_LARGE = 3, "High market"
+        MARKET_NONE = 0, "No marketplace"
+        MARKET_SMALL = 1, "Marketplace"
+        MARKET_MEDIUM = 2, "Trading Post"
+        MARKET_LARGE = 3, "High Market"
 
     # TODO: upgrading works, but the levels grant nothing yet
     class SanctuaryChoices(models.IntegerChoices):

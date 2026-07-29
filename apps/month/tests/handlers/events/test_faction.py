@@ -19,9 +19,17 @@ def test_handle_faction_fyrd_reserve_replenished_logs_the_new_recruitees():
         context=FactionFyrdReserveReplenished(faction=faction, new_recruitees=2, month=3)
     )
 
-    assert result == CreatePlayerMonthLog(
-        title="The fyrd has increased and has 2 new recruitees!", month=3, faction=faction
+    assert result == CreatePlayerMonthLog(title="The fyrd has grown by 2 new recruitees!", month=3, faction=faction)
+
+
+def test_handle_faction_fyrd_reserve_replenished_keeps_a_single_recruitee_singular():
+    faction = FactionFactory.build()
+
+    result = handle_faction_fyrd_reserve_replenished(
+        context=FactionFyrdReserveReplenished(faction=faction, new_recruitees=1, month=3)
     )
+
+    assert result == CreatePlayerMonthLog(title="The fyrd has grown by 1 new recruitee!", month=3, faction=faction)
 
 
 def test_handle_pay_monthly_salary_logs_the_paid_amount():
@@ -29,7 +37,7 @@ def test_handle_pay_monthly_salary_logs_the_paid_amount():
 
     result = handle_pay_monthly_salary(context=MonthlyWarriorSalariesPaid(faction=faction, amount=250, month=3))
 
-    assert result == CreatePlayerMonthLog(title="Monthly salaries paid of 250 silver.", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(title="Monthly salaries of 250 silver paid.", month=3, faction=faction)
 
 
 def test_handle_monthly_building_earnings_logs_the_earned_amount():

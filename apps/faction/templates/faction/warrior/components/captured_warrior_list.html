@@ -4,5 +4,7 @@
     {# todo: captured warriors never heal HP #}
     {% for warrior in faction.captured_warriors.all %}
         {% include 'warrior/components/warrior_card.html' with warrior=warrior faction=faction is_captured=True %}
+    {% empty %}
+        <p class="uk-text-meta">You hold no captives.</p>
     {% endfor %}
 </div>

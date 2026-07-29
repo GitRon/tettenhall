@@ -88,7 +88,7 @@ def test_handle_create_new_faction_for_non_player_faction():
 
 @pytest.mark.django_db
 def test_handle_restock_shop_items_requests_weapons():
-    # A market place holds four stalls
+    # A Marketplace holds four stalls
     faction = FactionFactory(town__marketplace=1)
 
     with mock.patch("apps.faction.handlers.commands.faction.random.getrandbits", return_value=1):
@@ -130,7 +130,7 @@ def test_handle_restock_shop_items_stocks_as_many_items_as_the_market_has_stalls
 
     result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
-    # A High market holds eight, against the three a town without a market manages
+    # A High Market holds eight, against the three a town without a market manages
     assert len(result) == 8
 
 

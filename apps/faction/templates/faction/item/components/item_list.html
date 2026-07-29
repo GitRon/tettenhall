@@ -3,5 +3,7 @@
     <h2>Unused Items</h2>
     {% for item in faction.get_all_unoccupied_items %}
         {% include 'item/components/item_sell_card.html' with item=item %}
+    {% empty %}
+        <p class="uk-text-meta">Every item you own is being worn.</p>
     {% endfor %}
 </div>

@@ -44,7 +44,8 @@
                         <td>{{ savegame.name }}</td>
                         <td>{{ savegame.player_faction.name }}</td>
                         <td>{{ savegame.current_month }}</td>
-                        <td>{{ savegame.created_by.get_full_name }}</td>
+                        {# Accounts are registered with an email only, so a full name is the exception #}
+                        <td>{{ savegame.created_by.get_full_name|default:savegame.created_by.username }}</td>
                         <td>{{ savegame.created_at|date:"d.m.Y H:i" }}</td>
                         <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
                         <td>
