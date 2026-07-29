@@ -32,6 +32,31 @@ def test_transaction_list_view_hides_transactions_of_other_savegames(logged_in_c
 
 
 @pytest.mark.django_db
+def test_transaction_list_view_hides_the_transactions_of_rival_factions(logged_in_client, current_savegame):
+    """
+    The rivals of the very same savegame keep their own purses, so savegame scope is not enough.
+    """
+    TransactionFactory(faction=FactionFactory(savegame=current_savegame), amount=999)
+
+    response = logged_in_client.get(reverse("finance:transaction-list-view"))
+
+    assert list(response.context["object_list"]) == []
+    assert response.context["current_balance"] == 0
+
+
+@pytest.mark.django_db
+def test_transaction_list_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    The savegame row exists before its faction does, so the page has to answer with an empty purse
+    rather than dereference the missing faction.
+    """
+    response = logged_in_client.get(reverse("finance:transaction-list-view"))
+
+    assert response.status_code == 200
+    assert response.context["current_balance"] == 0
+
+
+@pytest.mark.django_db
 def test_transaction_list_view_without_an_active_savegame(logged_in_client):
     """
     The balance used to be read off the savegame unguarded, so the page answered with a 500.

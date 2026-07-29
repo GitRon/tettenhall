@@ -54,7 +54,7 @@ class ItemBuyView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
         obj = self.get_object()
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        current_balance = Transaction.objects.current_balance(savegame_id=current_savegame.id)
+        current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
         if current_balance < obj.price:
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
             response["HX-Trigger"] = json.dumps(
