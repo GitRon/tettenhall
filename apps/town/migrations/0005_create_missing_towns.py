@@ -1,7 +1,7 @@
 from django.db import migrations
 
 
-def create_missing_towns(apps, schema_editor) -> None:  # noqa: PBR001 (RunPython calls this positionally)
+def create_missing_towns(apps, schema_editor) -> None:
     """
     Gives every faction that predates the town app a town of its own.
 

@@ -35,6 +35,10 @@
                     </a>
                 </td>
             </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="uk-text-meta">No skirmishes have been fought yet.</td>
+            </tr>
         {% endfor %}
         </tbody>
     </table>

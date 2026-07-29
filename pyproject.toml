@@ -161,6 +161,10 @@ exclude = [
 "*/managers/*.py" = [
     "PBR002",  # todo: enable this
 ]
+# Django calls RunPython/RunSQL callables positionally with (apps, schema_editor)
+"*/migrations/*.py" = [
+    "PBR001",
+]
 # pytest injects fixtures as positional arguments, so keyword-only signatures are impossible here
 "conftest.py" = [
     "PBR001",

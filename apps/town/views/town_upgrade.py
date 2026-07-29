@@ -37,7 +37,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         town = self.object
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        current_silver_balance = Transaction.objects.current_balance(savegame_id=current_savegame.id)
+        current_silver_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
 
         has_already_built = town.last_constructed_building_at == current_savegame.current_month
 
@@ -102,7 +102,7 @@ class UpgradeBuildingView(PlayerTownMixin, generic.DetailView):
         town = self.get_object()
 
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        current_silver_balance = Transaction.objects.current_balance(savegame_id=current_savegame.id)
+        current_silver_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
 
         current_building_level = getattr(town, building_type)
 

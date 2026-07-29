@@ -2,8 +2,11 @@
 
 **A savegame has exactly one player.** Rival factions are NPCs, so a rival reading "another faction's"
 data is not a leak. The pub belongs to the player, which is why `handle_add_warrior_to_pub` targets
-`savegame.player_faction` deliberately, and `Transaction.for_savegame()` filters
-`faction__player_savegame` — only the player faction's money counts.
+`savegame.player_faction` deliberately. Money is the other case: every faction of a savegame keeps its
+own purse, so `Transaction.for_faction()` and `Transaction.objects.current_balance()` take a faction id
+rather than a savegame id, and the player-facing callers pass `savegame.player_faction_id`. They used to
+join `faction__player_savegame` instead, which landed on the player faction too — that is the reverse
+side of a OneToOne — but said "the faction owning this savegame" where it meant "this faction".
 
 Everything else that resolves an object has to be scoped, because the id comes straight from the URL.
 This is the one view bug class that actually bites: everything else is a template detail, this one leaks

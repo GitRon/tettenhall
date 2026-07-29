@@ -158,7 +158,7 @@ def test_upgrade_building_view_charges_the_building_costs(logged_in_client, curr
 
     logged_in_client.post(reverse("town:upgrade-building-view", kwargs={"building_type": "hall"}))
 
-    assert Transaction.objects.current_balance(savegame_id=current_savegame.id) == 0
+    assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == 0
 
 
 @pytest.mark.django_db
@@ -177,7 +177,7 @@ def test_upgrade_building_view_charges_the_costs_of_the_building_it_upgrades(log
 
     # A Master Forge costs 3500, so the advertised price is what leaves the purse
     assert _building(page, "weaponsmith")["costs"] == 3500
-    assert Transaction.objects.current_balance(savegame_id=current_savegame.id) == 0
+    assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == 0
 
 
 @pytest.mark.django_db
