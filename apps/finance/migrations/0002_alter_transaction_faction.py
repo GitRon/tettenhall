@@ -4,7 +4,7 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
-def delete_faction_less_transactions(apps, schema_editor) -> None:  # noqa: PBR001 (RunPython calls this positionally)
+def delete_faction_less_transactions(apps, schema_editor) -> None:
     """
     The column used to be nullable, and the admin form let it stay empty, so old databases hold
     ledger rows belonging to nobody. A balance is a question about one faction, so those rows can
