@@ -9,6 +9,18 @@ class FactionQuerySet(models.QuerySet):
     def for_player_faction(self, *, faction_id: int):
         return self.filter(id=faction_id)
 
+    def rivals_of(self, *, savegame_id: int, player_faction_id: int | None):
+        """
+        Every faction of the savegame the player does not control.
+
+        A savegame without a player faction yet is a reachable state, and excluding "None" keeps
+        every row rather than dropping them - there is nobody to exclude at that point.
+
+        This is the one place deciding which rivals still take part in the game, so the "is this
+        faction defeated" filter belongs here once that flag exists.
+        """
+        return self.for_savegame(savegame_id=savegame_id).exclude(id=player_faction_id)
+
 
 class FactionManager(manager.Manager):
     def add_captive(self, *, faction, warrior):

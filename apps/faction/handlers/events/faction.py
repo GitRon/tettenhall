@@ -10,7 +10,7 @@ from apps.faction.messages.commands.faction import (
     ReplenishFyrdReserve,
 )
 from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
-from apps.month.messages.events.month import MonthPrepared
+from apps.month.messages.events.month import MonthPrepared, RivalFactionMonthPrepared
 from apps.savegame.messages.events.savegame import NewSavegameCreated
 from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
 
@@ -57,11 +57,19 @@ def handle_earn_money_from_buildings_for_new_month(*, context: MonthPrepared) ->
     return EarnMoneyFromBuildings(faction=context.faction, month=context.current_month)
 
 
+# Rivals recover between months as well, otherwise a faction that survived one battle stays crippled
+# for the rest of the game and can never be knocked out
+@message_registry.register_event(event=RivalFactionMonthPrepared)
 @message_registry.register_event(event=MonthPrepared)
-def handle_determine_warriors_with_reduced_morale_for_new_month(*, context: MonthPrepared) -> list[Command]:
+def handle_determine_warriors_with_reduced_morale_for_new_month(
+    *, context: MonthPrepared | RivalFactionMonthPrepared
+) -> list[Command]:
     return [DetermineWarriorsWithReducedMorale(faction=context.faction, month=context.current_month)]
 
 
+@message_registry.register_event(event=RivalFactionMonthPrepared)
 @message_registry.register_event(event=MonthPrepared)
-def handle_determine_injured_warriors_for_new_month(*, context: MonthPrepared) -> list[Command]:
+def handle_determine_injured_warriors_for_new_month(
+    *, context: MonthPrepared | RivalFactionMonthPrepared
+) -> list[Command]:
     return [DetermineInjuredWarriors(faction=context.faction, month=context.current_month)]

@@ -1,12 +1,19 @@
 from apps.faction.handlers.events.faction import (
     handle_create_player_faction_for_new_savegame,
+    handle_determine_injured_warriors_for_new_month,
+    handle_determine_warriors_with_reduced_morale_for_new_month,
     handle_earn_money_from_buildings_for_new_month,
     handle_warriors_with_reduced_morale_determined,
 )
-from apps.faction.messages.commands.faction import CreateFactionsForNewSavegame, EarnMoneyFromBuildings
+from apps.faction.messages.commands.faction import (
+    CreateFactionsForNewSavegame,
+    DetermineInjuredWarriors,
+    DetermineWarriorsWithReducedMorale,
+    EarnMoneyFromBuildings,
+)
 from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
 from apps.faction.tests.factories.faction import FactionFactory
-from apps.month.messages.events.month import MonthPrepared
+from apps.month.messages.events.month import MonthPrepared, RivalFactionMonthPrepared
 from apps.savegame.messages.events.savegame import NewSavegameCreated
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -62,3 +69,45 @@ def test_handle_earn_money_from_buildings_for_new_month_maps_to_command():
     result = handle_earn_money_from_buildings_for_new_month(context=context)
 
     assert result == EarnMoneyFromBuildings(faction=faction, month=7)
+
+
+def test_handle_determine_warriors_with_reduced_morale_for_new_month_for_the_player():
+    faction = FactionFactory.build()
+    context = MonthPrepared(
+        faction=faction, savegame=SavegameFactory.build(), training=TrainingFactory.build(), current_month=7
+    )
+
+    result = handle_determine_warriors_with_reduced_morale_for_new_month(context=context)
+
+    assert result == [DetermineWarriorsWithReducedMorale(faction=faction, month=7)]
+
+
+def test_handle_determine_warriors_with_reduced_morale_for_new_month_for_a_rival():
+    faction = FactionFactory.build()
+
+    result = handle_determine_warriors_with_reduced_morale_for_new_month(
+        context=RivalFactionMonthPrepared(faction=faction, current_month=7)
+    )
+
+    assert result == [DetermineWarriorsWithReducedMorale(faction=faction, month=7)]
+
+
+def test_handle_determine_injured_warriors_for_new_month_for_the_player():
+    faction = FactionFactory.build()
+    context = MonthPrepared(
+        faction=faction, savegame=SavegameFactory.build(), training=TrainingFactory.build(), current_month=7
+    )
+
+    result = handle_determine_injured_warriors_for_new_month(context=context)
+
+    assert result == [DetermineInjuredWarriors(faction=faction, month=7)]
+
+
+def test_handle_determine_injured_warriors_for_new_month_for_a_rival():
+    faction = FactionFactory.build()
+
+    result = handle_determine_injured_warriors_for_new_month(
+        context=RivalFactionMonthPrepared(faction=faction, current_month=7)
+    )
+
+    assert result == [DetermineInjuredWarriors(faction=faction, month=7)]

@@ -7,7 +7,9 @@ from apps.faction.tests.factories.faction import FactionFactory
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.savegame.tests.factories.savegame import SavegameFactory
+from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.training.tests.factories.training import TrainingFactory
 
 
@@ -28,6 +30,34 @@ def test_finish_month_view_advances_the_savegame_to_the_next_month(logged_in_cli
     assert response["HX-Redirect"] == reverse("account:dashboard-view")
     current_savegame.refresh_from_db()
     assert current_savegame.current_month == 2
+
+
+@pytest.mark.django_db
+def test_finish_month_view_lets_a_rival_faction_recover(logged_in_client, current_savegame):
+    """
+    Flow test rather than a unit test on purpose: that the rivals are announced at all only exists in
+    the registry, and strict mode's database blocker applies to nothing but a real queue run.
+
+    A warrior knocked unconscious in a battle keeps his condition and his health, and rivals used to
+    get no month at all - so a faction that survived one attack stayed crippled for the rest of the
+    game and could never be knocked out again. Healing lifts him above zero health, which is what
+    turns the condition back to healthy, whatever the sanctuary rolls.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_warrior = WarriorFactory(
+        faction=rival_faction,
+        savegame=current_savegame,
+        condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
+        current_health=0,
+        max_health=20,
+    )
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    rival_warrior.refresh_from_db()
+    assert rival_warrior.condition == Warrior.ConditionChoices.CONDITION_HEALTHY
 
 
 @pytest.mark.django_db
