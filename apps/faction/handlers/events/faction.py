@@ -10,7 +10,7 @@ from apps.faction.messages.commands.faction import (
     ReplenishFyrdReserve,
 )
 from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
-from apps.month.messages.events.month import MonthPrepared, RivalFactionMonthPrepared
+from apps.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
 from apps.savegame.messages.events.savegame import NewSavegameCreated
 from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
 
@@ -42,34 +42,28 @@ def handle_warriors_with_reduced_morale_determined(
     return event_list
 
 
-@message_registry.register_event(event=MonthPrepared)
-def handle_replenish_fyrd_reserve_for_new_month(*, context: MonthPrepared) -> list[Command]:
+@message_registry.register_event(event=PlayerMonthPrepared)
+def handle_replenish_fyrd_reserve_for_new_month(*, context: PlayerMonthPrepared) -> list[Command]:
     return [ReplenishFyrdReserve(faction=context.faction, month=context.current_month)]
 
 
-@message_registry.register_event(event=MonthPrepared)
-def handle_pay_monthly_warrior_salaries_for_new_month(*, context: MonthPrepared) -> Command:
+@message_registry.register_event(event=PlayerMonthPrepared)
+def handle_pay_monthly_warrior_salaries_for_new_month(*, context: PlayerMonthPrepared) -> Command:
     return PayMonthlyWarriorSalaries(faction=context.faction, month=context.current_month)
 
 
-@message_registry.register_event(event=MonthPrepared)
-def handle_earn_money_from_buildings_for_new_month(*, context: MonthPrepared) -> Command:
+@message_registry.register_event(event=PlayerMonthPrepared)
+def handle_earn_money_from_buildings_for_new_month(*, context: PlayerMonthPrepared) -> Command:
     return EarnMoneyFromBuildings(faction=context.faction, month=context.current_month)
 
 
-# Rivals recover between months as well, otherwise a faction that survived one battle stays crippled
-# for the rest of the game and can never be knocked out
-@message_registry.register_event(event=RivalFactionMonthPrepared)
-@message_registry.register_event(event=MonthPrepared)
-def handle_determine_warriors_with_reduced_morale_for_new_month(
-    *, context: MonthPrepared | RivalFactionMonthPrepared
-) -> list[Command]:
+# Every faction recovers, not just the player's: otherwise one that survived a battle stays crippled
+# for the rest of the game and can never be knocked out again
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_determine_warriors_with_reduced_morale_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
     return [DetermineWarriorsWithReducedMorale(faction=context.faction, month=context.current_month)]
 
 
-@message_registry.register_event(event=RivalFactionMonthPrepared)
-@message_registry.register_event(event=MonthPrepared)
-def handle_determine_injured_warriors_for_new_month(
-    *, context: MonthPrepared | RivalFactionMonthPrepared
-) -> list[Command]:
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_determine_injured_warriors_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
     return [DetermineInjuredWarriors(faction=context.faction, month=context.current_month)]

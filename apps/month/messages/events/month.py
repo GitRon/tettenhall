@@ -9,29 +9,37 @@ from apps.training.models import Training
 
 
 @dataclass(kw_only=True)
-class MonthPrepared(Event):
+class FactionMonthPrepared(Event):
+    """
+    A new month has begun for one faction. Raised once per faction of the savegame, the player's
+    included - the player is a faction like any other here.
+
+    This is where anything a faction does monthly belongs. Handlers subscribe to it once and then
+    apply to everybody, which is why it carries nothing player-specific: the moment a handler needs
+    to know whose month it is, it has picked the wrong event.
+    """
+
     faction: Faction
-    savegame: Savegame
-    # None when the player faction has no training row yet - consumers have to guard
-    training: Training | None
     current_month: int
 
 
 @dataclass(kw_only=True)
-class RivalFactionMonthPrepared(Event):
+class PlayerMonthPrepared(Event):
     """
-    A new month has begun for one rival faction. Raised once per rival, next to the single
-    MonthPrepared carrying the player's faction.
+    A new month has begun for the human player specifically.
 
-    The field names deliberately match MonthPrepared's, because the two events are meant to grow
-    together: every handler that reacts to a new month by reading nothing but "faction" and
-    "current_month" can be extended to the rivals by stacking a second decorator on it, with no
-    other change. Eight of MonthPrepared's ten handlers are in that shape today. The remaining two
-    read "training" and "savegame", both of which are player-only concepts, which is why neither
-    lives on this event.
+    Only for the things a rival genuinely has no equivalent of: the town economy, the training
+    regimen, the message log. A faction of the savegame gets a FactionMonthPrepared as well, so
+    nothing here needs repeating for the player.
+
+    Moving a handler from here to FactionMonthPrepared is how a player-only activity becomes
+    something rivals do too - the field names match so that the move is the whole change.
     """
 
     faction: Faction
+    savegame: Savegame
+    # None when the player faction has no training row yet - consumers have to guard
+    training: Training | None
     current_month: int
 
 

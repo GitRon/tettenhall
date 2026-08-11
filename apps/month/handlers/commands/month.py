@@ -4,10 +4,10 @@ from queuebie.messages import Event
 from apps.faction.models.faction import Faction
 from apps.month.messages.commands.month import ClearPlayerMonthLog, CreatePlayerMonthLog, PrepareMonth
 from apps.month.messages.events.month import (
-    MonthPrepared,
+    FactionMonthPrepared,
     PlayerMonthLogCleared,
     PlayerMonthLogCreated,
-    RivalFactionMonthPrepared,
+    PlayerMonthPrepared,
 )
 from apps.month.models import PlayerMonthLog
 from apps.training.models.training import Training
@@ -20,15 +20,12 @@ def handle_prepare_month(*, context: PrepareMonth) -> list[Event]:
     context.savegame.current_month = current_month
     context.savegame.save()
 
-    # One event per rival next to the player's. Rivals only recover between months today; giving
-    # them income or a restocked shop is a matter of stacking those handlers onto the event too,
-    # see RivalFactionMonthPrepared
-    rival_faction_list = Faction.objects.rivals_of(
-        savegame_id=context.savegame.id, player_faction_id=context.savegame.player_faction_id
-    )
+    # Every faction of the savegame gets its month, the player's included - what each of them
+    # actually does with it is decided by which handlers subscribe, not by who they are
+    faction_list = Faction.objects.still_in_play(savegame_id=context.savegame.id)
 
     return [
-        MonthPrepared(
+        PlayerMonthPrepared(
             faction=context.savegame.player_faction,
             savegame=context.savegame,
             # TODO: store this months training somewhere -> in savegame?
@@ -42,10 +39,7 @@ def handle_prepare_month(*, context: PrepareMonth) -> list[Event]:
             ),
             current_month=current_month,
         ),
-        *[
-            RivalFactionMonthPrepared(faction=rival_faction, current_month=current_month)
-            for rival_faction in rival_faction_list
-        ],
+        *[FactionMonthPrepared(faction=faction, current_month=current_month) for faction in faction_list],
     ]
 
 

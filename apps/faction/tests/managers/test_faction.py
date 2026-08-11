@@ -17,25 +17,12 @@ def test_add_captive_arrests_the_warrior():
 
 
 @pytest.mark.django_db
-def test_rivals_of_leaves_out_the_player_faction():
-    savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    rival_faction = FactionFactory(savegame=savegame)
-
-    result = Faction.objects.rivals_of(savegame_id=savegame.id, player_faction_id=player_faction.id)
-
-    assert list(result) == [rival_faction]
-
-
-@pytest.mark.django_db
-def test_rivals_of_without_a_player_faction():
-    """
-    A savegame gets its row before its factions exist, so there is nobody to leave out yet.
-    """
+def test_still_in_play_returns_the_factions_of_the_savegame():
     savegame = SavegameFactory()
     faction = FactionFactory(savegame=savegame)
+    FactionFactory()
 
-    result = Faction.objects.rivals_of(savegame_id=savegame.id, player_faction_id=None)
+    result = Faction.objects.still_in_play(savegame_id=savegame.id)
 
     assert list(result) == [faction]
 

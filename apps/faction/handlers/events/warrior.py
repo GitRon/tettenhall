@@ -4,7 +4,7 @@ from queuebie.messages import Command
 from apps.faction.messages.commands.faction import AddWarriorToPub, SetNewLeaderWarrior
 from apps.faction.messages.commands.warrior import RestockTownMercenaries
 from apps.faction.messages.events.faction import NewFactionCreated
-from apps.month.messages.events.month import MonthPrepared
+from apps.month.messages.events.month import PlayerMonthPrepared
 from apps.warrior.messages.events.warrior import NewLeaderWarriorCreated, WarriorCreated
 
 
@@ -21,6 +21,6 @@ def handle_add_new_warrior_to_faction_pub(*, context: WarriorCreated) -> Command
 
 
 @message_registry.register_event(event=NewFactionCreated)
-@message_registry.register_event(event=MonthPrepared)
-def handle_restock_mercenaries_in_pub_for_new_month(*, context: MonthPrepared | NewFactionCreated) -> Command:
+@message_registry.register_event(event=PlayerMonthPrepared)
+def handle_restock_mercenaries_in_pub_for_new_month(*, context: PlayerMonthPrepared | NewFactionCreated) -> Command:
     return RestockTownMercenaries(faction=context.faction, month=context.current_month)
