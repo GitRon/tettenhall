@@ -24,7 +24,7 @@ class SavegameManager(manager.Manager):
         # deactivate the savegames of everybody else
         return self.for_user(user_id=user_id).exclude(id=savegame_id).update(is_active=False)
 
-    def get_current_savegame(self, *, user_id: int) -> typing.Optional["Savegame"]:
+    def get_current_savegame(self, *, user_id: int) -> Savegame | None:
         """
         Efficient getter for the users current savegame
         """
@@ -33,7 +33,7 @@ class SavegameManager(manager.Manager):
         except self.model.DoesNotExist:
             return None
 
-    def activate_savegame(self, *, savegame: "Savegame") -> None:
+    def activate_savegame(self, *, savegame: Savegame) -> None:
         """
         Set savegame as active savegame and set all others of the current user as inactive
         """

@@ -187,7 +187,10 @@ AXES_CLIENT_IP_CALLABLE = lambda x: None  # noqa: E731
 AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
 
 # Queuebie
-QUEUEBIE_APP_BASE_PATH = BASE_DIR
+# Queuebie treats every app below this path as a local one and imports its "handlers/" modules.
+# Pointing it at BASE_DIR would include everything in ".venv/", which uv creates inside the project,
+# so a dependency shipping a "handlers/commands/" directory would register handlers on our bus.
+QUEUEBIE_APP_BASE_PATH = BASE_DIR / "apps"
 # TODO: Fix handlers so we can enable this
 QUEUEBIE_STRICT_MODE = True
 

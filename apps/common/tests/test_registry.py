@@ -42,10 +42,13 @@ TERMINAL_MESSAGES: frozenset[str] = frozenset(
 def _project_app_configs() -> list:
     """
     App configs of the local apps, ignoring everything installed as a dependency.
-    """
-    base_path = Path(settings.BASE_DIR).resolve()
 
-    return [app_config for app_config in apps.get_app_configs() if base_path in Path(app_config.path).resolve().parents]
+    Matched against "apps/" rather than BASE_DIR: uv puts the virtualenv in ".venv/" inside the
+    project, so BASE_DIR is also a parent of every installed package.
+    """
+    apps_path = (Path(settings.BASE_DIR) / "apps").resolve()
+
+    return [app_config for app_config in apps.get_app_configs() if apps_path in Path(app_config.path).resolve().parents]
 
 
 def _module_path_for(*, file: Path) -> str:

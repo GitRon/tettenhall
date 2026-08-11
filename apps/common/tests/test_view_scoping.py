@@ -77,9 +77,12 @@ def test_model_backed_views_scope_their_queryset():
 
 
 def _project_app_configs() -> list:
-    base_path = Path(settings.BASE_DIR).resolve()
+    # Matched against "apps/" rather than BASE_DIR: uv puts the virtualenv in ".venv/" inside the
+    # project, so BASE_DIR is also a parent of every installed package - django.contrib.admin
+    # included, which then gets collected as one of ours
+    apps_path = (Path(settings.BASE_DIR) / "apps").resolve()
 
-    return [app_config for app_config in apps.get_app_configs() if base_path in Path(app_config.path).resolve().parents]
+    return [app_config for app_config in apps.get_app_configs() if apps_path in Path(app_config.path).resolve().parents]
 
 
 def _module_path_for(*, file: Path) -> str:

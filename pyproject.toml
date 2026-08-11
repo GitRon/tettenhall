@@ -1,3 +1,31 @@
+[project]
+name = "tettenhall"
+version = "0.1.0"
+description = "A Django browser game about Anglo-Saxon factions"
+requires-python = ">=3.14"
+dependencies = [
+    "Django~=5.2",
+    "ambient-toolbox~=12.1",
+    "django-axes~=7.0",
+    "django-crispy-forms~=1.14",
+    "django-queuebie~=0.2",
+    "faker~=33.1",
+]
+
+[dependency-groups]
+dev = [
+    "django-removals",
+    "factory-boy~=3.3",
+    "pytest~=8.3",
+    "pytest-cov~=6.0",
+    "pytest-django~=4.11",
+]
+
+[tool.uv]
+# The project is an application, not a distributable package: there is nothing to build and
+# installing it into its own virtualenv would be pointless.
+package = false
+
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 lint.select = [
@@ -111,8 +139,10 @@ line-length = 120
 # Allow unused variables when underscore-prefixed.
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.12.
-target-version = "py312"
+# Assume Python 3.14. Two consequences worth knowing, both applied automatically:
+# PEP 649 makes annotations lazy, so quoted forward references under TYPE_CHECKING are no longer
+# needed, and PEP 758 allows "except A, B:" without the parentheses.
+target-version = "py314"
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = [
