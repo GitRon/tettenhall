@@ -1,3 +1,31 @@
+[project]
+name = "tettenhall"
+version = "0.1.0"
+description = "A Django browser game about Anglo-Saxon factions"
+requires-python = ">=3.14"
+dependencies = [
+    "Django~=5.2",
+    "ambient-toolbox~=12.1",
+    "django-axes~=7.0",
+    "django-crispy-forms~=1.14",
+    "django-queuebie~=0.2",
+    "faker~=33.1",
+]
+
+[dependency-groups]
+dev = [
+    "django-removals",
+    "factory-boy~=3.3",
+    "pytest~=8.3",
+    "pytest-cov~=6.0",
+    "pytest-django~=4.11",
+]
+
+[tool.uv]
+# The project is an application, not a distributable package: there is nothing to build and
+# installing it into its own virtualenv would be pointless.
+package = false
+
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 lint.select = [
@@ -111,8 +139,11 @@ line-length = 120
 # Allow unused variables when underscore-prefixed.
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.12.
-target-version = "py312"
+# The runtime is 3.14, but this caps the syntax ruff is allowed to *emit* and is deliberately one
+# version behind. At "py314" the formatter rewrites "except (A, B):" into PEP 758's "except A, B:",
+# which reads exactly like the Python 2 "except E, name:" idiom that bound the exception to a name.
+# Raise this once that form is familiar enough not to look like a bug.
+target-version = "py313"
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = [

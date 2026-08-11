@@ -18,28 +18,20 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Installed before setup-python so its "pipenv" cache backend can find the executable.
-      # Pinned on purpose: the Pipfile hash recorded in Pipfile.lock is computed by pipenv itself
-      # and the algorithm changed after 2025.0.4, so an unpinned "latest" fails the verify step
-      # below against a perfectly good lock file. Bump this together with the lock.
-      - name: Install pipenv
-        run: pipx install pipenv==2025.0.4
-
-      - uses: actions/setup-python@v6
+      # uv reads the interpreter from .python-version and installs it if the runner lacks it.
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9
         with:
-          python-version-file: Pipfile
-          cache: pipenv
+          enable-cache: true
 
-      # "pipenv sync" installs the locked versions only, so it silently uses a stale lock.
-      - name: Check Pipfile.lock is in sync with Pipfile
-        run: pipenv verify
-
+      # "--locked" fails on a stale lock file instead of quietly re-resolving, which is what
+      # "pipenv verify" used to do here - without pipenv's hash algorithm changing under us.
       - name: Install dependencies
-        run: pipenv sync --dev
+        run: uv sync --locked
 
       # Coverage config lives in pyproject.toml and fails the run below 100% branch coverage.
       - name: Run tests
-        run: pipenv run pytest --cov
+        run: uv run pytest --cov
 
   pre-commit:
     runs-on: ubuntu-latest
@@ -49,7 +41,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version-file: Pipfile
+          python-version-file: .python-version
 
       # The hooks build their own isolated environments, which is the slow part of a cold run.
       - name: Cache the hook environments
