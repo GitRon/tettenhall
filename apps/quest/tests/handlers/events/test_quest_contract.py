@@ -1,10 +1,34 @@
 import pytest
 
-from apps.quest.handlers.events.quest_contract import handle_finish_quest_contract
-from apps.quest.messages.commands.quest_contract import RemoveQuestContractAsActiveQuest
+from apps.quest.handlers.events.quest_contract import (
+    handle_finish_quest_contract,
+    handle_link_quest_contract_to_its_skirmish,
+)
+from apps.quest.messages.commands.quest_contract import AssignSkirmishToQuestContract, RemoveQuestContractAsActiveQuest
 from apps.quest.tests.factories.quest_contract import QuestContractFactory
-from apps.skirmish.messages.events.skirmish import SkirmishFinished
+from apps.skirmish.messages.events.skirmish import SkirmishCreated, SkirmishFinished
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
+
+
+@pytest.mark.django_db
+def test_handle_link_quest_contract_to_its_skirmish_assigns_the_contract():
+    skirmish = SkirmishFactory()
+    quest_contract = QuestContractFactory(faction=skirmish.player_faction)
+
+    result = handle_link_quest_contract_to_its_skirmish(
+        context=SkirmishCreated(skirmish=skirmish, quest_contract=quest_contract)
+    )
+
+    assert result == AssignSkirmishToQuestContract(quest_contract=quest_contract, skirmish=skirmish)
+
+
+@pytest.mark.django_db
+def test_handle_link_quest_contract_to_its_skirmish_stays_silent_without_a_contract():
+    skirmish = SkirmishFactory()
+
+    result = handle_link_quest_contract_to_its_skirmish(context=SkirmishCreated(skirmish=skirmish, quest_contract=None))
+
+    assert result is None
 
 
 @pytest.mark.django_db

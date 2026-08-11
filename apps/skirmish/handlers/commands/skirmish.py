@@ -42,10 +42,8 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
     )
     new_skirmish = skirmish_generator.process()
 
-    if context.quest_contract:
-        context.quest_contract.skirmish = new_skirmish
-        context.quest_contract.save()
-
+    # Linking the contract to the skirmish is the quest app's reaction to SkirmishCreated, see
+    # handle_link_quest_contract_to_its_skirmish - writing it here as well meant doing it twice
     return SkirmishCreated(
         skirmish=new_skirmish,
         quest_contract=context.quest_contract,

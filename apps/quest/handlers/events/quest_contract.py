@@ -7,7 +7,12 @@ from apps.skirmish.messages.events import skirmish
 
 
 @message_registry.register_event(event=skirmish.SkirmishCreated)
-def handle_link_quest_contract_to_its_skirmish(*, context: skirmish.SkirmishCreated) -> Command:
+def handle_link_quest_contract_to_its_skirmish(*, context: skirmish.SkirmishCreated) -> Command | None:
+    # Not every skirmish comes from a quest: attacking a rival faction creates one without a
+    # contract, and there is nothing to link then
+    if context.quest_contract is None:
+        return None
+
     return AssignSkirmishToQuestContract(quest_contract=context.quest_contract, skirmish=context.skirmish)
 
 
