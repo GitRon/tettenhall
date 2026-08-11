@@ -7,9 +7,9 @@ if typing.TYPE_CHECKING:
 
 
 class SkirmishActionDecisionService:
-    warrior: "Warrior"
+    warrior: Warrior
 
-    def __init__(self, *, warrior: "Warrior"):
+    def __init__(self, *, warrior: Warrior):
         self.warrior = warrior
 
     def _determine_decision(self) -> SkirmishActionChoices:

@@ -139,11 +139,10 @@ line-length = 120
 # Allow unused variables when underscore-prefixed.
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# The runtime is 3.14, but this caps the syntax ruff is allowed to *emit* and is deliberately one
-# version behind. At "py314" the formatter rewrites "except (A, B):" into PEP 758's "except A, B:",
-# which reads exactly like the Python 2 "except E, name:" idiom that bound the exception to a name.
-# Raise this once that form is familiar enough not to look like a bug.
-target-version = "py313"
+# Assume Python 3.14. Two consequences worth knowing, both applied automatically:
+# PEP 649 makes annotations lazy, so quoted forward references under TYPE_CHECKING are no longer
+# needed, and PEP 758 allows "except A, B:" without the parentheses.
+target-version = "py314"
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = [

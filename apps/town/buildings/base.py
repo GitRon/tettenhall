@@ -31,7 +31,7 @@ class Building(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_levels(cls) -> tuple[type["Building"], ...]:
+    def get_levels(cls) -> tuple[type[Building], ...]:
         """
         The variants of this building, ordered by level.
 
@@ -58,7 +58,7 @@ class Building(abc.ABC):
         return len(cls.get_levels()) - 1
 
     @classmethod
-    def get_building_by_type(cls, *, building_type: int) -> "Building":
+    def get_building_by_type(cls, *, building_type: int) -> Building:
         levels = cls.get_levels()
         if not 0 <= building_type < len(levels):
             raise RuntimeError(f"Unknown {cls.BUILDING_NAME} type: {building_type}")

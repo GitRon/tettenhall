@@ -84,7 +84,7 @@ class SkirmishFinishRoundView(SavegameScopedQuerysetMixin, generic.DetailView):
                 (int(participant_data["warrior_id"]), int(participant_data["skirmish_action"]))
                 for participant_data in skirmish_participants.values()
             ]
-        except (KeyError, ValueError):
+        except KeyError, ValueError:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # Which side a warrior fights on comes from this skirmish's own rosters. Not from the posted
