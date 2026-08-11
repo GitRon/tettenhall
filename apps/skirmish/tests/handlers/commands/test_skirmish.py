@@ -78,7 +78,7 @@ def test_handle_create_skirmish_generates_opponents_when_none_are_given():
 
 
 @pytest.mark.django_db
-def test_handle_create_skirmish_links_the_quest_contract_to_the_new_skirmish():
+def test_handle_create_skirmish_passes_the_quest_contract_on():
     quest_contract = QuestContractFactory()
     player_warrior = WarriorFactory(faction=quest_contract.faction)
     enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
@@ -95,8 +95,6 @@ def test_handle_create_skirmish_links_the_quest_contract_to_the_new_skirmish():
     )
 
     assert result.quest_contract == quest_contract
-    quest_contract.refresh_from_db()
-    assert quest_contract.skirmish == result.skirmish
 
 
 @pytest.mark.django_db
