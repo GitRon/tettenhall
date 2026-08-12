@@ -305,14 +305,22 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_player():
 
 @pytest.mark.django_db
 def test_handle_faction_wins_skirmish_loots_and_captures_for_the_non_player_faction():
+    """
+    The mirror image of the test above: the loot follows the victor, not the player. Naming the two
+    sides "player" and "non_player" used to make this case take the winner's items from the loser's
+    side and vice versa, so a losing player kept the gear of everyone who was merely knocked out.
+    """
     skirmish = SkirmishFactory()
     quest_contract = QuestContractFactory(faction=skirmish.player_faction, skirmish=skirmish, quest__loot=250)
     unconscious_player_warrior = WarriorFactory(
         faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
+    dead_enemy_warrior = WarriorFactory(
+        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
     healthy_enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction)
     skirmish.player_warriors.add(unconscious_player_warrior)
-    skirmish.non_player_warriors.add(healthy_enemy_warrior)
+    skirmish.non_player_warriors.add(dead_enemy_warrior, healthy_enemy_warrior)
 
     result = handle_faction_wins_skirmish(
         context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.non_player_faction, month=3)
@@ -320,7 +328,7 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_non_player_fact
 
     assert result == SkirmishFinished(
         skirmish=skirmish,
-        incapacitated_warriors=[],
+        incapacitated_warriors=[dead_enemy_warrior, unconscious_player_warrior],
         defeated_unconscious_warriors=[unconscious_player_warrior],
         victorious_conscious_warriors=[healthy_enemy_warrior],
         quest_name=quest_contract.quest.name,

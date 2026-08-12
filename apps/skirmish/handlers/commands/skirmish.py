@@ -171,33 +171,30 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         quest_name = None
         quest_loot = 0
 
+    # Everything below is about the winner and the loser, so the two sides get sorted into those
+    # roles exactly once. Reaching for "player_warriors" and "non_player_warriors" directly is what
+    # made the loot follow the player rather than the victor - the two only coincide when the player
+    # wins, and the model naming invites the mistake.
+    if context.skirmish.victorious_faction == context.skirmish.player_faction:
+        victorious_warriors = context.skirmish.player_warriors
+        defeated_warriors = context.skirmish.non_player_warriors
+    else:
+        victorious_warriors = context.skirmish.non_player_warriors
+        defeated_warriors = context.skirmish.player_warriors
+
     # The winner keeps the items from his dead warriors, but since it's easier they get "reassigned" to the victor,
     # thus himself.
     # Therefore, we reassign all dead victorious warriors items and all non-healthy defeated ones
     incapacitated_warriors = [
-        *context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_DEAD),
-        *context.skirmish.non_player_warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_HEALTHY),
+        *victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_DEAD),
+        *defeated_warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_HEALTHY),
     ]
 
     # Fetch a list of unconscious, defeated warriors
-    if context.skirmish.victorious_faction == context.skirmish.player_faction:
-        defeated_unconscious_warriors = context.skirmish.non_player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
-        )
-    else:
-        defeated_unconscious_warriors = context.skirmish.player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
-        )
+    defeated_unconscious_warriors = defeated_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
     # Fetch list of victorious, conscious warriors
-    if context.skirmish.victorious_faction == context.skirmish.player_faction:
-        victorious_conscious_warriors = context.skirmish.player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
-        )
-    else:
-        victorious_conscious_warriors = context.skirmish.non_player_warriors.filter(
-            condition=Warrior.ConditionChoices.CONDITION_HEALTHY
-        )
+    victorious_conscious_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
 
     # We need to evaluate the QS to avoid hitting the DB in the events
     return SkirmishFinished(
