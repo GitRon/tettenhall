@@ -17,3 +17,6 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Scratch state for the /implement-story skill: specs, plans, CI logs and review shards.
+.claude/runs/
