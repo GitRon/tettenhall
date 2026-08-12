@@ -1,6 +1,6 @@
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.month.messages.commands.month import CreatePlayerMonthLog
-from apps.month.messages.events.month import MonthPrepared
+from apps.month.messages.events.month import PlayerMonthPrepared
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.training.handlers.events.training import (
@@ -35,7 +35,7 @@ def test_handle_training_of_warriors_for_new_month_requests_the_training():
     training = TrainingFactory.build(faction=faction)
 
     result = handle_training_of_warriors_for_new_month(
-        context=MonthPrepared(faction=faction, savegame=savegame, training=training, current_month=3)
+        context=PlayerMonthPrepared(faction=faction, savegame=savegame, training=training, current_month=3)
     )
 
     assert result == [TrainWarriors(faction=faction, training=training, month=3)]
@@ -50,7 +50,7 @@ def test_handle_training_of_warriors_for_new_month_without_a_training():
     savegame = SavegameFactory.build()
 
     result = handle_training_of_warriors_for_new_month(
-        context=MonthPrepared(faction=faction, savegame=savegame, training=None, current_month=3)
+        context=PlayerMonthPrepared(faction=faction, savegame=savegame, training=None, current_month=3)
     )
 
     assert result == []

@@ -3,7 +3,7 @@ from queuebie.messages import Command
 
 from apps.faction.messages.events.faction import NewFactionCreated
 from apps.month.messages.commands.month import CreatePlayerMonthLog
-from apps.month.messages.events.month import MonthPrepared
+from apps.month.messages.events.month import PlayerMonthPrepared
 from apps.training.messages.commands.training import CreateNewTraining, TrainWarriors
 from apps.training.messages.events.training import WarriorUpgradedSkill
 
@@ -22,8 +22,8 @@ def handle_pub_mercenaries_restocked(*, context: WarriorUpgradedSkill) -> Comman
     )
 
 
-@message_registry.register_event(event=MonthPrepared)
-def handle_training_of_warriors_for_new_month(*, context: MonthPrepared) -> list[Command]:
+@message_registry.register_event(event=PlayerMonthPrepared)
+def handle_training_of_warriors_for_new_month(*, context: PlayerMonthPrepared) -> list[Command]:
     # A savegame whose player faction has no training row has nothing to train, and the command
     # handler dereferences "training" unguarded - finishing the month would answer with a 500
     if context.training is None:

@@ -5,7 +5,7 @@ from apps.faction.messages.commands.faction import RestockTownShopItems
 from apps.faction.messages.commands.item import AddItemToTownShop, RemoveItemFromTownShop
 from apps.faction.messages.events.faction import NewFactionCreated
 from apps.item.messages.events import item
-from apps.month.messages.events.month import MonthPrepared
+from apps.month.messages.events.month import PlayerMonthPrepared
 
 
 @message_registry.register_event(event=item.ItemCreated)
@@ -27,6 +27,6 @@ def handle_remove_bought_item_from_shop(*, context: item.ItemBought) -> Command:
 
 
 @message_registry.register_event(event=NewFactionCreated)
-@message_registry.register_event(event=MonthPrepared)
-def handle_restock_items_in_shop_for_new_month(*, context: MonthPrepared | NewFactionCreated) -> Command:
+@message_registry.register_event(event=PlayerMonthPrepared)
+def handle_restock_items_in_shop_for_new_month(*, context: PlayerMonthPrepared | NewFactionCreated) -> Command:
     return RestockTownShopItems(faction=context.faction, month=context.current_month)

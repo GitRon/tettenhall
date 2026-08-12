@@ -9,6 +9,15 @@ class FactionQuerySet(models.QuerySet):
     def for_player_faction(self, *, faction_id: int):
         return self.filter(id=faction_id)
 
+    def still_in_play(self, *, savegame_id: int):
+        """
+        Every faction of the savegame still taking part in the game, the player's included.
+
+        This is the one place deciding who is still in it, so the "is this faction defeated" filter
+        belongs here once that flag exists.
+        """
+        return self.for_savegame(savegame_id=savegame_id)
+
 
 class FactionManager(manager.Manager):
     def add_captive(self, *, faction, warrior):

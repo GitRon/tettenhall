@@ -1,7 +1,7 @@
 from apps.faction.handlers.events.quest import handle_offer_new_quests_on_bulletin_board
 from apps.faction.messages.commands.quest import OfferNewQuestsOnBulletinBoard
 from apps.faction.tests.factories.faction import FactionFactory
-from apps.month.messages.events.month import MonthPrepared
+from apps.month.messages.events.month import PlayerMonthPrepared
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.training.tests.factories.training import TrainingFactory
 
@@ -12,7 +12,7 @@ def test_handle_offer_new_quests_on_bulletin_board_maps_to_command():
     database is needed.
     """
     faction = FactionFactory.build()
-    context = MonthPrepared(
+    context = PlayerMonthPrepared(
         faction=faction, savegame=SavegameFactory.build(), training=TrainingFactory.build(), current_month=7
     )
 
