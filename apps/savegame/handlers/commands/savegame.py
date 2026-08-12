@@ -51,8 +51,13 @@ def handle_determine_savegame_outcome(*, context: DetermineSavegameOutcome) -> E
     context.savegame.save(update_fields=("outcome",))
 
     # The fight the game ended in is still open, and deciding it needs a query the consuming event
-    # handler is not allowed to make. Evaluated here so the message carries warriors, not a queryset
-    open_skirmish_list = list(Skirmish.objects.unresolved().for_savegame(savegame_id=context.savegame.id))
+    # handler is not allowed to make. Both sides are pulled in with it: that handler picks the victor
+    # from them, and reaching a relation there is a lazy query strict mode blocks
+    open_skirmish_list = list(
+        Skirmish.objects.unresolved()
+        .for_savegame(savegame_id=context.savegame.id)
+        .select_related("player_faction", "non_player_faction")
+    )
 
     return SavegameEnded(
         savegame=context.savegame,
