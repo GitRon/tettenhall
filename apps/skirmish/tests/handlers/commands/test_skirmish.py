@@ -366,7 +366,7 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_non_player_fact
         defeated_unconscious_warriors=[unconscious_player_warrior],
         victorious_conscious_warriors=[healthy_enemy_warrior],
         quest_name=quest_contract.quest.name,
-        quest_loot=250,
+        quest_loot=0,
         month=3,
     )
 

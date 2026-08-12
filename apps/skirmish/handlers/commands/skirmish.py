@@ -164,7 +164,12 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     try:
         quest_contract = context.skirmish.quest_contract
         quest_name = quest_contract.quest.name
-        quest_loot = quest_contract.quest.loot
+        # A quest only pays the faction that signed the contract, and only if it actually won: the
+        # reward is handed to the victor further down the chain, so carrying it regardless of the
+        # outcome funded the rival who beat you out of your own quest. Decided here rather than in
+        # the finance handler because reading the contract's faction is a query, which strict mode
+        # forbids in an event handler.
+        quest_loot = quest_contract.quest.loot if context.victorious_faction == quest_contract.faction else 0
     except QuestContract.DoesNotExist:
         # There might be skirmishes with no assigned quest contract
         # TODO: this shouldn't be handled here that explicitly -> model method?

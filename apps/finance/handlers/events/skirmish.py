@@ -9,7 +9,9 @@ from apps.skirmish.messages.events import transaction
 def handle_faction_loots_warriors_silver(*, context: transaction.WarriorDroppedSilver) -> Command | None:
     return CreateTransaction(
         faction=context.gaining_faction,
-        amount=-context.amount,
+        # Income, so positive: the faction is the one gaining the silver, not paying it. Every
+        # negative amount in the ledger is a cost - wages, recruitment, purchases, building work
+        amount=context.amount,
         reason=f"Looted from {context.warrior}",
         month=context.month,
     )
