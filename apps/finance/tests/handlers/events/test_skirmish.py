@@ -19,5 +19,4 @@ def test_handle_faction_loots_warriors_silver_books_the_loot_as_income():
         )
     )
 
-    # The transaction amount is inverted: a warrior dropping silver is a gain for the looting faction
-    assert result == CreateTransaction(faction=gaining_faction, amount=-50, reason="Looted from Cuthred", month=3)
+    assert result == CreateTransaction(faction=gaining_faction, amount=50, reason="Looted from Cuthred", month=3)

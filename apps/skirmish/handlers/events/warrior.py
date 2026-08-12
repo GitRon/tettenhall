@@ -128,7 +128,7 @@ def handle_experience_gain_after_battle_for_victor(*, context: skirmish.Skirmish
 
     gained_experience = 10
 
-    for victorious_warrior in context.victorious_conscious_warriors:
+    for victorious_warrior in context.victorious_healthy_warriors:
         message_list.append(
             IncreaseExperience(
                 skirmish=context.skirmish,

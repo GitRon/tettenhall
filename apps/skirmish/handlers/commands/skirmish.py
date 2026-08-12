@@ -164,7 +164,12 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     try:
         quest_contract = context.skirmish.quest_contract
         quest_name = quest_contract.quest.name
-        quest_loot = quest_contract.quest.loot
+        # A quest only pays the faction that signed the contract, and only if it actually won: the
+        # reward is handed to the victor further down the chain, so carrying it regardless of the
+        # outcome funded the rival who beat you out of your own quest. Decided here rather than in
+        # the finance handler because reading the contract's faction is a query, which strict mode
+        # forbids in an event handler.
+        quest_loot = quest_contract.quest.loot if quest_contract.faction_id == context.victorious_faction.pk else 0
     except QuestContract.DoesNotExist:
         # There might be skirmishes with no assigned quest contract
         # TODO: this shouldn't be handled here that explicitly -> model method?
@@ -205,15 +210,16 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     # The unconscious among them are the ones taken prisoner, and are already loaded above
     defeated_unconscious_warriors = [warrior for warrior in defeated_warriors_on_the_field if warrior.is_unconscious]
 
-    # Fetch list of victorious, conscious warriors
-    victorious_conscious_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+    # Only the ones still standing when it was over share in the victory: a warrior who was knocked
+    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did
+    victorious_healthy_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
 
     # We need to evaluate the QS to avoid hitting the DB in the events
     return SkirmishFinished(
         skirmish=context.skirmish,
         incapacitated_warriors=incapacitated_warriors,
         defeated_unconscious_warriors=defeated_unconscious_warriors,
-        victorious_conscious_warriors=list(victorious_conscious_warriors),
+        victorious_healthy_warriors=list(victorious_healthy_warriors),
         month=context.month,
         quest_name=quest_name,
         quest_loot=quest_loot,
