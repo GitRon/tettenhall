@@ -43,6 +43,32 @@ A shard file ending in the line `<!-- shard-complete -->` is finished. A shard f
 partial and is still used - its findings count, its coverage is reported as incomplete. No file at all
 means that lens was never reviewed, which is reported as a gap rather than blocking the run.
 
+`state.json` is what a later session resumes from, so its shape is fixed rather than improvised:
+
+```json
+{
+  "slug": "faction-defeat",
+  "issue": 21,
+  "branch": "feature/faction-defeat",
+  "base": "main",
+  "phase": "review",
+  "deadline_seconds": 720,
+  "ci_attempts": 2,
+  "review": {
+    "head_sha": "c753616",
+    "shards": {
+      "01-correctness": { "status": "complete", "attempts": 1, "agent_id": "agent_x" },
+      "02-data-layer":  { "status": "running",  "attempts": 2, "agent_id": "agent_y" },
+      "03-tests":       { "status": "gap",      "attempts": 2, "reason": "deadline" }
+    }
+  }
+}
+```
+
+`phase` is one of `spec`, `plan`, `implement`, `ci`, `review`, `triage`, `ship`. A shard `status` is one
+of `running`, `complete`, `partial`, `gap`. Write the file after every phase transition and every shard
+state change - it is cheap, and it is the only thing standing between an interrupted run and a restart.
+
 ## Before you start
 
 Read [AGENTS.md](../../../AGENTS.md) and the docs it points at for the area you are about to touch. They
@@ -94,18 +120,31 @@ Runs the same two gates as `.github/workflows/tests.yml`: `pre-commit run --all-
 formatting hooks fail the run they rewrote) and `uv run pytest --cov` behind the 100% branch gate. Results
 land in `ci.md`, full output in `ci-logs/`.
 
-Fix and re-run until both are green. **The review does not start on a red run** - reviewers must not spend
-wall-clock on findings a linter would have caught for free. If coverage is short, read
-[coverage](../../../docs/patterns/coverage.md): the fix is a test, never `# pragma: no cover` and never a
-lower `fail_under`.
+Fix and re-run until both are green, counting rounds in `ci_attempts`. **The review does not start on a
+red run** - reviewers must not spend wall-clock on findings a linter would have caught for free. If
+coverage is short, read [coverage](../../../docs/patterns/coverage.md): the fix is a test, never
+`# pragma: no cover` and never a lower `fail_under`.
+
+The formatting hooks rewrite files, so stage whatever they changed before the next commit - see
+[linting](../../../docs/contributing/linting.md).
+
+**After three red rounds, stop and report.** Three failures on the same gate means the plan was wrong, not
+that the fix needs another attempt, and grinding on it is exactly the wall-clock this skill exists to
+protect. Say what is failing and what you tried.
 
 ## Phase 4 - Sharded code review
 
-With `--native`, skip this phase and invoke `/code-review` instead, then jump to Phase 5.
+With `--native`, skip this phase and invoke `/code-review` instead. Then go to Phase 5, but skip its
+delta check - there is no review `head_sha` to diff against, and the native review already covered the
+change.
 
 ### Launch
 
-1. `git diff main...HEAD --stat` - count changed lines and decide the shard count:
+1. **`git status --porcelain` must be empty.** Commit everything first. The shards review
+   `git diff main...HEAD`, so uncommitted work is invisible to all of them and the round would come back
+   clean having reviewed nothing - the one failure this design must not have. Do not launch on a dirty
+   tree.
+2. `git diff main...HEAD --stat` - count changed lines and decide the shard count:
 
    | Changed lines | Shards |
    |---|---|
@@ -116,8 +155,8 @@ With `--native`, skip this phase and invoke `/code-review` instead, then jump to
 
    Take them in the order listed in [review lenses](references/review-lenses.md) - the lenses are ranked,
    so a small diff drops the least valuable ones and a deadline drops them too.
-2. Write `review/.started_at` (`date +%s`) and `review/.head_sha` (`git rev-parse HEAD`).
-3. Launch every shard **in a single message** so they run concurrently, one `Agent` call each with
+3. Write `review/.started_at` (`date +%s`) and `review/.head_sha` (`git rev-parse HEAD`).
+4. Launch every shard **in a single message** so they run concurrently, one `Agent` call each with
    `subagent_type: "general-purpose"` and `model: "sonnet"`. Build each prompt from the template in
    [review lenses](references/review-lenses.md). Record the returned agent ids in `state.json`.
 
@@ -126,8 +165,11 @@ With `--native`, skip this phase and invoke `/code-review` instead, then jump to
 Shard completions arrive as task notifications. On each one:
 
 ```bash
-bash .claude/skills/implement-story/scripts/review-status.sh .claude/runs/<slug>
+bash .claude/skills/implement-story/scripts/review-status.sh .claude/runs/<slug> <deadline_seconds>
 ```
+
+Pass the deadline explicitly - the script defaults to 720 and would otherwise measure a `--deadline=900`
+run against the wrong budget, cutting shards short without saying so.
 
 It prints elapsed seconds against the deadline and the per-shard state (`complete`, `partial`, `missing`).
 Do not poll it on a timer - only look when a notification wakes you, or when you have nothing else to do.

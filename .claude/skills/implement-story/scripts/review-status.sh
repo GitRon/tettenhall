@@ -39,7 +39,10 @@ found=0
 for f in "$REVIEW_DIR"/*.md; do
   found=1
   name=$(basename "$f")
-  findings=$(grep -c '^```finding' "$f" 2>/dev/null || echo 0)
+  # "grep -c" prints its count and still exits 1 when that count is zero, so a "|| echo 0" fallback
+  # would append a second zero and split the line. Swallow the exit code, keep the count.
+  findings=$(grep -c '^```finding' "$f" 2>/dev/null || true)
+  findings=${findings:-0}
   # The sentinel is the only thing that distinguishes a finished lens from one that died mid-write.
   if tail -n 5 "$f" | grep -q -- '<!-- shard-complete -->'; then
     state="complete"
