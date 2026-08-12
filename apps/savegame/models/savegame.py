@@ -7,6 +7,11 @@ from apps.savegame.managers.savegame import SavegameManager
 
 # TODO: can't remove a savegame via the admin due to FK issues
 class Savegame(models.Model):
+    class OutcomeChoices(models.IntegerChoices):
+        OUTCOME_RUNNING = 1, "Running"
+        OUTCOME_WON = 2, "Won"
+        OUTCOME_LOST = 3, "Lost"
+
     name = models.CharField("Name", max_length=75)
     created_by = models.ForeignKey(User, verbose_name="Created by", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -14,6 +19,11 @@ class Savegame(models.Model):
     is_active = models.BooleanField(default=False)
     current_month = models.PositiveSmallIntegerField(
         "Current month", default=1, help_text="Month will be incremented after creation via Command"
+    )
+    # Whether the game is still being played. Distinct from "is_active", which only says whether this
+    # is the savegame the user currently has loaded
+    outcome = models.PositiveSmallIntegerField(
+        "Outcome", choices=OutcomeChoices.choices, default=OutcomeChoices.OUTCOME_RUNNING
     )
 
     player_faction = models.OneToOneField(
