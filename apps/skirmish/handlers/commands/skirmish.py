@@ -169,7 +169,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         # outcome funded the rival who beat you out of your own quest. Decided here rather than in
         # the finance handler because reading the contract's faction is a query, which strict mode
         # forbids in an event handler.
-        quest_loot = quest_contract.quest.loot if context.victorious_faction == quest_contract.faction else 0
+        quest_loot = quest_contract.quest.loot if quest_contract.faction_id == context.victorious_faction.pk else 0
     except QuestContract.DoesNotExist:
         # There might be skirmishes with no assigned quest contract
         # TODO: this shouldn't be handled here that explicitly -> model method?
@@ -211,8 +211,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     defeated_unconscious_warriors = [warrior for warrior in defeated_warriors_on_the_field if warrior.is_unconscious]
 
     # Only the ones still standing when it was over share in the victory: a warrior who was knocked
-    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did. The
-    # list used to be called "conscious", which promised the fleeing ones a share it never gave them
+    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did
     victorious_healthy_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
 
     # We need to evaluate the QS to avoid hitting the DB in the events

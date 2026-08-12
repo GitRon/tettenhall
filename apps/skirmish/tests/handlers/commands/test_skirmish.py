@@ -338,6 +338,24 @@ def test_handle_faction_wins_skirmish_does_not_loot_a_warband_that_fled():
 
 
 @pytest.mark.django_db
+def test_handle_faction_wins_skirmish_pays_no_quest_loot_to_a_rival_victor():
+    """
+    The reward is handed to whoever won further down the chain, so carrying it regardless of the
+    outcome credited the rival with the player's own quest money.
+    """
+    skirmish = SkirmishFactory()
+    QuestContractFactory(faction=skirmish.player_faction, skirmish=skirmish, quest__loot=250)
+    skirmish.player_warriors.add(WarriorFactory(faction=skirmish.player_faction))
+    skirmish.non_player_warriors.add(WarriorFactory(faction=skirmish.non_player_faction))
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.non_player_faction, month=3)
+    )
+
+    assert result.quest_loot == 0
+
+
+@pytest.mark.django_db
 def test_handle_faction_wins_skirmish_loots_and_captures_for_the_non_player_faction():
     """
     The mirror image of the test above: the loot follows the victor, not the player. Naming the two
