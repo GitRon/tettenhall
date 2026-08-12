@@ -172,9 +172,8 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         quest_loot = 0
 
     # Everything below is about the winner and the loser, so the two sides get sorted into those
-    # roles exactly once. Reaching for "player_warriors" and "non_player_warriors" directly is what
-    # made the loot follow the player rather than the victor - the two only coincide when the player
-    # wins, and the model naming invites the mistake.
+    # roles exactly once - "player_warriors" and "non_player_warriors" only coincide with them when
+    # the player happens to be the one who won
     if context.skirmish.victorious_faction == context.skirmish.player_faction:
         victorious_warriors = context.skirmish.player_warriors
         defeated_warriors = context.skirmish.non_player_warriors
@@ -182,16 +181,29 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         victorious_warriors = context.skirmish.non_player_warriors
         defeated_warriors = context.skirmish.player_warriors
 
-    # The winner keeps the items from his dead warriors, but since it's easier they get "reassigned" to the victor,
-    # thus himself.
-    # Therefore, we reassign all dead victorious warriors items and all non-healthy defeated ones
+    # Only a warrior left lying on the field can be stripped: the dead and the unconscious. One who
+    # fled took his kit with him, so a warband that merely routs loses nothing but the fight. That
+    # distinction matters more than it looks: a defeat is declared exactly when nobody on that side
+    # is healthy any more, so "everyone not healthy" would have meant the whole roster, not its
+    # casualties.
+    defeated_warriors_on_the_field = list(
+        defeated_warriors.filter(
+            condition__in=(
+                Warrior.ConditionChoices.CONDITION_DEAD,
+                Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
+            )
+        )
+    )
+
+    # The winner's own dead take the same route, reassigned to the victor - who is their own faction,
+    # so it amounts to their gear returning to the stash. His unconscious survive and keep theirs.
     incapacitated_warriors = [
         *victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_DEAD),
-        *defeated_warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_HEALTHY),
+        *defeated_warriors_on_the_field,
     ]
 
-    # Fetch a list of unconscious, defeated warriors
-    defeated_unconscious_warriors = defeated_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    # The unconscious among them are the ones taken prisoner, and are already loaded above
+    defeated_unconscious_warriors = [warrior for warrior in defeated_warriors_on_the_field if warrior.is_unconscious]
 
     # Fetch list of victorious, conscious warriors
     victorious_conscious_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
@@ -200,7 +212,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     return SkirmishFinished(
         skirmish=context.skirmish,
         incapacitated_warriors=incapacitated_warriors,
-        defeated_unconscious_warriors=list(defeated_unconscious_warriors),
+        defeated_unconscious_warriors=defeated_unconscious_warriors,
         victorious_conscious_warriors=list(victorious_conscious_warriors),
         month=context.month,
         quest_name=quest_name,

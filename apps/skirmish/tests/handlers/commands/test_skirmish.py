@@ -276,17 +276,28 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
 
 @pytest.mark.django_db
 def test_handle_faction_wins_skirmish_loots_and_captures_for_the_player():
+    """
+    Both sides carry someone who is neither dead nor healthy, because that is where the two rules
+    differ: the loser's unconscious are stripped where they lie, the winner's own are not, and the
+    one who fled is gone with his kit whichever side he was on.
+    """
     skirmish = SkirmishFactory()
     quest_contract = QuestContractFactory(faction=skirmish.player_faction, skirmish=skirmish, quest__loot=250)
     dead_player_warrior = WarriorFactory(
         faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
+    unconscious_player_warrior = WarriorFactory(
+        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
     healthy_player_warrior = WarriorFactory(faction=skirmish.player_faction)
     unconscious_enemy_warrior = WarriorFactory(
         faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
-    skirmish.player_warriors.add(dead_player_warrior, healthy_player_warrior)
-    skirmish.non_player_warriors.add(unconscious_enemy_warrior)
+    fleeing_enemy_warrior = WarriorFactory(
+        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING
+    )
+    skirmish.player_warriors.add(dead_player_warrior, unconscious_player_warrior, healthy_player_warrior)
+    skirmish.non_player_warriors.add(unconscious_enemy_warrior, fleeing_enemy_warrior)
 
     result = handle_faction_wins_skirmish(
         context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.player_faction, month=3)
@@ -301,6 +312,29 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_player():
         quest_loot=250,
         month=3,
     )
+
+
+@pytest.mark.django_db
+def test_handle_faction_wins_skirmish_does_not_loot_a_warband_that_fled():
+    """
+    A defeat is declared as soon as nobody on a side is healthy, so a warband can lose without
+    leaving anyone on the field. Stripping "everyone not healthy" would have cost the loser every
+    weapon and piece of armour he owns for running away.
+    """
+    skirmish = SkirmishFactory()
+    fleeing_player_warrior = WarriorFactory(
+        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING
+    )
+    healthy_enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+    skirmish.player_warriors.add(fleeing_player_warrior)
+    skirmish.non_player_warriors.add(healthy_enemy_warrior)
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.non_player_faction, month=3)
+    )
+
+    assert result.incapacitated_warriors == []
+    assert result.defeated_unconscious_warriors == []
 
 
 @pytest.mark.django_db
