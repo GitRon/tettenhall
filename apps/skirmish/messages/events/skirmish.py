@@ -45,7 +45,7 @@ class SkirmishFinished(Event):
     skirmish: Skirmish
     incapacitated_warriors: list[Warrior]
     defeated_unconscious_warriors: list[Warrior]
-    victorious_conscious_warriors: list[Warrior]
+    victorious_healthy_warriors: list[Warrior]
     quest_name: str
     quest_loot: int
     month: int

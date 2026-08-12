@@ -210,15 +210,17 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     # The unconscious among them are the ones taken prisoner, and are already loaded above
     defeated_unconscious_warriors = [warrior for warrior in defeated_warriors_on_the_field if warrior.is_unconscious]
 
-    # Fetch list of victorious, conscious warriors
-    victorious_conscious_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+    # Only the ones still standing when it was over share in the victory: a warrior who was knocked
+    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did. The
+    # list used to be called "conscious", which promised the fleeing ones a share it never gave them
+    victorious_healthy_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
 
     # We need to evaluate the QS to avoid hitting the DB in the events
     return SkirmishFinished(
         skirmish=context.skirmish,
         incapacitated_warriors=incapacitated_warriors,
         defeated_unconscious_warriors=defeated_unconscious_warriors,
-        victorious_conscious_warriors=list(victorious_conscious_warriors),
+        victorious_healthy_warriors=list(victorious_healthy_warriors),
         month=context.month,
         quest_name=quest_name,
         quest_loot=quest_loot,

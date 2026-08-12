@@ -140,7 +140,7 @@ def test_handle_log_skirmish_finished_logs_the_victor():
             skirmish=skirmish,
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[],
-            victorious_conscious_warriors=[],
+            victorious_healthy_warriors=[],
             quest_name="Raid cattle",
             quest_loot=250,
             month=3,
