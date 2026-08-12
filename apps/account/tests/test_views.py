@@ -4,6 +4,7 @@ from django.urls import reverse
 from apps.account.tests.factories.user import UserFactory
 from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 
 
@@ -133,3 +134,14 @@ def test_dashboard_view_shows_an_active_quest_without_a_skirmish(logged_in_clien
     response = logged_in_client.get(reverse("account:dashboard-view"))
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_dashboard_view_shows_the_outcome_of_a_finished_savegame(logged_in_client, current_savegame):
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_WON
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("account:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["savegame_outcome"] == "Won"
