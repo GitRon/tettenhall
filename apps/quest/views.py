@@ -8,11 +8,13 @@ from queuebie.runner import handle_message
 from apps.quest.forms.quest_accept import QuestAcceptForm
 from apps.quest.messages.commands.quest import AcceptQuest
 from apps.quest.models.quest import Quest
-from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin
+from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.savegame.models.savegame import Savegame
 
 
-class QuestAcceptView(PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.FormView):
+class QuestAcceptView(
+    RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.FormView
+):
     model = Quest
     form_class = QuestAcceptForm
     template_name = "quest/quest_detail.html"

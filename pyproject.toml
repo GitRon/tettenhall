@@ -185,6 +185,10 @@ exclude = [
     "PBR001",
     "PBR002",
 ]
+# Mixins for those views override Django's own hooks, so the signatures are not ours to change
+"*/mixins.py" = [
+    "PBR001",
+]
 "*/context_processors/*.py" = [
     "PBR001",
 ]

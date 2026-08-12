@@ -8,6 +8,7 @@ from queuebie.messages import Command, Event
 from apps.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     CreateNewFaction,
+    DefeatFactionOfLostLeader,
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
@@ -19,6 +20,7 @@ from apps.faction.messages.commands.faction import (
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithReducedMoraleDetermined,
+    FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
@@ -190,6 +192,28 @@ def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> l
         )
 
     return event_list
+
+
+@message_registry.register_command(command=DefeatFactionOfLostLeader)
+def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) -> Event | None:
+    """
+    Knocks out the faction this warrior led, if he led one.
+
+    Most warriors are nobody's leader, so the usual answer is None. "Faction.leader" is looked up
+    rather than "warrior.faction" because capture clears the latter before this runs - the leader
+    relation is the only remaining record of who led whom.
+    """
+    faction = (
+        Faction.objects.still_in_play(savegame_id=context.warrior.savegame_id).filter(leader=context.warrior).first()
+    )
+
+    if faction is None:
+        return None
+
+    faction.is_defeated = True
+    faction.save(update_fields=("is_defeated",))
+
+    return FactionWasDefeated(faction=faction, savegame=faction.savegame)
 
 
 @message_registry.register_command(command=SetNewLeaderWarrior)

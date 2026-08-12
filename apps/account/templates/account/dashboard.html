@@ -3,6 +3,17 @@
 {% block content %}
     <h1>Dashboard</h1>
 
+    {% if savegame_outcome %}
+        <div class="uk-alert-primary" uk-alert>
+            <h3>{{ savegame_outcome }}</h3>
+            <p>
+                This game is over.
+                <a href="{% url 'savegame:savegame-list-view' %}">Pick or start another savegame</a>
+                to play on.
+            </p>
+        </div>
+    {% endif %}
+
     {% for active_quest in faction.active_quests.all %}
         <div uk-alert>
             <div>

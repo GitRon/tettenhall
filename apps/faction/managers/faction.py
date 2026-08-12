@@ -13,10 +13,10 @@ class FactionQuerySet(models.QuerySet):
         """
         Every faction of the savegame still taking part in the game, the player's included.
 
-        This is the one place deciding who is still in it, so the "is this faction defeated" filter
-        belongs here once that flag exists.
+        The one place deciding who is still in it: a defeated faction gets no month, is never picked
+        as a quest target, and cannot be knocked out twice.
         """
-        return self.for_savegame(savegame_id=savegame_id)
+        return self.for_savegame(savegame_id=savegame_id).filter(is_defeated=False)
 
 
 class FactionManager(manager.Manager):

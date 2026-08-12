@@ -5,6 +5,7 @@ from queuebie.messages import Event
 from apps.faction.models.faction import Faction
 from apps.item.services.generators.item.base import BaseItemGenerator
 from apps.quest.models import Quest
+from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -12,6 +13,12 @@ from apps.skirmish.models.warrior import Warrior
 class NewFactionCreated(Event):
     faction: Faction
     current_month: int
+
+
+@dataclass(kw_only=True)
+class FactionWasDefeated(Event):
+    faction: Faction
+    savegame: Savegame
 
 
 @dataclass(kw_only=True)

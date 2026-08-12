@@ -10,11 +10,15 @@ from queuebie.runner import handle_message
 from apps.finance.models import Transaction
 from apps.item.messages.commands.item import BuyItem, SellItem
 from apps.item.models.item import Item
-from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, SavegameScopedQuerysetMixin
+from apps.savegame.mixins import (
+    PlayerFactionScopedQuerysetMixin,
+    RunningSavegameRequiredMixin,
+    SavegameScopedQuerysetMixin,
+)
 from apps.savegame.models.savegame import Savegame
 
 
-class ItemSellView(PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.View):
+class ItemSellView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.View):
     # Only the player's own items can be sold. Being in the right savegame is not enough: the shop
     # and the rival factions have items in it too, and selling those would pay them.
     model = Item
@@ -36,7 +40,7 @@ class ItemSellView(PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.
         return response
 
 
-class ItemBuyView(SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
+class ItemBuyView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):
     model = Item
     http_method_names = ("post",)
 
