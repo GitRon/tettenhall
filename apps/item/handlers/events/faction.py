@@ -10,7 +10,6 @@ def handle_request_new_item_for_town_shop(*, context: RequestNewItemForTownShop)
     return CreateItem(
         owner=None,
         faction=context.faction,
-        savegame=context.faction.savegame,
         item_function=context.item_function,
         generator_class=context.generator_class,
         month=context.month,

@@ -5,7 +5,6 @@ from queuebie.messages import Command
 from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
 from apps.item.services.generators.item.base import BaseItemGenerator
-from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models import Warrior
 
 
@@ -15,7 +14,6 @@ class CreateItem(Command):
     faction: Faction
     generator_class: type[BaseItemGenerator]
     item_function: int
-    savegame: Savegame
     month: int
     quality_bonus: int = 0
 
