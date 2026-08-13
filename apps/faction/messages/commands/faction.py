@@ -80,3 +80,10 @@ class RemoveQuestFromBulletinBoard(Command):
     faction: Faction
     quest: Quest
     month: int
+
+
+@dataclass(kw_only=True)
+class DefeatFactionOfLostLeader(Command):
+    # Carries nothing but the warrior on purpose: the event handlers raising this cannot look up which
+    # faction he led, or whether he led one at all, without a query strict mode forbids them
+    warrior: Warrior

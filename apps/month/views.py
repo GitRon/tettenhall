@@ -9,12 +9,12 @@ from queuebie.runner import handle_message
 
 from apps.month.messages.commands.month import PrepareMonth
 from apps.month.models.player_month_log import PlayerMonthLog
-from apps.savegame.mixins import SavegameScopedQuerysetMixin
+from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models import Skirmish
 
 
-class FinishMonthView(generic.View):
+class FinishMonthView(RunningSavegameRequiredMixin, generic.View):
     http_method_names = ("post",)
 
     def post(self, request, *args, **kwargs) -> HttpResponse:

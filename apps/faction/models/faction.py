@@ -34,6 +34,9 @@ class Faction(models.Model):
         verbose_name="Captured warriors",
         blank=True,
     )
+    # Set when the leader is killed or captured. The faction row stays: "leader" is the only remaining
+    # record of who led it once capture has cleared the warrior's own faction
+    is_defeated = models.BooleanField("Is defeated", default=False)
     savegame = models.ForeignKey("savegame.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
 
     town_name = models.CharField("Town name", max_length=100)

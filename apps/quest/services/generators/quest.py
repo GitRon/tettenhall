@@ -19,8 +19,9 @@ class QuestGenerator:
         if self.savegame.player_faction_id is None:
             raise RuntimeError(f"Savegame {self.savegame.id} has no player faction to create a quest for.")
 
+        # A knocked-out faction is off the board, so it is no longer somewhere to send a warband
         target_faction_list = list(
-            Faction.objects.filter(savegame=self.savegame).exclude(id=self.savegame.player_faction_id)
+            Faction.objects.still_in_play(savegame_id=self.savegame.id).exclude(id=self.savegame.player_faction_id)
         )
         if not target_faction_list:
             raise RuntimeError(f"Savegame {self.savegame.id} has no rival faction a quest could target.")

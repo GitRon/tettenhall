@@ -1,4 +1,8 @@
+import json
+from http import HTTPStatus
+
 from django.db.models import QuerySet
+from django.http import HttpResponse
 from django.views.generic.base import ContextMixin
 
 from apps.savegame.models.savegame import Savegame
@@ -37,6 +41,30 @@ class PlayerFactionScopedQuerysetMixin:
             return super().get_queryset().none()
 
         return super().get_queryset().for_player_faction(faction_id=current_savegame.player_faction_id)
+
+
+class RunningSavegameRequiredMixin:
+    """
+    Refuses anything that would change the world once the game has been decided.
+
+    Every view dispatching a command needs this: the outcome is reached the moment a leader falls, and
+    a player left holding a finished savegame could otherwise keep drafting, buying and fighting in it.
+    Creating or loading a savegame deliberately does not carry it - that is exactly what a player does
+    after losing.
+
+    A savegame that is missing entirely is somebody else's problem; the views resolving one already
+    answer for that themselves.
+    """
+
+    def dispatch(self, request, *args, **kwargs) -> HttpResponse:
+        current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+
+        if current_savegame is not None and current_savegame.outcome != Savegame.OutcomeChoices.OUTCOME_RUNNING:
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps({"notification": "This game is over. Start a new savegame to play on."})
+            return response
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 class CurrentSavegameMixin(ContextMixin):

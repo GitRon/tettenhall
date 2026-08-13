@@ -6,6 +6,7 @@ from django.urls import reverse
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
+from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -58,6 +59,22 @@ def test_finish_month_view_lets_a_rival_faction_recover(logged_in_client, curren
     assert response.status_code == 200
     rival_warrior.refresh_from_db()
     assert rival_warrior.condition == Warrior.ConditionChoices.CONDITION_HEALTHY
+
+
+@pytest.mark.django_db
+def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current_savegame):
+    """
+    Covers RunningSavegameRequiredMixin for every view carrying it; which views those are is asserted
+    separately in apps/common/tests/test_ended_savegame_guard.py.
+    """
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 204
+    current_savegame.refresh_from_db()
+    assert current_savegame.current_month == 1
 
 
 @pytest.mark.django_db

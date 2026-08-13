@@ -5,6 +5,7 @@ import pytest
 from apps.faction.handlers.commands.faction import (
     handle_create_factions_for_new_savegame,
     handle_create_new_faction,
+    handle_defeat_faction_of_lost_leader,
     handle_determine_injured_warriors,
     handle_determine_warriors_with_reduced_morale,
     handle_earn_money_from_buildings,
@@ -15,6 +16,7 @@ from apps.faction.handlers.commands.faction import (
 from apps.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     CreateNewFaction,
+    DefeatFactionOfLostLeader,
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
@@ -25,6 +27,7 @@ from apps.faction.messages.commands.faction import (
 from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithReducedMoraleDetermined,
+    FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
     NewFactionCreated,
     QuestWasRemovedFromBulletinBoard,
@@ -84,6 +87,63 @@ def test_handle_create_new_faction_for_non_player_faction():
     assert result.faction.fyrd_reserve == 4
     savegame.refresh_from_db()
     assert savegame.player_faction is None
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_knocks_the_faction_out():
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction, savegame=faction.savegame)
+    faction.leader = leader
+    faction.save()
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    assert result == FactionWasDefeated(faction=faction, savegame=faction.savegame)
+    faction.refresh_from_db()
+    assert faction.is_defeated is True
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_for_a_captured_leader():
+    """
+    Capture clears the warrior's own faction before this runs, so the lookup has to go through
+    Faction.leader - the only remaining record of who led whom.
+    """
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction, savegame=faction.savegame)
+    faction.leader = leader
+    faction.save()
+    leader.faction = None
+    leader.save()
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    assert result == FactionWasDefeated(faction=faction, savegame=faction.savegame)
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_for_an_ordinary_warrior():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, savegame=faction.savegame)
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=warrior))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_for_an_already_defeated_faction():
+    """
+    Reachable: the leader can be killed in the fight and then captured when it is resolved.
+    """
+    faction = FactionFactory(is_defeated=True)
+    leader = WarriorFactory(faction=faction, savegame=faction.savegame)
+    faction.leader = leader
+    faction.save()
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    assert result is None
 
 
 @pytest.mark.django_db

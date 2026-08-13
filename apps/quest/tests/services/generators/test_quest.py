@@ -19,6 +19,22 @@ def test_process_targets_a_rival_faction():
 
 
 @pytest.mark.django_db
+def test_process_never_targets_a_defeated_faction():
+    """
+    A knocked-out faction is off the board, so the bulletin board must stop sending warbands after it.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    FactionFactory(savegame=savegame, is_defeated=True)
+    rival_faction = FactionFactory(savegame=savegame)
+
+    quest = QuestGenerator(savegame=savegame).process()
+
+    assert quest.target_faction == rival_faction
+
+
+@pytest.mark.django_db
 def test_process_without_a_player_faction():
     savegame = SavegameFactory()
 

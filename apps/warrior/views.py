@@ -7,7 +7,7 @@ from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.faction.models.faction import Faction
-from apps.savegame.mixins import SavegameScopedQuerysetMixin
+from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.forms.warrior import WarriorForm
@@ -70,7 +70,7 @@ class CapturedWarriorActionMixin(SavegameScopedQuerysetMixin):
         )
 
 
-class WarriorRecruitCapturedView(CapturedWarriorActionMixin, generic.DetailView):
+class WarriorRecruitCapturedView(RunningSavegameRequiredMixin, CapturedWarriorActionMixin, generic.DetailView):
     model = Warrior
     http_method_names = ("post",)
 
@@ -93,7 +93,7 @@ class WarriorRecruitCapturedView(CapturedWarriorActionMixin, generic.DetailView)
         return response
 
 
-class WarriorEnslaveCapturedView(CapturedWarriorActionMixin, generic.DetailView):
+class WarriorEnslaveCapturedView(RunningSavegameRequiredMixin, CapturedWarriorActionMixin, generic.DetailView):
     model = Warrior
     http_method_names = ("post",)
 

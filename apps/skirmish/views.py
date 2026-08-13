@@ -11,7 +11,7 @@ from queuebie.runner import handle_message
 
 from apps.common.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
-from apps.savegame.mixins import SavegameScopedQuerysetMixin
+from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.skirmish.models.battle_history import BattleHistory
@@ -52,7 +52,7 @@ class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class SkirmishFinishRoundView(SavegameScopedQuerysetMixin, generic.DetailView):
+class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     http_method_names = ("post",)
     object = None

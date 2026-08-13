@@ -5,7 +5,7 @@ from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.finance.models import Transaction
-from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin
+from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.savegame.models.savegame import Savegame
 from apps.town.buildings import BUILDINGS
 from apps.town.messages.commands.town import UpgradeTownBuilding
@@ -86,7 +86,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
         return context
 
 
-class UpgradeBuildingView(PlayerTownMixin, generic.DetailView):
+class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.DetailView):
     model = Town
     http_method_names = ("post",)
 
