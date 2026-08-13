@@ -12,12 +12,21 @@ from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 
 
 @dataclass(kw_only=True)
+class AttackFaction(Command):
+    attacking_faction: Faction
+    target_faction: Faction
+    assigned_warriors: QuerySet[Warrior] | list[Warrior]
+    month: int
+
+
+@dataclass(kw_only=True)
 class CreateSkirmish(Command):
     name: str
     faction_1: Faction
     faction_2: Faction
     warrior_list_1: QuerySet[Warrior] | list[Warrior]
     warrior_list_2: QuerySet[Warrior] | list[Warrior] | None
+    month: int
     quest_contract: QuestContract = None
 
 

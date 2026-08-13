@@ -7,6 +7,10 @@ from apps.skirmish.models.warrior import Warrior
 class Skirmish(models.Model):
     name = models.CharField("Name", max_length=100)
     current_round = models.PositiveSmallIntegerField("Current round", default=1)
+    # The month the fight belongs to. Nothing recorded it before, and a cap on how often the player
+    # may march against the same rival has nowhere else to look: a quest contract knows its month,
+    # but an attack carries no contract
+    month = models.PositiveSmallIntegerField("Month", default=1)
 
     # TODO: we could change this to attacker and defender and make AI factions fight themselves
     player_faction = models.ForeignKey(
