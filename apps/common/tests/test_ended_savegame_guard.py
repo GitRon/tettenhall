@@ -86,4 +86,4 @@ def test_the_guard_covers_every_view_that_dispatches_a_command():
     Guards the test above against quietly measuring nothing: an import mistake or a renamed helper
     would leave the list empty and the assertion green.
     """
-    assert len(_dispatching_view_classes()) >= len(UNGUARDED_VIEWS) + 7
+    assert len(_dispatching_view_classes()) >= len(UNGUARDED_VIEWS) + 8

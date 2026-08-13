@@ -1,12 +1,30 @@
 import pytest
 from django.urls import reverse
 
+from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.models.transaction import Transaction
 from apps.item.tests.factories.item import ItemFactory
 from apps.savegame.tests.factories.savegame import SavegameFactory
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+
+
+@pytest.fixture
+def player_faction_ready_to_march(current_savegame) -> Faction:
+    """
+    The player's faction with a healthy, unbooked leader.
+
+    Every attack needs one before anything about the target is looked at, so each case below would
+    otherwise open with the same three lines and bury the rule it is actually about.
+    """
+    faction = current_savegame.player_faction
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+
+    return faction
 
 
 @pytest.mark.django_db
@@ -30,6 +48,31 @@ def test_faction_detail_view_hides_factions_of_other_savegames(logged_in_client,
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": foreign_faction.id}))
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_offers_an_attack_on_a_rival(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["can_be_attacked"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_offers_no_attack_on_the_players_own_faction(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    response = logged_in_client.get(
+        reverse("faction:faction-detail-view", kwargs={"pk": player_faction_ready_to_march.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["can_be_attacked"] is False
 
 
 @pytest.mark.django_db
@@ -161,6 +204,123 @@ def test_draft_warrior_from_fyrd_view_without_a_player_faction(
 
     assert response.status_code == 404
     assert Warrior.objects.filter(faction=faction).exists() is False
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_shows_the_form(logged_in_client, current_savegame, player_faction_ready_to_march):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("faction:faction-attack-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["object"] == rival_faction
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_fights_the_rivals_own_war_band(
+    logged_in_client, current_savegame, player_faction_ready_to_march, queuebie_registry
+):
+    """
+    Flow test: no mocking inside the chain, so this runs the real queue and asserts the end state.
+    The whole point of the story is on the second assertion - the defending side is the rival's own
+    warriors, its leader among them, and not mercenaries invented for the fight.
+    """
+    follower = WarriorFactory(faction=player_faction_ready_to_march)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_leader = WarriorFactory(faction=rival_faction)
+    rival_faction.leader = rival_leader
+    rival_faction.save()
+
+    response = logged_in_client.post(
+        reverse("faction:faction-attack-view", kwargs={"pk": rival_faction.id}),
+        data={"assigned_warriors": [follower.id]},
+    )
+
+    assert response.status_code == 302
+    skirmish = Skirmish.objects.get(non_player_faction=rival_faction)
+    assert list(skirmish.non_player_warriors.all()) == [rival_leader]
+    assert list(skirmish.player_warriors.all()) == [player_faction_ready_to_march.leader, follower]
+    assert skirmish.month == current_savegame.current_month
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_hides_factions_of_other_savegames(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    other_savegame = SavegameFactory()
+    foreign_faction = FactionFactory(savegame=other_savegame)
+    WarriorFactory(faction=foreign_faction)
+
+    response = logged_in_client.post(reverse("faction:faction-attack-view", kwargs={"pk": foreign_faction.id}), data={})
+
+    assert response.status_code == 404
+    assert Skirmish.objects.exists() is False
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_cannot_attack_the_players_own_faction(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    Scoping to the savegame still reaches the player's own faction, and marching on yourself would
+    put the same warriors on both sides of the field.
+    """
+    response = logged_in_client.post(
+        reverse("faction:faction-attack-view", kwargs={"pk": player_faction_ready_to_march.id}), data={}
+    )
+
+    assert response.status_code == 404
+    assert Skirmish.objects.exists() is False
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_cannot_attack_a_defeated_faction(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A knocked-out faction is off the board, so there is nothing left to march against.
+    """
+    defeated_faction = FactionFactory(savegame=current_savegame, is_defeated=True)
+    WarriorFactory(faction=defeated_faction)
+
+    response = logged_in_client.post(
+        reverse("faction:faction-attack-view", kwargs={"pk": defeated_faction.id}), data={}
+    )
+
+    assert response.status_code == 404
+    assert Skirmish.objects.exists() is False
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_cannot_attack_the_same_rival_twice_in_a_month(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    SkirmishFactory(
+        player_faction=player_faction_ready_to_march,
+        non_player_faction=rival_faction,
+        month=current_savegame.current_month,
+    )
+
+    response = logged_in_client.post(reverse("faction:faction-attack-view", kwargs={"pk": rival_faction.id}), data={})
+
+    assert response.status_code == 404
+    assert Skirmish.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_without_an_active_savegame(logged_in_client):
+    """
+    Answering 404 rather than a server error: with no savegame there is nothing to scope against.
+    """
+    faction = FactionFactory()
+
+    response = logged_in_client.post(reverse("faction:faction-attack-view", kwargs={"pk": faction.pk}), data={})
+
+    assert response.status_code == 404
+    assert Skirmish.objects.exists() is False
 
 
 @pytest.mark.django_db

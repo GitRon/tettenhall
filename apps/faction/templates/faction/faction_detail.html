@@ -31,6 +31,10 @@
                     </tr>
                     </tbody>
                 </table>
+                {% if can_be_attacked %}
+                    <a href="{% url 'faction:faction-attack-view' object.id %}"
+                       class="uk-button uk-button-danger uk-button-small">Attack this faction</a>
+                {% endif %}
             </div>
             {% include 'faction/warrior/components/fyrd_card.html' with faction=object %}
         </div>

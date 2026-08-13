@@ -18,6 +18,34 @@ class FactionQuerySet(models.QuerySet):
         """
         return self.for_savegame(savegame_id=savegame_id).filter(is_defeated=False)
 
+    def attackable_by(self, *, player_faction, month: int):
+        """
+        Every rival "player_faction" may march against this month.
+
+        All of it lives in the queryset rather than in a template condition, because the target's id
+        comes from the URL and hiding a button guards nothing. The leader is checked here too even
+        though he stands on the attacking side: an attack he cannot march on is no attack at all,
+        and a rule kept somewhere else is how the button and the view drift apart.
+        """
+        # Imported here because the faction model imports this module while being defined itself,
+        # and the warrior model reaches back into the faction app
+        from apps.skirmish.models.warrior import Warrior
+
+        if player_faction is None or player_faction.get_available_leader(month=month) is None:
+            return self.none()
+
+        return (
+            self.still_in_play(savegame_id=player_faction.savegame_id)
+            .exclude(id=player_faction.id)
+            # A faction nobody healthy is left to defend cannot be marched on. Without this the
+            # skirmish would be created with an empty side.
+            .filter(warriors__condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+            # One attack per rival per month. Unlimited attacks would make knocking a faction out a
+            # formality rather than a campaign.
+            .exclude(non_player_skirmishes__player_faction=player_faction, non_player_skirmishes__month=month)
+            .distinct()
+        )
+
 
 class FactionManager(manager.Manager):
     def add_captive(self, *, faction, warrior):
