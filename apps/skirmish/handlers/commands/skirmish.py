@@ -7,6 +7,7 @@ from apps.quest.models import QuestContract
 from apps.skirmish.messages.commands import skirmish
 from apps.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
+    FactionWasAttacked,
     FighterPairsMatched,
     RoundFinished,
     SkirmishCreated,
@@ -22,11 +23,29 @@ from apps.skirmish.services.skirmish.damage import SkirmishDamageService
 from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
+@message_registry.register_command(command=skirmish.AttackFaction)
+def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | Event:
+    # Whom the rival fields is a query, so it is answered here rather than in the event handler that
+    # turns this into a skirmish - strict mode blocks the database there. Only the ones still on
+    # their feet turn out: a warrior who is down does not defend his town, and an unhealthy side
+    # would count as beaten before the first round.
+    defending_warriors = list(Warrior.objects.filter_healthy().filter_faction(faction_id=context.target_faction.id))
+
+    return FactionWasAttacked(
+        attacking_faction=context.attacking_faction,
+        defending_faction=context.target_faction,
+        attacking_warriors=list(context.assigned_warriors),
+        defending_warriors=defending_warriors,
+        month=context.month,
+    )
+
+
 @message_registry.register_command(command=skirmish.CreateSkirmish)
 def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
-    if context.warrior_list_2:
-        warrior_list_2 = context.warrior_list_2
-    else:
+    # "is None" rather than truthiness: an empty queryset is falsy, so "the target faction fields
+    # nobody" used to read as "no opponents were supplied" and quietly invented mercenaries for a
+    # faction that has none - and then dereferenced the quest contract an attack does not carry
+    if context.warrior_list_2 is None:
         warrior_generator = MercenaryWarriorGenerator(
             faction=context.faction_2, culture=context.faction_2.culture, savegame_id=context.faction_1.savegame_id
         )
@@ -34,11 +53,14 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
             warrior_generator.process()
             for _ in range(random.randrange(*context.quest_contract.quest.get_min_max_number_of_opponents()))
         ]
+    else:
+        warrior_list_2 = context.warrior_list_2
 
     skirmish_generator = BaseSkirmishGenerator(
         name=context.name,
         warriors_faction_1=context.warrior_list_1,
         warriors_faction_2=warrior_list_2,
+        month=context.month,
     )
     new_skirmish = skirmish_generator.process()
 

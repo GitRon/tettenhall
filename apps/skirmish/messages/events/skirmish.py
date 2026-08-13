@@ -10,6 +10,17 @@ from apps.skirmish.models.warrior import Warrior
 
 
 @dataclass(kw_only=True)
+class FactionWasAttacked(Event):
+    attacking_faction: Faction
+    defending_faction: Faction
+    # Both rosters arrive already resolved: whom the defender fields is a query, and the event
+    # handler reacting to this is not allowed to run one
+    attacking_warriors: list[Warrior]
+    defending_warriors: list[Warrior]
+    month: int
+
+
+@dataclass(kw_only=True)
 class SkirmishCreated(Event):
     skirmish: Skirmish
     quest_contract: QuestContract = None
