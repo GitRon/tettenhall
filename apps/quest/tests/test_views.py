@@ -5,6 +5,7 @@ from django.urls import reverse
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.quest.models.quest_contract import QuestContract
 from apps.quest.tests.factories.quest import QuestFactory
+from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -32,6 +33,27 @@ def test_quest_accept_view_signs_a_contract_and_sets_up_the_skirmish(logged_in_c
     quest_contract = QuestContract.objects.get(quest=quest, faction=current_savegame.player_faction)
     assert list(quest_contract.assigned_warriors.all()) == [warrior]
     assert quest_contract.skirmish is not None
+
+
+@pytest.mark.django_db
+def test_quest_accept_view_sends_the_player_home_on_a_finished_savegame(logged_in_client, current_savegame):
+    """
+    The full-page branch of RunningSavegameRequiredMixin. This is a plain navigation, not an htmx
+    fragment, and a browser handed a 204 abandons the navigation: the page does not change and the
+    player is told nothing. A redirect carrying a warning is the same refusal he can actually see.
+    """
+    quest = QuestFactory(target_faction__savegame=current_savegame)
+    current_savegame.player_faction.available_quests.add(quest)
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("quest:quest-accept-view", kwargs={"pk": quest.pk}))
+
+    assert response.status_code == 302
+    assert response.url == reverse("account:dashboard-view")
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [
+        "This game is over. Start a new savegame to play on."
+    ]
 
 
 @pytest.mark.django_db
