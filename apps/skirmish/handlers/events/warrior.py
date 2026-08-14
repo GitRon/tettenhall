@@ -1,6 +1,7 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.messages.commands.skirmish import DetermineAttacker
 from apps.skirmish.messages.commands.warrior import (
     CaptureWarrior,
@@ -92,17 +93,45 @@ def handle_experience_gain_on_warrior_incapacitation(
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
-def handle_morale_increase_on_warriors_defends_all_damage(
-    *, context: warrior.WarriorDefendedAllDamage
-) -> Command | None:
-    increased_morale = round(context.defender.max_morale * 0.1)
+def handle_morale_change_on_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command | None:
+    """
+    Turning a blow aside steadies a warrior. Cowering behind a shield wears him down.
 
-    if increased_morale > 0:
+    Without the second half a fight could not end. Below a quarter of his health a warrior always
+    picks a defensive stance, that stance doubles his defense and zeroes his attack, and once the
+    doubled defense outruns what the other side can hit for, nobody takes damage again - and the only
+    other two things that move morale in this game are taking damage and watching a comrade fall.
+    Neither happens, so nobody routs, no side ever loses its last healthy warrior, and the round
+    counter climbs for ever. One observed fight reached 54 rounds. That matters more than it sounds:
+    the month cannot be advanced while a skirmish is unresolved, so such a fight ends the savegame's
+    life rather than its own.
+
+    Draining instead of merely withholding the reward is the whole point - a warrior sitting at the
+    same morale for ever is exactly the fight that never ends. Dropping him to zero raises
+    WarriorHasFled, and a fleeing warrior is not a healthy one, which is what the defeat check in
+    handle_finish_round already counts.
+    """
+    # Ten percent of what he can hold, the lever the reward and the damage penalty already use
+    morale_at_stake = round(context.defender.max_morale * 0.1)
+
+    if context.defender_action == SkirmishActionChoices.DEFENSIVE_STANCE:
+        # Floored at one point, and only here: a tenth of a small morale pool rounds away to nothing,
+        # and a stance that costs nothing is the unwinnable fight all over again. The reward keeps its
+        # old shape below, because no such argument applies to it - inventing a point of morale for a
+        # warrior too brittle to have earned one would be a balance change with nothing behind it.
+        return ReduceMorale(
+            skirmish=context.skirmish,
+            warrior=context.defender,
+            lost_morale=max(1, morale_at_stake),
+        )
+
+    if morale_at_stake > 0:
         return IncreaseMorale(
             skirmish=context.skirmish,
             warrior=context.defender,
-            increased_morale=increased_morale,
+            increased_morale=morale_at_stake,
         )
+
     return None
 
 

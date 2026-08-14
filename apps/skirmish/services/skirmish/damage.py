@@ -56,6 +56,7 @@ class SkirmishDamageService:
                     defender=self.defender,
                     attacker_damage=attack,
                     defender_damage=defense,
+                    defender_action=self.defender_action,
                 )
             )
 

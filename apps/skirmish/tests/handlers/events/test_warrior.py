@@ -1,11 +1,12 @@
 import pytest
 
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.handlers.events.warrior import (
     handle_capture_unconscious_warriors,
     handle_experience_gain_after_battle_for_victor,
     handle_experience_gain_on_warrior_incapacitation,
+    handle_morale_change_on_warrior_defends_all_damage,
     handle_morale_drop_on_faction_on_warrior_is_out_of_fight,
-    handle_morale_increase_on_warriors_defends_all_damage,
     handle_reduce_health_and_update_condition,
 )
 from apps.skirmish.messages.commands.warrior import (
@@ -118,18 +119,19 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior()
 
 
 @pytest.mark.django_db
-def test_handle_morale_increase_on_warriors_defends_all_damage_rewards_the_defender():
+def test_handle_morale_change_on_warrior_defends_all_damage_rewards_a_real_defence():
     skirmish = SkirmishFactory()
     attacker = WarriorFactory(faction=skirmish.player_faction)
     defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=10, max_morale=20)
 
-    result = handle_morale_increase_on_warriors_defends_all_damage(
+    result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
             skirmish=skirmish,
             attacker=attacker,
             attacker_damage=5,
             defender=defender,
             defender_damage=5,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
         )
     )
 
@@ -137,22 +139,76 @@ def test_handle_morale_increase_on_warriors_defends_all_damage_rewards_the_defen
 
 
 @pytest.mark.django_db
-def test_handle_morale_increase_on_warriors_defends_all_damage_rewards_nothing_on_a_tiny_morale_pool():
+def test_handle_morale_change_on_warrior_defends_all_damage_wears_down_a_turtle():
+    """
+    Standing behind a shield is what makes a fight unwinnable, so it costs nerve instead of building
+    it - otherwise nothing moves the morale of a warrior nobody can hurt.
+    """
     skirmish = SkirmishFactory()
     attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=4, max_morale=4)
+    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=10, max_morale=20)
 
-    result = handle_morale_increase_on_warriors_defends_all_damage(
+    result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
             skirmish=skirmish,
             attacker=attacker,
             attacker_damage=5,
             defender=defender,
             defender_damage=5,
+            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+        )
+    )
+
+    assert result == ReduceMorale(skirmish=skirmish, warrior=defender, lost_morale=2)
+
+
+@pytest.mark.django_db
+def test_handle_morale_change_on_warrior_defends_all_damage_rewards_nothing_on_a_tiny_morale_pool():
+    """
+    The floor below applies to the drain only. A tenth of a small pool still rounds to nothing on the
+    reward side, exactly as it did before there was a drain at all - a warrior too brittle to earn a
+    point of morale is not handed one.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.player_faction)
+    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=4, max_morale=4)
+
+    result = handle_morale_change_on_warrior_defends_all_damage(
+        context=WarriorDefendedAllDamage(
+            skirmish=skirmish,
+            attacker=attacker,
+            attacker_damage=5,
+            defender=defender,
+            defender_damage=5,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
         )
     )
 
     assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_morale_change_on_warrior_defends_all_damage_always_costs_at_least_a_point():
+    """
+    A tenth of a small morale pool rounds to nothing, and a stance that costs nothing is the
+    unwinnable fight all over again.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.player_faction)
+    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=4, max_morale=4)
+
+    result = handle_morale_change_on_warrior_defends_all_damage(
+        context=WarriorDefendedAllDamage(
+            skirmish=skirmish,
+            attacker=attacker,
+            attacker_damage=5,
+            defender=defender,
+            defender_damage=5,
+            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+        )
+    )
+
+    assert result == ReduceMorale(skirmish=skirmish, warrior=defender, lost_morale=1)
 
 
 @pytest.mark.django_db
