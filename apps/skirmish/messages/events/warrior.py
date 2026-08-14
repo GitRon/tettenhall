@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.faction.models.faction import Faction
+from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -45,6 +46,9 @@ class WarriorDefendedAllDamage(Event):
     attacker_damage: int
     defender: Warrior
     defender_damage: int
+    # Carried because turning a blow aside and simply standing there behind a shield are worth
+    # opposite things to a warrior's nerve, and the damage alone cannot tell them apart
+    defender_action: SkirmishActionTypeHint
 
 
 @dataclass(kw_only=True)

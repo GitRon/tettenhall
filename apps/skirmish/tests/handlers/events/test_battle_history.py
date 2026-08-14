@@ -70,6 +70,7 @@ def test_handle_log_warrior_defends_all_damage_logs_the_successful_defense():
             attacker_damage=2,
             defender=defender,
             defender_damage=7,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
         )
     )
 

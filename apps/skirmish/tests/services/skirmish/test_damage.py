@@ -47,5 +47,8 @@ def test_deal_damage_announces_a_fully_defended_attack(damage_service):
             defender=damage_service.defender,
             attacker_damage=2,
             defender_damage=7,
+            # Passed on because whether the defender was turtling decides what the block does to his
+            # nerve, and only the service knows which action he picked
+            defender_action=damage_service.defender_action,
         )
     ]
