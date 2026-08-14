@@ -26,6 +26,12 @@ class FactionQuerySet(models.QuerySet):
         comes from the URL and hiding a button guards nothing. The leader is checked here too even
         though he stands on the attacking side: an attack he cannot march on is no attack at all,
         and a rule kept somewhere else is how the button and the view drift apart.
+
+        How often the player may attack is not asked here either, and deliberately so. Every warrior
+        fights once a month, the leader joins every attack, so a war band that has marched is a
+        leader who is busy - and this returns nothing for the rest of the month, whoever the target
+        is. A separate per-rival cap sat here once; it never got to decide anything and only looked
+        like a rule.
         """
         # Imported here because the faction model imports this module while being defined itself,
         # and the warrior model reaches back into the faction app
@@ -40,9 +46,6 @@ class FactionQuerySet(models.QuerySet):
             # A faction nobody healthy is left to defend cannot be marched on. Without this the
             # skirmish would be created with an empty side.
             .filter(warriors__condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
-            # One attack per rival per month. Unlimited attacks would make knocking a faction out a
-            # formality rather than a campaign.
-            .exclude(non_player_skirmishes__player_faction=player_faction, non_player_skirmishes__month=month)
             .distinct()
         )
 

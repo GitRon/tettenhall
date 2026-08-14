@@ -17,9 +17,31 @@ class WarriorQuerySet(models.QuerySet):
 
     def exclude_currently_busy(self, *, month: int):
         """
-        A warrior can fight now if either he has never fought a battle before or he didn't fight in the given week.
+        Every warrior fights once a month, and never two fights at the same time.
+
+        Three ways to be busy. Signed on to a quest this month, which is the only one this used to
+        know about. Already committed to a fight this month. And still standing on the roster of a
+        fight nobody has played out - that last one because an unresolved skirmish carries over into
+        the next month, where the month check on its own would hand the same warrior out again while
+        he is still in it.
+
+        Both sides of a skirmish are asked, not just the player's: who counts as "the player" there
+        is a property of the row rather than of the warrior, and a captive who changed banners has
+        fought all the same.
         """
-        return self.filter(Q(quest_contracts__isnull=True) | ~Q(quest_contracts__accepted_in_month=month))
+        # Imported here because the skirmish model reaches back into this module through the warrior
+        # model it points at
+        from apps.skirmish.models.skirmish import Skirmish
+
+        # Said once, against the skirmish rather than against the warrior's two relations to it.
+        # Spelling it out as "victorious_faction__isnull=True" on the reverse side would also have
+        # matched every warrior who has never fought at all, because the outer join hands those a row
+        # of nulls that looks exactly like an undecided fight.
+        occupying_skirmishes = Skirmish.objects.filter(Q(month=month) | Q(victorious_faction__isnull=True))
+
+        return self.filter(Q(quest_contracts__isnull=True) | ~Q(quest_contracts__accepted_in_month=month)).exclude(
+            Q(player_skirmishes__in=occupying_skirmishes) | Q(non_player_skirmishes__in=occupying_skirmishes)
+        )
 
 
 class WarriorManager(manager.Manager):

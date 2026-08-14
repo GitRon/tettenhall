@@ -38,6 +38,12 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             .filter(id=self.object.id)
             .exists()
         )
+        # A button that simply vanishes teaches the player nothing, and "every warrior fights once a
+        # month" is the rule he is most likely to walk into without noticing
+        player_faction = current_savegame.player_faction
+        context["has_marched_this_month"] = player_faction is not None and player_faction.has_marched_this_month(
+            month=current_savegame.current_month
+        )
 
         return context
 

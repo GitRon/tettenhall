@@ -76,6 +76,30 @@ def test_faction_detail_view_offers_no_attack_on_the_players_own_faction(
 
 
 @pytest.mark.django_db
+def test_faction_detail_view_says_why_the_attack_is_gone(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    The button simply vanishing teaches the player nothing, and "every warrior fights once a month"
+    is the rule he is most likely to walk into without noticing.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    skirmish = SkirmishFactory(
+        player_faction=player_faction_ready_to_march,
+        non_player_faction=rival_faction,
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["has_marched_this_month"] is True
+
+
+@pytest.mark.django_db
 def test_faction_item_list_view_shows_the_faction(logged_in_client, current_savegame):
     response = logged_in_client.get(
         reverse("faction:faction-item-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
@@ -293,18 +317,25 @@ def test_faction_attack_view_cannot_attack_a_defeated_faction(
 
 
 @pytest.mark.django_db
-def test_faction_attack_view_cannot_attack_the_same_rival_twice_in_a_month(
+def test_faction_attack_view_cannot_march_twice_in_a_month(
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):
-    rival_faction = FactionFactory(savegame=current_savegame)
-    WarriorFactory(faction=rival_faction)
-    SkirmishFactory(
+    """
+    Every warrior fights once a month and the leader joins every attack, so one fight uses the month
+    up - and it makes no difference that this is a rival nobody has touched yet.
+    """
+    already_fought = FactionFactory(savegame=current_savegame)
+    fought_skirmish = SkirmishFactory(
         player_faction=player_faction_ready_to_march,
-        non_player_faction=rival_faction,
+        non_player_faction=already_fought,
+        victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
     )
+    fought_skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+    untouched_rival = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=untouched_rival)
 
-    response = logged_in_client.post(reverse("faction:faction-attack-view", kwargs={"pk": rival_faction.id}), data={})
+    response = logged_in_client.post(reverse("faction:faction-attack-view", kwargs={"pk": untouched_rival.id}), data={})
 
     assert response.status_code == 404
     assert Skirmish.objects.count() == 1

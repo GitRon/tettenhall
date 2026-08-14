@@ -47,8 +47,9 @@ class QuestAcceptForm(forms.ModelForm):
         self.fields["faction"].initial = faction
         self.fields["faction"].widget = forms.HiddenInput()
 
-        # TODO: this is buggy, i've accepted a quest, not started it and i can select all warriors for the second
-        #  quest in the same round
+        # "exclude_currently_busy" carries the whole of "every warrior fights once a month" now,
+        # including the warrior still standing on the roster of a fight nobody has played out - which
+        # is what used to let the next month hand him out again
         self.fields["assigned_warriors"].queryset = (
             Warrior.objects.filter_healthy()
             .filter(

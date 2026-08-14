@@ -73,6 +73,19 @@ class Faction(models.Model):
 
         return Warrior.objects.filter_healthy().filter(id=self.leader_id).exclude_currently_busy(month=month).first()
 
+    def has_marched_this_month(self, *, month: int) -> bool:
+        """
+        Whether this faction's war band has already been committed to a fight this month.
+
+        Asked of the leader, because he is the one who joins every attack - once he is busy, nothing
+        the faction does can put another war band in the field. Only here to tell the player why the
+        attack button is gone; the guarding is done by [get_available_leader].
+        """
+        if self.leader_id is None:
+            return False
+
+        return not Warrior.objects.filter(id=self.leader_id).exclude_currently_busy(month=month).exists()
+
     def get_all_unoccupied_items(self) -> QuerySet:
         from apps.item.models.item import Item
 

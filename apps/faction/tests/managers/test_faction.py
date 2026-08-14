@@ -110,10 +110,22 @@ def test_attackable_by_excludes_a_faction_without_a_healthy_warrior(player_facti
 
 
 @pytest.mark.django_db
-def test_attackable_by_excludes_a_rival_already_attacked_this_month(player_faction):
+def test_attackable_by_offers_nobody_once_the_war_band_has_marched(player_faction):
+    """
+    Every warrior fights once a month and the leader joins every attack, so one fight uses the month
+    up - against this rival and against every other one.
+    """
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
-    SkirmishFactory(player_faction=player_faction, non_player_faction=rival_faction, month=3)
+    untouched_faction = FactionFactory(savegame=player_faction.savegame)
+    WarriorFactory(faction=untouched_faction)
+    skirmish = SkirmishFactory(
+        player_faction=player_faction,
+        non_player_faction=rival_faction,
+        victorious_faction=player_faction,
+        month=3,
+    )
+    skirmish.player_warriors.add(player_faction.leader)
 
     result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
 
@@ -121,17 +133,36 @@ def test_attackable_by_excludes_a_rival_already_attacked_this_month(player_facti
 
 
 @pytest.mark.django_db
-def test_attackable_by_offers_a_rival_fought_in_another_month(player_faction):
-    """
-    The cap is per month, so last month's fight is not this month's.
-    """
+def test_attackable_by_offers_a_rival_again_the_month_after(player_faction):
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
-    SkirmishFactory(player_faction=player_faction, non_player_faction=rival_faction, month=2)
+    skirmish = SkirmishFactory(
+        player_faction=player_faction,
+        non_player_faction=rival_faction,
+        victorious_faction=player_faction,
+        month=2,
+    )
+    skirmish.player_warriors.add(player_faction.leader)
 
     result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
 
     assert list(result) == [rival_faction]
+
+
+@pytest.mark.django_db
+def test_attackable_by_offers_nobody_while_a_fight_is_still_undecided(player_faction):
+    """
+    An unresolved fight carries over: the leader is still standing on that roster, so he is not
+    free to march again just because the month rolled over.
+    """
+    rival_faction = FactionFactory(savegame=player_faction.savegame)
+    WarriorFactory(faction=rival_faction)
+    skirmish = SkirmishFactory(player_faction=player_faction, non_player_faction=rival_faction, month=2)
+    skirmish.player_warriors.add(player_faction.leader)
+
+    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+
+    assert list(result) == []
 
 
 @pytest.mark.django_db

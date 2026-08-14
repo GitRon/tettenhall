@@ -34,6 +34,9 @@
                 {% if can_be_attacked %}
                     <a href="{% url 'faction:faction-attack-view' object.id %}"
                        class="uk-button uk-button-danger uk-button-small">Attack this faction</a>
+                {% elif has_marched_this_month %}
+                    {# Otherwise the button is simply gone and nothing says why #}
+                    <p class="uk-text-meta">Your warriors have already fought this month.</p>
                 {% endif %}
             </div>
             {% include 'faction/warrior/components/fyrd_card.html' with faction=object %}
