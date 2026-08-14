@@ -48,7 +48,7 @@ def test_handle_finish_quest_contract_closes_the_contract_behind_the_skirmish():
         )
     )
 
-    assert result == RemoveQuestContractAsActiveQuest(quest_contract=quest_contract, faction=skirmish.attacking_faction)
+    assert result == RemoveQuestContractAsActiveQuest(quest_contract=quest_contract)
 
 
 @pytest.mark.django_db

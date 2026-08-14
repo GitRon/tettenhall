@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from queuebie.messages import Command
 
-from apps.faction.models import Faction
 from apps.quest.models import QuestContract
 from apps.skirmish.models import Skirmish
 
@@ -15,5 +14,6 @@ class AssignSkirmishToQuestContract(Command):
 
 @dataclass(kw_only=True)
 class RemoveQuestContractAsActiveQuest(Command):
+    # No faction: the contract records the faction that signed it, and carrying a second one alongside
+    # it let the two disagree - see handle_remove_quest_contract_as_active_quest
     quest_contract: QuestContract
-    faction: Faction
