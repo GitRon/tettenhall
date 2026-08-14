@@ -110,12 +110,17 @@
         event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
     });
     // Notifications
+    // UIkit's own default. A second is not long enough to read a sentence like "This game is over.
+    // Start a new savegame to play on.", and for several actions the toast is the only feedback there
+    // is. Named once so the three call sites below cannot drift apart again.
+    const NOTIFICATION_TIMEOUT = 5000;
+
     document.body.addEventListener("notification", function (e) {
         UIkit.notification({
             message: e.detail.value,
             status: 'success',
             pos: 'top-center',
-            timeout: 1000,
+            timeout: NOTIFICATION_TIMEOUT,
         });
     });
     document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
@@ -124,7 +129,7 @@
                 message: "An error has occurred.",
                 status: 'danger',
                 pos: 'bottom-center',
-                timeout: 1000,
+                timeout: NOTIFICATION_TIMEOUT,
             });
         }
     });
@@ -134,7 +139,7 @@
             message: "{{ message|safe }}",
             status: "{{ message.level_tag }}",
             pos: 'top-center',
-            timeout: 1000,
+            timeout: NOTIFICATION_TIMEOUT,
         });
     {% endfor %}
 </script>
