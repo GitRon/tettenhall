@@ -59,6 +59,29 @@ def test_handle_warrior_is_captured_takes_the_warrior_out_of_his_faction():
 
 
 @pytest.mark.django_db
+def test_handle_warrior_is_captured_leaves_an_existing_prisoner_where_he_is():
+    """
+    A warrior can be on the roster of two unresolved skirmishes, and ending the game decides both in
+    one pass - so this runs twice for him. The second captor does not get to take him off the first.
+    """
+    skirmish = SkirmishFactory()
+    second_skirmish = SkirmishFactory(player_faction=skirmish.player_faction)
+    captured_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+    skirmish.player_faction.captured_warriors.add(captured_warrior)
+
+    result = handle_warrior_is_captured(
+        context=CaptureWarrior(
+            skirmish=second_skirmish,
+            warrior=captured_warrior,
+            capturing_faction=second_skirmish.non_player_faction,
+        )
+    )
+
+    assert result is None
+    assert list(second_skirmish.non_player_faction.captured_warriors.all()) == []
+
+
+@pytest.mark.django_db
 def test_handle_reduce_warrior_health_kills_the_warrior():
     skirmish = SkirmishFactory()
     attacker = WarriorFactory(faction=skirmish.player_faction)

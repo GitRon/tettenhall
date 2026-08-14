@@ -52,7 +52,22 @@ def handle_store_last_used_skirmish_action(*, context: warrior.StoreLastUsedSkir
 
 
 @message_registry.register_command(command=warrior.CaptureWarrior)
-def handle_warrior_is_captured(*, context: warrior.CaptureWarrior) -> list[Event] | Event:
+def handle_warrior_is_captured(*, context: warrior.CaptureWarrior) -> list[Event] | Event | None:
+    """
+    Takes the warrior prisoner, unless somebody already has him.
+
+    A warrior can stand on the roster of more than one unresolved skirmish, and ending the game
+    decides every one of them in a single pass - so this runs once per fight he was in. Taking him
+    twice left the same man sitting in two factions' cells at once, and announced a capture that
+    emptied a faction which had already lost him.
+
+    Asked of the captor relation rather than of "warrior.faction is None", because that is what
+    being a prisoner actually means here: a warrior with no faction is also what a capture leaves
+    behind, so reading it would refuse the very first capture as well.
+    """
+    if Faction.objects.filter(captured_warriors=context.warrior).exists():
+        return None
+
     Faction.objects.add_captive(faction=context.capturing_faction, warrior=context.warrior)
     context.warrior.faction = None
     context.warrior.save()
