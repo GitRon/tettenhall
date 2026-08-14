@@ -53,6 +53,30 @@ def test_faction_detail_view_hides_factions_of_other_savegames(logged_in_client,
 
 
 @pytest.mark.django_db
+def test_faction_detail_view_marks_the_players_own_faction(logged_in_client, current_savegame):
+    response = logged_in_client.get(
+        reverse("faction:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_does_not_mark_a_rival_as_the_players_own(logged_in_client, current_savegame):
+    """
+    The same template serves both, and on a rival's page "My faction" and the fyrd card offer a draft
+    the scoping on DraftWarriorFromFyrdView can only refuse.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
 def test_faction_detail_view_offers_an_attack_on_a_rival(
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):

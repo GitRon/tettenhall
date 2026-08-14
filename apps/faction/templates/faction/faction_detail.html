@@ -5,7 +5,7 @@
 
     <div class="uk-child-width-expand@s uk-text-center uk-grid-medium" uk-grid>
         <div>
-            <h2>My faction</h2>
+            <h2>{% if is_player_faction %}My faction{% else %}Rival faction{% endif %}</h2>
             <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
                 <h3>Details</h3>
                 <table class="uk-table">
@@ -39,7 +39,10 @@
                     <p class="uk-text-meta">Your warriors have already fought this month.</p>
                 {% endif %}
             </div>
-            {% include 'faction/warrior/components/fyrd_card.html' with faction=object %}
+            {# Only your own fyrd can be drafted from, so on a rival's page the card is a button that could only fail #}
+            {% if is_player_faction %}
+                {% include 'faction/warrior/components/fyrd_card.html' with faction=object %}
+            {% endif %}
         </div>
         <div>
             {% include "faction/warrior/components/warrior_list.html" with faction=object warrior_list=warrior_list %}
