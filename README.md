@@ -36,6 +36,8 @@ inferring the conventions from nearby code.
 ### Planning
 
 - [Backlog](docs/collaboration/backlog.md) — open ideas and unfinished work
+- [Writing an issue](docs/collaboration/writing-issues.md) — labels, anatomy, and the review pass before
+  an issue is created
 
 ## Credits
 
