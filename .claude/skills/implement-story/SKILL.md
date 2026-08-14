@@ -1,20 +1,23 @@
 ---
 name: implement-story
-description: Implement a story end to end - resolve it from a GitHub issue link, issue number or plain text, plan it, write it, get the local CI gates green, run a resumable sharded code review that never blocks on a dying reviewer, fix what it finds, then commit, push and open the PR. Use when asked to implement an issue or story, or to resume an interrupted run.
+description: Implement a story end to end - resolve it from a GitHub issue link, issue number or plain text, plan it, write it, get the local CI gates green, run a resumable sharded code review that never blocks on a dying reviewer, fix what it finds, play the story in a real browser to confirm it works, then commit, push and open the PR. Use when asked to implement an issue or story, or to resume an interrupted run.
 ---
 
 # Implement a story
 
-One story, from issue to open PR, with a code review that survives its own reviewers dying.
+One story, from issue to open PR, with a code review that survives its own reviewers dying and a browser
+that confirms the thing actually works.
 
 ## Usage
 
 ```
 /implement-story <github issue url | issue number | free text describing the story>
-/implement-story --resume [slug]        # pick an interrupted run back up
-/implement-story <story> --native       # use the built-in /code-review instead of sharded review
-/implement-story <story> --deadline=900 # review wall-clock budget in seconds (default 720)
-/implement-story <story> --no-pr        # stop after pushing, do not open the PR
+/implement-story --resume [slug]           # pick an interrupted run back up
+/implement-story <story> --native          # use the built-in /code-review instead of sharded review
+/implement-story <story> --deadline=900    # review wall-clock budget in seconds (default 720)
+/implement-story <story> --no-content-review # skip the browser phase
+/implement-story <story> --content-port=9000 # port for the smoke server (default 8765)
+/implement-story <story> --no-pr           # stop after pushing, do not open the PR
 ```
 
 ## The run directory
@@ -37,6 +40,13 @@ what makes a dead reviewer cost one lens instead of the whole run.
     03-tests.md
     04-conformance.md
   findings.md          merged, deduped, triaged
+  content/
+    journey.md         the steps to play, written before clicking, with the result of each
+    findings.md        what a player sees that is wrong
+    smoke.sqlite3      the throwaway database the browser plays on
+    server.log         the smoke server's output, where the tracebacks are
+    setup.log          migrate, loaddata and user seeding
+    .port  .pid        the running smoke server
 ```
 
 A shard file ending in the line `<!-- shard-complete -->` is finished. A shard file **without** it is a
@@ -61,12 +71,18 @@ means that lens was never reviewed, which is reported as a gap rather than block
       "02-data-layer":  { "status": "running",  "attempts": 2, "agent_id": "agent_y" },
       "03-tests":       { "status": "gap",      "attempts": 2, "reason": "deadline" }
     }
+  },
+  "content": {
+    "status": "pending",
+    "port": 8765,
+    "rounds": 0
   }
 }
 ```
 
-`phase` is one of `spec`, `plan`, `implement`, `ci`, `review`, `triage`, `ship`. A shard `status` is one
-of `running`, `complete`, `partial`, `gap`. Write the file after every phase transition and every shard
+`phase` is one of `spec`, `plan`, `implement`, `ci`, `review`, `triage`, `content`, `ship`. A shard
+`status` is one of `running`, `complete`, `partial`, `gap`. A `content.status` is one of `pending`,
+`pass`, `findings`, `blocked`, `skipped`. Write the file after every phase transition and every shard
 state change - it is cheap, and it is the only thing standing between an interrupted run and a restart.
 
 ## Before you start
@@ -216,7 +232,48 @@ Re-run `ci.sh`. **Do not re-run the review.** Instead, if the fixes were non-tri
 second review round is the single most expensive thing this skill could do and it is almost never worth
 it.
 
-## Phase 6 - Ship
+## Phase 6 - Content review
+
+Everything so far checked the code against itself. Nothing has loaded a page. This phase plays the story
+in a real browser and looks at what a player would see - which is the only way to catch a control wired
+to nothing, an htmx request quietly 500ing behind a one-second toast, or a feature that works perfectly
+and is reachable from nowhere. Skip it with `--no-content-review`.
+
+Read [content review](references/content-review.md) first. It carries the journey, this app's htmx
+habits, how to reach a game state honestly, and what counts as a finding.
+
+1. Start the app on its own throwaway database:
+
+   ```bash
+   bash .claude/skills/implement-story/scripts/content-server.sh fresh .claude/runs/<slug>
+   ```
+
+   `fresh` for the first round, so the story gets reached the way a player reaches it. Pass
+   `--content-port=N` through as the third argument. Record `content.port` in `state.json`.
+2. Write `content/journey.md` - the baseline journey plus the steps the story adds, each with its expected
+   outcome - **before** you touch the browser. A journey written afterwards only describes what happened.
+3. Walk it with the Playwright tools, from this session, in one browser. **Do not fan this out to agents**:
+   there is a single browser behind those tools and parallel drivers would fight over it.
+4. Record the result of every step in `journey.md` and every defect in `content/findings.md`. Check the
+   network requests after each mutating click - a failed htmx call leaves the page looking fine.
+5. Fix what the story broke, `content-server.sh restart` (the server does not autoreload, so without this
+   you are still testing the old code), and walk the failed steps again. **At most two fix rounds**,
+   counted in `content.rounds`. A third means the story's design is wrong in a way more clicking will not
+   settle - stop and report.
+6. Re-run `ci.sh`. A content fix that reddens the suite is worse than the bug it fixed.
+7. Stop the server and close the browser, pass or fail:
+
+   ```bash
+   bash .claude/skills/implement-story/scripts/content-server.sh stop .claude/runs/<slug>
+   ```
+
+   A server left running holds the port and serves pre-fix code to the next run.
+
+If the Playwright tools are not connected, or the server cannot be brought up, set `content.status` to
+`skipped` or `blocked` with the reason and carry on to Phase 7. A phase that cannot run is a gap like any
+other - say so plainly, and never report a pass you did not see.
+
+## Phase 7 - Ship
 
 Commit the fixes, push with `git push -u github <branch>`, and open the PR:
 
@@ -225,16 +282,23 @@ gh pr create --base main --title "<story title>" --body-file <body>
 ```
 
 The body carries: what the story asked for, what you built, `Closes #<n>` when there is an issue, the CI
-result, and a **Review coverage** line naming any lens that was skipped or partial. Unless `--no-pr`.
+result, a **Review coverage** line naming any lens that was skipped or partial, and a **Content review**
+line saying which journey was walked in the browser and what it showed - or that the phase was skipped,
+and why. Unless `--no-pr`.
 
-End with a short report: what shipped, what CI said, what the review found and what you fixed, what was
-skipped and why, and the out-of-scope list.
+End with a short report: what shipped, what CI said, what the review found and what you fixed, what the
+browser confirmed or broke, what was skipped and why, and the out-of-scope list.
 
 ## Resuming
 
 `state.json` carries `phase`. On `--resume`, read it and re-enter at that phase. Within Phase 4, relaunch
 only the shards whose status is not `complete`, and only if `review/.head_sha` still matches `HEAD` - if
 the code moved on, the round is stale, so start a fresh one.
+
+Within Phase 6, `content-server.sh start` reuses a smoke server that is still answering and reruns the
+setup against the existing database otherwise, so resuming costs a `start` and re-walking the steps whose
+result is missing from `journey.md`. Use `fresh` instead if the recorded results no longer describe the
+code, which is the case whenever the diff moved since the round began.
 
 If a run is interrupted anywhere, the run directory is enough to continue. Never restart from Phase 0 when
 `spec.md` already exists.
@@ -248,3 +312,6 @@ The point of the sharding is to spend wall-clock once. Hold these:
 - Never re-review after fixes; check the fix delta instead.
 - Never spend review wall-clock on anything `ruff`, `boa-restrictor` or the coverage gate already catches.
 - One retry per shard, at half scope. Then it is a gap.
+- One browser, driven from this session. The content review is never fanned out.
+- Walk the journey you wrote, plus at most ten exploratory clicks. Then write down what you have.
+- Two content fix rounds, then stop. And always stop the server - a stale one costs the next run a round.

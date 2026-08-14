@@ -20,3 +20,6 @@ htmlcov/
 
 # Scratch state for the /implement-story skill: specs, plans, CI logs and review shards.
 .claude/runs/
+
+# Snapshots and screenshots the Playwright MCP server drops here during a content review.
+.playwright-mcp/

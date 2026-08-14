@@ -3,6 +3,10 @@
 - `apps/config/settings.py` — the application settings.
 - `apps/config/settings_test.py` — the test settings, pointed at by `[tool.pytest.ini_options]` in
   `pyproject.toml`. It keeps `QUEUEBIE_STRICT_MODE = True` and pins a dedicated `locmem` cache.
+- `apps/config/settings_smoke.py` — used when a browser drives the app for a content review. Identical to
+  the application settings except for the database, which comes from `SMOKE_DB_PATH` so a smoke run plays
+  on a throwaway file instead of the development savegames. Nothing else is relaxed: a content review is
+  only worth its wall-clock if the app under the browser is the real one.
 
 ## Queuebie settings
 
