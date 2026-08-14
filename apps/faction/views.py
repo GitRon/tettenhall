@@ -99,22 +99,38 @@ class DraftWarriorFromFyrdView(RunningSavegameRequiredMixin, PlayerFactionScoped
         return response
 
 
-class FactionAttackView(RunningSavegameRequiredMixin, SingleObjectMixin, generic.FormView):
+class AttackTargetMixin:
+    """
+    Resolves the rival the player is marching against.
+
+    A separate mixin purely for the ordering. A "dispatch" written on the view itself runs before
+    every mixin the view inherits, so resolving the target there answered a decided savegame with a
+    404 about a rival it could no longer offer - the game being over never got a word in.
+    Sitting behind RunningSavegameRequiredMixin in the bases puts that guard first, which is the
+    difference between "not found" and a page telling the player why.
+    """
+
+    object = None
+    current_savegame: Savegame = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleObjectMixin, generic.FormView):
     """
     Marches the player's war band against a rival faction.
 
     Carries no scoping mixin: every rule about who may be attacked - the savegame among them - lives
     in "attackable_by()", and layering a second, looser scope on top would only invite the two to
-    disagree. A decided savegame never gets past it either, since it has neither a leader left to
-    march nor a rival still standing, but the guard is carried all the same because a view
-    dispatching a command is not the place to reason about that.
+    disagree.
     """
 
     model = Faction
     form_class = FactionAttackForm
     template_name = "faction/faction_attack.html"
-    object = None
-    current_savegame: Savegame = None
 
     def get_queryset(self) -> QuerySet:
         if self.current_savegame is None:
@@ -128,11 +144,6 @@ class FactionAttackView(RunningSavegameRequiredMixin, SingleObjectMixin, generic
                 month=self.current_savegame.current_month,
             )
         )
-
-    def dispatch(self, request, *args, **kwargs):
-        self.current_savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        self.object = self.get_object()
-        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

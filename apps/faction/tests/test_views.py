@@ -6,6 +6,7 @@ from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.models.transaction import Transaction
 from apps.item.tests.factories.item import ItemFactory
+from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
@@ -390,6 +391,30 @@ def test_faction_attack_view_cannot_march_twice_in_a_month(
 
     assert response.status_code == 404
     assert Skirmish.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_sends_the_player_home_on_a_finished_savegame(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A decided savegame has to read as "this game is over", not as a 404 about a rival that is no
+    longer on offer. Resolving the target in the view's own dispatch used to answer first and hide
+    the guard entirely - a browser walkthrough found it, since both refusals look the same from a
+    test that only asserts "not 200".
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("faction:faction-attack-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 302
+    assert response.url == reverse("account:dashboard-view")
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [
+        "This game is over. Start a new savegame to play on."
+    ]
 
 
 @pytest.mark.django_db
