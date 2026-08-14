@@ -32,14 +32,12 @@ def player_faction_ready_to_march(current_savegame) -> Faction:
 @pytest.mark.django_db
 def test_faction_detail_view_shows_the_faction(logged_in_client, current_savegame):
     faction = current_savegame.player_faction
-    # The template links to the leader unconditionally, so a faction without one cannot be rendered
-    faction.leader = WarriorFactory(faction=faction)
-    faction.save()
+    warrior = WarriorFactory(faction=faction)
 
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": faction.id}))
 
     assert response.status_code == 200
-    assert list(response.context["warrior_list"]) == [faction.leader]
+    assert list(response.context["warrior_list"]) == [warrior]
 
 
 @pytest.mark.django_db
