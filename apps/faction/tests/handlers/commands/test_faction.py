@@ -33,6 +33,7 @@ from apps.faction.messages.events.faction import (
     QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
+from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.culture import CultureFactory
 from apps.faction.tests.factories.faction import FactionFactory
@@ -353,6 +354,31 @@ def test_handle_create_factions_for_new_savegame_adds_the_drawn_number_of_rival_
     # Rival factions get a generated town of their own instead of the player's
     assert result[3].town_name != ""
     assert result[3].town_name != "Winchester"
+
+
+@pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_without_the_culture():
+    """
+    Cultures are reference data every environment ships with, so a missing one is a half-seeded
+    database rather than bad input - and it used to surface one line later as "NoneType has no
+    attribute locale".
+
+    A culture id nobody owns rather than an emptied table: the fixtures are loaded once per session,
+    and this is the path the crash actually arrives by, since a database without them renders the
+    dropdown empty and cannot be submitted at all.
+    """
+    savegame = SavegameFactory()
+    missing_culture_id = Culture.objects.order_by("-id").first().id + 1
+
+    with pytest.raises(RuntimeError, match=f"Culture {missing_culture_id} does not exist"):
+        handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                faction_culture_id=missing_culture_id,
+            )
+        )
 
 
 @pytest.mark.django_db
