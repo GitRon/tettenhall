@@ -27,6 +27,8 @@ class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
 class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish_fight.html"
+    object = None
+    current_savegame = None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -34,9 +36,9 @@ class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
         # The skirmish names its two sides by role, so whether a side is the player's - and therefore
         # whether its warrior cards let the human pick an action instead of showing the AI's decision -
         # is decided here, against the savegame. At most one of the two is True: a savegame that has no
-        # player faction yet makes both False rather than guessing at a side
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        player_faction_id = current_savegame.player_faction_id
+        # player faction yet makes both False rather than guessing at a side. Both the savegame and the
+        # skirmish were resolved by get() below, which is the only caller
+        player_faction_id = self.current_savegame.player_faction_id
 
         context["attacking_faction"] = self.object.attacking_faction
         context["defending_faction"] = self.object.defending_faction
@@ -47,21 +49,26 @@ class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
         return context
 
     def get(self, request, *args, **kwargs):
-        skirmish = self.get_object()
-        # Straight from the savegame rather than from a side of the skirmish: the scoped queryset above
+        # Both are resolved once here and kept on the view. Handing off to super().get() instead would
+        # fetch the same skirmish a second time - and its own scoped get_queryset() re-reads the
+        # savegame to do it - so the two lines it saves cost three queries per render.
+        # Straight from the savegame rather than from a side of the skirmish: the scoped queryset
         # already guarantees this skirmish belongs to the current savegame, and which of its sides is
         # the player's is no longer the row's business
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        self.object = self.get_object()
+        self.current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+
         if (
-            self.model.objects.for_savegame(savegame_id=current_savegame.id)
+            self.model.objects.for_savegame(savegame_id=self.current_savegame.id)
             .has_started()
             .unresolved()
-            .exclude(id=skirmish.id)
+            .exclude(id=self.object.id)
             .exists()
         ):
             messages.add_message(request, messages.WARNING, "Please finish your other skirmishes first.")
             return HttpResponseRedirect(reverse("skirmish:skirmish-list-view"))
-        return super().get(request, *args, **kwargs)
+
+        return self.render_to_response(self.get_context_data(object=self.object))
 
 
 class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, generic.DetailView):

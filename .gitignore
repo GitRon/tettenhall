@@ -20,3 +20,7 @@ htmlcov/
 
 # Scratch state for the /implement-story skill: specs, plans, CI logs and review shards.
 .claude/runs/
+
+# Git worktrees the agent skills check out inside the repo. Registered worktrees are still untracked
+# content here, so without this a nested checkout of the project can be committed by accident.
+.claude/worktrees/
