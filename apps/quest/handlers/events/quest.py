@@ -13,5 +13,6 @@ def handle_create_skirmish_for_quest_contract(*, context: quest.QuestAccepted) -
         faction_2=context.target_faction,
         warrior_list_1=context.quest_contract.assigned_warriors.all(),
         warrior_list_2=None,
+        month=context.month,
         quest_contract=context.quest_contract,
     )

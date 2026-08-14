@@ -9,12 +9,14 @@ from apps.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.handlers.commands.skirmish import (
     handle_assign_fighter_pairs,
+    handle_attack_faction,
     handle_create_skirmish,
     handle_determine_attacker_and_defender,
     handle_faction_wins_skirmish,
     handle_finish_round,
 )
 from apps.skirmish.messages.commands.skirmish import (
+    AttackFaction,
     CreateSkirmish,
     DetermineAttacker,
     FinishRound,
@@ -23,6 +25,7 @@ from apps.skirmish.messages.commands.skirmish import (
 )
 from apps.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
+    FactionWasAttacked,
     FighterPairsMatched,
     RoundFinished,
     SkirmishFinished,
@@ -31,6 +34,60 @@ from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+
+
+@pytest.mark.django_db
+def test_handle_attack_faction_fields_the_targets_own_warriors():
+    """
+    The point of the whole story: the defending side is the rival's actual war band, its leader
+    among them, rather than mercenaries invented for the occasion.
+    """
+    player_faction = FactionFactory()
+    target_faction = FactionFactory(savegame=player_faction.savegame)
+    player_leader = WarriorFactory(faction=player_faction)
+    target_leader = WarriorFactory(faction=target_faction)
+    target_faction.leader = target_leader
+    target_faction.save()
+
+    result = handle_attack_faction(
+        context=AttackFaction(
+            attacking_faction=player_faction,
+            target_faction=target_faction,
+            assigned_warriors=[player_leader],
+            month=3,
+        )
+    )
+
+    assert result == FactionWasAttacked(
+        attacking_faction=player_faction,
+        defending_faction=target_faction,
+        attacking_warriors=[player_leader],
+        defending_warriors=[target_leader],
+        month=3,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_attack_faction_leaves_the_targets_casualties_out_of_the_line_up():
+    """
+    A warrior who is down does not turn out to defend his town - and a side made up of him alone
+    would count as beaten before the first round.
+    """
+    player_faction = FactionFactory()
+    target_faction = FactionFactory(savegame=player_faction.savegame)
+    healthy_defender = WarriorFactory(faction=target_faction)
+    WarriorFactory(faction=target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = handle_attack_faction(
+        context=AttackFaction(
+            attacking_faction=player_faction,
+            target_faction=target_faction,
+            assigned_warriors=[WarriorFactory(faction=player_faction)],
+            month=3,
+        )
+    )
+
+    assert result.defending_warriors == [healthy_defender]
 
 
 @pytest.mark.django_db
@@ -46,12 +103,38 @@ def test_handle_create_skirmish_uses_the_given_opponents():
             faction_2=quest_contract.quest.target_faction,
             warrior_list_1=[player_warrior],
             warrior_list_2=[enemy_warrior],
+            month=3,
             quest_contract=quest_contract,
         )
     )
 
     assert list(result.skirmish.player_warriors.all()) == [player_warrior]
     assert list(result.skirmish.non_player_warriors.all()) == [enemy_warrior]
+
+
+@pytest.mark.django_db
+def test_handle_create_skirmish_records_the_month():
+    """
+    A skirmish had nowhere to say which month it belongs to, and the cap on attacking the same rival
+    twice has nothing else to go on.
+    """
+    quest_contract = QuestContractFactory()
+    player_warrior = WarriorFactory(faction=quest_contract.faction)
+    enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
+
+    result = handle_create_skirmish(
+        context=CreateSkirmish(
+            name="Ambush",
+            faction_1=quest_contract.faction,
+            faction_2=quest_contract.quest.target_faction,
+            warrior_list_1=[player_warrior],
+            warrior_list_2=[enemy_warrior],
+            month=7,
+            quest_contract=quest_contract,
+        )
+    )
+
+    assert result.skirmish.month == 7
 
 
 @pytest.mark.django_db
@@ -70,11 +153,37 @@ def test_handle_create_skirmish_generates_opponents_when_none_are_given():
                 faction_2=quest_contract.quest.target_faction,
                 warrior_list_1=[player_warrior],
                 warrior_list_2=None,
+                month=3,
                 quest_contract=quest_contract,
             )
         )
 
     assert result.skirmish.non_player_warriors.count() == 2
+
+
+@pytest.mark.django_db
+def test_handle_create_skirmish_does_not_generate_opponents_for_an_empty_list():
+    """
+    An empty queryset is falsy, so "this faction fields nobody" used to be indistinguishable from
+    "no opponents were supplied" - and invented mercenaries for a faction that has none, on a path
+    that then dereferenced the quest contract an attack does not carry.
+    """
+    player_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=player_faction.savegame)
+    player_warrior = WarriorFactory(faction=player_faction)
+
+    with pytest.raises(RuntimeError, match="no warriors on the defending side"):
+        handle_create_skirmish(
+            context=CreateSkirmish(
+                name="Brawl",
+                faction_1=player_faction,
+                faction_2=enemy_faction,
+                warrior_list_1=[player_warrior],
+                warrior_list_2=[],
+                month=3,
+                quest_contract=None,
+            )
+        )
 
 
 @pytest.mark.django_db
@@ -90,6 +199,7 @@ def test_handle_create_skirmish_passes_the_quest_contract_on():
             faction_2=quest_contract.quest.target_faction,
             warrior_list_1=[player_warrior],
             warrior_list_2=[enemy_warrior],
+            month=3,
             quest_contract=quest_contract,
         )
     )
@@ -111,6 +221,7 @@ def test_handle_create_skirmish_without_a_quest_contract():
             faction_2=enemy_faction,
             warrior_list_1=[player_warrior],
             warrior_list_2=[enemy_warrior],
+            month=3,
             quest_contract=None,
         )
     )

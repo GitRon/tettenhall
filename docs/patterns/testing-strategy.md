@@ -48,7 +48,7 @@ Three failure classes, three tools:
 ## Flow tests (sparingly)
 
 - Do **not** count by paths — that explodes combinatorially. Count by entry points: one test per view that
-  kicks off the queue. There are **10 `handle_message()` call sites across 7 views**.
+  kicks off the queue. There are **11 `handle_message()` call sites across 8 views**.
 - Only write them where ordering or transaction behaviour genuinely matters.
 - Assert on the end state only. Intermediate steps are already unit-tested.
 - No mocking inside the chain — either a real flow or a unit test, nothing in between.

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <h1>Attack "{{ object }}"</h1>
+
+    <div class="uk-width-1-2">
+        <table class="uk-table">
+            <tbody>
+            <tr>
+                <td>Target faction</td>
+                <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+                <td>Their leader</td>
+                <td>{{ object.leader }}</td>
+            </tr>
+            <tr>
+                {# Yours marches whether he is listed here or not, so say so rather than offer a choice #}
+                <td>Your leader</td>
+                <td>{{ form.leader }} (always joins)</td>
+            </tr>
+            <tr>
+                <td colspan="2">{% crispy form %}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock content %}

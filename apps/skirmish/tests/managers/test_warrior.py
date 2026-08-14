@@ -1,10 +1,120 @@
 import pytest
 
+from apps.faction.tests.factories.faction import FactionFactory
 from apps.item.models.item_type import ItemType
 from apps.item.tests.factories.item import ItemFactory
 from apps.item.tests.factories.item_type import ItemTypeFactory
+from apps.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_keeps_a_warrior_who_has_never_fought():
+    warrior = WarriorFactory()
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == [warrior]
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_drops_a_warrior_on_a_quest():
+    warrior = WarriorFactory()
+    quest_contract = QuestContractFactory(faction=warrior.faction, accepted_in_month=3)
+    quest_contract.assigned_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_drops_a_warrior_holding_an_older_contract_too():
+    """
+    Read per joined contract rather than per warrior, the older row satisfied "this one is not the
+    month asked about" and handed him back as free.
+    """
+    warrior = WarriorFactory()
+    for accepted_month in (1, 3):
+        quest_contract = QuestContractFactory(faction=warrior.faction, accepted_in_month=accepted_month)
+        quest_contract.assigned_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_keeps_a_warrior_whose_only_quest_was_last_month():
+    warrior = WarriorFactory()
+    quest_contract = QuestContractFactory(faction=warrior.faction, accepted_in_month=2)
+    quest_contract.assigned_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == [warrior]
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_drops_a_warrior_who_fought_this_month():
+    """
+    Every warrior fights once a month, so a decided fight still uses the month up.
+    """
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory(player_faction=warrior.faction, victorious_faction=warrior.faction, month=3)
+    skirmish.player_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_drops_a_warrior_still_in_an_undecided_fight():
+    """
+    An unresolved fight carries over, and the month check alone would hand the same warrior out
+    again next month while he is still standing on that roster.
+    """
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory(player_faction=warrior.faction, month=2)
+    skirmish.player_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_keeps_a_warrior_whose_last_fight_is_over():
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory(player_faction=warrior.faction, victorious_faction=warrior.faction, month=2)
+    skirmish.player_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == [warrior]
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_drops_a_warrior_who_fought_on_the_opposing_side():
+    """
+    Which side of the row a warrior stands on is a property of the skirmish, not of him - a captive
+    who has since changed banners fought all the same.
+    """
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory(
+        non_player_faction=warrior.faction,
+        player_faction=FactionFactory(savegame=warrior.savegame),
+        victorious_faction=warrior.faction,
+        month=3,
+    )
+    skirmish.non_player_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == []
 
 
 @pytest.mark.django_db
