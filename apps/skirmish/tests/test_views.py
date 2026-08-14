@@ -39,7 +39,7 @@ def test_skirmish_fight_view_shows_the_skirmish(logged_in_client, current_savega
 
 
 @pytest.mark.django_db
-def test_skirmish_fight_view_marks_which_side_the_player_holds(logged_in_client, current_savegame):
+def test_skirmish_fight_view_marks_the_player_who_marched(logged_in_client, current_savegame):
     """
     The two flags drive whether a side's warrior cards offer the human a skirmish action, so exactly
     one of them may be True - here the player is the faction that marched.
@@ -50,6 +50,23 @@ def test_skirmish_fight_view_marks_which_side_the_player_holds(logged_in_client,
 
     assert response.context["attacker_is_player"] is True
     assert response.context["defender_is_player"] is False
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_marks_the_player_who_was_marched_against(logged_in_client, current_savegame):
+    """
+    The player holds the defending side here, which is what makes the flags worth asserting: reading
+    them off side one would hand the human the rival's warband and let the AI command his own.
+    """
+    skirmish = SkirmishFactory(
+        attacking_faction=FactionFactory(savegame=current_savegame),
+        defending_faction=current_savegame.player_faction,
+    )
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.context["attacker_is_player"] is False
+    assert response.context["defender_is_player"] is True
 
 
 @pytest.mark.django_db
@@ -380,12 +397,19 @@ def test_faction_warrior_list_update_htmx_view_lists_the_warriors_of_the_defendi
 
 @pytest.mark.django_db
 def test_faction_warrior_list_update_htmx_view_marks_the_players_own_roster(logged_in_client, current_savegame):
-    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    """
+    The player holds the defending side, so the flag has to come from the savegame: taken from the
+    attacking side it would call the player's own warband the enemy and stop him commanding it.
+    """
+    skirmish = SkirmishFactory(
+        attacking_faction=FactionFactory(savegame=current_savegame),
+        defending_faction=current_savegame.player_faction,
+    )
 
     response = logged_in_client.get(
         reverse(
             "skirmish:faction-warrior-list-update-htmx",
-            kwargs={"skirmish_id": skirmish.pk, "faction_id": skirmish.attacking_faction_id},
+            kwargs={"skirmish_id": skirmish.pk, "faction_id": skirmish.defending_faction_id},
         )
     )
 
@@ -398,15 +422,18 @@ def test_faction_warrior_list_update_htmx_view_marks_a_rival_roster_as_not_the_p
     logged_in_client, current_savegame
 ):
     """
-    The flag decides whether these warrior cards let the human pick their action, so it has to follow
-    the savegame's player faction rather than the side of the skirmish the roster sits on.
+    The mirror image: the rival marched, and being the attacker must not make its warband the human's
+    to command.
     """
-    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    skirmish = SkirmishFactory(
+        attacking_faction=FactionFactory(savegame=current_savegame),
+        defending_faction=current_savegame.player_faction,
+    )
 
     response = logged_in_client.get(
         reverse(
             "skirmish:faction-warrior-list-update-htmx",
-            kwargs={"skirmish_id": skirmish.pk, "faction_id": skirmish.defending_faction_id},
+            kwargs={"skirmish_id": skirmish.pk, "faction_id": skirmish.attacking_faction_id},
         )
     )
 
