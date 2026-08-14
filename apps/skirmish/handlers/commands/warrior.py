@@ -121,6 +121,17 @@ def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event
 
     context.warrior = Warrior.objects.reduce_morale(obj=context.warrior, lost_morale=context.lost_morale)
 
+    # The loss comes first, because the battle log is written in the order the events arrive and a
+    # warrior who flees before losing the morale that made him flee reads backwards
+    if context.lost_morale > 0:
+        message_list.append(
+            WarriorLostMorale(
+                skirmish=context.skirmish,
+                warrior=context.warrior,
+                lost_morale=context.lost_morale,
+            )
+        )
+
     if context.warrior.current_morale <= 0:
         context.warrior = Warrior.objects.set_condition(
             obj=context.warrior, condition=Warrior.ConditionChoices.CONDITION_FLEEING
@@ -130,15 +141,6 @@ def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event
             WarriorHasFled(
                 skirmish=context.skirmish,
                 warrior=context.warrior,
-            )
-        )
-
-    if context.lost_morale > 0:
-        message_list.append(
-            WarriorLostMorale(
-                skirmish=context.skirmish,
-                warrior=context.warrior,
-                lost_morale=context.lost_morale,
             )
         )
 
