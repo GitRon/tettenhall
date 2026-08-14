@@ -14,20 +14,20 @@ def fought_skirmish(db) -> Skirmish:
     A skirmish in the state the developer tool is meant to undo: fought, decided and logged.
     """
     skirmish = SkirmishFactory(current_round=4)
-    skirmish.victorious_faction = skirmish.player_faction
+    skirmish.victorious_faction = skirmish.attacking_faction
     skirmish.save()
 
-    skirmish.player_warriors.add(
+    skirmish.attacking_warriors.add(
         WarriorFactory(
-            faction=skirmish.player_faction,
+            faction=skirmish.attacking_faction,
             current_health=3,
             current_morale=1,
             condition=Warrior.ConditionChoices.CONDITION_FLEEING,
         )
     )
-    skirmish.non_player_warriors.add(
+    skirmish.defending_warriors.add(
         WarriorFactory(
-            faction=skirmish.non_player_faction,
+            faction=skirmish.defending_faction,
             current_health=-2,
             current_morale=0,
             condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
@@ -50,8 +50,8 @@ def test_reset_skirmish_heals_every_participant(fought_skirmish):
 
     healed_warriors = Warrior.objects.filter(
         id__in=(
-            fought_skirmish.player_warriors.values_list("id", flat=True).union(
-                fought_skirmish.non_player_warriors.values_list("id", flat=True)
+            fought_skirmish.attacking_warriors.values_list("id", flat=True).union(
+                fought_skirmish.defending_warriors.values_list("id", flat=True)
             )
         )
     )
@@ -63,12 +63,12 @@ def test_reset_skirmish_heals_every_participant(fought_skirmish):
 
 
 def test_reset_skirmish_releases_the_captives(fought_skirmish):
-    captured_warrior = WarriorFactory(savegame=fought_skirmish.player_faction.savegame)
-    fought_skirmish.player_faction.captured_warriors.add(captured_warrior)
+    captured_warrior = WarriorFactory(savegame=fought_skirmish.attacking_faction.savegame)
+    fought_skirmish.attacking_faction.captured_warriors.add(captured_warrior)
 
     call_command("reset_skirmish", fought_skirmish.id)
 
-    assert list(fought_skirmish.player_faction.captured_warriors.all()) == []
+    assert list(fought_skirmish.attacking_faction.captured_warriors.all()) == []
 
 
 def test_reset_skirmish_clears_the_battle_history(fought_skirmish):

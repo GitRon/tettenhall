@@ -12,17 +12,18 @@ class Skirmish(models.Model):
     # but an attack carries no contract
     month = models.PositiveSmallIntegerField("Month", default=1)
 
-    # TODO: we could change this to attacker and defender and make AI factions fight themselves
-    player_faction = models.ForeignKey(
+    # Named for the role each side plays in the fight. Which of them the player holds - if either - is
+    # a question for the savegame, so nothing here has to be true of every skirmish ever created
+    attacking_faction = models.ForeignKey(
         "faction.Faction",
-        verbose_name="Player faction",
-        related_name="player_skirmishes",
+        verbose_name="Attacking faction",
+        related_name="attacking_skirmishes",
         on_delete=models.CASCADE,
     )
-    non_player_faction = models.ForeignKey(
+    defending_faction = models.ForeignKey(
         "faction.Faction",
-        verbose_name="Non-player faction",
-        related_name="non_player_skirmishes",
+        verbose_name="Defending faction",
+        related_name="defending_skirmishes",
         on_delete=models.CASCADE,
     )
     victorious_faction = models.ForeignKey(
@@ -33,15 +34,15 @@ class Skirmish(models.Model):
         null=True,
         blank=True,
     )
-    player_warriors = models.ManyToManyField(
+    attacking_warriors = models.ManyToManyField(
         Warrior,
-        verbose_name="Player warriors",
-        related_name="player_skirmishes",
+        verbose_name="Attacking warriors",
+        related_name="attacking_skirmishes",
     )
-    non_player_warriors = models.ManyToManyField(
+    defending_warriors = models.ManyToManyField(
         Warrior,
-        verbose_name="Non-player warriors",
-        related_name="non_player_skirmishes",
+        verbose_name="Defending warriors",
+        related_name="defending_skirmishes",
     )
 
     objects = SkirmishManager()

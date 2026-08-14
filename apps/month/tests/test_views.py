@@ -84,7 +84,7 @@ def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current
 
 @pytest.mark.django_db
 def test_finish_month_view_keeps_the_month_open_while_a_skirmish_is_unresolved(logged_in_client, current_savegame):
-    SkirmishFactory(player_faction=current_savegame.player_faction)
+    SkirmishFactory(attacking_faction=current_savegame.player_faction)
 
     response = logged_in_client.post(reverse("month:finish-month-view"))
 

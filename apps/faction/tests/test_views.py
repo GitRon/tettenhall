@@ -88,12 +88,12 @@ def test_faction_detail_view_says_why_the_attack_is_gone(
     rival_faction = FactionFactory(savegame=current_savegame)
     WarriorFactory(faction=rival_faction)
     skirmish = SkirmishFactory(
-        player_faction=player_faction_ready_to_march,
-        non_player_faction=rival_faction,
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=rival_faction,
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
     )
-    skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
 
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
@@ -110,12 +110,12 @@ def test_faction_detail_view_says_nothing_about_marching_on_the_players_own_fact
     button is missing - it was never on offer.
     """
     skirmish = SkirmishFactory(
-        player_faction=player_faction_ready_to_march,
-        non_player_faction=FactionFactory(savegame=current_savegame),
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=FactionFactory(savegame=current_savegame),
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
     )
-    skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
 
     response = logged_in_client.get(
         reverse("faction:faction-detail-view", kwargs={"pk": player_faction_ready_to_march.id})
@@ -135,12 +135,12 @@ def test_faction_detail_view_says_nothing_about_marching_on_a_defeated_faction(
     defeated_faction = FactionFactory(savegame=current_savegame, is_defeated=True)
     WarriorFactory(faction=defeated_faction)
     skirmish = SkirmishFactory(
-        player_faction=player_faction_ready_to_march,
-        non_player_faction=defeated_faction,
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=defeated_faction,
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
     )
-    skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
 
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": defeated_faction.id}))
 
@@ -314,9 +314,9 @@ def test_faction_attack_view_fights_the_rivals_own_war_band(
     assert [str(message) for message in get_messages(response.wsgi_request)] == [
         f"Your war band marches on {rival_faction}."
     ]
-    skirmish = Skirmish.objects.get(non_player_faction=rival_faction)
-    assert list(skirmish.non_player_warriors.all()) == [rival_leader]
-    assert list(skirmish.player_warriors.all()) == [player_faction_ready_to_march.leader, follower]
+    skirmish = Skirmish.objects.get(defending_faction=rival_faction)
+    assert list(skirmish.defending_warriors.all()) == [rival_leader]
+    assert list(skirmish.attacking_warriors.all()) == [player_faction_ready_to_march.leader, follower]
     assert skirmish.month == current_savegame.current_month
 
 
@@ -378,12 +378,12 @@ def test_faction_attack_view_cannot_march_twice_in_a_month(
     """
     already_fought = FactionFactory(savegame=current_savegame)
     fought_skirmish = SkirmishFactory(
-        player_faction=player_faction_ready_to_march,
-        non_player_faction=already_fought,
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=already_fought,
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
     )
-    fought_skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+    fought_skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
     untouched_rival = FactionFactory(savegame=current_savegame)
     WarriorFactory(faction=untouched_rival)
 

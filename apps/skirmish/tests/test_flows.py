@@ -24,9 +24,9 @@ def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
     turns into a rout, not how many rounds it took to get there.
     """
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
     exhausted_defender = WarriorFactory(
-        faction=skirmish.non_player_faction, current_morale=2, max_morale=20, current_health=3
+        faction=skirmish.defending_faction, current_morale=2, max_morale=20, current_health=3
     )
 
     handle_message(

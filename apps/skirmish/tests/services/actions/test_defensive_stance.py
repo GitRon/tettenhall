@@ -17,7 +17,7 @@ def test_get_pair_matching_points_never_makes_the_warrior_the_attacker():
 @pytest.mark.django_db
 def test_get_attack_value_never_deals_damage():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
     service = DefensiveStanceService(skirmish=skirmish, warrior=warrior)
 
     result = service.get_attack_value()
@@ -29,7 +29,7 @@ def test_get_attack_value_never_deals_damage():
 @pytest.mark.django_db
 def test_get_defense_value_doubles_the_defense():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
     service = DefensiveStanceService(skirmish=skirmish, warrior=warrior)
 
     # Patched at the boundary: the die behind "roll_defense()"

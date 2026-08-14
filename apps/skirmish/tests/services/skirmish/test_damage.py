@@ -13,9 +13,9 @@ def damage_service(db) -> SkirmishDamageService:
 
     return SkirmishDamageService(
         skirmish=skirmish,
-        attacker=WarriorFactory(faction=skirmish.player_faction),
+        attacker=WarriorFactory(faction=skirmish.attacking_faction),
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
-        defender=WarriorFactory(faction=skirmish.non_player_faction),
+        defender=WarriorFactory(faction=skirmish.defending_faction),
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
     )
 

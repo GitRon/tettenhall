@@ -33,25 +33,29 @@ from apps.skirmish.tests.factories.warrior import WarriorFactory
 @pytest.mark.django_db
 def test_handle_warrior_is_captured_hands_the_warrior_to_the_victor():
     skirmish = SkirmishFactory()
-    captured_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+    captured_warrior = WarriorFactory(faction=skirmish.defending_faction)
 
     result = handle_warrior_is_captured(
-        context=CaptureWarrior(skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.player_faction)
+        context=CaptureWarrior(
+            skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.attacking_faction
+        )
     )
 
     assert result == WarriorWasCaptured(
-        skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.player_faction
+        skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.attacking_faction
     )
-    assert list(skirmish.player_faction.captured_warriors.all()) == [captured_warrior]
+    assert list(skirmish.attacking_faction.captured_warriors.all()) == [captured_warrior]
 
 
 @pytest.mark.django_db
 def test_handle_warrior_is_captured_takes_the_warrior_out_of_his_faction():
     skirmish = SkirmishFactory()
-    captured_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+    captured_warrior = WarriorFactory(faction=skirmish.defending_faction)
 
     handle_warrior_is_captured(
-        context=CaptureWarrior(skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.player_faction)
+        context=CaptureWarrior(
+            skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.attacking_faction
+        )
     )
 
     captured_warrior.refresh_from_db()
@@ -65,27 +69,27 @@ def test_handle_warrior_is_captured_leaves_an_existing_prisoner_where_he_is():
     one pass - so this runs twice for him. The second captor does not get to take him off the first.
     """
     skirmish = SkirmishFactory()
-    second_skirmish = SkirmishFactory(player_faction=skirmish.player_faction)
-    captured_warrior = WarriorFactory(faction=skirmish.non_player_faction)
-    skirmish.player_faction.captured_warriors.add(captured_warrior)
+    second_skirmish = SkirmishFactory(attacking_faction=skirmish.attacking_faction)
+    captured_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_faction.captured_warriors.add(captured_warrior)
 
     result = handle_warrior_is_captured(
         context=CaptureWarrior(
             skirmish=second_skirmish,
             warrior=captured_warrior,
-            capturing_faction=second_skirmish.non_player_faction,
+            capturing_faction=second_skirmish.defending_faction,
         )
     )
 
     assert result is None
-    assert list(second_skirmish.non_player_faction.captured_warriors.all()) == []
+    assert list(second_skirmish.defending_faction.captured_warriors.all()) == []
 
 
 @pytest.mark.django_db
 def test_handle_reduce_warrior_health_kills_the_warrior():
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_health=20, max_health=20)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_health=20, max_health=20)
 
     result = handle_reduce_warrior_health(
         context=ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=24)
@@ -99,8 +103,8 @@ def test_handle_reduce_warrior_health_kills_the_warrior():
 @pytest.mark.django_db
 def test_handle_reduce_warrior_health_incapacitates_the_warrior():
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_health=20, max_health=20)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_health=20, max_health=20)
 
     result = handle_reduce_warrior_health(
         context=ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=23)
@@ -114,8 +118,8 @@ def test_handle_reduce_warrior_health_incapacitates_the_warrior():
 @pytest.mark.django_db
 def test_handle_reduce_warrior_health_leaves_a_surviving_warrior_healthy():
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_health=20, max_health=20)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_health=20, max_health=20)
 
     result = handle_reduce_warrior_health(
         context=ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=5)
@@ -130,7 +134,7 @@ def test_handle_reduce_warrior_health_leaves_a_surviving_warrior_healthy():
 def test_handle_warrior_losing_morale_ignores_an_unconscious_warrior():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(
-        faction=skirmish.player_faction,
+        faction=skirmish.attacking_faction,
         condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
         current_morale=20,
         max_morale=20,
@@ -144,7 +148,7 @@ def test_handle_warrior_losing_morale_ignores_an_unconscious_warrior():
 @pytest.mark.django_db
 def test_handle_warrior_losing_morale_makes_the_warrior_flee_without_morale_left():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction, current_morale=5, max_morale=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, current_morale=5, max_morale=20)
 
     result = handle_warrior_losing_morale(context=ReduceMorale(skirmish=skirmish, warrior=warrior, lost_morale=5))
 
@@ -159,7 +163,7 @@ def test_handle_warrior_losing_morale_makes_the_warrior_flee_without_morale_left
 @pytest.mark.django_db
 def test_handle_warrior_losing_morale_keeps_a_warrior_with_morale_left_fighting():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction, current_morale=20, max_morale=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, current_morale=20, max_morale=20)
 
     result = handle_warrior_losing_morale(context=ReduceMorale(skirmish=skirmish, warrior=warrior, lost_morale=2))
 
@@ -171,7 +175,7 @@ def test_handle_warrior_losing_morale_keeps_a_warrior_with_morale_left_fighting(
 @pytest.mark.django_db
 def test_handle_warrior_losing_morale_stays_silent_without_a_morale_loss():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction, current_morale=20, max_morale=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, current_morale=20, max_morale=20)
 
     result = handle_warrior_losing_morale(context=ReduceMorale(skirmish=skirmish, warrior=warrior, lost_morale=0))
 
@@ -179,11 +183,11 @@ def test_handle_warrior_losing_morale_stays_silent_without_a_morale_loss():
 
 
 @pytest.mark.django_db
-def test_handle_reduce_morale_of_remaining_warriors_hits_the_comrades_of_a_player_warrior():
+def test_handle_reduce_morale_of_remaining_warriors_hits_the_comrades_of_an_attacking_warrior():
     skirmish = SkirmishFactory()
-    fleeing_warrior = WarriorFactory(faction=skirmish.player_faction, max_morale=20)
-    comrade = WarriorFactory(faction=skirmish.player_faction)
-    skirmish.player_warriors.add(fleeing_warrior, comrade)
+    fleeing_warrior = WarriorFactory(faction=skirmish.attacking_faction, max_morale=20)
+    comrade = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(fleeing_warrior, comrade)
 
     result = handle_reduce_morale_of_remaining_warriors(
         context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=fleeing_warrior)
@@ -195,9 +199,9 @@ def test_handle_reduce_morale_of_remaining_warriors_hits_the_comrades_of_a_playe
 @pytest.mark.django_db
 def test_handle_reduce_morale_of_remaining_warriors_hits_the_comrades_of_an_enemy_warrior():
     skirmish = SkirmishFactory()
-    incapacitated_warrior = WarriorFactory(faction=skirmish.non_player_faction, max_morale=20)
-    comrade = WarriorFactory(faction=skirmish.non_player_faction)
-    skirmish.non_player_warriors.add(incapacitated_warrior, comrade)
+    incapacitated_warrior = WarriorFactory(faction=skirmish.defending_faction, max_morale=20)
+    comrade = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(incapacitated_warrior, comrade)
 
     result = handle_reduce_morale_of_remaining_warriors(
         context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=incapacitated_warrior)
@@ -209,8 +213,8 @@ def test_handle_reduce_morale_of_remaining_warriors_hits_the_comrades_of_an_enem
 @pytest.mark.django_db
 def test_handle_reduce_morale_of_remaining_warriors_skips_the_warrior_himself():
     skirmish = SkirmishFactory()
-    killed_warrior = WarriorFactory(faction=skirmish.player_faction, max_morale=20)
-    skirmish.player_warriors.add(killed_warrior)
+    killed_warrior = WarriorFactory(faction=skirmish.attacking_faction, max_morale=20)
+    skirmish.attacking_warriors.add(killed_warrior)
 
     result = handle_reduce_morale_of_remaining_warriors(
         context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=killed_warrior)
@@ -222,7 +226,7 @@ def test_handle_reduce_morale_of_remaining_warriors_skips_the_warrior_himself():
 @pytest.mark.django_db
 def test_handle_warrior_increasing_morale_adds_the_gained_points():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction, current_morale=10, max_morale=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, current_morale=10, max_morale=20)
 
     result = handle_warrior_increasing_morale(
         context=IncreaseMorale(skirmish=skirmish, warrior=warrior, increased_morale=5)
@@ -236,7 +240,7 @@ def test_handle_warrior_increasing_morale_adds_the_gained_points():
 @pytest.mark.django_db
 def test_handle_warrior_increasing_experience_adds_the_gained_points():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction, experience=100)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=100)
 
     result = handle_warrior_increasing_experience(
         context=IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=25)

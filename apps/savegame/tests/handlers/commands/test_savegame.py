@@ -78,7 +78,7 @@ def test_handle_determine_savegame_outcome_carries_the_unresolved_skirmish():
     savegame = SavegameFactory()
     savegame.player_faction = FactionFactory(savegame=savegame, is_defeated=True)
     savegame.save()
-    skirmish = SkirmishFactory(player_faction=savegame.player_faction)
+    skirmish = SkirmishFactory(attacking_faction=savegame.player_faction)
 
     result = handle_determine_savegame_outcome(context=DetermineSavegameOutcome(savegame=savegame))
 

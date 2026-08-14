@@ -17,7 +17,7 @@ def test_get_pair_matching_points_doubles_the_base_points():
 @pytest.mark.django_db
 def test_get_attack_value_halves_the_damage():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.player_faction, strength=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=20)
     service = FastAttackService(skirmish=skirmish, warrior=warrior)
 
     # Patched at the boundary: the die behind "roll_attack()"

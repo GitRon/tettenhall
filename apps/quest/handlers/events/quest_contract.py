@@ -24,4 +24,4 @@ def handle_finish_quest_contract(*, context: skirmish.SkirmishFinished) -> Comma
         # There might be skirmishes with no assigned quest contract
         return None
 
-    return RemoveQuestContractAsActiveQuest(quest_contract=quest_contract, faction=context.skirmish.player_faction)
+    return RemoveQuestContractAsActiveQuest(quest_contract=quest_contract)

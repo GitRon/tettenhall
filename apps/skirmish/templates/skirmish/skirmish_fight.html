@@ -5,7 +5,7 @@
 
     <div class="uk-grid-match uk-child-width-1-3@m" uk-grid>
         <div>
-            {% include 'skirmish/faction/components/faction_box.html' with faction=player_faction warrior_list=skirmish.player_warriors.all is_player=True %}
+            {% include 'skirmish/faction/components/faction_box.html' with faction=attacking_faction warrior_list=skirmish.attacking_warriors.all is_player=attacker_is_player %}
         </div>
         <div>
             <div class="uk-tile-muted uk-padding-large">
@@ -29,7 +29,7 @@
             </div>
         </div>
         <div>
-            {% include 'skirmish/faction/components/faction_box.html' with faction=non_player_faction warrior_list=skirmish.non_player_warriors.all is_player=False %}
+            {% include 'skirmish/faction/components/faction_box.html' with faction=defending_faction warrior_list=skirmish.defending_warriors.all is_player=defender_is_player %}
         </div>
     </div>
 {% endblock content %}

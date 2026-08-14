@@ -42,26 +42,26 @@ def test_handle_attack_faction_fields_the_targets_own_warriors():
     The point of the whole story: the defending side is the rival's actual war band, its leader
     among them, rather than mercenaries invented for the occasion.
     """
-    player_faction = FactionFactory()
-    target_faction = FactionFactory(savegame=player_faction.savegame)
-    player_leader = WarriorFactory(faction=player_faction)
+    attacking_faction = FactionFactory()
+    target_faction = FactionFactory(savegame=attacking_faction.savegame)
+    attacking_leader = WarriorFactory(faction=attacking_faction)
     target_leader = WarriorFactory(faction=target_faction)
     target_faction.leader = target_leader
     target_faction.save()
 
     result = handle_attack_faction(
         context=AttackFaction(
-            attacking_faction=player_faction,
+            attacking_faction=attacking_faction,
             target_faction=target_faction,
-            assigned_warriors=[player_leader],
+            assigned_warriors=[attacking_leader],
             month=3,
         )
     )
 
     assert result == FactionWasAttacked(
-        attacking_faction=player_faction,
+        attacking_faction=attacking_faction,
         defending_faction=target_faction,
-        attacking_warriors=[player_leader],
+        attacking_warriors=[attacking_leader],
         defending_warriors=[target_leader],
         month=3,
     )
@@ -73,16 +73,16 @@ def test_handle_attack_faction_leaves_the_targets_casualties_out_of_the_line_up(
     A warrior who is down does not turn out to defend his town - and a side made up of him alone
     would count as beaten before the first round.
     """
-    player_faction = FactionFactory()
-    target_faction = FactionFactory(savegame=player_faction.savegame)
+    attacking_faction = FactionFactory()
+    target_faction = FactionFactory(savegame=attacking_faction.savegame)
     healthy_defender = WarriorFactory(faction=target_faction)
     WarriorFactory(faction=target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
     result = handle_attack_faction(
         context=AttackFaction(
-            attacking_faction=player_faction,
+            attacking_faction=attacking_faction,
             target_faction=target_faction,
-            assigned_warriors=[WarriorFactory(faction=player_faction)],
+            assigned_warriors=[WarriorFactory(faction=attacking_faction)],
             month=3,
         )
     )
@@ -93,7 +93,7 @@ def test_handle_attack_faction_leaves_the_targets_casualties_out_of_the_line_up(
 @pytest.mark.django_db
 def test_handle_create_skirmish_uses_the_given_opponents():
     quest_contract = QuestContractFactory()
-    player_warrior = WarriorFactory(faction=quest_contract.faction)
+    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
     enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
 
     result = handle_create_skirmish(
@@ -101,15 +101,15 @@ def test_handle_create_skirmish_uses_the_given_opponents():
             name="Ambush",
             faction_1=quest_contract.faction,
             faction_2=quest_contract.quest.target_faction,
-            warrior_list_1=[player_warrior],
+            warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
             month=3,
             quest_contract=quest_contract,
         )
     )
 
-    assert list(result.skirmish.player_warriors.all()) == [player_warrior]
-    assert list(result.skirmish.non_player_warriors.all()) == [enemy_warrior]
+    assert list(result.skirmish.attacking_warriors.all()) == [attacking_warrior]
+    assert list(result.skirmish.defending_warriors.all()) == [enemy_warrior]
 
 
 @pytest.mark.django_db
@@ -119,7 +119,7 @@ def test_handle_create_skirmish_records_the_month():
     twice has nothing else to go on.
     """
     quest_contract = QuestContractFactory()
-    player_warrior = WarriorFactory(faction=quest_contract.faction)
+    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
     enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
 
     result = handle_create_skirmish(
@@ -127,7 +127,7 @@ def test_handle_create_skirmish_records_the_month():
             name="Ambush",
             faction_1=quest_contract.faction,
             faction_2=quest_contract.quest.target_faction,
-            warrior_list_1=[player_warrior],
+            warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
             month=7,
             quest_contract=quest_contract,
@@ -140,7 +140,7 @@ def test_handle_create_skirmish_records_the_month():
 @pytest.mark.django_db
 def test_handle_create_skirmish_generates_opponents_when_none_are_given():
     quest_contract = QuestContractFactory()
-    player_warrior = WarriorFactory(faction=quest_contract.faction)
+    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
     ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON)
     ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR)
 
@@ -151,14 +151,14 @@ def test_handle_create_skirmish_generates_opponents_when_none_are_given():
                 name="Ambush",
                 faction_1=quest_contract.faction,
                 faction_2=quest_contract.quest.target_faction,
-                warrior_list_1=[player_warrior],
+                warrior_list_1=[attacking_warrior],
                 warrior_list_2=None,
                 month=3,
                 quest_contract=quest_contract,
             )
         )
 
-    assert result.skirmish.non_player_warriors.count() == 2
+    assert result.skirmish.defending_warriors.count() == 2
 
 
 @pytest.mark.django_db
@@ -168,17 +168,17 @@ def test_handle_create_skirmish_does_not_generate_opponents_for_an_empty_list():
     "no opponents were supplied" - and invented mercenaries for a faction that has none, on a path
     that then dereferenced the quest contract an attack does not carry.
     """
-    player_faction = FactionFactory()
-    enemy_faction = FactionFactory(savegame=player_faction.savegame)
-    player_warrior = WarriorFactory(faction=player_faction)
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+    attacking_warrior = WarriorFactory(faction=attacking_faction)
 
     with pytest.raises(RuntimeError, match="no warriors on the defending side"):
         handle_create_skirmish(
             context=CreateSkirmish(
                 name="Brawl",
-                faction_1=player_faction,
+                faction_1=attacking_faction,
                 faction_2=enemy_faction,
-                warrior_list_1=[player_warrior],
+                warrior_list_1=[attacking_warrior],
                 warrior_list_2=[],
                 month=3,
                 quest_contract=None,
@@ -189,7 +189,7 @@ def test_handle_create_skirmish_does_not_generate_opponents_for_an_empty_list():
 @pytest.mark.django_db
 def test_handle_create_skirmish_passes_the_quest_contract_on():
     quest_contract = QuestContractFactory()
-    player_warrior = WarriorFactory(faction=quest_contract.faction)
+    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
     enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
 
     result = handle_create_skirmish(
@@ -197,7 +197,7 @@ def test_handle_create_skirmish_passes_the_quest_contract_on():
             name="Ambush",
             faction_1=quest_contract.faction,
             faction_2=quest_contract.quest.target_faction,
-            warrior_list_1=[player_warrior],
+            warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
             month=3,
             quest_contract=quest_contract,
@@ -209,17 +209,17 @@ def test_handle_create_skirmish_passes_the_quest_contract_on():
 
 @pytest.mark.django_db
 def test_handle_create_skirmish_without_a_quest_contract():
-    player_faction = FactionFactory()
-    enemy_faction = FactionFactory(savegame=player_faction.savegame)
-    player_warrior = WarriorFactory(faction=player_faction)
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+    attacking_warrior = WarriorFactory(faction=attacking_faction)
     enemy_warrior = WarriorFactory(faction=enemy_faction)
 
     result = handle_create_skirmish(
         context=CreateSkirmish(
             name="Brawl",
-            faction_1=player_faction,
+            faction_1=attacking_faction,
             faction_2=enemy_faction,
-            warrior_list_1=[player_warrior],
+            warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
             month=3,
             quest_contract=None,
@@ -232,12 +232,12 @@ def test_handle_create_skirmish_without_a_quest_contract():
 @pytest.mark.django_db
 def test_handle_assign_fighter_pairs_matches_equally_sized_groups():
     skirmish = SkirmishFactory()
-    player_participant = SkirmishParticipant(
-        warrior=WarriorFactory(faction=skirmish.player_faction),
+    attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
         skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
     )
     enemy_participant = SkirmishParticipant(
-        warrior=WarriorFactory(faction=skirmish.non_player_faction),
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
         skirmish_action=SkirmishActionChoices.DEFENSIVE_STANCE,
     )
 
@@ -246,7 +246,7 @@ def test_handle_assign_fighter_pairs_matches_equally_sized_groups():
         result = handle_assign_fighter_pairs(
             context=StartDuel(
                 skirmish=skirmish,
-                skirmish_participants_1=[player_participant],
+                skirmish_participants_1=[attacking_participant],
                 skirmish_participants_2=[enemy_participant],
             )
         )
@@ -254,7 +254,7 @@ def test_handle_assign_fighter_pairs_matches_equally_sized_groups():
     assert result == [
         FighterPairsMatched(
             skirmish=skirmish,
-            warrior_1=player_participant.warrior,
+            warrior_1=attacking_participant.warrior,
             warrior_2=enemy_participant.warrior,
             attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
             attack_action_2=SkirmishActionChoices.DEFENSIVE_STANCE,
@@ -265,16 +265,16 @@ def test_handle_assign_fighter_pairs_matches_equally_sized_groups():
 @pytest.mark.django_db
 def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_group():
     skirmish = SkirmishFactory()
-    first_player_participant = SkirmishParticipant(
-        warrior=WarriorFactory(faction=skirmish.player_faction),
+    first_attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
         skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
     )
-    second_player_participant = SkirmishParticipant(
-        warrior=WarriorFactory(faction=skirmish.player_faction),
+    second_attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
         skirmish_action=SkirmishActionChoices.FAST_ATTACK,
     )
     enemy_participant = SkirmishParticipant(
-        warrior=WarriorFactory(faction=skirmish.non_player_faction),
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
         skirmish_action=SkirmishActionChoices.DEFENSIVE_STANCE,
     )
 
@@ -283,7 +283,7 @@ def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_g
         result = handle_assign_fighter_pairs(
             context=StartDuel(
                 skirmish=skirmish,
-                skirmish_participants_1=[first_player_participant, second_player_participant],
+                skirmish_participants_1=[first_attacking_participant, second_attacking_participant],
                 skirmish_participants_2=[enemy_participant],
             )
         )
@@ -291,14 +291,14 @@ def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_g
     assert result == [
         FighterPairsMatched(
             skirmish=skirmish,
-            warrior_1=first_player_participant.warrior,
+            warrior_1=first_attacking_participant.warrior,
             warrior_2=enemy_participant.warrior,
             attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
             attack_action_2=SkirmishActionChoices.DEFENSIVE_STANCE,
         ),
         AttackerDefenderDecided(
             skirmish=skirmish,
-            attacker=second_player_participant.warrior,
+            attacker=second_attacking_participant.warrior,
             attacker_action=SkirmishActionChoices.FAST_ATTACK,
             defender=enemy_participant.warrior,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
@@ -309,15 +309,15 @@ def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_g
 @pytest.mark.django_db
 def test_handle_determine_attacker_and_defender_lets_the_first_warrior_attack():
     skirmish = SkirmishFactory()
-    player_warrior = WarriorFactory(faction=skirmish.player_faction, dexterity=10)
-    enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction, dexterity=10)
+    attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction, dexterity=10)
+    enemy_warrior = WarriorFactory(faction=skirmish.defending_faction, dexterity=10)
 
     # Boundary randomness: equal matching points are decided by a random draw
     with mock.patch("apps.skirmish.handlers.commands.skirmish.random.random", return_value=0.2):
         result = handle_determine_attacker_and_defender(
             context=DetermineAttacker(
                 skirmish=skirmish,
-                warrior_1=player_warrior,
+                warrior_1=attacking_warrior,
                 action_1=SkirmishActionChoices.SIMPLE_ATTACK,
                 warrior_2=enemy_warrior,
                 action_2=SkirmishActionChoices.SIMPLE_ATTACK,
@@ -326,7 +326,7 @@ def test_handle_determine_attacker_and_defender_lets_the_first_warrior_attack():
 
     assert result == AttackerDefenderDecided(
         skirmish=skirmish,
-        attacker=player_warrior,
+        attacker=attacking_warrior,
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=enemy_warrior,
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
@@ -336,15 +336,15 @@ def test_handle_determine_attacker_and_defender_lets_the_first_warrior_attack():
 @pytest.mark.django_db
 def test_handle_determine_attacker_and_defender_lets_the_second_warrior_attack():
     skirmish = SkirmishFactory()
-    player_warrior = WarriorFactory(faction=skirmish.player_faction, dexterity=10)
-    enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction, dexterity=10)
+    attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction, dexterity=10)
+    enemy_warrior = WarriorFactory(faction=skirmish.defending_faction, dexterity=10)
 
     # Boundary randomness: equal matching points are decided by a random draw
     with mock.patch("apps.skirmish.handlers.commands.skirmish.random.random", return_value=0.8):
         result = handle_determine_attacker_and_defender(
             context=DetermineAttacker(
                 skirmish=skirmish,
-                warrior_1=player_warrior,
+                warrior_1=attacking_warrior,
                 action_1=SkirmishActionChoices.SIMPLE_ATTACK,
                 warrior_2=enemy_warrior,
                 action_2=SkirmishActionChoices.SIMPLE_ATTACK,
@@ -355,7 +355,7 @@ def test_handle_determine_attacker_and_defender_lets_the_second_warrior_attack()
         skirmish=skirmish,
         attacker=enemy_warrior,
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
-        defender=player_warrior,
+        defender=attacking_warrior,
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
     )
 
@@ -363,13 +363,13 @@ def test_handle_determine_attacker_and_defender_lets_the_second_warrior_attack()
 @pytest.mark.django_db
 def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
     skirmish = SkirmishFactory()
-    player_warrior = WarriorFactory(faction=skirmish.player_faction, dexterity=10)
-    enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction, dexterity=10)
+    attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction, dexterity=10)
+    enemy_warrior = WarriorFactory(faction=skirmish.defending_faction, dexterity=10)
 
     result = handle_determine_attacker_and_defender(
         context=DetermineAttacker(
             skirmish=skirmish,
-            warrior_1=player_warrior,
+            warrior_1=attacking_warrior,
             action_1=SkirmishActionChoices.DEFENSIVE_STANCE,
             warrior_2=enemy_warrior,
             action_2=SkirmishActionChoices.DEFENSIVE_STANCE,
@@ -378,7 +378,7 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
 
     assert result == AttackerDefenderDecided(
         skirmish=skirmish,
-        attacker=player_warrior,
+        attacker=attacking_warrior,
         attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
         defender=enemy_warrior,
         defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
@@ -386,39 +386,39 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
 
 
 @pytest.mark.django_db
-def test_handle_faction_wins_skirmish_loots_and_captures_for_the_player():
+def test_handle_faction_wins_skirmish_loots_and_captures_for_the_attacking_faction():
     """
     Both sides carry someone who is neither dead nor healthy, because that is where the two rules
     differ: the loser's unconscious are stripped where they lie, the winner's own are not, and the
     one who fled is gone with his kit whichever side he was on.
     """
     skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(faction=skirmish.player_faction, skirmish=skirmish, quest__loot=250)
-    dead_player_warrior = WarriorFactory(
-        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
+    dead_attacking_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
-    unconscious_player_warrior = WarriorFactory(
-        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    unconscious_attacking_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
-    healthy_player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    healthy_attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction)
     unconscious_enemy_warrior = WarriorFactory(
-        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+        faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
     fleeing_enemy_warrior = WarriorFactory(
-        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING
+        faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING
     )
-    skirmish.player_warriors.add(dead_player_warrior, unconscious_player_warrior, healthy_player_warrior)
-    skirmish.non_player_warriors.add(unconscious_enemy_warrior, fleeing_enemy_warrior)
+    skirmish.attacking_warriors.add(dead_attacking_warrior, unconscious_attacking_warrior, healthy_attacking_warrior)
+    skirmish.defending_warriors.add(unconscious_enemy_warrior, fleeing_enemy_warrior)
 
     result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.player_faction, month=3)
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
     )
 
     assert result == SkirmishFinished(
         skirmish=skirmish,
-        incapacitated_warriors=[dead_player_warrior, unconscious_enemy_warrior],
+        incapacitated_warriors=[dead_attacking_warrior, unconscious_enemy_warrior],
         defeated_unconscious_warriors=[unconscious_enemy_warrior],
-        victorious_healthy_warriors=[healthy_player_warrior],
+        victorious_healthy_warriors=[healthy_attacking_warrior],
         quest_name=quest_contract.quest.name,
         quest_loot=250,
         month=3,
@@ -433,15 +433,15 @@ def test_handle_faction_wins_skirmish_does_not_loot_a_warband_that_fled():
     weapon and piece of armour he owns for running away.
     """
     skirmish = SkirmishFactory()
-    fleeing_player_warrior = WarriorFactory(
-        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING
+    fleeing_attacking_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING
     )
-    healthy_enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction)
-    skirmish.player_warriors.add(fleeing_player_warrior)
-    skirmish.non_player_warriors.add(healthy_enemy_warrior)
+    healthy_enemy_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(fleeing_attacking_warrior)
+    skirmish.defending_warriors.add(healthy_enemy_warrior)
 
     result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.non_player_faction, month=3)
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.defending_faction, month=3)
     )
 
     assert result.incapacitated_warriors == []
@@ -452,47 +452,49 @@ def test_handle_faction_wins_skirmish_does_not_loot_a_warband_that_fled():
 def test_handle_faction_wins_skirmish_pays_no_quest_loot_to_a_rival_victor():
     """
     The reward is handed to whoever won further down the chain, so carrying it regardless of the
-    outcome credited the rival with the player's own quest money.
+    outcome credited the rival with the contract holder's own quest money.
     """
     skirmish = SkirmishFactory()
-    QuestContractFactory(faction=skirmish.player_faction, skirmish=skirmish, quest__loot=250)
-    skirmish.player_warriors.add(WarriorFactory(faction=skirmish.player_faction))
-    skirmish.non_player_warriors.add(WarriorFactory(faction=skirmish.non_player_faction))
+    QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
 
     result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.non_player_faction, month=3)
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.defending_faction, month=3)
     )
 
     assert result.quest_loot == 0
 
 
 @pytest.mark.django_db
-def test_handle_faction_wins_skirmish_loots_and_captures_for_the_non_player_faction():
+def test_handle_faction_wins_skirmish_loots_and_captures_for_the_defending_faction():
     """
-    The mirror image of the test above: the loot follows the victor, not the player. Naming the two
-    sides "player" and "non_player" used to make this case take the winner's items from the loser's
-    side and vice versa, so a losing player kept the gear of everyone who was merely knocked out.
+    The mirror image of the test above: the loot follows the victor, not the side that marched.
+
+    Back when the two sides were named after the player rather than their role, this case took the
+    winner's items from the loser's side and vice versa, so a losing player kept the gear of everyone
+    who was merely knocked out.
     """
     skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(faction=skirmish.player_faction, skirmish=skirmish, quest__loot=250)
-    unconscious_player_warrior = WarriorFactory(
-        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
+    unconscious_attacking_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
     dead_enemy_warrior = WarriorFactory(
-        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+        faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
-    healthy_enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction)
-    skirmish.player_warriors.add(unconscious_player_warrior)
-    skirmish.non_player_warriors.add(dead_enemy_warrior, healthy_enemy_warrior)
+    healthy_enemy_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(unconscious_attacking_warrior)
+    skirmish.defending_warriors.add(dead_enemy_warrior, healthy_enemy_warrior)
 
     result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.non_player_faction, month=3)
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.defending_faction, month=3)
     )
 
     assert result == SkirmishFinished(
         skirmish=skirmish,
-        incapacitated_warriors=[dead_enemy_warrior, unconscious_player_warrior],
-        defeated_unconscious_warriors=[unconscious_player_warrior],
+        incapacitated_warriors=[dead_enemy_warrior, unconscious_attacking_warrior],
+        defeated_unconscious_warriors=[unconscious_attacking_warrior],
         victorious_healthy_warriors=[healthy_enemy_warrior],
         quest_name=quest_contract.quest.name,
         quest_loot=0,
@@ -506,18 +508,18 @@ def test_handle_faction_wins_skirmish_without_a_quest_contract():
     Not every skirmish belongs to a quest, so winning one without a contract has to work.
     """
     skirmish = SkirmishFactory()
-    healthy_player_warrior = WarriorFactory(faction=skirmish.player_faction)
-    skirmish.player_warriors.add(healthy_player_warrior)
+    healthy_attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(healthy_attacking_warrior)
 
     result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.player_faction, month=3)
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
     )
 
     assert result == SkirmishFinished(
         skirmish=skirmish,
         incapacitated_warriors=[],
         defeated_unconscious_warriors=[],
-        victorious_healthy_warriors=[healthy_player_warrior],
+        victorious_healthy_warriors=[healthy_attacking_warrior],
         quest_name=None,
         quest_loot=0,
         month=3,
@@ -527,10 +529,10 @@ def test_handle_faction_wins_skirmish_without_a_quest_contract():
 @pytest.mark.django_db
 def test_handle_finish_round_leaves_an_undecided_skirmish_without_a_victor():
     skirmish = SkirmishFactory()
-    player_warrior = WarriorFactory(faction=skirmish.player_faction)
-    enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction)
-    skirmish.player_warriors.add(player_warrior)
-    skirmish.non_player_warriors.add(enemy_warrior)
+    attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    enemy_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(attacking_warrior)
+    skirmish.defending_warriors.add(enemy_warrior)
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
@@ -540,50 +542,50 @@ def test_handle_finish_round_leaves_an_undecided_skirmish_without_a_victor():
 
 
 @pytest.mark.django_db
-def test_handle_finish_round_declares_the_player_faction_the_victor():
+def test_handle_finish_round_declares_the_attacking_faction_the_victor():
     skirmish = SkirmishFactory()
-    player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction)
     dead_enemy_warrior = WarriorFactory(
-        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+        faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
-    skirmish.player_warriors.add(player_warrior)
-    skirmish.non_player_warriors.add(dead_enemy_warrior)
+    skirmish.attacking_warriors.add(attacking_warrior)
+    skirmish.defending_warriors.add(dead_enemy_warrior)
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
-    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.player_faction, month=3)
+    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.attacking_faction, month=3)
 
 
 @pytest.mark.django_db
-def test_handle_finish_round_declares_the_non_player_faction_the_victor():
+def test_handle_finish_round_declares_the_defending_faction_the_victor():
     skirmish = SkirmishFactory()
-    unconscious_player_warrior = WarriorFactory(
-        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    unconscious_attacking_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
-    enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction)
-    skirmish.player_warriors.add(unconscious_player_warrior)
-    skirmish.non_player_warriors.add(enemy_warrior)
+    enemy_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(unconscious_attacking_warrior)
+    skirmish.defending_warriors.add(enemy_warrior)
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
-    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.non_player_faction, month=3)
+    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.defending_faction, month=3)
 
 
 @pytest.mark.django_db
-def test_handle_finish_round_declares_the_player_faction_the_victor_on_a_mutual_wipeout():
+def test_handle_finish_round_declares_the_attacking_faction_the_victor_on_a_mutual_wipeout():
     """
-    Both sides going down in the same round is decided in the player's favour.
+    Both sides going down in the same round is decided in favour of the side that marched.
     """
     skirmish = SkirmishFactory()
-    dead_player_warrior = WarriorFactory(
-        faction=skirmish.player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    dead_attacking_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
     dead_enemy_warrior = WarriorFactory(
-        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+        faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
-    skirmish.player_warriors.add(dead_player_warrior)
-    skirmish.non_player_warriors.add(dead_enemy_warrior)
+    skirmish.attacking_warriors.add(dead_attacking_warrior)
+    skirmish.defending_warriors.add(dead_enemy_warrior)
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
-    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.player_faction, month=3)
+    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.attacking_faction, month=3)

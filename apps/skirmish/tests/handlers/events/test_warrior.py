@@ -58,7 +58,7 @@ def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_fleeing_
     database access here.
     """
     skirmish = SkirmishFactory.build()
-    fleeing_warrior = WarriorFactory.build(faction=skirmish.player_faction)
+    fleeing_warrior = WarriorFactory.build(faction=skirmish.attacking_faction)
 
     result = handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         context=WarriorHasFled(skirmish=skirmish, warrior=fleeing_warrior)
@@ -69,8 +69,8 @@ def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_fleeing_
 
 def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_an_incapacitated_warrior():
     skirmish = SkirmishFactory.build()
-    incapacitated_warrior = WarriorFactory.build(faction=skirmish.non_player_faction)
-    attacker = WarriorFactory.build(faction=skirmish.player_faction)
+    incapacitated_warrior = WarriorFactory.build(faction=skirmish.defending_faction)
+    attacker = WarriorFactory.build(faction=skirmish.attacking_faction)
 
     result = handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         context=WarriorWasIncapacitated(skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker)
@@ -81,8 +81,8 @@ def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_an_incapac
 
 def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_killed_warrior():
     skirmish = SkirmishFactory.build()
-    killed_warrior = WarriorFactory.build(faction=skirmish.player_faction)
-    killer = WarriorFactory.build(faction=skirmish.non_player_faction)
+    killed_warrior = WarriorFactory.build(faction=skirmish.attacking_faction)
+    killer = WarriorFactory.build(faction=skirmish.defending_faction)
 
     result = handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
         context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
@@ -96,8 +96,8 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_an_incapacitated_w
     One test per registered message: the handler is registered for two of them.
     """
     skirmish = SkirmishFactory.build()
-    incapacitated_warrior = WarriorFactory.build(faction=skirmish.non_player_faction)
-    attacker = WarriorFactory.build(faction=skirmish.player_faction)
+    incapacitated_warrior = WarriorFactory.build(faction=skirmish.defending_faction)
+    attacker = WarriorFactory.build(faction=skirmish.attacking_faction)
 
     result = handle_experience_gain_on_warrior_incapacitation(
         context=WarriorWasIncapacitated(skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker)
@@ -108,8 +108,8 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_an_incapacitated_w
 
 def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior():
     skirmish = SkirmishFactory.build()
-    killed_warrior = WarriorFactory.build(faction=skirmish.non_player_faction)
-    killer = WarriorFactory.build(faction=skirmish.player_faction)
+    killed_warrior = WarriorFactory.build(faction=skirmish.defending_faction)
+    killer = WarriorFactory.build(faction=skirmish.attacking_faction)
 
     result = handle_experience_gain_on_warrior_incapacitation(
         context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
@@ -121,8 +121,8 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior()
 @pytest.mark.django_db
 def test_handle_morale_change_on_warrior_defends_all_damage_rewards_a_real_defence():
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=10, max_morale=20)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_morale=10, max_morale=20)
 
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
@@ -145,8 +145,8 @@ def test_handle_morale_change_on_warrior_defends_all_damage_wears_down_a_turtle(
     it - otherwise nothing moves the morale of a warrior nobody can hurt.
     """
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=10, max_morale=20)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_morale=10, max_morale=20)
 
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
@@ -170,8 +170,8 @@ def test_handle_morale_change_on_warrior_defends_all_damage_rewards_nothing_on_a
     point of morale is not handed one.
     """
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=4, max_morale=4)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_morale=4, max_morale=4)
 
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
@@ -194,8 +194,8 @@ def test_handle_morale_change_on_warrior_defends_all_damage_always_costs_at_leas
     unwinnable fight all over again.
     """
     skirmish = SkirmishFactory()
-    attacker = WarriorFactory(faction=skirmish.player_faction)
-    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=4, max_morale=4)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_morale=4, max_morale=4)
 
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
@@ -214,9 +214,9 @@ def test_handle_morale_change_on_warrior_defends_all_damage_always_costs_at_leas
 @pytest.mark.django_db
 def test_handle_capture_unconscious_warriors_captures_every_defeated_warrior():
     skirmish = SkirmishFactory()
-    skirmish.victorious_faction = skirmish.player_faction
+    skirmish.victorious_faction = skirmish.attacking_faction
     skirmish.save()
-    unconscious_enemy_warrior = WarriorFactory(faction=skirmish.non_player_faction)
+    unconscious_enemy_warrior = WarriorFactory(faction=skirmish.defending_faction)
 
     result = handle_capture_unconscious_warriors(
         context=SkirmishFinished(
@@ -234,7 +234,7 @@ def test_handle_capture_unconscious_warriors_captures_every_defeated_warrior():
         CaptureWarrior(
             skirmish=skirmish,
             warrior=unconscious_enemy_warrior,
-            capturing_faction=skirmish.player_faction,
+            capturing_faction=skirmish.attacking_faction,
         )
     ]
 
@@ -261,21 +261,21 @@ def test_handle_capture_unconscious_warriors_captures_nobody_without_defeated_wa
 @pytest.mark.django_db
 def test_handle_experience_gain_after_battle_for_victor_rewards_every_surviving_warrior():
     skirmish = SkirmishFactory()
-    healthy_player_warrior = WarriorFactory(faction=skirmish.player_faction)
+    healthy_attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction)
 
     result = handle_experience_gain_after_battle_for_victor(
         context=SkirmishFinished(
             skirmish=skirmish,
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[],
-            victorious_healthy_warriors=[healthy_player_warrior],
+            victorious_healthy_warriors=[healthy_attacking_warrior],
             quest_name="Raid",
             quest_loot=250,
             month=3,
         )
     )
 
-    assert result == [IncreaseExperience(skirmish=skirmish, warrior=healthy_player_warrior, increased_experience=10)]
+    assert result == [IncreaseExperience(skirmish=skirmish, warrior=healthy_attacking_warrior, increased_experience=10)]
 
 
 @pytest.mark.django_db

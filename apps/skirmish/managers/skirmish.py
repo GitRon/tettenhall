@@ -4,7 +4,7 @@ from django.db.models import manager
 
 class SkirmishQuerySet(models.QuerySet):
     def for_savegame(self, *, savegame_id: int):
-        return self.filter(player_faction__savegame_id=savegame_id)
+        return self.filter(attacking_faction__savegame_id=savegame_id)
 
     def unresolved(self):
         return self.filter(victorious_faction__isnull=True)

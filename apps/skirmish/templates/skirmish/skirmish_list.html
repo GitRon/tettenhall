@@ -7,8 +7,8 @@
         <thead>
         <tr>
             <th>Name</th>
-            <th>Player faction</th>
-            <th>Non-player faction</th>
+            <th>Attacker</th>
+            <th>Defender</th>
             <th>Rounds</th>
             <th>Victor</th>
             <th></th>
@@ -18,8 +18,8 @@
         {% for skirmish in object_list %}
             <tr>
                 <td>{{ skirmish.name }}</td>
-                <td>{{ skirmish.player_faction }}</td>
-                <td>{{ skirmish.non_player_faction }}</td>
+                <td>{{ skirmish.attacking_faction }}</td>
+                <td>{{ skirmish.defending_faction }}</td>
                 <td>{{ skirmish.current_round }}</td>
                 <td>{{ skirmish.victorious_faction|default_if_none:"-" }}</td>
                 <td>

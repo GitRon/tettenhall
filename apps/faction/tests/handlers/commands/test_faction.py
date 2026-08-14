@@ -70,7 +70,7 @@ def test_handle_create_new_faction_for_player_faction():
 
 
 @pytest.mark.django_db
-def test_handle_create_new_faction_for_non_player_faction():
+def test_handle_create_new_faction_for_defending_faction():
     savegame = SavegameFactory(current_month=5)
     culture = CultureFactory()
 

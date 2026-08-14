@@ -8,7 +8,7 @@ from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 @pytest.mark.django_db
 def test_get_open_skirmishes_returns_the_unresolved_skirmishes(rf, user):
     savegame = SavegameFactory(created_by=user)
-    skirmish = SkirmishFactory(player_faction__savegame=savegame, victorious_faction=None)
+    skirmish = SkirmishFactory(attacking_faction__savegame=savegame, victorious_faction=None)
     request = rf.get("/")
     request.user = user
 

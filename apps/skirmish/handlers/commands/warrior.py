@@ -19,10 +19,10 @@ from apps.skirmish.models.warrior import Warrior
 
 @message_registry.register_command(command=warrior.ReduceMoraleOfRemainingWarriors)
 def handle_reduce_morale_of_remaining_warriors(*, context: warrior.ReduceMoraleOfRemainingWarriors) -> list[Command]:
-    if context.warrior.faction_id == context.skirmish.player_faction_id:
-        affected_warrior_list = context.skirmish.player_warriors.all()
+    if context.warrior.faction_id == context.skirmish.attacking_faction_id:
+        affected_warrior_list = context.skirmish.attacking_warriors.all()
     else:
-        affected_warrior_list = context.skirmish.non_player_warriors.all()
+        affected_warrior_list = context.skirmish.defending_warriors.all()
 
     # Every other warrior from the faction participating in this battle will lose 10% morale
     message_list = []

@@ -63,8 +63,8 @@ def test_exclude_currently_busy_drops_a_warrior_who_fought_this_month():
     Every warrior fights once a month, so a decided fight still uses the month up.
     """
     warrior = WarriorFactory()
-    skirmish = SkirmishFactory(player_faction=warrior.faction, victorious_faction=warrior.faction, month=3)
-    skirmish.player_warriors.add(warrior)
+    skirmish = SkirmishFactory(attacking_faction=warrior.faction, victorious_faction=warrior.faction, month=3)
+    skirmish.attacking_warriors.add(warrior)
 
     result = Warrior.objects.exclude_currently_busy(month=3)
 
@@ -78,8 +78,8 @@ def test_exclude_currently_busy_drops_a_warrior_still_in_an_undecided_fight():
     again next month while he is still standing on that roster.
     """
     warrior = WarriorFactory()
-    skirmish = SkirmishFactory(player_faction=warrior.faction, month=2)
-    skirmish.player_warriors.add(warrior)
+    skirmish = SkirmishFactory(attacking_faction=warrior.faction, month=2)
+    skirmish.attacking_warriors.add(warrior)
 
     result = Warrior.objects.exclude_currently_busy(month=3)
 
@@ -89,8 +89,8 @@ def test_exclude_currently_busy_drops_a_warrior_still_in_an_undecided_fight():
 @pytest.mark.django_db
 def test_exclude_currently_busy_keeps_a_warrior_whose_last_fight_is_over():
     warrior = WarriorFactory()
-    skirmish = SkirmishFactory(player_faction=warrior.faction, victorious_faction=warrior.faction, month=2)
-    skirmish.player_warriors.add(warrior)
+    skirmish = SkirmishFactory(attacking_faction=warrior.faction, victorious_faction=warrior.faction, month=2)
+    skirmish.attacking_warriors.add(warrior)
 
     result = Warrior.objects.exclude_currently_busy(month=3)
 
@@ -98,19 +98,19 @@ def test_exclude_currently_busy_keeps_a_warrior_whose_last_fight_is_over():
 
 
 @pytest.mark.django_db
-def test_exclude_currently_busy_drops_a_warrior_who_fought_on_the_opposing_side():
+def test_exclude_currently_busy_drops_a_warrior_who_fought_on_the_defending_side():
     """
     Which side of the row a warrior stands on is a property of the skirmish, not of him - a captive
     who has since changed banners fought all the same.
     """
     warrior = WarriorFactory()
     skirmish = SkirmishFactory(
-        non_player_faction=warrior.faction,
-        player_faction=FactionFactory(savegame=warrior.savegame),
+        defending_faction=warrior.faction,
+        attacking_faction=FactionFactory(savegame=warrior.savegame),
         victorious_faction=warrior.faction,
         month=3,
     )
-    skirmish.non_player_warriors.add(warrior)
+    skirmish.defending_warriors.add(warrior)
 
     result = Warrior.objects.exclude_currently_busy(month=3)
 

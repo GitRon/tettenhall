@@ -46,8 +46,8 @@ def test_has_marched_this_month_after_a_fight():
     faction = FactionFactory()
     faction.leader = WarriorFactory(faction=faction)
     faction.save()
-    skirmish = SkirmishFactory(player_faction=faction, victorious_faction=faction, month=3)
-    skirmish.player_warriors.add(faction.leader)
+    skirmish = SkirmishFactory(attacking_faction=faction, victorious_faction=faction, month=3)
+    skirmish.attacking_warriors.add(faction.leader)
 
     result = faction.has_marched_this_month(month=3)
 

@@ -113,7 +113,7 @@ def test_dashboard_view_lists_the_month_logs_of_the_current_savegame(logged_in_c
 
 @pytest.mark.django_db
 def test_dashboard_view_shows_an_active_quest_with_a_skirmish(logged_in_client, current_savegame):
-    skirmish = SkirmishFactory(player_faction=current_savegame.player_faction)
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     quest_contract = QuestContractFactory(faction=current_savegame.player_faction, skirmish=skirmish)
     current_savegame.player_faction.active_quests.add(quest_contract)
 
