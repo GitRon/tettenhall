@@ -93,7 +93,7 @@ def handle_experience_gain_on_warrior_incapacitation(
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
-def handle_morale_change_on_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command:
+def handle_morale_change_on_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command | None:
     """
     Turning a blow aside steadies a warrior. Cowering behind a shield wears him down.
 
@@ -111,23 +111,28 @@ def handle_morale_change_on_warrior_defends_all_damage(*, context: warrior.Warri
     WarriorHasFled, and a fleeing warrior is not a healthy one, which is what the defeat check in
     handle_finish_round already counts.
     """
-    # Ten percent of what he can hold, the same lever the reward and the damage penalty already use.
-    # Floored at one point so the drain cannot round away to nothing on a warrior with little morale
-    # to give - a stance that costs zero is the stalemate all over again.
-    morale_at_stake = max(1, round(context.defender.max_morale * 0.1))
+    # Ten percent of what he can hold, the lever the reward and the damage penalty already use
+    morale_at_stake = round(context.defender.max_morale * 0.1)
 
     if context.defender_action == SkirmishActionChoices.DEFENSIVE_STANCE:
+        # Floored at one point, and only here: a tenth of a small morale pool rounds away to nothing,
+        # and a stance that costs nothing is the unwinnable fight all over again. The reward keeps its
+        # old shape below, because no such argument applies to it - inventing a point of morale for a
+        # warrior too brittle to have earned one would be a balance change with nothing behind it.
         return ReduceMorale(
             skirmish=context.skirmish,
             warrior=context.defender,
-            lost_morale=morale_at_stake,
+            lost_morale=max(1, morale_at_stake),
         )
 
-    return IncreaseMorale(
-        skirmish=context.skirmish,
-        warrior=context.defender,
-        increased_morale=morale_at_stake,
-    )
+    if morale_at_stake > 0:
+        return IncreaseMorale(
+            skirmish=context.skirmish,
+            warrior=context.defender,
+            increased_morale=morale_at_stake,
+        )
+
+    return None
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)

@@ -163,6 +163,31 @@ def test_handle_morale_change_on_warrior_defends_all_damage_wears_down_a_turtle(
 
 
 @pytest.mark.django_db
+def test_handle_morale_change_on_warrior_defends_all_damage_rewards_nothing_on_a_tiny_morale_pool():
+    """
+    The floor below applies to the drain only. A tenth of a small pool still rounds to nothing on the
+    reward side, exactly as it did before there was a drain at all - a warrior too brittle to earn a
+    point of morale is not handed one.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.player_faction)
+    defender = WarriorFactory(faction=skirmish.non_player_faction, current_morale=4, max_morale=4)
+
+    result = handle_morale_change_on_warrior_defends_all_damage(
+        context=WarriorDefendedAllDamage(
+            skirmish=skirmish,
+            attacker=attacker,
+            attacker_damage=5,
+            defender=defender,
+            defender_damage=5,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        )
+    )
+
+    assert result is None
+
+
+@pytest.mark.django_db
 def test_handle_morale_change_on_warrior_defends_all_damage_always_costs_at_least_a_point():
     """
     A tenth of a small morale pool rounds to nothing, and a stance that costs nothing is the
