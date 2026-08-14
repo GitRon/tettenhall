@@ -56,7 +56,7 @@ def handle_determine_savegame_outcome(*, context: DetermineSavegameOutcome) -> E
     open_skirmish_list = list(
         Skirmish.objects.unresolved()
         .for_savegame(savegame_id=context.savegame.id)
-        .select_related("player_faction", "non_player_faction")
+        .select_related("attacking_faction", "defending_faction")
     )
 
     return SavegameEnded(

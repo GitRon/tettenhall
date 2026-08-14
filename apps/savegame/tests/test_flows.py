@@ -32,9 +32,9 @@ def test_losing_the_leader_ends_the_game_and_decides_the_open_fight(queuebie_reg
     player_faction.save()
 
     # The fight he fell in is still running, so ending the game has to decide it
-    skirmish = SkirmishFactory(player_faction=player_faction, non_player_faction=rival_faction)
-    skirmish.player_warriors.add(leader)
-    skirmish.non_player_warriors.add(WarriorFactory(faction=rival_faction, savegame=savegame))
+    skirmish = SkirmishFactory(attacking_faction=player_faction, defending_faction=rival_faction)
+    skirmish.attacking_warriors.add(leader)
+    skirmish.defending_warriors.add(WarriorFactory(faction=rival_faction, savegame=savegame))
 
     handle_message(DefeatFactionOfLostLeader(warrior=leader))
 
@@ -67,12 +67,12 @@ def test_a_warrior_in_two_open_fights_is_taken_prisoner_only_once(queuebie_regis
     player_faction.save()
 
     # He was committed to both fights, and neither has been played out
-    first_skirmish = SkirmishFactory(player_faction=player_faction, non_player_faction=first_rival)
-    first_skirmish.player_warriors.add(leader)
-    first_skirmish.non_player_warriors.add(WarriorFactory(faction=first_rival, savegame=savegame))
-    second_skirmish = SkirmishFactory(player_faction=player_faction, non_player_faction=second_rival)
-    second_skirmish.player_warriors.add(leader)
-    second_skirmish.non_player_warriors.add(WarriorFactory(faction=second_rival, savegame=savegame))
+    first_skirmish = SkirmishFactory(attacking_faction=player_faction, defending_faction=first_rival)
+    first_skirmish.attacking_warriors.add(leader)
+    first_skirmish.defending_warriors.add(WarriorFactory(faction=first_rival, savegame=savegame))
+    second_skirmish = SkirmishFactory(attacking_faction=player_faction, defending_faction=second_rival)
+    second_skirmish.attacking_warriors.add(leader)
+    second_skirmish.defending_warriors.add(WarriorFactory(faction=second_rival, savegame=savegame))
 
     handle_message(DefeatFactionOfLostLeader(warrior=leader))
 

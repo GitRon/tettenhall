@@ -13,15 +13,15 @@ from apps.skirmish.tests.factories.warrior import WarriorFactory
 @pytest.mark.django_db
 def test_handle_warrior_drops_loot_drops_weapon_and_armor():
     skirmish = SkirmishFactory()
-    weapon = ItemFactory(savegame=skirmish.player_faction.savegame)
+    weapon = ItemFactory(savegame=skirmish.attacking_faction.savegame)
     armor = ItemFactory(
-        savegame=skirmish.player_faction.savegame,
+        savegame=skirmish.attacking_faction.savegame,
         type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR),
     )
-    warrior = WarriorFactory(faction=skirmish.non_player_faction, weapon=weapon, armor=armor)
+    warrior = WarriorFactory(faction=skirmish.defending_faction, weapon=weapon, armor=armor)
 
     result = handle_warrior_drops_loot(
-        context=WarriorDropsLoot(skirmish=skirmish, warrior=warrior, new_owner=skirmish.player_faction)
+        context=WarriorDropsLoot(skirmish=skirmish, warrior=warrior, new_owner=skirmish.attacking_faction)
     )
 
     assert result == [
@@ -30,14 +30,14 @@ def test_handle_warrior_drops_loot_drops_weapon_and_armor():
             warrior=warrior,
             item=weapon,
             item_name=weapon.display_name,
-            new_owner=skirmish.player_faction,
+            new_owner=skirmish.attacking_faction,
         ),
         ItemDroppedAsLoot(
             skirmish=skirmish,
             warrior=warrior,
             item=armor,
             item_name=armor.display_name,
-            new_owner=skirmish.player_faction,
+            new_owner=skirmish.attacking_faction,
         ),
     ]
 
@@ -45,10 +45,10 @@ def test_handle_warrior_drops_loot_drops_weapon_and_armor():
 @pytest.mark.django_db
 def test_handle_warrior_drops_loot_drops_nothing_for_an_unequipped_warrior():
     skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.non_player_faction, weapon=None, armor=None)
+    warrior = WarriorFactory(faction=skirmish.defending_faction, weapon=None, armor=None)
 
     result = handle_warrior_drops_loot(
-        context=WarriorDropsLoot(skirmish=skirmish, warrior=warrior, new_owner=skirmish.player_faction)
+        context=WarriorDropsLoot(skirmish=skirmish, warrior=warrior, new_owner=skirmish.attacking_faction)
     )
 
     assert result == []

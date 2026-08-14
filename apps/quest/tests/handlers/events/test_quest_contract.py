@@ -13,7 +13,7 @@ from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 @pytest.mark.django_db
 def test_handle_link_quest_contract_to_its_skirmish_assigns_the_contract():
     skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(faction=skirmish.player_faction)
+    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction)
 
     result = handle_link_quest_contract_to_its_skirmish(
         context=SkirmishCreated(skirmish=skirmish, quest_contract=quest_contract)
@@ -34,7 +34,7 @@ def test_handle_link_quest_contract_to_its_skirmish_stays_silent_without_a_contr
 @pytest.mark.django_db
 def test_handle_finish_quest_contract_closes_the_contract_behind_the_skirmish():
     skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(faction=skirmish.player_faction, skirmish=skirmish)
+    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish)
 
     result = handle_finish_quest_contract(
         context=SkirmishFinished(
@@ -48,7 +48,7 @@ def test_handle_finish_quest_contract_closes_the_contract_behind_the_skirmish():
         )
     )
 
-    assert result == RemoveQuestContractAsActiveQuest(quest_contract=quest_contract, faction=skirmish.player_faction)
+    assert result == RemoveQuestContractAsActiveQuest(quest_contract=quest_contract, faction=skirmish.attacking_faction)
 
 
 @pytest.mark.django_db

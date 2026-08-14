@@ -31,15 +31,27 @@ class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["player_faction"] = self.object.player_faction
-        context["non_player_faction"] = self.object.non_player_faction
+        # The skirmish names its two sides by role, so whether a side is the player's - and therefore
+        # whether its warrior cards let the human pick an action instead of showing the AI's decision -
+        # is decided here, against the savegame. At most one of the two is True: a savegame that has no
+        # player faction yet makes both False rather than guessing at a side
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        player_faction_id = current_savegame.player_faction_id
+
+        context["attacking_faction"] = self.object.attacking_faction
+        context["defending_faction"] = self.object.defending_faction
+        context["attacker_is_player"] = self.object.attacking_faction_id == player_faction_id
+        context["defender_is_player"] = self.object.defending_faction_id == player_faction_id
         context["battle_log"] = self.object.battle_logs.all()
 
         return context
 
     def get(self, request, *args, **kwargs):
         skirmish = self.get_object()
-        current_savegame = skirmish.player_faction.savegame
+        # Straight from the savegame rather than from a side of the skirmish: the scoped queryset above
+        # already guarantees this skirmish belongs to the current savegame, and which of its sides is
+        # the player's is no longer the row's business
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
         if (
             self.model.objects.for_savegame(savegame_id=current_savegame.id)
             .has_started()
@@ -66,15 +78,15 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         self.object = (
             self.get_queryset()
             .filter(id=self.kwargs.get("pk"))
-            .prefetch_related("player_warriors", "non_player_warriors")
+            .prefetch_related("attacking_warriors", "defending_warriors")
             .first()
         )
         if not self.object:
             return HttpResponse(status=HTTPStatus.NOT_FOUND)
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
 
-        player_warrior_participants = []
-        opposing_warrior_participants = []
+        attacking_participants = []
+        defending_participants = []
 
         # Every value here arrives in the request body, so anything missing or non-numeric is bad
         # input rather than a server error. The posted "faction_id" is deliberately not read: see
@@ -88,20 +100,20 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # Which side a warrior fights on comes from this skirmish's own rosters. Not from the posted
-        # "faction_id", which is client-supplied - naming the opposing faction there put an enemy
-        # warrior into the player's line-up, attacking its own side. And not from "warrior.faction"
+        # "faction_id", which is client-supplied - naming the opposing faction there put a warrior into
+        # the other side's line-up, attacking his own side. And not from "warrior.faction"
         # either, which is what the template fills that field with: it changes the moment a captive
         # is recruited, so it disagrees with the roster the warrior actually fights in.
         # Both relations are prefetched above, so this costs no extra queries, and keying by id
         # means a warrior listed twice cannot produce a duplicate-row lookup error.
-        player_roster = {warrior.id: warrior for warrior in self.object.player_warriors.all()}
-        opposing_roster = {warrior.id: warrior for warrior in self.object.non_player_warriors.all()}
+        attacking_roster = {warrior.id: warrior for warrior in self.object.attacking_warriors.all()}
+        defending_roster = {warrior.id: warrior for warrior in self.object.defending_warriors.all()}
 
         for warrior_id, skirmish_action in participants:
-            if warrior_id in player_roster:
-                warrior, side = player_roster[warrior_id], player_warrior_participants
-            elif warrior_id in opposing_roster:
-                warrior, side = opposing_roster[warrior_id], opposing_warrior_participants
+            if warrior_id in attacking_roster:
+                warrior, side = attacking_roster[warrior_id], attacking_participants
+            elif warrior_id in defending_roster:
+                warrior, side = defending_roster[warrior_id], defending_participants
             else:
                 # A warrior id naming someone who is not fighting this skirmish
                 return HttpResponse(status=HTTPStatus.BAD_REQUEST)
@@ -109,15 +121,15 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
             side.append(SkirmishParticipant(warrior=warrior, skirmish_action=skirmish_action))
 
         # Ensure that all lists contain warriors
-        if len(player_warrior_participants) == 0 or len(opposing_warrior_participants) == 0:
+        if len(attacking_participants) == 0 or len(defending_participants) == 0:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # Start duel
         handle_message(
             StartDuel(
                 skirmish=self.object,
-                skirmish_participants_1=player_warrior_participants,
-                skirmish_participants_2=opposing_warrior_participants,
+                skirmish_participants_1=attacking_participants,
+                skirmish_participants_2=defending_participants,
             )
         )
 
@@ -168,22 +180,24 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         # Both ids arrive in the URL: the skirmish has to belong to the current savegame, and the
         # faction has to be one of the two fighting it - otherwise an unrelated faction would fall
-        # through to the non-player branch below and be shown those warriors
+        # through to the defending branch below and be shown those warriors
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
         skirmish = get_object_or_404(
             Skirmish.objects.for_savegame(savegame_id=current_savegame.id if current_savegame else None),
             pk=self.kwargs.get("skirmish_id"),
         )
         faction = get_object_or_404(
-            Faction.objects.filter(id__in=(skirmish.player_faction_id, skirmish.non_player_faction_id)),
+            Faction.objects.filter(id__in=(skirmish.attacking_faction_id, skirmish.defending_faction_id)),
             pk=self.kwargs.get("faction_id"),
         )
 
         context = super().get_context_data(**kwargs)
-        if faction == skirmish.player_faction:
-            context["object_list"] = skirmish.player_warriors.all()
+        if faction.pk == skirmish.attacking_faction_id:
+            context["object_list"] = skirmish.attacking_warriors.all()
         else:
-            context["object_list"] = skirmish.non_player_warriors.all()
-        context["is_player"] = skirmish.player_faction == faction
+            context["object_list"] = skirmish.defending_warriors.all()
+        # Which roster to show is the skirmish's business, but whether the human commands it is the
+        # savegame's: being the attacker no longer means being the player
+        context["is_player"] = faction.pk == current_savegame.player_faction_id
 
         return context

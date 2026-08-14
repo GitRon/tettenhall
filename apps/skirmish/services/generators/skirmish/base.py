@@ -26,12 +26,12 @@ class BaseSkirmishGenerator:
 
         skirmish = Skirmish.objects.create(
             name=self.name,
-            player_faction_id=self.warriors_faction_1[0].faction.id,
-            non_player_faction_id=self.warriors_faction_2[0].faction.id,
+            attacking_faction_id=self.warriors_faction_1[0].faction.id,
+            defending_faction_id=self.warriors_faction_2[0].faction.id,
             month=self.month,
         )
 
-        skirmish.player_warriors.add(*self.warriors_faction_1)
-        skirmish.non_player_warriors.add(*self.warriors_faction_2)
+        skirmish.attacking_warriors.add(*self.warriors_faction_1)
+        skirmish.defending_warriors.add(*self.warriors_faction_2)
 
         return skirmish

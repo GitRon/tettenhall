@@ -4,7 +4,7 @@ from django.db.models import manager
 
 class BattleHistoryQuerySet(models.QuerySet):
     def for_savegame(self, *, savegame_id: int):
-        return self.filter(skirmish__player_faction__savegame_id=savegame_id)
+        return self.filter(skirmish__attacking_faction__savegame_id=savegame_id)
 
 
 class BattleHistoryManager(manager.Manager):

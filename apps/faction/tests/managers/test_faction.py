@@ -120,12 +120,12 @@ def test_attackable_by_offers_nobody_once_the_war_band_has_marched(player_factio
     untouched_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=untouched_faction)
     skirmish = SkirmishFactory(
-        player_faction=player_faction,
-        non_player_faction=rival_faction,
+        attacking_faction=player_faction,
+        defending_faction=rival_faction,
         victorious_faction=player_faction,
         month=3,
     )
-    skirmish.player_warriors.add(player_faction.leader)
+    skirmish.attacking_warriors.add(player_faction.leader)
 
     result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
 
@@ -137,12 +137,12 @@ def test_attackable_by_offers_a_rival_again_the_month_after(player_faction):
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
     skirmish = SkirmishFactory(
-        player_faction=player_faction,
-        non_player_faction=rival_faction,
+        attacking_faction=player_faction,
+        defending_faction=rival_faction,
         victorious_faction=player_faction,
         month=2,
     )
-    skirmish.player_warriors.add(player_faction.leader)
+    skirmish.attacking_warriors.add(player_faction.leader)
 
     result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
 
@@ -157,8 +157,8 @@ def test_attackable_by_offers_nobody_while_a_fight_is_still_undecided(player_fac
     """
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
-    skirmish = SkirmishFactory(player_faction=player_faction, non_player_faction=rival_faction, month=2)
-    skirmish.player_warriors.add(player_faction.leader)
+    skirmish = SkirmishFactory(attacking_faction=player_faction, defending_faction=rival_faction, month=2)
+    skirmish.attacking_warriors.add(player_faction.leader)
 
     result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
 

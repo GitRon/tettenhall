@@ -199,14 +199,14 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         quest_loot = 0
 
     # Everything below is about the winner and the loser, so the two sides get sorted into those
-    # roles exactly once - "player_warriors" and "non_player_warriors" only coincide with them when
-    # the player happens to be the one who won
-    if context.skirmish.victorious_faction == context.skirmish.player_faction:
-        victorious_warriors = context.skirmish.player_warriors
-        defeated_warriors = context.skirmish.non_player_warriors
+    # roles exactly once - "attacking_warriors" and "defending_warriors" only coincide with them when
+    # the side that marched is the side that won
+    if context.skirmish.victorious_faction == context.skirmish.attacking_faction:
+        victorious_warriors = context.skirmish.attacking_warriors
+        defeated_warriors = context.skirmish.defending_warriors
     else:
-        victorious_warriors = context.skirmish.non_player_warriors
-        defeated_warriors = context.skirmish.player_warriors
+        victorious_warriors = context.skirmish.defending_warriors
+        defeated_warriors = context.skirmish.attacking_warriors
 
     # Only a warrior left lying on the field can be stripped: the dead and the unconscious. One who
     # fled took his kit with him, so a warband that merely routs loses nothing but the fight. That
@@ -255,11 +255,11 @@ def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event
 
     # Check if one faction has been defeated
     victor = None
-    if not context.skirmish.non_player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+    if not context.skirmish.defending_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
         # Checked first on purpose: if both sides are wiped out in the same round, the tie goes to
-        # the player
-        victor = context.skirmish.player_faction
-    elif not context.skirmish.player_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
-        victor = context.skirmish.non_player_faction
+        # the side that marched
+        victor = context.skirmish.attacking_faction
+    elif not context.skirmish.attacking_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+        victor = context.skirmish.defending_faction
 
     return RoundFinished(skirmish=context.skirmish, victor=victor, month=context.month)

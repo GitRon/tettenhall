@@ -19,12 +19,12 @@ class SkirmishAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "current_round",
-        "player_faction",
-        "non_player_faction",
+        "attacking_faction",
+        "defending_faction",
         "victorious_faction",
     )
     list_filter = (
-        "player_faction__savegame",
+        "attacking_faction__savegame",
         "victorious_faction",
     )
 

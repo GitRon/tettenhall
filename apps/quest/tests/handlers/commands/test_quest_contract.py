@@ -17,7 +17,7 @@ def test_handle_assign_skirmish_to_quest_contract_stores_the_link():
     notice it regressing - and that one would blame the view rather than the handler.
     """
     skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(faction=skirmish.player_faction)
+    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction)
 
     result = handle_assign_skirmish_to_quest_contract(
         context=AssignSkirmishToQuestContract(quest_contract=quest_contract, skirmish=skirmish)

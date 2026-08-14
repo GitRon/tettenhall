@@ -10,6 +10,8 @@ class SkirmishFactory(DjangoModelFactory):
         model = Skirmish
 
     name = factory.Sequence(lambda n: f"Skirmish {n}")
-    player_faction = factory.SubFactory(FactionFactory)
+    attacking_faction = factory.SubFactory(FactionFactory)
     # Keep both factions inside the same savegame
-    non_player_faction = factory.SubFactory(FactionFactory, savegame=factory.SelfAttribute("..player_faction.savegame"))
+    defending_faction = factory.SubFactory(
+        FactionFactory, savegame=factory.SelfAttribute("..attacking_faction.savegame")
+    )

@@ -29,9 +29,9 @@ class WarriorQuerySet(models.QuerySet):
         contracts it read per through-row instead: a warrior holding contracts in month 1 and month 3
         came back as free in month 3, because the month-1 row satisfied "this row is not month 3".
 
-        Both sides of a skirmish are asked, not just the player's: who counts as "the player" there
-        is a property of the row rather than of the warrior, and a captive who changed banners has
-        fought all the same.
+        Both sides of a skirmish are asked, attacking and defending alike: a captive who changed
+        banners has fought all the same, and a warrior is no less busy for having been the one
+        marched against.
         """
         # Imported here because the skirmish model reaches back into this module through the warrior
         # model it points at
@@ -44,7 +44,7 @@ class WarriorQuerySet(models.QuerySet):
         occupying_skirmishes = Skirmish.objects.filter(Q(month=month) | Q(victorious_faction__isnull=True))
 
         return self.exclude(quest_contracts__accepted_in_month=month).exclude(
-            Q(player_skirmishes__in=occupying_skirmishes) | Q(non_player_skirmishes__in=occupying_skirmishes)
+            Q(attacking_skirmishes__in=occupying_skirmishes) | Q(defending_skirmishes__in=occupying_skirmishes)
         )
 
 

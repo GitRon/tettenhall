@@ -20,8 +20,8 @@ def test_assignable_warriors_exclude_a_warrior_still_in_last_month_s_fight():
     committed_warrior = WarriorFactory(faction=faction)
     old_contract = QuestContractFactory(faction=faction, accepted_in_month=1)
     old_contract.assigned_warriors.add(committed_warrior)
-    open_skirmish = SkirmishFactory(player_faction=faction, month=1)
-    open_skirmish.player_warriors.add(committed_warrior)
+    open_skirmish = SkirmishFactory(attacking_faction=faction, month=1)
+    open_skirmish.attacking_warriors.add(committed_warrior)
 
     new_quest = QuestFactory(target_faction__savegame=savegame)
     form = QuestAcceptForm(quest_id=new_quest.id, player_faction_id=faction.id)

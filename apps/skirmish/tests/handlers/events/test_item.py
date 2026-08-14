@@ -12,10 +12,10 @@ from apps.skirmish.tests.factories.warrior import WarriorFactory
 @pytest.mark.django_db
 def test_handle_distribute_loot_hands_items_and_silver_of_every_incapacitated_warrior_to_the_victor():
     skirmish = SkirmishFactory()
-    skirmish.victorious_faction = skirmish.player_faction
+    skirmish.victorious_faction = skirmish.attacking_faction
     skirmish.save()
     dead_enemy_warrior = WarriorFactory(
-        faction=skirmish.non_player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+        faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
 
     result = handle_distribute_loot(
@@ -31,11 +31,11 @@ def test_handle_distribute_loot_hands_items_and_silver_of_every_incapacitated_wa
     )
 
     assert result == [
-        WarriorDropsLoot(skirmish=skirmish, warrior=dead_enemy_warrior, new_owner=skirmish.player_faction),
+        WarriorDropsLoot(skirmish=skirmish, warrior=dead_enemy_warrior, new_owner=skirmish.attacking_faction),
         WarriorDropsSilver(
             skirmish=skirmish,
             warrior=dead_enemy_warrior,
-            gaining_faction=skirmish.player_faction,
+            gaining_faction=skirmish.attacking_faction,
             month=3,
         ),
     ]

@@ -17,18 +17,18 @@ class Command(BaseCommand):
         skirmish.victorious_faction = None
         skirmish.save()
 
-        skirmish.player_warriors.update(
+        skirmish.attacking_warriors.update(
             current_health=F("max_health"),
             current_morale=F("max_morale"),
             condition=Warrior.ConditionChoices.CONDITION_HEALTHY,
         )
-        skirmish.non_player_warriors.update(
+        skirmish.defending_warriors.update(
             current_health=F("max_health"),
             current_morale=F("max_morale"),
             condition=Warrior.ConditionChoices.CONDITION_HEALTHY,
         )
 
-        skirmish.player_faction.captured_warriors.remove(*skirmish.player_faction.captured_warriors.all())
-        skirmish.non_player_faction.captured_warriors.remove(*skirmish.non_player_faction.captured_warriors.all())
+        skirmish.attacking_faction.captured_warriors.remove(*skirmish.attacking_faction.captured_warriors.all())
+        skirmish.defending_faction.captured_warriors.remove(*skirmish.defending_faction.captured_warriors.all())
 
         BattleHistory.objects.filter(skirmish=skirmish).delete()
