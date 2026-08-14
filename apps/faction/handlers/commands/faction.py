@@ -48,6 +48,16 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
     emitting it runs under strict mode's database blocker.
     """
     culture = Culture.objects.get_or_none(id=context.faction_culture_id)
+    # Cultures are reference data, and a database missing them used to die one line down on
+    # "NoneType has no attribute locale". Says what is missing instead, the way the item generator
+    # already does for its own fixture. This guards the rival draw below as well: a culture coming
+    # back here is proof the table has rows for "random.choice" to pick from.
+    if culture is None:
+        raise RuntimeError(
+            f"Culture {context.faction_culture_id} does not exist. "
+            f"Load the reference data with 'loaddata culture itemtype'."
+        )
+
     faker = Faker([culture.locale])
 
     return [
