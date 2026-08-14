@@ -1,8 +1,10 @@
 import json
 from http import HTTPStatus
 
+from django.contrib import messages
 from django.db.models import QuerySet
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.views.generic.base import ContextMixin
 
 from apps.savegame.models.savegame import Savegame
@@ -54,15 +56,27 @@ class RunningSavegameRequiredMixin:
 
     A savegame that is missing entirely is somebody else's problem; the views resolving one already
     answer for that themselves.
+
+    How it refuses depends on who asked. Most of the views behind this are htmx fragments, and an
+    empty 204 carrying a notification is exactly right for them. For the two that are full-page
+    navigations it is not: the browser treats 204 as "nothing to do", abandons the navigation, leaves
+    the player on the page he clicked from and tells him nothing at all. Those get a message and a
+    redirect instead, which is the same toast by another route.
     """
+
+    REFUSAL_NOTICE = "This game is over. Start a new savegame to play on."
 
     def dispatch(self, request, *args, **kwargs) -> HttpResponse:
         current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
 
         if current_savegame is not None and current_savegame.outcome != Savegame.OutcomeChoices.OUTCOME_RUNNING:
-            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
-            response["HX-Trigger"] = json.dumps({"notification": "This game is over. Start a new savegame to play on."})
-            return response
+            if request.headers.get("HX-Request"):
+                response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+                response["HX-Trigger"] = json.dumps({"notification": self.REFUSAL_NOTICE})
+                return response
+
+            messages.add_message(request, messages.WARNING, self.REFUSAL_NOTICE)
+            return HttpResponseRedirect(reverse("account:dashboard-view"))
 
         return super().dispatch(request, *args, **kwargs)
 

@@ -64,15 +64,20 @@ def test_finish_month_view_lets_a_rival_faction_recover(logged_in_client, curren
 @pytest.mark.django_db
 def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current_savegame):
     """
-    Covers RunningSavegameRequiredMixin for every view carrying it; which views those are is asserted
-    separately in apps/common/tests/test_ended_savegame_guard.py.
+    Covers the htmx branch of RunningSavegameRequiredMixin; which views carry it at all is asserted
+    separately in apps/common/tests/test_ended_savegame_guard.py, and the full-page branch is covered
+    by the quest accept view, which is one of the two navigations behind the guard.
+
+    The header is what the browser really sends here - base.html drives this button with "hx-post" -
+    and an empty 204 is only the right refusal for a request that can act on one.
     """
     current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
     current_savegame.save()
 
-    response = logged_in_client.post(reverse("month:finish-month-view"))
+    response = logged_in_client.post(reverse("month:finish-month-view"), headers={"hx-request": "true"})
 
     assert response.status_code == 204
+    assert json.loads(response["HX-Trigger"]) == {"notification": "This game is over. Start a new savegame to play on."}
     current_savegame.refresh_from_db()
     assert current_savegame.current_month == 1
 
