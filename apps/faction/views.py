@@ -32,6 +32,12 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         # Asked through the same queryset the attack view resolves its target with, so the button
         # and the page it leads to can never disagree about who may be attacked
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        # This template serves the player's own faction and a rival's alike, so it has to know which
+        # it is looking at: "My faction" over a rival's details is simply wrong, and the fyrd card
+        # offers a draft the scoping on DraftWarriorFromFyrdView can only refuse.
+        # A savegame without a player faction gives None here, which no faction id equals - so it
+        # renders as a rival's page, which is right: there is no own faction yet.
+        context["is_player_faction"] = self.object.id == current_savegame.player_faction_id
         context["can_be_attacked"] = (
             Faction.objects.attackable_by(
                 player_faction=current_savegame.player_faction, month=current_savegame.current_month

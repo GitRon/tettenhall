@@ -152,9 +152,10 @@ def test_handle_warrior_losing_morale_makes_the_warrior_flee_without_morale_left
 
     result = handle_warrior_losing_morale(context=ReduceMorale(skirmish=skirmish, warrior=warrior, lost_morale=5))
 
+    # The loss before the rout: the battle log is written in the order the events arrive
     assert result == [
-        WarriorHasFled(skirmish=skirmish, warrior=warrior),
         WarriorLostMorale(skirmish=skirmish, warrior=warrior, lost_morale=5),
+        WarriorHasFled(skirmish=skirmish, warrior=warrior),
     ]
     warrior.refresh_from_db()
     assert warrior.condition == Warrior.ConditionChoices.CONDITION_FLEEING

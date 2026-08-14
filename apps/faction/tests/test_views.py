@@ -32,14 +32,12 @@ def player_faction_ready_to_march(current_savegame) -> Faction:
 @pytest.mark.django_db
 def test_faction_detail_view_shows_the_faction(logged_in_client, current_savegame):
     faction = current_savegame.player_faction
-    # The template links to the leader unconditionally, so a faction without one cannot be rendered
-    faction.leader = WarriorFactory(faction=faction)
-    faction.save()
+    warrior = WarriorFactory(faction=faction)
 
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": faction.id}))
 
     assert response.status_code == 200
-    assert list(response.context["warrior_list"]) == [faction.leader]
+    assert list(response.context["warrior_list"]) == [warrior]
 
 
 @pytest.mark.django_db
@@ -50,6 +48,30 @@ def test_faction_detail_view_hides_factions_of_other_savegames(logged_in_client,
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": foreign_faction.id}))
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_marks_the_players_own_faction(logged_in_client, current_savegame):
+    response = logged_in_client.get(
+        reverse("faction:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_does_not_mark_a_rival_as_the_players_own(logged_in_client, current_savegame):
+    """
+    The same template serves both, and on a rival's page "My faction" and the fyrd card offer a draft
+    the scoping on DraftWarriorFromFyrdView can only refuse.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is False
 
 
 @pytest.mark.django_db
