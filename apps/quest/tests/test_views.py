@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
@@ -27,7 +28,7 @@ def test_quest_accept_view_signs_a_contract_and_sets_up_the_skirmish(logged_in_c
     )
 
     assert response.status_code == 302
-    assert "HX-Trigger" in response.headers
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [f'You accepted the quest "{quest}".']
     quest_contract = QuestContract.objects.get(quest=quest, faction=current_savegame.player_faction)
     assert list(quest_contract.assigned_warriors.all()) == [warrior]
     assert quest_contract.skirmish is not None

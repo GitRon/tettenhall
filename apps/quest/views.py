@@ -1,5 +1,4 @@
-import json
-
+from django.contrib import messages
 from django.urls import reverse
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
@@ -51,12 +50,10 @@ class QuestAcceptView(
             )
         )
 
-        response["HX-Trigger"] = json.dumps(
-            {
-                "loadFactionItemList": "-",
-                "loadFactionWarriorList": "-",
-            }
-        )
+        # A message rather than an "HX-Trigger": this form is a plain post and the response is a
+        # redirect, so the browser navigates away and nothing is left to read a header
+        messages.add_message(self.request, messages.SUCCESS, f'You accepted the quest "{self.object}".')
+
         return response
 
     def get_success_url(self):

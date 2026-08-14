@@ -25,6 +25,10 @@ class WarriorQuerySet(models.QuerySet):
         the next month, where the month check on its own would hand the same warrior out again while
         he is still in it.
 
+        The quest half is one "NOT EXISTS" about the warrior. Spelled as a filter over the joined
+        contracts it read per through-row instead: a warrior holding contracts in month 1 and month 3
+        came back as free in month 3, because the month-1 row satisfied "this row is not month 3".
+
         Both sides of a skirmish are asked, not just the player's: who counts as "the player" there
         is a property of the row rather than of the warrior, and a captive who changed banners has
         fought all the same.
@@ -39,7 +43,7 @@ class WarriorQuerySet(models.QuerySet):
         # of nulls that looks exactly like an undecided fight.
         occupying_skirmishes = Skirmish.objects.filter(Q(month=month) | Q(victorious_faction__isnull=True))
 
-        return self.filter(Q(quest_contracts__isnull=True) | ~Q(quest_contracts__accepted_in_month=month)).exclude(
+        return self.exclude(quest_contracts__accepted_in_month=month).exclude(
             Q(player_skirmishes__in=occupying_skirmishes) | Q(non_player_skirmishes__in=occupying_skirmishes)
         )
 

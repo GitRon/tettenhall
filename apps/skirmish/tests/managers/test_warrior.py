@@ -31,6 +31,33 @@ def test_exclude_currently_busy_drops_a_warrior_on_a_quest():
 
 
 @pytest.mark.django_db
+def test_exclude_currently_busy_drops_a_warrior_holding_an_older_contract_too():
+    """
+    Read per joined contract rather than per warrior, the older row satisfied "this one is not the
+    month asked about" and handed him back as free.
+    """
+    warrior = WarriorFactory()
+    for accepted_month in (1, 3):
+        quest_contract = QuestContractFactory(faction=warrior.faction, accepted_in_month=accepted_month)
+        quest_contract.assigned_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_exclude_currently_busy_keeps_a_warrior_whose_only_quest_was_last_month():
+    warrior = WarriorFactory()
+    quest_contract = QuestContractFactory(faction=warrior.faction, accepted_in_month=2)
+    quest_contract.assigned_warriors.add(warrior)
+
+    result = Warrior.objects.exclude_currently_busy(month=3)
+
+    assert list(result) == [warrior]
+
+
+@pytest.mark.django_db
 def test_exclude_currently_busy_drops_a_warrior_who_fought_this_month():
     """
     Every warrior fights once a month, so a decided fight still uses the month up.

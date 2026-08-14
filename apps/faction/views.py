@@ -1,5 +1,6 @@
 import json
 
+from django.contrib import messages
 from django.db.models import QuerySet, Sum
 from django.shortcuts import render
 from django.urls import reverse
@@ -39,10 +40,15 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             .exists()
         )
         # A button that simply vanishes teaches the player nothing, and "every warrior fights once a
-        # month" is the rule he is most likely to walk into without noticing
+        # month" is the rule he is most likely to walk into without noticing. Only said where marching
+        # is what is actually missing though: this faction has to be one he could otherwise march on,
+        # or the sentence is a non sequitur on his own faction and on one already knocked out.
         player_faction = current_savegame.player_faction
-        context["has_marched_this_month"] = player_faction is not None and player_faction.has_marched_this_month(
-            month=current_savegame.current_month
+        context["has_marched_this_month"] = (
+            not context["can_be_attacked"]
+            and player_faction is not None
+            and Faction.objects.attackable_targets(player_faction=player_faction).filter(id=self.object.id).exists()
+            and player_faction.has_marched_this_month(month=current_savegame.current_month)
         )
 
         return context
@@ -156,12 +162,11 @@ class FactionAttackView(RunningSavegameRequiredMixin, SingleObjectMixin, generic
             )
         )
 
-        response["HX-Trigger"] = json.dumps(
-            {
-                "notification": f"Your war band marches on {self.object}",
-                "loadFactionWarriorList": "-",
-            }
-        )
+        # A message rather than an "HX-Trigger": this form is a plain post and the response is a
+        # redirect, so the browser navigates away and nothing is left to read a header. The same
+        # toast comes out the other end, because base.html renders "messages" on every page.
+        messages.add_message(self.request, messages.SUCCESS, f"Your war band marches on {self.object}.")
+
         return response
 
     def get_success_url(self):

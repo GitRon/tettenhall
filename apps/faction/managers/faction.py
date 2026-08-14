@@ -18,6 +18,28 @@ class FactionQuerySet(models.QuerySet):
         """
         return self.for_savegame(savegame_id=savegame_id).filter(is_defeated=False)
 
+    def attackable_targets(self, *, player_faction):
+        """
+        Every rival of "player_faction" that is a legitimate target, leaving aside whether the player
+        has anyone left to send.
+
+        Split out from [attackable_by] so the faction page can tell "you cannot attack them" from
+        "you cannot attack anybody this month" - the message for the second is a non sequitur on the
+        player's own faction or on one that is already knocked out.
+        """
+        # Imported here because the faction model imports this module while being defined itself,
+        # and the warrior model reaches back into the faction app
+        from apps.skirmish.models.warrior import Warrior
+
+        return (
+            self.still_in_play(savegame_id=player_faction.savegame_id)
+            .exclude(id=player_faction.id)
+            # A faction nobody healthy is left to defend cannot be marched on. Without this the
+            # skirmish would be created with an empty side.
+            .filter(warriors__condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+            .distinct()
+        )
+
     def attackable_by(self, *, player_faction, month: int):
         """
         Every rival "player_faction" may march against this month.
@@ -33,21 +55,10 @@ class FactionQuerySet(models.QuerySet):
         is. A separate per-rival cap sat here once; it never got to decide anything and only looked
         like a rule.
         """
-        # Imported here because the faction model imports this module while being defined itself,
-        # and the warrior model reaches back into the faction app
-        from apps.skirmish.models.warrior import Warrior
-
         if player_faction is None or player_faction.get_available_leader(month=month) is None:
             return self.none()
 
-        return (
-            self.still_in_play(savegame_id=player_faction.savegame_id)
-            .exclude(id=player_faction.id)
-            # A faction nobody healthy is left to defend cannot be marched on. Without this the
-            # skirmish would be created with an empty side.
-            .filter(warriors__condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
-            .distinct()
-        )
+        return self.attackable_targets(player_faction=player_faction)
 
 
 class FactionManager(manager.Manager):

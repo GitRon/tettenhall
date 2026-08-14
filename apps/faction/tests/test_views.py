@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from apps.faction.models.faction import Faction
@@ -97,6 +98,53 @@ def test_faction_detail_view_says_why_the_attack_is_gone(
 
     assert response.context["can_be_attacked"] is False
     assert response.context["has_marched_this_month"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_nothing_about_marching_on_the_players_own_faction(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    You can never march on yourself, so "your warriors have already fought" is not the reason the
+    button is missing - it was never on offer.
+    """
+    skirmish = SkirmishFactory(
+        player_faction=player_faction_ready_to_march,
+        non_player_faction=FactionFactory(savegame=current_savegame),
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(
+        reverse("faction:faction-detail-view", kwargs={"pk": player_faction_ready_to_march.id})
+    )
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["has_marched_this_month"] is False
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_nothing_about_marching_on_a_defeated_faction(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    Same again: a knocked-out faction is off the board whatever the player's war band is doing.
+    """
+    defeated_faction = FactionFactory(savegame=current_savegame, is_defeated=True)
+    WarriorFactory(faction=defeated_faction)
+    skirmish = SkirmishFactory(
+        player_faction=player_faction_ready_to_march,
+        non_player_faction=defeated_faction,
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.player_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": defeated_faction.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["has_marched_this_month"] is False
 
 
 @pytest.mark.django_db
@@ -262,6 +310,9 @@ def test_faction_attack_view_fights_the_rivals_own_war_band(
     )
 
     assert response.status_code == 302
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [
+        f"Your war band marches on {rival_faction}."
+    ]
     skirmish = Skirmish.objects.get(non_player_faction=rival_faction)
     assert list(skirmish.non_player_warriors.all()) == [rival_leader]
     assert list(skirmish.player_warriors.all()) == [player_faction_ready_to_march.leader, follower]
