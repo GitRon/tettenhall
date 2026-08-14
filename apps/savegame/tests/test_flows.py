@@ -45,6 +45,42 @@ def test_losing_the_leader_ends_the_game_and_decides_the_open_fight(queuebie_reg
 
 
 @pytest.mark.django_db
+def test_a_warrior_in_two_open_fights_is_taken_prisoner_only_once(queuebie_registry):
+    """
+    Ending the game decides every unresolved skirmish in one pass, so a warrior standing on two
+    rosters is processed as a casualty twice. He used to end up in both victors' cells at once.
+
+    A flow test rather than a unit test because that is the whole defect: the capture handler is
+    correct on its own and only misbehaves when the force-resolve above it calls it a second time.
+    """
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame)
+    savegame.player_faction = player_faction
+    savegame.save()
+    first_rival = FactionFactory(savegame=savegame)
+    second_rival = FactionFactory(savegame=savegame)
+
+    leader = WarriorFactory(
+        faction=player_faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    player_faction.leader = leader
+    player_faction.save()
+
+    # He was committed to both fights, and neither has been played out
+    first_skirmish = SkirmishFactory(player_faction=player_faction, non_player_faction=first_rival)
+    first_skirmish.player_warriors.add(leader)
+    first_skirmish.non_player_warriors.add(WarriorFactory(faction=first_rival, savegame=savegame))
+    second_skirmish = SkirmishFactory(player_faction=player_faction, non_player_faction=second_rival)
+    second_skirmish.player_warriors.add(leader)
+    second_skirmish.non_player_warriors.add(WarriorFactory(faction=second_rival, savegame=savegame))
+
+    handle_message(DefeatFactionOfLostLeader(warrior=leader))
+
+    assert list(first_rival.captured_warriors.all()) == [leader]
+    assert list(second_rival.captured_warriors.all()) == []
+
+
+@pytest.mark.django_db
 def test_losing_the_last_rival_wins_the_game(queuebie_registry):
     savegame = SavegameFactory()
     player_faction = FactionFactory(savegame=savegame)
