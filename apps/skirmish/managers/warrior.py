@@ -226,25 +226,36 @@ class WarriorManager(manager.Manager):
             .order_by("monthly_salary", "id")
         )
 
-    def record_salary_paid(self, *, obj):
+    def record_salaries_paid(self, *, warrior_list: list) -> list:
         """
-        Note that this warrior got his wages, which forgives however many months he went without.
-        """
-        obj.refresh_from_db()
-        obj.unpaid_months = 0
-        obj.save(update_fields=("unpaid_months",))
+        Note that these warriors got their wages, which forgives however many months they went
+        without.
 
-        return obj
-
-    def record_salary_unpaid(self, *, obj):
+        Taken a roster at a time rather than a warrior at a time, because the salary run always has
+        the whole list in hand and a per-warrior write would put two queries per man on the month
+        advance. No "refresh_from_db" either, for the same reason the batching is safe: these
+        instances came out of "get_payroll_for_faction" moments earlier in the same transaction, and
+        nothing in a month touches "unpaid_months" but this method and its unpaid twin. Mutating them
+        before the write is what keeps the objects handed to the events correct without reading them
+        back.
         """
-        Note another month this warrior went without his wages.
-        """
-        obj.refresh_from_db()
-        obj.unpaid_months += 1
-        obj.save(update_fields=("unpaid_months",))
+        for warrior in warrior_list:
+            warrior.unpaid_months = 0
 
-        return obj
+        self.bulk_update(warrior_list, ("unpaid_months",))
+
+        return warrior_list
+
+    def record_salaries_unpaid(self, *, warrior_list: list) -> list:
+        """
+        Note another month these warriors went without their wages.
+        """
+        for warrior in warrior_list:
+            warrior.unpaid_months += 1
+
+        self.bulk_update(warrior_list, ("unpaid_months",))
+
+        return warrior_list
 
     def strip_equipment(self, *, obj):
         """

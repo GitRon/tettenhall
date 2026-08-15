@@ -357,23 +357,40 @@ def test_get_payroll_for_faction_leaves_out_another_factions_warriors():
 
 
 @pytest.mark.django_db
-def test_record_salary_paid_forgives_the_months_he_went_without():
-    warrior = WarriorFactory(unpaid_months=2)
+def test_record_salaries_paid_forgives_the_months_they_went_without():
+    first_warrior = WarriorFactory(unpaid_months=2)
+    second_warrior = WarriorFactory(unpaid_months=1)
 
-    Warrior.objects.record_salary_paid(obj=warrior)
+    Warrior.objects.record_salaries_paid(warrior_list=[first_warrior, second_warrior])
 
-    warrior.refresh_from_db()
-    assert warrior.unpaid_months == 0
+    first_warrior.refresh_from_db()
+    second_warrior.refresh_from_db()
+    assert (first_warrior.unpaid_months, second_warrior.unpaid_months) == (0, 0)
 
 
 @pytest.mark.django_db
-def test_record_salary_unpaid_counts_another_month():
-    warrior = WarriorFactory(unpaid_months=1)
+def test_record_salaries_unpaid_counts_another_month():
+    first_warrior = WarriorFactory(unpaid_months=1)
+    second_warrior = WarriorFactory(unpaid_months=0)
 
-    Warrior.objects.record_salary_unpaid(obj=warrior)
+    Warrior.objects.record_salaries_unpaid(warrior_list=[first_warrior, second_warrior])
 
-    warrior.refresh_from_db()
-    assert warrior.unpaid_months == 2
+    first_warrior.refresh_from_db()
+    second_warrior.refresh_from_db()
+    assert (first_warrior.unpaid_months, second_warrior.unpaid_months) == (2, 1)
+
+
+@pytest.mark.django_db
+def test_record_salaries_unpaid_leaves_the_instances_carrying_the_new_count():
+    """
+    The unpaid warriors go straight onto an event, and the handler at the other end decides whether
+    a man deserts by reading this count off them - so the objects have to be right, not just the rows.
+    """
+    warrior = WarriorFactory(unpaid_months=2)
+
+    result = Warrior.objects.record_salaries_unpaid(warrior_list=[warrior])
+
+    assert result[0].unpaid_months == 3
 
 
 @pytest.mark.django_db
