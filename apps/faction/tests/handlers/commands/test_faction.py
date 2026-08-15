@@ -265,7 +265,7 @@ def test_handle_determine_injured_warriors_with_injured_warrior():
         context=DetermineInjuredWarriors(faction=injured_warrior.faction, month=3)
     )
 
-    assert result == [HealInjuredWarrior(warrior=injured_warrior, month=3)]
+    assert result == [HealInjuredWarrior(faction=injured_warrior.faction, warrior=injured_warrior, month=3)]
 
 
 @pytest.mark.django_db
@@ -284,6 +284,82 @@ def test_handle_determine_injured_warriors_ignores_dead_warriors():
     dead_warrior = WarriorFactory(current_health=0, max_health=20, condition=Warrior.ConditionChoices.CONDITION_DEAD)
 
     result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=dead_warrior.faction, month=3))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_determine_injured_warriors_selects_a_captive_of_this_faction():
+    """
+    A captive is on nobody's roster, so his captor's sweep is the only one that can reach him.
+    """
+    captor = FactionFactory()
+    captive = WarriorFactory(
+        faction=None,
+        savegame=captor.savegame,
+        culture=captor.culture,
+        current_health=0,
+        max_health=20,
+        condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
+    )
+    captor.captured_warriors.add(captive)
+
+    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=captor, month=3))
+
+    # The captor rides along, because the mending is done at his sanctuary and logged in his month
+    assert result == [HealInjuredWarrior(faction=captor, warrior=captive, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_determine_injured_warriors_leaves_another_factions_captive_alone():
+    captor = FactionFactory()
+    captive = WarriorFactory(
+        faction=None,
+        savegame=captor.savegame,
+        culture=captor.culture,
+        current_health=0,
+        max_health=20,
+        condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
+    )
+    captor.captured_warriors.add(captive)
+    bystander_faction = FactionFactory(savegame=captor.savegame)
+
+    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=bystander_faction, month=3))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_determine_injured_warriors_skips_a_captive_at_full_health():
+    captor = FactionFactory()
+    healed_captive = WarriorFactory(
+        faction=None, savegame=captor.savegame, culture=captor.culture, current_health=20, max_health=20
+    )
+    captor.captured_warriors.add(healed_captive)
+
+    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=captor, month=3))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_determine_injured_warriors_skips_a_dead_captive():
+    """
+    Only the unconscious are ever taken prisoner, but a captive can be killed off the field by
+    anything that reaches him, and no sanctuary mends a corpse.
+    """
+    captor = FactionFactory()
+    dead_captive = WarriorFactory(
+        faction=None,
+        savegame=captor.savegame,
+        culture=captor.culture,
+        current_health=0,
+        max_health=20,
+        condition=Warrior.ConditionChoices.CONDITION_DEAD,
+    )
+    captor.captured_warriors.add(dead_captive)
+
+    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=captor, month=3))
 
     assert result == []
 
@@ -318,6 +394,26 @@ def test_handle_determine_warriors_with_reduced_morale_skips_dead_warriors():
     )
 
     assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[], month=3)
+
+
+@pytest.mark.django_db
+def test_handle_determine_warriors_with_reduced_morale_passes_over_captives():
+    """
+    Health is what a captor mends, spirit is not - unlike the healing sweep, this one stays on the
+    roster on purpose. Morale is refilled to the maximum further down the chain, and a month in an
+    enemy cell restoring a man completely reads wrong.
+    """
+    captor = FactionFactory()
+    captive = WarriorFactory(
+        faction=None, savegame=captor.savegame, culture=captor.culture, current_morale=5, max_morale=20
+    )
+    captor.captured_warriors.add(captive)
+
+    result = handle_determine_warriors_with_reduced_morale(
+        context=DetermineWarriorsWithReducedMorale(faction=captor, month=3)
+    )
+
+    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=captor, warrior_list=[], month=3)
 
 
 @pytest.mark.django_db

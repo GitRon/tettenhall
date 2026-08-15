@@ -1,6 +1,6 @@
 import random
 
-from django.db.models import F
+from django.db.models import F, Q
 from faker import Faker
 from queuebie import message_registry
 from queuebie.messages import Command, Event
@@ -171,6 +171,11 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | N
 
 @message_registry.register_command(command=DetermineWarriorsWithReducedMorale)
 def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsWithReducedMorale) -> Event:
+    # The roster only, captives deliberately excluded - unlike the healing sweep below, which does
+    # reach them. Health is what a captor can mend; spirit is not, and
+    # "handle_replenish_warrior_morale" refills to the maximum unconditionally, so a month in an
+    # enemy cell would restore a man completely.
+    #
     # Only warriors below their maximum have anything to recover - replenishing the rest would be
     # a no-op further down the chain
     warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
@@ -186,9 +191,25 @@ def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsW
 
 @message_registry.register_command(command=DetermineInjuredWarriors)
 def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> list[Command]:
-    # Get all injured but not dead warriors of "faction"
-    warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
-        current_health__lt=F("max_health")
+    """
+    Every injured man this faction is responsible for: its own roster, plus the captives it holds.
+
+    A captive is on nobody's roster - capture clears "warrior.faction" - so without the second half
+    he heals nothing for as long as he is held, and a prisoner taken unconscious stays at the health
+    the blow that felled him left him at for ever.
+
+    Healing him from his captor's sweep reaches him exactly once: a warrior belongs to exactly one
+    captor, and this runs once per faction per month. The captor rides along on the command because
+    it is his sanctuary that does the mending and his month log the line belongs in - the healing
+    handler cannot read either off a warrior whose own faction is None.
+
+    Matched by id rather than through the reverse accessor of "captured_warriors", which would join
+    per captor row and hand the same man out twice were he ever held by two of them.
+    """
+    warrior_qs = (
+        Warrior.objects.filter(Q(faction=context.faction) | Q(id__in=context.faction.captured_warriors.all()))
+        .exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+        .filter(current_health__lt=F("max_health"))
     )
 
     event_list = []
@@ -196,6 +217,7 @@ def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> l
         event_list.append(
             # TODO: this should be an event, not a command
             HealInjuredWarrior(
+                faction=context.faction,
                 warrior=warrior,
                 month=context.month,
             )
