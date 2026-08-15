@@ -28,9 +28,13 @@ class PlayerMonthPrepared(Event):
     """
     A new month has begun for the human player specifically.
 
-    Only for the things a rival genuinely has no equivalent of: the town economy, the training
-    regimen, the message log. A faction of the savegame gets a FactionMonthPrepared as well, so
-    nothing here needs repeating for the player.
+    Only for the things a rival genuinely has no equivalent of: the town economy and the message
+    log. A faction of the savegame gets a FactionMonthPrepared as well, so nothing here needs
+    repeating for the player.
+
+    The training regimen sits here too, and does not belong: every faction owns a Training row
+    from NewFactionCreated on, so training is a player-only activity by registration only.
+    Moving it is #48.
 
     Moving a handler from here to FactionMonthPrepared is how a player-only activity becomes
     something rivals do too - the field names match so that the move is the whole change.
