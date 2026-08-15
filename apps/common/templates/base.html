@@ -133,10 +133,17 @@
         }
     });
 
+    {# Two sinks, two filters, and both are load-bearing. "escapejs" is the one for this position: a #}
+    {# message holding a double quote closes the string literal, and a SyntaxError costs the whole #}
+    {# block above - the CSRF header, the notification listener and the 5xx toast all stop being #}
+    {# registered. "escape" is for the sink underneath: UIkit inserts "message" as HTML, so a "<" #}
+    {# would otherwise be parsed as markup rather than shown. "level_tag" is a fixed vocabulary #}
+    {# today, but it sits in the same position, so it is escaped too rather than left to be worked #}
+    {# out again later. #}
     {% for message in messages %}
         UIkit.notification({
-            message: "{{ message|safe }}",
-            status: "{{ message.level_tag }}",
+            message: "{{ message|escape|escapejs }}",
+            status: "{{ message.level_tag|escapejs }}",
             pos: 'top-center',
             timeout: NOTIFICATION_TIMEOUT,
         });

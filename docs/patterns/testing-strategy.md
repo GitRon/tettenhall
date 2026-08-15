@@ -72,8 +72,14 @@ and assembling context. Keep the tests equally thin — **one test per view**, v
   in a second savegame and assert it is *not* reachable. See [savegame scoping](savegame-scoping.md).
 - The UI is htmx-driven. Where a view sets `HX-Trigger`, assert the header is present — behaviour rides on
   it. Don't assert on the exact JSON payload.
-- **Never assert on rendered HTML.** Status code, context and headers only. Template assertions break on
-  every markup change and catch nothing.
+- **Never assert on rendered HTML**, with one exception. Status code, context and headers only —
+  template assertions break on every markup change and catch nothing. The exception is a defect that
+  exists *only* in the rendered output, which in practice means escaping: a value interpolated into a
+  sink that then mis-parses it. Status and context are identical with the bug present and absent, so
+  nothing else can pin it. Then one test may read the response body, and what it asserts is the
+  escaping, not the markup — the dangerous form is absent and the text still arrived. Name the defect
+  in the docstring and say the rule is being set aside on purpose. This is not licence to assert that a
+  page contains a heading.
 
 ## Don't test
 
