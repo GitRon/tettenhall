@@ -47,8 +47,10 @@ def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[
 
 @message_registry.register_command(command=HealInjuredWarrior)
 def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
-    # How far the town's sanctuary can mend a warrior in one month
-    sanctuary = Sanctuary.get_building_by_type(building_type=context.warrior.faction.town.sanctuary)
+    # How far the town's sanctuary can mend a warrior in one month. The faction is taken off the
+    # command rather than off the warrior, because a captive has none: capture clears
+    # "warrior.faction", and he is mended in his captor's town, at his captor's sanctuary.
+    sanctuary = Sanctuary.get_building_by_type(building_type=context.faction.town.sanctuary)
     max_recoverable_health_points = sanctuary.MAX_HEALING_POINTS
 
     # Cap healed points at the maximum. randrange() excludes its upper bound, so it needs the "+ 1"
@@ -66,7 +68,7 @@ def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
 
     return WarriorHealthHealed(
         warrior=context.warrior,
-        faction=context.warrior.faction,
+        faction=context.faction,
         healed_points=healed_hp,
         month=context.month,
     )

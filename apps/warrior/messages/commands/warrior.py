@@ -32,6 +32,9 @@ class ReplenishWarriorMorale(Command):
 
 @dataclass(kw_only=True)
 class HealInjuredWarrior(Command):
+    # The faction mending him, which is not always the one he belongs to: a captive is healed by the
+    # faction holding him, and capture has cleared his own
+    faction: Faction
     warrior: Warrior
     month: int
 
