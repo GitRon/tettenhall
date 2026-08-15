@@ -14,7 +14,7 @@ class RequestWarriorForPub(Event):
     # TODO: this is a command and not an event by name -> maybe just use commands? seems legit
     savegame: Savegame
     faction: Faction | None
-    # TODO: faction reicht nicht aus, ich möchte ja auch für andere factions des savegames warriors im pool haben
+    # TODO (#47): faction reicht nicht aus, ich möchte ja auch für andere factions des savegames warriors im pool haben
     culture: Culture
     generator_class: type[BaseWarriorGenerator]
     month: int

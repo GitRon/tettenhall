@@ -10,7 +10,7 @@ from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishAct
 
 
 # TODO: move to warrior app?
-# TODO: permanent injuries would be nice -> each has a modificator and reduces a value like HP or dex
+# TODO (#53): permanent injuries would be nice -> each has a modificator and reduces a value like HP or dex
 #  -> ankle -> reduce dex, missing finger -> strength etc.
 class Warrior(models.Model):
     NO_WEAPON_ATTACK = "1d3"
@@ -87,7 +87,7 @@ class Warrior(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    # TODO: add property when a certain value is really high to add a nickname like "Victor the Fast"
+    # TODO (#42): add property when a certain value is really high to add a nickname like "Victor the Fast"
     #  (good and bad cases)
 
     @property
@@ -115,8 +115,8 @@ class Warrior(models.Model):
         return int(self.recruitment_price / 2)
 
     def get_skirmish_actions(self) -> list[tuple]:
-        # TODO: show only the ones the warrior has depending on his level
-        # TODO: use XP to add more skirmish actions -> every level gets a fixed action to keep it simple
+        # TODO (#52): show only the ones the warrior has depending on his level
+        # TODO (#52): use XP to add more skirmish actions -> every level gets a fixed action to keep it simple
         return SkirmishActionChoices.choices
 
     def decide_skirmish_action(self) -> [int, str]:

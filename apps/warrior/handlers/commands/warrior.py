@@ -26,7 +26,7 @@ from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerat
 
 @message_registry.register_command(command=ReplenishWarriorMorale)
 def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[Event] | Event | None:
-    # TODO: when money goes below X, let warriors morale drop once they don't get payed
+    # TODO (#45): when money goes below X, let warriors morale drop once they don't get payed
 
     # Morale is always filled up to the max
     recovered_morale = context.warrior.max_morale - context.warrior.current_morale

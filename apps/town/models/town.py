@@ -10,21 +10,18 @@ class Town(models.Model):
         HALL_MEDIUM = 2, "Great Hall"
         HALL_LARGE = 3, "High Hall"
 
-    # TODO: upgrading works, but the levels grant nothing yet
     class WeaponsmithChoices(models.IntegerChoices):
         WEAPONSMITH_NONE = 0, "No weaponsmith"
         WEAPONSMITH_SMALL = 1, "Smithy"
         WEAPONSMITH_MEDIUM = 2, "Forge Hall"
         WEAPONSMITH_LARGE = 3, "Master Forge"
 
-    # TODO: upgrading works, but the levels grant nothing yet
     class MarketChoices(models.IntegerChoices):
         MARKET_NONE = 0, "No marketplace"
         MARKET_SMALL = 1, "Marketplace"
         MARKET_MEDIUM = 2, "Trading Post"
         MARKET_LARGE = 3, "High Market"
 
-    # TODO: upgrading works, but the levels grant nothing yet
     class SanctuaryChoices(models.IntegerChoices):
         SANCTUARY_NONE = 0, "No sanctuary"
         SANCTUARY_SMALL = 1, "Shrine"

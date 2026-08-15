@@ -50,7 +50,6 @@ class BaseItemGenerator:
         if not item_type:
             raise RuntimeError("No item type found.")
 
-        # TODO: sometimes "item_type" is None
         dice_notation = DiceNotation(dice_string=item_type.base_value, modifier=modifier)
         price = abs(dice_notation.expectancy_value * dice_notation.sides * max(modifier, 1))
 

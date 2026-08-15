@@ -191,7 +191,6 @@ AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
 # Pointing it at BASE_DIR would include everything in ".venv/", which uv creates inside the project,
 # so a dependency shipping a "handlers/commands/" directory would register handlers on our bus.
 QUEUEBIE_APP_BASE_PATH = BASE_DIR / "apps"
-# TODO: Fix handlers so we can enable this
 QUEUEBIE_STRICT_MODE = True
 
 
