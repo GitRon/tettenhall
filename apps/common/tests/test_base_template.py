@@ -10,6 +10,7 @@ import pytest
 from django.contrib import messages
 from django.contrib.messages.storage.base import Message
 from django.template.loader import render_to_string
+from django.test import override_settings
 from django.urls import reverse
 
 
@@ -55,3 +56,19 @@ def test_message_with_angle_brackets_reaches_the_toast_as_text():
     assert "\\u003Cthe moor" not in content
     # the JavaScript escaping of &lt;the moor&gt;
     assert "\\u0026lt\\u003Bthe moor\\u0026gt\\u003B" in content
+
+
+@override_settings(MESSAGE_TAGS={messages.SUCCESS: 'success"; alert(1); //'})
+def test_message_level_tag_is_escaped_for_the_javascript_string_literal():
+    """
+    The level tag is interpolated into a second literal on the line below the message, and breaks it
+    the same way. Nothing in this project overrides MESSAGE_TAGS, so the vocabulary is fixed and
+    harmless today - which is exactly why the escaping there would be dropped by someone tidying up
+    without anything failing. It gets "escapejs" and not "escape" because UIkit reads "status" as a
+    CSS class rather than as HTML.
+    """
+    content = render_to_string("base.html", {"messages": [Message(messages.SUCCESS, "A quiet month.")]})
+
+    assert 'status: "success";' not in content
+    # the JavaScript escaping of the quote and both semicolons in the hostile tag above
+    assert 'status: "success\\u0022\\u003B alert(1)\\u003B //",' in content
