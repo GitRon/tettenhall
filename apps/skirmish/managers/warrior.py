@@ -84,13 +84,33 @@ class WarriorManager(manager.Manager):
         self.filter(armor=item).update(armor=None)
 
     def replenish_current_morale(self, *, obj, recovered_morale_points: int):
+        """
+        Give the morale back, and with it the nerve to fight again.
+
+        A rout is the one condition morale owns, so this owns the way out of it the same way
+        "replenish_current_health" owns the way out of unconsciousness. Without the condition, a
+        warrior who fled without a scratch ended the month at full morale and still "FLEEING": the
+        healing sweep only looks at the wounded, so the one method that could have cleared him never
+        ran on him, and he drew salary for the rest of the game without ever fighting again.
+
+        Only the fleeing rally. An unconscious man's way back is the health path - and he reaches
+        this method every month, because the morale sweep excludes only the dead - while a dead one
+        has no way back at all, so a bare "his morale is up, so he is healthy" would wake the first
+        and resurrect the second.
+
+        Rallied to zero is not rallied, which is why the morale is asked about as well as the
+        condition.
+        """
         obj.refresh_from_db()
         obj.current_morale += recovered_morale_points
 
         if obj.current_morale > obj.max_morale:
             obj.current_morale = obj.max_morale
 
-        obj.save(update_fields=("current_morale",))
+        if obj.current_morale > 0 and obj.is_fleeing:
+            obj.condition = obj.ConditionChoices.CONDITION_HEALTHY
+
+        obj.save(update_fields=("current_morale", "condition"))
 
         return obj
 

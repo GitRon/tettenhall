@@ -170,6 +170,83 @@ def test_replenish_current_morale_caps_at_the_maximum():
 
 
 @pytest.mark.django_db
+def test_replenish_current_morale_rallies_a_fleeing_warrior():
+    """
+    A rout with no wound in it is a normal way for a fight to end, and this is the only method that
+    can clear it - the healing sweep never sees a warrior who is already at full health.
+    """
+    warrior = WarriorFactory(current_morale=0, max_morale=20, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
+
+    result = Warrior.objects.replenish_current_morale(obj=warrior, recovered_morale_points=20)
+
+    assert result.current_morale == 20
+    assert result.condition == Warrior.ConditionChoices.CONDITION_HEALTHY
+
+
+@pytest.mark.django_db
+def test_replenish_current_morale_rallies_a_fleeing_warrior_despite_his_wounds():
+    """
+    The rally does not wait on the health path: his nerve and his wounds are mended separately, and
+    a man who has both is not left running until the second one is done.
+    """
+    warrior = WarriorFactory(
+        current_morale=0,
+        max_morale=20,
+        current_health=5,
+        max_health=20,
+        condition=Warrior.ConditionChoices.CONDITION_FLEEING,
+    )
+
+    result = Warrior.objects.replenish_current_morale(obj=warrior, recovered_morale_points=20)
+
+    assert result.current_health == 5
+    assert result.condition == Warrior.ConditionChoices.CONDITION_HEALTHY
+
+
+@pytest.mark.django_db
+def test_replenish_current_morale_leaves_an_unconscious_warrior_unconscious():
+    """
+    The morale sweep excludes only the dead, so an unconscious warrior below his maximum reaches
+    this method every month. Waking him here would take the healing sweep's decision away from it.
+    """
+    warrior = WarriorFactory(
+        current_morale=0,
+        max_morale=20,
+        current_health=-5,
+        max_health=20,
+        condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
+    )
+
+    result = Warrior.objects.replenish_current_morale(obj=warrior, recovered_morale_points=20)
+
+    assert result.current_morale == 20
+    assert result.condition == Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+
+
+@pytest.mark.django_db
+def test_replenish_current_morale_leaves_a_dead_warrior_dead():
+    warrior = WarriorFactory(current_morale=0, max_morale=20, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    result = Warrior.objects.replenish_current_morale(obj=warrior, recovered_morale_points=20)
+
+    assert result.condition == Warrior.ConditionChoices.CONDITION_DEAD
+
+
+@pytest.mark.django_db
+def test_replenish_current_morale_does_not_rally_a_warrior_whose_morale_is_still_zero():
+    """
+    Rallied to nothing is not rallied - a man handed back zero morale would rout again on the first
+    blow of the next fight.
+    """
+    warrior = WarriorFactory(current_morale=0, max_morale=0, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
+
+    result = Warrior.objects.replenish_current_morale(obj=warrior, recovered_morale_points=0)
+
+    assert result.current_morale == 0
+    assert result.condition == Warrior.ConditionChoices.CONDITION_FLEEING
+
+
+@pytest.mark.django_db
 def test_increase_morale_adds_the_gained_points():
     warrior = WarriorFactory(current_morale=10, max_morale=20)
 
