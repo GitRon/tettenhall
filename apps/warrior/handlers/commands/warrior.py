@@ -12,22 +12,64 @@ from apps.warrior.messages.commands.warrior import (
     CreateWarrior,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
+    PunishUnpaidWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
 )
 from apps.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
     WarriorCreated,
+    WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
+    WarriorLostMoraleOverUnpaidSalary,
     WarriorMoraleReplenished,
 )
 from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 
 
+@message_registry.register_command(command=PunishUnpaidWarrior)
+def handle_punish_unpaid_warrior(*, context: PunishUnpaidWarrior) -> Event:
+    """
+    What a month without wages does to the man who went without it.
+
+    Morale first and desertion after, so the war band sours visibly before it starts shrinking and
+    the player has a couple of months to sell something. Low morale is what routs a warrior
+    mid-fight, so an unpaid band breaks early without any of this having to say so.
+
+    The gear stays behind. An item belongs to the faction and is only wielded by a warrior, so
+    letting him keep it would put it out of everyone's reach rather than in his hands - and the
+    silver it fetches is exactly what a broke faction needs.
+    """
+    # The leader is the one man who never walks. Faction.leader is a CASCADE FK and losing him is
+    # what defeats a faction, so a leader deserting would end the game over a wage bill instead of
+    # shrinking the war band to what it can afford. He sulks indefinitely instead.
+    is_leader = context.faction.leader_id == context.warrior.id
+
+    if context.warrior.unpaid_months >= Warrior.UNPAID_MONTHS_UNTIL_DESERTION and not is_leader:
+        Warrior.objects.strip_equipment(obj=context.warrior)
+        Warrior.objects.set_faction(obj=context.warrior, faction=None)
+
+        return WarriorDesertedOverUnpaidSalary(
+            warrior=context.warrior,
+            faction=context.faction,
+            month=context.month,
+        )
+
+    # Floored at one point, the way apply_level_up_growth floors its gains: a quarter of a levy's
+    # morale rounds to nothing for every maximum below three, and a penalty of zero is not one
+    lost_morale = max(1, round(context.warrior.max_morale * Warrior.UNPAID_MORALE_LOSS))
+    Warrior.objects.reduce_morale(obj=context.warrior, lost_morale=lost_morale)
+
+    return WarriorLostMoraleOverUnpaidSalary(
+        warrior=context.warrior,
+        faction=context.faction,
+        lost_morale=lost_morale,
+        month=context.month,
+    )
+
+
 @message_registry.register_command(command=ReplenishWarriorMorale)
 def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[Event] | Event | None:
-    # TODO (#45): when money goes below X, let warriors morale drop once they don't get payed
-
     # Morale is always filled up to the max
     recovered_morale = context.warrior.max_morale - context.warrior.current_morale
 

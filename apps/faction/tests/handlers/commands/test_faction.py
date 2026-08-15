@@ -380,6 +380,24 @@ def test_handle_determine_warriors_with_reduced_morale_skips_warriors_at_full_mo
 
 
 @pytest.mark.django_db
+def test_handle_determine_warriors_with_reduced_morale_skips_an_unpaid_warrior():
+    """
+    A man who was not paid does not cheer up either. Without this the sweep would hand back every
+    point insolvency had just taken, in the same month it took them, because the replenish handler
+    at the end of the chain refills to the maximum.
+    """
+    faction = FactionFactory()
+    paid_warrior = WarriorFactory(faction=faction, current_morale=5, max_morale=20)
+    WarriorFactory(faction=faction, current_morale=5, max_morale=20, unpaid_months=1)
+
+    result = handle_determine_warriors_with_reduced_morale(
+        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
+    )
+
+    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[paid_warrior], month=3)
+
+
+@pytest.mark.django_db
 def test_handle_determine_warriors_with_reduced_morale_skips_dead_warriors():
     faction = FactionFactory()
     WarriorFactory(

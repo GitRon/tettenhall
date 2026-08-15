@@ -36,6 +36,22 @@ class MonthlyWarriorSalariesPaid(Event):
 
 
 @dataclass(kw_only=True)
+class MonthlyWarriorSalariesUnpaid(Event):
+    """
+    The faction ran out of silver part way down its own payroll.
+
+    Raised alongside MonthlyWarriorSalariesPaid rather than instead of it: a faction that covered
+    three of its five men did both things in the same month.
+    """
+
+    faction: Faction
+    # The men who went without, already carrying their updated "unpaid_months"
+    warrior_list: list[Warrior]
+    missing_amount: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class MonthlyBuildingMoneyEarned(Event):
     faction: Faction
     amount: int

@@ -206,6 +206,73 @@ class WarriorManager(manager.Manager):
             or 0
         )
 
+    def get_payroll_for_faction(self, *, faction) -> list:
+        """
+        Everybody "faction" owes wages to this month, cheapest man first.
+
+        The same roster "get_monthly_salary_for_faction" sums - the dead draw nothing, and a captive
+        is off it already because capture clears his faction - but handed over warrior by warrior,
+        because a faction that cannot pay the whole bill has to know who it did manage to pay.
+
+        The order is the rule: paying from the cheapest up fits the most men into whatever silver
+        there is, and leaves the shortfall sitting on the dearest. Those are the veterans, the ones
+        whose salary grew with every level, so insolvency costs a faction its best men first.
+        """
+        return list(
+            self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
+            .filter(faction=faction)
+            # By id as well, or two warriors on the same salary come back in whatever order the
+            # database feels like and the tests below them flap
+            .order_by("monthly_salary", "id")
+        )
+
+    def record_salaries_paid(self, *, warrior_list: list) -> list:
+        """
+        Note that these warriors got their wages, which forgives however many months they went
+        without.
+
+        Taken a roster at a time rather than a warrior at a time, because the salary run always has
+        the whole list in hand and a per-warrior write would put two queries per man on the month
+        advance. No "refresh_from_db" either, for the same reason the batching is safe: these
+        instances came out of "get_payroll_for_faction" moments earlier in the same transaction, and
+        nothing in a month touches "unpaid_months" but this method and its unpaid twin. Mutating them
+        before the write is what keeps the objects handed to the events correct without reading them
+        back.
+        """
+        for warrior in warrior_list:
+            warrior.unpaid_months = 0
+
+        self.bulk_update(warrior_list, ("unpaid_months",))
+
+        return warrior_list
+
+    def record_salaries_unpaid(self, *, warrior_list: list) -> list:
+        """
+        Note another month these warriors went without their wages.
+        """
+        for warrior in warrior_list:
+            warrior.unpaid_months += 1
+
+        self.bulk_update(warrior_list, ("unpaid_months",))
+
+        return warrior_list
+
+    def strip_equipment(self, *, obj):
+        """
+        Take back whatever the warrior is carrying, without touching who owns it.
+
+        An item belongs to the faction ("Item.owner") and is only ever wielded by a warrior, so a
+        man who leaves the roster still holding his gear takes it out of reach rather than with him:
+        "Faction.get_all_unoccupied_items" skips anything a warrior is wearing, so the faction could
+        neither re-equip nor sell it ever again.
+        """
+        obj.refresh_from_db()
+        obj.weapon = None
+        obj.armor = None
+        obj.save(update_fields=("weapon", "armor"))
+
+        return obj
+
     def set_faction(self, *, obj, faction) -> int:
         """
         Set a new faction for the given warrior.

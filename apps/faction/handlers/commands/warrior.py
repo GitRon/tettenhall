@@ -5,11 +5,13 @@ from apps.faction.messages.commands.faction import AddWarriorToPub, PayMonthlyWa
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
 from apps.faction.messages.events.faction import (
     MonthlyWarriorSalariesPaid,
+    MonthlyWarriorSalariesUnpaid,
     WarriorWasAddedToPub,
 )
 from apps.faction.messages.events.warrior import RequestWarriorForPub, WarriorRecruited
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
+from apps.finance.models import Transaction
 from apps.skirmish.models import Warrior
 from apps.town.buildings.hall import Hall
 from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
@@ -83,10 +85,61 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
 
 @message_registry.register_command(command=PayMonthlyWarriorSalaries)
 def handle_warrior_monthly_salaries(*, context: PayMonthlyWarriorSalaries) -> list[Event] | Event:
-    amount = Warrior.objects.get_monthly_salary_for_faction(faction=context.faction)
+    """
+    Pay this month's wages, as far as the purse reaches.
 
-    return MonthlyWarriorSalariesPaid(
-        faction=context.faction,
-        amount=amount,
-        month=context.month,
-    )
+    The one bill in the game that arrives whether or not it can be met - every other check in the
+    codebase guards a purchase somebody chose to make - so it is also the only one that has to
+    decide what happens when it cannot. It pays the roster cheapest man first and stops when the
+    silver does, which fits the most men into what there is and leaves the shortfall on the dearest.
+
+    Both events can come out of one month: a faction that covered three of its five warriors paid
+    something and failed to pay something. The paid event stays silent at zero, though, because it
+    writes a transaction and a log line, and "salaries of 0 silver paid" directly above "you were
+    150 short" reads as a contradiction.
+    """
+    balance = Transaction.objects.current_balance(faction_id=context.faction.id)
+
+    paid_amount = 0
+    missing_amount = 0
+    paid_warrior_list = []
+    unpaid_warrior_list = []
+
+    for warrior in Warrior.objects.get_payroll_for_faction(faction=context.faction):
+        # No early exit on the first man the purse cannot cover: the payroll is sorted by salary, so
+        # everybody after him costs at least as much and fails the same test anyway, and the loop
+        # collects them all without a second branch to get wrong
+        if paid_amount + warrior.monthly_salary <= balance:
+            paid_amount += warrior.monthly_salary
+            paid_warrior_list.append(warrior)
+        else:
+            missing_amount += warrior.monthly_salary
+            unpaid_warrior_list.append(warrior)
+
+    # Two writes for the whole roster rather than two per man: this runs on the synchronous month
+    # advance, and #3 is about to multiply it by every rival faction in the savegame
+    Warrior.objects.record_salaries_paid(warrior_list=paid_warrior_list)
+    Warrior.objects.record_salaries_unpaid(warrior_list=unpaid_warrior_list)
+
+    message_list = []
+
+    if paid_amount > 0:
+        message_list.append(
+            MonthlyWarriorSalariesPaid(
+                faction=context.faction,
+                amount=paid_amount,
+                month=context.month,
+            )
+        )
+
+    if unpaid_warrior_list:
+        message_list.append(
+            MonthlyWarriorSalariesUnpaid(
+                faction=context.faction,
+                warrior_list=unpaid_warrior_list,
+                missing_amount=missing_amount,
+                month=context.month,
+            )
+        )
+
+    return message_list

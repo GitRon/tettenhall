@@ -182,10 +182,19 @@ def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsW
     # him the following month. Nobody is stranded routed by it either - prisoners are taken from the
     # unconscious alone ("handle_finish_skirmish"), and a man who fled the field walked off it.
     #
+    # A man who was not paid does not cheer up either, and this is what makes that stick:
+    # "handle_replenish_warrior_morale" refills to the maximum, so without the "unpaid_months"
+    # filter the sweep would hand back every point insolvency had just taken, in the same month it
+    # took them. The salary run writes that counter before this reads it - "handle_prepare_month"
+    # returns PlayerMonthPrepared ahead of the FactionMonthPrepared list and queuebie drains the
+    # queue in order - which is why there is a flow test on FinishMonthView pinning the ordering.
+    #
     # Only warriors below their maximum have anything to recover - replenishing the rest would be
     # a no-op further down the chain
-    warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
-        current_morale__lt=F("max_morale")
+    warrior_qs = (
+        context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+        .filter(unpaid_months=0)
+        .filter(current_morale__lt=F("max_morale"))
     )
 
     return FactionWarriorsWithReducedMoraleDetermined(

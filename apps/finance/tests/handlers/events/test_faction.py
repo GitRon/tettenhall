@@ -1,10 +1,27 @@
-from apps.faction.messages.events.faction import MonthlyBuildingMoneyEarned, NewFactionCreated
+from apps.faction.messages.events.faction import (
+    MonthlyBuildingMoneyEarned,
+    MonthlyWarriorSalariesPaid,
+    NewFactionCreated,
+)
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.handlers.events.faction import (
     handle_building_money_earnings,
     handle_hand_out_starting_silver_for_new_factions,
+    handle_pay_warrior_salaries,
 )
 from apps.finance.messages.commands.transaction import CreateTransaction
+
+
+def test_handle_pay_warrior_salaries_debits_what_was_actually_paid():
+    """
+    The amount is what the faction managed to pay, not what it owed - a purse that covered three of
+    five men is only ever charged for the three.
+    """
+    faction = FactionFactory.build()
+
+    result = handle_pay_warrior_salaries(context=MonthlyWarriorSalariesPaid(faction=faction, amount=250, month=3))
+
+    assert result == CreateTransaction(faction=faction, amount=-250, reason="Salaries paid in month 3.", month=3)
 
 
 def test_handle_building_money_earnings_credits_the_faction():

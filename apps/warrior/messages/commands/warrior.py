@@ -31,6 +31,15 @@ class ReplenishWarriorMorale(Command):
 
 
 @dataclass(kw_only=True)
+class PunishUnpaidWarrior(Command):
+    warrior: Warrior
+    # The faction that failed to pay him. Taken off the command rather than off the warrior because
+    # the handler asks it who its leader is, and the warrior's own FK is what desertion clears
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
 class HealInjuredWarrior(Command):
     # The faction mending him, which is not always the one he belongs to: a captive is healed by the
     # faction holding him, and capture has cleared his own
