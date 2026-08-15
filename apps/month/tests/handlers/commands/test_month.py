@@ -1,9 +1,10 @@
 import pytest
 
 from apps.faction.tests.factories.faction import FactionFactory
-from apps.month.handlers.commands.month import handle_prepare_month
-from apps.month.messages.commands.month import PrepareMonth
-from apps.month.messages.events.month import FactionMonthPrepared
+from apps.month.handlers.commands.month import handle_create_player_month_log, handle_prepare_month
+from apps.month.messages.commands.month import CreatePlayerMonthLog, PrepareMonth
+from apps.month.messages.events.month import FactionMonthPrepared, PlayerMonthLogCreated
+from apps.month.models.player_month_log import PlayerMonthLog
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.training.tests.factories.training import TrainingFactory
 
@@ -102,3 +103,57 @@ def test_handle_prepare_month_without_a_player_faction():
 
     assert result[0].training is None
     assert result[0].current_month == 5
+
+
+@pytest.mark.django_db
+def test_handle_create_player_month_log_writes_the_line():
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+
+    result = handle_create_player_month_log(
+        context=CreatePlayerMonthLog(
+            title="The fyrd has grown by 1 new recruitee!", month=3, faction=savegame.player_faction
+        )
+    )
+
+    player_month_log = PlayerMonthLog.objects.get()
+    assert result == PlayerMonthLogCreated(player_month_log=player_month_log)
+    assert player_month_log.title == "The fyrd has grown by 1 new recruitee!"
+
+
+@pytest.mark.django_db
+def test_handle_create_player_month_log_drops_the_line_of_a_rival_faction():
+    """
+    Recovery is faction-wide on purpose, so a rival's warriors produce these commands too. The
+    choke point every producer passes through is the only place that can tell them apart - the
+    producers are event handlers, where the traversal this does is blocked.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    rival_faction = FactionFactory(savegame=savegame)
+
+    result = handle_create_player_month_log(
+        context=CreatePlayerMonthLog(title="Warrior RivalMan healed 2 HP.", month=3, faction=rival_faction)
+    )
+
+    assert result is None
+    assert PlayerMonthLog.objects.exists() is False
+
+
+@pytest.mark.django_db
+def test_handle_create_player_month_log_without_a_player_faction():
+    """
+    Reachable before the player's faction exists: the savegame row is created first. Nobody to log
+    for, so nothing is written rather than a row nobody can ever read.
+    """
+    savegame = SavegameFactory(player_faction=None)
+    faction = FactionFactory(savegame=savegame)
+
+    result = handle_create_player_month_log(
+        context=CreatePlayerMonthLog(title="Buildings earned 50 silver this month.", month=3, faction=faction)
+    )
+
+    assert result is None
+    assert PlayerMonthLog.objects.exists() is False

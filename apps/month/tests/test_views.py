@@ -62,6 +62,28 @@ def test_finish_month_view_lets_a_rival_faction_recover(logged_in_client, curren
 
 
 @pytest.mark.django_db
+def test_finish_month_view_logs_the_recovery_of_the_player_faction_only(logged_in_client, current_savegame):
+    """
+    Flow test rather than a unit test: that the rivals get a month at all only exists in the
+    registry, and the producers of these log lines are two handlers away from the one guarding them.
+
+    Both warriors heal - recovery is faction-wide on purpose - but only one of them is bookkeeping
+    the player has any business reading. Rival lines used to outnumber his own, a savegame starting
+    with three to five of them.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    WarriorFactory(faction=current_savegame.player_faction, current_health=16, max_health=20)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction, current_health=18, max_health=20)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert PlayerMonthLog.objects.filter(faction=current_savegame.player_faction).exists() is True
+    assert PlayerMonthLog.objects.filter(faction=rival_faction).exists() is False
+
+
+@pytest.mark.django_db
 def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current_savegame):
     """
     Covers the htmx branch of RunningSavegameRequiredMixin; which views carry it at all is asserted
@@ -118,6 +140,20 @@ def test_player_month_log_list_view_hides_logs_of_another_savegame(logged_in_cli
 
 
 @pytest.mark.django_db
+def test_player_month_log_list_view_hides_logs_of_a_rival_faction(logged_in_client, current_savegame):
+    """
+    Scoping to the savegame is not enough here: the rivals of the player live in it too, and the log
+    is his own faction's bookkeeping rather than his savegame's.
+    """
+    PlayerMonthLogFactory(faction=FactionFactory(savegame=current_savegame))
+
+    response = logged_in_client.get(reverse("month:player-month-log-list-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["playermonthlog_list"]) == []
+
+
+@pytest.mark.django_db
 def test_acknowledge_player_month_log_view_removes_the_log(logged_in_client, current_savegame):
     player_month_log = PlayerMonthLogFactory(faction=current_savegame.player_faction)
 
@@ -142,6 +178,20 @@ def test_acknowledge_player_month_log_view_cannot_remove_a_log_of_another_savega
 
     assert response.status_code == 404
     assert PlayerMonthLog.objects.filter(pk=foreign_log.pk).exists() is True
+
+
+@pytest.mark.django_db
+def test_acknowledge_player_month_log_view_cannot_remove_a_log_of_a_rival_faction(logged_in_client, current_savegame):
+    """
+    The stricter mixin is what closes this one: a rival of the player's own savegame passes the
+    savegame scoping, and the id from the URL was enough to acknowledge its row away.
+    """
+    rival_log = PlayerMonthLogFactory(faction=FactionFactory(savegame=current_savegame))
+
+    response = logged_in_client.delete(reverse("month:player-month-log-remove-view", kwargs={"pk": rival_log.pk}))
+
+    assert response.status_code == 404
+    assert PlayerMonthLog.objects.filter(pk=rival_log.pk).exists() is True
 
 
 @pytest.mark.django_db
