@@ -417,6 +417,30 @@ def test_handle_determine_warriors_with_reduced_morale_passes_over_captives():
 
 
 @pytest.mark.django_db
+def test_handle_determine_warriors_with_reduced_morale_picks_up_a_fleeing_warrior():
+    """
+    The half of the rally this sweep owns. Restoring the condition further down the chain only ever
+    helps if the man who routed is in this list at all, and a warrior who fled without a scratch is
+    in no other one - the healing sweep wants the wounded, and he is not.
+    """
+    faction = FactionFactory()
+    fleeing_warrior = WarriorFactory(
+        faction=faction,
+        current_morale=0,
+        max_morale=20,
+        condition=Warrior.ConditionChoices.CONDITION_FLEEING,
+    )
+
+    result = handle_determine_warriors_with_reduced_morale(
+        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
+    )
+
+    assert result == FactionWarriorsWithReducedMoraleDetermined(
+        faction=faction, warrior_list=[fleeing_warrior], month=3
+    )
+
+
+@pytest.mark.django_db
 def test_handle_create_factions_for_new_savegame_starts_with_the_player_faction():
     savegame = SavegameFactory()
     culture = CultureFactory()
