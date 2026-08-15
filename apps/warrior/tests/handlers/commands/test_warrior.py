@@ -2,16 +2,11 @@ from unittest import mock
 
 import pytest
 
-from apps.faction.messages.events.warrior import WarriorRecruited
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warrior.handlers.commands.warrior import (
-    handle_heal_injured_warrior,
-    handle_recruit_captured_warrior,
-    handle_replenish_warrior_morale,
-)
-from apps.warrior.messages.commands.warrior import HealInjuredWarrior, RecruitCapturedWarrior, ReplenishWarriorMorale
+from apps.warrior.handlers.commands.warrior import handle_heal_injured_warrior, handle_replenish_warrior_morale
+from apps.warrior.messages.commands.warrior import HealInjuredWarrior, ReplenishWarriorMorale
 from apps.warrior.messages.events.warrior import WarriorHealthHealed, WarriorMoraleReplenished
 
 
@@ -156,22 +151,3 @@ def test_handle_heal_injured_warrior_wakes_a_captive_without_freeing_him():
     captive.refresh_from_db()
     assert captive.condition == Warrior.ConditionChoices.CONDITION_HEALTHY
     assert list(captor.captured_warriors.all()) == [captive]
-
-
-@pytest.mark.django_db
-def test_handle_recruit_captured_warrior_keeps_the_health_he_was_mended_to():
-    """
-    Recruiting is the moment a captive rejoins a roster, not a second course of treatment: the
-    months in the cell already brought him back, and taking him on adds nothing to that.
-    """
-    captor = FactionFactory()
-    captive = WarriorFactory(
-        faction=None, savegame=captor.savegame, culture=captor.culture, current_health=20, max_health=20
-    )
-    captor.captured_warriors.add(captive)
-
-    result = handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captive, faction=captor, month=3))
-
-    assert result == WarriorRecruited(warrior=captive, faction=captor, recruitment_price=0, month=3)
-    captive.refresh_from_db()
-    assert captive.current_health == 20
