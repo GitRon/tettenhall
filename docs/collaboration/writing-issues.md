@@ -32,9 +32,10 @@ merely *plain*. Broken is `mvp`.
 - **`enhancement`** — new behaviour, or behaviour the game means but does not have.
 - **`documentation`** — a doc [indexed in the README](../../README.md) is wrong, missing or has drifted
   from the code.
-- **`question`** — a decision has to be made before the work can be specified. Issue #46 is the pattern:
+- **`question`** — a decision has to be made before the work can be specified. Issue #62 is the pattern:
   the code is doing something nobody chose, and the issue exists to get it chosen. A `question` issue is
-  finished when the decision is written down, not when code changes.
+  finished when the decision is written down, not when code changes — #62 closed with a comment in a
+  handler (14db034) and no behaviour change at all.
 
 `bug` + `question` together is legitimate and common: the behaviour is wrong *and* the right behaviour is
 open.
