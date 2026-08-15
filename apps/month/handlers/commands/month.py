@@ -44,7 +44,14 @@ def handle_prepare_month(*, context: PrepareMonth) -> list[Event]:
 
 
 @message_registry.register_command(command=CreatePlayerMonthLog)
-def handle_create_player_month_log(*, context: CreatePlayerMonthLog) -> Event:
+def handle_create_player_month_log(*, context: CreatePlayerMonthLog) -> Event | None:
+    # Every faction of the savegame gets its month, so the recovery handlers emit this command for
+    # the rivals too - and their lines would drown the player's own in his log. The producers cannot
+    # tell them apart: they are event handlers, where strict mode's database blocker forbids the
+    # traversal below. This command handler may query, and every producer passes through it.
+    if context.faction.savegame.player_faction_id != context.faction.id:
+        return None
+
     player_month_log = PlayerMonthLog.objects.create_record(
         title=context.title,
         month=context.month,
@@ -56,6 +63,9 @@ def handle_create_player_month_log(*, context: CreatePlayerMonthLog) -> Event:
 
 @message_registry.register_command(command=ClearPlayerMonthLog)
 def handle_clear_player_month_log(*, context: ClearPlayerMonthLog) -> Event:
+    # Wider than the player faction on purpose, even though handle_create_player_month_log no longer
+    # writes anything else: this is what sweeps up the rival rows a savegame accumulated before that
+    # guard existed
     PlayerMonthLog.objects.for_savegame(savegame_id=context.savegame.id).filter(
         month__lt=context.current_month
     ).delete()
