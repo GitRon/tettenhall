@@ -176,6 +176,12 @@ def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsW
     # "handle_replenish_warrior_morale" refills to the maximum unconditionally, so a month in an
     # enemy cell would restore a man completely.
     #
+    # Settled, not an oversight left next to a healing sweep that was taught the opposite lesson: a
+    # captive keeps whatever morale the fight left him for as long as he is held, and only starts
+    # recovering once "handle_recruit_captured_warrior" puts him on a roster and this sweep reaches
+    # him the following month. Nobody is stranded routed by it either - prisoners are taken from the
+    # unconscious alone ("handle_finish_skirmish"), and a man who fled the field walked off it.
+    #
     # Only warriors below their maximum have anything to recover - replenishing the rest would be
     # a no-op further down the chain
     warrior_qs = context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).filter(
