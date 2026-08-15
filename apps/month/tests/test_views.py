@@ -84,6 +84,34 @@ def test_finish_month_view_logs_the_recovery_of_the_player_faction_only(logged_i
 
 
 @pytest.mark.django_db
+def test_finish_month_view_keeps_an_unpaid_warriors_morale_down(logged_in_client, current_savegame):
+    """
+    Flow test rather than a unit test, because what it pins is the ordering of two commands and
+    nothing but a real queue run has one.
+
+    The morale sweep refills to the maximum, so it has to see the unpaid count the salary run wrote
+    this same month - handle_prepare_month returns PlayerMonthPrepared ahead of the
+    FactionMonthPrepared list and queuebie drains in order. Reverse the two and this warrior ends the
+    month at 20 minus the penalty instead: replenished first, docked afterwards, no worse off for
+    having gone unpaid.
+
+    He starts below his maximum on purpose. At full morale the sweep would pass him over anyway and
+    the test would hold whichever way round the two ran.
+    """
+    # The bulletin board restocks as part of the month and a quest needs somebody to be against
+    FactionFactory(savegame=current_savegame)
+    warrior = WarriorFactory(
+        faction=current_savegame.player_faction, current_morale=10, max_morale=20, monthly_salary=500
+    )
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    warrior.refresh_from_db()
+    assert (warrior.unpaid_months, warrior.current_morale) == (1, 5)
+
+
+@pytest.mark.django_db
 def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current_savegame):
     """
     Covers the htmx branch of RunningSavegameRequiredMixin; which views carry it at all is asserted

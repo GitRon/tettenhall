@@ -316,3 +316,93 @@ def test_apply_level_up_growth_leaves_the_current_values_alone():
 
     warrior.refresh_from_db()
     assert (warrior.current_health, warrior.current_morale) == (5, 5)
+
+
+@pytest.mark.django_db
+def test_get_payroll_for_faction_hands_over_the_cheapest_warrior_first():
+    """
+    The order is the rule: paying from the cheapest up fits the most men into whatever silver there
+    is, and leaves the shortfall sitting on the veterans.
+    """
+    faction = FactionFactory()
+    ealdorman = WarriorFactory(faction=faction, monthly_salary=300)
+    levy = WarriorFactory(faction=faction, monthly_salary=50)
+    thegn = WarriorFactory(faction=faction, monthly_salary=200)
+
+    result = Warrior.objects.get_payroll_for_faction(faction=faction)
+
+    assert result == [levy, thegn, ealdorman]
+
+
+@pytest.mark.django_db
+def test_get_payroll_for_faction_leaves_out_the_dead():
+    faction = FactionFactory()
+    survivor = WarriorFactory(faction=faction, monthly_salary=50)
+    WarriorFactory(faction=faction, monthly_salary=50, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    result = Warrior.objects.get_payroll_for_faction(faction=faction)
+
+    assert result == [survivor]
+
+
+@pytest.mark.django_db
+def test_get_payroll_for_faction_leaves_out_another_factions_warriors():
+    faction = FactionFactory()
+    own_warrior = WarriorFactory(faction=faction, monthly_salary=50)
+    WarriorFactory(monthly_salary=50)
+
+    result = Warrior.objects.get_payroll_for_faction(faction=faction)
+
+    assert result == [own_warrior]
+
+
+@pytest.mark.django_db
+def test_record_salary_paid_forgives_the_months_he_went_without():
+    warrior = WarriorFactory(unpaid_months=2)
+
+    Warrior.objects.record_salary_paid(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert warrior.unpaid_months == 0
+
+
+@pytest.mark.django_db
+def test_record_salary_unpaid_counts_another_month():
+    warrior = WarriorFactory(unpaid_months=1)
+
+    Warrior.objects.record_salary_unpaid(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert warrior.unpaid_months == 2
+
+
+@pytest.mark.django_db
+def test_strip_equipment_takes_back_weapon_and_armor():
+    """
+    An item belongs to the faction and is only wielded by a warrior, so gear left on a man who has
+    walked off the roster is out of everyone's reach rather than in his hands.
+    """
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON))
+    armor = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR))
+    warrior = WarriorFactory(weapon=weapon, armor=armor)
+
+    Warrior.objects.strip_equipment(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert (warrior.weapon, warrior.armor) == (None, None)
+
+
+@pytest.mark.django_db
+def test_strip_equipment_leaves_the_owning_faction_alone():
+    """
+    Taking the gear back is what keeps it sellable - the faction has to still own it afterwards, or
+    a deserter has robbed the war band on his way out.
+    """
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
+    warrior = WarriorFactory(faction=faction, weapon=weapon)
+
+    Warrior.objects.strip_equipment(obj=warrior)
+
+    weapon.refresh_from_db()
+    assert weapon.owner == faction

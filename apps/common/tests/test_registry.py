@@ -35,6 +35,9 @@ TERMINAL_MESSAGES: frozenset[str] = frozenset(
         "apps.skirmish.messages.events.battle_history.BattleHistoryCreated",
         "apps.skirmish.messages.events.warrior.LastUsedSkirmishActionStored",
         "apps.training.messages.events.training.NewTrainingCreated",
+        # The player is told what he was short and who walked over it, not who sulked - one line per
+        # unpaid warrior would bury the rest of the month, and the roster shows the morale anyway
+        "apps.warrior.messages.events.warrior.WarriorLostMoraleOverUnpaidSalary",
     }
 )
 

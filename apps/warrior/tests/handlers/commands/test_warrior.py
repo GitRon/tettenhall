@@ -3,11 +3,23 @@ from unittest import mock
 import pytest
 
 from apps.faction.tests.factories.faction import FactionFactory
+from apps.item.models.item_type import ItemType
+from apps.item.tests.factories.item import ItemFactory
+from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warrior.handlers.commands.warrior import handle_heal_injured_warrior, handle_replenish_warrior_morale
-from apps.warrior.messages.commands.warrior import HealInjuredWarrior, ReplenishWarriorMorale
-from apps.warrior.messages.events.warrior import WarriorHealthHealed, WarriorMoraleReplenished
+from apps.warrior.handlers.commands.warrior import (
+    handle_heal_injured_warrior,
+    handle_punish_unpaid_warrior,
+    handle_replenish_warrior_morale,
+)
+from apps.warrior.messages.commands.warrior import HealInjuredWarrior, PunishUnpaidWarrior, ReplenishWarriorMorale
+from apps.warrior.messages.events.warrior import (
+    WarriorDesertedOverUnpaidSalary,
+    WarriorHealthHealed,
+    WarriorLostMoraleOverUnpaidSalary,
+    WarriorMoraleReplenished,
+)
 
 
 @pytest.mark.django_db
@@ -151,3 +163,78 @@ def test_handle_heal_injured_warrior_wakes_a_captive_without_freeing_him():
     captive.refresh_from_db()
     assert captive.condition == Warrior.ConditionChoices.CONDITION_HEALTHY
     assert list(captor.captured_warriors.all()) == [captive]
+
+
+@pytest.mark.django_db
+def test_handle_punish_unpaid_warrior_takes_a_quarter_of_his_morale():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, current_morale=20, max_morale=20, unpaid_months=1)
+
+    result = handle_punish_unpaid_warrior(context=PunishUnpaidWarrior(warrior=warrior, faction=faction, month=3))
+
+    assert result == WarriorLostMoraleOverUnpaidSalary(warrior=warrior, faction=faction, lost_morale=5, month=3)
+    warrior.refresh_from_db()
+    assert warrior.current_morale == 15
+
+
+@pytest.mark.django_db
+def test_handle_punish_unpaid_warrior_floors_the_loss_at_one_point():
+    """
+    A quarter of a levy's morale rounds to nothing for every maximum below three, and a penalty of
+    zero is not a penalty.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, current_morale=2, max_morale=2, unpaid_months=1)
+
+    result = handle_punish_unpaid_warrior(context=PunishUnpaidWarrior(warrior=warrior, faction=faction, month=3))
+
+    assert result.lost_morale == 1
+    warrior.refresh_from_db()
+    assert warrior.current_morale == 1
+
+
+@pytest.mark.django_db
+def test_handle_punish_unpaid_warrior_lets_him_walk_on_the_third_month():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, unpaid_months=3)
+
+    result = handle_punish_unpaid_warrior(context=PunishUnpaidWarrior(warrior=warrior, faction=faction, month=3))
+
+    assert result == WarriorDesertedOverUnpaidSalary(warrior=warrior, faction=faction, month=3)
+    warrior.refresh_from_db()
+    assert warrior.faction is None
+
+
+@pytest.mark.django_db
+def test_handle_punish_unpaid_warrior_leaves_a_deserters_gear_with_the_faction():
+    """
+    An item belongs to the faction and is only wielded by a warrior, so gear walking off the roster
+    on a deserter can never be re-equipped or sold again.
+    """
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
+    warrior = WarriorFactory(faction=faction, weapon=weapon, unpaid_months=3)
+
+    handle_punish_unpaid_warrior(context=PunishUnpaidWarrior(warrior=warrior, faction=faction, month=3))
+
+    warrior.refresh_from_db()
+    weapon.refresh_from_db()
+    assert (warrior.weapon, weapon.owner) == (None, faction)
+
+
+@pytest.mark.django_db
+def test_handle_punish_unpaid_warrior_keeps_the_leader_however_long_he_goes_unpaid():
+    """
+    Faction.leader is a CASCADE FK and losing the leader is what defeats a faction, so a leader
+    deserting would end the game over a wage bill instead of shrinking the war band.
+    """
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction, current_morale=20, max_morale=20, unpaid_months=9)
+    faction.leader = leader
+    faction.save()
+
+    result = handle_punish_unpaid_warrior(context=PunishUnpaidWarrior(warrior=leader, faction=faction, month=3))
+
+    assert result == WarriorLostMoraleOverUnpaidSalary(warrior=leader, faction=faction, lost_morale=5, month=3)
+    leader.refresh_from_db()
+    assert leader.faction == faction

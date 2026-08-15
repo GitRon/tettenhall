@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.db.models import QuerySet, Sum
+from django.db.models import QuerySet
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import generic
@@ -199,13 +199,11 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         # Fetch current savegame record
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        player_faction = current_savegame.player_faction
-        # TODO: put in manager
-        context["monthly_salary_amount"] = (
-            player_faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD).aggregate(
-                sum_monthly_salary=Sum("monthly_salary")
-            )["sum_monthly_salary"]
-            or 0
+        # The same sum the salary run bills against, taken from the same place: the card is a
+        # promise about what next month costs, and it used to make that promise with its own copy of
+        # the aggregate
+        context["monthly_salary_amount"] = Warrior.objects.get_monthly_salary_for_faction(
+            faction=current_savegame.player_faction
         )
         return context
 

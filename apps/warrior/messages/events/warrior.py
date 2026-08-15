@@ -16,6 +16,22 @@ class WarriorMoraleReplenished(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorLostMoraleOverUnpaidSalary(Event):
+    warrior: Warrior
+    faction: Faction
+    lost_morale: int
+    month: int
+
+
+@dataclass(kw_only=True)
+class WarriorDesertedOverUnpaidSalary(Event):
+    warrior: Warrior
+    # The faction he walked out on - his own FK is cleared by then
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorHealthHealed(Event):
     warrior: Warrior
     faction: Faction

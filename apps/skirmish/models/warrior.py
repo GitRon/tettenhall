@@ -26,6 +26,12 @@ class Warrior(models.Model):
     # What every level adds to the four attributes and to the salary alike
     LEVEL_UP_GROWTH = 0.1
 
+    # What a month without wages costs, as a share of the warrior's maximum morale, and how many
+    # such months in a row he puts up with before walking. Two drops and then he is gone, so the
+    # player watches the war band sour for two months before it starts shrinking.
+    UNPAID_MORALE_LOSS = 0.25
+    UNPAID_MONTHS_UNTIL_DESERTION = 3
+
     class ConditionChoices(models.IntegerChoices):
         CONDITION_HEALTHY = 1, "Healthy"
         CONDITION_UNCONSCIOUS = 2, "Unconscious"
@@ -57,6 +63,10 @@ class Warrior(models.Model):
 
     experience = models.PositiveIntegerField("Experience", default=0)
     monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
+    # Consecutive months this warrior went without his wages, reset the moment he is paid again.
+    # Per warrior rather than per faction because the salary run pays the roster cheapest first and
+    # stops when the silver does, so one month leaves some men paid and some not.
+    unpaid_months = models.PositiveSmallIntegerField("Unpaid months", default=0)
 
     recruitment_price = models.PositiveSmallIntegerField("Recruitment price", default=0)
 
