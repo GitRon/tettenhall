@@ -1,3 +1,5 @@
+from math import isqrt
+
 from django.db import models
 
 from apps.common.domain.dice import DiceNotation
@@ -15,6 +17,14 @@ from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishAct
 class Warrior(models.Model):
     NO_WEAPON_ATTACK = "1d3"
     NO_ARMOR_DEFENSE = "1d3"
+
+    # Reaching level N costs (N - 1) squared times XP_LEVEL_BASE - 100, 400, 900, 1600 - so every level takes
+    # longer than the one before it and a veteran does not run away with it. Quadratic rather than
+    # anything steeper because isqrt inverts it in one integer expression: no loop walking the
+    # levels, and no float to round the wrong way at a threshold.
+    XP_LEVEL_BASE = 100
+    # What every level adds to the four attributes and to the salary alike
+    LEVEL_UP_GROWTH = 0.1
 
     class ConditionChoices(models.IntegerChoices):
         CONDITION_HEALTHY = 1, "Healthy"
@@ -113,6 +123,36 @@ class Warrior(models.Model):
     @property
     def slavery_selling_price(self) -> int:
         return int(self.recruitment_price / 2)
+
+    @staticmethod
+    def level_for(*, experience: int) -> int:
+        """
+        The level a given amount of experience buys, as a staticmethod so a handler can ask for the
+        level of a number rather than of an instance.
+
+        Derived rather than stored: a column would need a backfill for every warrior generated with
+        experience already, and would then be free to drift out of step with the experience it is
+        supposed to describe.
+
+        Coerced to an int because a freshly generated warrior does not hold one. BaseWarriorGenerator
+        rolls "random.gauss" and hands the float straight to "objects.create", and Django does not
+        re-read after a create - so the database has an integer while the in-memory instance still has
+        30.4, and "isqrt(30.4 // 100)" raises. That is every warrior in the pub and every leader on the
+        turn a savegame is created.
+        """
+        return isqrt(int(experience) // Warrior.XP_LEVEL_BASE) + 1
+
+    @property
+    def level(self) -> int:
+        return self.level_for(experience=self.experience)
+
+    @property
+    def experience_for_next_level(self) -> int:
+        """
+        The threshold the next level sits behind, so a level can be shown as progress towards
+        something rather than as a number that appears from nowhere on a battlefield.
+        """
+        return self.level**2 * self.XP_LEVEL_BASE
 
     def get_skirmish_actions(self) -> list[tuple]:
         # TODO (#52): show only the ones the warrior has depending on his level

@@ -113,6 +113,28 @@ def handle_warrior_gained_experience(*, context: warrior.WarriorGainedExperience
     )
 
 
+@message_registry.register_event(event=warrior.WarriorGainedLevel)
+def handle_warrior_gained_level(*, context: warrior.WarriorGainedLevel) -> Command:
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} reached level {context.level}.",
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorImprovedStats)
+def handle_warrior_improved_stats(*, context: warrior.WarriorImprovedStats) -> Command:
+    """
+    The wage rise is told to the player at the moment it happens. A bill that grows silently is one he
+    discovers as an unexplained shortfall a month later.
+    """
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} grew stronger: strength +{context.gained_strength}, "
+        f"dexterity +{context.gained_dexterity}, health +{context.gained_max_health}, "
+        f"morale +{context.gained_max_morale} — and now costs {context.new_monthly_salary} silver a month.",
+    )
+
+
 @message_registry.register_event(event=transaction.WarriorDroppedSilver)
 def handle_warrior_dropped_silver(*, context: transaction.WarriorDroppedSilver) -> Command:
     return CreateBattleHistory(

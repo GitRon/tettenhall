@@ -97,3 +97,26 @@ class WarriorGainedExperience(Event):
     skirmish: Skirmish
     warrior: Warrior
     gained_experience: int
+
+
+@dataclass(kw_only=True)
+class WarriorGainedLevel(Event):
+    skirmish: Skirmish
+    warrior: Warrior
+    level: int
+
+
+@dataclass(kw_only=True)
+class WarriorImprovedStats(Event):
+    skirmish: Skirmish
+    warrior: Warrior
+    gained_strength: int
+    gained_dexterity: int
+    gained_max_health: int
+    gained_max_morale: int
+    gained_salary: int
+    # The wage *after* the growth, carried rather than read back off the warrior when the log line is
+    # written. Every message in a level-up chain holds the same instance, so a gain crossing two
+    # thresholds grows it twice before either log handler runs - and both lines would then quote the
+    # wage the second growth left behind.
+    new_monthly_salary: int

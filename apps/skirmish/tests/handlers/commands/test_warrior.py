@@ -1,6 +1,7 @@
 import pytest
 
 from apps.skirmish.handlers.commands.warrior import (
+    handle_increase_warrior_stats_on_level_up,
     handle_reduce_morale_of_remaining_warriors,
     handle_reduce_warrior_health,
     handle_warrior_increasing_experience,
@@ -12,14 +13,17 @@ from apps.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    IncreaseWarriorStatsOnLevelUp,
     ReduceHealth,
     ReduceMorale,
     ReduceMoraleOfRemainingWarriors,
 )
 from apps.skirmish.messages.events.warrior import (
     WarriorGainedExperience,
+    WarriorGainedLevel,
     WarriorGainedMorale,
     WarriorHasFled,
+    WarriorImprovedStats,
     WarriorLostMorale,
     WarriorWasCaptured,
     WarriorWasIncapacitated,
@@ -247,6 +251,66 @@ def test_handle_warrior_increasing_experience_adds_the_gained_points():
         context=IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=25)
     )
 
-    assert result == WarriorGainedExperience(skirmish=skirmish, warrior=warrior, gained_experience=25)
+    assert result == [WarriorGainedExperience(skirmish=skirmish, warrior=warrior, gained_experience=25)]
     warrior.refresh_from_db()
     assert warrior.experience == 125
+
+
+@pytest.mark.django_db
+def test_handle_warrior_increasing_experience_announces_a_crossed_threshold():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=90)
+
+    result = handle_warrior_increasing_experience(
+        context=IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=25)
+    )
+
+    assert result == [
+        WarriorGainedExperience(skirmish=skirmish, warrior=warrior, gained_experience=25),
+        WarriorGainedLevel(skirmish=skirmish, warrior=warrior, level=2),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_warrior_increasing_experience_announces_both_of_two_crossed_thresholds():
+    """
+    A gain spanning two thresholds levels the warrior twice, so it has to grow him twice and read as
+    two lines in the log. Clamping to a single level-up would quietly swallow the second.
+    """
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=0)
+
+    result = handle_warrior_increasing_experience(
+        context=IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=400)
+    )
+
+    assert result == [
+        WarriorGainedExperience(skirmish=skirmish, warrior=warrior, gained_experience=400),
+        WarriorGainedLevel(skirmish=skirmish, warrior=warrior, level=2),
+        WarriorGainedLevel(skirmish=skirmish, warrior=warrior, level=3),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_increase_warrior_stats_on_level_up_reports_every_gain():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, strength=10, dexterity=10, max_health=20, max_morale=20, monthly_salary=150
+    )
+
+    result = handle_increase_warrior_stats_on_level_up(
+        context=IncreaseWarriorStatsOnLevelUp(skirmish=skirmish, warrior=warrior)
+    )
+
+    assert result == WarriorImprovedStats(
+        skirmish=skirmish,
+        warrior=warrior,
+        gained_strength=1,
+        gained_dexterity=1,
+        gained_max_health=2,
+        gained_max_morale=2,
+        gained_salary=15,
+        new_monthly_salary=165,
+    )
+    warrior.refresh_from_db()
+    assert warrior.monthly_salary == 165

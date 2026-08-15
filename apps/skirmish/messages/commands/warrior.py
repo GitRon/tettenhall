@@ -53,4 +53,11 @@ class IncreaseMorale(Command):
 class IncreaseExperience(Command):
     skirmish: Skirmish
     warrior: Warrior
-    increased_experience: float
+    # An int, because a fractional gain would put the level thresholds off by a rounding error
+    increased_experience: int
+
+
+@dataclass(kw_only=True)
+class IncreaseWarriorStatsOnLevelUp(Command):
+    skirmish: Skirmish
+    warrior: Warrior

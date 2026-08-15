@@ -271,3 +271,48 @@ def test_increase_experience_adds_the_gained_points():
     result = Warrior.objects.increase_experience(obj=warrior, experience=25)
 
     assert result.experience == 125
+
+
+@pytest.mark.django_db
+def test_apply_level_up_growth_takes_a_tenth_of_every_grown_value():
+    warrior = WarriorFactory(strength=10, dexterity=10, max_health=20, max_morale=20, monthly_salary=150)
+
+    result = Warrior.objects.apply_level_up_growth(obj=warrior)
+
+    assert result == {"strength": 1, "dexterity": 1, "max_health": 2, "max_morale": 2, "monthly_salary": 15}
+    warrior.refresh_from_db()
+    assert (warrior.strength, warrior.dexterity, warrior.max_health, warrior.max_morale, warrior.monthly_salary) == (
+        11,
+        11,
+        22,
+        22,
+        165,
+    )
+
+
+@pytest.mark.django_db
+def test_apply_level_up_growth_floors_every_gain_at_one_point():
+    """
+    A levy off the fyrd sits at about five strength, five dexterity and five morale, and a tenth of
+    five rounds to zero - Python rounds halves to even. Without the floor he would level up, gain a
+    single hit point off his larger health pool, and charge more for it.
+    """
+    warrior = WarriorFactory(strength=5, dexterity=5, max_health=10, max_morale=5, monthly_salary=150)
+
+    result = Warrior.objects.apply_level_up_growth(obj=warrior)
+
+    assert result == {"strength": 1, "dexterity": 1, "max_health": 1, "max_morale": 1, "monthly_salary": 15}
+
+
+@pytest.mark.django_db
+def test_apply_level_up_growth_leaves_the_current_values_alone():
+    """
+    Experience arrives during a skirmish, so raising current_health along with the maximum would top a
+    warrior up mid-battle and make winning harder the cheapest way to survive a fight.
+    """
+    warrior = WarriorFactory(current_health=5, max_health=20, current_morale=5, max_morale=20, monthly_salary=150)
+
+    Warrior.objects.apply_level_up_growth(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert (warrior.current_health, warrior.current_morale) == (5, 5)

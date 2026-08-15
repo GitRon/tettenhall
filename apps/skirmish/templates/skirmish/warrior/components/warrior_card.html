@@ -5,6 +5,9 @@
         <h3 class="uk-card-title">{{ warrior.name }}</h3>
         <ul class="uk-subnav uk-subnav-divider uk-margin-remove-top">
             <li>{{ warrior.faction }}</li>
+            {# The level goes on the card in the fight because this is where a level-up is actually #}
+            {# witnessed: the growth happens mid-skirmish and the log announces it right beside here. #}
+            <li><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</li>
             <li>
                 <div class="uk-margin-top">
                     <progress class="uk-progress progress-green" value="{{ warrior.current_health }}"

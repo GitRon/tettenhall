@@ -7,6 +7,7 @@ from apps.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    IncreaseWarriorStatsOnLevelUp,
     ReduceHealth,
     ReduceMorale,
     ReduceMoraleOfRemainingWarriors,
@@ -90,6 +91,14 @@ def handle_experience_gain_on_warrior_incapacitation(
         warrior=context.by_warrior,
         increased_experience=gained_experience,
     )
+
+
+@message_registry.register_event(event=warrior.WarriorGainedLevel)
+def handle_stat_growth_on_warrior_level_up(*, context: warrior.WarriorGainedLevel) -> Command:
+    # The writing happens in the command handler rather than here, for the same reason
+    # ReduceMoraleOfRemainingWarriors exists rather than the morale drop happening inline: an event
+    # handler reacts, it does not touch the database
+    return IncreaseWarriorStatsOnLevelUp(skirmish=context.skirmish, warrior=context.warrior)
 
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)

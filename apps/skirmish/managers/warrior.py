@@ -159,6 +159,42 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def apply_level_up_growth(self, *, obj) -> dict[str, int]:
+        """
+        Grow everything a level touches by LEVEL_UP_GROWTH, and return what each one gained.
+
+        Only the maxima, never the current values. Unlike training, experience arrives *during* a
+        skirmish - handle_experience_gain_on_warrior_incapacitation fires the moment somebody drops -
+        so raising current_health here would top a warrior up mid-battle and make winning harder the
+        cheapest way to survive. The warrior reads as wounded against his new ceiling instead, which
+        is what handle_progress_warrior_training already does with max_morale.
+
+        Every gain is floored at one point. A tenth of a small attribute rounds to nothing: round(v *
+        0.1) is 0 for every v from 1 to 5, five included, because Python rounds halves to even. The
+        fyrd generator sits at STATS_MU = 5 and MORALE_MU = 5, so a levy would otherwise level up,
+        gain a single hit point off his health, and charge more for it. Same reasoning and same shape
+        as max(1, morale_at_stake) in handle_morale_change_on_warrior_defends_all_damage.
+
+        The *_progress columns are deliberately not involved. They belong to training, which fills and
+        resets them, so keeping a fractional remainder there would mean a level-up eats a month of
+        training and a month of training triggers level-up growth. Levels round per event.
+        """
+        # The refresh matters twice over: it takes the authoritative values, and it is also what turns
+        # a generated warrior's float attributes into the integers the arithmetic below assumes
+        obj.refresh_from_db()
+
+        grown_fields = ("strength", "dexterity", "max_health", "max_morale", "monthly_salary")
+        gains = {field: max(1, round(getattr(obj, field) * self.model.LEVEL_UP_GROWTH)) for field in grown_fields}
+
+        for field, gain in gains.items():
+            setattr(obj, field, getattr(obj, field) + gain)
+
+        # Only the five fields touched above: a full save would write back everything else this
+        # instance still holds from before
+        obj.save(update_fields=grown_fields)
+
+        return gains
+
     def get_monthly_salary_for_faction(self, *, faction) -> int:
         """
         Calculate the salary of all warriors working for "faction" not being dead.

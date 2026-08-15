@@ -12,8 +12,10 @@ from apps.skirmish.handlers.events.battle_history import (
     handle_log_warrior_takes_damage,
     handle_warrior_dropped_silver,
     handle_warrior_gained_experience,
+    handle_warrior_gained_level,
     handle_warrior_gains_morale,
     handle_warrior_has_fled,
+    handle_warrior_improved_stats,
     handle_warrior_is_captured,
     handle_warrior_lost_morale,
 )
@@ -24,8 +26,10 @@ from apps.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
     WarriorGainedExperience,
+    WarriorGainedLevel,
     WarriorGainedMorale,
     WarriorHasFled,
+    WarriorImprovedStats,
     WarriorLostMorale,
     WarriorTookDamage,
     WarriorWasCaptured,
@@ -217,6 +221,39 @@ def test_handle_warrior_gained_experience_logs_the_gained_points():
     )
 
     assert result == CreateBattleHistory(skirmish=skirmish, message="Beorn gained 25 experience.")
+
+
+def test_handle_warrior_gained_level_logs_the_new_level():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Beorn")
+
+    result = handle_warrior_gained_level(context=WarriorGainedLevel(skirmish=skirmish, warrior=warrior, level=4))
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Beorn reached level 4.")
+
+
+def test_handle_warrior_improved_stats_logs_the_growth_and_the_new_wage():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Beorn")
+
+    result = handle_warrior_improved_stats(
+        context=WarriorImprovedStats(
+            skirmish=skirmish,
+            warrior=warrior,
+            gained_strength=1,
+            gained_dexterity=1,
+            gained_max_health=2,
+            gained_max_morale=1,
+            gained_salary=15,
+            new_monthly_salary=165,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Beorn grew stronger: strength +1, dexterity +1, health +2, morale +1 — "
+        "and now costs 165 silver a month.",
+    )
 
 
 def test_handle_warrior_dropped_silver_logs_the_loot():
