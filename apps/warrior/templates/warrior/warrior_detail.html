@@ -14,6 +14,16 @@
             <td>{{ object.culture }}</td>
         </tr>
         <tr>
+            <td>Level</td>
+            <td>{{ object.level }}</td>
+        </tr>
+        <tr>
+            <td>Experience</td>
+            {# Against the next threshold rather than on its own, so the level reads as progress #}
+            {# towards something instead of a number appearing from nowhere on a battlefield. #}
+            <td>{{ object.experience }} / {{ object.experience_for_next_level }} XP</td>
+        </tr>
+        <tr>
             <td>Weapon</td>
             <td>
                 {% include 'warrior/components/warrior_field_display.html' with object=object attribute='weapon' field_value=object.weapon %}

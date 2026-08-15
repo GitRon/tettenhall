@@ -2,7 +2,9 @@ import pytest
 from queuebie.runner import handle_message
 
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.messages.commands.warrior import IncreaseExperience
 from apps.skirmish.messages.events.warrior import WarriorDefendedAllDamage
+from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -43,3 +45,43 @@ def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
     exhausted_defender.refresh_from_db()
     assert exhausted_defender.current_morale == 0
     assert exhausted_defender.condition == Warrior.ConditionChoices.CONDITION_FLEEING
+
+
+@pytest.mark.django_db
+def test_a_level_up_is_logged_before_the_growth_it_caused(queuebie_registry):
+    """
+    The two lines a level-up writes, in the order a player has to read them in.
+
+    WarriorGainedLevel has two handlers - the logger and the one that starts the growth - and queuebie
+    runs them in registration order, which is the order autodiscover() walked them: app configs, then
+    os.listdir over handlers/events/. "battle_history.py" sorts before "warrior.py", so the level line
+    is queued before the growth command and the log comes out right. Nothing enforces that ordering,
+    and #40 was this same bug in the other direction, with a rout logged before the morale loss that
+    caused it - so it is asserted here rather than trusted to a directory listing.
+
+    Four hundred points from nothing crosses two thresholds at once, which also proves the second
+    level-up is not swallowed, and that the two growths are told apart: the queue is FIFO, so both
+    growths have already run by the time either line is written, and the wages quoted are 165 and 181
+    only because the event carries the figure rather than reading it back off the shared instance.
+    """
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(
+        faction=skirmish.attacking_faction,
+        name="Beorn",
+        experience=0,
+        strength=10,
+        dexterity=10,
+        max_health=20,
+        max_morale=20,
+        monthly_salary=150,
+    )
+
+    handle_message(IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=400))
+
+    assert list(BattleHistory.objects.order_by("id").values_list("message", flat=True)) == [
+        "Beorn gained 400 experience.",
+        "Beorn reached level 2.",
+        "Beorn reached level 3.",
+        "Beorn grew stronger: strength +1, dexterity +1, health +2, morale +2 — and now costs 165 silver a month.",
+        "Beorn grew stronger: strength +1, dexterity +1, health +2, morale +2 — and now costs 181 silver a month.",
+    ]

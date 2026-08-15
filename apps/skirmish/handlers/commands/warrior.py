@@ -7,8 +7,10 @@ from apps.skirmish.messages.commands.warrior import ReduceHealth, ReduceMorale
 from apps.skirmish.messages.events.warrior import (
     LastUsedSkirmishActionStored,
     WarriorGainedExperience,
+    WarriorGainedLevel,
     WarriorGainedMorale,
     WarriorHasFled,
+    WarriorImprovedStats,
     WarriorLostMorale,
     WarriorWasCaptured,
     WarriorWasIncapacitated,
@@ -160,10 +162,54 @@ def handle_warrior_increasing_morale(*, context: warrior.IncreaseMorale) -> list
 
 @message_registry.register_command(command=warrior.IncreaseExperience)
 def handle_warrior_increasing_experience(*, context: warrior.IncreaseExperience) -> list[Event] | Event:
+    """
+    Books the experience, and announces every level threshold it carried the warrior across.
+
+    The level before the gain is worked out from the value after it, because there is no reliable
+    "before" left to read: increase_experience refreshes from the database and then adds, so the
+    instance the caller was holding may have been stale. Subtracting what the manager was told to add
+    from what it ended up with gives the old total whatever the caller had. Asking a later event
+    handler instead is not an option either - strict mode blocks database access there.
+
+    One event per level crossed rather than one for the crossing. A gain that spans two thresholds has
+    to grow the warrior twice and read as two lines in the log; clamping to a single level-up would
+    quietly swallow the second.
+    """
     context.warrior = Warrior.objects.increase_experience(obj=context.warrior, experience=context.increased_experience)
 
-    return WarriorGainedExperience(
+    previous_level = Warrior.level_for(experience=context.warrior.experience - context.increased_experience)
+
+    message_list = [
+        WarriorGainedExperience(
+            skirmish=context.skirmish,
+            warrior=context.warrior,
+            gained_experience=context.increased_experience,
+        )
+    ]
+
+    for level in range(previous_level + 1, context.warrior.level + 1):
+        message_list.append(
+            WarriorGainedLevel(
+                skirmish=context.skirmish,
+                warrior=context.warrior,
+                level=level,
+            )
+        )
+
+    return message_list
+
+
+@message_registry.register_command(command=warrior.IncreaseWarriorStatsOnLevelUp)
+def handle_increase_warrior_stats_on_level_up(*, context: warrior.IncreaseWarriorStatsOnLevelUp) -> list[Event] | Event:
+    gains = Warrior.objects.apply_level_up_growth(obj=context.warrior)
+
+    return WarriorImprovedStats(
         skirmish=context.skirmish,
         warrior=context.warrior,
-        gained_experience=context.increased_experience,
+        gained_strength=gains["strength"],
+        gained_dexterity=gains["dexterity"],
+        gained_max_health=gains["max_health"],
+        gained_max_morale=gains["max_morale"],
+        gained_salary=gains["monthly_salary"],
+        new_monthly_salary=context.warrior.monthly_salary,
     )

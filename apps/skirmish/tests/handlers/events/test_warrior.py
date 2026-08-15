@@ -8,11 +8,13 @@ from apps.skirmish.handlers.events.warrior import (
     handle_morale_change_on_warrior_defends_all_damage,
     handle_morale_drop_on_faction_on_warrior_is_out_of_fight,
     handle_reduce_health_and_update_condition,
+    handle_stat_growth_on_warrior_level_up,
 )
 from apps.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    IncreaseWarriorStatsOnLevelUp,
     ReduceHealth,
     ReduceMorale,
     ReduceMoraleOfRemainingWarriors,
@@ -20,6 +22,7 @@ from apps.skirmish.messages.commands.warrior import (
 from apps.skirmish.messages.events.skirmish import SkirmishFinished
 from apps.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
+    WarriorGainedLevel,
     WarriorHasFled,
     WarriorTookDamage,
     WarriorWasIncapacitated,
@@ -116,6 +119,17 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior()
     )
 
     assert result == IncreaseExperience(skirmish=skirmish, warrior=killer, increased_experience=25)
+
+
+def test_handle_stat_growth_on_warrior_level_up_asks_for_the_growth():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(faction=skirmish.attacking_faction)
+
+    result = handle_stat_growth_on_warrior_level_up(
+        context=WarriorGainedLevel(skirmish=skirmish, warrior=warrior, level=2)
+    )
+
+    assert result == IncreaseWarriorStatsOnLevelUp(skirmish=skirmish, warrior=warrior)
 
 
 @pytest.mark.django_db
