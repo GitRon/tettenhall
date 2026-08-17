@@ -27,9 +27,14 @@ class SavegameManager(manager.Manager):
     def get_current_savegame(self, *, user_id: int) -> Savegame | None:
         """
         Efficient getter for the users current savegame
+
+        The player faction comes along for the ride because four context processors call this on
+        every authenticated render and three of them go straight on to read it - so leaving it out
+        bought a second query per caller rather than saving anything. It is a nullable one-to-one, so
+        this is a left join and a savegame without a faction still comes back.
         """
         try:
-            return self.get(created_by=user_id, is_active=True)
+            return self.select_related("player_faction").get(created_by=user_id, is_active=True)
         except self.model.DoesNotExist:
             return None
 
