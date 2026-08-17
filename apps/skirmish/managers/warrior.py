@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Q, Sum, manager
+from django.db.models import Q, manager
 
 
 class WarriorQuerySet(models.QuerySet):
@@ -195,24 +195,15 @@ class WarriorManager(manager.Manager):
 
         return gains
 
-    def get_monthly_salary_for_faction(self, *, faction) -> int:
-        """
-        Calculate the salary of all warriors working for "faction" not being dead.
-        """
-        return (
-            self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
-            .filter(faction=faction)
-            .aggregate(amount=Sum("monthly_salary"))["amount"]
-            or 0
-        )
-
     def get_payroll_for_faction(self, *, faction) -> list:
         """
         Everybody "faction" owes wages to this month, cheapest man first.
 
-        The same roster "get_monthly_salary_for_faction" sums - the dead draw nothing, and a captive
-        is off it already because capture clears his faction - but handed over warrior by warrior,
-        because a faction that cannot pay the whole bill has to know who it did manage to pay.
+        The dead draw nothing, and a captive is off the roster already because capture clears his
+        faction. Handed over warrior by warrior rather than as a sum, because a faction that cannot
+        pay the whole bill has to know who it did manage to pay - and the cost card has to know who
+        it would fail to pay. [Payroll] is what both of them ask; there used to be an aggregate
+        beside this for the card, and the two could answer differently.
 
         The order is the rule: paying from the cheapest up fits the most men into whatever silver
         there is, and leaves the shortfall sitting on the dearest. Those are the veterans, the ones
