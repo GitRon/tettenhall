@@ -12,6 +12,7 @@ from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+from apps.town.buildings.hall import NoHall
 
 
 @pytest.fixture
@@ -454,6 +455,10 @@ def test_faction_attack_view_without_an_active_savegame(logged_in_client):
 
 @pytest.mark.django_db
 def test_monthly_cost_overview_sums_up_the_salaries(logged_in_client, current_savegame):
+    """
+    The wage bill is not this view's own any more: it comes off "wage_bill_payroll", the projection
+    the salary run bills from, so the card and the month cannot disagree about the number.
+    """
     WarriorFactory(faction=current_savegame.player_faction, monthly_salary=30)
     WarriorFactory(faction=current_savegame.player_faction, monthly_salary=12)
 
@@ -462,7 +467,21 @@ def test_monthly_cost_overview_sums_up_the_salaries(logged_in_client, current_sa
     )
 
     assert response.status_code == 200
-    assert response.context["monthly_salary_amount"] == 42
+    assert response.context["wage_bill_payroll"].total_amount == 42
+
+
+@pytest.mark.django_db
+def test_monthly_cost_overview_names_the_income_of_the_hall(logged_in_client, current_savegame):
+    """
+    The one number the card assembles itself, because nothing else on any page shows it - and it is
+    read off the building rather than repeated here, the way every balance number is.
+    """
+    response = logged_in_client.get(
+        reverse("faction:faction-monthly-costs-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["building_income_amount"] == NoHall.REVENUE_PER_ROUND
 
 
 @pytest.mark.django_db

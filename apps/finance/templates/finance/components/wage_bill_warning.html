@@ -1,0 +1,35 @@
+{# Silent while the wages are covered: the card and the dashboard both include this unconditionally, #}
+{# so a faction in the black gets no alert rather than a green one saying nothing happened. #}
+{% if wage_bill_payroll.is_short %}
+    <div class="uk-alert-danger" uk-alert>
+        <h4 class="uk-margin-remove-bottom">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ wage_bill_payroll.missing_amount }} silver short of next month's wages
+        </h4>
+        <p class="uk-margin-remove-top uk-text-small">
+            Wages are paid cheapest man first out of the silver you hold when the month turns. Your
+            buildings pay out after them, so that income covers the month after this one.
+        </p>
+        <p class="uk-margin-remove">
+            Going unpaid:
+            {% for warrior in wage_bill_payroll.unpaid_warrior_list %}
+                {{ warrior }} ({{ warrior.monthly_salary }} silver){% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+        {% if wage_bill_payroll.deserting_warrior_list %}
+            <p class="uk-margin-remove uk-text-bold">
+                Leaving the war band over it:
+                {% for warrior in wage_bill_payroll.deserting_warrior_list %}
+                    {{ warrior }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+                — {{ wage_bill_payroll.months_until_desertion }} months without wages and a man strips his
+                gear and walks.
+            </p>
+        {% endif %}
+        {% if show_finance_link %}
+            <p class="uk-margin-remove-bottom">
+                <a href="{% url 'finance:transaction-list-view' %}">Look at the books</a>
+            </p>
+        {% endif %}
+    </div>
+{% endif %}

@@ -4,8 +4,22 @@
         <tbody>
         <tr>
             <td>Salaries</td>
-            <td>{{ monthly_salary_amount }}</td>
+            <td>{{ wage_bill_payroll.total_amount }}</td>
         </tr>
+        <tr>
+            <td>
+                Building income
+                <span class="uk-text-meta">arrives after the wages</span>
+            </td>
+            <td>{{ building_income_amount }}</td>
+        </tr>
+        {% if not wage_bill_payroll.is_short %}
+            <tr>
+                <td>Left after next month's wages</td>
+                <td>{{ wage_bill_payroll.remaining_amount }}</td>
+            </tr>
+        {% endif %}
         </tbody>
     </table>
+    {% include 'finance/components/wage_bill_warning.html' %}
 </div>
