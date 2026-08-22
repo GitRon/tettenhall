@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.town.buildings.hall import Hall
 from apps.town.managers.town import TownManager
 
 
@@ -65,3 +66,14 @@ class Town(models.Model):
         holding a second copy of them that can drift from the column.
         """
         return dict(self._meta.get_field(building_type).choices)[level]
+
+    def get_monthly_income(self) -> int:
+        """
+        What the town pays out when a month turns.
+
+        The hall is the only building with a recurring payout and it owns the number, so this reads
+        it off the level standing rather than holding a copy. One place for it because the month
+        bills it and the cost card promises it, and a card naming a different figure than the month
+        pays is the kind of thing a player never forgives.
+        """
+        return Hall.get_building_by_type(building_type=self.hall).REVENUE_PER_ROUND

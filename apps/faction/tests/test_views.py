@@ -12,7 +12,8 @@ from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-from apps.town.buildings.hall import NoHall
+from apps.town.buildings.hall import MediumHall
+from apps.town.models import Town
 
 
 @pytest.fixture
@@ -473,15 +474,20 @@ def test_monthly_cost_overview_sums_up_the_salaries(logged_in_client, current_sa
 @pytest.mark.django_db
 def test_monthly_cost_overview_names_the_income_of_the_hall(logged_in_client, current_savegame):
     """
-    The one number the card assembles itself, because nothing else on any page shows it - and it is
-    read off the building rather than repeated here, the way every balance number is.
+    The one number the card assembles itself, because nothing else on any page shows it - off the
+    town the same way the month reads it. A hall above the baseline, so a card answering with the
+    default income for every town would fail here.
     """
+    town = current_savegame.player_faction.town
+    town.hall = Town.HallChoices.HALL_MEDIUM
+    town.save()
+
     response = logged_in_client.get(
         reverse("faction:faction-monthly-costs-view", kwargs={"pk": current_savegame.player_faction.id})
     )
 
     assert response.status_code == 200
-    assert response.context["building_income_amount"] == NoHall.REVENUE_PER_ROUND
+    assert response.context["building_income_amount"] == MediumHall.REVENUE_PER_ROUND
 
 
 @pytest.mark.django_db

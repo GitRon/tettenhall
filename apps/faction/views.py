@@ -19,7 +19,6 @@ from apps.savegame.mixins import (
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.messages.commands.skirmish import AttackFaction
 from apps.skirmish.models.warrior import Warrior
-from apps.town.buildings.hall import Hall
 
 
 class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
@@ -204,9 +203,9 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         # projection the salary run bills from and the navbar warns from, which the finance context
         # processor puts on every render - computing it here again is what made the card and the
         # month disagree about who goes unpaid. Only the income is this card's own, because it is
-        # the one number on it that nothing else shows.
-        hall_building = Hall.get_building_by_type(building_type=current_savegame.player_faction.town.hall)
-        context["building_income_amount"] = hall_building.REVENUE_PER_ROUND
+        # the one number on it that nothing else shows - and it is read off the town, the same way
+        # the month reads it, rather than assembled from a building here.
+        context["building_income_amount"] = current_savegame.player_faction.town.get_monthly_income()
 
         return context
 
