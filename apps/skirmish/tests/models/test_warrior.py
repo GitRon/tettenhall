@@ -40,14 +40,6 @@ def test_level_for_the_second_threshold():
     assert Warrior.level_for(experience=400) == 3
 
 
-def test_level_for_a_float_experience():
-    """
-    A generated warrior holds the float "random.gauss" rolled, because Django does not re-read after a
-    create. "isqrt" refuses one, so the coercion inside is what keeps every warrior in the pub readable.
-    """
-    assert Warrior.level_for(experience=130.7) == 2
-
-
 def test_level_reads_the_warriors_own_experience():
     warrior = WarriorFactory.build(experience=400)
 

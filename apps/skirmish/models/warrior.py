@@ -143,14 +143,8 @@ class Warrior(models.Model):
         Derived rather than stored: a column would need a backfill for every warrior generated with
         experience already, and would then be free to drift out of step with the experience it is
         supposed to describe.
-
-        Coerced to an int because a freshly generated warrior does not hold one. BaseWarriorGenerator
-        rolls "random.gauss" and hands the float straight to "objects.create", and Django does not
-        re-read after a create - so the database has an integer while the in-memory instance still has
-        30.4, and "isqrt(30.4 // 100)" raises. That is every warrior in the pub and every leader on the
-        turn a savegame is created.
         """
-        return isqrt(int(experience) // Warrior.XP_LEVEL_BASE) + 1
+        return isqrt(experience // Warrior.XP_LEVEL_BASE) + 1
 
     @property
     def level(self) -> int:
