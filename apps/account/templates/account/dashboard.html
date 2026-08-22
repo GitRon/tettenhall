@@ -14,6 +14,10 @@
         </div>
     {% endif %}
 
+    {# The page the player lands on after finishing a month, so it is where next month's shortfall is #}
+    {# worth the most: the consequence is three months away and every one of them starts here. #}
+    {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
+
     {% for active_quest in faction.active_quests.all %}
         <div uk-alert>
             <div>

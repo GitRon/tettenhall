@@ -32,7 +32,6 @@ from apps.faction.models.faction import Faction
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
-from apps.town.buildings.hall import Hall
 from apps.town.buildings.marketplace import Marketplace
 from apps.town.buildings.weaponsmith import Weaponsmith
 from apps.town.models import Town
@@ -273,12 +272,8 @@ def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event
 
 @message_registry.register_command(command=EarnMoneyFromBuildings)
 def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event:
-    # Get hall building
-    hall_type = context.faction.town.hall
-    hall_building = Hall.get_building_by_type(building_type=hall_type)
-
     return MonthlyBuildingMoneyEarned(
         faction=context.faction,
-        amount=hall_building.REVENUE_PER_ROUND,
+        amount=context.faction.town.get_monthly_income(),
         month=context.month,
     )

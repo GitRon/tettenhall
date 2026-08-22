@@ -13,6 +13,7 @@ from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.finance.models import Transaction
 from apps.skirmish.models import Warrior
+from apps.skirmish.projections.payroll import Payroll
 from apps.town.buildings.hall import Hall
 from apps.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
@@ -97,47 +98,37 @@ def handle_warrior_monthly_salaries(*, context: PayMonthlyWarriorSalaries) -> li
     something and failed to pay something. The paid event stays silent at zero, though, because it
     writes a transaction and a log line, and "salaries of 0 silver paid" directly above "you were
     150 short" reads as a contradiction.
+
+    Who ends up on which side is [Payroll]'s answer rather than this handler's, so the card that
+    warns the player beforehand can ask the same question and get the same men.
     """
-    balance = Transaction.objects.current_balance(faction_id=context.faction.id)
-
-    paid_amount = 0
-    missing_amount = 0
-    paid_warrior_list = []
-    unpaid_warrior_list = []
-
-    for warrior in Warrior.objects.get_payroll_for_faction(faction=context.faction):
-        # No early exit on the first man the purse cannot cover: the payroll is sorted by salary, so
-        # everybody after him costs at least as much and fails the same test anyway, and the loop
-        # collects them all without a second branch to get wrong
-        if paid_amount + warrior.monthly_salary <= balance:
-            paid_amount += warrior.monthly_salary
-            paid_warrior_list.append(warrior)
-        else:
-            missing_amount += warrior.monthly_salary
-            unpaid_warrior_list.append(warrior)
+    payroll = Payroll.for_faction(
+        faction=context.faction,
+        budget=Transaction.objects.current_balance(faction_id=context.faction.id),
+    )
 
     # Two writes for the whole roster rather than two per man: this runs on the synchronous month
     # advance, and #3 is about to multiply it by every rival faction in the savegame
-    Warrior.objects.record_salaries_paid(warrior_list=paid_warrior_list)
-    Warrior.objects.record_salaries_unpaid(warrior_list=unpaid_warrior_list)
+    Warrior.objects.record_salaries_paid(warrior_list=payroll.paid_warrior_list)
+    Warrior.objects.record_salaries_unpaid(warrior_list=payroll.unpaid_warrior_list)
 
     message_list = []
 
-    if paid_amount > 0:
+    if payroll.paid_amount > 0:
         message_list.append(
             MonthlyWarriorSalariesPaid(
                 faction=context.faction,
-                amount=paid_amount,
+                amount=payroll.paid_amount,
                 month=context.month,
             )
         )
 
-    if unpaid_warrior_list:
+    if payroll.is_short:
         message_list.append(
             MonthlyWarriorSalariesUnpaid(
                 faction=context.faction,
-                warrior_list=unpaid_warrior_list,
-                missing_amount=missing_amount,
+                warrior_list=payroll.unpaid_warrior_list,
+                missing_amount=payroll.missing_amount,
                 month=context.month,
             )
         )

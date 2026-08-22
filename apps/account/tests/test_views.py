@@ -6,6 +6,7 @@ from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.mark.django_db
@@ -109,6 +110,21 @@ def test_dashboard_view_lists_the_month_logs_of_the_current_savegame(logged_in_c
     assert response.status_code == 200
     assert list(response.context["player_month_logs"]) == [player_month_log]
     assert response.context["faction"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_dashboard_view_warns_about_a_wage_bill_it_cannot_pay(logged_in_client, current_savegame):
+    """
+    The warning lives in a branch of the template nothing else renders, and it reverses a url and
+    walks two lists inside it - the same shape that answered 500 in the quest case below. A test
+    without a shortfall renders none of it.
+    """
+    WarriorFactory(faction=current_savegame.player_faction, monthly_salary=150, unpaid_months=2)
+
+    response = logged_in_client.get(reverse("account:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["wage_bill_payroll"].is_short is True
 
 
 @pytest.mark.django_db

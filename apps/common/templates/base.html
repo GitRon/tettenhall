@@ -66,7 +66,20 @@
             <div class="uk-navbar-item">
                 {# todo: this needs to update itself when we do things with HTMX #}
                 <span >{% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}</span>
-                <span >{% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}</span>
+                {# The one element guaranteed to be in front of the player when they click "Finish #}
+                {# month", so it is where the wage bill has to speak up. The detail stays on the #}
+                {# cost card and on the dashboard; this is a marker and a way to reach them. #}
+                {% if wage_bill_payroll.is_short %}
+                    <span class="uk-text-danger">
+                        <a class="uk-text-danger" href="{% url 'finance:transaction-list-view' %}"
+                           title="{{ wage_bill_payroll.missing_amount }} silver short of next month's wages">
+                            {% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %}
+                            {{ current_balance }} <i class="fa-solid fa-triangle-exclamation"></i>
+                        </a>
+                    </span>
+                {% else %}
+                    <span >{% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}</span>
+                {% endif %}
                 <span >{% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}</span>
             </div>
         {% endif %}

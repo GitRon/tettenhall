@@ -199,12 +199,14 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         # Fetch current savegame record
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
-        # The same sum the salary run bills against, taken from the same place: the card is a
-        # promise about what next month costs, and it used to make that promise with its own copy of
-        # the aggregate
-        context["monthly_salary_amount"] = Warrior.objects.get_monthly_salary_for_faction(
-            faction=current_savegame.player_faction
-        )
+        # The wage bill itself is not assembled here. It comes off "wage_bill_payroll", the same
+        # projection the salary run bills from and the navbar warns from, which the finance context
+        # processor puts on every render - computing it here again is what made the card and the
+        # month disagree about who goes unpaid. Only the income is this card's own, because it is
+        # the one number on it that nothing else shows - and it is read off the town, the same way
+        # the month reads it, rather than assembled from a building here.
+        context["building_income_amount"] = current_savegame.player_faction.town.get_monthly_income()
+
         return context
 
 

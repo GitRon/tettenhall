@@ -112,6 +112,29 @@ def test_finish_month_view_keeps_an_unpaid_warriors_morale_down(logged_in_client
 
 
 @pytest.mark.django_db
+def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_in_client, current_savegame):
+    """
+    Flow test rather than a unit test, because what it pins is the ordering of two commands and
+    nothing but a real queue run has one.
+
+    This warrior costs less than the hall earns, and still goes unpaid: both handlers hang off
+    PlayerMonthPrepared with the salary run registered first, so the payroll reads the purse before
+    the income lands in it. That is what the cost card and the navbar promise the player - a wage
+    bill measured against today's silver, with the income funding the month after - so reversing the
+    two would silently turn every one of those warnings into a false alarm.
+    """
+    # The bulletin board restocks as part of the month and a quest needs somebody to be against
+    FactionFactory(savegame=current_savegame)
+    warrior = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=40)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    warrior.refresh_from_db()
+    assert warrior.unpaid_months == 1
+
+
+@pytest.mark.django_db
 def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current_savegame):
     """
     Covers the htmx branch of RunningSavegameRequiredMixin; which views carry it at all is asserted
