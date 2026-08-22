@@ -179,8 +179,8 @@ class WarriorManager(manager.Manager):
         resets them, so keeping a fractional remainder there would mean a level-up eats a month of
         training and a month of training triggers level-up growth. Levels round per event.
         """
-        # The refresh matters twice over: it takes the authoritative values, and it is also what turns
-        # a generated warrior's float attributes into the integers the arithmetic below assumes
+        # Refreshed so the arithmetic below runs on the authoritative values rather than on whatever
+        # this instance was still holding
         obj.refresh_from_db()
 
         grown_fields = ("strength", "dexterity", "max_health", "max_morale", "monthly_salary")

@@ -16,7 +16,6 @@ class BaseWarriorGenerator:
     HEALTH_SIGMA: int
     MORALE_MU: int
     MORALE_SIGMA: int
-    # TODO (#41): ensure that both stats are never zero
     STATS_MU: int
     STATS_SIGMA: int
     STATS_MIN: int
@@ -39,45 +38,50 @@ class BaseWarriorGenerator:
     def process(self) -> Warrior:
         faker = Faker([self.culture.locale])
 
+        # Every roll is rounded to the integer its column holds, and rounded before the guard sees
+        # it. The guards compare against zero, and a raw "random.gauss" float of 0.42 satisfies them
+        # and is then truncated to zero on the way into the column - a warrior with no health at
+        # all, who cannot be wounded because his death threshold is zero, cannot be healed because
+        # the monthly sweep asks for current below maximum, and draws a full wage regardless.
+        # Rounding is what makes the guards real retries, and it keeps the instance handed back in
+        # step with the row written, since Django does not re-read after a create.
         experience = 0
         while experience == 0:
-            experience = max(random.gauss(self.XP_MU, self.XP_SIGMA), 0)
+            experience = max(round(random.gauss(self.XP_MU, self.XP_SIGMA)), 0)
 
         max_health = 0
         while max_health == 0:
-            max_health = max(random.gauss(self.HEALTH_MU, self.HEALTH_SIGMA), 0)
+            max_health = max(round(random.gauss(self.HEALTH_MU, self.HEALTH_SIGMA)), 0)
 
         health_progress = -1
         while health_progress < 0 or health_progress > 100:
-            health_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
+            health_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
 
         max_morale = 0
         while max_morale == 0:
-            max_morale = max(random.gauss(self.MORALE_MU, self.MORALE_SIGMA), 0)
+            max_morale = max(round(random.gauss(self.MORALE_MU, self.MORALE_SIGMA)), 0)
 
         morale_progress = -1
         while morale_progress < 0 or morale_progress > 100:
-            morale_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
+            morale_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
 
-        strength = 0
-        while strength == 0:
-            strength = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), self.STATS_MIN)
+        # Floored at STATS_MIN rather than guarded and re-rolled: every generator sets a minimum of
+        # at least one, so a stat cannot come out at zero the way health and morale can.
+        strength = max(round(random.gauss(self.STATS_MU, self.STATS_SIGMA)), self.STATS_MIN)
 
         strength_progress = -1
         while strength_progress < 0 or strength_progress > 100:
-            strength_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
+            strength_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
 
-        dexterity = 0
-        while dexterity == 0:
-            dexterity = max(random.gauss(self.STATS_MU, self.STATS_SIGMA), self.STATS_MIN)
+        dexterity = max(round(random.gauss(self.STATS_MU, self.STATS_SIGMA)), self.STATS_MIN)
 
         dexterity_progress = -1
         while dexterity_progress < 0 or dexterity_progress > 100:
-            dexterity_progress = max(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA), 0)
+            dexterity_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
 
         base_recruitment_price = 0
         while base_recruitment_price == 0:
-            base_recruitment_price = max(random.gauss(100, 50), 0)
+            base_recruitment_price = max(round(random.gauss(100, 50)), 0)
         recruitment_price = int(
             (((strength + dexterity) / self.STATS_MU) + (max_health / self.HEALTH_MU)) * base_recruitment_price
         )
