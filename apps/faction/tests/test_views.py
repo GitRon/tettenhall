@@ -236,6 +236,138 @@ def test_faction_detail_view_says_nothing_about_marching_on_a_defeated_faction(
 
 
 @pytest.mark.django_db
+def test_rival_faction_list_view_lists_the_rivals_with_their_roster(logged_in_client, current_savegame):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    WarriorFactory(faction=rival_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert list(response.context["rival_list"]) == [rival_faction]
+    assert response.context["rival_list"][0].warrior_count == 1
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_excludes_a_defeated_rival(logged_in_client, current_savegame):
+    """
+    The same queryset that decides who is still on the board, so a knocked-out rival drops off this
+    page for the same reason it stops getting a month.
+    """
+    FactionFactory(savegame=current_savegame, is_defeated=True)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert list(response.context["rival_list"]) == []
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
+    other_savegame = SavegameFactory()
+    FactionFactory(savegame=other_savegame)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert list(response.context["rival_list"]) == []
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    Who counts as a rival is a question about the player's own faction, so before there is one there
+    is nobody to list - not a server error.
+    """
+    FactionFactory(savegame=savegame_without_player_faction)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["rival_list"]) == []
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_offers_an_attack_on_a_rival(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert response.context["rival_list"][0].can_be_attacked is True
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_says_when_a_rivals_own_war_band_is_committed(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    His war band is free but theirs is spoken for, so the missing button is the rival's doing - said
+    per row, because it is the one of the three reasons that is about a single rival.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    committed_defender = WarriorFactory(faction=rival_faction)
+    SkirmishFactory(defending_faction=rival_faction).defending_warriors.add(committed_defender)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert response.context["rival_list"][0].can_be_attacked is False
+    assert response.context["rival_list"][0].their_war_band_is_committed is True
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_says_the_war_band_has_already_marched(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A fact about the player's own war band rather than about any one rival, so it is said once for the
+    whole page instead of on every row.
+    """
+    untouched_rival = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=untouched_rival)
+    skirmish = SkirmishFactory(
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=FactionFactory(savegame=current_savegame),
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert response.context["has_marched_this_month"] is True
+    assert response.context["leader_cannot_march"] is False
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_says_the_leader_cannot_march(logged_in_client, current_savegame):
+    """
+    Nothing is keeping the war band busy, so the reason is the leader himself - here a faction that
+    has none at all, which is what a captured or killed leader leaves behind.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert response.context["has_marched_this_month"] is False
+    assert response.context["leader_cannot_march"] is True
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_stays_quiet_over_an_empty_board(logged_in_client, current_savegame):
+    """
+    No rival is standing, so there is no missing button to explain: the sentences would be about a
+    fight nothing was ever going to offer.
+    """
+    FactionFactory(savegame=current_savegame, is_defeated=True)
+
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert response.context["has_marched_this_month"] is False
+    assert response.context["leader_cannot_march"] is False
+
+
+@pytest.mark.django_db
 def test_faction_item_list_view_shows_the_faction(logged_in_client, current_savegame):
     response = logged_in_client.get(
         reverse("faction:faction-item-list-htmx", kwargs={"pk": current_savegame.player_faction.id})

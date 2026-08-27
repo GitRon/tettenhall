@@ -45,6 +45,43 @@ def test_still_in_play_returns_the_factions_of_the_savegame():
 
 
 @pytest.mark.django_db
+def test_rivals_in_play_returns_the_rival(player_faction):
+    rival_faction = FactionFactory(savegame=player_faction.savegame)
+
+    result = Faction.objects.rivals_in_play(player_faction=player_faction)
+
+    assert list(result) == [rival_faction]
+
+
+@pytest.mark.django_db
+def test_rivals_in_play_excludes_the_player_faction(player_faction):
+    result = Faction.objects.rivals_in_play(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_rivals_in_play_excludes_a_defeated_faction(player_faction):
+    """
+    A knocked-out rival drops off the board for the same reason it stops getting a month.
+    """
+    FactionFactory(savegame=player_faction.savegame, is_defeated=True)
+
+    result = Faction.objects.rivals_in_play(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_rivals_in_play_excludes_factions_of_another_savegame(player_faction):
+    FactionFactory()
+
+    result = Faction.objects.rivals_in_play(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
 def test_attackable_by_returns_the_rival(player_faction):
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
