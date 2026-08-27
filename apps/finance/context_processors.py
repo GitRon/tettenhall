@@ -24,10 +24,10 @@ def get_current_balance(request) -> dict:  # noqa: PBR001
     # would repeat this savegame lookup and this balance query on every authenticated render, and
     # could answer from a different one of the two. The navbar shows them side by side.
     #
-    # The budget is today's balance with no income added. Wages are billed before the hall pays out
-    # - "handle_pay_monthly_warrior_salaries_for_new_month" is registered ahead of
-    # "handle_earn_money_from_buildings_for_new_month" on FactionMonthPrepared and queuebie drains in
-    # order - so this month's income funds next month's wages, not the ones being projected here.
+    # The budget is today's balance with no income added, which is what the month really bills
+    # against: an income returns an event, and the "CreateTransaction" it becomes is queued behind
+    # every command the month's events raised, the salary run included. So this month's income funds
+    # next month's wages rather than the ones being projected here.
     wage_bill_payroll = Payroll.for_faction(faction=current_savegame.player_faction, budget=current_balance)
 
     return {"current_balance": current_balance, "wage_bill_payroll": wage_bill_payroll}

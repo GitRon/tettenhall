@@ -116,14 +116,15 @@ def test_finish_month_view_keeps_an_unpaid_warriors_morale_down(logged_in_client
 @pytest.mark.django_db
 def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_in_client, current_savegame):
     """
-    Flow test rather than a unit test, because what it pins is the ordering of two commands and
-    nothing but a real queue run has one.
+    Flow test rather than a unit test, because what it pins is when a ledger row lands and nothing
+    but a real queue run has an answer.
 
-    This warrior costs less than the hall earns, and still goes unpaid: both handlers hang off
-    PlayerMonthPrepared with the salary run registered first, so the payroll reads the purse before
-    the income lands in it. That is what the cost card and the navbar promise the player - a wage
-    bill measured against today's silver, with the income funding the month after - so reversing the
-    two would silently turn every one of those warnings into a false alarm.
+    This warrior costs less than the hall earns, and still goes unpaid: the hall's income returns an
+    event, and the "CreateTransaction" it becomes is queued behind every command the month's events
+    raised, the salary run among them. So the payroll reads the purse before the income reaches it.
+    That is what the cost card and the navbar promise the player - a wage bill measured against
+    today's silver, with the income funding the month after - and a change that let the income land
+    early would silently turn every one of those warnings into a false alarm.
     """
     # The bulletin board restocks as part of the month and a quest needs somebody to be against
     FactionFactory(savegame=current_savegame)
@@ -159,6 +160,30 @@ def test_finish_month_view_moves_a_rivals_roster_and_purse(logged_in_client, cur
     # Started on 1000, took 250 of income, paid 150 of wages, and the free draft wrote nothing
     assert Transaction.objects.current_balance(faction_id=rival_faction.id) == 1100
     assert Warrior.objects.filter(faction=rival_faction).count() == 2
+
+
+@pytest.mark.django_db
+def test_finish_month_view_weighs_a_rivals_draft_against_the_purse_the_month_opened_with(
+    logged_in_client, current_savegame
+):
+    """
+    Flow test rather than a unit test: a unit test is handed a balance, so it cannot tell which balance
+    the handler would have seen in a real month.
+
+    This rival opens on 100 against a wage bill of 150, so it does not draft - even though the 250 of
+    income it takes this month would have covered the man twice over. Nothing the month earns reaches
+    the ledger until every command the month's events raised has run, the draft decision included, so
+    the purse it weighs is the one it started on. Reading the later balance instead would draft here.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=100, month=1)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert Warrior.objects.filter(faction=rival_faction).count() == 1
 
 
 @pytest.mark.django_db

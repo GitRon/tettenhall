@@ -48,11 +48,16 @@ def handle_warriors_with_reduced_morale_determined(
 # player and to his rivals alike, and the declaration order below is the order it happens in: queuebie
 # drains the commands one event raises in the order its handlers returned them.
 #
-# The order is a rule, not a detail. Wages are billed before either income lands, because that is what
-# the cost card and the navbar promise the player - a wage bill measured against today's silver, with
-# this month's income funding the month after. The recovery sweeps come after the wages so the morale
-# one sees the unpaid count the salary run just wrote, and the draft comes last so a faction only
-# calls somebody up out of what wages and income left it.
+# That order is load-bearing for exactly one thing: the recovery sweeps come after the wages, so the
+# morale one sees the "unpaid_months" the salary run wrote. That write is synchronous, inside the
+# salary command handler, which is why the order decides it - and there is a flow test on
+# FinishMonthView pinning it.
+#
+# It decides nothing about the money. A salary run and an income each return an event, and the
+# "CreateTransaction" it becomes is queued behind this whole batch, so no ledger row for the month
+# lands until every command below has run. That is what makes the wage bill fall on the silver the
+# month opened with, which is what the cost card and the navbar promise the player - and it holds
+# however these are ordered.
 @message_registry.register_event(event=FactionMonthPrepared)
 def handle_replenish_fyrd_reserve_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
     return [ReplenishFyrdReserve(faction=context.faction, month=context.current_month)]

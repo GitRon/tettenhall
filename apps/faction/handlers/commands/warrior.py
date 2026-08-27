@@ -74,9 +74,17 @@ def handle_consider_fyrd_draft(*, context: ConsiderFyrdDraft) -> list[Event] | E
 
     "Can afford it" is a month of breathing room rather than the price of the man, because a draft is
     free and what it commits the faction to is his keep. So the purse has to still cover the roster's
-    wage bill once over, read off the same [Payroll] the salary run bills from - and read after that
-    run, which is what the declaration order of the monthly handlers guarantees. A faction with no
-    roster passes trivially, which is how one that has been emptied out starts rebuilding.
+    wage bill once over, read off the same [Payroll] the salary run bills from.
+
+    The purse being read is the one the month opened with, and that is not a matter of where this sits
+    among the monthly handlers. Nothing the month earns or spends reaches the ledger until every
+    command those handlers raised has run: a salary run and an income both return an *event*, and the
+    "CreateTransaction" it turns into is queued behind the whole batch. So every faction weighs the
+    same balance it started the month on, whichever order the handlers run in - which also means the
+    wage bill this compares against has been committed but not yet debited.
+
+    A faction with no roster passes trivially, which is how one that has been emptied out starts
+    rebuilding.
 
     All three questions are queries, which is why this is a command handler at all: the event handler
     on the monthly event may only raise this and let it decide.
