@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.contrib.messages import get_messages
 from django.urls import reverse
@@ -5,7 +7,10 @@ from django.urls import reverse
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.models.transaction import Transaction
+from apps.finance.tests.factories.transaction import TransactionFactory
+from apps.item.models.item_type import ItemType
 from apps.item.tests.factories.item import ItemFactory
+from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
@@ -15,6 +20,7 @@ from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.town.buildings.hall import MediumHall
 from apps.town.models import Town
+from apps.training.tests.factories.training import TrainingFactory
 
 
 @pytest.fixture
@@ -498,6 +504,203 @@ def test_draft_warrior_from_fyrd_view_without_a_player_faction(
 
     assert response.status_code == 404
     assert Warrior.objects.filter(faction=faction).exists() is False
+
+
+@pytest.fixture
+def pub_mercenary(current_savegame) -> Warrior:
+    """
+    A mercenary standing in the player's pub, priced at 180 silver.
+
+    Unhired stock has no faction of its own, so the factory cannot reach through one for the savegame
+    and the culture the way it does everywhere else.
+    """
+    faction = current_savegame.player_faction
+    mercenary = WarriorFactory(
+        faction=None,
+        savegame=current_savegame,
+        culture=faction.culture,
+        recruitment_price=180,
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    return mercenary
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_hires_him(logged_in_client, current_savegame, pub_mercenary, queuebie_registry):
+    """
+    Flow test: no mocking inside the chain, so this runs the real queue and asserts the end state.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.status_code == 200
+    pub_mercenary.refresh_from_db()
+    assert pub_mercenary.faction == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_debits_his_price(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert "HX-Trigger" in response.headers
+    assert Transaction.objects.filter(faction=current_savegame.player_faction, amount=-180).exists() is True
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_takes_him_off_the_pub_shelf(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.status_code == 200
+    assert list(current_savegame.player_faction.available_mercenaries.all()) == []
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_hands_his_gear_to_the_faction(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    """
+    Pub gear is generated unowned, and an unowned item never reaches "get_all_unoccupied_items" - the
+    faction could neither re-equip nor sell what it has just paid for.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+    weapon = ItemFactory(
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        savegame=current_savegame,
+        owner=None,
+    )
+    pub_mercenary.weapon = weapon
+    pub_mercenary.save()
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.status_code == 200
+    weapon.refresh_from_db()
+    assert weapon.owner == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_refuses_without_enough_silver(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    TransactionFactory(faction=current_savegame.player_faction, amount=50)
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.status_code == 204
+    assert json.loads(response["HX-Trigger"]) == {
+        "notification": "You don't have enough silver to hire this mercenary."
+    }
+    pub_mercenary.refresh_from_db()
+    assert pub_mercenary.faction is None
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_cannot_hire_the_same_man_twice(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    """
+    He leaves the pub when he is hired, and the scoping resolves nothing outside it - so a second
+    post cannot buy the same man again.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+    logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.status_code == 404
+    assert Transaction.objects.filter(faction=current_savegame.player_faction, amount=-180).count() == 1
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_hides_the_pub_of_another_savegame(
+    logged_in_client, current_savegame, queuebie_registry
+):
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+    other_savegame = SavegameFactory()
+    other_faction = FactionFactory(savegame=other_savegame)
+    other_mercenary = WarriorFactory(
+        faction=None, savegame=other_savegame, culture=other_faction.culture, recruitment_price=180
+    )
+    other_faction.available_mercenaries.add(other_mercenary)
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": other_mercenary.id}))
+
+    assert response.status_code == 404
+    other_mercenary.refresh_from_db()
+    assert other_mercenary.faction is None
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_cannot_hire_a_warrior_outside_the_pub(
+    logged_in_client, current_savegame, queuebie_registry
+):
+    """
+    Being in the savegame is not enough: rival warriors, captives and deserters are all "Warrior"
+    rows, and the price check alone would hand most of them over for nothing.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_warrior = WarriorFactory(faction=rival_faction, recruitment_price=180)
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": rival_warrior.id}))
+
+    assert response.status_code == 404
+    rival_warrior.refresh_from_db()
+    assert rival_warrior.faction == rival_faction
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_without_a_player_faction(
+    logged_in_client, savegame_without_player_faction, queuebie_registry
+):
+    """
+    There is no own faction to hire into yet, so the scoping narrows to nothing.
+    """
+    faction = FactionFactory(savegame=savegame_without_player_faction)
+    mercenary = WarriorFactory(
+        faction=None, savegame=savegame_without_player_faction, culture=faction.culture, recruitment_price=180
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": mercenary.id}))
+
+    assert response.status_code == 404
+    mercenary.refresh_from_db()
+    assert mercenary.faction is None
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_keeps_him_through_the_monthly_restock(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    """
+    Flow test across a month boundary, which is the only level this trap is visible at.
+
+    "handle_restock_pub_mercenaries" clears the stock with "available_mercenaries.all().delete()" -
+    a warrior queryset, so it deletes the rows themselves. A hired man still linked to the pub is
+    therefore deleted at the start of the next month, after he has been paid for and equipped.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+    # The month chain trains the current training and restocks the bulletin board, and a quest needs
+    # somebody to target
+    TrainingFactory(faction=current_savegame.player_faction)
+    FactionFactory(savegame=current_savegame)
+    logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert Warrior.objects.filter(id=pub_mercenary.id, faction=current_savegame.player_faction).exists() is True
 
 
 @pytest.mark.django_db

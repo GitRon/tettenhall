@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import Q, manager
 
+from apps.item.models.item import Item
+
 
 class WarriorQuerySet(models.QuerySet):
     def for_savegame(self, *, savegame_id: int):
@@ -14,6 +16,19 @@ class WarriorQuerySet(models.QuerySet):
 
     def filter_faction(self, *, faction_id: int):
         return self.filter(faction=faction_id)
+
+    def in_pub_of(self, *, faction_id: int):
+        """
+        The mercenaries standing in this faction's pub, waiting to be hired.
+
+        Membership of "available_mercenaries" rather than a missing faction: a mercenary nobody has
+        hired has none, and so does a deserter and a captive whose banner was cleared - hiring one of
+        those out of the pub would be hiring a man who is not in it.
+
+        Parameterised by faction on purpose. Every faction owns a pub set already, and the caller
+        passing the player's is what says "the player hires from his own town" - not this method.
+        """
+        return self.filter(available_pub_mercenaries=faction_id)
 
     def exclude_currently_busy(self, *, month: int):
         """
@@ -263,6 +278,30 @@ class WarriorManager(manager.Manager):
         obj.save(update_fields=("weapon", "armor"))
 
         return obj
+
+    def transfer_equipment_ownership(self, *, obj, new_owner) -> list:
+        """
+        Hand whatever the warrior is carrying to his new faction, and leave it on him.
+
+        Ownership and use are two different things: an item belongs to a faction ("Item.owner") and is
+        wielded by a warrior. A man hired out of the pub arrives carrying gear nobody owns, and unowned
+        gear is invisible to "Faction.get_all_unoccupied_items" - so it could never be re-equipped onto
+        anybody else or sold, while "get_weapon_or_fallback" builds its fallbacks with
+        "owner=self.faction". Either the items come with him or they are taken off him; leaving them
+        ownerless is the one outcome that strands them.
+
+        Deliberately not "Item.objects.update_ownership", which nulls the bearer's weapon and armor as
+        it hands the item over. That is right for a purchase, where nobody is wearing it yet, and it
+        would disarm the man the faction has just paid for.
+        """
+        equipment = [item for item in (obj.weapon, obj.armor) if item is not None]
+
+        for item in equipment:
+            item.owner = new_owner
+
+        Item.objects.bulk_update(equipment, ("owner",))
+
+        return equipment
 
     def set_faction(self, *, obj, faction) -> int:
         """

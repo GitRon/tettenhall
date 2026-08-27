@@ -237,3 +237,29 @@ def test_remove_captive_releases_the_warrior():
     Faction.objects.remove_captive(faction=faction, warrior=warrior)
 
     assert list(faction.captured_warriors.all()) == []
+
+
+@pytest.mark.django_db
+def test_remove_mercenary_from_pub_takes_him_off_the_shelf():
+    faction = FactionFactory()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.available_mercenaries.add(mercenary)
+
+    Faction.objects.remove_mercenary_from_pub(faction=faction, warrior=mercenary)
+
+    assert list(faction.available_mercenaries.all()) == []
+
+
+@pytest.mark.django_db
+def test_remove_mercenary_from_pub_leaves_the_warrior_himself_alone():
+    """
+    The link is removed, not the row. The monthly restock deletes what it finds in the pub, so this
+    is the difference between a hired man and one deleted from under the faction that paid for him.
+    """
+    faction = FactionFactory()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.available_mercenaries.add(mercenary)
+
+    Faction.objects.remove_mercenary_from_pub(faction=faction, warrior=mercenary)
+
+    assert Warrior.objects.filter(id=mercenary.id).exists() is True

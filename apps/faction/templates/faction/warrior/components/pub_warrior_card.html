@@ -1,5 +1,5 @@
-{% load obsucrify static %}
-<div class="uk-card uk-card-default uk-margin-bottom">
+{% load l10n obsucrify static %}
+<div id="pub-mercenary-card-{{ warrior.id|unlocalize }}" class="uk-card uk-card-default uk-margin-bottom">
     <div class="uk-card-header">
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-auto">
@@ -53,11 +53,11 @@
         </div>
     </div>
     <div class="uk-card-footer">
-        {# todo: implement recruiting, then turn this back into a link. It stays disabled until then, #}
-        {# because a priced button that does nothing reads as a broken feature rather than a planned one. #}
-        <button class="uk-button uk-button-text" disabled
-                title="Recruiting mercenaries is not implemented yet">
-            Recruit for {{ warrior.recruitment_price }} silver
-        </button>
+        {# The card swaps itself out: the town square has no htmx partial for the pub list, and a hired #}
+        {# man is no longer in it. A 204 refusal swaps nothing, so the card survives a rejected hire. #}
+        <a hx-post="{% url 'faction:pub-mercenary-recruit-view' warrior.id %}"
+           hx-target="#pub-mercenary-card-{{ warrior.id|unlocalize }}"
+           hx-swap="outerHTML"
+           class="uk-button uk-button-text">Recruit for {{ warrior.recruitment_price }} silver</a>
     </div>
 </div>
