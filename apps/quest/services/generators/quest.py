@@ -13,18 +13,38 @@ class QuestGenerator:
 
         self.savegame = savegame
 
-    def process(self) -> Quest:
+    def process(self) -> Quest | None:
         # A savegame without these is degenerate - bootstrapping always creates a player faction and
         # three to five rivals - so say so instead of dying on an IndexError further down
         if self.savegame.player_faction_id is None:
             raise RuntimeError(f"Savegame {self.savegame.id} has no player faction to create a quest for.")
 
-        # A knocked-out faction is off the board, so it is no longer somewhere to send a warband
-        target_faction_list = list(
-            Faction.objects.still_in_play(savegame_id=self.savegame.id).exclude(id=self.savegame.player_faction_id)
-        )
-        if not target_faction_list:
+        if (
+            not Faction.objects.still_in_play(savegame_id=self.savegame.id)
+            .exclude(id=self.savegame.player_faction_id)
+            .exists()
+        ):
             raise RuntimeError(f"Savegame {self.savegame.id} has no rival faction a quest could target.")
+
+        # The same queryset the attack path resolves its target with, so the two paths cannot
+        # disagree about who may be marched on: a faction with nobody healthy left to defend it is
+        # no longer somewhere to send a warband, because the errand would stage a fight against an
+        # empty side. That a beaten enemy becomes unreachable at all is wrong and #44 owns it; this
+        # only stops the quest path walking into the hole the attack path already guards.
+        target_faction_list = list(
+            Faction.objects.attackable_targets(
+                player_faction=self.savegame.player_faction, month=self.savegame.current_month
+            )
+        )
+
+        # Rivals are left, but not one of them can field a defender - every man beaten, or every man
+        # already in a fight. Only the first is reachable from here, since nothing is committed yet
+        # when the month is being prepared, but the branch answers both. No quest this month rather
+        # than an exception: the month advance is what asks for one, and a player who has just beaten
+        # his last standing opponent has not broken the game. They are back on the board as soon as
+        # the monthly healing puts a warrior back on his feet.
+        if not target_faction_list:
+            return None
 
         # TODO: move to model?
         quest_name_list = (

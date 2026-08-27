@@ -6,6 +6,7 @@ from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.models.transaction import Transaction
 from apps.item.tests.factories.item import ItemFactory
+from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.skirmish import Skirmish
@@ -109,8 +110,34 @@ def test_faction_detail_view_says_why_the_attack_is_gone(
     The button simply vanishing teaches the player nothing, and "every warrior fights once a month"
     is the rule he is most likely to walk into without noticing.
     """
+    # A rival he has not touched: its own men are free, so his march is the only thing in the way
+    untouched_rival = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=untouched_rival)
+    skirmish = SkirmishFactory(
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=FactionFactory(savegame=current_savegame),
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": untouched_rival.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["has_marched_this_month"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_why_the_attack_is_gone_on_the_rival_he_marched_on(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    The page he is most likely to be looking at, and the one that went quiet: a real march puts the
+    target's defenders on the skirmish roster too, which takes the faction out of "attackable_targets"
+    and used to take the sentence with it.
+    """
     rival_faction = FactionFactory(savegame=current_savegame)
-    WarriorFactory(faction=rival_faction)
+    rival_warrior = WarriorFactory(faction=rival_faction)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
         defending_faction=rival_faction,
@@ -118,11 +145,47 @@ def test_faction_detail_view_says_why_the_attack_is_gone(
         month=current_savegame.current_month,
     )
     skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
+    skirmish.defending_warriors.add(rival_warrior)
 
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
     assert response.context["can_be_attacked"] is False
     assert response.context["has_marched_this_month"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_when_the_rivals_own_war_band_is_committed(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    The other side of "every warrior fights once a month". His war band is free - he has not marched -
+    but theirs is spoken for, which a quest accepted against them does as surely as a fight does.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    committed_defender = WarriorFactory(faction=rival_faction)
+    SkirmishFactory(defending_faction=rival_faction).defending_warriors.add(committed_defender)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["has_marched_this_month"] is False
+    assert response.context["their_war_band_is_committed"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_nothing_about_a_committed_war_band_on_a_defeated_faction(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A knocked-out faction never offered a fight, so neither sentence applies - the same reason the
+    marching one stays quiet there.
+    """
+    defeated_faction = FactionFactory(savegame=current_savegame, is_defeated=True)
+    WarriorFactory(faction=defeated_faction)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": defeated_faction.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["their_war_band_is_committed"] is False
 
 
 @pytest.mark.django_db
@@ -250,7 +313,9 @@ def test_draft_warrior_from_fyrd_view_drafts_a_warrior(logged_in_client, current
     faction.refresh_from_db()
     assert faction.fyrd_reserve == 0
     assert Warrior.objects.filter(faction=faction).count() == 1
-    assert Transaction.objects.filter(faction=faction).count() == 1
+    # A levy called up out of the fyrd costs nothing, and a ledger row reading "-0 silver" is not a
+    # payment - every faction drafts every month it can, so those rows would bury the real ones
+    assert Transaction.objects.filter(faction=faction).exists() is False
 
 
 @pytest.mark.django_db
@@ -511,6 +576,27 @@ def test_town_square_view_shows_the_faction(logged_in_client, current_savegame):
 
 
 @pytest.mark.django_db
+def test_town_square_view_offers_only_quests_that_can_still_be_taken_on(logged_in_client, current_savegame):
+    """
+    Scoped the same way QuestAcceptView resolves its quest, so the card and the page it leads to
+    cannot disagree - the opposition is the target's own war band, and one the player has beaten inside
+    this month fields nobody.
+    """
+    fightable_quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=fightable_quest.target_faction)
+    flattened_quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=flattened_quest.target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    current_savegame.player_faction.available_quests.add(fightable_quest, flattened_quest)
+
+    response = logged_in_client.get(
+        reverse("faction:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["quest_list"]) == [fightable_quest]
+
+
+@pytest.mark.django_db
 def test_town_square_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
     other_savegame = SavegameFactory()
     foreign_faction = FactionFactory(savegame=other_savegame)
@@ -568,3 +654,73 @@ def test_faction_detail_view_shows_a_faction_without_a_leader(logged_in_client, 
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_does_not_blame_the_rival_when_the_players_leader_cannot_march(
+    logged_in_client, current_savegame
+):
+    """
+    The sentence exists to explain the missing button, so it must not point at the rival when the
+    player could not have marched on anybody. His leader is down here - not busy, so nothing says he
+    has already fought - and the rival's men happen to be committed as well. Blaming them sends him
+    off to wait for a month that will not give the button back.
+    """
+    player_faction = current_savegame.player_faction
+    player_faction.leader = WarriorFactory(
+        faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    player_faction.save()
+    rival_faction = FactionFactory(savegame=current_savegame)
+    committed_defender = WarriorFactory(faction=rival_faction)
+    SkirmishFactory(defending_faction=rival_faction).defending_warriors.add(committed_defender)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["their_war_band_is_committed"] is False
+    assert response.context["leader_cannot_march"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_when_the_leader_is_in_no_condition_to_march(logged_in_client, current_savegame):
+    """
+    The third way the button goes: nothing is wrong with the rival and the war band has not fought, the
+    leader is simply not fit to lead it. He joins every attack, so he is the whole of the refusal - and
+    unlike the other two this one names something the player can act on.
+    """
+    player_faction = current_savegame.player_faction
+    player_faction.leader = WarriorFactory(
+        faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    player_faction.save()
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["leader_cannot_march"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_blames_the_march_rather_than_the_leader_when_he_has_fought(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A leader who marched is unavailable too, so both sentences could claim him. The march is the more
+    useful thing to say - it is true of every rival that month, not just this one.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    skirmish = SkirmishFactory(
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=FactionFactory(savegame=current_savegame),
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["has_marched_this_month"] is True
+    assert response.context["leader_cannot_march"] is False

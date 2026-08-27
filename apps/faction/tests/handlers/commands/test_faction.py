@@ -9,6 +9,7 @@ from apps.faction.handlers.commands.faction import (
     handle_determine_injured_warriors,
     handle_determine_warriors_with_reduced_morale,
     handle_earn_money_from_buildings,
+    handle_earn_monthly_faction_income,
     handle_remove_quest_from_bulletin_board,
     handle_replenish_fyrd_reserve,
     handle_restock_shop_items,
@@ -20,6 +21,7 @@ from apps.faction.messages.commands.faction import (
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
+    EarnMonthlyFactionIncome,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -29,6 +31,7 @@ from apps.faction.messages.events.faction import (
     FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
+    MonthlyFactionIncomeEarned,
     NewFactionCreated,
     QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
@@ -537,3 +540,50 @@ def test_handle_earn_money_from_buildings_without_a_hall():
 
     # A town without a hall still trickles in a baseline
     assert result == MonthlyBuildingMoneyEarned(faction=faction, amount=50, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_earn_monthly_faction_income_scales_with_the_healthy_roster():
+    player_faction = FactionFactory()
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    rival_faction = FactionFactory(savegame=player_faction.savegame)
+    WarriorFactory(faction=rival_faction)
+    WarriorFactory(faction=rival_faction)
+
+    result = handle_earn_monthly_faction_income(context=EarnMonthlyFactionIncome(faction=rival_faction, month=3))
+
+    # 50 of baseline plus 200 for each of the two men it can field
+    assert result == MonthlyFactionIncomeEarned(faction=rival_faction, amount=450, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_earn_monthly_faction_income_leaves_out_the_warriors_who_are_down():
+    """
+    A faction that cannot field a warrior should not be earning off him - while the wage bill covers
+    him all the same, which is the squeeze a beaten faction is under.
+    """
+    player_faction = FactionFactory()
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    rival_faction = FactionFactory(savegame=player_faction.savegame)
+    WarriorFactory(faction=rival_faction)
+    WarriorFactory(faction=rival_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = handle_earn_monthly_faction_income(context=EarnMonthlyFactionIncome(faction=rival_faction, month=3))
+
+    assert result.amount == 250
+
+
+@pytest.mark.django_db
+def test_handle_earn_monthly_faction_income_refuses_the_player():
+    """
+    The player has the buildings, so taking this as well would pay him twice for the same month.
+    """
+    player_faction = FactionFactory()
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+
+    result = handle_earn_monthly_faction_income(context=EarnMonthlyFactionIncome(faction=player_faction, month=3))
+
+    assert result is None

@@ -28,9 +28,14 @@ class PlayerMonthPrepared(Event):
     """
     A new month has begun for the human player specifically.
 
-    Only for the things a rival genuinely has no equivalent of: the town economy and the message
-    log. A faction of the savegame gets a FactionMonthPrepared as well, so nothing here needs
-    repeating for the player.
+    Only for the things a rival genuinely has no equivalent of: the town economy that pays him, the
+    shops and the bulletin board he browses, and the message log he reads. A faction of the savegame
+    gets a FactionMonthPrepared as well, so nothing here needs repeating for the player.
+
+    Being registered here is a guard in itself, and the cheaper one - the town income needs no check
+    of its own because a rival never reaches it. What cannot be settled this way goes on
+    FactionMonthPrepared and guards itself in its command handler, the way the rival income refuses
+    the player.
 
     The training regimen sits here too, and does not belong: every faction owns a Training row
     from NewFactionCreated on, so training is a player-only activity by registration only.

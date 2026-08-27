@@ -4,6 +4,8 @@ import pytest
 from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
+from apps.finance.models import Transaction
+from apps.finance.tests.factories.transaction import TransactionFactory
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.savegame.models.savegame import Savegame
@@ -114,14 +116,15 @@ def test_finish_month_view_keeps_an_unpaid_warriors_morale_down(logged_in_client
 @pytest.mark.django_db
 def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_in_client, current_savegame):
     """
-    Flow test rather than a unit test, because what it pins is the ordering of two commands and
-    nothing but a real queue run has one.
+    Flow test rather than a unit test, because what it pins is when a ledger row lands and nothing
+    but a real queue run has an answer.
 
-    This warrior costs less than the hall earns, and still goes unpaid: both handlers hang off
-    PlayerMonthPrepared with the salary run registered first, so the payroll reads the purse before
-    the income lands in it. That is what the cost card and the navbar promise the player - a wage
-    bill measured against today's silver, with the income funding the month after - so reversing the
-    two would silently turn every one of those warnings into a false alarm.
+    This warrior costs less than the hall earns, and still goes unpaid: the hall's income returns an
+    event, and the "CreateTransaction" it becomes is queued behind every command the month's events
+    raised, the salary run among them. So the payroll reads the purse before the income reaches it.
+    That is what the cost card and the navbar promise the player - a wage bill measured against
+    today's silver, with the income funding the month after - and a change that let the income land
+    early would silently turn every one of those warnings into a false alarm.
     """
     # The bulletin board restocks as part of the month and a quest needs somebody to be against
     FactionFactory(savegame=current_savegame)
@@ -132,6 +135,89 @@ def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_i
     assert response.status_code == 200
     warrior.refresh_from_db()
     assert warrior.unpaid_months == 1
+
+
+@pytest.mark.django_db
+def test_finish_month_view_moves_a_rivals_roster_and_purse(logged_in_client, current_savegame):
+    """
+    The whole story in one run, and a flow test because none of it exists anywhere else: that the
+    rivals get a month at all lives only in the registry, and every guard deciding which faction gets
+    which half of the bookkeeping sits a command handler away from the event that raised it.
+
+    The rival earns its own income - 50 of baseline plus 200 for the man it can field - pays him, and
+    calls another up out of its fyrd. The player's month log stays his own throughout, which is the
+    regression this keeps closed: every one of those steps emits a log line, and a savegame carries
+    three to five rivals whose lines would bury his.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=1000, month=1)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    # Started on 1000, took 250 of income, paid 150 of wages, and the free draft wrote nothing
+    assert Transaction.objects.current_balance(faction_id=rival_faction.id) == 1100
+    assert Warrior.objects.filter(faction=rival_faction).count() == 2
+
+
+@pytest.mark.django_db
+def test_finish_month_view_weighs_a_rivals_draft_against_the_purse_the_month_opened_with(
+    logged_in_client, current_savegame
+):
+    """
+    Flow test rather than a unit test: a unit test is handed a balance, so it cannot tell which balance
+    the handler would have seen in a real month.
+
+    This rival opens on 100 against a wage bill of 150, so it does not draft - even though the 250 of
+    income it takes this month would have covered the man twice over. Nothing the month earns reaches
+    the ledger until every command the month's events raised has run, the draft decision included, so
+    the purse it weighs is the one it started on. Reading the later balance instead would draft here.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=100, month=1)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert Warrior.objects.filter(faction=rival_faction).count() == 1
+
+
+@pytest.mark.django_db
+def test_finish_month_view_keeps_a_rivals_bookkeeping_out_of_the_players_log(logged_in_client, current_savegame):
+    """
+    Guarded at the choke point rather than per producer: the handlers raising these lines are event
+    handlers, where strict mode forbids the relation traversal the check needs.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=1000, month=1)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert PlayerMonthLog.objects.filter(faction=rival_faction).exists() is False
+
+
+@pytest.mark.django_db
+def test_finish_month_view_pays_a_rival_nothing_for_a_hall_it_does_not_have(logged_in_client, current_savegame):
+    """
+    A rival's town is created at every default, so the hall would pay it 50 silver against a leader's
+    salary of around 150 - under water by month 10 and worse with every warrior it recruits. It earns
+    off its war band instead, and the two must not both land.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=0)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert Transaction.objects.filter(faction=rival_faction, reason__startswith="Building earnings").exists() is False
 
 
 @pytest.mark.django_db
@@ -250,3 +336,37 @@ def test_finish_month_view_without_an_active_savegame(logged_in_client):
     response = logged_in_client.post(reverse("month:finish-month-view"))
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_finish_month_view_still_offers_a_rival_the_player_fought_last_month(logged_in_client, current_savegame):
+    """
+    Flow test, because what it pins is an ordering inside one queue run.
+
+    Quest targets are drawn through "attackable_targets", which now asks whether a faction has anybody
+    who is not already in a fight - and "every warrior fights once a month" reads that against a month.
+    "handle_prepare_month" increments and saves the month before it raises anything, so generation asks
+    about the new one and last month's fights are behind it. Were it to ask about the old month instead,
+    every rival the player had fought would drop off the board it is drawing, and this savegame's only
+    rival would leave it empty.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    veteran_defender = WarriorFactory(faction=rival_faction, savegame=current_savegame)
+    # A fight that is over, in the month about to end
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction,
+        defending_faction=rival_faction,
+        victorious_faction=current_savegame.player_faction,
+        month=current_savegame.current_month,
+    )
+    skirmish.defending_warriors.add(veteran_defender)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    # A set because the board draws one to three cards: what matters is that the rival is on it at all,
+    # and that nothing else is - an empty board is what asking about the old month would have produced
+    assert set(current_savegame.player_faction.available_quests.values_list("target_faction", flat=True)) == {
+        rival_faction.id
+    }

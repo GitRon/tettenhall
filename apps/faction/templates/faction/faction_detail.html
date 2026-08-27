@@ -36,6 +36,10 @@
                 {% elif has_marched_this_month %}
                     {# Otherwise the button is simply gone and nothing says why #}
                     <p class="uk-text-meta">Your warriors have already fought this month.</p>
+                {% elif leader_cannot_march %}
+                    <p class="uk-text-meta">Your leader is in no condition to march.</p>
+                {% elif their_war_band_is_committed %}
+                    <p class="uk-text-meta">Their warriors are already committed to a fight this month.</p>
                 {% endif %}
             </div>
             {# Only your own fyrd can be drafted from, so on a rival's page the card is a button that could only fail #}

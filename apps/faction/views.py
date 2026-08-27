@@ -11,6 +11,7 @@ from queuebie.runner import handle_message
 from apps.faction.forms.faction_attack import FactionAttackForm
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.models.faction import Faction
+from apps.quest.models.quest import Quest
 from apps.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -46,15 +47,53 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             .exists()
         )
         # A button that simply vanishes teaches the player nothing, and "every warrior fights once a
-        # month" is the rule he is most likely to walk into without noticing. Only said where marching
-        # is what is actually missing though: this faction has to be one he could otherwise march on,
-        # or the sentence is a non sequitur on his own faction and on one already knocked out.
+        # month" is the rule he is most likely to walk into without noticing. Three separate things can
+        # take the button away, so each gets its own sentence: his war band has fought, his leader is
+        # unfit to lead one, or the rival's men are spoken for.
+        #
+        # All three are asked against "rivals_still_standing" rather than "attackable_targets", which is
+        # narrower by exactly one of the rules being explained: a faction excluded for having committed
+        # defenders would drop out of the test for whether to explain why it is excluded. Anything
+        # outside that queryset never offered a fight in the first place - the player's own faction, one
+        # already knocked out - and a sentence about it would be a non sequitur.
         player_faction = current_savegame.player_faction
+        is_a_standing_rival = (
+            player_faction is not None
+            and Faction.objects.rivals_still_standing(player_faction=player_faction).filter(id=self.object.id).exists()
+        )
+        # The leader decides which of the three applies, so he is asked once. Busy is the first, unfit
+        # the second, and fit and free means the refusal is the rival's doing - the three are exclusive
+        # by construction rather than by the order the template happens to test them in.
+        has_available_leader = (
+            player_faction is not None
+            and player_faction.get_available_leader(month=current_savegame.current_month) is not None
+        )
         context["has_marched_this_month"] = (
             not context["can_be_attacked"]
-            and player_faction is not None
-            and Faction.objects.attackable_targets(player_faction=player_faction).filter(id=self.object.id).exists()
+            and is_a_standing_rival
             and player_faction.has_marched_this_month(month=current_savegame.current_month)
+        )
+        # Not busy and still unavailable means wounded or routed. "Your warriors have already fought" is
+        # untrue of him and blaming the rival would be worse, so this is the one that says what the
+        # player can actually do about it: mend him.
+        context["leader_cannot_march"] = (
+            not context["can_be_attacked"]
+            and is_a_standing_rival
+            and not context["has_marched_this_month"]
+            and not has_available_leader
+        )
+        # Their men are alive and well and already in a fight, which is most often the one the player
+        # just had with them, or a quest he accepted against them. Only said once the player could
+        # otherwise have marched, or it blames the rival for a refusal that is nothing to do with them.
+        context["their_war_band_is_committed"] = (
+            not context["can_be_attacked"]
+            and is_a_standing_rival
+            and has_available_leader
+            and not Faction.objects.attackable_targets(
+                player_faction=player_faction, month=current_savegame.current_month
+            )
+            .filter(id=self.object.id)
+            .exists()
         )
 
         return context
@@ -213,6 +252,15 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
 class TownSquareView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/town_square.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Asked through the same queryset QuestAcceptView resolves its quest with, so a card is only
+        # ever shown for a quest that can actually be taken on
+        context["quest_list"] = Quest.objects.for_player_faction(faction_id=self.object.id).resolvable(
+            month=self.object.savegame.current_month
+        )
+        return context
 
 
 class FactionShopItemListView(SavegameScopedQuerysetMixin, generic.DetailView):

@@ -5,6 +5,7 @@ from faker import Faker
 from queuebie import message_registry
 from queuebie.messages import Command, Event
 
+from apps.faction.domain.rival_income import RivalIncome
 from apps.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     CreateNewFaction,
@@ -12,6 +13,7 @@ from apps.faction.messages.commands.faction import (
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
+    EarnMonthlyFactionIncome,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -22,6 +24,7 @@ from apps.faction.messages.events.faction import (
     FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
+    MonthlyFactionIncomeEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
     QuestWasRemovedFromBulletinBoard,
@@ -184,9 +187,10 @@ def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsW
     # A man who was not paid does not cheer up either, and this is what makes that stick:
     # "handle_replenish_warrior_morale" refills to the maximum, so without the "unpaid_months"
     # filter the sweep would hand back every point insolvency had just taken, in the same month it
-    # took them. The salary run writes that counter before this reads it - "handle_prepare_month"
-    # returns PlayerMonthPrepared ahead of the FactionMonthPrepared list and queuebie drains the
-    # queue in order - which is why there is a flow test on FinishMonthView pinning the ordering.
+    # took them. The salary run writes that counter before this reads it - both hang off
+    # FactionMonthPrepared with the salary run declared first, and queuebie drains the commands one
+    # event raised in the order its handlers returned them - which is why there is a flow test on
+    # FinishMonthView pinning the ordering.
     #
     # Only warriors below their maximum have anything to recover - replenishing the rest would be
     # a no-op further down the chain
@@ -272,8 +276,44 @@ def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event
 
 @message_registry.register_command(command=EarnMoneyFromBuildings)
 def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event:
+    """
+    The town's monthly payout, for the one faction that builds.
+
+    Never asked of a rival rather than refused for one: this hangs off PlayerMonthPrepared, the event
+    for the things a rival has no equivalent of. A rival's town is created at every default and would
+    collect NoHall's 50 silver against a leader's salary of around 150 - and hall revenue is flat per
+    level while a wage bill scales with the roster, so letting rivals build their way out of that
+    would move the constant and never the slope. They earn off their war band instead, see
+    [RivalIncome].
+    """
     return MonthlyBuildingMoneyEarned(
         faction=context.faction,
         amount=context.faction.town.get_monthly_income(),
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=EarnMonthlyFactionIncome)
+def handle_earn_monthly_faction_income(*, context: EarnMonthlyFactionIncome) -> list[Event] | Event | None:
+    """
+    What a rival lives on, which is its war band rather than its town.
+
+    Refused for the player, unlike the town income above: this one hangs off FactionMonthPrepared,
+    which is raised for every faction and knows nothing about who they are, so the guard belongs here
+    where reading the savegame is allowed. He has the buildings, and taking both would pay him twice
+    for the same month.
+
+    Counted over the healthy alone, while the wage bill covers everybody who is not dead - a faction
+    that cannot field a warrior should not be earning off him. See [RivalIncome] for why the two
+    rosters differ on purpose.
+    """
+    if context.faction.savegame.player_faction_id == context.faction.id:
+        return None
+
+    healthy_warriors = Warrior.objects.filter_healthy().filter_faction(faction_id=context.faction.id).count()
+
+    return MonthlyFactionIncomeEarned(
+        faction=context.faction,
+        amount=RivalIncome.get_monthly_income(healthy_warriors=healthy_warriors),
         month=context.month,
     )

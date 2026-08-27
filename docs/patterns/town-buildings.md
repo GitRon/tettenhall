@@ -52,8 +52,12 @@ holding that level's numbers:
 
 ## Known gaps
 
-- **NPC factions never build.** `MonthPrepared` fans out to every faction and each one collects its hall
-  income, but nothing upgrades a rival's town, so every building effect is a player-only power curve.
+- **NPC factions never build.** Nothing upgrades a rival's town, so every building effect is a
+  player-only power curve. The hall income is player-only to match: it hangs off `PlayerMonthPrepared`,
+  the event for the things a rival has no equivalent of, and a rival earns off its war band instead
+  (`apps/faction/domain/rival_income.py`). Hall revenue is flat per level while a wage bill scales with
+  the roster, so paying rivals through the town would move the constant and never the slope. Giving them
+  chosen starting levels is #46, construction proper is #68.
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
   bonus is the only thing making better gear — none of them has a second effect yet.
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's

@@ -20,7 +20,6 @@ from apps.skirmish.services.actions.utils import get_service_by_attack_action
 from apps.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
 from apps.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 from apps.skirmish.services.skirmish.damage import SkirmishDamageService
-from apps.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
 @message_registry.register_command(command=skirmish.AttackFaction)
@@ -29,7 +28,17 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
     # turns this into a skirmish - strict mode blocks the database there. Only the ones still on
     # their feet turn out: a warrior who is down does not defend his town, and an unhealthy side
     # would count as beaten before the first round.
-    defending_warriors = list(Warrior.objects.filter_healthy().filter_faction(faction_id=context.target_faction.id))
+    #
+    # And only the ones not already in a fight, the same rule the quest muster applies. A defender
+    # standing in two open skirmishes strands whichever is resolved second: the side that lost him
+    # has nobody healthy left to post, so it cannot be played out, and the month refuses to turn
+    # while a skirmish is open. "attackable_targets" asks this same question, so a target that
+    # reaches here has somebody to field.
+    defending_warriors = list(
+        Warrior.objects.filter_healthy()
+        .filter_faction(faction_id=context.target_faction.id)
+        .exclude_currently_busy(month=context.month)
+    )
 
     return FactionWasAttacked(
         attacking_faction=context.attacking_faction,
@@ -42,24 +51,14 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
 
 @message_registry.register_command(command=skirmish.CreateSkirmish)
 def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
-    # "is None" rather than truthiness: an empty queryset is falsy, so "the target faction fields
-    # nobody" used to read as "no opponents were supplied" and quietly invented mercenaries for a
-    # faction that has none - and then dereferenced the quest contract an attack does not carry
-    if context.warrior_list_2 is None:
-        warrior_generator = MercenaryWarriorGenerator(
-            faction=context.faction_2, culture=context.faction_2.culture, savegame_id=context.faction_1.savegame_id
-        )
-        warrior_list_2 = [
-            warrior_generator.process()
-            for _ in range(random.randrange(*context.quest_contract.quest.get_min_max_number_of_opponents()))
-        ]
-    else:
-        warrior_list_2 = context.warrior_list_2
-
+    # Both rosters arrive resolved. Whom a faction fields is its own business and is answered by the
+    # command handler that raised the event leading here - handle_attack_faction for a march,
+    # handle_accept_quest for an errand - so there is exactly one answer to it and this only stages
+    # the fight.
     skirmish_generator = BaseSkirmishGenerator(
         name=context.name,
         warriors_faction_1=context.warrior_list_1,
-        warriors_faction_2=warrior_list_2,
+        warriors_faction_2=context.warrior_list_2,
         month=context.month,
     )
     new_skirmish = skirmish_generator.process()
@@ -179,6 +178,24 @@ def handle_warrior_attacks_warrior(
     return service.process()
 
 
+def _scaled_quest_loot(*, quest_contract: QuestContract, skirmish: Skirmish) -> int:
+    """
+    What the contract actually pays, given how thin a war band the target turned out to be.
+
+    The money follows the opposition rather than the opposition being padded to fit the money: the
+    difficulty says how many of the rival's warriors turn out, and a hard quest against a faction
+    that can field two men is an easy fight and pays like one. "Quest.loot" is therefore a ceiling
+    rather than a promise, measured against the top of the difficulty band.
+
+    Never an undersell: the turnout is drawn from that same band, so the ratio is one at a full
+    muster and less below it. And never a number the player is disappointed against either - the
+    quest board runs the loot through "obscurify", so what was advertised was "High", not a figure.
+    """
+    _, band_maximum = quest_contract.quest.get_min_max_number_of_opponents()
+
+    return round(quest_contract.quest.loot * skirmish.defending_warriors.count() / band_maximum)
+
+
 @message_registry.register_command(command=skirmish.WinSkirmish)
 def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event:
     Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction)
@@ -191,7 +208,10 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         # outcome funded the rival who beat you out of your own quest. Decided here rather than in
         # the finance handler because reading the contract's faction is a query, which strict mode
         # forbids in an event handler.
-        quest_loot = quest_contract.quest.loot if quest_contract.faction_id == context.victorious_faction.pk else 0
+        if quest_contract.faction_id == context.victorious_faction.pk:
+            quest_loot = _scaled_quest_loot(quest_contract=quest_contract, skirmish=context.skirmish)
+        else:
+            quest_loot = 0
     except QuestContract.DoesNotExist:
         # There might be skirmishes with no assigned quest contract
         # TODO: this shouldn't be handled here that explicitly -> model method?

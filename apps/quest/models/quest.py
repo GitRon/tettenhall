@@ -27,8 +27,12 @@ class Quest(models.Model):
 
     def get_min_max_number_of_opponents(self) -> (int, int):
         """
-        Calculates the minimum and maximum number of opponents a player will encounter when resolving (fighting)
-        a quest contract.
+        How many of the target faction's warriors turn out, at the least and at the most.
+
+        A selection size rather than a spawn count: the opposition is the rival's actual war band, so
+        a faction with fewer men than the maximum simply fields what it has. Both ends are inclusive,
+        and the maximum has to be reachable - the payout in "_scaled_quest_loot" is measured against
+        it, so a band whose top could never turn out would undersell every full muster.
         """
         if self.difficulty == self.DifficultyChoices.DIFFICULTY_EASY:
             return 3, 5
