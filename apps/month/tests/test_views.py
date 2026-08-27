@@ -336,3 +336,37 @@ def test_finish_month_view_without_an_active_savegame(logged_in_client):
     response = logged_in_client.post(reverse("month:finish-month-view"))
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_finish_month_view_still_offers_a_rival_the_player_fought_last_month(logged_in_client, current_savegame):
+    """
+    Flow test, because what it pins is an ordering inside one queue run.
+
+    Quest targets are drawn through "attackable_targets", which now asks whether a faction has anybody
+    who is not already in a fight - and "every warrior fights once a month" reads that against a month.
+    "handle_prepare_month" increments and saves the month before it raises anything, so generation asks
+    about the new one and last month's fights are behind it. Were it to ask about the old month instead,
+    every rival the player had fought would drop off the board it is drawing, and this savegame's only
+    rival would leave it empty.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    veteran_defender = WarriorFactory(faction=rival_faction, savegame=current_savegame)
+    # A fight that is over, in the month about to end
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction,
+        defending_faction=rival_faction,
+        victorious_faction=current_savegame.player_faction,
+        month=current_savegame.current_month,
+    )
+    skirmish.defending_warriors.add(veteran_defender)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    # A set because the board draws one to three cards: what matters is that the rival is on it at all,
+    # and that nothing else is - an empty board is what asking about the old month would have produced
+    assert set(current_savegame.player_faction.available_quests.values_list("target_faction", flat=True)) == {
+        rival_faction.id
+    }

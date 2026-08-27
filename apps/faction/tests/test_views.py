@@ -677,5 +677,50 @@ def test_faction_detail_view_does_not_blame_the_rival_when_the_players_leader_ca
 
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
-    assert response.context["has_marched_this_month"] is False
     assert response.context["their_war_band_is_committed"] is False
+    assert response.context["leader_cannot_march"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_when_the_leader_is_in_no_condition_to_march(logged_in_client, current_savegame):
+    """
+    The third way the button goes: nothing is wrong with the rival and the war band has not fought, the
+    leader is simply not fit to lead it. He joins every attack, so he is the whole of the refusal - and
+    unlike the other two this one names something the player can act on.
+    """
+    player_faction = current_savegame.player_faction
+    player_faction.leader = WarriorFactory(
+        faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    player_faction.save()
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["leader_cannot_march"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_blames_the_march_rather_than_the_leader_when_he_has_fought(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A leader who marched is unavailable too, so both sentences could claim him. The march is the more
+    useful thing to say - it is true of every rival that month, not just this one.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    skirmish = SkirmishFactory(
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=FactionFactory(savegame=current_savegame),
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["has_marched_this_month"] is True
+    assert response.context["leader_cannot_march"] is False

@@ -47,12 +47,12 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             .exists()
         )
         # A button that simply vanishes teaches the player nothing, and "every warrior fights once a
-        # month" is the rule he is most likely to walk into without noticing. It now costs him the
-        # button from either side - his own war band having marched, or theirs being spoken for - so
-        # both get a sentence.
+        # month" is the rule he is most likely to walk into without noticing. Three separate things can
+        # take the button away, so each gets its own sentence: his war band has fought, his leader is
+        # unfit to lead one, or the rival's men are spoken for.
         #
-        # Both are asked against "rivals_still_standing" rather than "attackable_targets", which is
-        # narrower by exactly the rule being explained: a faction excluded for having committed
+        # All three are asked against "rivals_still_standing" rather than "attackable_targets", which is
+        # narrower by exactly one of the rules being explained: a faction excluded for having committed
         # defenders would drop out of the test for whether to explain why it is excluded. Anything
         # outside that queryset never offered a fight in the first place - the player's own faction, one
         # already knocked out - and a sentence about it would be a non sequitur.
@@ -61,23 +61,34 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             player_faction is not None
             and Faction.objects.rivals_still_standing(player_faction=player_faction).filter(id=self.object.id).exists()
         )
+        # The leader decides which of the three applies, so he is asked once. Busy is the first, unfit
+        # the second, and fit and free means the refusal is the rival's doing - the three are exclusive
+        # by construction rather than by the order the template happens to test them in.
+        has_available_leader = (
+            player_faction is not None
+            and player_faction.get_available_leader(month=current_savegame.current_month) is not None
+        )
         context["has_marched_this_month"] = (
             not context["can_be_attacked"]
             and is_a_standing_rival
             and player_faction.has_marched_this_month(month=current_savegame.current_month)
         )
+        # Not busy and still unavailable means wounded or routed. "Your warriors have already fought" is
+        # untrue of him and blaming the rival would be worse, so this is the one that says what the
+        # player can actually do about it: mend him.
+        context["leader_cannot_march"] = (
+            not context["can_be_attacked"]
+            and is_a_standing_rival
+            and not context["has_marched_this_month"]
+            and not has_available_leader
+        )
         # Their men are alive and well and already in a fight, which is most often the one the player
-        # just had with them, or a quest he accepted against them.
-        #
-        # Only said once the player could otherwise have marched, or it blames the rival for a refusal
-        # that is nothing to do with them: a leader who is wounded rather than busy leaves the button
-        # gone and "your warriors have already fought" untrue, and pointing at the rival then sends the
-        # player off to wait for a month that will not give the button back. That leader is the one
-        # remaining silent case, and it was silent before this sentence existed.
+        # just had with them, or a quest he accepted against them. Only said once the player could
+        # otherwise have marched, or it blames the rival for a refusal that is nothing to do with them.
         context["their_war_band_is_committed"] = (
             not context["can_be_attacked"]
             and is_a_standing_rival
-            and player_faction.get_available_leader(month=current_savegame.current_month) is not None
+            and has_available_leader
             and not Faction.objects.attackable_targets(
                 player_faction=player_faction, month=current_savegame.current_month
             )
