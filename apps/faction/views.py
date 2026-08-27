@@ -1,7 +1,9 @@
 import json
+from http import HTTPStatus
 
 from django.contrib import messages
 from django.db.models import Count, Q, QuerySet
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import generic
@@ -9,8 +11,9 @@ from django.views.generic.detail import SingleObjectMixin
 from queuebie.runner import handle_message
 
 from apps.faction.forms.faction_attack import FactionAttackForm
-from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
+from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
 from apps.faction.models.faction import Faction
+from apps.finance.models import Transaction
 from apps.quest.models.quest import Quest
 from apps.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
@@ -243,6 +246,65 @@ class DraftWarriorFromFyrdView(RunningSavegameRequiredMixin, PlayerFactionScoped
             }
         )
 
+        return response
+
+
+class RecruitPubMercenaryView(
+    RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View
+):
+    """
+    Hires the mercenary the player clicked on in his own pub.
+
+    Scoped by pub membership rather than by "PlayerFactionScopedQuerysetMixin": a mercenary nobody has
+    hired has no faction at all, so the stricter mixin would narrow every candidate away. The savegame
+    scope underneath it is not enough on its own - "Warrior" rows include rival warriors, captives and
+    deserters, all of whom would otherwise be hireable by id, and most of them for nothing.
+
+    The URL carries the warrior only. Which pub he is taken from is the player's, read off the
+    savegame, because the player hires from his own town - a posted faction could only ever lie about
+    that.
+    """
+
+    model = Warrior
+    http_method_names = ("post",)
+
+    def get_queryset(self) -> QuerySet:
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        if current_savegame is None or current_savegame.player_faction_id is None:
+            return super().get_queryset().none()
+
+        return super().get_queryset().in_pub_of(faction_id=current_savegame.player_faction_id)
+
+    def post(self, *args, **kwargs):
+        obj = self.get_object()
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+
+        current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
+        if current_balance < obj.recruitment_price:
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "notification": "You don't have enough silver to hire this mercenary.",
+                }
+            )
+            return response
+
+        handle_message(
+            RecruitPubMercenary(
+                warrior=obj,
+                faction=current_savegame.player_faction,
+                month=current_savegame.current_month,
+            )
+        )
+
+        # An empty body on purpose: the button swaps its own card out, and the town square has no htmx
+        # partial for the pub list to reload in its place.
+        response = HttpResponse(status=HTTPStatus.OK)
+        response["HX-Trigger"] = json.dumps(
+            {
+                "notification": f"{obj} joins your war band for {obj.recruitment_price} silver.",
+            }
+        )
         return response
 
 

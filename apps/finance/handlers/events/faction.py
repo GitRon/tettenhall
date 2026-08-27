@@ -13,9 +13,10 @@ from apps.finance.messages.commands.transaction import CreateTransaction
 
 @message_registry.register_event(event=warrior.WarriorRecruited)
 def handle_warrior_recruited(*, context: warrior.WarriorRecruited) -> Command | None:
-    # A fyrd levy costs nothing to call up, and a row reading "-0 silver" is not a payment. Silent
-    # rather than free-with-a-receipt because every faction drafts every month it can, so the ledger
-    # would fill with them and a rival's balance is meant to be readable off it.
+    # A recruitment at no price moves no silver, and a row reading "-0 silver" is not a payment.
+    # Silent rather than free-with-a-receipt because the fyrd levy is free and every faction drafts
+    # every month it can afford to, so the ledger would fill with those and a rival's balance is meant
+    # to be readable off it - the purse itself is shown nowhere in the UI.
     if context.recruitment_price == 0:
         return None
 

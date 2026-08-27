@@ -2,7 +2,12 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.faction.messages.commands.faction import AddWarriorToPub, PayMonthlyWarriorSalaries
-from apps.faction.messages.commands.warrior import ConsiderFyrdDraft, DraftWarriorFromFyrd, RestockTownMercenaries
+from apps.faction.messages.commands.warrior import (
+    ConsiderFyrdDraft,
+    DraftWarriorFromFyrd,
+    RecruitPubMercenary,
+    RestockTownMercenaries,
+)
 from apps.faction.messages.events.faction import (
     MonthlyWarriorSalariesPaid,
     MonthlyWarriorSalariesUnpaid,
@@ -124,6 +129,30 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
         faction=context.faction,
         warrior=warrior,
         recruitment_price=0,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=RecruitPubMercenary)
+def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event] | Event:
+    """
+    Hire the man standing in the pub.
+
+    No morale malus, unlike recruiting a captive: a mercenary who took the silver is not fighting
+    under duress. What he is instead is a man with no village of his own to defend, and the generator
+    is where that shows - his morale rolls low to begin with.
+
+    The price rides on the event rather than being spent here, so the ledger row is the finance app's
+    to write the way every other payment in the game is.
+    """
+    Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
+    Warrior.objects.transfer_equipment_ownership(obj=context.warrior, new_owner=context.faction)
+    Faction.objects.remove_mercenary_from_pub(faction=context.faction, warrior=context.warrior)
+
+    return WarriorRecruited(
+        warrior=context.warrior,
+        faction=context.faction,
+        recruitment_price=context.warrior.recruitment_price,
         month=context.month,
     )
 

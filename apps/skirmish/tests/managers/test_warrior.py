@@ -11,6 +11,43 @@ from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.mark.django_db
+def test_in_pub_of_returns_the_mercenaries_of_that_pub():
+    faction = FactionFactory()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.available_mercenaries.add(mercenary)
+
+    result = Warrior.objects.in_pub_of(faction_id=faction.id)
+
+    assert list(result) == [mercenary]
+
+
+@pytest.mark.django_db
+def test_in_pub_of_leaves_out_another_factions_pub():
+    faction = FactionFactory()
+    other_faction = FactionFactory(savegame=faction.savegame)
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    other_faction.available_mercenaries.add(mercenary)
+
+    result = Warrior.objects.in_pub_of(faction_id=faction.id)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_in_pub_of_leaves_out_a_warrior_who_is_merely_factionless():
+    """
+    A deserter and a captive whose banner was cleared have no faction either, and neither is standing
+    in the pub - membership is what this asks about, not a missing faction.
+    """
+    faction = FactionFactory()
+    WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+
+    result = Warrior.objects.in_pub_of(faction_id=faction.id)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
 def test_exclude_currently_busy_keeps_a_warrior_who_has_never_fought():
     warrior = WarriorFactory()
 
@@ -423,3 +460,43 @@ def test_strip_equipment_leaves_the_owning_faction_alone():
 
     weapon.refresh_from_db()
     assert weapon.owner == faction
+
+
+@pytest.mark.django_db
+def test_transfer_equipment_ownership_hands_both_items_to_the_new_owner():
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON))
+    armor = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR))
+    warrior = WarriorFactory(weapon=weapon, armor=armor)
+
+    Warrior.objects.transfer_equipment_ownership(obj=warrior, new_owner=faction)
+
+    weapon.refresh_from_db()
+    armor.refresh_from_db()
+    assert (weapon.owner, armor.owner) == (faction, faction)
+
+
+@pytest.mark.django_db
+def test_transfer_equipment_ownership_leaves_the_gear_on_the_warrior():
+    """
+    Unlike "Item.objects.update_ownership", which takes an item off its bearer as it changes hands -
+    that would disarm the man the faction has just paid for.
+    """
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON))
+    warrior = WarriorFactory(weapon=weapon)
+
+    Warrior.objects.transfer_equipment_ownership(obj=warrior, new_owner=faction)
+
+    warrior.refresh_from_db()
+    assert warrior.weapon == weapon
+
+
+@pytest.mark.django_db
+def test_transfer_equipment_ownership_of_a_warrior_carrying_nothing():
+    faction = FactionFactory()
+    warrior = WarriorFactory(weapon=None, armor=None)
+
+    result = Warrior.objects.transfer_equipment_ownership(obj=warrior, new_owner=faction)
+
+    assert result == []

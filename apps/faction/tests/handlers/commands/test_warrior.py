@@ -3,16 +3,25 @@ import pytest
 from apps.faction.handlers.commands.warrior import (
     handle_consider_fyrd_draft,
     handle_draft_warrior_from_fyrd,
+    handle_recruit_pub_mercenary,
     handle_restock_pub_mercenaries,
     handle_warrior_monthly_salaries,
 )
 from apps.faction.messages.commands.faction import PayMonthlyWarriorSalaries
-from apps.faction.messages.commands.warrior import ConsiderFyrdDraft, DraftWarriorFromFyrd, RestockTownMercenaries
+from apps.faction.messages.commands.warrior import (
+    ConsiderFyrdDraft,
+    DraftWarriorFromFyrd,
+    RecruitPubMercenary,
+    RestockTownMercenaries,
+)
 from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, MonthlyWarriorSalariesUnpaid
 from apps.faction.messages.events.warrior import FyrdDraftApproved, RequestWarriorForPub, WarriorRecruited
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.tests.factories.transaction import TransactionFactory
+from apps.item.models.item_type import ItemType
+from apps.item.tests.factories.item import ItemFactory
+from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.models import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.town.models import Town
@@ -152,6 +161,82 @@ def test_handle_draft_warrior_from_fyrd_with_empty_reserve():
 
     assert result is None
     assert Warrior.objects.filter(faction=faction).exists() is False
+
+
+@pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_takes_him_onto_the_roster():
+    faction = _player_faction()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, recruitment_price=180)
+    faction.available_mercenaries.add(mercenary)
+
+    result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
+
+    assert result == WarriorRecruited(warrior=mercenary, faction=faction, recruitment_price=180, month=3)
+    mercenary.refresh_from_db()
+    assert mercenary.faction == faction
+
+
+@pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_takes_him_out_of_the_pub():
+    """
+    The monthly restock deletes what it finds in the pub, rows and all, so a hired man left linked to
+    it is deleted at the start of the next month - after he has been paid for.
+    """
+    faction = _player_faction()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.available_mercenaries.add(mercenary)
+
+    handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
+
+    assert list(faction.available_mercenaries.all()) == []
+
+
+@pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_hands_his_gear_to_the_faction():
+    """
+    Pub gear is generated unowned, and unowned gear never reaches "get_all_unoccupied_items" - it
+    could be neither re-equipped onto anybody else nor sold.
+    """
+    faction = _player_faction()
+    weapon = ItemFactory(
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        savegame=faction.savegame,
+        owner=None,
+    )
+    armor = ItemFactory(
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+        savegame=faction.savegame,
+        owner=None,
+    )
+    mercenary = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, weapon=weapon, armor=armor
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
+
+    weapon.refresh_from_db()
+    armor.refresh_from_db()
+    assert (weapon.owner, armor.owner) == (faction, faction)
+
+
+@pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_who_carries_nothing():
+    """
+    A mercenary rolls his weapon at 75% and his armor at 25%, so an empty-handed one is the common
+    case rather than the edge.
+    """
+    faction = _player_faction()
+    mercenary = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, weapon=None, armor=None
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
+
+    assert result == WarriorRecruited(warrior=mercenary, faction=faction, recruitment_price=0, month=3)
+    mercenary.refresh_from_db()
+    assert (mercenary.weapon, mercenary.armor) == (None, None)
 
 
 @pytest.mark.django_db

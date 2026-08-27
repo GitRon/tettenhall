@@ -102,6 +102,17 @@ class FactionManager(manager.Manager):
     def remove_captive(self, *, faction, warrior):
         faction.captured_warriors.remove(warrior)
 
+    def remove_mercenary_from_pub(self, *, faction, warrior):
+        """
+        Take a hired mercenary off the pub's shelf.
+
+        Not cosmetic. "handle_restock_pub_mercenaries" clears the stock with
+        "available_mercenaries.all().delete()", which is a warrior queryset and deletes the rows
+        themselves - so a man left linked to the pub is deleted at the start of the next month, after
+        he has been paid for, equipped and marched. This is what keeps him out of that queryset.
+        """
+        faction.available_mercenaries.remove(warrior)
+
     def replenish_fyrd_reserve(self, *, faction, new_recruitees: int):
         faction.refresh_from_db()
 
