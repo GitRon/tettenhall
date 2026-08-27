@@ -4,6 +4,8 @@ import pytest
 from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
+from apps.finance.models import Transaction
+from apps.finance.tests.factories.transaction import TransactionFactory
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.savegame.models.savegame import Savegame
@@ -132,6 +134,65 @@ def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_i
     assert response.status_code == 200
     warrior.refresh_from_db()
     assert warrior.unpaid_months == 1
+
+
+@pytest.mark.django_db
+def test_finish_month_view_moves_a_rivals_roster_and_purse(logged_in_client, current_savegame):
+    """
+    The whole story in one run, and a flow test because none of it exists anywhere else: that the
+    rivals get a month at all lives only in the registry, and every guard deciding which faction gets
+    which half of the bookkeeping sits a command handler away from the event that raised it.
+
+    The rival earns its own income - 50 of baseline plus 200 for the man it can field - pays him, and
+    calls another up out of its fyrd. The player's month log stays his own throughout, which is the
+    regression this keeps closed: every one of those steps emits a log line, and a savegame carries
+    three to five rivals whose lines would bury his.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=1000, month=1)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    # Started on 1000, took 250 of income, paid 150 of wages, and the free draft wrote nothing
+    assert Transaction.objects.current_balance(faction_id=rival_faction.id) == 1100
+    assert Warrior.objects.filter(faction=rival_faction).count() == 2
+
+
+@pytest.mark.django_db
+def test_finish_month_view_keeps_a_rivals_bookkeeping_out_of_the_players_log(logged_in_client, current_savegame):
+    """
+    Guarded at the choke point rather than per producer: the handlers raising these lines are event
+    handlers, where strict mode forbids the relation traversal the check needs.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=1000, month=1)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert PlayerMonthLog.objects.filter(faction=rival_faction).exists() is False
+
+
+@pytest.mark.django_db
+def test_finish_month_view_pays_a_rival_nothing_for_a_hall_it_does_not_have(logged_in_client, current_savegame):
+    """
+    A rival's town is created at every default, so the hall would pay it 50 silver against a leader's
+    salary of around 150 - under water by month 10 and worse with every warrior it recruits. It earns
+    off its war band instead, and the two must not both land.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=0)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    assert Transaction.objects.filter(faction=rival_faction, reason__startswith="Building earnings").exists() is False
 
 
 @pytest.mark.django_db

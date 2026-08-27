@@ -1,14 +1,15 @@
 import pytest
 
 from apps.faction.handlers.commands.warrior import (
+    handle_consider_fyrd_draft,
     handle_draft_warrior_from_fyrd,
     handle_restock_pub_mercenaries,
     handle_warrior_monthly_salaries,
 )
 from apps.faction.messages.commands.faction import PayMonthlyWarriorSalaries
-from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
+from apps.faction.messages.commands.warrior import ConsiderFyrdDraft, DraftWarriorFromFyrd, RestockTownMercenaries
 from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, MonthlyWarriorSalariesUnpaid
-from apps.faction.messages.events.warrior import RequestWarriorForPub, WarriorRecruited
+from apps.faction.messages.events.warrior import FyrdDraftApproved, RequestWarriorForPub, WarriorRecruited
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.tests.factories.transaction import TransactionFactory
@@ -76,6 +77,58 @@ def test_handle_restock_pub_mercenaries_skips_a_rival_faction():
     assert result == []
     # Bailing out before the clean-up, so the rival keeps whatever it had
     assert list(rival_faction.available_mercenaries.all()) == [previous_stock]
+
+
+@pytest.mark.django_db
+def test_handle_consider_fyrd_draft_approves_a_rival_that_can_afford_it():
+    rival_faction = FactionFactory(fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=1000)
+
+    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=rival_faction, month=3))
+
+    assert result == FyrdDraftApproved(faction=rival_faction, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_consider_fyrd_draft_refuses_a_rival_that_cannot_afford_it():
+    """
+    A draft is free, so what it commits the faction to is the man's keep - which is why the purse has
+    to still cover the roster's wage bill once over rather than any purchase price.
+    """
+    rival_faction = FactionFactory(fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=100)
+
+    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=rival_faction, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_consider_fyrd_draft_refuses_an_empty_fyrd():
+    rival_faction = FactionFactory(fyrd_reserve=0)
+    TransactionFactory(faction=rival_faction, amount=1000)
+
+    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=rival_faction, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_consider_fyrd_draft_refuses_the_player():
+    """
+    The player's draft is a button on his fyrd card, and choosing when to press it is the point of
+    having one.
+    """
+    player_faction = FactionFactory(fyrd_reserve=2)
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    TransactionFactory(faction=player_faction, amount=1000)
+
+    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=player_faction, month=3))
+
+    assert result is None
 
 
 @pytest.mark.django_db

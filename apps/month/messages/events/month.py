@@ -28,9 +28,14 @@ class PlayerMonthPrepared(Event):
     """
     A new month has begun for the human player specifically.
 
-    Only for the things a rival genuinely has no equivalent of: the town economy and the message
-    log. A faction of the savegame gets a FactionMonthPrepared as well, so nothing here needs
-    repeating for the player.
+    Only for the things a rival genuinely has no equivalent of: the shops and the bulletin board he
+    browses, and the message log he reads. A faction of the savegame gets a FactionMonthPrepared as
+    well, so nothing here needs repeating for the player.
+
+    Not the purse, though. Wages, both incomes and the fyrd all sit on FactionMonthPrepared, where
+    each of them refuses the side it is not for in its own command handler - keeping them on one event
+    is what fixes the order they happen in, and the wage bill has to be billed before either income
+    lands.
 
     The training regimen sits here too, and does not belong: every faction owns a Training row
     from NewFactionCreated on, so training is a player-only activity by registration only.

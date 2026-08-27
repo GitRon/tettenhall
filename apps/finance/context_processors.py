@@ -26,7 +26,7 @@ def get_current_balance(request) -> dict:  # noqa: PBR001
     #
     # The budget is today's balance with no income added. Wages are billed before the hall pays out
     # - "handle_pay_monthly_warrior_salaries_for_new_month" is registered ahead of
-    # "handle_earn_money_from_buildings_for_new_month" on PlayerMonthPrepared and queuebie drains in
+    # "handle_earn_money_from_buildings_for_new_month" on FactionMonthPrepared and queuebie drains in
     # order - so this month's income funds next month's wages, not the ones being projected here.
     wage_bill_payroll = Payroll.for_faction(faction=current_savegame.player_faction, budget=current_balance)
 

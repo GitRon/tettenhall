@@ -2,13 +2,13 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.faction.messages.commands.faction import AddWarriorToPub, PayMonthlyWarriorSalaries
-from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
+from apps.faction.messages.commands.warrior import ConsiderFyrdDraft, DraftWarriorFromFyrd, RestockTownMercenaries
 from apps.faction.messages.events.faction import (
     MonthlyWarriorSalariesPaid,
     MonthlyWarriorSalariesUnpaid,
     WarriorWasAddedToPub,
 )
-from apps.faction.messages.events.warrior import RequestWarriorForPub, WarriorRecruited
+from apps.faction.messages.events.warrior import FyrdDraftApproved, RequestWarriorForPub, WarriorRecruited
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.finance.models import Transaction
@@ -60,6 +60,38 @@ def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Even
     context.savegame.player_faction.available_mercenaries.add(context.warrior)
 
     return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)
+
+
+@message_registry.register_command(command=ConsiderFyrdDraft)
+def handle_consider_fyrd_draft(*, context: ConsiderFyrdDraft) -> list[Event] | Event | None:
+    """
+    Whether this faction calls somebody up out of its fyrd this month.
+
+    A rival's only decision, and it is taken greedily: it drafts whenever the reserve and the purse
+    allow, because there is nothing else for it to spend on yet and anything cleverer would be faction
+    AI. The player is refused here - his draft is a button on the fyrd card, and choosing when to press
+    it is the point of having one.
+
+    "Can afford it" is a month of breathing room rather than the price of the man, because a draft is
+    free and what it commits the faction to is his keep. So the purse has to still cover the roster's
+    wage bill once over, read off the same [Payroll] the salary run bills from - and read after that
+    run, which is what the declaration order of the monthly handlers guarantees. A faction with no
+    roster passes trivially, which is how one that has been emptied out starts rebuilding.
+
+    All three questions are queries, which is why this is a command handler at all: the event handler
+    on the monthly event may only raise this and let it decide.
+    """
+    if context.faction.savegame.player_faction_id == context.faction.id:
+        return None
+
+    if context.faction.fyrd_reserve <= 0:
+        return None
+
+    balance = Transaction.objects.current_balance(faction_id=context.faction.id)
+    if balance < Payroll.for_faction(faction=context.faction, budget=balance).total_amount:
+        return None
+
+    return FyrdDraftApproved(faction=context.faction, month=context.month)
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)

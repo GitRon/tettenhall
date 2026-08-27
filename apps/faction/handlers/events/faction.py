@@ -6,11 +6,13 @@ from apps.faction.messages.commands.faction import (
     DetermineInjuredWarriors,
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
+    EarnMonthlyFactionIncome,
     PayMonthlyWarriorSalaries,
     ReplenishFyrdReserve,
 )
+from apps.faction.messages.commands.warrior import ConsiderFyrdDraft
 from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
-from apps.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
+from apps.month.messages.events.month import FactionMonthPrepared
 from apps.savegame.messages.events.savegame import NewSavegameCreated
 from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
 
@@ -42,19 +44,36 @@ def handle_warriors_with_reduced_morale_determined(
     return event_list
 
 
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_replenish_fyrd_reserve_for_new_month(*, context: PlayerMonthPrepared) -> list[Command]:
+# Everything a faction does when a month turns hangs off FactionMonthPrepared, so it applies to the
+# player and to his rivals alike, and the declaration order below is the order it happens in: queuebie
+# drains the commands one event raises in the order its handlers returned them.
+#
+# The order is a rule, not a detail. Wages are billed before either income lands, because that is what
+# the cost card and the navbar promise the player - a wage bill measured against today's silver, with
+# this month's income funding the month after. The recovery sweeps come after the wages so the morale
+# one sees the unpaid count the salary run just wrote, and the draft comes last so a faction only
+# calls somebody up out of what wages and income left it.
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_replenish_fyrd_reserve_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
     return [ReplenishFyrdReserve(faction=context.faction, month=context.current_month)]
 
 
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_pay_monthly_warrior_salaries_for_new_month(*, context: PlayerMonthPrepared) -> Command:
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_pay_monthly_warrior_salaries_for_new_month(*, context: FactionMonthPrepared) -> Command:
     return PayMonthlyWarriorSalaries(faction=context.faction, month=context.current_month)
 
 
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_earn_money_from_buildings_for_new_month(*, context: PlayerMonthPrepared) -> Command:
+# Both incomes are raised for everybody and each one refuses the side it is not for, in its command
+# handler where the savegame may be read. A rival's town sits at every default, so routing it through
+# the hall would pay it 50 silver against a leader's salary of around 150.
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_earn_money_from_buildings_for_new_month(*, context: FactionMonthPrepared) -> Command:
     return EarnMoneyFromBuildings(faction=context.faction, month=context.current_month)
+
+
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_earn_monthly_faction_income_for_new_month(*, context: FactionMonthPrepared) -> Command:
+    return EarnMonthlyFactionIncome(faction=context.faction, month=context.current_month)
 
 
 # Every faction recovers, not just the player's: otherwise one that survived a battle stays crippled
@@ -67,3 +86,8 @@ def handle_determine_warriors_with_reduced_morale_for_new_month(*, context: Fact
 @message_registry.register_event(event=FactionMonthPrepared)
 def handle_determine_injured_warriors_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
     return [DetermineInjuredWarriors(faction=context.faction, month=context.current_month)]
+
+
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_consider_fyrd_draft_for_new_month(*, context: FactionMonthPrepared) -> Command:
+    return ConsiderFyrdDraft(faction=context.faction, month=context.current_month)

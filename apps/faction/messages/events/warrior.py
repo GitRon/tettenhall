@@ -21,6 +21,20 @@ class RequestWarriorForPub(Event):
 
 
 @dataclass(kw_only=True)
+class FyrdDraftApproved(Event):
+    """
+    This faction can call somebody up, and has decided to.
+
+    The whole decision was made before this was raised, so the handler has nothing left to weigh -
+    which is what lets a rival's draft run through the same DraftWarriorFromFyrd the player's fyrd
+    card dispatches, rather than a second flow beside it.
+    """
+
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorRecruited(Event):
     warrior: Warrior
     faction: Faction

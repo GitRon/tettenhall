@@ -59,6 +59,21 @@ class MonthlyBuildingMoneyEarned(Event):
 
 
 @dataclass(kw_only=True)
+class MonthlyFactionIncomeEarned(Event):
+    """
+    A faction with no player behind it took its monthly income.
+
+    Separate from MonthlyBuildingMoneyEarned rather than an amount passed through it: that one is
+    logged as "Buildings earned ... silver this month", and a rival has no buildings to have earned
+    it with.
+    """
+
+    faction: Faction
+    amount: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class FactionWarriorsWithReducedMoraleDetermined(Event):
     faction: Faction
     warrior_list: list[Warrior]
