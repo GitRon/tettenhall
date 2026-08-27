@@ -18,6 +18,25 @@ class FactionQuerySet(models.QuerySet):
         """
         return self.for_savegame(savegame_id=savegame_id).filter(is_defeated=False)
 
+    def rivals_still_standing(self, *, player_faction):
+        """
+        Every rival of "player_faction" that still has somebody on his feet, free or not.
+
+        Wider than [attackable_targets] by exactly the "already in a fight" rule, and that gap is the
+        point: it is what lets the faction page tell "they cannot be marched on right now" from "there
+        was never anything here to march on". A knocked-out faction and the player's own belong to the
+        second, and a sentence explaining the missing button would be a non sequitur on either.
+        """
+        # Imported here because the faction model imports this module while being defined itself,
+        # and the warrior model reaches back into the faction app
+        from apps.skirmish.models.warrior import Warrior
+
+        return (
+            self.still_in_play(savegame_id=player_faction.savegame_id)
+            .exclude(id=player_faction.id)
+            .filter(id__in=Warrior.objects.filter_healthy().values("faction_id"))
+        )
+
     def attackable_targets(self, *, player_faction, month: int):
         """
         Every rival of "player_faction" that is a legitimate target, leaving aside whether the player
@@ -41,12 +60,10 @@ class FactionQuerySet(models.QuerySet):
 
         available_defenders = Warrior.objects.filter_healthy().exclude_currently_busy(month=month)
 
-        return (
-            self.still_in_play(savegame_id=player_faction.savegame_id)
-            .exclude(id=player_faction.id)
-            # Through a subquery on the warrior rather than a join on the roster, so a faction with
-            # several men left standing still comes back once
-            .filter(id__in=available_defenders.values("faction_id"))
+        # Through a subquery on the warrior rather than a join on the roster, so a faction with
+        # several men left standing still comes back once
+        return self.rivals_still_standing(player_faction=player_faction).filter(
+            id__in=available_defenders.values("faction_id")
         )
 
     def attackable_by(self, *, player_faction, month: int):

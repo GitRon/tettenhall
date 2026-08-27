@@ -47,17 +47,35 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             .exists()
         )
         # A button that simply vanishes teaches the player nothing, and "every warrior fights once a
-        # month" is the rule he is most likely to walk into without noticing. Only said where marching
-        # is what is actually missing though: this faction has to be one he could otherwise march on,
-        # or the sentence is a non sequitur on his own faction and on one already knocked out.
+        # month" is the rule he is most likely to walk into without noticing. It now costs him the
+        # button from either side - his own war band having marched, or theirs being spoken for - so
+        # both get a sentence.
+        #
+        # Both are asked against "rivals_still_standing" rather than "attackable_targets", which is
+        # narrower by exactly the rule being explained: a faction excluded for having committed
+        # defenders would drop out of the test for whether to explain why it is excluded. Anything
+        # outside that queryset never offered a fight in the first place - the player's own faction, one
+        # already knocked out - and a sentence about it would be a non sequitur.
         player_faction = current_savegame.player_faction
+        is_a_standing_rival = (
+            player_faction is not None
+            and Faction.objects.rivals_still_standing(player_faction=player_faction).filter(id=self.object.id).exists()
+        )
         context["has_marched_this_month"] = (
             not context["can_be_attacked"]
-            and player_faction is not None
-            and Faction.objects.attackable_targets(player_faction=player_faction, month=current_savegame.current_month)
+            and is_a_standing_rival
+            and player_faction.has_marched_this_month(month=current_savegame.current_month)
+        )
+        # Their men are alive and well and already in a fight, which is most often the one the player
+        # just had with them, or a quest he accepted against them
+        context["their_war_band_is_committed"] = (
+            not context["can_be_attacked"]
+            and is_a_standing_rival
+            and not Faction.objects.attackable_targets(
+                player_faction=player_faction, month=current_savegame.current_month
+            )
             .filter(id=self.object.id)
             .exists()
-            and player_faction.has_marched_this_month(month=current_savegame.current_month)
         )
 
         return context

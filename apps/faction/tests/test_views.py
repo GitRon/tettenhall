@@ -110,8 +110,34 @@ def test_faction_detail_view_says_why_the_attack_is_gone(
     The button simply vanishing teaches the player nothing, and "every warrior fights once a month"
     is the rule he is most likely to walk into without noticing.
     """
+    # A rival he has not touched: its own men are free, so his march is the only thing in the way
+    untouched_rival = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=untouched_rival)
+    skirmish = SkirmishFactory(
+        attacking_faction=player_faction_ready_to_march,
+        defending_faction=FactionFactory(savegame=current_savegame),
+        victorious_faction=player_faction_ready_to_march,
+        month=current_savegame.current_month,
+    )
+    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": untouched_rival.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["has_marched_this_month"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_why_the_attack_is_gone_on_the_rival_he_marched_on(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    The page he is most likely to be looking at, and the one that went quiet: a real march puts the
+    target's defenders on the skirmish roster too, which takes the faction out of "attackable_targets"
+    and used to take the sentence with it.
+    """
     rival_faction = FactionFactory(savegame=current_savegame)
-    WarriorFactory(faction=rival_faction)
+    rival_warrior = WarriorFactory(faction=rival_faction)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
         defending_faction=rival_faction,
@@ -119,11 +145,47 @@ def test_faction_detail_view_says_why_the_attack_is_gone(
         month=current_savegame.current_month,
     )
     skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
+    skirmish.defending_warriors.add(rival_warrior)
 
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
     assert response.context["can_be_attacked"] is False
     assert response.context["has_marched_this_month"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_when_the_rivals_own_war_band_is_committed(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    The other side of "every warrior fights once a month". His war band is free - he has not marched -
+    but theirs is spoken for, which a quest accepted against them does as surely as a fight does.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    committed_defender = WarriorFactory(faction=rival_faction)
+    SkirmishFactory(defending_faction=rival_faction).defending_warriors.add(committed_defender)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["has_marched_this_month"] is False
+    assert response.context["their_war_band_is_committed"] is True
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_nothing_about_a_committed_war_band_on_a_defeated_faction(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A knocked-out faction never offered a fight, so neither sentence applies - the same reason the
+    marching one stays quiet there.
+    """
+    defeated_faction = FactionFactory(savegame=current_savegame, is_defeated=True)
+    WarriorFactory(faction=defeated_faction)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": defeated_faction.id}))
+
+    assert response.context["can_be_attacked"] is False
+    assert response.context["their_war_band_is_committed"] is False
 
 
 @pytest.mark.django_db
