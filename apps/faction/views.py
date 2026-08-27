@@ -11,6 +11,7 @@ from queuebie.runner import handle_message
 from apps.faction.forms.faction_attack import FactionAttackForm
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd
 from apps.faction.models.faction import Faction
+from apps.quest.models.quest import Quest
 from apps.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -213,6 +214,13 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
 class TownSquareView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/town_square.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Asked through the same queryset QuestAcceptView resolves its quest with, so a card is only
+        # ever shown for a quest that can actually be taken on
+        context["quest_list"] = Quest.objects.for_player_faction(faction_id=self.object.id).resolvable()
+        return context
 
 
 class FactionShopItemListView(SavegameScopedQuerysetMixin, generic.DetailView):

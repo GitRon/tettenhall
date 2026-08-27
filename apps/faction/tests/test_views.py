@@ -6,6 +6,7 @@ from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.models.transaction import Transaction
 from apps.item.tests.factories.item import ItemFactory
+from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.skirmish import Skirmish
@@ -250,7 +251,9 @@ def test_draft_warrior_from_fyrd_view_drafts_a_warrior(logged_in_client, current
     faction.refresh_from_db()
     assert faction.fyrd_reserve == 0
     assert Warrior.objects.filter(faction=faction).count() == 1
-    assert Transaction.objects.filter(faction=faction).count() == 1
+    # A levy called up out of the fyrd costs nothing, and a ledger row reading "-0 silver" is not a
+    # payment - every faction drafts every month it can, so those rows would bury the real ones
+    assert Transaction.objects.filter(faction=faction).exists() is False
 
 
 @pytest.mark.django_db
@@ -508,6 +511,26 @@ def test_town_square_view_shows_the_faction(logged_in_client, current_savegame):
 
     assert response.status_code == 200
     assert response.context["object"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_town_square_view_offers_only_quests_that_can_still_be_taken_on(logged_in_client, current_savegame):
+    """
+    Scoped the same way QuestAcceptView resolves its quest, so the card and the page it leads to
+    cannot disagree - the opposition is the target's own war band, and a flattened one fields nobody.
+    """
+    fightable_quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=fightable_quest.target_faction)
+    flattened_quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=flattened_quest.target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    current_savegame.player_faction.available_quests.add(fightable_quest, flattened_quest)
+
+    response = logged_in_client.get(
+        reverse("faction:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["quest_list"]) == [fightable_quest]
 
 
 @pytest.mark.django_db

@@ -16,7 +16,7 @@
         </div>
         <div class="uk-margin-bottom">
             <h2>Board</h2>
-            {% for quest in object.available_quests.all %}
+            {% for quest in quest_list %}
                 {% include 'quest/components/quest_card.html' with quest=quest %}
             {% endfor %}
         </div>
