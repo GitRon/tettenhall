@@ -108,6 +108,33 @@ not show enough of it.
 One browser, one tab, driven from this session. Do not hand this phase to parallel agents: there is a
 single browser behind the Playwright tools and two drivers would fight over it.
 
+## The browser is shared with every other checkout on this machine
+
+`@playwright/mcp` does not launch a browser per server. Unless it was started with `--isolated`, it asks
+a machine-wide daemon for the *unnamed* browser, and every other unnamed server gets the same one. Two
+content reviews running at once therefore share one Chrome: one of them finds the other's tabs in its
+snapshot, and the other loses its page mid-navigation to
+
+```
+Error: async initializeServer: Target page, context or browser has been closed
+```
+
+That error is not your story and no amount of restarting the smoke server fixes it. When you see it, or
+when a snapshot shows a tab you never opened, check whether another checkout is in Phase 6
+(`git worktree list`, then look for a live `content/.pid` in each).
+
+Two ways out, in order of preference:
+
+1. **Isolate the server**, once, in the `playwright` entry of `~/.claude.json` - add `"--isolated"` to
+   its `args`. Concurrent servers then each get their own browser, verified up to three at a time. The
+   cost is that the profile lives in memory, so nothing survives an MCP restart - which for this phase is
+   no cost at all, because every round logs in from scratch anyway.
+2. **Serialise the phase.** Wait for the other checkout's content review to finish, or record this one as
+   `blocked` with the reason and ship without it, the same as any other phase that could not run.
+
+Either way, never `browser_close` your way out of a collision: on a shared daemon browser that is the
+other run's browser too.
+
 Budget: the baseline journey, the story journey, and **at most ten exploratory interactions beyond them.**
 Past that, write down what you have and stop. A browser is an excellent place to lose an hour.
 
@@ -146,6 +173,9 @@ story-caused: yes | no
   an unreachable feature, severity high.
 - **Playwright is not connected.** Record the phase as skipped with the reason. Never report a pass you
   did not see.
+- **Another checkout is already driving the browser.** `Target page, context or browser has been closed`,
+  or tabs you never opened. Isolate the MCP server or wait - see above - and record the phase as
+  `blocked` if you do neither.
 
 ## Teardown
 

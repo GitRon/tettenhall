@@ -26,6 +26,8 @@ Everything durable lives in `.claude/runs/<slug>/` (gitignored). This directory 
 what makes a dead reviewer cost one lens instead of the whole run.
 
 ```
+.claude/runs/
+  .lock                this checkout's one-run-at-a-time lock: slug, branch, epoch seconds
 .claude/runs/<slug>/
   spec.md              the story, resolved once, never re-fetched
   plan.md              the approved implementation plan
@@ -91,6 +93,34 @@ Read [AGENTS.md](../../../AGENTS.md) and the docs it points at for the area you 
 are normative, and this project deviates from Django defaults on purpose. Do not infer conventions from
 nearby code.
 
+A checkout also has to be able to run the gates. A fresh `git worktree` carries no untracked files, so it
+has no `.venv` - and Phase 3 is where that surfaces, long after the story is written. Check it here:
+
+```bash
+[ -x .venv/bin/python ] || [ -x .venv/Scripts/python.exe ] || uv sync
+```
+
+`pre-commit` and `uv` are installed machine-wide and their caches are shared, so they need nothing per
+checkout. `node_modules` is missing in a fresh worktree too, but `content-server.sh` installs it in
+Phase 6 rather than failing.
+
+## Parallel runs
+
+Several checkouts of this repository work on stories at the same time - `git worktree list` shows them.
+Most of what a run touches is already per-checkout: the run directory, `db.sqlite3`, the smoke database
+inside `content/`, and the port, which `content-server.sh` probes upward from the default rather than
+assuming it is free. Two things are not.
+
+**One run at a time per checkout.** Phase 1 checks out a branch and Phase 2 rewrites the working tree, so
+a second run in the same directory pulls the ground out from under the first. `.claude/runs/.lock` is one
+line - `<slug> <branch> <epoch seconds>` - written in Phase 0 and deleted in Phase 7. To work two stories
+at once, use a second worktree, never a second session in this one.
+
+**The browser is shared across the whole machine.** `@playwright/mcp` gives every server started without
+`--isolated` the same daemon browser, so two content reviews land in one Chrome: one of them sees the
+other's tabs and the other dies mid-navigation with `Target page, context or browser has been closed`.
+[Content review](references/content-review.md) carries the check and the fix.
+
 ## Phase 0 - Resolve the story
 
 Derive `<slug>` as a short kebab-case name for the story (`faction-defeat`, `town-shop-restock`).
@@ -105,6 +135,18 @@ Resolve once. Later phases read `spec.md`, they do not re-fetch.
 
 If the working tree is dirty or a rebase/merge is in progress, stop and say so. Do not start a story on
 top of someone else's half-finished work.
+
+Then take the checkout's lock:
+
+```bash
+mkdir -p .claude/runs
+cat .claude/runs/.lock 2>/dev/null          # empty, or a slug that is not yours -> stop
+echo "<slug> <branch> $(date +%s)" > .claude/runs/.lock
+```
+
+A lock naming a different slug means another run owns this working tree. Stop and say which one - do not
+take it over. If that run was abandoned, its `state.json` says which phase it died in: resume it, or
+delete the lock deliberately and say you did.
 
 ## Phase 1 - Plan, then stop
 
@@ -253,7 +295,9 @@ habits, how to reach a game state honestly, and what counts as a finding.
 2. Write `content/journey.md` - the baseline journey plus the steps the story adds, each with its expected
    outcome - **before** you touch the browser. A journey written afterwards only describes what happened.
 3. Walk it with the Playwright tools, from this session, in one browser. **Do not fan this out to agents**:
-   there is a single browser behind those tools and parallel drivers would fight over it.
+   there is a single browser behind those tools and parallel drivers would fight over it. The same is true
+   across checkouts - see [content review](references/content-review.md) on the shared daemon browser
+   before starting this phase while another run is in it.
 4. Record the result of every step in `journey.md` and every defect in `content/findings.md`. Check the
    network requests after each mutating click - a failed htmx call leaves the page looking fine.
 5. Fix what the story broke, `content-server.sh restart` (the server does not autoreload, so without this
@@ -286,6 +330,9 @@ result, a **Review coverage** line naming any lens that was skipped or partial, 
 line saying which journey was walked in the browser and what it showed - or that the phase was skipped,
 and why. Unless `--no-pr`.
 
+Release the checkout's lock once the PR is open - `rm -f .claude/runs/.lock`. A lock left behind blocks
+the next story in this worktree for no reason.
+
 End with a short report: what shipped, what CI said, what the review found and what you fixed, what the
 browser confirmed or broke, what was skipped and why, and the out-of-scope list.
 
@@ -301,7 +348,8 @@ result is missing from `journey.md`. Use `fresh` instead if the recorded results
 code, which is the case whenever the diff moved since the round began.
 
 If a run is interrupted anywhere, the run directory is enough to continue. Never restart from Phase 0 when
-`spec.md` already exists.
+`spec.md` already exists. A `--resume` of the slug the lock already names simply keeps it; rewrite it if
+it is missing.
 
 ## Cost rules
 
@@ -312,6 +360,7 @@ The point of the sharding is to spend wall-clock once. Hold these:
 - Never re-review after fixes; check the fix delta instead.
 - Never spend review wall-clock on anything `ruff`, `boa-restrictor` or the coverage gate already catches.
 - One retry per shard, at half scope. Then it is a gap.
-- One browser, driven from this session. The content review is never fanned out.
+- One browser, driven from this session. The content review is never fanned out - and never run at the
+  same time as another checkout's, unless the MCP server is `--isolated`.
 - Walk the journey you wrote, plus at most ten exploratory clicks. Then write down what you have.
 - Two content fix rounds, then stop. And always stop the server - a stale one costs the next run a round.
