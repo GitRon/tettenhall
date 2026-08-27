@@ -37,10 +37,12 @@ class QuestGenerator:
             )
         )
 
-        # Rivals are left, but every one of them has been flattened. No quest this month rather than
-        # an exception: the month advance is what asks for one, and a player who has just beaten his
-        # last standing opponent has not broken the game. They are back on the board as soon as the
-        # monthly healing puts a warrior back on his feet.
+        # Rivals are left, but not one of them can field a defender - every man beaten, or every man
+        # already in a fight. Only the first is reachable from here, since nothing is committed yet
+        # when the month is being prepared, but the branch answers both. No quest this month rather
+        # than an exception: the month advance is what asks for one, and a player who has just beaten
+        # his last standing opponent has not broken the game. They are back on the board as soon as
+        # the monthly healing puts a warrior back on his feet.
         if not target_faction_list:
             return None
 

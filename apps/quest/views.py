@@ -21,6 +21,12 @@ class QuestAcceptView(
     current_savegame: Savegame = None
 
     def get_queryset(self):
+        # A logged-in user need not have a savegame yet, and there is no month to ask about then. The
+        # scoping mixin would narrow to nothing anyway, so this only has to avoid dereferencing it -
+        # the same guard FactionAttackView carries, for the same reason.
+        if self.current_savegame is None:
+            return super().get_queryset().none()
+
         # The board and this view are scoped the same way, so the "Accept" link and the page it leads
         # to can never disagree about which quests can still be taken on
         return super().get_queryset().resolvable(month=self.current_savegame.current_month)

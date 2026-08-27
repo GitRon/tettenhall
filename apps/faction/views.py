@@ -67,10 +67,17 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             and player_faction.has_marched_this_month(month=current_savegame.current_month)
         )
         # Their men are alive and well and already in a fight, which is most often the one the player
-        # just had with them, or a quest he accepted against them
+        # just had with them, or a quest he accepted against them.
+        #
+        # Only said once the player could otherwise have marched, or it blames the rival for a refusal
+        # that is nothing to do with them: a leader who is wounded rather than busy leaves the button
+        # gone and "your warriors have already fought" untrue, and pointing at the rival then sends the
+        # player off to wait for a month that will not give the button back. That leader is the one
+        # remaining silent case, and it was silent before this sentence existed.
         context["their_war_band_is_committed"] = (
             not context["can_be_attacked"]
             and is_a_standing_rival
+            and player_faction.get_available_leader(month=current_savegame.current_month) is not None
             and not Faction.objects.attackable_targets(
                 player_faction=player_faction, month=current_savegame.current_month
             )

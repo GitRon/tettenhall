@@ -243,3 +243,18 @@ def test_quest_accept_view_takes_the_targets_defenders_out_of_reach_of_a_march(
 
     assert response.status_code == 404
     assert Skirmish.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_quest_accept_view_without_an_active_savegame(logged_in_client):
+    """
+    Answering 404 rather than a server error: with no savegame there is no month to ask whether the
+    target can still field a defender, and the scoped queryset narrows to nothing anyway.
+    """
+    quest = QuestFactory()
+    WarriorFactory(faction=quest.target_faction)
+
+    response = logged_in_client.get(reverse("quest:quest-accept-view", kwargs={"pk": quest.pk}))
+
+    assert response.status_code == 404
+    assert QuestContract.objects.exists() is False

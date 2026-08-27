@@ -654,3 +654,28 @@ def test_faction_detail_view_shows_a_faction_without_a_leader(logged_in_client, 
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_does_not_blame_the_rival_when_the_players_leader_cannot_march(
+    logged_in_client, current_savegame
+):
+    """
+    The sentence exists to explain the missing button, so it must not point at the rival when the
+    player could not have marched on anybody. His leader is down here - not busy, so nothing says he
+    has already fought - and the rival's men happen to be committed as well. Blaming them sends him
+    off to wait for a month that will not give the button back.
+    """
+    player_faction = current_savegame.player_faction
+    player_faction.leader = WarriorFactory(
+        faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    player_faction.save()
+    rival_faction = FactionFactory(savegame=current_savegame)
+    committed_defender = WarriorFactory(faction=rival_faction)
+    SkirmishFactory(defending_faction=rival_faction).defending_warriors.add(committed_defender)
+
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["has_marched_this_month"] is False
+    assert response.context["their_war_band_is_committed"] is False
