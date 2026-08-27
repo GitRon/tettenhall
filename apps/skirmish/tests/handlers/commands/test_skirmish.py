@@ -3,8 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.faction.tests.factories.faction import FactionFactory
-from apps.item.models.item_type import ItemType
-from apps.item.tests.factories.item_type import ItemTypeFactory
+from apps.quest.models.quest import Quest
 from apps.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.handlers.commands.skirmish import (
@@ -138,35 +137,11 @@ def test_handle_create_skirmish_records_the_month():
 
 
 @pytest.mark.django_db
-def test_handle_create_skirmish_generates_opponents_when_none_are_given():
-    quest_contract = QuestContractFactory()
-    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
-    ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON)
-    ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR)
-
-    # Boundary randomness: the number of generated opponents is a random draw
-    with mock.patch("apps.skirmish.handlers.commands.skirmish.random.randrange", return_value=2):
-        result = handle_create_skirmish(
-            context=CreateSkirmish(
-                name="Ambush",
-                faction_1=quest_contract.faction,
-                faction_2=quest_contract.quest.target_faction,
-                warrior_list_1=[attacking_warrior],
-                warrior_list_2=None,
-                month=3,
-                quest_contract=quest_contract,
-            )
-        )
-
-    assert result.skirmish.defending_warriors.count() == 2
-
-
-@pytest.mark.django_db
-def test_handle_create_skirmish_does_not_generate_opponents_for_an_empty_list():
+def test_handle_create_skirmish_refuses_an_empty_defending_side():
     """
-    An empty queryset is falsy, so "this faction fields nobody" used to be indistinguishable from
-    "no opponents were supplied" - and invented mercenaries for a faction that has none, on a path
-    that then dereferenced the quest contract an attack does not carry.
+    Nobody is conjured to fill the gap any more, so a side that fields nobody is a fight that cannot
+    be staged. What keeps it unreachable is who may be targeted at all - "Quest.objects.resolvable()"
+    for an errand, "attackable_targets" for a march.
     """
     attacking_faction = FactionFactory()
     enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
@@ -420,9 +395,67 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_attacking_facti
         defeated_unconscious_warriors=[unconscious_enemy_warrior],
         victorious_healthy_warriors=[healthy_attacking_warrior],
         quest_name=quest_contract.quest.name,
-        quest_loot=250,
+        # Two defenders turned out against an easy quest's band of up to five, so the contract pays
+        # two fifths of its face value
+        quest_loot=100,
         month=3,
     )
+
+
+@pytest.mark.django_db
+def test_handle_faction_wins_skirmish_pays_the_full_loot_for_a_full_muster():
+    """
+    The advertised figure is never an undersell: the turnout is drawn from the difficulty band, so a
+    faction that fields the top of it earns the contract's whole face value.
+    """
+    skirmish = SkirmishFactory()
+    quest_contract = QuestContractFactory(
+        faction=skirmish.attacking_faction,
+        skirmish=skirmish,
+        quest__loot=300,
+        quest__difficulty=Quest.DifficultyChoices.DIFFICULTY_EASY,
+    )
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    # An easy quest musters up to five
+    for _ in range(5):
+        skirmish.defending_warriors.add(
+            WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+        )
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
+    )
+
+    assert result.quest_loot == quest_contract.quest.loot
+
+
+@pytest.mark.django_db
+def test_handle_faction_wins_skirmish_pays_less_for_a_thin_warband():
+    """
+    The money follows the opposition rather than the opposition being padded to fit the money: a hard
+    quest against a faction that can field two men is an easy fight and pays like one.
+    """
+    skirmish = SkirmishFactory()
+    QuestContractFactory(
+        faction=skirmish.attacking_faction,
+        skirmish=skirmish,
+        quest__loot=800,
+        quest__difficulty=Quest.DifficultyChoices.DIFFICULTY_HARD,
+    )
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    skirmish.defending_warriors.add(
+        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    )
+    skirmish.defending_warriors.add(
+        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    )
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
+    )
+
+    # Two of the eight a hard quest musters, so a quarter of the 800 on the contract
+    assert result.quest_loot == 200
 
 
 @pytest.mark.django_db

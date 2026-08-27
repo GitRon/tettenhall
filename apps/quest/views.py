@@ -20,6 +20,11 @@ class QuestAcceptView(
     object = None
     current_savegame: Savegame = None
 
+    def get_queryset(self):
+        # The board and this view are scoped the same way, so the "Accept" link and the page it leads
+        # to can never disagree about which quests can still be taken on
+        return super().get_queryset().resolvable()
+
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.current_savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)

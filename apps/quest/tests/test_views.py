@@ -7,6 +7,7 @@ from apps.quest.models.quest_contract import QuestContract
 from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
+from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -16,6 +17,7 @@ def test_quest_accept_view_signs_a_contract_and_sets_up_the_skirmish(logged_in_c
     Flow test: no mocking inside the chain, so this runs the real queue and asserts the end state.
     """
     quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=quest.target_faction)
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     current_savegame.player_faction.available_quests.add(quest)
 
@@ -43,6 +45,7 @@ def test_quest_accept_view_sends_the_player_home_on_a_finished_savegame(logged_i
     player is told nothing. A redirect carrying a warning is the same refusal he can actually see.
     """
     quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=quest.target_faction)
     current_savegame.player_faction.available_quests.add(quest)
     current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
     current_savegame.save()
@@ -59,6 +62,7 @@ def test_quest_accept_view_sends_the_player_home_on_a_finished_savegame(logged_i
 @pytest.mark.django_db
 def test_quest_accept_view_redisplays_the_quest_on_an_invalid_submission(logged_in_client, current_savegame):
     quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=quest.target_faction)
     current_savegame.player_faction.available_quests.add(quest)
 
     response = logged_in_client.post(reverse("quest:quest-accept-view", kwargs={"pk": quest.pk}), data={})
@@ -75,6 +79,7 @@ def test_quest_accept_view_cannot_accept_a_quest_that_was_never_offered(logged_i
     the player's own bulletin board.
     """
     unoffered_quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=unoffered_quest.target_faction)
     warrior = WarriorFactory(faction=current_savegame.player_faction)
 
     response = logged_in_client.post(
@@ -91,14 +96,41 @@ def test_quest_accept_view_cannot_accept_a_quest_that_was_never_offered(logged_i
 
 
 @pytest.mark.django_db
+def test_quest_accept_view_refuses_a_quest_whose_target_fields_nobody(logged_in_client, current_savegame):
+    """
+    A quest outlives the month it was offered in, so the faction it names may have been flattened
+    since. The opposition is that faction's own war band, and staging a fight against an empty side
+    raises one hop into the queue - so the view refuses before anything is signed.
+    """
+    quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=quest.target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    current_savegame.player_faction.available_quests.add(quest)
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.post(
+        reverse("quest:quest-accept-view", kwargs={"pk": quest.pk}),
+        data={
+            "faction": current_savegame.player_faction.id,
+            "quest": quest.id,
+            "assigned_warriors": [warrior.id],
+        },
+    )
+
+    assert response.status_code == 404
+    assert QuestContract.objects.exists() is False
+
+
+@pytest.mark.django_db
 def test_quest_accept_view_rejects_a_hidden_quest_field_naming_another_quest(logged_in_client, current_savegame):
     """
     "quest" is a hidden input, so its queryset has to do the validating: left at the default the
     posted id would decide which quest gets accepted, not the scoped one from the URL.
     """
     quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=quest.target_faction)
     current_savegame.player_faction.available_quests.add(quest)
     other_quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=other_quest.target_faction)
     current_savegame.player_faction.available_quests.add(other_quest)
     warrior = WarriorFactory(faction=current_savegame.player_faction)
 
@@ -121,6 +153,7 @@ def test_quest_accept_view_rejects_a_hidden_faction_field_naming_another_faction
     Same for "faction": the posted id must not be able to sign the contract for somebody else.
     """
     quest = QuestFactory(target_faction__savegame=current_savegame)
+    WarriorFactory(faction=quest.target_faction)
     current_savegame.player_faction.available_quests.add(quest)
     rival_faction = FactionFactory(savegame=current_savegame)
     warrior = WarriorFactory(faction=current_savegame.player_faction)
