@@ -18,6 +18,16 @@ class FactionQuerySet(models.QuerySet):
         """
         return self.for_savegame(savegame_id=savegame_id).filter(is_defeated=False)
 
+    def rivals_in_play(self, *, player_faction):
+        """
+        Every faction "player_faction" shares its savegame with that is still on the board.
+
+        The one queryset deciding who the player is up against, whether or not he could march on them
+        today: a rival that has been knocked out drops off the rival list for the same reason it stops
+        getting a month.
+        """
+        return self.still_in_play(savegame_id=player_faction.savegame_id).exclude(id=player_faction.id)
+
     def rivals_still_standing(self, *, player_faction):
         """
         Every rival of "player_faction" that still has somebody on his feet, free or not.
@@ -31,10 +41,8 @@ class FactionQuerySet(models.QuerySet):
         # and the warrior model reaches back into the faction app
         from apps.skirmish.models.warrior import Warrior
 
-        return (
-            self.still_in_play(savegame_id=player_faction.savegame_id)
-            .exclude(id=player_faction.id)
-            .filter(id__in=Warrior.objects.filter_healthy().values("faction_id"))
+        return self.rivals_in_play(player_faction=player_faction).filter(
+            id__in=Warrior.objects.filter_healthy().values("faction_id")
         )
 
     def attackable_targets(self, *, player_faction, month: int):

@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.db.models import QuerySet
+from django.db.models import Count, Q, QuerySet
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import generic
@@ -94,6 +94,108 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             )
             .filter(id=self.object.id)
             .exists()
+        )
+
+        return context
+
+
+class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
+    """
+    Everybody the player is playing against, and whether he may march on them.
+
+    The rival's own page already serves a rival as readily as the player's own, so this is the way in
+    rather than a second rendering of it: the Attack button lives over there, and until this page
+    existed it was reachable only by typing a faction id into the address bar.
+    """
+
+    model = Faction
+    template_name = "faction/rival_faction_list.html"
+    context_object_name = "rival_list"
+    current_savegame: Savegame = None
+
+    def setup(self, request, *args, **kwargs) -> None:
+        # Resolved once here rather than in both methods below, which each need it: the second call
+        # would be a second query for an answer that cannot have changed within one render
+        super().setup(request, *args, **kwargs)
+        self.current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+
+    def get_queryset(self) -> QuerySet:
+        # Who a rival is, is a question about the player's faction, so without one there is nobody to
+        # list - the same "nothing found" the scoping mixins answer with rather than a server error
+        if self.current_savegame is None or self.current_savegame.player_faction is None:
+            return super().get_queryset().none()
+
+        return (
+            super()
+            .get_queryset()
+            .rivals_in_play(player_faction=self.current_savegame.player_faction)
+            # Both are read for every row, so without them the page that exists to answer the
+            # per-rival questions in a fixed number of queries would spend two per rival on its own
+            # columns. The leader is nullable, so this stays a left join and a leaderless faction
+            # still comes back.
+            .select_related("culture", "leader")
+            # The roster, and deliberately nothing finer: health, morale and gear are knowledge the
+            # player has not earned without scouting. Counted in the same query rather than per card,
+            # and the dead are left out of it the way the faction page leaves them off the roster.
+            .annotate(
+                warrior_count=Count("warriors", filter=~Q(warriors__condition=Warrior.ConditionChoices.CONDITION_DEAD))
+            )
+            .order_by("name")
+        )
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        if self.current_savegame is None or self.current_savegame.player_faction is None:
+            return context
+
+        player_faction = self.current_savegame.player_faction
+        month = self.current_savegame.current_month
+
+        # Both questions are asked once for the whole page and answered out of a set, because asking
+        # them per row is a query per row - and it is the same "attackable_by" the attack view
+        # resolves its target with, so a button here and the page it leads to cannot disagree.
+        attackable_rival_ids = set(
+            Faction.objects.attackable_by(
+                player_faction=player_faction, month=self.current_savegame.current_month
+            ).values_list("id", flat=True)
+        )
+        # Wider by exactly the "their men are already in a fight" rule, which is what makes it the
+        # right guard for the sentences below: outside it a rival never offered a fight in the first
+        # place, and explaining a button that was never there would be a non sequitur.
+        standing_rival_ids = set(
+            Faction.objects.rivals_still_standing(player_faction=self.current_savegame.player_faction).values_list(
+                "id", flat=True
+            )
+        )
+        # The leader decides whose refusal it is: unfit or busy and it is the player's own doing, fit
+        # and free and the rival's men are the only thing left in the way
+        has_available_leader = player_faction.get_available_leader(month=month) is not None
+
+        # Evaluated into a list, because the template iterating the queryset again would re-run it and
+        # lose these two answers
+        rival_list = list(context[self.context_object_name])
+        for rival in rival_list:
+            rival.can_be_attacked = rival.id in attackable_rival_ids
+            rival.their_war_band_is_committed = (
+                has_available_leader and rival.id in standing_rival_ids and rival.id not in attackable_rival_ids
+            )
+        context[self.context_object_name] = rival_list
+
+        # Said once above the table rather than on every row: both are facts about the player's own
+        # war band, so no rival is what decides them, and a row each would be the same sentence
+        # repeated as many times as there are rivals. Only said at all while somebody is still
+        # standing - over a board that has been cleared it explains the absence of a button that
+        # nothing would have offered anyway.
+        context["has_marched_this_month"] = (
+            len(standing_rival_ids) > 0
+            and not has_available_leader
+            and player_faction.has_marched_this_month(month=month)
+        )
+        # Not busy and still unavailable means wounded, routed or dead. Blaming the month would be
+        # untrue of him, so this is the one that says what the player can do about it: mend him.
+        context["leader_cannot_march"] = (
+            len(standing_rival_ids) > 0 and not has_available_leader and not context["has_marched_this_month"]
         )
 
         return context

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Rival factions</h1>
+
+    {# The reasons the player's own war band cannot march are facts about him, not about any one rival, #}
+    {# so they are said once here instead of on every row #}
+    {% if has_marched_this_month %}
+        <p class="uk-text-meta">Your warriors have already fought this month.</p>
+    {% elif leader_cannot_march %}
+        <p class="uk-text-meta">Your leader is in no condition to march.</p>
+    {% endif %}
+
+    <table class="uk-table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Culture</th>
+            <th>Town</th>
+            <th>Leader</th>
+            <th>Warriors</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for rival in rival_list %}
+            <tr>
+                <td>
+                    <a href="{% url 'faction:faction-detail-view' rival.id %}">{{ rival.name }}</a>
+                </td>
+                <td>{{ rival.culture.name }}</td>
+                <td>{{ rival.town_name }}</td>
+                {# A faction can be without a leader, and reversing the url with no id raises #}
+                <td>
+                    {% if rival.leader %}
+                        <a href="{% url 'warrior:warrior-detail-view' rival.leader.id %}">{{ rival.leader }}</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ rival.warrior_count }}</td>
+                <td>
+                    {% if rival.can_be_attacked %}
+                        <a href="{% url 'faction:faction-attack-view' rival.id %}"
+                           class="uk-button uk-button-danger uk-button-small">Attack</a>
+                    {% elif rival.their_war_band_is_committed %}
+                        {# Otherwise the button is simply gone and nothing says why #}
+                        <span class="uk-text-meta">Already in a fight this month.</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="uk-text-meta">No rivals are left on the board.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock content %}
