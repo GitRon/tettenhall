@@ -129,6 +129,11 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
             super()
             .get_queryset()
             .rivals_in_play(player_faction=self.current_savegame.player_faction)
+            # Both are read for every row, so without them the page that exists to answer the
+            # per-rival questions in a fixed number of queries would spend two per rival on its own
+            # columns. The leader is nullable, so this stays a left join and a leaderless faction
+            # still comes back.
+            .select_related("culture", "leader")
             # The roster, and deliberately nothing finer: health, morale and gear are knowledge the
             # player has not earned without scouting. Counted in the same query rather than per card,
             # and the dead are left out of it the way the faction page leaves them off the roster.
