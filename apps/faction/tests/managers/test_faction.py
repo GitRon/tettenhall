@@ -110,6 +110,22 @@ def test_attackable_by_excludes_a_faction_without_a_healthy_warrior(player_facti
 
 
 @pytest.mark.django_db
+def test_attackable_by_excludes_a_faction_whose_defenders_are_already_in_a_fight(player_faction):
+    """
+    Its men are healthy but committed, so the muster would field nobody and the skirmish would be
+    created with an empty side. Reachable since a quest fields the target's own war band: accept one
+    against a rival and its defenders are spoken for.
+    """
+    rival_faction = FactionFactory(savegame=player_faction.savegame)
+    committed_defender = WarriorFactory(faction=rival_faction)
+    SkirmishFactory(defending_faction=rival_faction).defending_warriors.add(committed_defender)
+
+    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
 def test_attackable_by_offers_nobody_once_the_war_band_has_marched(player_faction):
     """
     Every warrior fights once a month and the leader joins every attack, so one fight uses the month

@@ -90,6 +90,31 @@ def test_handle_attack_faction_leaves_the_targets_casualties_out_of_the_line_up(
 
 
 @pytest.mark.django_db
+def test_handle_attack_faction_leaves_out_a_defender_already_in_a_fight():
+    """
+    Every warrior fights once a month, defenders included. Two open skirmishes sharing a defender is a
+    savegame that cannot be finished: resolving one leaves the other with nobody healthy to post, and
+    the month will not turn while a skirmish is open.
+    """
+    attacking_faction = FactionFactory()
+    target_faction = FactionFactory(savegame=attacking_faction.savegame)
+    available_defender = WarriorFactory(faction=target_faction)
+    committed_defender = WarriorFactory(faction=target_faction)
+    SkirmishFactory(defending_faction=target_faction).defending_warriors.add(committed_defender)
+
+    result = handle_attack_faction(
+        context=AttackFaction(
+            attacking_faction=attacking_faction,
+            target_faction=target_faction,
+            assigned_warriors=[WarriorFactory(faction=attacking_faction)],
+            month=1,
+        )
+    )
+
+    assert result.defending_warriors == [available_defender]
+
+
+@pytest.mark.django_db
 def test_handle_create_skirmish_uses_the_given_opponents():
     quest_contract = QuestContractFactory()
     attacking_warrior = WarriorFactory(faction=quest_contract.faction)

@@ -7,6 +7,7 @@ from apps.quest.models.quest_contract import QuestContract
 from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.tests.factories.savegame import SavegameFactory
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -98,9 +99,9 @@ def test_quest_accept_view_cannot_accept_a_quest_that_was_never_offered(logged_i
 @pytest.mark.django_db
 def test_quest_accept_view_refuses_a_quest_whose_target_fields_nobody(logged_in_client, current_savegame):
     """
-    A quest outlives the month it was offered in, so the faction it names may have been flattened
-    since. The opposition is that faction's own war band, and staging a fight against an empty side
-    raises one hop into the queue - so the view refuses before anything is signed.
+    The card goes stale inside the month it was offered in - the player beats the target after it was
+    pinned. The opposition is that faction's own war band, and staging a fight against an empty side
+    raises one hop into the queue, so the view refuses before anything is signed.
     """
     quest = QuestFactory(target_faction__savegame=current_savegame)
     WarriorFactory(faction=quest.target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
@@ -205,3 +206,40 @@ def test_quest_accept_view_cannot_accept_a_quest_of_another_savegame(logged_in_c
 
     assert response.status_code == 404
     assert QuestContract.objects.filter(quest=foreign_quest).exists() is False
+
+
+@pytest.mark.django_db
+def test_quest_accept_view_takes_the_targets_defenders_out_of_reach_of_a_march(
+    logged_in_client, current_savegame, queuebie_registry
+):
+    """
+    Flow test, because what it pins is a savegame that could not be finished, and only a real queue run
+    creates the two skirmishes.
+
+    Accepting a quest commits the target's war band. Marching on the same rival afterwards used to
+    muster the very same men onto a second skirmish; whichever was resolved first killed them, leaving
+    the other with nobody healthy to post. The fight view then refuses the round and the month refuses
+    to turn while a skirmish is open - the game simply stops. Now the rival is no longer a legitimate
+    target while its defenders are spoken for.
+    """
+    player_faction = current_savegame.player_faction
+    leader = WarriorFactory(faction=player_faction, savegame=current_savegame)
+    player_faction.leader = leader
+    player_faction.save()
+    footman = WarriorFactory(faction=player_faction, savegame=current_savegame)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame)
+    quest = QuestFactory(target_faction=rival_faction)
+    player_faction.available_quests.add(quest)
+    logged_in_client.post(
+        reverse("quest:quest-accept-view", kwargs={"pk": quest.pk}),
+        data={"faction": player_faction.id, "quest": quest.id, "assigned_warriors": [footman.id]},
+    )
+
+    # The leader is added by the form, so an empty band still marches
+    response = logged_in_client.post(
+        reverse("faction:faction-attack-view", kwargs={"pk": rival_faction.pk}), data={"assigned_warriors": []}
+    )
+
+    assert response.status_code == 404
+    assert Skirmish.objects.count() == 1

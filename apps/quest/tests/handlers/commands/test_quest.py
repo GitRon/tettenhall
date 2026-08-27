@@ -10,6 +10,7 @@ from apps.quest.models.quest_contract import QuestContract
 from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -129,3 +130,29 @@ def test_handle_accept_quest_leaves_the_targets_casualties_at_home():
         )
 
     assert result.target_warriors == [healthy_defender]
+
+
+@pytest.mark.django_db
+def test_handle_accept_quest_leaves_out_a_defender_already_in_a_fight():
+    """
+    The defect this closes is a savegame that cannot be finished. A man mustered onto two open
+    skirmishes strands whichever is resolved second: the side that lost him has nobody healthy to
+    post, so the fight view refuses the round, and the month will not turn while a skirmish is open.
+    """
+    quest = QuestFactory()
+    accepting_faction = FactionFactory(savegame=quest.target_faction.savegame)
+    available_defender = WarriorFactory(faction=quest.target_faction)
+    committed_defender = WarriorFactory(faction=quest.target_faction)
+    SkirmishFactory(defending_faction=quest.target_faction).defending_warriors.add(committed_defender)
+
+    with mock.patch("apps.quest.handlers.commands.quest.random.randint", return_value=5):
+        result = handle_accept_quest(
+            context=AcceptQuest(
+                accepting_faction=accepting_faction,
+                quest=quest,
+                assigned_warriors=[WarriorFactory(faction=accepting_faction)],
+                month=1,
+            )
+        )
+
+    assert result.target_warriors == [available_defender]

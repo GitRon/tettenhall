@@ -54,7 +54,9 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         context["has_marched_this_month"] = (
             not context["can_be_attacked"]
             and player_faction is not None
-            and Faction.objects.attackable_targets(player_faction=player_faction).filter(id=self.object.id).exists()
+            and Faction.objects.attackable_targets(player_faction=player_faction, month=current_savegame.current_month)
+            .filter(id=self.object.id)
+            .exists()
             and player_faction.has_marched_this_month(month=current_savegame.current_month)
         )
 
@@ -219,7 +221,9 @@ class TownSquareView(SavegameScopedQuerysetMixin, generic.DetailView):
         context = super().get_context_data(**kwargs)
         # Asked through the same queryset QuestAcceptView resolves its quest with, so a card is only
         # ever shown for a quest that can actually be taken on
-        context["quest_list"] = Quest.objects.for_player_faction(faction_id=self.object.id).resolvable()
+        context["quest_list"] = Quest.objects.for_player_faction(faction_id=self.object.id).resolvable(
+            month=self.object.savegame.current_month
+        )
         return context
 
 

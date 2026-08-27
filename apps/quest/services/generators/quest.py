@@ -31,7 +31,11 @@ class QuestGenerator:
         # no longer somewhere to send a warband, because the errand would stage a fight against an
         # empty side. That a beaten enemy becomes unreachable at all is wrong and #44 owns it; this
         # only stops the quest path walking into the hole the attack path already guards.
-        target_faction_list = list(Faction.objects.attackable_targets(player_faction=self.savegame.player_faction))
+        target_faction_list = list(
+            Faction.objects.attackable_targets(
+                player_faction=self.savegame.player_faction, month=self.savegame.current_month
+            )
+        )
 
         # Rivals are left, but every one of them has been flattened. No quest this month rather than
         # an exception: the month advance is what asks for one, and a player who has just beaten his

@@ -28,7 +28,17 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
     # turns this into a skirmish - strict mode blocks the database there. Only the ones still on
     # their feet turn out: a warrior who is down does not defend his town, and an unhealthy side
     # would count as beaten before the first round.
-    defending_warriors = list(Warrior.objects.filter_healthy().filter_faction(faction_id=context.target_faction.id))
+    #
+    # And only the ones not already in a fight, the same rule the quest muster applies. A defender
+    # standing in two open skirmishes strands whichever is resolved second: the side that lost him
+    # has nobody healthy left to post, so it cannot be played out, and the month refuses to turn
+    # while a skirmish is open. "attackable_targets" asks this same question, so a target that
+    # reaches here has somebody to field.
+    defending_warriors = list(
+        Warrior.objects.filter_healthy()
+        .filter_faction(faction_id=context.target_faction.id)
+        .exclude_currently_busy(month=context.month)
+    )
 
     return FactionWasAttacked(
         attacking_faction=context.attacking_faction,

@@ -517,7 +517,8 @@ def test_town_square_view_shows_the_faction(logged_in_client, current_savegame):
 def test_town_square_view_offers_only_quests_that_can_still_be_taken_on(logged_in_client, current_savegame):
     """
     Scoped the same way QuestAcceptView resolves its quest, so the card and the page it leads to
-    cannot disagree - the opposition is the target's own war band, and a flattened one fields nobody.
+    cannot disagree - the opposition is the target's own war band, and one the player has beaten inside
+    this month fields nobody.
     """
     fightable_quest = QuestFactory(target_faction__savegame=current_savegame)
     WarriorFactory(faction=fightable_quest.target_faction)

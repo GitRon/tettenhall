@@ -95,8 +95,12 @@ def handle_consider_fyrd_draft(*, context: ConsiderFyrdDraft) -> list[Event] | E
     if context.faction.fyrd_reserve <= 0:
         return None
 
+    # budget=0 on purpose: "total_amount" is the whole roster's wages either way, and handing it the
+    # balance would read as though the comparison were self-satisfying. It also means a future
+    # "total_amount" that did respect the budget could not quietly turn this into "balance < balance",
+    # which is false for every faction and would draft on every reserve there is.
     balance = Transaction.objects.current_balance(faction_id=context.faction.id)
-    if balance < Payroll.for_faction(faction=context.faction, budget=balance).total_amount:
+    if balance < Payroll.for_faction(faction=context.faction, budget=0).total_amount:
         return None
 
     return FyrdDraftApproved(faction=context.faction, month=context.month)

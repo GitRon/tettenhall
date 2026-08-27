@@ -23,11 +23,13 @@ class QuestAcceptView(
     def get_queryset(self):
         # The board and this view are scoped the same way, so the "Accept" link and the page it leads
         # to can never disagree about which quests can still be taken on
-        return super().get_queryset().resolvable()
+        return super().get_queryset().resolvable(month=self.current_savegame.current_month)
 
     def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        # The savegame first: resolving the quest runs the scoped queryset above, which needs the
+        # month to ask whether the target can still field a defender
         self.current_savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        self.object = self.get_object()
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):

@@ -40,12 +40,12 @@ def handle_accept_quest(*, context: AcceptQuest) -> list[Event] | Event:
         target_faction=context.quest.target_faction,
         quest=context.quest,
         quest_contract=quest_contract,
-        target_warriors=_muster_defenders(quest=context.quest),
+        target_warriors=_muster_defenders(quest=context.quest, month=context.month),
         month=context.month,
     )
 
 
-def _muster_defenders(*, quest: Quest) -> list[Warrior]:
+def _muster_defenders(*, quest: Quest, month: int) -> list[Warrior]:
     """
     Whom the target faction turns out against this errand.
 
@@ -54,14 +54,23 @@ def _muster_defenders(*, quest: Quest) -> list[Warrior]:
     not defend his town, and a side made up of him alone would count as beaten before the first
     round.
 
+    And only the ones not already in a fight. Every warrior fights once a month, defenders included:
+    a man mustered onto two open skirmishes strands whichever is resolved second, because the side
+    that lost him has nobody healthy left to post and the month refuses to turn while a skirmish is
+    open.
+
     Resolved here, in the command handler, because "handle_create_skirmish_for_quest_contract" reacts
     to the event this returns and may not touch the database under strict mode.
 
-    A faction with nobody left fields nobody, and staging a fight against an empty side raises one
-    hop later. What keeps that from being reachable is "Quest.objects.resolvable()", which is what
-    the board and the accept view are scoped to.
+    A faction with nobody available fields nobody, and staging a fight against an empty side raises
+    one hop later. What keeps that from being reachable is "Quest.objects.resolvable()", which asks
+    this same question and is what the board and the accept view are scoped to.
     """
-    healthy_warriors = list(Warrior.objects.filter_healthy().filter_faction(faction_id=quest.target_faction_id))
+    healthy_warriors = list(
+        Warrior.objects.filter_healthy()
+        .filter_faction(faction_id=quest.target_faction_id)
+        .exclude_currently_busy(month=month)
+    )
     minimum_turnout, maximum_turnout = quest.get_min_max_number_of_opponents()
 
     return random.sample(healthy_warriors, min(random.randint(minimum_turnout, maximum_turnout), len(healthy_warriors)))
