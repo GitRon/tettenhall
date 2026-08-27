@@ -21,10 +21,11 @@ from apps.faction.messages.commands.faction import (
 from apps.faction.messages.commands.warrior import ConsiderFyrdDraft
 from apps.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
 from apps.faction.tests.factories.faction import FactionFactory
-from apps.month.messages.events.month import FactionMonthPrepared
+from apps.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
 from apps.savegame.messages.events.savegame import NewSavegameCreated
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+from apps.training.tests.factories.training import TrainingFactory
 from apps.warrior.messages.commands.warrior import ReplenishWarriorMorale
 
 
@@ -90,11 +91,16 @@ def test_handle_pay_monthly_warrior_salaries_for_new_month_maps_to_command():
 
 
 def test_handle_earn_money_from_buildings_for_new_month_maps_to_command():
+    """
+    On the player-only event: the town economy is the thing a rival has no equivalent of, and being
+    registered there is the whole of what keeps a rival off the hall's revenue.
+    """
     faction = FactionFactory.build()
-
-    result = handle_earn_money_from_buildings_for_new_month(
-        context=FactionMonthPrepared(faction=faction, current_month=7)
+    context = PlayerMonthPrepared(
+        faction=faction, savegame=SavegameFactory.build(), training=TrainingFactory.build(), current_month=7
     )
+
+    result = handle_earn_money_from_buildings_for_new_month(context=context)
 
     assert result == EarnMoneyFromBuildings(faction=faction, month=7)
 

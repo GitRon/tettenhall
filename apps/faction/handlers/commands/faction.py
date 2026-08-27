@@ -275,20 +275,17 @@ def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event
 
 
 @message_registry.register_command(command=EarnMoneyFromBuildings)
-def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event | None:
+def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event:
     """
     The town's monthly payout, for the one faction that builds.
 
-    Refused for a rival rather than never asked of one: the monthly event is raised for every faction
-    and knows nothing about who they are, so the guard belongs here, where reading the savegame is
-    allowed. A rival's town is created at every default and would collect NoHall's 50 silver against
-    a leader's salary of around 150 - and hall revenue is flat per level while a wage bill scales with
-    the roster, so letting rivals build their way out of that would move the constant and never the
-    slope. They earn off their war band instead, see [RivalIncome].
+    Never asked of a rival rather than refused for one: this hangs off PlayerMonthPrepared, the event
+    for the things a rival has no equivalent of. A rival's town is created at every default and would
+    collect NoHall's 50 silver against a leader's salary of around 150 - and hall revenue is flat per
+    level while a wage bill scales with the roster, so letting rivals build their way out of that
+    would move the constant and never the slope. They earn off their war band instead, see
+    [RivalIncome].
     """
-    if context.faction.savegame.player_faction_id != context.faction.id:
-        return None
-
     return MonthlyBuildingMoneyEarned(
         faction=context.faction,
         amount=context.faction.town.get_monthly_income(),
@@ -301,8 +298,10 @@ def handle_earn_monthly_faction_income(*, context: EarnMonthlyFactionIncome) -> 
     """
     What a rival lives on, which is its war band rather than its town.
 
-    The mirror image of the guard above, and the player is the one refused here: he has the buildings,
-    and taking both would pay him twice for the same month.
+    Refused for the player, unlike the town income above: this one hangs off FactionMonthPrepared,
+    which is raised for every faction and knows nothing about who they are, so the guard belongs here
+    where reading the savegame is allowed. He has the buildings, and taking both would pay him twice
+    for the same month.
 
     Counted over the healthy alone, while the wage bill covers everybody who is not dead - a faction
     that cannot field a warrior should not be earning off him. See [RivalIncome] for why the two

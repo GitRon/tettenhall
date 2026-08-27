@@ -526,8 +526,6 @@ def test_handle_create_factions_for_new_savegame_without_the_culture():
 def test_handle_earn_money_from_buildings_pays_the_revenue_of_the_hall():
     # A Great Hall brings in 550 silver a month
     faction = FactionFactory(town__hall=2)
-    faction.savegame.player_faction = faction
-    faction.savegame.save()
 
     result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
 
@@ -537,29 +535,11 @@ def test_handle_earn_money_from_buildings_pays_the_revenue_of_the_hall():
 @pytest.mark.django_db
 def test_handle_earn_money_from_buildings_without_a_hall():
     faction = FactionFactory()
-    faction.savegame.player_faction = faction
-    faction.savegame.save()
 
     result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
 
     # A town without a hall still trickles in a baseline
     assert result == MonthlyBuildingMoneyEarned(faction=faction, amount=50, month=3)
-
-
-@pytest.mark.django_db
-def test_handle_earn_money_from_buildings_refuses_a_rival():
-    """
-    A rival's town sits at every default, so the hall would pay it 50 silver against a leader's
-    salary of around 150. It earns off its war band instead.
-    """
-    player_faction = FactionFactory()
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
-    rival_faction = FactionFactory(savegame=player_faction.savegame)
-
-    result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=rival_faction, month=3))
-
-    assert result is None
 
 
 @pytest.mark.django_db
