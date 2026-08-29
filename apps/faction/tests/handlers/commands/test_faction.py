@@ -47,6 +47,7 @@ from apps.quest.tests.factories.quest import QuestFactory
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+from apps.town.models import Town
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
 
 
@@ -91,6 +92,51 @@ def test_handle_create_new_faction_for_defending_faction():
     assert result.faction.fyrd_reserve == 4
     savegame.refresh_from_db()
     assert savegame.player_faction is None
+
+
+@pytest.mark.django_db
+def test_handle_create_new_faction_gives_the_player_a_town_at_every_default():
+    """
+    Months count from 1, so "last_constructed_building_at" at 0 is what leaves month 1 buildable.
+    """
+    savegame = SavegameFactory(current_month=5)
+
+    result = handle_create_new_faction(
+        context=CreateNewFaction(
+            name="Wessex",
+            town_name="Winchester",
+            culture_id=CultureFactory().id,
+            savegame=savegame,
+            is_player_faction=True,
+        )
+    )
+
+    town = result.faction.town
+    assert (town.hall, town.weaponsmith, town.marketplace, town.sanctuary) == (0, 0, 0, 0)
+    assert town.last_constructed_building_at == 0
+
+
+@pytest.mark.django_db
+def test_handle_create_new_faction_gives_a_rival_a_chosen_sanctuary():
+    """
+    Nothing upgrades a rival's town, so the level it is created with is the pace its wounded mend at
+    for the rest of the savegame. The other three buildings stay at 0 on purpose.
+    """
+    savegame = SavegameFactory(current_month=5)
+
+    result = handle_create_new_faction(
+        context=CreateNewFaction(
+            name="Mercia",
+            town_name="Tamworth",
+            culture_id=CultureFactory().id,
+            savegame=savegame,
+            is_player_faction=False,
+        )
+    )
+
+    town = result.faction.town
+    assert town.sanctuary == Town.SanctuaryChoices.SANCTUARY_SMALL
+    assert (town.hall, town.weaponsmith, town.marketplace) == (0, 0, 0)
 
 
 @pytest.mark.django_db

@@ -2,10 +2,14 @@ from unittest import mock
 
 import pytest
 
+from apps.faction.handlers.commands.faction import handle_create_new_faction
+from apps.faction.messages.commands.faction import CreateNewFaction
+from apps.faction.tests.factories.culture import CultureFactory
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.item.models.item_type import ItemType
 from apps.item.tests.factories.item import ItemFactory
 from apps.item.tests.factories.item_type import ItemTypeFactory
+from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warrior.handlers.commands.warrior import (
@@ -113,6 +117,32 @@ def test_handle_heal_injured_warrior_heals_further_with_a_larger_sanctuary():
 
     # A Great Sanctuary reaches 20 points, against the 4 a town without one manages
     mocked_randrange.assert_called_once_with(1, 21)
+
+
+@pytest.mark.django_db
+def test_handle_heal_injured_warrior_mends_a_rival_at_the_level_he_was_created_with():
+    """
+    The town a rival is actually created with, not one set up by hand: the ceiling a rival heals
+    against is decided at faction creation and nothing ever raises it, so the two ends of that have
+    to be checked together.
+    """
+    savegame = SavegameFactory()
+    rival = handle_create_new_faction(
+        context=CreateNewFaction(
+            name="Mercia",
+            town_name="Tamworth",
+            culture_id=CultureFactory().id,
+            savegame=savegame,
+            is_player_faction=False,
+        )
+    ).faction
+    warrior = WarriorFactory(faction=rival, savegame=savegame, current_health=1, max_health=20)
+
+    with mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=1) as mocked_randrange:
+        handle_heal_injured_warrior(context=HealInjuredWarrior(faction=rival, warrior=warrior, month=3))
+
+    # A Shrine reaches 8 points, against the 4 a town without a sanctuary manages
+    mocked_randrange.assert_called_once_with(1, 9)
 
 
 @pytest.mark.django_db

@@ -2,6 +2,7 @@ import pytest
 
 from apps.town.buildings.base import BuildingEffect
 from apps.town.buildings.sanctuary import (
+    NPC_STARTING_SANCTUARY_LEVEL,
     LargeSanctuary,
     MediumSanctuary,
     NoSanctuary,
@@ -53,3 +54,22 @@ def test_get_effects_names_the_healing_ceiling():
     result = SmallSanctuary.get_effects()
 
     assert result == (BuildingEffect(label="Healed per month at most", value="8 health points"),)
+
+
+def test_npc_starting_sanctuary_level_is_the_shrine():
+    """
+    The level a rival is created with, and the only one it ever has. Derived from get_levels() rather
+    than written as a number, so this pins the variant it resolves to rather than the index.
+    """
+    result = Sanctuary.get_building_by_type(building_type=NPC_STARTING_SANCTUARY_LEVEL)
+
+    assert isinstance(result, SmallSanctuary)
+    assert result.MAX_HEALING_POINTS == 8
+
+
+def test_npc_starting_sanctuary_level_is_a_level_the_column_accepts():
+    """
+    The constant is written straight into a choices-constrained column, and Django validates choices
+    only in forms.
+    """
+    assert NPC_STARTING_SANCTUARY_LEVEL == Town.SanctuaryChoices.SANCTUARY_SMALL

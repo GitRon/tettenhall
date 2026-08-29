@@ -128,6 +128,21 @@ def test_town_upgrade_view_does_not_show_a_town_of_another_savegame(logged_in_cl
 
 
 @pytest.mark.django_db
+def test_town_upgrade_view_does_not_show_the_town_of_a_rival(logged_in_client, current_savegame):
+    """
+    A rival's town carries a non-zero sanctuary, so it is the one town in the savegame the URL could
+    upgrade for free. The URL carries no id and PlayerTownMixin scopes to the player's faction, which
+    is what keeps it out of reach.
+    """
+    rival = FactionFactory(savegame=current_savegame, town__sanctuary=Town.SanctuaryChoices.SANCTUARY_SMALL)
+
+    response = logged_in_client.get(reverse("town:town-upgrade-view"))
+
+    assert response.context["object"] == current_savegame.player_faction.town
+    assert response.context["object"] != rival.town
+
+
+@pytest.mark.django_db
 def test_town_upgrade_view_without_an_active_savegame(logged_in_client):
     """
     The town used to be dereferenced unguarded, so the page answered with a 500.
