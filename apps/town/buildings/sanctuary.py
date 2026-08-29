@@ -49,3 +49,10 @@ class LargeSanctuary(Sanctuary):
     MAX_HEALING_POINTS = 20
 
     BUILDING_COSTS = 3500
+
+
+# Where a faction the player did not create starts, and stays: nothing upgrades a rival's town, so this
+# is the pace its wounded mend at for the whole savegame. The Shrine puts a beaten rival out of the
+# fight for a season rather than most of a year, while an invested player still outheals him. Read off
+# get_levels() rather than written as a number, so it keeps naming the Shrine if a level is inserted.
+NPC_STARTING_SANCTUARY_LEVEL: int = Sanctuary.get_levels().index(SmallSanctuary)

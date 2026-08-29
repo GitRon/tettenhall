@@ -45,6 +45,13 @@ holding that level's numbers:
   one the player cannot do anything about until it is over — naming the price instead sends them off to
   raise silver they may not spend yet. The price is a disabled button on the page anyway, so a click
   reaching the view at all means the page was stale.
+- **A rival's town is created at chosen levels, and stays there.** The player starts at every default;
+  a rival is handed the sanctuary level named by `NPC_STARTING_SANCTUARY_LEVEL`
+  (`apps/town/buildings/sanctuary.py`), because the healing ceiling is the one lever that decides
+  something for a faction the player never reaches into. Its other three buildings stay at 0 — their
+  levers price or stock things only the player can use. The level is derived from `get_levels()` rather
+  than written as a number, and `handle_heal_injured_warrior` keeps a single lookup for every faction, so
+  nothing on the healing path knows what a rival is.
 - **A faction without a town breaks four separate flows** (month advance, item sale, shop restock,
   warrior healing), all with `Town.DoesNotExist`. Anything that creates factions outside
   `handle_create_new_faction` — a data migration, a fixture, a management command — has to create the
@@ -53,11 +60,11 @@ holding that level's numbers:
 ## Known gaps
 
 - **NPC factions never build.** Nothing upgrades a rival's town, so every building effect is a
-  player-only power curve. The hall income is player-only to match: it hangs off `PlayerMonthPrepared`,
-  the event for the things a rival has no equivalent of, and a rival earns off its war band instead
-  (`apps/faction/domain/rival_income.py`). Hall revenue is flat per level while a wage bill scales with
-  the roster, so paying rivals through the town would move the constant and never the slope. Giving them
-  chosen starting levels is #46, construction proper is #68.
+  player-only power curve. Construction proper is #68. The hall income is player-only to match: it hangs
+  off `PlayerMonthPrepared`, the event for the things a rival has no equivalent of, and a rival earns off
+  its war band instead (`apps/faction/domain/rival_income.py`). Hall revenue is flat per level while a
+  wage bill scales with the roster, so paying rivals through the town would move the constant and never
+  the slope.
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
   bonus is the only thing making better gear — none of them has a second effect yet.
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's

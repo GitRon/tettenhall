@@ -36,6 +36,7 @@ from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
 from apps.town.buildings.marketplace import Marketplace
+from apps.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
 from apps.town.buildings.weaponsmith import Weaponsmith
 from apps.town.models import Town
 from apps.warrior.messages.commands.warrior import HealInjuredWarrior
@@ -95,13 +96,19 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
     # A faction always has exactly one town, so it is part of creating one rather than a reaction to
     # it: several handlers of NewFactionCreated already read faction.town, and an event handler
     # emitting a CreateTown command would land in the same batch as those, with no guaranteed order.
-    # "last_constructed_building_at" stays at its 0 default so the player can build in month 1.
-    Town.objects.create(faction=faction)
-
-    # Set player faction in savegame
     if context.is_player_faction:
+        # Every building at its 0 default, "last_constructed_building_at" included, so the player can
+        # build in month 1.
+        Town.objects.create(faction=faction)
         context.savegame.player_faction = faction
         context.savegame.save()
+    else:
+        # A rival is handed the one building level that decides something for it. Nothing upgrades a
+        # rival's town, so the sanctuary it is created with is the pace its wounded mend at for the
+        # rest of the savegame, and it wants choosing rather than inheriting the level of a town that
+        # has built nothing. The other three stay at 0: their levers price or stock something only
+        # the player reaches.
+        Town.objects.create(faction=faction, sanctuary=NPC_STARTING_SANCTUARY_LEVEL)
 
     return NewFactionCreated(
         faction=faction,
