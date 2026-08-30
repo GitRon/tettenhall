@@ -394,6 +394,31 @@ def test_faction_item_list_view_hides_factions_of_other_savegames(logged_in_clie
 
 
 @pytest.mark.django_db
+def test_faction_item_list_view_marks_the_players_own_faction(logged_in_client, current_savegame):
+    """
+    The list carries the Sell control and addresses the player about the items, and it replaces
+    itself over htmx - so it has to answer this on its own rather than inherit the detail page's
+    answer, which the first swap would otherwise drop.
+    """
+    response = logged_in_client.get(
+        reverse("faction:faction-item-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_faction_item_list_view_does_not_mark_a_rival_as_the_players_own(logged_in_client, current_savegame):
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("faction:faction-item-list-htmx", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
 def test_faction_warrior_list_view_shows_the_living_warriors(logged_in_client, current_savegame):
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     WarriorFactory(faction=current_savegame.player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
@@ -424,6 +449,34 @@ def test_faction_captured_warrior_list_view_shows_the_faction(logged_in_client, 
 
     assert response.status_code == 200
     assert response.context["object"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_faction_captured_warrior_list_view_marks_the_players_own_faction(logged_in_client, current_savegame):
+    """
+    The empty state names whose captives are missing, and it replaces itself over htmx - so it has to
+    answer this on its own rather than inherit the detail page's answer.
+    """
+    response = logged_in_client.get(
+        reverse("faction:faction-captured-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_faction_captured_warrior_list_view_does_not_mark_a_rival_as_the_players_own(
+    logged_in_client, current_savegame
+):
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(
+        reverse("faction:faction-captured-warrior-list-htmx", kwargs={"pk": rival_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is False
 
 
 @pytest.mark.django_db

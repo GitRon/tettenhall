@@ -4,6 +4,11 @@
     {% for item in faction.get_all_unoccupied_items %}
         {% include 'item/components/item_sell_card.html' with item=item %}
     {% empty %}
-        <p class="uk-text-meta">Every item you own is being worn.</p>
+        {# The same list serves a rival's page, where the property being described is not the player's #}
+        {% if is_player_faction %}
+            <p class="uk-text-meta">Every item you own is being worn.</p>
+        {% else %}
+            <p class="uk-text-meta">Every item they own is being worn.</p>
+        {% endif %}
     {% endfor %}
 </div>

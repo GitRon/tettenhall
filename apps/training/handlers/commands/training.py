@@ -3,7 +3,6 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Event
 
-from apps.skirmish.models.warrior import Warrior
 from apps.training.messages.commands.training import CreateNewTraining, TrainWarriors
 from apps.training.messages.events.training import NewTrainingCreated, WarriorUpgradedSkill
 from apps.training.models import Training
@@ -21,7 +20,7 @@ def handle_create_training_for_new_faction(*, context: CreateNewTraining) -> lis
 @message_registry.register_command(command=TrainWarriors)
 def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] | Event:
     training_category = context.training.category
-    warriors_to_train = context.faction.warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+    warriors_to_train = context.faction.warriors.filter_healthy()
 
     event_list = []
 

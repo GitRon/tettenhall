@@ -3,6 +3,7 @@ from django.views import generic
 
 from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
+from apps.skirmish.models.warrior import Warrior
 from apps.training.forms import TrainingForm
 from apps.training.models.training import Training
 
@@ -23,6 +24,18 @@ class TrainingListView(SavegameScopedQuerysetMixin, generic.ListView):
             Training.objects.for_player_faction(faction_id=current_savegame.player_faction_id).first()
             if current_savegame and current_savegame.player_faction_id
             else None
+        )
+        # The roster the page describes, read here rather than off the faction in the template: the
+        # month only trains the healthy, so a template walking every warrior promised progress to men
+        # the handler skips. The dead are left off entirely, the way the faction page leaves them off
+        # its roster; everybody else is listed with his condition, because "why is he not improving"
+        # is the question this page exists to answer.
+        context["warrior_list"] = (
+            Warrior.objects.exclude_dead()
+            .filter_faction(faction_id=current_savegame.player_faction_id)
+            .order_by("name")
+            if current_savegame and current_savegame.player_faction_id
+            else Warrior.objects.none()
         )
         return context
 

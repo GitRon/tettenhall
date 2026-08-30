@@ -25,10 +25,16 @@
     <div class="uk-card-body uk-text-left">
         <p>Worn by: {{ item.worn_by|default_if_none:"-" }}</p>
     </div>
-    <div class="uk-card-footer">
-        <a hx-post="{% url 'item:item-sell-view' item.id %}"
-           hx-target="#item-card-{{ item.id|unlocalize }}"
-           hx-swap="none"
-           class="uk-button uk-button-text">Sell</a>
-    </div>
+    {% comment %}
+        Only the player's own items can be sold: "ItemSellView" is scoped to the player faction, so on
+        a rival's page this is a control that could only ever 404.
+    {% endcomment %}
+    {% if is_player_faction %}
+        <div class="uk-card-footer">
+            <a hx-post="{% url 'item:item-sell-view' item.id %}"
+               hx-target="#item-card-{{ item.id|unlocalize }}"
+               hx-swap="none"
+               class="uk-button uk-button-text">Sell</a>
+        </div>
+    {% endif %}
 </div>

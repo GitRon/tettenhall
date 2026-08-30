@@ -14,7 +14,7 @@ def handle_create_training_for_faction(*, context: NewFactionCreated) -> Command
 
 
 @message_registry.register_event(event=WarriorUpgradedSkill)
-def handle_pub_mercenaries_restocked(*, context: WarriorUpgradedSkill) -> Command:
+def handle_warrior_upgraded_skill(*, context: WarriorUpgradedSkill) -> Command:
     return CreatePlayerMonthLog(
         title=f"Your warrior {context.warrior.name} upgraded his {context.changed_attribute}!",
         month=context.month,
