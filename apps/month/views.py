@@ -11,6 +11,7 @@ from apps.month.messages.commands.month import PrepareMonth
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.models import Skirmish
 
 
@@ -19,7 +20,7 @@ class FinishMonthView(RunningSavegameRequiredMixin, generic.View):
 
     def post(self, request, *args, **kwargs) -> HttpResponse:
         # Fetch current savegame record
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=request)
         if current_savegame is None:
             return HttpResponse(status=HTTPStatus.NOT_FOUND)
 

@@ -8,6 +8,7 @@ from django.views import generic
 from apps.account.forms.login import LoginForm
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 
 
 class LoginView(RequestInFormKwargsMixin, generic.FormView):
@@ -50,7 +51,7 @@ class DashboardView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         if current_savegame:
             # Scoped the same way PlayerMonthLogListView is, because that htmx view replaces this

@@ -2,6 +2,8 @@ import json
 
 import pytest
 from django.contrib.messages import get_messages
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from apps.faction.models.faction import Faction
@@ -57,6 +59,25 @@ def test_faction_detail_view_hides_factions_of_other_savegames(logged_in_client,
     response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": foreign_faction.id}))
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_resolves_the_current_savegame_once(logged_in_client, current_savegame):
+    """
+    Four context processors, the scoping mixin and the view itself all need the current savegame, and
+    they used to ask for it separately - six identical lookups to render one page. They go through the
+    request-scoped resolver now, so the page asks once.
+    """
+    with CaptureQueriesContext(connection) as captured_queries:
+        response = logged_in_client.get(
+            reverse("faction:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
+        )
+
+    assert response.status_code == 200
+    savegame_lookups = [
+        query for query in captured_queries.captured_queries if 'FROM "savegame_savegame"' in query["sql"]
+    ]
+    assert len(savegame_lookups) == 1
 
 
 @pytest.mark.django_db

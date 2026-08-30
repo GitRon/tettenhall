@@ -3,6 +3,7 @@ from django.views import generic
 
 from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.models.warrior import Warrior
 from apps.training.forms import TrainingForm
 from apps.training.models.training import Training
@@ -17,7 +18,7 @@ class TrainingListView(SavegameScopedQuerysetMixin, generic.ListView):
 
         # A user without an active savegame has neither, and dereferencing it answered the page
         # with a server error
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
         context["faction"] = current_savegame.player_faction if current_savegame else None
         # Every faction of the savegame owns a training row, so this has to name the player's own
         context["current_training"] = (

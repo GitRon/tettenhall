@@ -1,4 +1,5 @@
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.models import Skirmish
 
 
@@ -7,7 +8,7 @@ def get_open_skirmishes(request) -> dict:  # noqa: PBR001
         return {}
 
     # Fetch current savegame record
-    current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+    current_savegame: Savegame = get_current_savegame_for_request(request=request)
 
     # A user without an active savegame - a fresh account, for instance - has no skirmishes yet.
     # The templates only render this inside a "current_savegame" check anyway.

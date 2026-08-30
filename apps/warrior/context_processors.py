@@ -1,4 +1,5 @@
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.models import Warrior
 
 
@@ -7,7 +8,7 @@ def get_current_amount_warriors(request) -> dict:  # noqa: PBR001
         return {}
 
     # Fetch current savegame record
-    current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+    current_savegame: Savegame = get_current_savegame_for_request(request=request)
 
     # A user without an active savegame - a fresh account, for instance - has no warriors yet, and
     # a savegame carries no player faction until one has been created for it. Answer with an empty

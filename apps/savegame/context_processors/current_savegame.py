@@ -1,7 +1,7 @@
-from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 
 
 def current_savegame(request) -> dict:
     return {
-        "current_savegame": Savegame.objects.get_current_savegame(user_id=request.user.id),
+        "current_savegame": get_current_savegame_for_request(request=request),
     }

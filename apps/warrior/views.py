@@ -9,6 +9,7 @@ from queuebie.runner import handle_message
 from apps.faction.models.faction import Faction
 from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.forms.warrior import WarriorForm
 from apps.warrior.messages.commands.warrior import EnslaveCapturedWarrior, RecruitCapturedWarrior
@@ -62,7 +63,7 @@ class CapturedWarriorActionMixin(SavegameScopedQuerysetMixin):
     """
 
     def get_captor_faction(self, *, warrior: Warrior) -> Faction:
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         return get_object_or_404(
             Faction.objects.for_savegame(savegame_id=current_savegame.id).filter(captured_warriors=warrior),
@@ -77,7 +78,7 @@ class WarriorRecruitCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
         faction = self.get_captor_faction(warrior=obj)
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         handle_message(RecruitCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
 
@@ -100,7 +101,7 @@ class WarriorEnslaveCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
         faction = self.get_captor_faction(warrior=obj)
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         handle_message(EnslaveCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
 

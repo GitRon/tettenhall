@@ -48,7 +48,11 @@ class Training(models.Model):
             raise RuntimeError("Invalid training category provided.")
 
         # Rounded to an int: the improvement ends up in a progress bar stored as a positive small
-        # integer, so a float would only survive until the next refresh from the database
-        improvement = max(round(random.gauss(self.TRAINING_IMPROVEMENT_MU, self.TRAINING_IMPROVEMENT_SIGMA)), 0)
+        # integer, so a float would only survive until the next refresh from the database.
+        #
+        # Floored at 1 rather than 0: a roll below 0.5 rounds to nothing, which at these parameters is
+        # about one month in six, and a month of training that moves no bar at all is indistinguishable
+        # from a bug to the player watching it.
+        improvement = max(round(random.gauss(self.TRAINING_IMPROVEMENT_MU, self.TRAINING_IMPROVEMENT_SIGMA)), 1)
 
         return attribute, improvement
