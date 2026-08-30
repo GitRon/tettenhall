@@ -453,6 +453,31 @@ def test_faction_warrior_list_view_shows_the_living_warriors(logged_in_client, c
 
 
 @pytest.mark.django_db
+def test_faction_warrior_list_view_marks_the_players_own_faction(logged_in_client, current_savegame):
+    """
+    The card withholds health, morale and gear on a rival's page, and it replaces itself over htmx -
+    so it has to answer this on its own rather than inherit the detail page's answer, which the first
+    swap would otherwise drop.
+    """
+    response = logged_in_client.get(
+        reverse("faction:faction-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_view_does_not_mark_a_rival_as_the_players_own(logged_in_client, current_savegame):
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("faction:faction-warrior-list-htmx", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
 def test_faction_warrior_list_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
     other_savegame = SavegameFactory()
     foreign_faction = FactionFactory(savegame=other_savegame)

@@ -251,7 +251,7 @@ class FactionItemListView(PlayerFactionAwareContextMixin, SavegameScopedQueryset
     template_name = "faction/item/components/item_list.html"
 
 
-class FactionWarriorListView(SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionWarriorListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/warrior/components/warrior_list.html"
 
