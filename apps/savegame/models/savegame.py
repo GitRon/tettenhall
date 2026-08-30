@@ -5,7 +5,6 @@ from apps.faction.models import Faction
 from apps.savegame.managers.savegame import SavegameManager
 
 
-# TODO (#41): can't remove a savegame via the admin due to FK issues
 class Savegame(models.Model):
     class OutcomeChoices(models.IntegerChoices):
         OUTCOME_RUNNING = 1, "Running"
