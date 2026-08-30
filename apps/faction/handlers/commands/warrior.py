@@ -13,7 +13,7 @@ from apps.faction.messages.events.faction import (
     MonthlyWarriorSalariesUnpaid,
     WarriorWasAddedToPub,
 )
-from apps.faction.messages.events.warrior import FyrdDraftApproved, RequestWarriorForPub, WarriorRecruited
+from apps.faction.messages.events.warrior import FyrdDraftApproved, PubMercenarySlotOpened, WarriorRecruited
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.finance.models import Transaction
@@ -44,7 +44,7 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
 
     for _ in range(hall_building.AVAILABLE_MERCENARIES):
         events.append(
-            RequestWarriorForPub(
+            PubMercenarySlotOpened(
                 savegame=context.faction.savegame,
                 faction=None,
                 culture=Culture.objects.all().order_by("?").first(),

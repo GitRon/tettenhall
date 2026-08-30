@@ -15,7 +15,7 @@ from apps.faction.messages.commands.warrior import (
     RestockTownMercenaries,
 )
 from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, MonthlyWarriorSalariesUnpaid
-from apps.faction.messages.events.warrior import FyrdDraftApproved, RequestWarriorForPub, WarriorRecruited
+from apps.faction.messages.events.warrior import FyrdDraftApproved, PubMercenarySlotOpened, WarriorRecruited
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.tests.factories.transaction import TransactionFactory
@@ -50,7 +50,7 @@ def test_handle_restock_pub_mercenaries_requests_one_warrior_per_hall_slot():
     result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
 
     assert len(result) == 2
-    assert result[0] == RequestWarriorForPub(
+    assert result[0] == PubMercenarySlotOpened(
         savegame=faction.savegame,
         faction=None,
         # Drawn per slot with order_by("?"), so everything but the culture is deterministic
