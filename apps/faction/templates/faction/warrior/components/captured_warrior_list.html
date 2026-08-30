@@ -4,6 +4,11 @@
     {% for warrior in faction.captured_warriors.all %}
         {% include 'warrior/components/warrior_card.html' with warrior=warrior faction=faction is_captured=True %}
     {% empty %}
-        <p class="uk-text-meta">You hold no captives.</p>
+        {# The same list serves a rival's page, where the captives being described are not the player's #}
+        {% if is_player_faction %}
+            <p class="uk-text-meta">You hold no captives.</p>
+        {% else %}
+            <p class="uk-text-meta">They hold no captives.</p>
+        {% endif %}
     {% endfor %}
 </div>

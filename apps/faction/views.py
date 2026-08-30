@@ -25,7 +25,34 @@ from apps.skirmish.messages.commands.skirmish import AttackFaction
 from apps.skirmish.models.warrior import Warrior
 
 
-class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
+class PlayerFactionAwareContextMixin:
+    """
+    Tells the template whether the faction it is rendering belongs to the player.
+
+    The faction detail page serves the player's own faction and a rival's alike, and so do the two
+    htmx partials that replace parts of it. All three renderings have to answer this the same way:
+    the partials carry controls only the player's own faction may use and address him about property
+    that may not be his, so a page that got the answer right once and lost it on the first
+    "loadFactionItemList" swap would put the rival's Sell button back.
+    """
+
+    current_savegame: Savegame = None
+
+    def setup(self, request, *args, **kwargs) -> None:
+        # Resolved once here rather than in every method needing it, the way RivalFactionListView
+        # does: the answer cannot change within one render
+        super().setup(request, *args, **kwargs)
+        self.current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        # A savegame without a player faction gives None here, which no faction id equals - so it
+        # renders as a rival's page, which is right: there is no own faction yet.
+        context["is_player_faction"] = self.object.id == self.current_savegame.player_faction_id
+        return context
+
+
+class FactionDetailView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/faction_detail.html"
 
@@ -35,13 +62,7 @@ class FactionDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
 
         # Asked through the same queryset the attack view resolves its target with, so the button
         # and the page it leads to can never disagree about who may be attacked
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        # This template serves the player's own faction and a rival's alike, so it has to know which
-        # it is looking at: "My faction" over a rival's details is simply wrong, and the fyrd card
-        # offers a draft the scoping on DraftWarriorFromFyrdView can only refuse.
-        # A savegame without a player faction gives None here, which no faction id equals - so it
-        # renders as a rival's page, which is right: there is no own faction yet.
-        context["is_player_faction"] = self.object.id == current_savegame.player_faction_id
+        current_savegame = self.current_savegame
         context["can_be_attacked"] = (
             Faction.objects.attackable_by(
                 player_faction=current_savegame.player_faction, month=current_savegame.current_month
@@ -204,7 +225,7 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
         return context
 
 
-class FactionItemListView(SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionItemListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/item/components/item_list.html"
 
@@ -219,7 +240,7 @@ class FactionWarriorListView(SavegameScopedQuerysetMixin, generic.DetailView):
         return context
 
 
-class FactionCapturedWarriorListView(SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionCapturedWarriorListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/warrior/components/captured_warrior_list.html"
 
