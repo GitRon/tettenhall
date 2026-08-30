@@ -2,7 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid, NewFactionCreated
-from apps.faction.messages.events.warrior import RequestWarriorForPub
+from apps.faction.messages.events.warrior import PubMercenarySlotOpened
 from apps.warrior.messages.commands.warrior import CreateNewLeaderWarrior, CreateWarrior, PunishUnpaidWarrior
 
 
@@ -22,8 +22,8 @@ def handle_unpaid_warriors(*, context: MonthlyWarriorSalariesUnpaid) -> list[Com
     ]
 
 
-@message_registry.register_event(event=RequestWarriorForPub)
-def handle_request_warrior_for_pub(*, context: RequestWarriorForPub) -> Command:
+@message_registry.register_event(event=PubMercenarySlotOpened)
+def handle_pub_mercenary_slot_opened(*, context: PubMercenarySlotOpened) -> Command:
     return CreateWarrior(
         savegame=context.savegame,
         faction=context.faction,

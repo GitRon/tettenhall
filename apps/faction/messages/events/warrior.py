@@ -10,11 +10,11 @@ from apps.warrior.services.generators.warrior.base import BaseWarriorGenerator
 
 
 @dataclass(kw_only=True)
-class RequestWarriorForPub(Event):
-    # TODO: this is a command and not an event by name -> maybe just use commands? seems legit
+class PubMercenarySlotOpened(Event):
     savegame: Savegame
     faction: Faction | None
-    # TODO (#47): faction reicht nicht aus, ich möchte ja auch für andere factions des savegames warriors im pool haben
+    # TODO (#47): the faction alone is not enough - the pool should hold warriors for the other
+    # factions of the savegame too
     culture: Culture
     generator_class: type[BaseWarriorGenerator]
     month: int
