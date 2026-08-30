@@ -19,12 +19,42 @@ from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 
 
+class OccupiableSideMixin:
+    """
+    Puts the side of this fight whose town can now simply be ridden into on the context.
+
+    The signal that matters most about an occupation comes off the fight that opened the window, and
+    that is here: the last defender falling is what makes the town takeable, and the player is looking
+    straight at it. Read at render time from "occupiable_by" rather than recorded anywhere, so it goes
+    away by itself once the month turns and the rival's men are back on their feet.
+
+    Who won is deliberately not asked. The player's own faction is not in "rivals_in_play" and a side
+    with anyone healthy left is not occupiable, so at most one of the two sides can ever come back -
+    and a mutual wipeout that left the player's own war band flattened still offers the right one.
+
+    Shared by the fight page and the htmx partial it swaps in, which render the same template: the
+    prompt has to appear on the "updateFightButton" trigger that follows the winning round, not only
+    on a reload.
+    """
+
+    def get_occupiable_faction(self, *, skirmish) -> Faction | None:
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        if current_savegame is None or current_savegame.player_faction is None:
+            return None
+
+        return (
+            Faction.objects.occupiable_by(player_faction=current_savegame.player_faction)
+            .filter(id__in=(skirmish.attacking_faction_id, skirmish.defending_faction_id))
+            .first()
+        )
+
+
 class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
     model = Skirmish
     template_name = "skirmish/skirmish_list.html"
 
 
-class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
+class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish_fight.html"
     object = None
@@ -45,6 +75,7 @@ class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
         context["attacker_is_player"] = self.object.attacking_faction_id == player_faction_id
         context["defender_is_player"] = self.object.defending_faction_id == player_faction_id
         context["battle_log"] = self.object.battle_logs.all()
+        context["occupiable_faction"] = self.get_occupiable_faction(skirmish=self.object)
 
         return context
 
@@ -166,9 +197,16 @@ class SkirmishRoundUpdateHtmxView(SavegameScopedQuerysetMixin, generic.DetailVie
     template_name = "skirmish/skirmish/htmx/_round.html"
 
 
-class SkirmishFightButtonUpdateHtmxView(SavegameScopedQuerysetMixin, generic.DetailView):
+class SkirmishFightButtonUpdateHtmxView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish/htmx/_fight_button.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # The swap that follows the winning round renders this template on its own, so without this
+        # the prompt would only ever appear on a reload of the page the player has just finished with
+        context["occupiable_faction"] = self.get_occupiable_faction(skirmish=self.object)
+        return context
 
 
 class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView):

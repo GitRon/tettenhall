@@ -3,6 +3,7 @@ from queuebie.messages import Command
 
 from apps.faction.messages.events import warrior
 from apps.faction.messages.events.faction import (
+    FactionWasOccupied,
     MonthlyBuildingMoneyEarned,
     MonthlyFactionIncomeEarned,
     MonthlyWarriorSalariesPaid,
@@ -73,3 +74,35 @@ def handle_monthly_faction_income(*, context: MonthlyFactionIncomeEarned) -> Com
 @message_registry.register_event(event=NewFactionCreated)
 def handle_hand_out_starting_silver_for_new_factions(*, context: NewFactionCreated) -> Command:
     return CreateTransaction(faction=context.faction, month=1, amount=1000, reason="Starting silver")
+
+
+@message_registry.register_event(event=FactionWasOccupied)
+def handle_plunder_occupied_faction_treasury(*, context: FactionWasOccupied) -> list[Command] | None:
+    """
+    Moves the occupied town's share of silver across to the faction that rode in.
+
+    Two ledger rows rather than one, because every faction keeps its own purse and a balance is only
+    ever a question about one of them - the loser has to be seen to have paid what the winner is seen
+    to have taken.
+
+    Nothing at all when there is nothing to take. A rival can be in the red, and half a debt is not
+    something to carry home, so [OccupationSpoils] floors the share at zero - and a pair of rows
+    reading "0 silver" is not a payment.
+    """
+    if context.plundered_silver == 0:
+        return None
+
+    return [
+        CreateTransaction(
+            faction=context.faction,
+            amount=-context.plundered_silver,
+            reason=f"{context.occupying_faction} plundered the treasury",
+            month=context.month,
+        ),
+        CreateTransaction(
+            faction=context.occupying_faction,
+            amount=context.plundered_silver,
+            reason=f"Treasury of {context.faction} plundered",
+            month=context.month,
+        ),
+    ]

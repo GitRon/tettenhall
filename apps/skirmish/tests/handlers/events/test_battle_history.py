@@ -183,6 +183,20 @@ def test_handle_warrior_is_captured_logs_the_arrest():
     assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred was captured and arrested.")
 
 
+def test_handle_warrior_is_captured_of_an_occupation():
+    """
+    A leader seized in an occupied town was taken without a fight, so there is no battle log to
+    write the line into.
+    """
+    result = handle_warrior_is_captured(
+        context=WarriorWasCaptured(
+            skirmish=None, warrior=WarriorFactory.build(), capturing_faction=FactionFactory.build()
+        )
+    )
+
+    assert result is None
+
+
 def test_handle_warrior_gains_morale_logs_the_gained_points():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Beorn")

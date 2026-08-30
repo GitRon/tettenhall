@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -457,3 +458,72 @@ def test_faction_warrior_list_update_htmx_view_cannot_list_warriors_of_another_s
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_offers_the_beaten_side(logged_in_client, current_savegame):
+    """
+    The signal that matters most comes off the fight that opened the window, so the page the player
+    is already looking at is what offers the ride.
+    """
+    beaten_faction = FactionFactory(savegame=current_savegame)
+    beaten_faction.leader = WarriorFactory(
+        faction=beaten_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    beaten_faction.save()
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction,
+        defending_faction=beaten_faction,
+        victorious_faction=current_savegame.player_faction,
+    )
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["occupiable_faction"] == beaten_faction
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_offers_nothing_while_the_loser_still_stands(logged_in_client, current_savegame):
+    defending_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=defending_faction)
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, defending_faction=defending_faction)
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.context["occupiable_faction"] is None
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_button_update_htmx_view_offers_the_beaten_side(logged_in_client, current_savegame):
+    """
+    The swap that follows the winning round renders the partial on its own, so the prompt has to be
+    on this view's context too - otherwise it would only ever appear on a reload.
+    """
+    beaten_faction = FactionFactory(savegame=current_savegame)
+    beaten_faction.leader = WarriorFactory(
+        faction=beaten_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    beaten_faction.save()
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction,
+        defending_faction=beaten_faction,
+        victorious_faction=current_savegame.player_faction,
+    )
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-button-update-htmx", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["occupiable_faction"] == beaten_faction
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_button_update_htmx_view_without_a_player_faction(
+    logged_in_client, savegame_without_player_faction
+):
+    skirmish = SkirmishFactory(attacking_faction=FactionFactory(savegame=savegame_without_player_faction))
+
+    response = logged_in_client.get(reverse("skirmish:skirmish-fight-button-update-htmx", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["occupiable_faction"] is None

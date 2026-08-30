@@ -74,7 +74,12 @@ def handle_log_item_dropped(*, context: item.ItemDroppedAsLoot) -> Command:
 
 
 @message_registry.register_event(event=warrior.WarriorWasCaptured)
-def handle_warrior_is_captured(*, context: warrior.WarriorWasCaptured) -> Command:
+def handle_warrior_is_captured(*, context: warrior.WarriorWasCaptured) -> Command | None:
+    # A leader seized in an occupied town was taken without a fight, so there is no battle log to
+    # write into. The line is not lost anywhere else either - an occupation has no history to read
+    if context.skirmish is None:
+        return None
+
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} was captured and arrested.",

@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from django.contrib import messages
 from django.db.models import Count, Q, QuerySet
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import generic
@@ -11,6 +11,7 @@ from django.views.generic.detail import SingleObjectMixin
 from queuebie.runner import handle_message
 
 from apps.faction.forms.faction_attack import FactionAttackForm
+from apps.faction.messages.commands.faction import OccupyFaction
 from apps.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
 from apps.faction.models.faction import Faction
 from apps.finance.models import Transaction
@@ -119,6 +120,15 @@ class FactionDetailView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMi
             .filter(id=self.object.id)
             .exists()
         )
+        # The opposite question to the three above, and the only one of the four that offers the
+        # player something rather than explaining an absence: this rival has nobody left to hold his
+        # town. Asked through the same queryset FactionOccupyView resolves its target with, so the
+        # button and the page it leads to cannot disagree. No month, and nothing about the player's
+        # own leader - see "occupiable_by".
+        context["can_be_occupied"] = (
+            player_faction is not None
+            and Faction.objects.occupiable_by(player_faction=player_faction).filter(id=self.object.id).exists()
+        )
 
         return context
 
@@ -198,9 +208,19 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
 
         # Evaluated into a list, because the template iterating the queryset again would re-run it and
         # lose these two answers
+        # Asked once for the whole page as well, for the same reason: a lookup per row is a query per
+        # row. Not the complement of either set above - a rival can be out of both while its healthy
+        # men are merely spoken for elsewhere, and that town is still defended.
+        occupiable_rival_ids = set(
+            Faction.objects.occupiable_by(player_faction=self.current_savegame.player_faction).values_list(
+                "id", flat=True
+            )
+        )
+
         rival_list = list(context[self.context_object_name])
         for rival in rival_list:
             rival.can_be_attacked = rival.id in attackable_rival_ids
+            rival.can_be_occupied = rival.id in occupiable_rival_ids
             rival.their_war_band_is_committed = (
                 has_available_leader and rival.id in standing_rival_ids and rival.id not in attackable_rival_ids
             )
@@ -412,6 +432,52 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
 
     def get_success_url(self):
         return reverse("skirmish:skirmish-list-view")
+
+
+class FactionOccupyView(RunningSavegameRequiredMixin, SingleObjectMixin, generic.View):
+    """
+    Rides into a rival town that has nobody healthy left to hold it.
+
+    Carries no scoping mixin, for the same reason FactionAttackView does not: every rule about who may
+    be ridden into - the savegame among them - lives in "occupiable_by()", and a second, looser scope
+    on top would only invite the two to disagree. A rival who is still standing is simply not found.
+
+    POST only and no form: there is nothing to compose. The war band that opened the window has
+    already marched, so the occupation takes no warriors and offers no choices - it is one button.
+    """
+
+    model = Faction
+    http_method_names = ("post",)
+
+    def get_queryset(self) -> QuerySet:
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        if current_savegame is None or current_savegame.player_faction is None:
+            return super().get_queryset().none()
+
+        return super().get_queryset().occupiable_by(player_faction=current_savegame.player_faction)
+
+    def post(self, request, *args, **kwargs):
+        obj = self.get_object()
+        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+
+        handle_message(
+            OccupyFaction(
+                # The scoped object from the URL, not a posted field: which town is ridden into is
+                # decided by the route that was allowed to be reached
+                faction=obj,
+                occupying_faction=current_savegame.player_faction,
+                month=current_savegame.current_month,
+            )
+        )
+
+        # A message rather than an "HX-Trigger": this is a plain post answered with a redirect, so the
+        # browser navigates away and nothing is left to read a header. base.html renders "messages" on
+        # every page, so the same toast comes out the other end.
+        messages.add_message(request, messages.SUCCESS, f"You ride into {obj.town_name}. {obj} is finished.")
+
+        # Back to the rival list rather than to the town just taken: the faction is knocked out, and
+        # its page is the one thing the player has no further use for
+        return HttpResponseRedirect(reverse("faction:rival-faction-list-view"))
 
 
 class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):

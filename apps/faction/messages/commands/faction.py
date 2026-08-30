@@ -93,3 +93,17 @@ class DefeatFactionOfLostLeader(Command):
     # Carries nothing but the warrior on purpose: the event handlers raising this cannot look up which
     # faction he led, or whether he led one at all, without a query strict mode forbids them
     warrior: Warrior
+
+
+@dataclass(kw_only=True)
+class OccupyFaction(Command):
+    """
+    Ride into a rival town nobody healthy is left to hold.
+
+    Carries the target and the occupier only. What the town is worth and who leads it are questions
+    for the database, and the handler is where they may be asked.
+    """
+
+    faction: Faction
+    occupying_faction: Faction
+    month: int

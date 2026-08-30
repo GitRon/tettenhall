@@ -43,6 +43,11 @@
                     {% if rival.can_be_attacked %}
                         <a href="{% url 'faction:faction-attack-view' rival.id %}"
                            class="uk-button uk-button-danger uk-button-small">Attack</a>
+                    {% elif rival.can_be_occupied %}
+                        <form method="post" action="{% url 'faction:faction-occupy-view' rival.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="uk-button uk-button-danger uk-button-small">Ride in</button>
+                        </form>
                     {% elif rival.their_war_band_is_committed %}
                         {# Otherwise the button is simply gone and nothing says why #}
                         <span class="uk-text-meta">Already in a fight this month.</span>

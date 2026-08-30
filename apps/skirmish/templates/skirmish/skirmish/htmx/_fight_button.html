@@ -8,4 +8,14 @@
             Fight!
         </button>
     </div>
+{% elif occupiable_faction %}
+    {# The fight is over and the loser has nobody healthy left to hold his town. This is the moment #}
+    {# the window opens, so the offer is made here rather than only on the rival's own page #}
+    <form method="post" action="{% url 'faction:faction-occupy-view' occupiable_faction.id %}"
+          class="uk-float-right">
+        {% csrf_token %}
+        <button type="submit" class="uk-button uk-button-danger">
+            Ride into {{ occupiable_faction.town_name }}
+        </button>
+    </form>
 {% endif %}

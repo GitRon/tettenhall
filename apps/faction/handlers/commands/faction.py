@@ -5,6 +5,7 @@ from faker import Faker
 from queuebie import message_registry
 from queuebie.messages import Command, Event
 
+from apps.faction.domain.occupation_spoils import OccupationSpoils
 from apps.faction.domain.rival_income import RivalIncome
 from apps.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
@@ -14,6 +15,7 @@ from apps.faction.messages.commands.faction import (
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
+    OccupyFaction,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -23,6 +25,7 @@ from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
+    FactionWasOccupied,
     MonthlyBuildingMoneyEarned,
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
@@ -32,6 +35,7 @@ from apps.faction.messages.events.faction import (
 )
 from apps.faction.models import Culture
 from apps.faction.models.faction import Faction
+from apps.finance.models import Transaction
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.skirmish.models.warrior import Warrior
@@ -271,6 +275,32 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
     faction.save(update_fields=("is_defeated",))
 
     return FactionWasDefeated(faction=faction, savegame=faction.savegame)
+
+
+@message_registry.register_command(command=OccupyFaction)
+def handle_occupy_faction(*, context: OccupyFaction) -> Event:
+    """
+    Rides into a town nobody healthy is left to hold.
+
+    Does no work of its own: what an occupation costs the loser is the treasury and the leader, and
+    both of those are somebody else's handler. This is where the two get looked up, because the event
+    handlers taking them run under strict mode's database blocker and could not.
+
+    The leader is read off the faction rather than off its roster - an unconscious leader is still the
+    leader, and by the time this runs he is the only man the town has left. That he exists at all is
+    "occupiable_by"'s doing, which is also the queryset the view resolved the target through.
+    """
+    plundered_silver = OccupationSpoils.get_plundered_silver(
+        treasury=Transaction.objects.current_balance(faction_id=context.faction.id)
+    )
+
+    return FactionWasOccupied(
+        faction=context.faction,
+        occupying_faction=context.occupying_faction,
+        leader=context.faction.leader,
+        plundered_silver=plundered_silver,
+        month=context.month,
+    )
 
 
 @message_registry.register_command(command=SetNewLeaderWarrior)

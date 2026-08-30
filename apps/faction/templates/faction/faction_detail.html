@@ -33,6 +33,15 @@
                 {% if can_be_attacked %}
                     <a href="{% url 'faction:faction-attack-view' object.id %}"
                        class="uk-button uk-button-danger uk-button-small">Attack this faction</a>
+                {% elif can_be_occupied %}
+                    {# Nobody healthy is left to hold the town, so there is nothing to fight and nothing to compose #}
+                    <form method="post" action="{% url 'faction:faction-occupy-view' object.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="uk-button uk-button-danger uk-button-small">
+                            Ride into {{ object.town_name }}
+                        </button>
+                    </form>
+                    <p class="uk-text-meta">Nobody is left to hold this town. Take its leader and its silver.</p>
                 {% elif has_marched_this_month %}
                     {# Otherwise the button is simply gone and nothing says why #}
                     <p class="uk-text-meta">Your warriors have already fought this month.</p>

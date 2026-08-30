@@ -1,4 +1,5 @@
 from apps.faction.messages.events.faction import (
+    FactionWasOccupied,
     MonthlyBuildingMoneyEarned,
     MonthlyFactionIncomeEarned,
     MonthlyWarriorSalariesPaid,
@@ -11,6 +12,7 @@ from apps.finance.handlers.events.faction import (
     handle_hand_out_starting_silver_for_new_factions,
     handle_monthly_faction_income,
     handle_pay_warrior_salaries,
+    handle_plunder_occupied_faction_treasury,
     handle_warrior_recruited,
 )
 from apps.finance.messages.commands.transaction import CreateTransaction
@@ -83,3 +85,50 @@ def test_handle_monthly_faction_income_credits_the_faction():
     result = handle_monthly_faction_income(context=MonthlyFactionIncomeEarned(faction=faction, amount=450, month=3))
 
     assert result == CreateTransaction(faction=faction, amount=450, reason="Faction income in month 3.", month=3)
+
+
+def test_handle_plunder_occupied_faction_treasury_moves_the_silver_across():
+    occupying_faction = FactionFactory.build()
+    faction = FactionFactory.build()
+    leader = WarriorFactory.build(faction=faction)
+
+    result = handle_plunder_occupied_faction_treasury(
+        context=FactionWasOccupied(
+            faction=faction,
+            occupying_faction=occupying_faction,
+            leader=leader,
+            plundered_silver=400,
+            month=3,
+        )
+    )
+
+    assert result == [
+        CreateTransaction(
+            faction=faction,
+            amount=-400,
+            reason=f"{occupying_faction} plundered the treasury",
+            month=3,
+        ),
+        CreateTransaction(
+            faction=occupying_faction,
+            amount=400,
+            reason=f"Treasury of {faction} plundered",
+            month=3,
+        ),
+    ]
+
+
+def test_handle_plunder_occupied_faction_treasury_of_an_empty_treasury():
+    faction = FactionFactory.build()
+
+    result = handle_plunder_occupied_faction_treasury(
+        context=FactionWasOccupied(
+            faction=faction,
+            occupying_faction=FactionFactory.build(),
+            leader=WarriorFactory.build(faction=faction),
+            plundered_silver=0,
+            month=3,
+        )
+    )
+
+    assert result is None

@@ -82,6 +82,109 @@ def test_rivals_in_play_excludes_factions_of_another_savegame(player_faction):
 
 
 @pytest.mark.django_db
+def test_occupiable_by_returns_a_rival_nobody_healthy_is_left_to_hold(player_faction):
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == [rival]
+
+
+@pytest.mark.django_db
+def test_occupiable_by_excludes_a_rival_with_a_healthy_warrior(player_faction):
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    WarriorFactory(faction=rival)
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_occupiable_by_ignores_healthy_warriors_of_another_faction(player_faction):
+    """
+    A healthy man somewhere else must not keep an undefended town off the list.
+
+    The trap this pins is SQL rather than game logic: the exclusion runs against a subquery of
+    faction ids, and a warrior with no faction at all - a captive, a pub mercenary, a deserter -
+    contributes a NULL to it, which makes "id NOT IN (..., NULL)" NULL for every row and empties the
+    result entirely. Both are present here, so a missing guard returns nothing rather than too much.
+    """
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    captive = WarriorFactory(faction=player_faction)
+    captive.faction = None
+    captive.save()
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == [rival]
+
+
+@pytest.mark.django_db
+def test_occupiable_by_excludes_a_rival_without_a_leader(player_faction):
+    FactionFactory(savegame=player_faction.savegame, leader=None)
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_occupiable_by_excludes_the_player_faction(player_faction):
+    player_faction.leader.condition = Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    player_faction.leader.save()
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_occupiable_by_excludes_a_defeated_faction(player_faction):
+    rival = FactionFactory(savegame=player_faction.savegame, is_defeated=True)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_occupiable_by_excludes_factions_of_another_savegame(player_faction):
+    rival = FactionFactory()
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_occupiable_by_offers_a_rival_whose_men_are_committed_but_healthy_nothing(player_faction):
+    """
+    Unattackable is not the same as undefended, which is why this is not the complement of
+    "attackable_by": a rival whose healthy men are already standing in a fight still holds his town.
+    """
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival)
+    rival.save()
+    skirmish = SkirmishFactory(month=3, attacking_faction=player_faction, defending_faction=rival)
+    skirmish.defending_warriors.add(rival.leader)
+
+    result = Faction.objects.occupiable_by(player_faction=player_faction)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
 def test_attackable_by_returns_the_rival(player_faction):
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)

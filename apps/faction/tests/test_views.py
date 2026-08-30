@@ -1112,3 +1112,91 @@ def test_faction_detail_view_blames_the_march_rather_than_the_leader_when_he_has
 
     assert response.context["has_marched_this_month"] is True
     assert response.context["leader_cannot_march"] is False
+
+
+@pytest.fixture
+def undefended_rival(current_savegame) -> Faction:
+    """
+    A rival whose last man on his feet has just gone down: a leader, and nobody healthy.
+
+    The state a won battle leaves behind, and the only one an occupation can be launched from, so
+    every case below opens from it.
+    """
+    rival = FactionFactory(savegame=current_savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+
+    return rival
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_offers_an_undefended_town(logged_in_client, current_savegame, undefended_rival):
+    response = logged_in_client.get(reverse("faction:faction-detail-view", kwargs={"pk": undefended_rival.id}))
+
+    assert response.status_code == 200
+    assert response.context["can_be_occupied"] is True
+
+
+@pytest.mark.django_db
+def test_rival_faction_list_view_offers_an_undefended_town(logged_in_client, current_savegame, undefended_rival):
+    response = logged_in_client.get(reverse("faction:rival-faction-list-view"))
+
+    assert response.status_code == 200
+    assert [rival.can_be_occupied for rival in response.context["rival_list"]] == [True]
+
+
+@pytest.mark.django_db
+def test_faction_occupy_view_takes_the_town(logged_in_client, current_savegame, undefended_rival, queuebie_registry):
+    """
+    Flow test: no mocking inside the chain, so this runs the real queue and asserts the end state -
+    the leader is a prisoner, the faction is knocked out and half the treasury has changed hands.
+    """
+    TransactionFactory(faction=undefended_rival, amount=800)
+
+    response = logged_in_client.post(reverse("faction:faction-occupy-view", kwargs={"pk": undefended_rival.id}))
+
+    assert response.status_code == 302
+    undefended_rival.refresh_from_db()
+    assert undefended_rival.is_defeated is True
+    assert list(current_savegame.player_faction.captured_warriors.all()) == [undefended_rival.leader]
+    assert Transaction.objects.current_balance(faction_id=undefended_rival.id) == 400
+    assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == 400
+
+
+@pytest.mark.django_db
+def test_faction_occupy_view_refuses_a_rival_that_is_still_standing(
+    logged_in_client, current_savegame, undefended_rival
+):
+    WarriorFactory(faction=undefended_rival)
+
+    response = logged_in_client.post(reverse("faction:faction-occupy-view", kwargs={"pk": undefended_rival.id}))
+
+    assert response.status_code == 404
+    undefended_rival.refresh_from_db()
+    assert undefended_rival.is_defeated is False
+
+
+@pytest.mark.django_db
+def test_faction_occupy_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
+    foreign_faction = FactionFactory(savegame=SavegameFactory())
+    foreign_faction.leader = WarriorFactory(
+        faction=foreign_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    foreign_faction.save()
+
+    response = logged_in_client.post(reverse("faction:faction-occupy-view", kwargs={"pk": foreign_faction.id}))
+
+    assert response.status_code == 404
+    foreign_faction.refresh_from_db()
+    assert foreign_faction.is_defeated is False
+
+
+@pytest.mark.django_db
+def test_faction_occupy_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    rival = FactionFactory(savegame=savegame_without_player_faction)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+
+    response = logged_in_client.post(reverse("faction:faction-occupy-view", kwargs={"pk": rival.id}))
+
+    assert response.status_code == 404
