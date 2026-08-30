@@ -17,6 +17,11 @@ class WarriorQuerySet(models.QuerySet):
     def filter_faction(self, *, faction_id: int):
         return self.filter(faction=faction_id)
 
+    def for_player_faction(self, *, faction_id: int):
+        # The warriors the player commands. Narrower than "for_savegame", which also holds every
+        # rival's men, the captives and the mercenaries still standing in a pub
+        return self.filter(faction_id=faction_id)
+
     def in_pub_of(self, *, faction_id: int):
         """
         The mercenaries standing in this faction's pub, waiting to be hired.

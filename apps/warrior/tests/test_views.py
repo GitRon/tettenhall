@@ -258,6 +258,54 @@ def test_warrior_recruit_captured_view_without_a_player_faction(logged_in_client
 
 
 @pytest.mark.django_db
+def test_warrior_weapon_update_view_cannot_rearm_a_rival_warrior(logged_in_client, current_savegame):
+    """
+    Changing what a warrior carries is a write, and a rival's men are in the player's savegame - so
+    the URL was all it took to re-arm them.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_warrior = WarriorFactory(faction=rival_faction, savegame=current_savegame, weapon=None)
+    weapon = ItemFactory(savegame=current_savegame, owner=rival_faction)
+
+    response = logged_in_client.post(
+        reverse(
+            "warrior:warrior-partial-update-view",
+            kwargs={"pk": rival_warrior.id, "htmx_attribute": "weapon"},
+        ),
+        data={"weapon": weapon.id},
+    )
+
+    assert response.status_code == 404
+    rival_warrior.refresh_from_db()
+    assert rival_warrior.weapon is None
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_marks_the_players_own_warrior(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_does_not_mark_a_rival_warrior_as_the_players_own(logged_in_client, current_savegame):
+    """
+    This page is where a rival card's "Detail" link leads, so withholding gear on the card alone
+    would only have cost the player a click.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_warrior = WarriorFactory(faction=rival_faction, savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": rival_warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
 def test_warrior_weapon_update_view_rejects_an_unknown_attribute(logged_in_client, current_savegame):
     """
     The attribute is a free URL segment, so a hand-typed one used to reach a RuntimeError in the
