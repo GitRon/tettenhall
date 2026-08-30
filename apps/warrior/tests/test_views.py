@@ -197,6 +197,67 @@ def test_warrior_recruit_captured_view_cannot_recruit_into_a_faction_of_another_
 
 
 @pytest.mark.django_db
+def test_warrior_recruit_captured_view_cannot_recruit_into_a_rival_faction(logged_in_client, current_savegame):
+    """
+    Being in the player's savegame is not enough: a rival is a faction of it, and recruiting his
+    captive staffed the rival's own war band for free, on the player's click.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    third_party = FactionFactory(savegame=current_savegame)
+    captive = WarriorFactory(faction=third_party, savegame=current_savegame)
+    rival_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.post(
+        reverse(
+            "warrior:warrior-recruit-captured-view",
+            kwargs={"pk": captive.id, "faction_id": rival_faction.id},
+        )
+    )
+
+    assert response.status_code == 404
+    assert list(rival_faction.captured_warriors.all()) == [captive]
+
+
+@pytest.mark.django_db
+def test_warrior_enslave_captured_view_cannot_enslave_a_rivals_captive(logged_in_client, current_savegame):
+    """
+    The transaction is written for the faction holding the prisoner, so this used to pay a rival for
+    selling his own captive.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    third_party = FactionFactory(savegame=current_savegame)
+    captive = WarriorFactory(faction=third_party, savegame=current_savegame, recruitment_price=200)
+    rival_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.post(
+        reverse(
+            "warrior:warrior-enslave-captured-view",
+            kwargs={"pk": captive.id, "faction_id": rival_faction.id},
+        )
+    )
+
+    assert response.status_code == 404
+    assert Transaction.objects.current_balance(faction_id=rival_faction.id) == 0
+
+
+@pytest.mark.django_db
+def test_warrior_recruit_captured_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    Nothing is the player's yet, so there is no faction he may act for.
+    """
+    faction = FactionFactory(savegame=savegame_without_player_faction)
+    captive = WarriorFactory(faction=faction, savegame=savegame_without_player_faction)
+    faction.captured_warriors.add(captive)
+
+    response = logged_in_client.post(
+        reverse("warrior:warrior-recruit-captured-view", kwargs={"pk": captive.id, "faction_id": faction.id})
+    )
+
+    assert response.status_code == 404
+    assert list(faction.captured_warriors.all()) == [captive]
+
+
+@pytest.mark.django_db
 def test_warrior_weapon_update_view_rejects_an_unknown_attribute(logged_in_client, current_savegame):
     """
     The attribute is a free URL segment, so a hand-typed one used to reach a RuntimeError in the
