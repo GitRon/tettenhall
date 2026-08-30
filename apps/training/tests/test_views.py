@@ -2,6 +2,8 @@ import pytest
 from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
+from apps.skirmish.models.warrior import Warrior
+from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.training.models.training import Training
 from apps.training.tests.factories.training import TrainingFactory
 
@@ -25,6 +27,44 @@ def test_training_list_view_hides_trainings_of_another_savegame(logged_in_client
 
     assert response.status_code == 200
     assert list(response.context["training_list"]) == [training]
+
+
+@pytest.mark.django_db
+def test_training_list_view_lists_the_living_roster(logged_in_client, current_savegame):
+    """
+    The month trains the healthy only, and the page used to walk every warrior of the faction - so a
+    fleeing man sat there with progress bars and then did not move when the month turned. The dead
+    are left off entirely, the way the faction page leaves them off its roster.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    healthy_warrior = WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+    fleeing_warrior = WarriorFactory(
+        faction=current_savegame.player_faction, name="Beorn", condition=Warrior.ConditionChoices.CONDITION_FLEEING
+    )
+    WarriorFactory(
+        faction=current_savegame.player_faction, name="Cenwulf", condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+
+    response = logged_in_client.get(reverse("training:training-list-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["warrior_list"]) == [healthy_warrior, fleeing_warrior]
+
+
+@pytest.mark.django_db
+def test_training_list_view_lists_only_the_roster_of_the_player_faction(logged_in_client, current_savegame):
+    """
+    Every faction of the savegame has warriors, and only the player's own are in his training.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    own_warrior = WarriorFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("training:training-list-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["warrior_list"]) == [own_warrior]
 
 
 @pytest.mark.django_db
@@ -75,17 +115,19 @@ def test_training_list_view_without_an_active_savegame(logged_in_client):
 
     assert response.status_code == 200
     assert response.context["current_training"] is None
+    assert list(response.context["warrior_list"]) == []
 
 
 @pytest.mark.django_db
 def test_training_list_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
     """
-    The training lookup needs a faction id, so there is nothing to name yet.
+    Both the training lookup and the roster need a faction id, so there is nothing to name yet.
     """
     response = logged_in_client.get(reverse("training:training-list-view"))
 
     assert response.status_code == 200
     assert response.context["current_training"] is None
+    assert list(response.context["warrior_list"]) == []
 
 
 @pytest.mark.django_db

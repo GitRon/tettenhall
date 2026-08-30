@@ -35,25 +35,44 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for warrior in faction.warriors.all %}
+                {% for warrior in warrior_list %}
                     <tr>
-                        <td>{{ warrior.name }}</td>
+                        <td>
+                            {{ warrior.name }}
+                            {# The month trains the healthy only, so a man who is not says so here rather
+                               than sitting in the table looking like everybody else and never moving #}
+                            {% if not warrior.is_healthy %}
+                                <span class="uk-badge uk-badge-danger">{{ warrior.get_condition_display }}</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <span class="uk-badge uk-badge-success">{{ warrior.strength }}</span>
-                            <progress class="uk-progress" value="{{ warrior.strength_progress }}" max="100"></progress>
+                            {% if warrior.is_healthy %}
+                                <progress class="uk-progress" value="{{ warrior.strength_progress }}" max="100"></progress>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="uk-badge">{{ warrior.dexterity }}</span>
-                            <progress class="uk-progress" value="{{ warrior.dexterity_progress }}" max="100"></progress>
+                            {% if warrior.is_healthy %}
+                                <progress class="uk-progress" value="{{ warrior.dexterity_progress }}" max="100"></progress>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="uk-badge">{{ warrior.max_health }}</span>
-                            <progress class="uk-progress" value="{{ warrior.health_progress }}" max="100"></progress>
+                            {% if warrior.is_healthy %}
+                                <progress class="uk-progress" value="{{ warrior.health_progress }}" max="100"></progress>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="uk-badge">{{ warrior.max_morale }}</span>
-                            <progress class="uk-progress" value="{{ warrior.morale_progress }}" max="100"></progress>
+                            {% if warrior.is_healthy %}
+                                <progress class="uk-progress" value="{{ warrior.morale_progress }}" max="100"></progress>
+                            {% endif %}
                         </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="uk-text-meta">Nobody is in training this month.</td>
                     </tr>
                 {% endfor %}
                 </tbody>
