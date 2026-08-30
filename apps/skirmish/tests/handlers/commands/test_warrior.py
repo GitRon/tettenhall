@@ -1,5 +1,6 @@
 import pytest
 
+from apps.faction.tests.factories.faction import FactionFactory
 from apps.skirmish.handlers.commands.warrior import (
     handle_increase_warrior_stats_on_level_up,
     handle_reduce_morale_of_remaining_warriors,
@@ -49,6 +50,23 @@ def test_handle_warrior_is_captured_hands_the_warrior_to_the_victor():
         skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.attacking_faction
     )
     assert list(skirmish.attacking_faction.captured_warriors.all()) == [captured_warrior]
+
+
+@pytest.mark.django_db
+def test_handle_warrior_is_captured_without_a_skirmish():
+    """
+    An occupation seizes a leader where he stands, with no fight to have taken him off the field of.
+    """
+    occupying_faction = FactionFactory()
+    faction = FactionFactory(savegame=occupying_faction.savegame)
+    leader = WarriorFactory(faction=faction)
+
+    result = handle_warrior_is_captured(
+        context=CaptureWarrior(skirmish=None, warrior=leader, capturing_faction=occupying_faction)
+    )
+
+    assert result == WarriorWasCaptured(skirmish=None, warrior=leader, capturing_faction=occupying_faction)
+    assert list(occupying_faction.captured_warriors.all()) == [leader]
 
 
 @pytest.mark.django_db

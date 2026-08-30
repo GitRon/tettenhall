@@ -110,3 +110,20 @@ class QuestWasRemovedFromBulletinBoard(Event):
     faction: Faction
     quest: Quest
     month: int
+
+
+@dataclass(kw_only=True)
+class FactionWasOccupied(Event):
+    """
+    A rival town was ridden into, its treasury shared out and its leader seized where he stood.
+
+    The leader and the silver both ride along already resolved. Everything reacting to this is an
+    event handler under strict mode's database blocker, so neither the ledger nor the capture could
+    look them up for itself.
+    """
+
+    faction: Faction
+    occupying_faction: Faction
+    leader: Warrior
+    plundered_silver: int
+    month: int

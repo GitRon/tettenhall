@@ -16,7 +16,15 @@ class StoreLastUsedSkirmishAction(Command):
 
 @dataclass(kw_only=True)
 class CaptureWarrior(Command):
-    skirmish: Skirmish
+    """
+    Take a warrior prisoner.
+
+    "skirmish" is nullable and carries no default on purpose: a man is taken off the field of a fight
+    or seized in an occupied town, and every call site says which. A default would let a new one
+    forget, and the fight it belongs to would go missing from the battle log without a word.
+    """
+
+    skirmish: Skirmish | None
     warrior: Warrior
     capturing_faction: Faction
 

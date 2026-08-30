@@ -25,6 +25,7 @@ urlpatterns = [
         name="pub-mercenary-recruit-view",
     ),
     path("faction/<int:pk>/attack", views.FactionAttackView.as_view(), name="faction-attack-view"),
+    path("faction/<int:pk>/occupy", views.FactionOccupyView.as_view(), name="faction-occupy-view"),
     path("faction/<int:pk>/costs/monthly", views.MonthlyCostOverview.as_view(), name="faction-monthly-costs-view"),
     path("faction/<int:pk>/town-square", views.TownSquareView.as_view(), name="town-square-view"),
     path("faction/<int:pk>/shop/item/htmx", views.FactionShopItemListView.as_view(), name="shop-item-list-htmx"),

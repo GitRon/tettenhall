@@ -10,6 +10,7 @@ from apps.faction.handlers.commands.faction import (
     handle_determine_warriors_with_reduced_morale,
     handle_earn_money_from_buildings,
     handle_earn_monthly_faction_income,
+    handle_occupy_faction,
     handle_remove_quest_from_bulletin_board,
     handle_replenish_fyrd_reserve,
     handle_restock_shop_items,
@@ -22,6 +23,7 @@ from apps.faction.messages.commands.faction import (
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
+    OccupyFaction,
     RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
@@ -30,6 +32,7 @@ from apps.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
+    FactionWasOccupied,
     MonthlyBuildingMoneyEarned,
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
@@ -40,6 +43,7 @@ from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.culture import CultureFactory
 from apps.faction.tests.factories.faction import FactionFactory
+from apps.finance.tests.factories.transaction import TransactionFactory
 from apps.item.models import ItemType
 from apps.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.item.tests.factories.item import ItemFactory
@@ -633,3 +637,34 @@ def test_handle_earn_monthly_faction_income_refuses_the_player():
     result = handle_earn_monthly_faction_income(context=EarnMonthlyFactionIncome(faction=player_faction, month=3))
 
     assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_occupy_faction_hands_over_the_leader_and_a_share_of_the_treasury():
+    occupying_faction = FactionFactory()
+    faction = FactionFactory(savegame=occupying_faction.savegame)
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+    TransactionFactory(faction=faction, amount=800)
+
+    result = handle_occupy_faction(context=OccupyFaction(faction=faction, occupying_faction=occupying_faction, month=3))
+
+    assert result == FactionWasOccupied(
+        faction=faction,
+        occupying_faction=occupying_faction,
+        leader=faction.leader,
+        plundered_silver=400,
+        month=3,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_occupy_faction_of_an_empty_treasury():
+    occupying_faction = FactionFactory()
+    faction = FactionFactory(savegame=occupying_faction.savegame)
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+
+    result = handle_occupy_faction(context=OccupyFaction(faction=faction, occupying_faction=occupying_faction, month=3))
+
+    assert result.plundered_silver == 0

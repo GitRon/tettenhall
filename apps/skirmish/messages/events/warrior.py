@@ -73,7 +73,9 @@ class WarriorWasKilled(Event):
 
 @dataclass(kw_only=True)
 class WarriorWasCaptured(Event):
-    skirmish: Skirmish
+    # Nullable for the same reason as the command that raises it: an occupation takes a leader
+    # without a fight, and there is no battle log for the line to be written into
+    skirmish: Skirmish | None
     warrior: Warrior
     capturing_faction: Faction
 

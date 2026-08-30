@@ -45,6 +45,45 @@ class FactionQuerySet(models.QuerySet):
             id__in=Warrior.objects.filter_healthy().values("faction_id")
         )
 
+    def occupiable_by(self, *, player_faction):
+        """
+        Every rival of "player_faction" whose town can simply be ridden into.
+
+        The mirror of [rivals_still_standing] rather than the complement of [attackable_by]: a rival
+        can be unattackable for having its healthy men already committed to a fight, and a town whose
+        defenders are alive, well and merely busy elsewhere is still defended. So this asks the
+        positive question - still in play, not the player's own, nobody healthy left to hold it.
+
+        The player's own leader is deliberately not asked about, unlike [attackable_by]. The only way
+        a rival reaches this state is that somebody beat his war band, so the leader who did it is on
+        "attacking_skirmishes" for the month and "get_available_leader" returns None for every
+        occupation that can exist. The march is what paid for the month; this is its follow-up, not a
+        second action.
+
+        A leaderless faction is left out. The occupation ends a faction by seizing the man who leads
+        it, and there is nothing to seize here - without this the town would be occupiable again every
+        month for the rest of the savegame. Unreachable in ordinary play, where a leader who falls
+        takes his faction with him, so this is a guard rather than a rule the player will meet.
+        """
+        # Imported here because the faction model imports this module while being defined itself,
+        # and the warrior model reaches back into the faction app
+        from apps.skirmish.models.warrior import Warrior
+
+        # The non-null guard is what makes this the negation of [rivals_still_standing] and not an
+        # empty queryset. Captives, pub mercenaries and deserters all carry no faction, so without it
+        # the subquery yields a NULL, "id NOT IN (..., NULL)" is NULL for every row in SQL, and
+        # nothing at all comes back the moment a single prisoner exists. The positive form the sibling
+        # method uses is immune to that, which is why only this one needs the filter.
+        factions_with_a_healthy_warrior = (
+            Warrior.objects.filter_healthy().filter(faction__isnull=False).values("faction_id")
+        )
+
+        return (
+            self.rivals_in_play(player_faction=player_faction)
+            .exclude(id__in=factions_with_a_healthy_warrior)
+            .exclude(leader__isnull=True)
+        )
+
     def attackable_targets(self, *, player_faction, month: int):
         """
         Every rival of "player_faction" that is a legitimate target, leaving aside whether the player
