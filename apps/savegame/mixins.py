@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.views.generic.base import ContextMixin
 
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 
 
 class SavegameScopedQuerysetMixin:
@@ -20,7 +21,7 @@ class SavegameScopedQuerysetMixin:
     """
 
     def get_queryset(self) -> QuerySet:
-        current_savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame = get_current_savegame_for_request(request=self.request)
         if current_savegame is None:
             return super().get_queryset().none()
 
@@ -38,7 +39,7 @@ class PlayerFactionScopedQuerysetMixin:
     """
 
     def get_queryset(self) -> QuerySet:
-        current_savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame = get_current_savegame_for_request(request=self.request)
         if current_savegame is None or current_savegame.player_faction_id is None:
             return super().get_queryset().none()
 
@@ -67,7 +68,7 @@ class RunningSavegameRequiredMixin:
     REFUSAL_NOTICE = "This game is over. Start a new savegame to play on."
 
     def dispatch(self, request, *args, **kwargs) -> HttpResponse:
-        current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        current_savegame = get_current_savegame_for_request(request=request)
 
         if current_savegame is not None and current_savegame.outcome != Savegame.OutcomeChoices.OUTCOME_RUNNING:
             if request.headers.get("HX-Request"):
@@ -91,5 +92,5 @@ class CurrentSavegameMixin(ContextMixin):
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        context["current_savegame"] = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        context["current_savegame"] = get_current_savegame_for_request(request=self.request)
         return context

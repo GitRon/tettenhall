@@ -16,6 +16,7 @@ from apps.savegame.mixins import (
     SavegameScopedQuerysetMixin,
 )
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 
 
 class ItemSellView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.View):
@@ -26,7 +27,7 @@ class ItemSellView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixi
 
     def post(self, *args, **kwargs):
         obj = self.get_object()
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         handle_message(SellItem(selling_faction=obj.owner, item=obj, month=current_savegame.current_month))
 
@@ -48,7 +49,7 @@ class ItemBuyView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, Sin
         # Only what is actually on the player's shop shelf. "Unowned" is not the same thing: the
         # weapons and armor of the pub mercenaries have no owner either, and buying one of those
         # disarms the mercenary standing in the pub.
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
         if current_savegame is None or current_savegame.player_faction_id is None:
             return super().get_queryset().none()
 
@@ -56,7 +57,7 @@ class ItemBuyView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, Sin
 
     def post(self, *args, **kwargs):
         obj = self.get_object()
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
         if current_balance < obj.price:

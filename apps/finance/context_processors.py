@@ -1,5 +1,6 @@
 from apps.finance.models import Transaction
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.projections.payroll import Payroll
 
 
@@ -8,7 +9,7 @@ def get_current_balance(request) -> dict:  # noqa: PBR001
         return {}
 
     # Fetch current savegame record
-    current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+    current_savegame: Savegame = get_current_savegame_for_request(request=request)
 
     # A user without an active savegame - a fresh account, for instance - has no balance yet, and
     # neither has one whose player faction is still to be created. Answer with 0 rather than leave

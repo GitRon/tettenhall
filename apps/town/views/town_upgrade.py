@@ -7,6 +7,7 @@ from queuebie.runner import handle_message
 from apps.finance.models import Transaction
 from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.town.buildings import BUILDINGS
 from apps.town.messages.commands.town import UpgradeTownBuilding
 from apps.town.models import Town
@@ -36,7 +37,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         town = self.object
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
         current_silver_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
 
         has_already_built = town.last_constructed_building_at == current_savegame.current_month
@@ -101,7 +102,7 @@ class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic
         building_class = BUILDINGS[building_type]
         town = self.get_object()
 
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
         current_silver_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
 
         current_building_level = getattr(town, building_type)

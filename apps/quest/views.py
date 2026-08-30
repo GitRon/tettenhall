@@ -9,6 +9,7 @@ from apps.quest.messages.commands.quest import AcceptQuest
 from apps.quest.models.quest import Quest
 from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 
 
 class QuestAcceptView(
@@ -34,7 +35,7 @@ class QuestAcceptView(
     def dispatch(self, request, *args, **kwargs):
         # The savegame first: resolving the quest runs the scoped queryset above, which needs the
         # month to ask whether the target can still field a defender
-        self.current_savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        self.current_savegame = get_current_savegame_for_request(request=self.request)
         self.object = self.get_object()
         return super().dispatch(request, *args, **kwargs)
 

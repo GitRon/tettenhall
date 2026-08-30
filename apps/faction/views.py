@@ -21,6 +21,7 @@ from apps.savegame.mixins import (
     SavegameScopedQuerysetMixin,
 )
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.messages.commands.skirmish import AttackFaction
 from apps.skirmish.models.warrior import Warrior
 
@@ -42,7 +43,7 @@ class PlayerFactionAwareContextMixin:
         # Resolved once here rather than in every method needing it, the way RivalFactionListView
         # does: the answer cannot change within one render
         super().setup(request, *args, **kwargs)
-        self.current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        self.current_savegame = get_current_savegame_for_request(request=request)
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
@@ -141,7 +142,7 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
         # Resolved once here rather than in both methods below, which each need it: the second call
         # would be a second query for an answer that cannot have changed within one render
         super().setup(request, *args, **kwargs)
-        self.current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        self.current_savegame = get_current_savegame_for_request(request=request)
 
     def get_queryset(self) -> QuerySet:
         # Who a rival is, is a question about the player's faction, so without one there is nobody to
@@ -254,7 +255,7 @@ class DraftWarriorFromFyrdView(RunningSavegameRequiredMixin, PlayerFactionScoped
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         handle_message(DraftWarriorFromFyrd(faction=obj, month=current_savegame.current_month))
         response = render(request, self.template_name, {"faction": obj})
@@ -290,7 +291,7 @@ class RecruitPubMercenaryView(
     http_method_names = ("post",)
 
     def get_queryset(self) -> QuerySet:
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
         if current_savegame is None or current_savegame.player_faction_id is None:
             return super().get_queryset().none()
 
@@ -298,7 +299,7 @@ class RecruitPubMercenaryView(
 
     def post(self, *args, **kwargs):
         obj = self.get_object()
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
         if current_balance < obj.recruitment_price:
@@ -344,7 +345,7 @@ class AttackTargetMixin:
     current_savegame: Savegame = None
 
     def dispatch(self, request, *args, **kwargs):
-        self.current_savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        self.current_savegame = get_current_savegame_for_request(request=request)
         self.object = self.get_object()
         return super().dispatch(request, *args, **kwargs)
 
@@ -421,7 +422,7 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Fetch current savegame record
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         # The wage bill itself is not assembled here. It comes off "wage_bill_payroll", the same
         # projection the salary run bills from and the navbar warns from, which the finance context

@@ -13,6 +13,7 @@ from apps.common.utils import querydict_to_nested_dict
 from apps.faction.models.faction import Faction
 from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
+from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
@@ -56,7 +57,7 @@ class SkirmishFightView(SavegameScopedQuerysetMixin, generic.DetailView):
         # already guarantees this skirmish belongs to the current savegame, and which of its sides is
         # the player's is no longer the row's business
         self.object = self.get_object()
-        self.current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=request.user.id)
+        self.current_savegame: Savegame = get_current_savegame_for_request(request=request)
 
         if (
             self.model.objects.for_savegame(savegame_id=self.current_savegame.id)
@@ -78,7 +79,7 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
 
     def post(self, request, *args, **kwargs):
         # TODO: make enemy warriors chose a skirmish action (in SkirmishFightView?)
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         # Through the scoped queryset, otherwise the id from the URL would be enough to fight
         # another player's skirmish
@@ -188,7 +189,7 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         # Both ids arrive in the URL: the skirmish has to belong to the current savegame, and the
         # faction has to be one of the two fighting it - otherwise an unrelated faction would fall
         # through to the defending branch below and be shown those warriors
-        current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
         skirmish = get_object_or_404(
             Skirmish.objects.for_savegame(savegame_id=current_savegame.id if current_savegame else None),
             pk=self.kwargs.get("skirmish_id"),
