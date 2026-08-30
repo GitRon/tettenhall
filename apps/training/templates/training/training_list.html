@@ -39,8 +39,11 @@
                     <tr>
                         <td>
                             {{ warrior.name }}
-                            {# The month trains the healthy only, so a man who is not says so here rather
-                               than sitting in the table looking like everybody else and never moving #}
+                            {% comment %}
+                                The month trains the healthy only, so a man who is not says so here
+                                rather than sitting in the table looking like everybody else and
+                                never moving.
+                            {% endcomment %}
                             {% if not warrior.is_healthy %}
                                 <span class="uk-badge uk-badge-danger">{{ warrior.get_condition_display }}</span>
                             {% endif %}

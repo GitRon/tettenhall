@@ -122,8 +122,11 @@ def test_dashboard_view_lists_the_month_logs_of_the_player_faction(logged_in_cli
 def test_dashboard_view_lists_no_month_logs_without_a_player_faction(logged_in_client, savegame_without_player_faction):
     """
     The log is the player faction's, and there is none yet - so there is nothing of his to read.
+
+    The row belongs to a faction of this very savegame, which is what makes the test discriminating:
+    scoping to the savegame would list it, scoping to a player faction that does not exist cannot.
     """
-    PlayerMonthLogFactory()
+    PlayerMonthLogFactory(faction=FactionFactory(savegame=savegame_without_player_faction))
 
     response = logged_in_client.get(reverse("account:dashboard-view"))
 
