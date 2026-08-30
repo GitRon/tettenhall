@@ -23,18 +23,25 @@
             {# towards something instead of a number appearing from nowhere on a battlefield. #}
             <td>{{ object.experience }} / {{ object.experience_for_next_level }} XP</td>
         </tr>
-        <tr>
-            <td>Weapon</td>
-            <td>
-                {% include 'warrior/components/warrior_field_display.html' with object=object attribute='weapon' field_value=object.weapon %}
-            </td>
-        </tr>
-        <tr>
-            <td>Armor</td>
-            <td>
-                {% include 'warrior/components/warrior_field_display.html' with object=object attribute='armor' field_value=object.armor %}
-            </td>
-        </tr>
+        {% comment %}
+            Gear is knowledge the player has not earned without scouting, the same rule the rivals
+            list and the roster card follow. Editable only for his own men besides: the update view
+            refuses a rival, so on a rival's page this would be a control that could only fail.
+        {% endcomment %}
+        {% if is_player_faction %}
+            <tr>
+                <td>Weapon</td>
+                <td>
+                    {% include 'warrior/components/warrior_field_display.html' with object=object attribute='weapon' field_value=object.weapon %}
+                </td>
+            </tr>
+            <tr>
+                <td>Armor</td>
+                <td>
+                    {% include 'warrior/components/warrior_field_display.html' with object=object attribute='armor' field_value=object.armor %}
+                </td>
+            </tr>
+        {% endif %}
         </tbody>
     </table>
 {% endblock content %}

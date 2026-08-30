@@ -7,7 +7,11 @@ from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.faction.models.faction import Faction
-from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
+from apps.savegame.mixins import (
+    PlayerFactionScopedQuerysetMixin,
+    RunningSavegameRequiredMixin,
+    SavegameScopedQuerysetMixin,
+)
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.models.warrior import Warrior
@@ -19,8 +23,20 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Warrior
     template_name = "warrior/warrior_detail.html"
 
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        # This page is where a rival card's "Detail" link leads, so it has to withhold the gear the
+        # card withholds - otherwise hiding it one screen earlier only costs the player a click
+        current_savegame = get_current_savegame_for_request(request=self.request)
+        context["is_player_faction"] = (
+            current_savegame is not None and self.object.faction_id == current_savegame.player_faction_id
+        )
+        return context
 
-class WarriorWeaponUpdateView(SavegameScopedQuerysetMixin, generic.UpdateView):
+
+class WarriorWeaponUpdateView(PlayerFactionScopedQuerysetMixin, generic.UpdateView):
+    # Changing what a warrior carries is a write, and being in the player's savegame is not enough:
+    # a rival's men are in it too, and the URL was all it took to re-arm them
     model = Warrior
     form_class = WarriorForm
     template_name = "warrior/components/warrior_field_edit.html"
