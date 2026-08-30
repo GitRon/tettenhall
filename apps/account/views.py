@@ -53,9 +53,17 @@ class DashboardView(generic.TemplateView):
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
 
         if current_savegame:
-            context["player_month_logs"] = PlayerMonthLog.objects.for_savegame(
-                savegame_id=current_savegame.id
-            ).order_by("-month")
+            # Scoped the same way PlayerMonthLogListView is, because that htmx view replaces this
+            # very block on every refresh: the log the player reads is his own faction's, and the two
+            # renderings asking different questions is how a line could show up once and then vanish
+            # on its own. A savegame without a player faction has no log of his to read yet.
+            context["player_month_logs"] = (
+                PlayerMonthLog.objects.for_player_faction(faction_id=current_savegame.player_faction_id).order_by(
+                    "-month"
+                )
+                if current_savegame.player_faction_id
+                else PlayerMonthLog.objects.none()
+            )
             context["faction"] = current_savegame.player_faction
             # Only set once the game has been decided, so the template can ask a single question
             # instead of comparing against the running value itself

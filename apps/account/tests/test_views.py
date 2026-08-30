@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from apps.account.tests.factories.user import UserFactory
+from apps.faction.tests.factories.faction import FactionFactory
 from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.savegame.models.savegame import Savegame
@@ -102,14 +103,32 @@ def test_dashboard_view_is_reachable_without_an_active_savegame(logged_in_client
 
 
 @pytest.mark.django_db
-def test_dashboard_view_lists_the_month_logs_of_the_current_savegame(logged_in_client, current_savegame):
+def test_dashboard_view_lists_the_month_logs_of_the_player_faction(logged_in_client, current_savegame):
+    """
+    Scoped the way PlayerMonthLogListView is, since that htmx view replaces this block on every
+    refresh - a rival's line rendered here would vanish again on the first swap.
+    """
     player_month_log = PlayerMonthLogFactory(faction=current_savegame.player_faction)
+    PlayerMonthLogFactory(faction=FactionFactory(savegame=current_savegame))
 
     response = logged_in_client.get(reverse("account:dashboard-view"))
 
     assert response.status_code == 200
     assert list(response.context["player_month_logs"]) == [player_month_log]
     assert response.context["faction"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_dashboard_view_lists_no_month_logs_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    The log is the player faction's, and there is none yet - so there is nothing of his to read.
+    """
+    PlayerMonthLogFactory()
+
+    response = logged_in_client.get(reverse("account:dashboard-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["player_month_logs"]) == []
 
 
 @pytest.mark.django_db
