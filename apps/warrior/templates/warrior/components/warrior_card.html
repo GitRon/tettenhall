@@ -11,9 +11,18 @@
                     <i class="fa-solid fa-award"></i> <i>Level {{ warrior.level }}</i>&nbsp;
                     <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
                     <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>&nbsp;
-                    <i class="fa-solid fa-heart"></i>
-                    <i>{{ warrior.current_health }}/{{ warrior.max_health }}</i>&nbsp;
-                    <i class="fa-solid fa-bolt"></i> <i>{{ warrior.current_morale }}/{{ warrior.max_morale }}</i>&nbsp;
+                    {% comment %}
+                        Health, morale and gear are what the rivals list calls knowledge the player has
+                        not earned without scouting, so a rival's card withholds exactly those three and
+                        nothing else. Without this the overview counted a rival's men while his own page
+                        gave away every number about them.
+                    {% endcomment %}
+                    {% if is_player_faction %}
+                        <i class="fa-solid fa-heart"></i>
+                        <i>{{ warrior.current_health }}/{{ warrior.max_health }}</i>&nbsp;
+                        <i class="fa-solid fa-bolt"></i>
+                        <i>{{ warrior.current_morale }}/{{ warrior.max_morale }}</i>&nbsp;
+                    {% endif %}
                     <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
                 </p>
             </div>
@@ -45,20 +54,27 @@
                         <td>Culture</td>
                         <td>{{ warrior.culture.name }}</td>
                     </tr>
-                    <tr>
-                        <td>Weapon</td>
-                        <td>{{ warrior.weapon|default_if_none:'-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Armor</td>
-                        <td>{{ warrior.armor|default_if_none:'-' }}</td>
-                    </tr>
+                    {% if is_player_faction %}
+                        <tr>
+                            <td>Weapon</td>
+                            <td>{{ warrior.weapon|default_if_none:'-' }}</td>
+                        </tr>
+                        <tr>
+                            <td>Armor</td>
+                            <td>{{ warrior.armor|default_if_none:'-' }}</td>
+                        </tr>
+                    {% endif %}
                 </table>
             </div>
         </div>
     </div>
     <div class="uk-card-footer">
-        {% if is_captured %}
+        {% comment %}
+            Only the player may act on his own prisoners. On a rival's page these two posted to a view
+            that answers for the faction in the URL, so recruiting a rival's captive staffed the rival's
+            war band and enslaving one paid the rival - both on the player's click.
+        {% endcomment %}
+        {% if is_captured and is_player_faction %}
             <a hx-post="{% url 'warrior:warrior-recruit-captured-view' warrior.id faction.id %}"
                class="uk-button uk-button-text">
                 Recruit for <i class="fa-solid fa-coins"></i> <i>0</i></a> /

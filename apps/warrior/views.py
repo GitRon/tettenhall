@@ -55,18 +55,24 @@ class WarriorWeaponUpdateView(SavegameScopedQuerysetMixin, generic.UpdateView):
 
 class CapturedWarriorActionMixin(SavegameScopedQuerysetMixin):
     """
-    Resolves the faction holding a captured warrior.
+    Resolves the player's own faction as the one holding a captured warrior.
 
-    Both facts have to be verified: the faction id arrives in the URL, so it could point at another
-    player's faction, and "remove_captive()" is a silent no-op for a warrior that was never
-    captured - without the check, a player could enslave his own warriors for silver.
+    Two facts have to be verified, and the savegame is not enough for either. The faction id arrives in
+    the URL, so it could name a rival of this very savegame - and a rival is a faction the player may
+    not act for: recruiting a rival's captive staffs the rival's war band for free, and enslaving one
+    pays the rival for his own prisoner. And "remove_captive()" is a silent no-op for a warrior that was
+    never captured, so without the membership check a player could enslave his own warriors for silver.
     """
 
     def get_captor_faction(self, *, warrior: Warrior) -> Faction:
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+        if current_savegame is None or current_savegame.player_faction_id is None:
+            raise Http404
 
         return get_object_or_404(
-            Faction.objects.for_savegame(savegame_id=current_savegame.id).filter(captured_warriors=warrior),
+            Faction.objects.for_player_faction(faction_id=current_savegame.player_faction_id).filter(
+                captured_warriors=warrior
+            ),
             pk=self.kwargs["faction_id"],
         )
 
