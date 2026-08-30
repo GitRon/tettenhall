@@ -29,9 +29,6 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
             category=training_category
         )
 
-        if improvement <= 0:
-            continue
-
         attribute_progress_name = f"{attribute}_progress"
         new_value = getattr(warrior, attribute_progress_name) + improvement
         updated_fields = [attribute_progress_name]
