@@ -281,17 +281,62 @@ def test_warrior_weapon_update_view_cannot_rearm_a_rival_warrior(logged_in_clien
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_marks_the_players_own_warrior(logged_in_client, current_savegame):
+def test_warrior_detail_view_shows_the_gear_of_the_players_own_warrior(logged_in_client, current_savegame):
     warrior = WarriorFactory(faction=current_savegame.player_faction)
 
     response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": warrior.id}))
 
     assert response.status_code == 200
-    assert response.context["is_player_faction"] is True
+    assert response.context["can_see_gear"] is True
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_does_not_mark_a_rival_warrior_as_the_players_own(logged_in_client, current_savegame):
+def test_warrior_detail_view_shows_the_gear_of_a_captive_the_player_holds(logged_in_client, current_savegame):
+    """
+    A prisoner carries no faction at all, so asking whether he is "in the player's faction" would
+    withhold the gear of a man the player is holding and about to recruit or sell.
+    """
+    captive = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": captive.id}))
+
+    assert response.status_code == 200
+    assert response.context["can_see_gear"] is True
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_shows_the_gear_of_a_mercenary_in_the_players_pub(logged_in_client, current_savegame):
+    """
+    The pub card already names the weapon it is charging for, so hiding it one click later would
+    contradict the screen the player just came from.
+    """
+    mercenary = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.available_mercenaries.add(mercenary)
+
+    response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": mercenary.id}))
+
+    assert response.status_code == 200
+    assert response.context["can_see_gear"] is True
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_hides_the_gear_of_a_captive_a_rival_holds(logged_in_client, current_savegame):
+    """
+    A rival's prisoner is faction-less too, so "no faction" cannot be the test either.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    captive = WarriorFactory(faction=None, savegame=current_savegame, culture=rival_faction.culture)
+    rival_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": captive.id}))
+
+    assert response.status_code == 200
+    assert response.context["can_see_gear"] is False
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_hides_the_gear_of_a_rival_warrior(logged_in_client, current_savegame):
     """
     This page is where a rival card's "Detail" link leads, so withholding gear on the card alone
     would only have cost the player a click.
@@ -302,7 +347,7 @@ def test_warrior_detail_view_does_not_mark_a_rival_warrior_as_the_players_own(lo
     response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": rival_warrior.id}))
 
     assert response.status_code == 200
-    assert response.context["is_player_faction"] is False
+    assert response.context["can_see_gear"] is False
 
 
 @pytest.mark.django_db
