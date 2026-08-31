@@ -293,6 +293,84 @@ def test_skirmish_finish_round_view_refuses_a_one_sided_round(logged_in_client, 
 
 
 @pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_an_action_that_is_not_one(logged_in_client, current_savegame):
+    """
+    An unknown number used to pass the view and raise "Invalid attack action" deep in the damage
+    services - a 500 on input this view already means to refuse.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": 999,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_player_warrior_left_uncommanded(logged_in_client, current_savegame):
+    """
+    The empty-side check no longer implies this: the enemy's side is built from the roster, so a
+    player who leaves one of his own men out of the post would otherwise field him against nobody.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    commanded_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    forgotten_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(commanded_warrior, forgotten_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": commanded_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_ignores_the_action_posted_for_the_enemy(logged_in_client, current_savegame):
+    """
+    End to end through the real queue, with no mocking: the enemy's last used action is what the
+    duel recorded for him, so posting a defensive stance on his behalf must not be what he did.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    enemy_warrior = WarriorFactory(
+        faction=skirmish.defending_faction, current_health=20, max_health=20, dexterity=20, strength=1
+    )
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(enemy_warrior)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            "skirmish_participant[1][warrior_id]": enemy_warrior.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.DEFENSIVE_STANCE,
+        },
+    )
+
+    assert response.status_code == 200
+    enemy_warrior.refresh_from_db()
+    assert enemy_warrior.last_used_skirmish_action == SkirmishActionChoices.FAST_ATTACK
+
+
+@pytest.mark.django_db
 def test_skirmish_round_update_htmx_view_shows_the_skirmish(logged_in_client, current_savegame):
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
 
