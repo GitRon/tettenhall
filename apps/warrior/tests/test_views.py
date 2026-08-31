@@ -336,6 +336,50 @@ def test_warrior_detail_view_hides_the_gear_of_a_captive_a_rival_holds(logged_in
 
 
 @pytest.mark.django_db
+def test_warrior_detail_view_offers_the_gear_edit_for_the_players_own_warrior(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["can_edit_gear"] is True
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_does_not_offer_the_gear_edit_for_a_captive(logged_in_client, current_savegame):
+    """
+    His gear is readable and his loadout is not the player's to change: the update view resolves the
+    player's own faction only, so an edit control here could answer nothing but 404.
+    """
+    captive = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.get(reverse("warrior:warrior-detail-view", kwargs={"pk": captive.id}))
+
+    assert response.status_code == 200
+    assert response.context["can_see_gear"] is True
+    assert response.context["can_edit_gear"] is False
+
+
+@pytest.mark.django_db
+def test_warrior_weapon_update_view_refuses_a_captive(logged_in_client, current_savegame):
+    """
+    The other half of the same rule, asked of the view rather than the page.
+    """
+    captive = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.get(
+        reverse(
+            "warrior:warrior-partial-update-view",
+            kwargs={"pk": captive.id, "htmx_attribute": "weapon"},
+        )
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_warrior_detail_view_hides_the_gear_of_a_rival_warrior(logged_in_client, current_savegame):
     """
     This page is where a rival card's "Detail" link leads, so withholding gear on the card alone
