@@ -25,11 +25,20 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        # This page is where a rival card's "Detail" link leads, so it has to withhold the gear the
-        # card withholds - otherwise hiding it one screen earlier only costs the player a click
+        # This page is where a rival card's "Detail" link leads, so it has to withhold the gear that
+        # card withholds - otherwise hiding it one screen earlier only costs the player a click.
+        #
+        # Asked as "may the player see this man's gear", not "is he in the player's faction": the two
+        # come apart for everybody carrying no faction at all. His own prisoners and the mercenaries
+        # standing in his own pub are faction-less, and the pub card already advertises the weapon it
+        # is charging him for - so a faction test would have hidden, one click later, what the town
+        # square had just shown him.
         current_savegame = get_current_savegame_for_request(request=self.request)
-        context["is_player_faction"] = (
-            current_savegame is not None and self.object.faction_id == current_savegame.player_faction_id
+        player_faction = current_savegame.player_faction if current_savegame else None
+        context["can_see_gear"] = player_faction is not None and (
+            self.object.faction_id == player_faction.id
+            or player_faction.captured_warriors.filter(id=self.object.id).exists()
+            or player_faction.available_mercenaries.filter(id=self.object.id).exists()
         )
         return context
 

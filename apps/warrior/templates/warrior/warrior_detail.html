@@ -25,10 +25,11 @@
         </tr>
         {% comment %}
             Gear is knowledge the player has not earned without scouting, the same rule the rivals
-            list and the roster card follow. Editable only for his own men besides: the update view
-            refuses a rival, so on a rival's page this would be a control that could only fail.
+            list and the roster card follow. Shown for everyone he commands, holds or is being
+            offered - his own men, his prisoners, and the mercenaries in his pub, whose weapon the
+            town square is already charging him for.
         {% endcomment %}
-        {% if is_player_faction %}
+        {% if can_see_gear %}
             <tr>
                 <td>Weapon</td>
                 <td>
