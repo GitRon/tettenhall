@@ -1,9 +1,13 @@
 <div id="partial-field-container-{{ attribute }}">
     <span>{{ field_value|default_if_none:"No item selected" }}</span>
-    <button hx-get="{% url 'warrior:warrior-partial-update-view' object.id attribute %}"
-            hx-target="#partial-field-container-{{ attribute }}"
-            hx-swap="outerHTML"
-            class="uk-button uk-button-default uk-button-small">
-        <i class="fa-solid fa-feather-pointed"></i>
-    </button>
+    {# Shown for the player's own men only: the update view resolves nobody else, so on a prisoner or #}
+    {# a pub mercenary - whose gear he may read - this button could only ever answer 404 #}
+    {% if can_edit_gear %}
+        <button hx-get="{% url 'warrior:warrior-partial-update-view' object.id attribute %}"
+                hx-target="#partial-field-container-{{ attribute }}"
+                hx-swap="outerHTML"
+                class="uk-button uk-button-default uk-button-small">
+            <i class="fa-solid fa-feather-pointed"></i>
+        </button>
+    {% endif %}
 </div>

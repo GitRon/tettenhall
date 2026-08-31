@@ -35,8 +35,13 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         # square had just shown him.
         current_savegame = get_current_savegame_for_request(request=self.request)
         player_faction = current_savegame.player_faction if current_savegame else None
+        # Seeing and changing are different rights, and a prisoner and a pub mercenary sit between
+        # them: the player may read what they carry, but only his own men can be re-equipped - the
+        # update view resolves nobody else. Rendering the edit control for them would be exactly the
+        # control-that-can-only-fail this batch removed twice already.
+        context["can_edit_gear"] = player_faction is not None and self.object.faction_id == player_faction.id
         context["can_see_gear"] = player_faction is not None and (
-            self.object.faction_id == player_faction.id
+            context["can_edit_gear"]
             or player_faction.captured_warriors.filter(id=self.object.id).exists()
             or player_faction.available_mercenaries.filter(id=self.object.id).exists()
         )
@@ -75,6 +80,9 @@ class WarriorWeaponUpdateView(PlayerFactionScopedQuerysetMixin, generic.UpdateVi
         context["object"] = self.object
         context["attribute"] = self.htmx_field
         context["field_value"] = getattr(self.object, self.htmx_field)
+        # This view resolves the player's own men and nobody else, so anything it re-renders is
+        # editable by construction - without this the control removes itself after one use
+        context["can_edit_gear"] = True
         return context
 
 
