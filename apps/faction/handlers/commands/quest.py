@@ -20,6 +20,6 @@ def handle_offer_quests(*, context: OfferNewQuestsOnBulletinBoard) -> list[Event
                 savegame=context.faction.savegame, faction=context.faction, month=context.month
             )
         )
-        # TODO: create event to show the user that we've finished and let user log listend to it
+        # TODO (#97): create event to show the user that we've finished and let user log listend to it
 
     return events

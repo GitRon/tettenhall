@@ -122,7 +122,7 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
 
 @message_registry.register_command(command=RestockTownShopItems)
 def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] | Event:
-    # TODO: in item.py?
+    # TODO (#93): in item.py?
     # Clean up previous stock
     context.faction.available_items.all().delete()
 
@@ -159,7 +159,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
 
 @message_registry.register_command(command=RemoveQuestFromBulletinBoard)
 def handle_remove_quest_from_bulletin_board(*, context: RemoveQuestFromBulletinBoard) -> Event:
-    # TODO: in quest.py?
+    # TODO (#93): in quest.py?
     context.faction.available_quests.remove(context.quest)
 
     return QuestWasRemovedFromBulletinBoard(faction=context.faction, quest=context.quest, month=context.month)
@@ -244,7 +244,7 @@ def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> l
     event_list = []
     for warrior in warrior_qs:
         event_list.append(
-            # TODO: this should be an event, not a command
+            # TODO (#96): this should be an event, not a command
             HealInjuredWarrior(
                 faction=context.faction,
                 warrior=warrior,

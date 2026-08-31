@@ -18,7 +18,7 @@ class RiskyAttackService(AttackService):
         else:
             attack = 0
 
-        # TODO: can we put this in "AttackService"?
+        # TODO (#99): can we put this in "AttackService"?
         self.message_list.append(WarriorAttackedWithDamage(skirmish=self.skirmish, warrior=self.warrior, damage=attack))
 
         return attack

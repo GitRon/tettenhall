@@ -46,7 +46,7 @@ class QuestGenerator:
         if not target_faction_list:
             return None
 
-        # TODO: move to model?
+        # TODO (#102): move to model?
         quest_name_list = (
             "Hunt down raiders",
             "Pillage village",

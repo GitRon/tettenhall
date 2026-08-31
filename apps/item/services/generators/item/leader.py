@@ -9,7 +9,7 @@ class LeaderItemGenerator(BaseItemGenerator):
     MODIFIER_ROLLS_SIGMA = 1
 
     def _get_queryset_for_type(self) -> QuerySet:
-        # TODO: this is ugly
+        # TODO (#94): this is ugly
         if self.function == ItemType.FunctionChoices.FUNCTION_WEAPON:
             return (
                 ItemType.objects.filter(function=self.function)
