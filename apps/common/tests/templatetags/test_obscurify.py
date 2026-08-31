@@ -1,4 +1,4 @@
-from apps.common.templatetags.obsucrify import obscurify
+from apps.common.templatetags.obscurify import obscurify
 
 
 def test_obscurify_well_above_the_average():
