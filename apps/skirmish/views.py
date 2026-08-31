@@ -15,14 +15,12 @@ from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQue
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.exceptions import UnknownSkirmishParticipantError
 from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
-from apps.skirmish.services.skirmish.skirmish_participants import (
-    SkirmishParticipantBuilderService,
-    UnknownSkirmishParticipantError,
-)
+from apps.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
 
 
 class OccupiableSideMixin:

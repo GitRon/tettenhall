@@ -1,15 +1,7 @@
+from apps.skirmish.exceptions import UnknownSkirmishParticipantError
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
-
-
-class UnknownSkirmishParticipantError(Exception):
-    """
-    Raised when a posted warrior id names somebody who is not fighting this skirmish.
-
-    A separate exception rather than a return value, because the view answers for it with the same 400
-    it already gives every other piece of unusable input - and an empty list is a legitimate result.
-    """
 
 
 class SkirmishParticipantBuilderService:

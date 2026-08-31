@@ -1,11 +1,9 @@
 import pytest
 
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.exceptions import UnknownSkirmishParticipantError
 from apps.skirmish.models.warrior import Warrior
-from apps.skirmish.services.skirmish.skirmish_participants import (
-    SkirmishParticipantBuilderService,
-    UnknownSkirmishParticipantError,
-)
+from apps.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
