@@ -45,8 +45,6 @@ class Town(models.Model):
         default=0,
     )
 
-    # TODO: training grounds might be interesting as well for faster learning?
-
     objects = TownManager()
 
     class Meta:
