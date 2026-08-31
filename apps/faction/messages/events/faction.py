@@ -88,7 +88,7 @@ class NewLeaderWarriorSet(Event):
 
 @dataclass(kw_only=True)
 class RequestNewItemForTownShop(Event):
-    # TODO: item.py?
+    # TODO (#93): item.py?
     faction: Faction
     generator_class: type[BaseItemGenerator]
     item_function: int
@@ -98,7 +98,7 @@ class RequestNewItemForTownShop(Event):
 
 @dataclass(kw_only=True)
 class WarriorWasAddedToPub(Event):
-    # TODO: warrior.py?
+    # TODO (#93): warrior.py?
     faction: Faction
     warrior: Warrior
     month: int
@@ -106,7 +106,7 @@ class WarriorWasAddedToPub(Event):
 
 @dataclass(kw_only=True)
 class QuestWasRemovedFromBulletinBoard(Event):
-    # TODO: quest.py?
+    # TODO (#93): quest.py?
     faction: Faction
     quest: Quest
     month: int

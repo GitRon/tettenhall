@@ -112,7 +112,7 @@ class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic
         if current_building_level >= building_class.get_max_level():
             messages.add_message(request, messages.WARNING, "You already have the maximum building level.")
 
-            # TODO: encapsulate this logic somewhere so we don't need to return this n times
+            # TODO (#100): encapsulate this logic somewhere so we don't need to return this n times
             #  -> create validation service
             response = HttpResponse()
             response["HX-Redirect"] = reverse("town:town-upgrade-view")

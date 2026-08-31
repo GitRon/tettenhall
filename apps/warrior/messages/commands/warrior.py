@@ -20,7 +20,7 @@ class CreateWarrior(Command):
 
 @dataclass(kw_only=True)
 class CreateNewLeaderWarrior(Command):
-    # TODO: entweder mach ich alle so oder ich nutze hier das generische event mit generator_class?
+    # TODO (#102): entweder mach ich alle so oder ich nutze hier das generische event mit generator_class?
     faction: Faction
 
 

@@ -53,7 +53,7 @@ class BaseItemGenerator:
         dice_notation = DiceNotation(dice_string=item_type.base_value, modifier=modifier)
         price = abs(dice_notation.expectancy_value * dice_notation.sides * max(modifier, 1))
 
-        # TODO: move in "create_record" method
+        # TODO (#102): move in "create_record" method
         return Item.objects.create(
             type=item_type,
             condition=self._determine_condition(modifier=modifier),

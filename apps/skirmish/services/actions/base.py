@@ -8,7 +8,7 @@ from apps.skirmish.messages.events.warrior import (
 from apps.skirmish.models import Skirmish, Warrior
 
 
-# TODO: attack service is misleading, maybe skirmish action again?
+# TODO (#95): attack service is misleading, maybe skirmish action again?
 class AttackService:
     message_list: list[Event]
 

@@ -11,7 +11,7 @@ from apps.skirmish.managers.warrior import WarriorManager
 from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 
 
-# TODO: move to warrior app?
+# TODO (#95): move to warrior app?
 # TODO (#53): permanent injuries would be nice -> each has a modificator and reduces a value like HP or dex
 #  -> ankle -> reduce dex, missing finger -> strength etc.
 class Warrior(models.Model):

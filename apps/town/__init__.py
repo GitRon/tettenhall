@@ -1,1 +1,1 @@
-# TODO: probably migrate this app into "faction" app
+# TODO (#95): probably migrate this app into "faction" app

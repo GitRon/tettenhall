@@ -214,7 +214,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
             quest_loot = 0
     except QuestContract.DoesNotExist:
         # There might be skirmishes with no assigned quest contract
-        # TODO: this shouldn't be handled here that explicitly -> model method?
+        # TODO (#102): this shouldn't be handled here that explicitly -> model method?
         quest_name = None
         quest_loot = 0
 
