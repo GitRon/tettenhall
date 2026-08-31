@@ -182,5 +182,5 @@ def test_process_refuses_a_warrior_fighting_neither_side():
         player_faction_id=skirmish.attacking_faction_id,
     )
 
-    with pytest.raises(UnknownSkirmishParticipantError):
+    with pytest.raises(UnknownSkirmishParticipantError, match=f"Warrior {outsider.id} is not fighting this skirmish"):
         service.process()

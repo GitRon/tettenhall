@@ -63,7 +63,7 @@ class SkirmishParticipantBuilderService:
         known_ids = {warrior.id for warrior in attacking_roster + defending_roster}
         for warrior_id, _skirmish_action in self.participants:
             if warrior_id not in known_ids:
-                raise UnknownSkirmishParticipantError
+                raise UnknownSkirmishParticipantError(f"Warrior {warrior_id} is not fighting this skirmish.")
 
         # The same question SkirmishFightView asks of the same savegame. A savegame without a player
         # faction answers False for both sides rather than guessing at one, which leaves the whole
