@@ -1031,6 +1031,24 @@ def test_town_square_view_offers_only_quests_that_can_still_be_taken_on(logged_i
 
 
 @pytest.mark.django_db
+def test_town_square_view_renders_the_mercenaries_standing_in_the_pub(logged_in_client, current_savegame):
+    """
+    The pub card only renders once somebody is standing in the pub, so an empty one left the whole
+    template - its "load" tag included - unexercised by the suite. It runs every stat through the
+    "obscurify" filter, which is a template library that has to resolve by name.
+    """
+    mercenary = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.available_mercenaries.add(mercenary)
+
+    response = logged_in_client.get(
+        reverse("faction:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["object"].available_mercenaries.all()) == [mercenary]
+
+
+@pytest.mark.django_db
 def test_town_square_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
     other_savegame = SavegameFactory()
     foreign_faction = FactionFactory(savegame=other_savegame)
