@@ -14,10 +14,13 @@ from apps.faction.models.faction import Faction
 from apps.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.services.current_savegame import get_current_savegame_for_request
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.exceptions import UnknownSkirmishParticipantError
 from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
 
 
 class OccupiableSideMixin:
@@ -108,8 +111,30 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
     http_method_names = ("post",)
     object = None
 
+    def _player_commanded_his_whole_side(
+        self,
+        *,
+        attacking_participants: list[SkirmishParticipant],
+        defending_participants: list[SkirmishParticipant],
+    ) -> bool:
+        """
+        Whether every healthy warrior the player commands was given an action.
+
+        Asked of both sides without knowing which is his: the side he does not command was built from
+        the roster and therefore covers itself by construction, so testing both costs nothing and
+        needs no second copy of the "which side is the player's" question.
+        """
+        for roster, participants in (
+            (self.object.attacking_warriors.all(), attacking_participants),
+            (self.object.defending_warriors.all(), defending_participants),
+        ):
+            commanded = {participant.warrior.id for participant in participants}
+            if any(warrior.is_healthy and warrior.id not in commanded for warrior in roster):
+                return False
+
+        return True
+
     def post(self, request, *args, **kwargs):
-        # TODO: make enemy warriors chose a skirmish action (in SkirmishFightView?)
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         # Through the scoped queryset, otherwise the id from the URL would be enough to fight
@@ -124,43 +149,45 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
             return HttpResponse(status=HTTPStatus.NOT_FOUND)
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
 
-        attacking_participants = []
-        defending_participants = []
-
-        # Every value here arrives in the request body, so anything missing or non-numeric is bad
-        # input rather than a server error. The posted "faction_id" is deliberately not read: see
-        # the side assignment below.
+        # Every value here arrives in the request body, so anything missing, non-numeric or naming an
+        # action that does not exist is bad input rather than a server error. Without the membership
+        # test an unknown number reached "get_service_by_attack_action" and raised there, answering 500
+        # to input this very block means to refuse. The posted "faction_id" is deliberately not read:
+        # which side a warrior fights on comes from the skirmish's own rosters, since a posted one can
+        # lie and "warrior.faction" changes the moment a captive is recruited.
         try:
             participants = [
-                (int(participant_data["warrior_id"]), int(participant_data["skirmish_action"]))
+                (int(participant_data["warrior_id"]), SkirmishActionChoices(int(participant_data["skirmish_action"])))
                 for participant_data in skirmish_participants.values()
             ]
         except KeyError, ValueError:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-        # Which side a warrior fights on comes from this skirmish's own rosters. Not from the posted
-        # "faction_id", which is client-supplied - naming the opposing faction there put a warrior into
-        # the other side's line-up, attacking his own side. And not from "warrior.faction"
-        # either, which is what the template fills that field with: it changes the moment a captive
-        # is recruited, so it disagrees with the roster the warrior actually fights in.
-        # Both relations are prefetched above, so this costs no extra queries, and keying by id
-        # means a warrior listed twice cannot produce a duplicate-row lookup error.
-        attacking_roster = {warrior.id: warrior for warrior in self.object.attacking_warriors.all()}
-        defending_roster = {warrior.id: warrior for warrior in self.object.defending_warriors.all()}
+        # The enemy's actions are decided here rather than read off the request: his card used to post
+        # the AI's choice back in a field the player could edit. The service takes the whole side, so
+        # leaving an enemy out of the post no longer leaves him out of the fight either.
+        try:
+            attacking_participants, defending_participants = SkirmishParticipantBuilderService(
+                skirmish=self.object,
+                participants=participants,
+                player_faction_id=current_savegame.player_faction_id if current_savegame else None,
+            ).process()
+        except UnknownSkirmishParticipantError:
+            # A warrior id naming someone who is not fighting this skirmish
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-        for warrior_id, skirmish_action in participants:
-            if warrior_id in attacking_roster:
-                warrior, side = attacking_roster[warrior_id], attacking_participants
-            elif warrior_id in defending_roster:
-                warrior, side = defending_roster[warrior_id], defending_participants
-            else:
-                # A warrior id naming someone who is not fighting this skirmish
-                return HttpResponse(status=HTTPStatus.BAD_REQUEST)
-
-            side.append(SkirmishParticipant(warrior=warrior, skirmish_action=skirmish_action))
-
-        # Ensure that all lists contain warriors
+        # A side with nobody in it is not a fight, and the pairing handler picks a random opponent from
+        # each list - an empty one raises there. This used to prove both sides had been *posted*; now
+        # that only the player's side is, it proves both rosters actually field somebody healthy.
         if len(attacking_participants) == 0 or len(defending_participants) == 0:
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+
+        # And the player has to have commanded every one of his own healthy warriors, which the check
+        # above no longer implies: leaving a man out of the post used to shrink the side, and would
+        # now silently field him against nobody.
+        if not self._player_commanded_his_whole_side(
+            attacking_participants=attacking_participants, defending_participants=defending_participants
+        ):
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # Start duel
