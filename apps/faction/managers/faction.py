@@ -152,11 +152,11 @@ class FactionManager(manager.Manager):
         """
         faction.available_mercenaries.remove(warrior)
 
-    def replenish_fyrd_reserve(self, *, faction, new_recruitees: int):
+    def replenish_fyrd_reserve(self, *, faction, new_recruits: int):
         faction.refresh_from_db()
 
         # Update reserve
-        faction.fyrd_reserve += new_recruitees
+        faction.fyrd_reserve += new_recruits
         faction.save()
 
         return faction

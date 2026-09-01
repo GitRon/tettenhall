@@ -113,13 +113,13 @@ def test_handle_create_player_month_log_writes_the_line():
 
     result = handle_create_player_month_log(
         context=CreatePlayerMonthLog(
-            title="The fyrd has grown by 1 new recruitee!", month=3, faction=savegame.player_faction
+            title="The fyrd has grown by 1 new recruit!", month=3, faction=savegame.player_faction
         )
     )
 
     player_month_log = PlayerMonthLog.objects.get()
     assert result == PlayerMonthLogCreated(player_month_log=player_month_log)
-    assert player_month_log.title == "The fyrd has grown by 1 new recruitee!"
+    assert player_month_log.title == "The fyrd has grown by 1 new recruit!"
 
 
 @pytest.mark.django_db
