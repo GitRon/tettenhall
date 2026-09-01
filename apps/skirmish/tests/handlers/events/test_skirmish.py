@@ -39,7 +39,9 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
 def test_handle_round_finished_wins_the_skirmish_for_the_victor():
     skirmish = SkirmishFactory()
 
-    result = handle_round_finished(context=RoundFinished(skirmish=skirmish, victor=skirmish.attacking_faction, month=3))
+    result = handle_round_finished(
+        context=RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.attacking_faction, month=3)
+    )
 
     assert result == WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
 
@@ -48,6 +50,6 @@ def test_handle_round_finished_wins_the_skirmish_for_the_victor():
 def test_handle_round_finished_does_nothing_without_a_victor():
     skirmish = SkirmishFactory()
 
-    result = handle_round_finished(context=RoundFinished(skirmish=skirmish, victor=None, month=3))
+    result = handle_round_finished(context=RoundFinished(skirmish=skirmish, round_number=1, victor=None, month=3))
 
     assert result is None

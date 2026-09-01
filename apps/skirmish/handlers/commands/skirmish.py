@@ -270,6 +270,10 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
 
 @message_registry.register_command(command=skirmish.FinishRound)
 def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event:
+    # Read before the increment: this is the round that just resolved, and it is what the battle log
+    # names. Afterwards "current_round" points at the round nobody has fought yet
+    finished_round = context.skirmish.current_round
+
     # Increment round
     Skirmish.objects.increment_round(skirmish=context.skirmish)
 
@@ -282,4 +286,4 @@ def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event
     elif not context.skirmish.attacking_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
         victor = context.skirmish.defending_faction
 
-    return RoundFinished(skirmish=context.skirmish, victor=victor, month=context.month)
+    return RoundFinished(skirmish=context.skirmish, round_number=finished_round, victor=victor, month=context.month)

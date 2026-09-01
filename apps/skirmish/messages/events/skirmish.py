@@ -47,6 +47,10 @@ class AttackerDefenderDecided(Event):
 @dataclass(kw_only=True)
 class RoundFinished(Event):
     skirmish: Skirmish
+    # The round that just resolved, read off the skirmish before it is incremented. Carried rather
+    # than looked up again, because by the time an event handler runs "current_round" has already
+    # moved on to the round nobody has fought yet
+    round_number: int
     victor: Faction | None
     month: int
 

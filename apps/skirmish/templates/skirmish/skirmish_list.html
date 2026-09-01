@@ -20,7 +20,9 @@
                 <td>{{ skirmish.name }}</td>
                 <td>{{ skirmish.attacking_faction }}</td>
                 <td>{{ skirmish.defending_faction }}</td>
-                <td>{{ skirmish.current_round }}</td>
+                {# What the fight has cost so far, not which round is next - the header over the fight #}
+                {# itself is the one that wants "current_round" #}
+                <td>{{ skirmish.rounds_fought }}</td>
                 <td>{{ skirmish.victorious_faction|default_if_none:"-" }}</td>
                 <td>
                     {% if skirmish.victorious_faction %}

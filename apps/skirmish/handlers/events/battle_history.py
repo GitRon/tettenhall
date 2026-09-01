@@ -53,7 +53,7 @@ def handle_log_warrior_death(*, context: warrior.WarriorWasKilled) -> Command:
 def handle_log_round_finished(*, context: skirmish.RoundFinished) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
-        message=f"Round {context.skirmish.current_round} finished.",
+        message=f"Round {context.round_number} finished.",
     )
 
 
