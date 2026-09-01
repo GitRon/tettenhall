@@ -75,6 +75,9 @@
             war band and enslaving one paid the rival - both on the player's click.
         {% endcomment %}
         {% if is_captured and is_player_faction %}
+            {# The nought is written out rather than read off anything, and mirrors the "recruitment_price=0" #}
+            {# in "handle_recruit_captured_warrior": a man already in your cells costs no silver, only #}
+            {# the quarter of his nerve that handler takes off him. #}
             <a hx-post="{% url 'warrior:warrior-recruit-captured-view' warrior.id faction.id %}"
                class="uk-button uk-button-text">
                 Recruit for <i class="fa-solid fa-coins"></i> <i>0</i></a> /
