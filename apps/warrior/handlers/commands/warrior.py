@@ -144,7 +144,10 @@ def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior) -> list[
     return WarriorWasSoldIntoSlavery(
         warrior=context.warrior,
         selling_faction=context.faction,
-        price=context.warrior.recruitment_price,
+        # What a slaver pays, not what the man would cost to hire: the ledger books
+        # "slavery_selling_price" and the captive card advertises it, so an event carrying the full
+        # recruitment price was twice the silver that actually changes hands.
+        price=context.warrior.slavery_selling_price,
         month=context.month,
     )
 
