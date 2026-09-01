@@ -8,13 +8,6 @@
             {# The level goes on the card in the fight because this is where a level-up is actually #}
             {# witnessed: the growth happens mid-skirmish and the log announces it right beside here. #}
             <li><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</li>
-            <li>
-                <div class="uk-margin-top">
-                    <progress class="uk-progress progress-green" value="{{ warrior.current_health }}"
-                              max="{{ warrior.max_health }}"
-                              title="{{ warrior.current_health }}/{{ warrior.max_health }}"></progress>
-                </div>
-            </li>
         </ul>
     </div>
     <div class="uk-card-body">
@@ -38,7 +31,12 @@
                     </p>
                 {% endif %}
             </div>
+            {# Health as text beside the morale, the way the faction page's card already prints both. #}
+            {# It used to be a "uk-progress" bar in the subnav above, where UIkit's "width: 100%" #}
+            {# resolved against a zero-width flex item and rendered nothing at all - so the one number #}
+            {# that decides whether to press "Fight!" again was the only one the card withheld. #}
             <div class="color-corale">
+                <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
                 <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
             </div>
         </div>
