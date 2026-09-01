@@ -36,6 +36,7 @@ class ItemSellView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixi
             {
                 "loadFactionItemList": "-",
                 "loadFactionWarriorList": "-",
+                "updateResourceBar": "-",
             }
         )
         return response
@@ -82,6 +83,7 @@ class ItemBuyView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, Sin
         response["HX-Trigger"] = json.dumps(
             {
                 "loadShopItemList": "-",
+                "updateResourceBar": "-",
             }
         )
         return response

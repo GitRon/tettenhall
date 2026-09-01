@@ -127,6 +127,7 @@ class WarriorRecruitCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
                 "notification": "Captured warrior joined your ranks",
                 "loadFactionWarriorList": "-",
                 "loadFactionCapturedWarriorList": "-",
+                "updateResourceBar": "-",
             }
         )
 
@@ -149,6 +150,7 @@ class WarriorEnslaveCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
             {
                 "notification": "Captured warrior was sold into slavery",
                 "loadFactionCapturedWarriorList": "-",
+                "updateResourceBar": "-",
             }
         )
 

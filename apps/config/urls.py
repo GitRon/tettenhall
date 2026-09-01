@@ -24,6 +24,7 @@ urlpatterns = [
     # Custom
     path("", RedirectView.as_view(pattern_name="account:login-view", permanent=False)),
     path("account/", include(("apps.account.urls", "apps.account"), namespace="account")),
+    path("common/", include(("apps.common.urls", "apps.common"), namespace="common")),
     path("faction/", include(("apps.faction.urls", "apps.faction"), namespace="faction")),
     path("finance/", include(("apps.finance.urls", "apps.finance"), namespace="finance")),
     path("item/", include(("apps.item.urls", "apps.item"), namespace="item")),
