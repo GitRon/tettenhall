@@ -155,6 +155,24 @@ def test_exclude_currently_busy_drops_a_warrior_who_fought_on_the_defending_side
 
 
 @pytest.mark.django_db
+def test_reduce_current_health_subtracts_the_damage():
+    warrior = WarriorFactory(current_health=18, max_health=20)
+
+    result = Warrior.objects.reduce_current_health(obj=warrior, damage=5)
+
+    assert result.current_health == 13
+
+
+@pytest.mark.django_db
+def test_reduce_current_health_floors_a_fatal_blow_at_nothing():
+    warrior = WarriorFactory(current_health=4, max_health=20)
+
+    result = Warrior.objects.reduce_current_health(obj=warrior, damage=15)
+
+    assert result.current_health == 0
+
+
+@pytest.mark.django_db
 def test_replenish_current_health_caps_at_the_maximum():
     warrior = WarriorFactory(current_health=18, max_health=20)
 

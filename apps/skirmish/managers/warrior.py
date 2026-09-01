@@ -71,7 +71,13 @@ class WarriorQuerySet(models.QuerySet):
 class WarriorManager(manager.Manager):
     def reduce_current_health(self, *, obj, damage: int):
         obj.refresh_from_db()
-        obj.current_health -= damage
+
+        # Floored at nothing, the way its twin below is capped at the maximum. A blow harder than the
+        # man is left standing in used to be stored as it landed, so a warrior sat at -6 health: the
+        # number reached the card, and the monthly healing sweep then spent its whole roll carrying
+        # him from -6 to -5 while "replenish_current_health" kept him unconscious for wanting a
+        # positive value.
+        obj.current_health = max(obj.current_health - damage, 0)
         obj.save(update_fields=("current_health",))
 
         return obj
