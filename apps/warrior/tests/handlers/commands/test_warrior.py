@@ -4,6 +4,7 @@ import pytest
 
 from apps.faction.handlers.commands.faction import handle_create_new_faction
 from apps.faction.messages.commands.faction import CreateNewFaction
+from apps.faction.messages.events.warrior import WarriorWasSoldIntoSlavery
 from apps.faction.tests.factories.culture import CultureFactory
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.item.models.item_type import ItemType
@@ -13,11 +14,17 @@ from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warrior.handlers.commands.warrior import (
+    handle_enslave_captured_warrior,
     handle_heal_injured_warrior,
     handle_punish_unpaid_warrior,
     handle_replenish_warrior_morale,
 )
-from apps.warrior.messages.commands.warrior import HealInjuredWarrior, PunishUnpaidWarrior, ReplenishWarriorMorale
+from apps.warrior.messages.commands.warrior import (
+    EnslaveCapturedWarrior,
+    HealInjuredWarrior,
+    PunishUnpaidWarrior,
+    ReplenishWarriorMorale,
+)
 from apps.warrior.messages.events.warrior import (
     WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
@@ -268,3 +275,19 @@ def test_handle_punish_unpaid_warrior_keeps_the_leader_however_long_he_goes_unpa
     assert result == WarriorLostMoraleOverUnpaidSalary(warrior=leader, faction=faction, lost_morale=5, month=3)
     leader.refresh_from_db()
     assert leader.faction == faction
+
+
+@pytest.mark.django_db
+def test_handle_enslave_captured_warrior_carries_the_slavers_price():
+    """
+    The ledger books "slavery_selling_price" and the captive card advertises it, so an event carrying
+    the full recruitment price named twice the silver that changes hands.
+    """
+    faction = FactionFactory()
+    captive = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, recruitment_price=97)
+    faction.captured_warriors.add(captive)
+
+    result = handle_enslave_captured_warrior(context=EnslaveCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    assert result == WarriorWasSoldIntoSlavery(warrior=captive, selling_faction=faction, price=48, month=3)
+    assert list(faction.captured_warriors.all()) == []
