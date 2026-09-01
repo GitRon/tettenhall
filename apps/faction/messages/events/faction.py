@@ -24,7 +24,7 @@ class FactionWasDefeated(Event):
 @dataclass(kw_only=True)
 class FactionFyrdReserveReplenished(Event):
     faction: Faction
-    new_recruitees: int
+    new_recruits: int
     month: int
 
 

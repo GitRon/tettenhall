@@ -167,17 +167,17 @@ def handle_remove_quest_from_bulletin_board(*, context: RemoveQuestFromBulletinB
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
 def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | None:
-    new_recruitees = random.randrange(0, 3)
+    new_recruits = random.randrange(0, 3)
 
-    if new_recruitees == 0:
+    if new_recruits == 0:
         return None
 
     # Update faction
-    Faction.objects.replenish_fyrd_reserve(faction=context.faction, new_recruitees=new_recruitees)
+    Faction.objects.replenish_fyrd_reserve(faction=context.faction, new_recruits=new_recruits)
 
     return FactionFyrdReserveReplenished(
         faction=context.faction,
-        new_recruitees=new_recruitees,
+        new_recruits=new_recruits,
         month=context.month,
     )
 

@@ -287,19 +287,19 @@ def test_handle_remove_quest_from_bulletin_board_takes_the_quest_off_the_board()
 
 
 @pytest.mark.django_db
-def test_handle_replenish_fyrd_reserve_with_new_recruitees():
+def test_handle_replenish_fyrd_reserve_with_new_recruits():
     faction = FactionFactory(fyrd_reserve=3)
 
     with mock.patch("apps.faction.handlers.commands.faction.random.randrange", return_value=2):
         result = handle_replenish_fyrd_reserve(context=ReplenishFyrdReserve(faction=faction, month=3))
 
-    assert result == FactionFyrdReserveReplenished(faction=faction, new_recruitees=2, month=3)
+    assert result == FactionFyrdReserveReplenished(faction=faction, new_recruits=2, month=3)
     faction.refresh_from_db()
     assert faction.fyrd_reserve == 5
 
 
 @pytest.mark.django_db
-def test_handle_replenish_fyrd_reserve_without_new_recruitees():
+def test_handle_replenish_fyrd_reserve_without_new_recruits():
     faction = FactionFactory(fyrd_reserve=3)
 
     with mock.patch("apps.faction.handlers.commands.faction.random.randrange", return_value=0):

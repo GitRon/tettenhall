@@ -13,9 +13,8 @@ from apps.month.messages.commands.month import CreatePlayerMonthLog
 @message_registry.register_event(event=FactionFyrdReserveReplenished)
 def handle_faction_fyrd_reserve_replenished(*, context: FactionFyrdReserveReplenished) -> Command:
     return CreatePlayerMonthLog(
-        # The handler only fires for one recruitee upwards, but "1 new recruitees" still read wrong
-        title=f"The fyrd has grown by {context.new_recruitees} "
-        f"new recruitee{'' if context.new_recruitees == 1 else 's'}!",
+        # The handler only fires for one man upwards, but "1 new recruits" still read wrong
+        title=f"The fyrd has grown by {context.new_recruits} new recruit{'' if context.new_recruits == 1 else 's'}!",
         month=context.month,
         faction=context.faction,
     )
