@@ -43,12 +43,20 @@ class BaseItemGenerator:
         return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")
 
     def process(self) -> Item:
-        # Modifier can be negative, DiceNotation class takes care of not dealing negative damage
-        modifier = round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)) + self.quality_bonus
-
         item_type = self._get_queryset_for_type().first()
         if not item_type:
             raise RuntimeError("No item type found.")
+
+        # Modifier can be negative, DiceNotation class takes care of not dealing negative damage
+        modifier = round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)) + self.quality_bonus
+
+        # Floored against the die it is attached to, which is why the type has to be drawn first. The
+        # roll is unbounded below, so a small die could come out with a modifier deeper than its own
+        # maximum - a "Rusty Pitchfork (1d4-4)" tops out at nothing and cannot hurt anybody for the
+        # whole savegame, while "abs(... * max(modifier, 1))" below still prices it like a weapon that
+        # can. A floored item is a better one than the roll asked for, so the condition follows.
+        best_possible_roll = DiceNotation(dice_string=item_type.base_value).best_possible_roll
+        modifier = max(modifier, 1 - best_possible_roll)
 
         dice_notation = DiceNotation(dice_string=item_type.base_value, modifier=modifier)
         price = abs(dice_notation.expectancy_value * dice_notation.sides * max(modifier, 1))
