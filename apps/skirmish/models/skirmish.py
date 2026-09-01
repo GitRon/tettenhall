@@ -54,3 +54,14 @@ class Skirmish(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def rounds_fought(self) -> int:
+        """
+        How many rounds have been resolved, as opposed to which round is being fought now.
+
+        "current_round" starts at one and is incremented as each round resolves, so it answers "which
+        round is this" - right for the header over a fight in progress, and one too many for a column
+        counting what a finished fight cost.
+        """
+        return self.current_round - 1

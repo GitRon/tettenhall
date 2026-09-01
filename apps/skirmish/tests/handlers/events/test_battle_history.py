@@ -129,10 +129,14 @@ def test_handle_log_warrior_death_logs_the_kill():
     assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred is out of the fight being killed.")
 
 
-def test_handle_log_round_finished_logs_the_round_number():
-    skirmish = SkirmishFactory.build(current_round=3)
+def test_handle_log_round_finished_names_the_round_that_resolved():
+    """
+    The number comes off the event, not off the skirmish: by the time this runs "current_round" has
+    already been incremented to the round nobody has fought yet.
+    """
+    skirmish = SkirmishFactory.build(current_round=4)
 
-    result = handle_log_round_finished(context=RoundFinished(skirmish=skirmish, victor=None, month=3))
+    result = handle_log_round_finished(context=RoundFinished(skirmish=skirmish, round_number=3, victor=None, month=3))
 
     assert result == CreateBattleHistory(skirmish=skirmish, message="Round 3 finished.")
 

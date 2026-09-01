@@ -594,7 +594,7 @@ def test_handle_finish_round_leaves_an_undecided_skirmish_without_a_victor():
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
-    assert result == RoundFinished(skirmish=skirmish, victor=None, month=3)
+    assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=None, month=3)
     skirmish.refresh_from_db()
     assert skirmish.current_round == 2
 
@@ -611,7 +611,7 @@ def test_handle_finish_round_declares_the_attacking_faction_the_victor():
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
-    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.attacking_faction, month=3)
+    assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.attacking_faction, month=3)
 
 
 @pytest.mark.django_db
@@ -626,7 +626,7 @@ def test_handle_finish_round_declares_the_defending_faction_the_victor():
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
-    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.defending_faction, month=3)
+    assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.defending_faction, month=3)
 
 
 @pytest.mark.django_db
@@ -646,4 +646,4 @@ def test_handle_finish_round_declares_the_attacking_faction_the_victor_on_a_mutu
 
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
-    assert result == RoundFinished(skirmish=skirmish, victor=skirmish.attacking_faction, month=3)
+    assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.attacking_faction, month=3)
