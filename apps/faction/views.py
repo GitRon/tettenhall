@@ -285,6 +285,7 @@ class DraftWarriorFromFyrdView(RunningSavegameRequiredMixin, PlayerFactionScoped
                 "notification": "New Warrior drafted",
                 "loadFactionWarriorList": "-",
                 "loadFactionItemList": "-",
+                "updateResourceBar": "-",
             }
         )
 
@@ -345,6 +346,7 @@ class RecruitPubMercenaryView(
         response["HX-Trigger"] = json.dumps(
             {
                 "notification": f"{obj} joins your war band for {obj.recruitment_price} silver.",
+                "updateResourceBar": "-",
             }
         )
         return response

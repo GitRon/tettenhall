@@ -32,7 +32,11 @@ def test_item_sell_view_announces_the_changed_lists_to_htmx(logged_in_client, cu
 
     response = logged_in_client.post(reverse("item:item-sell-view", kwargs={"pk": item.pk}))
 
-    assert json.loads(response["HX-Trigger"]) == {"loadFactionItemList": "-", "loadFactionWarriorList": "-"}
+    assert json.loads(response["HX-Trigger"]) == {
+        "loadFactionItemList": "-",
+        "loadFactionWarriorList": "-",
+        "updateResourceBar": "-",
+    }
 
 
 @pytest.mark.django_db
@@ -75,7 +79,7 @@ def test_item_buy_view_announces_the_changed_shop_list_to_htmx(logged_in_client,
 
     response = logged_in_client.post(reverse("item:item-buy-view", kwargs={"pk": item.pk}))
 
-    assert json.loads(response["HX-Trigger"]) == {"loadShopItemList": "-"}
+    assert json.loads(response["HX-Trigger"]) == {"loadShopItemList": "-", "updateResourceBar": "-"}
 
 
 @pytest.mark.django_db

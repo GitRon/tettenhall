@@ -215,6 +215,7 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
                 "updateFactionWarriorList": "-",
                 "updateSkirmishRound": "-",
                 "updateFightButton": "-",
+                "updateResourceBar": "-",
             }
         )
         return response
