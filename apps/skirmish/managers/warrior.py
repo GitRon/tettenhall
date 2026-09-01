@@ -72,13 +72,27 @@ class WarriorManager(manager.Manager):
     def reduce_current_health(self, *, obj, damage: int):
         obj.refresh_from_db()
 
-        # Floored at nothing, the way its twin below is capped at the maximum. A blow harder than the
-        # man is left standing in used to be stored as it landed, so a warrior sat at -6 health: the
-        # number reached the card, and the monthly healing sweep then spent its whole roll carrying
-        # him from -6 to -5 while "replenish_current_health" kept him unconscious for wanting a
-        # positive value.
-        obj.current_health = max(obj.current_health - damage, 0)
+        # Deliberately unfloored, unlike its twin below: how far past zero the blow carried a man is
+        # what "handle_reduce_warrior_health" reads to tell a corpse from a captive. The value is
+        # normalised the moment that decision is made - see "put_out_of_the_fight" - so nothing
+        # outside that one handler ever sees a negative.
+        obj.current_health -= damage
         obj.save(update_fields=("current_health",))
+
+        return obj
+
+    def put_out_of_the_fight(self, *, obj, condition: int):
+        """
+        Settles a warrior who has taken more than he can stand: his condition, and his health at nothing.
+
+        The two belong together. Overkill depth decides which condition he gets, so the health has to
+        stay as the blow left it until then - and be tidied away immediately afterwards, because a
+        stored -6 reached the card as "-6/8" and cost the monthly healing sweep its whole roll
+        carrying him to -5, where "replenish_current_health" still would not wake him.
+        """
+        obj.current_health = max(obj.current_health, 0)
+        obj.condition = condition
+        obj.save(update_fields=("current_health", "condition"))
 
         return obj
 
