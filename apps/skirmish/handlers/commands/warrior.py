@@ -108,7 +108,9 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
                 )
             )
 
-        Warrior.objects.set_condition(obj=context.warrior, condition=condition)
+        # Not "set_condition": the overkill depth above has served its purpose by now, so the health
+        # is floored in the same write rather than left negative for every later reader to trip over
+        Warrior.objects.put_out_of_the_fight(obj=context.warrior, condition=condition)
 
     return message_list
 

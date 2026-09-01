@@ -164,10 +164,33 @@ def test_reduce_current_health_subtracts_the_damage():
 
 
 @pytest.mark.django_db
-def test_reduce_current_health_floors_a_fatal_blow_at_nothing():
+def test_reduce_current_health_keeps_the_overkill_of_a_fatal_blow():
+    """
+    Unfloored on purpose: how far past zero the blow carried him is what tells a corpse from a
+    captive, and "put_out_of_the_fight" is what tidies the number away afterwards.
+    """
     warrior = WarriorFactory(current_health=4, max_health=20)
 
     result = Warrior.objects.reduce_current_health(obj=warrior, damage=15)
+
+    assert result.current_health == -11
+
+
+@pytest.mark.django_db
+def test_put_out_of_the_fight_floors_health_at_nothing():
+    warrior = WarriorFactory(current_health=-11, max_health=20)
+
+    result = Warrior.objects.put_out_of_the_fight(obj=warrior, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    assert result.current_health == 0
+    assert result.condition == Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+
+
+@pytest.mark.django_db
+def test_put_out_of_the_fight_leaves_a_warrior_dropped_exactly_to_nothing_alone():
+    warrior = WarriorFactory(current_health=0, max_health=20)
+
+    result = Warrior.objects.put_out_of_the_fight(obj=warrior, condition=Warrior.ConditionChoices.CONDITION_DEAD)
 
     assert result.current_health == 0
 
