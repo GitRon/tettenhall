@@ -132,11 +132,16 @@
     // is. Named once so the three call sites below cannot drift apart again.
     const NOTIFICATION_TIMEOUT = 5000;
 
+    // Every toast sits at the bottom, because the navbar is the first thing in the body and has no
+    // offset under it: a top-centre notification covers the nav links and the resource counters, and
+    // the counters are what several of these toasts are reporting a change to.
+    const NOTIFICATION_POSITION = 'bottom-center';
+
     document.body.addEventListener("notification", function (e) {
         UIkit.notification({
             message: e.detail.value,
             status: 'success',
-            pos: 'top-center',
+            pos: NOTIFICATION_POSITION,
             timeout: NOTIFICATION_TIMEOUT,
         });
     });
@@ -145,7 +150,7 @@
             UIkit.notification({
                 message: "An error has occurred.",
                 status: 'danger',
-                pos: 'bottom-center',
+                pos: NOTIFICATION_POSITION,
                 timeout: NOTIFICATION_TIMEOUT,
             });
         }
@@ -162,7 +167,7 @@
         UIkit.notification({
             message: "{{ message|escape|escapejs }}",
             status: "{{ message.level_tag|escapejs }}",
-            pos: 'top-center',
+            pos: NOTIFICATION_POSITION,
             timeout: NOTIFICATION_TIMEOUT,
         });
     {% endfor %}
