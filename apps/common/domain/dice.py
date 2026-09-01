@@ -35,3 +35,13 @@ class DiceNotation:
     @property
     def expectancy_value(self) -> float:
         return (self.rolls * (self.sides + 1) / 2) + self.modifier
+
+    @property
+    def best_possible_roll(self) -> int:
+        """
+        Every die showing its highest face, before the modifier.
+
+        What an item generator floors a negative modifier against: a modifier deeper than this makes
+        the item unable to deal damage at all, however it is rolled.
+        """
+        return self.rolls * self.sides

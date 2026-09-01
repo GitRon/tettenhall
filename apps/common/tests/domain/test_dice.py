@@ -32,3 +32,9 @@ def test_expectancy_value_averages_the_rolls():
     dice_notation = DiceNotation(dice_string="2d4", modifier=7)
 
     assert dice_notation.expectancy_value == 12
+
+
+def test_best_possible_roll_ignores_the_modifier():
+    dice_notation = DiceNotation(dice_string="3d5", modifier=-99)
+
+    assert dice_notation.best_possible_roll == 15
