@@ -10,8 +10,8 @@ from apps.skirmish.messages.events import item, skirmish, transaction, warrior
 def handle_log_warrior_takes_damage(*, context: warrior.WarriorTookDamage) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
-        message=f"{context.attacker} hits for {context.attacker_damage} damage and {context.defender} defends for "
-        f"{context.defender_damage} resulting in {context.damage} damage.",
+        message=f"{context.attacker} strikes at {context.attacker_damage} against {context.defender}'s "
+        f"{context.defender_damage} defense, and {context.damage} damage gets through.",
     )
 
 

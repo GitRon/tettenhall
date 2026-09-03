@@ -58,7 +58,33 @@ def test_handle_log_warrior_takes_damage_logs_both_rolls():
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
-        message="Beorn hits for 7 damage and Cuthred defends for 2 resulting in 5 damage.",
+        message="Beorn strikes at 7 against Cuthred's 2 defense, and 5 damage gets through.",
+    )
+
+
+def test_handle_log_warrior_takes_damage_when_the_defence_outrolls_the_attack():
+    """
+    Armour heavier than the weapon facing it still lets a share of the blow through, so the line may
+    not read as a subtraction of the one roll from the other.
+    """
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Beorn")
+    defender = WarriorFactory.build(name="Cuthred")
+
+    result = handle_log_warrior_takes_damage(
+        context=WarriorTookDamage(
+            skirmish=skirmish,
+            attacker=attacker,
+            attacker_damage=12,
+            defender=defender,
+            defender_damage=20,
+            damage=3,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Beorn strikes at 12 against Cuthred's 20 defense, and 3 damage gets through.",
     )
 
 
