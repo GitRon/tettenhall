@@ -197,8 +197,13 @@ def _scaled_quest_loot(*, quest_contract: QuestContract, skirmish: Skirmish) -> 
 
 
 @message_registry.register_command(command=skirmish.WinSkirmish)
-def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event:
-    Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction)
+def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event | None:
+    # A fight is won once. The manager refuses a skirmish that already has a victor, and stopping here
+    # is what keeps the silver, the experience, the quest reward and the log line to a single helping:
+    # the savegame ending force-resolves the very fight it ended in, so the round that ended it arrives
+    # behind a victory that has already been paid out.
+    if not Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction):
+        return None
 
     try:
         quest_contract = context.skirmish.quest_contract

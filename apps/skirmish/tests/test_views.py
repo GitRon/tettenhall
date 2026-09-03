@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -121,6 +122,33 @@ def test_skirmish_finish_round_view_advances_the_round(logged_in_client, current
     assert "HX-Trigger" in response
     skirmish.refresh_from_db()
     assert skirmish.current_round == 2
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_fight_that_is_already_decided(logged_in_client, current_savegame):
+    """
+    A double-click on the last "Fight!" is two posts, and the second arrives at a resolved skirmish.
+    Fighting round 13 of a fight decided in round 12 turns out deserters and prisoners still sitting
+    on the roster, and pays everybody the after-battle experience a second time.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    opposing_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(opposing_warrior)
+    Skirmish.objects.filter(pk=skirmish.pk).update(victorious_faction=skirmish.attacking_faction)
+
+    response = logged_in_client.post(
+        reverse("skirmish:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 409
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
 
 
 @pytest.mark.django_db

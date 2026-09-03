@@ -147,6 +147,15 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         )
         if not self.object:
             return HttpResponse(status=HTTPStatus.NOT_FOUND)
+
+        # A fight that has a victor is over, and another round of it fields men who have no business
+        # on the field any more - a deserter still on the roster, a prisoner taken when his town fell.
+        # It needs no crafted request to reach: a double-click on the last "Fight!" is two posts, and
+        # the second arrives here. A conflict rather than bad input, because the post is well formed
+        # and it is the fight that has moved on.
+        if self.object.victorious_faction_id:
+            return HttpResponse(status=HTTPStatus.CONFLICT)
+
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
 
         # Every value here arrives in the request body, so anything missing, non-numeric or naming an
