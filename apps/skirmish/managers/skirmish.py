@@ -19,9 +19,25 @@ class SkirmishManager(manager.Manager):
         skirmish.current_round += 1
         return skirmish.save()
 
-    def set_victor(self, *, skirmish, victorious_faction):
+    def set_victor(self, *, skirmish, victorious_faction) -> bool:
+        """
+        Writes the victor onto a skirmish that has none, and answers whether it was this call.
+
+        A single conditional UPDATE rather than a read-modify-save, because two passes can reach the
+        same fight: killing the player's leader ends the savegame, which force-resolves every open
+        skirmish - including the one that round is still resolving. The two passes hold separate
+        instances of the same row, so nothing in memory can see the other's write. Refusing the
+        second here is what keeps the loser from being stripped twice and the quest from paying
+        twice.
+        """
+        updated = self.filter(pk=skirmish.pk, victorious_faction__isnull=True).update(
+            victorious_faction=victorious_faction
+        )
+        if not updated:
+            return False
+
         skirmish.victorious_faction = victorious_faction
-        return skirmish.save()
+        return True
 
 
 SkirmishManager = SkirmishManager.from_queryset(SkirmishQuerySet)

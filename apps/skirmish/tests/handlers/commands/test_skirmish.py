@@ -29,6 +29,7 @@ from apps.skirmish.messages.events.skirmish import (
     RoundFinished,
     SkirmishFinished,
 )
+from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -582,6 +583,25 @@ def test_handle_faction_wins_skirmish_without_a_quest_contract():
         quest_loot=0,
         month=3,
     )
+
+
+@pytest.mark.django_db
+def test_handle_faction_wins_skirmish_refuses_a_skirmish_that_already_has_a_victor():
+    """
+    Killing the player's leader ends the savegame, which force-resolves the very fight it ended in -
+    so the round still resolving that fight arrives behind a victory already paid out. Stopping here
+    is what keeps the loser from being stripped twice and the quest contract from paying twice.
+    """
+    skirmish = SkirmishFactory()
+    QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    Skirmish.objects.filter(pk=skirmish.pk).update(victorious_faction=skirmish.attacking_faction)
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
+    )
+
+    assert result is None
 
 
 @pytest.mark.django_db
