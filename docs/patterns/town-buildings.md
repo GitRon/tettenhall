@@ -23,9 +23,14 @@ holding that level's numbers:
 
 ## Rules
 
-- **Every game-balance number lives in `apps/town/buildings/`** — the building costs and each building's
-  effect. Don't hardcode a number in a handler that a building should own; the handler reads the constant.
-  The upgrade page names the effects too, and reads them from the same place through `get_effects()`.
+- **Every number a building levers lives in `apps/town/buildings/`** — the building costs and each
+  building's effect. Don't hardcode a number in a handler that a building should own; the handler reads the
+  constant. The upgrade page names the effects too, and reads them from the same place through
+  `get_effects()`.
+- **A balance number no building levers lives with the system that owns the mechanic**, as a class constant
+  on that service or generator — `AttackService.BASE_COMPARE_STRENGTH`,
+  `SkirmishDamageService.MINIMUM_DAMAGE_SHARE`, a warrior generator's `STATS_MU`. `apps/town/buildings/` is
+  the home for levers, not a registry of every number in the game.
 - **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots, weaponsmith →
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling.
 - **Level 0 is a baseline, not "no effect"**: a town without a hall still earns a little, and one without

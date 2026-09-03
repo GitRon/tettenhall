@@ -107,13 +107,12 @@ def handle_morale_change_on_warrior_defends_all_damage(*, context: warrior.Warri
     Turning a blow aside steadies a warrior. Cowering behind a shield wears him down.
 
     Without the second half a fight could not end. Below a quarter of his health a warrior always
-    picks a defensive stance, that stance doubles his defense and zeroes his attack, and once the
-    doubled defense outruns what the other side can hit for, nobody takes damage again - and the only
-    other two things that move morale in this game are taking damage and watching a comrade fall.
-    Neither happens, so nobody routs, no side ever loses its last healthy warrior, and the round
-    counter climbs for ever. One observed fight reached 54 rounds. That matters more than it sounds:
-    the month cannot be advanced while a skirmish is unresolved, so such a fight ends the savegame's
-    life rather than its own.
+    picks a defensive stance, and that stance zeroes his attack: once both sides are in it neither
+    deals anything, and the only other two things that move morale in this game are taking damage and
+    watching a comrade fall. Neither happens, so nobody routs, no side ever loses its last healthy
+    warrior, and the round counter climbs for ever. That matters more than it sounds: the month cannot
+    be advanced while a skirmish is unresolved, so such a fight ends the savegame's life rather than
+    its own.
 
     Draining instead of merely withholding the reward is the whole point - a warrior sitting at the
     same morale for ever is exactly the fight that never ends. Dropping him to zero raises
