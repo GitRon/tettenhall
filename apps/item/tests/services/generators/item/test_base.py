@@ -92,8 +92,7 @@ def test_process_without_a_quality_bonus():
 def test_process_floors_a_modifier_deeper_than_the_die_can_roll():
     """
     A weapon whose modifier undercuts its own best roll cannot deal damage however it is rolled - the
-    "Rusty Pitchfork (1d4-4)" a rival turned up with tops out at nothing - and the price does not
-    notice, because it clamps the multiplier rather than the modifier.
+    "Rusty Pitchfork (1d4-4)" a rival turned up with tops out at nothing.
     """
     # Its own function value, so the queryset cannot draw one of the shipped types instead
     ItemTypeFactory(function=99, base_value="1d4")
@@ -117,3 +116,34 @@ def test_process_leaves_a_modifier_the_die_can_still_carry():
         result = generator.process()
 
     assert result.modifier == -2
+
+
+@pytest.mark.django_db
+def test_process_prices_an_item_by_its_expected_damage():
+    """
+    The dice decide the damage, so they have to decide the price: a "Cheap Long sword (4d4+0)"
+    averaging ten damage is worth more than a "Superior Pitchfork (1d4+5)" averaging seven and a half.
+    """
+    ItemTypeFactory(function=99, base_value="4d4")
+    generator = BaseItemGenerator(faction=None, item_function=99, savegame_id=SavegameFactory().id)
+
+    with mock.patch("apps.item.services.generators.item.base.random.gauss", return_value=0):
+        result = generator.process()
+
+    assert result.price == 100
+
+
+@pytest.mark.django_db
+def test_process_prices_an_item_that_barely_threatens_anybody_at_the_floor():
+    """
+    A modifier floored against a small die leaves an expectancy below a single point of damage, which
+    is not a price - the item is worth the floor instead.
+    """
+    ItemTypeFactory(function=99, base_value="1d4")
+    generator = BaseItemGenerator(faction=None, item_function=99, savegame_id=SavegameFactory().id)
+
+    # A 1d4 floors the modifier at -3, leaving an expectancy of -0.5
+    with mock.patch("apps.item.services.generators.item.base.random.gauss", return_value=-20):
+        result = generator.process()
+
+    assert result.price == 10
