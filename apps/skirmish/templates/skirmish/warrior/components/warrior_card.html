@@ -13,9 +13,13 @@
     <div class="uk-card-body">
         <div uk-grid>
             <div>
+                {# "Healthy" is the name of a state and not a reading of the health beside it: nothing #}
+                {# between full health and zero moves the condition, so a man at 1 of 20 is in it as #}
+                {# much as one who has not been touched. What the state says is that he is still on #}
+                {# his feet, and the number says at what cost. #}
                 {% if warrior.is_healthy %}
                     <p class="uk-text-success">
-                        <i class="fa-solid fa-feather-pointed"></i> {{ warrior.get_condition_display }}
+                        <i class="fa-solid fa-feather-pointed"></i> Able to fight
                     </p>
                 {% elif warrior.is_unconscious %}
                     <p class="uk-text-warning">
