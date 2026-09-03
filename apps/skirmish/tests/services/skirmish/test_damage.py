@@ -56,8 +56,9 @@ def test_deal_damage_floors_a_blow_the_defence_outmatches(damage_service):
 
 def test_deal_damage_announces_a_fully_defended_attack(damage_service):
     """
-    The floor is a share of the blow, so it rounds away on the smallest ones and the smallest blows
-    can still be stopped dead. Two is the largest attack that behaves this way.
+    The floor is a share of the blow rounded to whole points, so it rounds away on the smallest ones
+    and those can still be stopped dead. Two is the largest attack that behaves this way, because
+    round() takes a half to the even side and so takes this one down.
     """
     result = damage_service._deal_damage(attack=2, defense=7)
 

@@ -15,12 +15,15 @@ def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
     """
     The chain that makes an unwinnable fight end, run for real rather than asserted handler by handler.
 
-    Below a quarter of his health a warrior always picks a defensive stance, which doubles his defense
-    and zeroes his attack. Once that defense outruns what the other side can hit for, nobody takes
-    damage and nobody falls - and those were the only two things that moved morale. So the drain has
-    to come from the stance itself, and it has to reach all the way to CONDITION_FLEEING, which the
-    defeat check counts as "not healthy". Only a real queue run proves the three handlers between the
-    block and the rout are actually wired to each other.
+    Below a quarter of his health a warrior always picks a defensive stance, which zeroes his attack.
+    Once both sides are there neither throws a blow, so nobody takes damage and nobody falls - and
+    those were the only two things that moved morale. So the drain has to come from the stance itself,
+    and it has to reach all the way to CONDITION_FLEEING, which the defeat check counts as "not
+    healthy". Only a real queue run proves the three handlers between the block and the rout are
+    actually wired to each other.
+
+    Driven with a blow that was never thrown, because that is the state the damage service raises this
+    event for: a positive attack keeps a share of itself past any defense.
 
     Set one round short of routing rather than looped: what matters is that the last point of morale
     turns into a rout, not how many rounds it took to get there.
@@ -35,7 +38,7 @@ def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
         WarriorDefendedAllDamage(
             skirmish=skirmish,
             attacker=attacker,
-            attacker_damage=4,
+            attacker_damage=0,
             defender=exhausted_defender,
             defender_damage=20,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,

@@ -7,10 +7,17 @@ from apps.skirmish.services.actions.utils import get_service_by_attack_action
 
 
 class SkirmishDamageService:
-    # The share of a blow that defence cannot prevent. A weapon and the armour facing it are drawn
-    # from comparable dice pools, so subtracting the one from the other reaches zero often - and a
-    # fight in which neither side can be hurt has no way to end, which holds the month open and the
-    # savegame with it. Armour therefore blunts a blow down to this share of it and no further.
+    # Roughly the share of a blow that defence cannot prevent: rounded to whole points, so it is a
+    # quarter only on the way past and nothing at all below an attack of three.
+    #
+    # A weapon and the armour facing it are drawn from comparable dice pools, so subtracting the one
+    # from the other reaches zero often, and two warriors trading blows neither can land gain morale
+    # for every block and so never rout. That fight has no way to end, and an unresolved skirmish
+    # holds the month open and the savegame with it.
+    #
+    # It answers only the fight in which blows are being thrown. Two warriors both in a defensive
+    # stance throw nothing at all, this leaves their zero a zero, and the morale drain on a fully
+    # defended blow is still the only thing that ends that one.
     MINIMUM_DAMAGE_SHARE = 0.25
 
     skirmish: Skirmish
