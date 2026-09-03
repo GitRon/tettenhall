@@ -14,7 +14,13 @@
                     <i class="fa-solid fa-heart"></i>
                     <i>{{ warrior.max_health|obscurify:20 }}</i>&nbsp;
                     <i class="fa-solid fa-bolt"></i> <i>{{ warrior.max_morale|obscurify:10 }}</i>&nbsp;
-                    <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
+                    {# The condition is a state, not a scale, and reads the same on every card the #}
+                    {# player sees a warrior on. #}
+                    {% if warrior.is_healthy %}
+                        <i class="fa-solid fa-user-injured"></i> <i>Able to fight</i>
+                    {% else %}
+                        <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
+                    {% endif %}
                 </p>
             </div>
         </div>
