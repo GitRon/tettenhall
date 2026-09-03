@@ -22,7 +22,8 @@ inferring the conventions from nearby code.
 - [Adding a new flow](docs/patterns/adding-a-flow.md) — the end-to-end checklist
 - [Strict mode](docs/patterns/strict-mode.md) — what it enforces, and where it does not
 - [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
-- [Town buildings](docs/patterns/town-buildings.md) — where the game-balance numbers live
+- [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a
+  balance number belongs
 
 ### Testing
 

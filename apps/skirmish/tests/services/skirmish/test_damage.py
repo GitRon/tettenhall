@@ -36,7 +36,29 @@ def test_deal_damage_announces_the_damage_getting_through(damage_service):
     ]
 
 
+def test_deal_damage_floors_a_blow_the_defence_outmatches(damage_service):
+    result = damage_service._deal_damage(attack=12, defense=20)
+
+    assert result == 3
+    assert damage_service.message_list == [
+        WarriorTookDamage(
+            skirmish=damage_service.skirmish,
+            attacker=damage_service.attacker,
+            attacker_damage=12,
+            defender=damage_service.defender,
+            defender_damage=20,
+            # A quarter of the blow, because armour outmatching a weapon blunts it rather than
+            # stopping it dead
+            damage=3,
+        )
+    ]
+
+
 def test_deal_damage_announces_a_fully_defended_attack(damage_service):
+    """
+    The floor is a share of the blow, so it rounds away on the smallest ones and the smallest blows
+    can still be stopped dead. Two is the largest attack that behaves this way.
+    """
     result = damage_service._deal_damage(attack=2, defense=7)
 
     assert result == 0
@@ -49,6 +71,22 @@ def test_deal_damage_announces_a_fully_defended_attack(damage_service):
             defender_damage=7,
             # Passed on because whether the defender was turtling decides what the block does to his
             # nerve, and only the service knows which action he picked
+            defender_action=damage_service.defender_action,
+        )
+    ]
+
+
+def test_deal_damage_announces_an_attack_that_was_never_thrown(damage_service):
+    result = damage_service._deal_damage(attack=0, defense=5)
+
+    assert result == 0
+    assert damage_service.message_list == [
+        WarriorDefendedAllDamage(
+            skirmish=damage_service.skirmish,
+            attacker=damage_service.attacker,
+            defender=damage_service.defender,
+            attacker_damage=0,
+            defender_damage=5,
             defender_action=damage_service.defender_action,
         )
     ]
