@@ -19,6 +19,15 @@ def item_generator(db) -> BaseItemGenerator:
     )
 
 
+@pytest.fixture
+def armor_generator(db) -> BaseItemGenerator:
+    return BaseItemGenerator(
+        faction=None,
+        item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
+        savegame_id=SavegameFactory().id,
+    )
+
+
 def test_determine_condition_below_the_expected_range(item_generator):
     result = item_generator._determine_condition(modifier=-1)
 
@@ -39,6 +48,28 @@ def test_determine_condition_within_one_sigma_above_the_mean(item_generator):
 
 def test_determine_condition_above_the_expected_range(item_generator):
     result = item_generator._determine_condition(modifier=4)
+
+    assert result == Item.ConditionChoices.CONDITION_SUPERIOR
+
+
+def test_modifier_distribution_for_a_weapon(item_generator):
+    result = item_generator._modifier_distribution
+
+    assert result == (BaseItemGenerator.MODIFIER_ROLLS_MU, BaseItemGenerator.MODIFIER_ROLLS_SIGMA)
+
+
+def test_modifier_distribution_for_armor(armor_generator):
+    result = armor_generator._modifier_distribution
+
+    assert result == (BaseItemGenerator.ARMOR_MODIFIER_ROLLS_MU, BaseItemGenerator.ARMOR_MODIFIER_ROLLS_SIGMA)
+
+
+def test_determine_condition_reads_the_armor_pool(armor_generator):
+    """
+    The same modifier means two different things on the two functions: three sits inside the weapon
+    pool's traditional band and above everything the armour pool has a name for.
+    """
+    result = armor_generator._determine_condition(modifier=3)
 
     assert result == Item.ConditionChoices.CONDITION_SUPERIOR
 
@@ -86,6 +117,57 @@ def test_process_without_a_quality_bonus():
 
     assert result.modifier == 2
     assert result.condition == Item.ConditionChoices.CONDITION_TRADITIONAL
+
+
+@pytest.mark.django_db
+def test_process_rolls_armor_from_its_own_pool(armor_generator):
+    """
+    A mean of its own is the whole point of the split, so the roll has to reach for it rather than for
+    the weapon mean sitting on the same class.
+    """
+    with mock.patch("apps.item.services.generators.item.base.random.gauss", return_value=1) as mocked_gauss:
+        result = armor_generator.process()
+
+    assert mocked_gauss.call_args.args == (
+        BaseItemGenerator.ARMOR_MODIFIER_ROLLS_MU,
+        BaseItemGenerator.ARMOR_MODIFIER_ROLLS_SIGMA,
+    )
+    assert result.condition == Item.ConditionChoices.CONDITION_TRADITIONAL
+
+
+@pytest.mark.django_db
+def test_process_lifts_armor_by_the_quality_bonus():
+    """
+    The forge works on mail as well as on blades, and the condition ladder it lifts an item up is the
+    armour one - a mean of one plus a bonus of two lands above the armour pool's superior threshold.
+    """
+    generator = BaseItemGenerator(
+        faction=None,
+        item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
+        savegame_id=SavegameFactory().id,
+        quality_bonus=2,
+    )
+
+    with mock.patch("apps.item.services.generators.item.base.random.gauss", return_value=1):
+        result = generator.process()
+
+    assert result.modifier == 3
+    assert result.condition == Item.ConditionChoices.CONDITION_SUPERIOR
+
+
+@pytest.mark.django_db
+def test_process_floors_an_armor_modifier_deeper_than_the_die_can_roll(armor_generator):
+    """
+    The floor is reachable on the armour side as well as on the weapon side, and a piece of mail floored
+    against its own dice still turns aside a single point. Which armour the generator drew decides how
+    deep the floor sits, so the assertion asks the dice rather than naming a number.
+    """
+    with mock.patch("apps.item.services.generators.item.base.random.gauss", return_value=-20):
+        result = armor_generator.process()
+
+    dice_notation = DiceNotation(dice_string=result.type.base_value, modifier=result.modifier)
+    assert result.modifier == 1 - dice_notation.best_possible_roll
+    assert dice_notation.best_possible_roll + dice_notation.modifier == 1
 
 
 @pytest.mark.django_db
