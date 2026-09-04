@@ -7,6 +7,10 @@ from apps.item.services.generators.item.base import BaseItemGenerator
 class FyrdItemGenerator(BaseItemGenerator):
     MODIFIER_ROLLS_MU = 0
     MODIFIER_ROLLS_SIGMA = 2
+    # Half of nothing is nothing, spelled out rather than left to inheritance: the base class carries a
+    # mean of its own, and a levy who inherited it would come off the fields better armoured than armed
+    ARMOR_MODIFIER_ROLLS_MU = 0
+    ARMOR_MODIFIER_ROLLS_SIGMA = 2
 
     def _get_queryset_for_type(self) -> QuerySet:
         # TODO (#94): this is ugly

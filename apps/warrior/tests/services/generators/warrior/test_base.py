@@ -122,3 +122,26 @@ def test_process_leaves_the_warrior_bare_when_both_rolls_fail():
 
     assert result.weapon is None
     assert result.armor is None
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_levy_baseline_on_the_warrior():
+    """
+    The baseline travels with the warrior because the archetypes do not share one, and a levy carrying
+    a mercenary's mean would swing at half strength for the whole savegame.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.strength_baseline == FyrdWarriorGenerator.STATS_MU
+    assert Warrior.objects.get(pk=result.pk).strength_baseline == FyrdWarriorGenerator.STATS_MU
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_leader_baseline_on_the_warrior():
+    generator = LeaderWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.strength_baseline == LeaderWarriorGenerator.STATS_MU

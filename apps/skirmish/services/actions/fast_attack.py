@@ -17,8 +17,8 @@ class FastAttackService(AttackService):
 
     def get_attack_value(self) -> int:
         # Attack will cause only 50% damage since it's a fast one
-        # Attack will be at 100% for strength 10, otherwise less or greater
-        attack = round(self.warrior.roll_attack() * 0.5 * self.warrior.strength / self.BASE_COMPARE_STRENGTH)
+        # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
+        attack = round(self.warrior.roll_attack() * 0.5 * self.warrior.strength / self.warrior.strength_baseline)
 
         self.message_list.append(
             WarriorAttackedWithDamage(

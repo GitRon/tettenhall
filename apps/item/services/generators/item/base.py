@@ -9,8 +9,15 @@ from apps.item.models.item_type import ItemType
 
 
 class BaseItemGenerator:
+    # What an item's modifier is drawn from, unless it is armour
     MODIFIER_ROLLS_MU = 2
     MODIFIER_ROLLS_SIGMA = 2
+    # Armour has a pool of its own, at half that mean. The two face each other across the damage
+    # formula, so a single mean serving both makes arming a warrior better armour him better in the same
+    # step, and armour drawn against a weapon's mean turns aside almost every blow aimed at it. Every
+    # generator sets both pairs, so neither function inherits the other's number.
+    ARMOR_MODIFIER_ROLLS_MU = 1
+    ARMOR_MODIFIER_ROLLS_SIGMA = 2
 
     # What one point of expected damage costs, and the floor an item is priced against. Expectancy is
     # unbounded below - a modifier floored against a small die can leave a weapon barely able to
@@ -35,12 +42,28 @@ class BaseItemGenerator:
         # instead of re-centring it: the condition thresholds stay on the generator's own mean
         self.quality_bonus = quality_bonus
 
+    @property
+    def _modifier_distribution(self) -> tuple[int, int]:
+        """
+        The mean and sigma an item of the function this generator was built for is drawn from.
+
+        Asked in both places that need it, the roll and the condition label, so a piece of armour is
+        named against the pool it actually came out of. Reading the weapon's mean instead would
+        mislabel every piece of armour in the game by the size of the split.
+        """
+        if self.function == ItemType.FunctionChoices.FUNCTION_ARMOR:
+            return self.ARMOR_MODIFIER_ROLLS_MU, self.ARMOR_MODIFIER_ROLLS_SIGMA
+
+        return self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA
+
     def _determine_condition(self, *, modifier: int) -> int:
-        if modifier < self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA:
+        modifier_mu, modifier_sigma = self._modifier_distribution
+
+        if modifier < modifier_mu - modifier_sigma:
             return Item.ConditionChoices.CONDITION_RUSTY
-        if self.MODIFIER_ROLLS_MU - self.MODIFIER_ROLLS_SIGMA <= modifier < self.MODIFIER_ROLLS_MU:
+        if modifier_mu - modifier_sigma <= modifier < modifier_mu:
             return Item.ConditionChoices.CONDITION_CHEAP
-        if self.MODIFIER_ROLLS_MU <= modifier < self.MODIFIER_ROLLS_MU + self.MODIFIER_ROLLS_SIGMA:
+        if modifier_mu <= modifier < modifier_mu + modifier_sigma:
             return Item.ConditionChoices.CONDITION_TRADITIONAL
         # Everything the checks above didn't claim is above the traditional range
         return Item.ConditionChoices.CONDITION_SUPERIOR
@@ -54,7 +77,8 @@ class BaseItemGenerator:
             raise RuntimeError("No item type found.")
 
         # Modifier can be negative, DiceNotation class takes care of not dealing negative damage
-        modifier = round(random.gauss(self.MODIFIER_ROLLS_MU, self.MODIFIER_ROLLS_SIGMA)) + self.quality_bonus
+        modifier_mu, modifier_sigma = self._modifier_distribution
+        modifier = round(random.gauss(modifier_mu, modifier_sigma)) + self.quality_bonus
 
         # Floored against the die it is attached to, which is why the type has to be drawn first. The
         # roll is unbounded below, so a small die could come out with a modifier deeper than its own
