@@ -7,6 +7,8 @@ from apps.item.services.generators.item.base import BaseItemGenerator
 class LeaderItemGenerator(BaseItemGenerator):
     MODIFIER_ROLLS_MU = 4
     MODIFIER_ROLLS_SIGMA = 1
+    ARMOR_MODIFIER_ROLLS_MU = 2
+    ARMOR_MODIFIER_ROLLS_SIGMA = 1
 
     def _get_queryset_for_type(self) -> QuerySet:
         # TODO (#94): this is ugly
