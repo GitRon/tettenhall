@@ -17,8 +17,6 @@ class AttackService:
     skirmish: Skirmish
     warrior: Warrior
 
-    BASE_COMPARE_STRENGTH = 10
-
     def __init__(self, *, skirmish: Skirmish, warrior: Warrior) -> None:
         super().__init__()
 
@@ -36,8 +34,8 @@ class AttackService:
         return warrior_dexterity
 
     def get_attack_value(self) -> int:
-        # Attack will be at 100% for strength 10, otherwise less or greater
-        attack = round(self.warrior.roll_attack() * self.warrior.strength / self.BASE_COMPARE_STRENGTH)
+        # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
+        attack = round(self.warrior.roll_attack() * self.warrior.strength / self.warrior.strength_baseline)
         self.message_list.append(
             WarriorAttackedWithDamage(
                 skirmish=self.skirmish,

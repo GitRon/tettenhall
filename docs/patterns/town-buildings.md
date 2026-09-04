@@ -28,9 +28,12 @@ holding that level's numbers:
   constant. The upgrade page names the effects too, and reads them from the same place through
   `get_effects()`.
 - **A balance number no building levers lives with the system that owns the mechanic**, as a class constant
-  on that service or generator — `AttackService.BASE_COMPARE_STRENGTH`,
-  `SkirmishDamageService.MINIMUM_DAMAGE_SHARE`, a warrior generator's `STATS_MU`. `apps/town/buildings/` is
-  the home for levers, not a registry of every number in the game.
+  on that service or generator — `SkirmishDamageService.MINIMUM_DAMAGE_SHARE`, an item generator's
+  `MODIFIER_ROLLS_MU`, a warrior generator's `STATS_MU`. `apps/town/buildings/` is the home for levers, not
+  a registry of every number in the game.
+- **A number that differs per warrior or per item is a column, not a constant.** `Warrior.strength_baseline`
+  is the archetype mean a man's strength is measured against, written by the generator that drew him: one
+  constant on the attack service cannot sit on three archetype means at once.
 - **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots, weaponsmith →
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling.
 - **Level 0 is a baseline, not "no effect"**: a town without a hall still earns a little, and one without
