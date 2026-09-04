@@ -49,6 +49,12 @@ class Warrior(models.Model):
 
     strength = models.PositiveSmallIntegerField("Strength")
     strength_progress = models.PositiveSmallIntegerField("Strength progress", default=0)
+    # The mean strength of the population this warrior was drawn from, stamped on him by his generator.
+    # It is what his own strength is measured against when he swings: a man at his kind's mean deals his
+    # weapon's full damage, one below it less and one above it more. Carried per warrior rather than held
+    # as one number for the whole game, because the archetypes do not share a mean - a single pivot would
+    # be a standing discount for whichever archetypes sit below it, which is most of them.
+    strength_baseline = models.PositiveSmallIntegerField("Strength baseline")
 
     dexterity = models.PositiveSmallIntegerField("Dexterity")
     dexterity_progress = models.PositiveSmallIntegerField("Dexterity progress", default=0)

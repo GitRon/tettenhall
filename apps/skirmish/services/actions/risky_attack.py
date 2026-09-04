@@ -13,8 +13,8 @@ class RiskyAttackService(AttackService):
     def get_attack_value(self) -> int:
         # Attack has 50% chance to miss
         if bool(random.getrandbits(1)):
-            # Attack will be at 100% for strength 10, otherwise less or greater
-            attack = round(self.warrior.roll_attack() * 2 * self.warrior.strength / self.BASE_COMPARE_STRENGTH)
+            # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
+            attack = round(self.warrior.roll_attack() * 2 * self.warrior.strength / self.warrior.strength_baseline)
         else:
             attack = 0
 

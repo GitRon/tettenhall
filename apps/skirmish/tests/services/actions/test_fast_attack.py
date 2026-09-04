@@ -26,3 +26,20 @@ def test_get_attack_value_halves_the_damage():
 
     assert result == 3
     assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=3)]
+
+
+@pytest.mark.django_db
+def test_get_attack_value_halves_a_blow_measured_against_a_lower_baseline():
+    """
+    The halving sits on top of the strength comparison rather than replacing it, so a levy swinging
+    fast is measured against a levy's mean and not against a number this service holds.
+    """
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=20, strength_baseline=5)
+    service = FastAttackService(skirmish=skirmish, warrior=warrior)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        result = service.get_attack_value()
+
+    assert result == 6
+    assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=6)]

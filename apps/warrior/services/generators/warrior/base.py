@@ -120,6 +120,9 @@ class BaseWarriorGenerator:
             morale_progress=morale_progress,
             strength=strength,
             strength_progress=strength_progress,
+            # What this warrior's strength is measured against in a fight: the mean of the archetype he
+            # was drawn from, so a man of his own kind's average deals his weapon's full damage
+            strength_baseline=self.STATS_MU,
             dexterity=dexterity,
             dexterity_progress=dexterity_progress,
             recruitment_price=recruitment_price,

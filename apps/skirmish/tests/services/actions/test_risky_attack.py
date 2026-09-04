@@ -36,3 +36,22 @@ def test_get_attack_value_deals_nothing_on_a_miss():
 
     assert result == 0
     assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=0)]
+
+
+@pytest.mark.django_db
+def test_get_attack_value_doubles_a_blow_measured_against_a_lower_baseline():
+    """
+    The doubling sits on top of the strength comparison, the same way the fast attack's halving does.
+    """
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=10, strength_baseline=5)
+    service = RiskyAttackService(skirmish=skirmish, warrior=warrior)
+
+    with (
+        mock.patch("apps.skirmish.services.actions.risky_attack.random.getrandbits", return_value=1),
+        mock.patch("apps.common.domain.dice.random.randint", return_value=3),
+    ):
+        result = service.get_attack_value()
+
+    assert result == 12
+    assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=12)]

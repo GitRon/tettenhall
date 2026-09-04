@@ -16,6 +16,9 @@ class WarriorFactory(DjangoModelFactory):
     culture = factory.SelfAttribute("faction.culture")
 
     strength = 10
+    # A warrior sitting exactly at his baseline deals his weapon's full damage, which is what the
+    # arithmetic in most of the suite is written against
+    strength_baseline = 10
     dexterity = 10
     current_health = 20
     max_health = 20
