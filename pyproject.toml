@@ -15,6 +15,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "boa-restrictor~=1.18",
     "django-removals",
     "factory-boy~=3.3",
     "pytest~=9.1",
@@ -108,7 +109,7 @@ lint.fixable = [
 lint.unfixable = []
 
 # Allow noqa's from "boa-restrictor" linter
-lint.external = ["PBR", "DBR"]
+lint.external = ["PBR", "DBR", "TBR"]
 
 exclude = [
     ".bzr",
@@ -156,12 +157,10 @@ target-version = "py314"
   "FBT003",
 ]
 
-"scripts/*.py" = [
-  # Checks for packages that are missing an __init__.py file
-  "INP001",
-]
-
 [tool.boa-restrictor]
+custom_rules = [
+    "scripts.linting.no_future_annotations.NoFutureAnnotationsImportRule",
+]
 exclude = [
     "PBR005",
     "DBR002",
@@ -211,13 +210,13 @@ exclude = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "apps.config.settings_test"
 python_files = ["test_*.py"]
-testpaths = ["apps"]
+testpaths = ["apps", "scripts"]
 
 [tool.coverage.run]
 # Branch coverage, not just statement coverage: an "if" counts as covered as soon as its body ran,
 # so a missing "else" and an unexercised loop exit would both pass unnoticed.
 branch = true
-source = ["apps"]
+source = ["apps", "scripts"]
 omit = [
     "*/migrations/*",  # Generated
     "*/messages/*",    # Dataclasses, no logic

@@ -25,6 +25,18 @@ wheels = [
 ]
 
 [[package]]
+name = "boa-restrictor"
+version = "1.18.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fc/56/3a400cf9df1cb9889974ba462dc9e1ab7bd02d8591c96266bf7e935d5d18/boa_restrictor-1.18.0.tar.gz", hash = "sha256:441fdb4aa09249d927893e46c061335068c5e5f4b2b2d203aa1d9c9dfb1ce3ec", size = 143243, upload-time = "2026-09-03T09:57:30.285Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/8c/948ec77b53285aa8762e129ddd4447353f773b6e99374028d266679f6b4e/boa_restrictor-1.18.0-py3-none-any.whl", hash = "sha256:51fef03206a1b92488acf10f2c37a8a7aa559e6bac0dde5f7546b4ca59521117", size = 42472, upload-time = "2026-09-03T09:57:28.821Z" },
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -326,6 +338,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "boa-restrictor" },
     { name = "django-removals" },
     { name = "factory-boy" },
     { name = "pytest" },
@@ -346,6 +359,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "boa-restrictor", specifier = "~=1.18" },
     { name = "django-removals" },
     { name = "factory-boy", specifier = "~=3.3" },
     { name = "pytest", specifier = "~=9.1" },
