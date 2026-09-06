@@ -3,6 +3,24 @@ from dataclasses import dataclass, field
 from apps.skirmish.models import Warrior
 
 
+@dataclass(frozen=True, kw_only=True)
+class UnpaidWarriorCountdown:
+    """
+    One man the purse cannot cover, and how far along his patience would be once it fails to.
+
+    "months_unpaid" counts the month being projected, so it is the number
+    "handle_punish_unpaid_warrior" reads rather than the one standing in the database now: a man who
+    has never gone without reads one, and a man who reads the full term is the man the desertion
+    list names.
+
+    It is None for the leader, because his count is not merely long - it never matures at all. A
+    number for him would invite the player to read a deadline into it.
+    """
+
+    warrior: Warrior
+    months_unpaid: int | None
+
+
 @dataclass(kw_only=True)
 class Payroll:
     """
@@ -85,20 +103,44 @@ class Payroll:
         return Warrior.UNPAID_MONTHS_UNTIL_DESERTION
 
     @property
-    def deserting_warrior_list(self) -> list:
+    def unpaid_countdown_list(self) -> list[UnpaidWarriorCountdown]:
         """
-        The men a shortfall would cost the faction outright rather than only in morale.
+        Every unpaid man with the number of months his patience is down to, so the warning can say
+        the same thing about him every month instead of only on the last one.
 
         Counted as "one more than he has gone without already", because that is the state
         "handle_punish_unpaid_warrior" reads: the salary run has recorded this month's failure by the
         time it asks. So this is only a projection while nothing has been recorded yet - which is
         exactly when a warning is worth anything.
 
-        The leader is left out for the reason he is left out there: losing him defeats the faction,
-        so he sulks indefinitely instead of walking, and a warning that he leaves would be a lie.
+        The leader is counted at None rather than left out: he is still going unpaid and the warning
+        still owes the player his name and his salary. Losing him defeats the faction, so he sulks
+        indefinitely instead of walking, and any number beside his name would be a deadline that
+        never arrives.
+
+        In "unpaid_warrior_list" order, which is the salary order the roster arrived in - the same
+        order the month will fail to pay them in.
         """
         return [
-            warrior
+            UnpaidWarriorCountdown(
+                warrior=warrior,
+                months_unpaid=None if warrior.id == self.leader_id else warrior.unpaid_months + 1,
+            )
             for warrior in self.unpaid_warrior_list
-            if warrior.unpaid_months + 1 >= Warrior.UNPAID_MONTHS_UNTIL_DESERTION and warrior.id != self.leader_id
+        ]
+
+    @property
+    def deserting_warrior_list(self) -> list:
+        """
+        The men a shortfall would cost the faction outright rather than only in morale.
+
+        Read off the countdown rather than off the roster a second time, so the man the warning
+        counts to the end and the man it says is leaving are decided by one expression. Two copies of
+        it could disagree, and a warning naming a different man than the month takes is worse than
+        none.
+        """
+        return [
+            entry.warrior
+            for entry in self.unpaid_countdown_list
+            if entry.months_unpaid is not None and entry.months_unpaid >= Warrior.UNPAID_MONTHS_UNTIL_DESERTION
         ]
