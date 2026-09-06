@@ -86,7 +86,7 @@ def test_handle_log_warrior_takes_damage_when_the_defence_outrolls_the_attack():
             attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=12), value=12),
             defender=defender,
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=20), value=20),
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=20), value=20),
             damage=3,
         )
     )
@@ -111,7 +111,7 @@ def test_handle_log_warrior_defends_all_damage_logs_the_successful_defense():
             attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=2),
             defender=defender,
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=7), value=7),
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
             outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
         )
     )
