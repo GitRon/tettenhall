@@ -49,3 +49,17 @@ class WarriorWasSoldIntoSlavery(Event):
     selling_faction: Faction
     price: int
     month: int
+
+
+@dataclass(kw_only=True)
+class TownMercenariesRestocked(Event):
+    """
+    The pub has been emptied and this month's mercenaries requested.
+
+    Raised once for the whole restock, against WarriorWasAddedToPub firing per man - a line per man
+    would bury the rest of the month.
+    """
+
+    faction: Faction
+    new_mercenaries: int
+    month: int
