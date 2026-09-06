@@ -12,11 +12,15 @@ from apps.warrior.messages.events.warrior import (
 
 @message_registry.register_event(event=WarriorMoraleReplenished)
 def handle_warrior_morale_replenished(*, context: WarriorMoraleReplenished) -> Command:
+    # The faction comes off the event, not off the warrior. An event handler runs behind the database
+    # blocker, and "warrior.faction" is only free when something upstream happened to leave the
+    # relation cached - a "refresh_from_db" in the command handler that raised this drops it, and the
+    # read that follows is a query in a place that may not make one. The event carries what is needed.
     return CreatePlayerMonthLog(
         title=f"Morale of warrior {context.warrior} was replenished to the maximum.",
         kind=PlayerMonthLog.KindChoices.KIND_MORALE_RECOVERED,
         month=context.month,
-        faction=context.warrior.faction,
+        faction=context.faction,
     )
 
 

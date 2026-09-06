@@ -98,6 +98,30 @@ def test_warrior_recruit_captured_view_moves_the_captive_into_the_faction(logged
 
 
 @pytest.mark.django_db
+def test_warrior_recruit_captured_view_marches_a_drained_captive_out_with_his_nerve_back(
+    logged_in_client, current_savegame
+):
+    """
+    The whole chain, because the morale half of it only fires for a captive the fight emptied, and
+    the log entry it raises runs behind the database blocker - which a direct handler call lifts.
+    """
+    enemy_faction = FactionFactory(savegame=current_savegame)
+    captive = WarriorFactory(faction=enemy_faction, current_morale=0, max_morale=20)
+    current_savegame.player_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.post(
+        reverse(
+            "warrior:warrior-recruit-captured-view",
+            kwargs={"pk": captive.id, "faction_id": current_savegame.player_faction.id},
+        )
+    )
+
+    assert response.status_code == 200
+    captive.refresh_from_db()
+    assert captive.current_morale == 15
+
+
+@pytest.mark.django_db
 def test_warrior_recruit_captured_view_cannot_recruit_a_captive_of_another_savegame(logged_in_client, current_savegame):
     foreign_warrior = WarriorFactory()
 
