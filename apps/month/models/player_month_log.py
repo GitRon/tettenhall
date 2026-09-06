@@ -21,6 +21,9 @@ class PlayerMonthLog(models.Model):
         KIND_SKILL_UPGRADE = 6, "Skill upgrade"
         KIND_MORALE_RECOVERED = 7, "Morale recovered"
         KIND_WOUNDS_HEALED = 8, "Wounds healed"
+        KIND_QUESTS_OFFERED = 9, "Quests offered"
+        KIND_PUB_RESTOCKED = 10, "Pub restocked"
+        KIND_SHOP_RESTOCKED = 11, "Shop restocked"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -33,6 +36,9 @@ class PlayerMonthLog(models.Model):
         KindChoices.KIND_SKILL_UPGRADE: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_MORALE_RECOVERED: CategoryChoices.CATEGORY_UPKEEP,
         KindChoices.KIND_WOUNDS_HEALED: CategoryChoices.CATEGORY_UPKEEP,
+        KindChoices.KIND_QUESTS_OFFERED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        KindChoices.KIND_PUB_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        KindChoices.KIND_SHOP_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each
