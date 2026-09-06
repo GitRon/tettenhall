@@ -7,7 +7,7 @@ from apps.skirmish.models import BattleHistory
 
 
 @message_registry.register_command(command=CreateBattleHistory)
-def handle_faction_wins_skirmish(*, context: CreateBattleHistory) -> Event:
+def handle_create_battle_history(*, context: CreateBattleHistory) -> Event:
     history = BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=context.message,
