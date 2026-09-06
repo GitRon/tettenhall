@@ -33,6 +33,7 @@ from apps.faction.messages.events.faction import (
     QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
+from apps.faction.messages.events.item import TownShopRestocked
 from apps.faction.models import Culture
 from apps.faction.models.faction import Faction
 from apps.finance.models import Transaction
@@ -161,6 +162,12 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                     quality_bonus=weaponsmith.QUALITY_BONUS,
                 )
             )
+
+    # After the loop, and counting the whole shop rather than each item: the player wants to know
+    # whether it is worth walking over, not that a stall was filled
+    message_list.append(
+        TownShopRestocked(faction=context.faction, new_items=marketplace.AVAILABLE_ITEMS, month=context.month)
+    )
 
     return message_list
 

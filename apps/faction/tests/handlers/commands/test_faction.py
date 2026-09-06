@@ -39,6 +39,7 @@ from apps.faction.messages.events.faction import (
     QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
+from apps.faction.messages.events.item import TownShopRestocked
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.culture import CultureFactory
@@ -208,6 +209,7 @@ def test_handle_restock_shop_items_requests_weapons():
     with mock.patch("apps.faction.handlers.commands.faction.random.getrandbits", return_value=1):
         result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
+    *item_requests, _ = result
     expected_message = RequestNewItemForTownShop(
         faction=faction,
         generator_class=MercenaryItemGenerator,
@@ -215,7 +217,7 @@ def test_handle_restock_shop_items_requests_weapons():
         month=3,
         quality_bonus=0,
     )
-    assert result == [expected_message] * 4
+    assert item_requests == [expected_message] * 4
 
 
 @pytest.mark.django_db
@@ -225,6 +227,7 @@ def test_handle_restock_shop_items_requests_armor():
     with mock.patch("apps.faction.handlers.commands.faction.random.getrandbits", return_value=0):
         result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
+    *item_requests, _ = result
     expected_message = RequestNewItemForTownShop(
         faction=faction,
         generator_class=MercenaryItemGenerator,
@@ -232,7 +235,7 @@ def test_handle_restock_shop_items_requests_armor():
         month=3,
         quality_bonus=0,
     )
-    assert result == [expected_message] * 4
+    assert item_requests == [expected_message] * 4
 
 
 @pytest.mark.django_db
@@ -244,8 +247,9 @@ def test_handle_restock_shop_items_stocks_as_many_items_as_the_market_has_stalls
 
     result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
+    *item_requests, _ = result
     # A High Market holds eight, against the three a town without a market manages
-    assert len(result) == 8
+    assert len(item_requests) == 8
 
 
 @pytest.mark.django_db
@@ -254,8 +258,18 @@ def test_handle_restock_shop_items_passes_the_quality_of_the_weaponsmith():
 
     result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
+    *item_requests, _ = result
     # A Master Forge adds three to every modifier roll in the shop
-    assert {message.quality_bonus for message in result} == {3}
+    assert {message.quality_bonus for message in item_requests} == {3}
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_announces_the_whole_shop_once():
+    faction = FactionFactory(town__marketplace=1)
+
+    result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    assert result[-1] == TownShopRestocked(faction=faction, new_items=4, month=3)
 
 
 @pytest.mark.django_db

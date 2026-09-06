@@ -15,7 +15,12 @@ from apps.faction.messages.commands.warrior import (
     RestockTownMercenaries,
 )
 from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, MonthlyWarriorSalariesUnpaid
-from apps.faction.messages.events.warrior import FyrdDraftApproved, PubMercenarySlotOpened, WarriorRecruited
+from apps.faction.messages.events.warrior import (
+    FyrdDraftApproved,
+    PubMercenarySlotOpened,
+    TownMercenariesRestocked,
+    WarriorRecruited,
+)
 from apps.faction.models.faction import Faction
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.tests.factories.transaction import TransactionFactory
@@ -49,7 +54,8 @@ def test_handle_restock_pub_mercenaries_requests_one_warrior_per_hall_slot():
 
     result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
 
-    assert len(result) == 2
+    *mercenary_slots, _ = result
+    assert len(mercenary_slots) == 2
     assert result[0] == PubMercenarySlotOpened(
         savegame=faction.savegame,
         faction=None,
@@ -58,6 +64,15 @@ def test_handle_restock_pub_mercenaries_requests_one_warrior_per_hall_slot():
         generator_class=MercenaryWarriorGenerator,
         month=3,
     )
+
+
+@pytest.mark.django_db
+def test_handle_restock_pub_mercenaries_announces_the_whole_pub_once():
+    faction = _player_faction(hall=Town.HallChoices.HALL_MEDIUM)
+
+    result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
+
+    assert result[-1] == TownMercenariesRestocked(faction=faction, new_mercenaries=2, month=3)
 
 
 @pytest.mark.django_db

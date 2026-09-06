@@ -13,7 +13,12 @@ from apps.faction.messages.events.faction import (
     MonthlyWarriorSalariesUnpaid,
     WarriorWasAddedToPub,
 )
-from apps.faction.messages.events.warrior import FyrdDraftApproved, PubMercenarySlotOpened, WarriorRecruited
+from apps.faction.messages.events.warrior import (
+    FyrdDraftApproved,
+    PubMercenarySlotOpened,
+    TownMercenariesRestocked,
+    WarriorRecruited,
+)
 from apps.faction.models.culture import Culture
 from apps.faction.models.faction import Faction
 from apps.finance.models import Transaction
@@ -52,7 +57,16 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
                 month=context.month,
             )
         )
-        # TODO (#97): create event to show the user that we've finished and let user log listend to it
+
+    # After the loop, and counting the whole pub rather than each man: the player wants to know
+    # whether it is worth walking over, not that a stool was filled
+    events.append(
+        TownMercenariesRestocked(
+            faction=context.faction,
+            new_mercenaries=hall_building.AVAILABLE_MERCENARIES,
+            month=context.month,
+        )
+    )
 
     return events
 
