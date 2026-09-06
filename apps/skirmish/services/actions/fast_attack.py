@@ -3,7 +3,6 @@ from queuebie.messages import Command
 from apps.skirmish.messages.commands.skirmish import (
     WarriorAttacksWarrior,
 )
-from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage
 from apps.skirmish.services.actions.base import AttackService
 
 
@@ -18,14 +17,4 @@ class FastAttackService(AttackService):
     def get_attack_value(self) -> int:
         # Attack will cause only 50% damage since it's a fast one
         # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
-        attack = round(self.warrior.roll_attack() * 0.5 * self.warrior.strength / self.warrior.strength_baseline)
-
-        self.message_list.append(
-            WarriorAttackedWithDamage(
-                skirmish=self.skirmish,
-                warrior=self.warrior,
-                damage=attack,
-            )
-        )
-
-        return attack
+        return round(self.warrior.roll_attack() * 0.5 * self.warrior.strength / self.warrior.strength_baseline)

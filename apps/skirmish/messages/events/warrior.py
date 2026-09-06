@@ -16,20 +16,6 @@ class LastUsedSkirmishActionStored(Event):
 
 
 @dataclass(kw_only=True)
-class WarriorAttackedWithDamage(Event):
-    skirmish: Skirmish
-    warrior: Warrior
-    damage: int
-
-
-@dataclass(kw_only=True)
-class WarriorDefendedDamage(Event):
-    skirmish: Skirmish
-    warrior: Warrior
-    damage: int
-
-
-@dataclass(kw_only=True)
 class WarriorTookDamage(Event):
     skirmish: Skirmish
     attacker: Warrior

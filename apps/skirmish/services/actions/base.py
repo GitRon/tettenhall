@@ -1,17 +1,9 @@
-from queuebie.messages import Event
-
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
-from apps.skirmish.messages.events.warrior import (
-    WarriorAttackedWithDamage,
-    WarriorDefendedDamage,
-)
 from apps.skirmish.models import Skirmish, Warrior
 
 
 # TODO (#95): attack service is misleading, maybe skirmish action again?
 class AttackService:
-    message_list: list[Event]
-
     command: WarriorAttacksWarrior
 
     skirmish: Skirmish
@@ -19,8 +11,6 @@ class AttackService:
 
     def __init__(self, *, skirmish: Skirmish, warrior: Warrior) -> None:
         super().__init__()
-
-        self.message_list = []
 
         self.warrior = warrior
         self.skirmish = skirmish
@@ -35,25 +25,7 @@ class AttackService:
 
     def get_attack_value(self) -> int:
         # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
-        attack = round(self.warrior.roll_attack() * self.warrior.strength / self.warrior.strength_baseline)
-        self.message_list.append(
-            WarriorAttackedWithDamage(
-                skirmish=self.skirmish,
-                warrior=self.warrior,
-                damage=attack,
-            )
-        )
-
-        return attack
+        return round(self.warrior.roll_attack() * self.warrior.strength / self.warrior.strength_baseline)
 
     def get_defense_value(self) -> int:
-        defense = self.warrior.roll_defense()
-        self.message_list.append(
-            WarriorDefendedDamage(
-                skirmish=self.skirmish,
-                warrior=self.warrior,
-                damage=defense,
-            )
-        )
-
-        return defense
+        return self.warrior.roll_defense()
