@@ -3,7 +3,7 @@ from queuebie.messages import Command
 
 from apps.faction.messages.events.faction import NewFactionCreated
 from apps.month.messages.commands.month import CreatePlayerMonthLog
-from apps.month.messages.events.month import PlayerMonthPrepared
+from apps.month.messages.events.month import FactionMonthPrepared
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.training.messages.commands.training import CreateNewTraining, TrainWarriors
 from apps.training.messages.events.training import WarriorUpgradedSkill
@@ -24,11 +24,10 @@ def handle_warrior_upgraded_skill(*, context: WarriorUpgradedSkill) -> Command:
     )
 
 
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_training_of_warriors_for_new_month(*, context: PlayerMonthPrepared) -> list[Command]:
-    # A savegame whose player faction has no training row has nothing to train, and the command
-    # handler dereferences "training" unguarded - finishing the month would answer with a 500
-    if context.training is None:
-        return []
-
-    return [TrainWarriors(faction=context.faction, training=context.training, month=context.current_month)]
+# On the faction-wide event, so a war band the player leaves alone for ten months is a harder fight
+# than it was. The regimen is not on the message: every faction owns its own row, and reading it is a
+# query, which strict mode forbids here - so the command carries the faction and its handler looks up
+# whose regimen that is
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_training_of_warriors_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
+    return [TrainWarriors(faction=context.faction, month=context.current_month)]

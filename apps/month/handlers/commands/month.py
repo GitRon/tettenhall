@@ -10,7 +10,6 @@ from apps.month.messages.events.month import (
     PlayerMonthPrepared,
 )
 from apps.month.models import PlayerMonthLog
-from apps.training.models.training import Training
 
 
 @message_registry.register_command(command=PrepareMonth)
@@ -28,15 +27,6 @@ def handle_prepare_month(*, context: PrepareMonth) -> list[Event]:
         PlayerMonthPrepared(
             faction=context.savegame.player_faction,
             savegame=context.savegame,
-            # TODO (#101): store this months training somewhere -> in savegame?
-            # Scoped to the player's own faction: every faction of the savegame owns a training row,
-            # so scoping to the savegame would still train the player's warriors by whichever row
-            # happens to come first. Stays None when there is no row - the consumer handles that.
-            training=(
-                Training.objects.for_player_faction(faction_id=context.savegame.player_faction_id).first()
-                if context.savegame.player_faction_id
-                else None
-            ),
             current_month=current_month,
         ),
         *[FactionMonthPrepared(faction=faction, current_month=current_month) for faction in faction_list],

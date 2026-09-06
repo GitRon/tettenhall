@@ -13,12 +13,28 @@ from apps.training.tests.factories.training import TrainingFactory
 
 
 @pytest.mark.django_db
+def test_handle_progress_warrior_training_without_a_training():
+    """
+    A faction owns a training row from NewFactionCreated on, so nothing but a savegame predating that
+    reaches this - and the month has to survive it rather than answer with a 500.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
+
+    result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
+
+    assert result == []
+    warrior.refresh_from_db()
+    assert warrior.strength_progress == 40
+
+
+@pytest.mark.django_db
 def test_handle_progress_warrior_training_without_healthy_warriors():
     faction = FactionFactory()
     WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
-    training = TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
 
-    result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, training=training, month=6))
+    result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
 
     assert result == []
 
@@ -31,13 +47,13 @@ def test_handle_progress_warrior_training_moves_the_bar_on_the_lowest_possible_r
     """
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
-    training = TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
 
     with (
         mock.patch("apps.training.models.training.random.choice", return_value="strength"),
         mock.patch("apps.training.models.training.random.gauss", return_value=-5),
     ):
-        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, training=training, month=6))
+        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
 
     assert result == []
     warrior.refresh_from_db()
@@ -48,13 +64,13 @@ def test_handle_progress_warrior_training_moves_the_bar_on_the_lowest_possible_r
 def test_handle_progress_warrior_training_fills_progress_bar():
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
-    training = TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
 
     with (
         mock.patch("apps.training.models.training.random.choice", return_value="strength"),
         mock.patch("apps.training.models.training.random.gauss", return_value=30),
     ):
-        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, training=training, month=6))
+        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
 
     assert result == []
     warrior.refresh_from_db()
@@ -66,13 +82,13 @@ def test_handle_progress_warrior_training_fills_progress_bar():
 def test_handle_progress_warrior_training_upgrades_base_attribute_on_full_progress_bar():
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, strength=10, strength_progress=80)
-    training = TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
 
     with (
         mock.patch("apps.training.models.training.random.choice", return_value="strength"),
         mock.patch("apps.training.models.training.random.gauss", return_value=30),
     ):
-        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, training=training, month=6))
+        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
 
     assert result == [
         WarriorUpgradedSkill(
@@ -91,13 +107,13 @@ def test_handle_progress_warrior_training_upgrades_base_attribute_on_full_progre
 def test_handle_progress_warrior_training_upgrades_maximum_value_on_full_progress_bar():
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, max_morale=20, morale_progress=80)
-    training = TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
 
     with (
         mock.patch("apps.training.models.training.random.choice", return_value="morale"),
         mock.patch("apps.training.models.training.random.gauss", return_value=30),
     ):
-        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, training=training, month=6))
+        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
 
     assert result == [
         WarriorUpgradedSkill(
@@ -120,13 +136,13 @@ def test_handle_progress_warrior_training_stores_a_rounded_improvement():
     """
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
-    training = TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
 
     with (
         mock.patch("apps.training.models.training.random.choice", return_value="strength"),
         mock.patch("apps.training.models.training.random.gauss", return_value=30.6),
     ):
-        handle_progress_warrior_training(context=TrainWarriors(faction=faction, training=training, month=6))
+        handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
 
     warrior.refresh_from_db()
     assert warrior.strength_progress == 71
