@@ -14,6 +14,7 @@ class PrepareMonth(Command):
 @dataclass(kw_only=True)
 class CreatePlayerMonthLog(Command):
     title: str
+    kind: int
     month: int
     faction: Faction
 

@@ -13,9 +13,13 @@ class PlayerMonthLogQuerySet(models.QuerySet):
 
 
 class PlayerMonthLogManager(manager.Manager):
-    def create_record(self, *, title: str, month: int, faction_id: int):
+    def create_record(self, *, title: str, kind: int, month: int, faction_id: int):
+        # The producer names the kind and the category follows from it, so the two halves of how a
+        # line is read cannot be set against each other
         return self.create(
             title=title,
+            kind=kind,
+            category=self.model.KIND_CATEGORIES[kind],
             month=month,
             faction_id=faction_id,
         )

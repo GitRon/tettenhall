@@ -2,6 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.month.messages.commands.month import CreatePlayerMonthLog
+from apps.month.models.player_month_log import PlayerMonthLog
 from apps.warrior.messages.events.warrior import (
     WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
@@ -13,6 +14,7 @@ from apps.warrior.messages.events.warrior import (
 def handle_warrior_morale_replenished(*, context: WarriorMoraleReplenished) -> Command:
     return CreatePlayerMonthLog(
         title=f"Morale of warrior {context.warrior} was replenished to the maximum.",
+        kind=PlayerMonthLog.KindChoices.KIND_MORALE_RECOVERED,
         month=context.month,
         faction=context.warrior.faction,
     )
@@ -22,6 +24,7 @@ def handle_warrior_morale_replenished(*, context: WarriorMoraleReplenished) -> C
 def handle_warrior_health_healed(*, context: WarriorHealthHealed) -> Command:
     return CreatePlayerMonthLog(
         title=f"Warrior {context.warrior} healed {context.healed_points} HP.",
+        kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_HEALED,
         month=context.month,
         faction=context.faction,
     )
@@ -33,6 +36,7 @@ def handle_warrior_deserted_over_unpaid_salary(*, context: WarriorDesertedOverUn
     # by the time this runs there is nothing on him left to log against
     return CreatePlayerMonthLog(
         title=f"{context.warrior} left the war band over unpaid wages.",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
         month=context.month,
         faction=context.faction,
     )

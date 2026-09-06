@@ -1,6 +1,7 @@
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.month.messages.commands.month import CreatePlayerMonthLog
 from apps.month.messages.events.month import PlayerMonthPrepared
+from apps.month.models.player_month_log import PlayerMonthLog
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.training.handlers.events.training import (
@@ -26,7 +27,12 @@ def test_handle_warrior_upgraded_skill_logs_the_upgraded_attribute():
         )
     )
 
-    assert result == CreatePlayerMonthLog(title="Your warrior Beorn upgraded his strength!", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="Your warrior Beorn upgraded his strength!",
+        kind=PlayerMonthLog.KindChoices.KIND_SKILL_UPGRADE,
+        month=3,
+        faction=faction,
+    )
 
 
 def test_handle_training_of_warriors_for_new_month_requests_the_training():

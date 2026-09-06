@@ -8,6 +8,7 @@ from apps.faction.messages.events.faction import (
     MonthlyWarriorSalariesUnpaid,
 )
 from apps.month.messages.commands.month import CreatePlayerMonthLog
+from apps.month.models.player_month_log import PlayerMonthLog
 
 
 @message_registry.register_event(event=FactionFyrdReserveReplenished)
@@ -15,6 +16,7 @@ def handle_faction_fyrd_reserve_replenished(*, context: FactionFyrdReserveReplen
     return CreatePlayerMonthLog(
         # The handler only fires for one man upwards, but "1 new recruits" still read wrong
         title=f"The fyrd has grown by {context.new_recruits} new recruit{'' if context.new_recruits == 1 else 's'}!",
+        kind=PlayerMonthLog.KindChoices.KIND_FYRD_GROWTH,
         month=context.month,
         faction=context.faction,
     )
@@ -24,6 +26,7 @@ def handle_faction_fyrd_reserve_replenished(*, context: FactionFyrdReserveReplen
 def handle_pay_monthly_salary(*, context: MonthlyWarriorSalariesPaid) -> Command:
     return CreatePlayerMonthLog(
         title=f"Monthly salaries of {context.amount} silver paid.",
+        kind=PlayerMonthLog.KindChoices.KIND_SALARIES_PAID,
         month=context.month,
         faction=context.faction,
     )
@@ -39,6 +42,7 @@ def handle_unpaid_warrior_salaries(*, context: MonthlyWarriorSalariesUnpaid) -> 
     return CreatePlayerMonthLog(
         title=f"{context.missing_amount} silver short: "
         f"{unpaid_warriors} warrior{'' if unpaid_warriors == 1 else 's'} went unpaid.",
+        kind=PlayerMonthLog.KindChoices.KIND_UNPAID_SALARIES,
         month=context.month,
         faction=context.faction,
     )
@@ -48,6 +52,7 @@ def handle_unpaid_warrior_salaries(*, context: MonthlyWarriorSalariesUnpaid) -> 
 def handle_monthly_building_earnings(*, context: MonthlyBuildingMoneyEarned) -> Command:
     return CreatePlayerMonthLog(
         title=f"Buildings earned {context.amount} silver this month.",
+        kind=PlayerMonthLog.KindChoices.KIND_BUILDING_INCOME,
         month=context.month,
         faction=context.faction,
     )
