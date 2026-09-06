@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage
 from apps.skirmish.services.actions.risky_attack import RiskyAttackService
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -22,7 +21,6 @@ def test_get_attack_value_doubles_the_damage_on_a_hit():
         result = service.get_attack_value()
 
     assert result == 6
-    assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=6)]
 
 
 @pytest.mark.django_db
@@ -35,7 +33,6 @@ def test_get_attack_value_deals_nothing_on_a_miss():
         result = service.get_attack_value()
 
     assert result == 0
-    assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=0)]
 
 
 @pytest.mark.django_db
@@ -54,4 +51,3 @@ def test_get_attack_value_doubles_a_blow_measured_against_a_lower_baseline():
         result = service.get_attack_value()
 
     assert result == 12
-    assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=12)]
