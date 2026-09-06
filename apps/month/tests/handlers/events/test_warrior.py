@@ -5,6 +5,7 @@ from apps.month.handlers.events.warrior import (
     handle_warrior_morale_replenished,
 )
 from apps.month.messages.commands.month import CreatePlayerMonthLog
+from apps.month.models.player_month_log import PlayerMonthLog
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warrior.messages.events.warrior import (
     WarriorDesertedOverUnpaidSalary,
@@ -22,7 +23,10 @@ def test_handle_warrior_morale_replenished_logs_the_recovery():
     )
 
     assert result == CreatePlayerMonthLog(
-        title="Morale of warrior Beorn was replenished to the maximum.", month=3, faction=faction
+        title="Morale of warrior Beorn was replenished to the maximum.",
+        kind=PlayerMonthLog.KindChoices.KIND_MORALE_RECOVERED,
+        month=3,
+        faction=faction,
     )
 
 
@@ -34,7 +38,12 @@ def test_handle_warrior_health_healed_logs_the_healed_points():
         context=WarriorHealthHealed(warrior=warrior, faction=faction, healed_points=5, month=3)
     )
 
-    assert result == CreatePlayerMonthLog(title="Warrior Beorn healed 5 HP.", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="Warrior Beorn healed 5 HP.",
+        kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_HEALED,
+        month=3,
+        faction=faction,
+    )
 
 
 def test_handle_warrior_deserted_over_unpaid_salary_logs_the_departure():
@@ -49,4 +58,9 @@ def test_handle_warrior_deserted_over_unpaid_salary_logs_the_departure():
         context=WarriorDesertedOverUnpaidSalary(warrior=warrior, faction=faction, month=3)
     )
 
-    assert result == CreatePlayerMonthLog(title="Oswine left the war band over unpaid wages.", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="Oswine left the war band over unpaid wages.",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+        month=3,
+        faction=faction,
+    )

@@ -12,6 +12,7 @@ from apps.month.handlers.events.faction import (
     handle_unpaid_warrior_salaries,
 )
 from apps.month.messages.commands.month import CreatePlayerMonthLog
+from apps.month.models.player_month_log import PlayerMonthLog
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -22,7 +23,12 @@ def test_handle_faction_fyrd_reserve_replenished_logs_the_new_recruits():
         context=FactionFyrdReserveReplenished(faction=faction, new_recruits=2, month=3)
     )
 
-    assert result == CreatePlayerMonthLog(title="The fyrd has grown by 2 new recruits!", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="The fyrd has grown by 2 new recruits!",
+        kind=PlayerMonthLog.KindChoices.KIND_FYRD_GROWTH,
+        month=3,
+        faction=faction,
+    )
 
 
 def test_handle_faction_fyrd_reserve_replenished_keeps_a_single_recruit_singular():
@@ -32,7 +38,12 @@ def test_handle_faction_fyrd_reserve_replenished_keeps_a_single_recruit_singular
         context=FactionFyrdReserveReplenished(faction=faction, new_recruits=1, month=3)
     )
 
-    assert result == CreatePlayerMonthLog(title="The fyrd has grown by 1 new recruit!", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="The fyrd has grown by 1 new recruit!",
+        kind=PlayerMonthLog.KindChoices.KIND_FYRD_GROWTH,
+        month=3,
+        faction=faction,
+    )
 
 
 def test_handle_pay_monthly_salary_logs_the_paid_amount():
@@ -40,7 +51,12 @@ def test_handle_pay_monthly_salary_logs_the_paid_amount():
 
     result = handle_pay_monthly_salary(context=MonthlyWarriorSalariesPaid(faction=faction, amount=250, month=3))
 
-    assert result == CreatePlayerMonthLog(title="Monthly salaries of 250 silver paid.", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="Monthly salaries of 250 silver paid.",
+        kind=PlayerMonthLog.KindChoices.KIND_SALARIES_PAID,
+        month=3,
+        faction=faction,
+    )
 
 
 def test_handle_unpaid_warrior_salaries_logs_the_shortfall():
@@ -59,7 +75,12 @@ def test_handle_unpaid_warrior_salaries_logs_the_shortfall():
         )
     )
 
-    assert result == CreatePlayerMonthLog(title="150 silver short: 2 warriors went unpaid.", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="150 silver short: 2 warriors went unpaid.",
+        kind=PlayerMonthLog.KindChoices.KIND_UNPAID_SALARIES,
+        month=3,
+        faction=faction,
+    )
 
 
 def test_handle_unpaid_warrior_salaries_keeps_a_single_unpaid_warrior_singular():
@@ -71,7 +92,12 @@ def test_handle_unpaid_warrior_salaries_keeps_a_single_unpaid_warrior_singular()
         )
     )
 
-    assert result == CreatePlayerMonthLog(title="150 silver short: 1 warrior went unpaid.", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="150 silver short: 1 warrior went unpaid.",
+        kind=PlayerMonthLog.KindChoices.KIND_UNPAID_SALARIES,
+        month=3,
+        faction=faction,
+    )
 
 
 def test_handle_monthly_building_earnings_logs_the_earned_amount():
@@ -79,4 +105,9 @@ def test_handle_monthly_building_earnings_logs_the_earned_amount():
 
     result = handle_monthly_building_earnings(context=MonthlyBuildingMoneyEarned(faction=faction, amount=300, month=3))
 
-    assert result == CreatePlayerMonthLog(title="Buildings earned 300 silver this month.", month=3, faction=faction)
+    assert result == CreatePlayerMonthLog(
+        title="Buildings earned 300 silver this month.",
+        kind=PlayerMonthLog.KindChoices.KIND_BUILDING_INCOME,
+        month=3,
+        faction=faction,
+    )

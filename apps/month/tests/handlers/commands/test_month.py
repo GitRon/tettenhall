@@ -113,13 +113,38 @@ def test_handle_create_player_month_log_writes_the_line():
 
     result = handle_create_player_month_log(
         context=CreatePlayerMonthLog(
-            title="The fyrd has grown by 1 new recruit!", month=3, faction=savegame.player_faction
+            title="The fyrd has grown by 1 new recruit!",
+            kind=PlayerMonthLog.KindChoices.KIND_FYRD_GROWTH,
+            month=3,
+            faction=savegame.player_faction,
         )
     )
 
     player_month_log = PlayerMonthLog.objects.get()
     assert result == PlayerMonthLogCreated(player_month_log=player_month_log)
     assert player_month_log.title == "The fyrd has grown by 1 new recruit!"
+
+
+@pytest.mark.django_db
+def test_handle_create_player_month_log_derives_the_category_from_the_kind():
+    """
+    The producer names one thing, so a line cannot be filed under a weight that contradicts what it
+    reports.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+
+    handle_create_player_month_log(
+        context=CreatePlayerMonthLog(
+            title="Oswine left the war band over unpaid wages.",
+            kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+            month=3,
+            faction=savegame.player_faction,
+        )
+    )
+
+    assert PlayerMonthLog.objects.get().category == PlayerMonthLog.CategoryChoices.CATEGORY_ATTENTION
 
 
 @pytest.mark.django_db
@@ -135,7 +160,12 @@ def test_handle_create_player_month_log_drops_the_line_of_a_rival_faction():
     rival_faction = FactionFactory(savegame=savegame)
 
     result = handle_create_player_month_log(
-        context=CreatePlayerMonthLog(title="Warrior RivalMan healed 2 HP.", month=3, faction=rival_faction)
+        context=CreatePlayerMonthLog(
+            title="Warrior RivalMan healed 2 HP.",
+            kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_HEALED,
+            month=3,
+            faction=rival_faction,
+        )
     )
 
     assert result is None
@@ -152,7 +182,12 @@ def test_handle_create_player_month_log_without_a_player_faction():
     faction = FactionFactory(savegame=savegame)
 
     result = handle_create_player_month_log(
-        context=CreatePlayerMonthLog(title="Buildings earned 50 silver this month.", month=3, faction=faction)
+        context=CreatePlayerMonthLog(
+            title="Buildings earned 50 silver this month.",
+            kind=PlayerMonthLog.KindChoices.KIND_BUILDING_INCOME,
+            month=3,
+            faction=faction,
+        )
     )
 
     assert result is None
