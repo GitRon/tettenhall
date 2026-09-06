@@ -506,6 +506,26 @@ def test_battle_history_update_htmx_view_reports_nothing_on_a_fight_between_two_
 
 
 @pytest.mark.django_db
+def test_battle_history_update_htmx_view_reports_nothing_on_a_fight_of_another_savegame(
+    logged_in_client, current_savegame
+):
+    """
+    The skirmish id comes straight from the URL, so a decided fight in somebody else's savegame must
+    not report itself here. The two arcs of the guard are reachable without ever taking this path.
+    """
+    other_skirmish = SkirmishFactory()
+    other_skirmish.victorious_faction = other_skirmish.attacking_faction
+    other_skirmish.save()
+
+    response = logged_in_client.get(
+        reverse("skirmish:battle-history-update-htmx", kwargs={"skirmish_id": other_skirmish.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["report"] is None
+
+
+@pytest.mark.django_db
 def test_battle_history_update_htmx_view_reports_nothing_without_a_player_faction(
     logged_in_client, savegame_without_player_faction
 ):
