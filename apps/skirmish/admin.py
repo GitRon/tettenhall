@@ -5,6 +5,7 @@ from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
+from apps.skirmish.models.skirmish_blow import SkirmishBlow
 from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.skirmish.models.skirmish_warrior_growth import SkirmishWarriorGrowth
 from apps.skirmish.models.warrior import Warrior
@@ -14,6 +15,12 @@ from apps.skirmish.models.warrior import Warrior
 class BattleHistoryAdmin(admin.ModelAdmin):
     list_display = ("message", "skirmish", "created_at")
     list_filter = ("skirmish",)
+
+
+@admin.register(SkirmishBlow)
+class SkirmishBlowAdmin(admin.ModelAdmin):
+    list_display = ("skirmish", "round_number", "attacker", "defender", "outcome", "attack_value", "damage")
+    list_filter = ("outcome", "skirmish")
 
 
 @admin.register(SkirmishSpoil)

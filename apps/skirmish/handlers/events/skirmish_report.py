@@ -10,7 +10,12 @@ rewording.
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.skirmish.messages.commands.skirmish_report import RecordSkirmishSpoil, RecordWarriorGrowth
+from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.skirmish.messages.commands.skirmish_report import (
+    RecordSkirmishBlow,
+    RecordSkirmishSpoil,
+    RecordWarriorGrowth,
+)
 from apps.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.skirmish.models import SkirmishSpoil
 
@@ -85,4 +90,42 @@ def handle_record_improved_stats(*, context: warrior.WarriorImprovedStats) -> Co
         gained_max_health=context.gained_max_health,
         gained_max_morale=context.gained_max_morale,
         new_monthly_salary=context.new_monthly_salary,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorTookDamage)
+def handle_record_landed_blow(*, context: warrior.WarriorTookDamage) -> Command:
+    """
+    A blow that got through. The outcome is stated rather than carried, because this event is raised
+    for nothing else - damage above zero is what makes it this event and not the other one.
+    """
+    return RecordSkirmishBlow(
+        skirmish=context.skirmish,
+        round_number=context.round_number,
+        attacker=context.attacker,
+        attacker_action=context.attacker_action,
+        attack=context.attack,
+        defender=context.defender,
+        defender_action=context.defender_action,
+        defense=context.defense,
+        outcome=BlowOutcomeChoices.OUTCOME_HIT,
+        damage=context.damage,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
+def handle_record_stopped_blow(*, context: warrior.WarriorDefendedAllDamage) -> Command:
+    """
+    An exchange that cost the defender nothing, which is three different things and says which.
+    """
+    return RecordSkirmishBlow(
+        skirmish=context.skirmish,
+        round_number=context.round_number,
+        attacker=context.attacker,
+        attacker_action=context.attacker_action,
+        attack=context.attack,
+        defender=context.defender,
+        defender_action=context.defender_action,
+        defense=context.defense,
+        outcome=context.outcome,
     )

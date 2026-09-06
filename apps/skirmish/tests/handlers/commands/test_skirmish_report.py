@@ -1,9 +1,26 @@
 import pytest
 
+from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.item.tests.factories.item import ItemFactory
-from apps.skirmish.handlers.commands.skirmish_report import handle_record_skirmish_spoil, handle_record_warrior_growth
-from apps.skirmish.messages.commands.skirmish_report import RecordSkirmishSpoil, RecordWarriorGrowth
-from apps.skirmish.messages.events.skirmish_report import SkirmishSpoilRecorded, WarriorGrowthRecorded
+from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.domain.action_roll import ActionRoll
+from apps.skirmish.handlers.commands.skirmish_report import (
+    handle_record_skirmish_blow,
+    handle_record_skirmish_spoil,
+    handle_record_warrior_growth,
+)
+from apps.skirmish.messages.commands.skirmish_report import (
+    RecordSkirmishBlow,
+    RecordSkirmishSpoil,
+    RecordWarriorGrowth,
+)
+from apps.skirmish.messages.events.skirmish_report import (
+    SkirmishBlowRecorded,
+    SkirmishSpoilRecorded,
+    WarriorGrowthRecorded,
+)
+from apps.skirmish.models.skirmish_blow import SkirmishBlow
 from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.skirmish.models.skirmish_warrior_growth import SkirmishWarriorGrowth
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -39,3 +56,28 @@ def test_handle_record_warrior_growth_stamps_the_side_the_man_fought_on():
 
     assert result == WarriorGrowthRecorded(growth=SkirmishWarriorGrowth.objects.get())
     assert SkirmishWarriorGrowth.objects.get().faction == skirmish.defending_faction
+
+
+@pytest.mark.django_db
+def test_handle_record_skirmish_blow_writes_the_row():
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+
+    result = handle_record_skirmish_blow(
+        context=RecordSkirmishBlow(
+            skirmish=skirmish,
+            round_number=4,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6", modifier=1), result=11), value=22),
+            defender=defender,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), value=3),
+            outcome=BlowOutcomeChoices.OUTCOME_HIT,
+            damage=19,
+        )
+    )
+
+    assert result == SkirmishBlowRecorded(blow=SkirmishBlow.objects.get())
+    assert (SkirmishBlow.objects.get().round_number, SkirmishBlow.objects.get().attack_roll) == (4, 11)
