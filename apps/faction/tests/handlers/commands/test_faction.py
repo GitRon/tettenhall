@@ -548,11 +548,56 @@ def test_handle_create_factions_for_new_savegame_adds_the_drawn_number_of_rival_
 
 
 @pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_culture():
+    """
+    A rival's warriors are generated from the culture on its own row, so its town has to be named from
+    that same culture - otherwise the player rides into a Norse-named town held by Frisians.
+    """
+    savegame = SavegameFactory()
+    norse_rival = CultureFactory(locale="no_NO")
+    frisian_rival = CultureFactory(locale="nl_NL")
+
+    # Faker is third party and random by nature. Standing it in for a stub that echoes the locale it was
+    # built with is the only way to tie a generated name back to the culture it was drawn from; seeding
+    # the real one is process-global and would leak into the rest of the session.
+    with (
+        mock.patch("apps.faction.handlers.commands.faction.random.randint", return_value=2),
+        mock.patch("apps.faction.handlers.commands.faction.random.choice", side_effect=[norse_rival, frisian_rival]),
+        mock.patch(
+            "apps.faction.handlers.commands.faction.Faker",
+            side_effect=lambda locales: mock.Mock(city=mock.Mock(return_value=f"Town of {locales[0]}")),
+        ),
+    ):
+        result = handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                faction_culture_id=CultureFactory(locale="ga_IE").id,
+            )
+        )
+
+    assert result[1] == CreateNewFaction(
+        name="Town of no_NO",
+        town_name="Town of no_NO",
+        culture_id=norse_rival.id,
+        savegame=savegame,
+        is_player_faction=False,
+    )
+    assert result[2] == CreateNewFaction(
+        name="Town of nl_NL",
+        town_name="Town of nl_NL",
+        culture_id=frisian_rival.id,
+        savegame=savegame,
+        is_player_faction=False,
+    )
+
+
+@pytest.mark.django_db
 def test_handle_create_factions_for_new_savegame_without_the_culture():
     """
     Cultures are reference data every environment ships with, so a missing one is a half-seeded
-    database rather than bad input - and it used to surface one line later as "NoneType has no
-    attribute locale".
+    database rather than bad input, and the handler says so by name.
 
     A culture id nobody owns rather than an emptied table: the fixtures are loaded once per session,
     and this is the path the crash actually arrives by, since a database without them renders the
