@@ -1,3 +1,4 @@
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
 from apps.skirmish.models import Skirmish, Warrior
 
@@ -23,9 +24,16 @@ class AttackService:
         """
         return warrior_dexterity
 
-    def get_attack_value(self) -> int:
+    def _scaled_by_strength(self, *, roll: int, action_multiplier: float = 1) -> int:
         # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
-        return round(self.warrior.roll_attack() * self.warrior.strength / self.warrior.strength_baseline)
+        return round(roll * action_multiplier * self.warrior.strength / self.warrior.strength_baseline)
 
-    def get_defense_value(self) -> int:
-        return self.warrior.roll_defense()
+    def get_attack_value(self) -> ActionRoll:
+        roll = self.warrior.roll_attack()
+
+        return ActionRoll(roll=roll, value=self._scaled_by_strength(roll=roll.result))
+
+    def get_defense_value(self) -> ActionRoll:
+        roll = self.warrior.roll_defense()
+
+        return ActionRoll(roll=roll, value=roll.result)
