@@ -19,8 +19,17 @@ class BattleHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(SkirmishBlow)
 class SkirmishBlowAdmin(admin.ModelAdmin):
-    list_display = ("skirmish", "round_number", "attacker", "defender", "outcome", "attack_value", "damage")
-    list_filter = ("outcome", "skirmish")
+    list_display = (
+        "skirmish",
+        "round_number",
+        "attacker",
+        "attack_item_type",
+        "defender",
+        "outcome",
+        "attack_value",
+        "damage",
+    )
+    list_filter = ("outcome", "attack_item_type", "skirmish")
 
 
 @admin.register(SkirmishSpoil)

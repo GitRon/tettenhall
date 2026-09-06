@@ -1,3 +1,5 @@
+import dataclasses
+
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
 from apps.skirmish.models import Skirmish, Warrior
@@ -24,16 +26,22 @@ class AttackService:
         """
         return warrior_dexterity
 
-    def _scaled_by_strength(self, *, roll: int, action_multiplier: float = 1) -> int:
-        # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
-        return round(roll * action_multiplier * self.warrior.strength / self.warrior.strength_baseline)
+    def _scaled_by_strength(self, *, attack: ActionRoll, action_multiplier: float = 1) -> ActionRoll:
+        """
+        What the fight compares, put in place of the bare roll and leaving the die and the gear alone.
+
+        Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater.
+        """
+        return dataclasses.replace(
+            attack,
+            value=round(
+                attack.roll.result * action_multiplier * self.warrior.strength / self.warrior.strength_baseline
+            ),
+        )
 
     def get_attack_value(self) -> ActionRoll:
-        roll = self.warrior.roll_attack()
-
-        return ActionRoll(roll=roll, value=self._scaled_by_strength(roll=roll.result))
+        return self._scaled_by_strength(attack=self.warrior.roll_attack())
 
     def get_defense_value(self) -> ActionRoll:
-        roll = self.warrior.roll_defense()
-
-        return ActionRoll(roll=roll, value=roll.result)
+        # Defence is the armour's own roll and nothing else - no strength, and so no baseline either
+        return self.warrior.roll_defense()

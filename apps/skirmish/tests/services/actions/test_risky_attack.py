@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.item.models.item_type import ItemType
 from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.services.actions.risky_attack import RiskyAttackService
@@ -23,7 +24,11 @@ def test_get_attack_value_doubles_the_damage_on_a_hit():
     ):
         result = service.get_attack_value()
 
-    assert result == ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3), value=6)
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        value=6,
+    )
 
 
 @pytest.mark.django_db
@@ -57,4 +62,8 @@ def test_get_attack_value_doubles_a_blow_measured_against_a_lower_baseline():
     ):
         result = service.get_attack_value()
 
-    assert result == ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3), value=12)
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        value=12,
+    )

@@ -144,25 +144,22 @@ def test_process_sets_each_mans_own_gear_and_action_against_the_others():
     The composition, not the arithmetic: each side's service is built from that side's action and that
     side's warrior, and the two rolls reach "_deal_damage" the right way round.
 
-    Distinct dice per man is what makes this test able to fail. With both of them on the fallback the
-    two sides swap to the same numbers, and every other test here hands "_deal_damage" its rolls
-    ready-made - so a crossed pair would be recorded as the wrong man's die and nothing would notice.
+    Distinct gear per man is what makes this test able to fail. With both of them on the fallback the
+    two sides swap to the same dice and the same type, and every other test here hands "_deal_damage"
+    its rolls ready-made - so a crossed pair would be recorded as the wrong man's weapon and nothing
+    would notice.
     """
     skirmish = SkirmishFactory()
     savegame = skirmish.attacking_faction.savegame
+    weapon_type = ItemTypeFactory(base_value="2d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON)
+    armor_type = ItemTypeFactory(base_value="1d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR)
     attacker = WarriorFactory(
         faction=skirmish.attacking_faction,
-        weapon=ItemFactory(
-            savegame=savegame,
-            type=ItemTypeFactory(base_value="2d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
-        ),
+        weapon=ItemFactory(savegame=savegame, type=weapon_type),
     )
     defender = WarriorFactory(
         faction=skirmish.defending_faction,
-        armor=ItemFactory(
-            savegame=savegame,
-            type=ItemTypeFactory(base_value="1d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR),
-        ),
+        armor=ItemFactory(savegame=savegame, type=armor_type),
     )
     service = SkirmishDamageService(
         skirmish=skirmish,
@@ -183,11 +180,15 @@ def test_process_sets_each_mans_own_gear_and_action_against_the_others():
             round_number=2,
             attacker=attacker,
             attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=6), value=6),
+            attack=ActionRoll(
+                roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=6), item_type=weapon_type, value=6
+            ),
             defender=defender,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
             # The stance doubles the value and leaves the die it doubled from as it fell
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), value=6),
+            defense=ActionRoll(
+                roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), item_type=armor_type, value=6
+            ),
             damage=2,
         )
     ]

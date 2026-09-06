@@ -14,10 +14,8 @@ class RiskyAttackService(AttackService):
     def get_attack_value(self) -> ActionRoll:
         # Attack has 50% chance to miss
         if bool(random.getrandbits(1)):
-            roll = self.warrior.roll_attack()
+            return self._scaled_by_strength(attack=self.warrior.roll_attack(), action_multiplier=2)
 
-            return ActionRoll(roll=roll, value=self._scaled_by_strength(roll=roll.result, action_multiplier=2))
-
-        # No die at all, and it says so: a swing that went wide is not a blow the armour stopped, and
-        # a zero on its own cannot tell the two apart
+        # No die and no weapon at all, and it says so: a swing that went wide is not a blow the armour
+        # stopped, and a zero on its own cannot tell the two apart
         return ActionRoll(roll=None, value=0, outcome=BlowOutcomeChoices.OUTCOME_MISSED)

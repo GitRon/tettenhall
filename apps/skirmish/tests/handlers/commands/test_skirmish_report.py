@@ -1,7 +1,9 @@
 import pytest
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.item.models.item_type import ItemType
 from apps.item.tests.factories.item import ItemFactory
+from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.domain.action_roll import ActionRoll
@@ -63,6 +65,8 @@ def test_handle_record_skirmish_blow_writes_the_row():
     skirmish = SkirmishFactory()
     attacker = WarriorFactory(faction=skirmish.attacking_faction)
     defender = WarriorFactory(faction=skirmish.defending_faction)
+    weapon_type = ItemTypeFactory(base_value="2d6")
+    armor_type = ItemTypeFactory(base_value="1d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR)
 
     result = handle_record_skirmish_blow(
         context=RecordSkirmishBlow(
@@ -70,10 +74,16 @@ def test_handle_record_skirmish_blow_writes_the_row():
             round_number=4,
             attacker=attacker,
             attacker_action=SkirmishActionChoices.RISKY_ATTACK,
-            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6", modifier=1), result=11), value=22),
+            attack=ActionRoll(
+                roll=DiceRoll(notation=DiceNotation(dice_string="2d6", modifier=1), result=11),
+                item_type=weapon_type,
+                value=22,
+            ),
             defender=defender,
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), value=3),
+            defense=ActionRoll(
+                roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), item_type=armor_type, value=3
+            ),
             outcome=BlowOutcomeChoices.OUTCOME_HIT,
             damage=19,
         )

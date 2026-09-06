@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.item.models.item_type import ItemType
 from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.services.actions.defensive_stance import DefensiveStanceService
@@ -42,4 +43,8 @@ def test_get_defense_value_doubles_the_defense():
         result = service.get_defense_value()
 
     # The die is kept as it fell, so the doubling stays visible as a doubling
-    assert result == ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d2"), result=2), value=4)
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d2"), result=2),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+        value=4,
+    )

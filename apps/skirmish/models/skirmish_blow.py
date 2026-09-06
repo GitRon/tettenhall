@@ -42,6 +42,19 @@ class SkirmishBlow(models.Model):
     # The weapon's notation and its own modifier, kept as written so "DiceNotation" can be handed them
     # back and asked what the throw could have been. Blank and null together when no die was thrown at
     # all - a defensive stance swings nothing, and a risky attack that goes wide never reaches the dice
+    # The kind of weapon that struck, kept as the type rather than the item: an item is deleted when
+    # it is destroyed and would take every blow ever struck with it along, while a type is reference
+    # data and outlives the sword. It is also the half that a question like "has this man ever felled
+    # someone with an axe" is asking, and it is the only thing that tells bare hands apart from a real
+    # 1d3 weapon - the fallback types are rows here like any other
+    attack_item_type = models.ForeignKey(
+        "item.ItemType",
+        verbose_name="Weapon type",
+        related_name="blows_struck",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+    )
     attack_dice = models.CharField("Attack dice", max_length=10, blank=True)
     attack_modifier = models.SmallIntegerField("Attack modifier", null=True, blank=True)
     attack_roll = models.PositiveSmallIntegerField("Attack roll", null=True, blank=True)
@@ -49,7 +62,10 @@ class SkirmishBlow(models.Model):
     # against his kind's mean, and then by whatever his action does to it
     attack_value = models.PositiveSmallIntegerField("Attack value", default=0)
 
-    # A defence is always rolled, even against a blow that never came
+    # A defence is always rolled, even against a blow that never came, so the armour is always known
+    defense_item_type = models.ForeignKey(
+        "item.ItemType", verbose_name="Armor type", related_name="blows_absorbed", on_delete=models.CASCADE
+    )
     defense_dice = models.CharField("Defense dice", max_length=10)
     defense_modifier = models.SmallIntegerField("Defense modifier")
     defense_roll = models.PositiveSmallIntegerField("Defense roll")

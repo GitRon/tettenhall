@@ -17,6 +17,4 @@ class FastAttackService(AttackService):
 
     def get_attack_value(self) -> ActionRoll:
         # Attack will cause only 50% damage since it's a fast one
-        roll = self.warrior.roll_attack()
-
-        return ActionRoll(roll=roll, value=self._scaled_by_strength(roll=roll.result, action_multiplier=0.5))
+        return self._scaled_by_strength(attack=self.warrior.roll_attack(), action_multiplier=0.5)

@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.item.models.item_type import ItemType
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.services.actions.base import AttackService
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -29,7 +30,11 @@ def test_get_attack_value_for_a_warrior_at_his_own_baseline():
     with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
         result = service.get_attack_value()
 
-    assert result == ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3), value=3)
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        value=3,
+    )
 
 
 @pytest.mark.django_db
@@ -46,7 +51,11 @@ def test_get_attack_value_for_a_warrior_below_his_baseline():
     with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
         result = service.get_attack_value()
 
-    assert result == ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3), value=2)
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        value=2,
+    )
 
 
 @pytest.mark.django_db
@@ -61,4 +70,8 @@ def test_get_defense_value_announces_the_roll():
     with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
         result = service.get_defense_value()
 
-    assert result == ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d2"), result=2), value=2)
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d2"), result=2),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+        value=2,
+    )

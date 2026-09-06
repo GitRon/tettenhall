@@ -1,6 +1,8 @@
 import factory
 from factory.django import DjangoModelFactory
 
+from apps.item.models.item_type import ItemType
+from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.models.skirmish_blow import SkirmishBlow
@@ -21,11 +23,15 @@ class SkirmishBlowFactory(DjangoModelFactory):
 
     outcome = BlowOutcomeChoices.OUTCOME_HIT
 
+    attack_item_type = factory.SubFactory(ItemTypeFactory, base_value="2d6")
     attack_dice = "2d6"
     attack_modifier = 1
     attack_roll = 8
     attack_value = 8
 
+    defense_item_type = factory.SubFactory(
+        ItemTypeFactory, base_value="1d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR
+    )
     defense_dice = "1d4"
     defense_modifier = 0
     defense_roll = 3
