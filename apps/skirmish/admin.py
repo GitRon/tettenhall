@@ -5,12 +5,26 @@ from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
+from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
+from apps.skirmish.models.skirmish_warrior_growth import SkirmishWarriorGrowth
 from apps.skirmish.models.warrior import Warrior
 
 
 @admin.register(BattleHistory)
 class BattleHistoryAdmin(admin.ModelAdmin):
     list_display = ("message", "skirmish", "created_at")
+    list_filter = ("skirmish",)
+
+
+@admin.register(SkirmishSpoil)
+class SkirmishSpoilAdmin(admin.ModelAdmin):
+    list_display = ("skirmish", "faction", "kind", "item", "warrior", "amount")
+    list_filter = ("kind", "skirmish")
+
+
+@admin.register(SkirmishWarriorGrowth)
+class SkirmishWarriorGrowthAdmin(admin.ModelAdmin):
+    list_display = ("skirmish", "warrior", "faction", "gained_experience", "reached_level")
     list_filter = ("skirmish",)
 
 

@@ -5,6 +5,8 @@ from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.skirmish.tests.factories.skirmish_spoil import SkirmishSpoilFactory
+from apps.skirmish.tests.factories.skirmish_warrior_growth import SkirmishWarriorGrowthFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -77,3 +79,13 @@ def test_reset_skirmish_clears_the_battle_history(fought_skirmish):
     call_command("reset_skirmish", fought_skirmish.id)
 
     assert fought_skirmish.battle_logs.count() == 0
+
+
+def test_reset_skirmish_clears_the_recorded_outcome(fought_skirmish):
+    SkirmishSpoilFactory(skirmish=fought_skirmish)
+    SkirmishWarriorGrowthFactory(skirmish=fought_skirmish)
+
+    call_command("reset_skirmish", fought_skirmish.id)
+
+    assert fought_skirmish.skirmish_spoils.count() == 0
+    assert fought_skirmish.skirmish_warrior_growths.count() == 0
