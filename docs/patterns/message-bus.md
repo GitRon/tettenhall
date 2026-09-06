@@ -18,6 +18,7 @@ Everything is a *message*. There are exactly two kinds, both plain `@dataclass(k
 from dataclasses import dataclass
 from queuebie.messages import Command
 
+
 @dataclass(kw_only=True)
 class UpgradeTownBuilding(Command):
     town: Town

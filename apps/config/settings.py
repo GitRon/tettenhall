@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "crispy_forms",
+    "crispy_bootstrap5",
     "apps.account",
     "apps.common",
     "apps.faction",
@@ -160,10 +161,12 @@ STATICFILES_DIRS = (
 )
 
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# Crispy forms
+# django-crispy-forms ships no template pack of its own; the pack is a separate distribution.
+# The site's own styling is UIkit, applied through the "uk-*" classes the FormHelper layouts set
+# on the fields, so the pack only supplies the surrounding markup.
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 
 # Axes config
@@ -185,6 +188,10 @@ AXES_LOCKOUT_PARAMETERS = ["username"]
 AXES_CLIENT_IP_CALLABLE = lambda x: None  # noqa: E731
 # Mask user-sensitive parameters in logging stream
 AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
+# axes.W006 asks for "ip_address" in AXES_LOCKOUT_PARAMETERS. AXES_CLIENT_IP_CALLABLE hands axes
+# None for every request, so the parameter would group all attempts into a single bucket rather
+# than rate-limit anyone.
+SILENCED_SYSTEM_CHECKS = ["axes.W006"]
 
 # Queuebie
 # Queuebie treats every app below this path as a local one and imports its "handlers/" modules.
