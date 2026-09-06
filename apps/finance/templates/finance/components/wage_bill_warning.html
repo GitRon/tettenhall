@@ -10,10 +10,17 @@
             Wages are paid cheapest man first out of the silver you hold when the month turns. Your
             buildings pay out after them, so that income covers the month after this one.
         </p>
+        {# The count rides inside the parenthesis rather than after a dash, so a roster of several #}
+        {# men stays one readable comma-separated run instead of nesting punctuation two deep. #}
         <p class="uk-margin-remove">
             Going unpaid:
-            {% for warrior in wage_bill_payroll.unpaid_warrior_list %}
-                {{ warrior }} ({{ warrior.monthly_salary }} silver){% if not forloop.last %}, {% endif %}
+            {% for entry in wage_bill_payroll.unpaid_countdown_list %}
+                {{ entry.warrior }} ({{ entry.warrior.monthly_salary }} silver,
+                {% if entry.months_unpaid %}
+                    {{ entry.months_unpaid }} of {{ wage_bill_payroll.months_until_desertion }} unpaid months
+                {% else %}
+                    your leader, who never walks
+                {% endif %}){% if not forloop.last %}, {% endif %}
             {% endfor %}
         </p>
         {% if wage_bill_payroll.deserting_warrior_list %}

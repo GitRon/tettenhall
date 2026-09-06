@@ -73,6 +73,48 @@ def test_months_until_desertion_names_the_number_the_punishment_reads():
     assert payroll.months_until_desertion == 3
 
 
+def test_unpaid_countdown_list_counts_the_month_being_projected():
+    """
+    One month already gone without, so the month being projected is his second - the number
+    handle_punish_unpaid_warrior will read once the salary run has recorded this month's failure.
+    """
+    payroll = Payroll(
+        warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=1)], budget=0, leader_id=1
+    )
+
+    assert [(entry.warrior.id, entry.months_unpaid) for entry in payroll.unpaid_countdown_list] == [(2, 2)]
+
+
+def test_unpaid_countdown_list_starts_a_man_who_has_never_gone_without_at_one():
+    payroll = Payroll(
+        warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=0)], budget=0, leader_id=1
+    )
+
+    assert [entry.months_unpaid for entry in payroll.unpaid_countdown_list] == [1]
+
+
+def test_unpaid_countdown_list_gives_the_leader_no_count():
+    """
+    He is still named and still going unpaid, but his count never matures, so a number beside him
+    would be a deadline that never arrives.
+    """
+    payroll = Payroll(
+        warrior_list=[WarriorFactory.build(id=1, monthly_salary=30, unpaid_months=5)], budget=0, leader_id=1
+    )
+
+    assert [(entry.warrior.id, entry.months_unpaid) for entry in payroll.unpaid_countdown_list] == [(1, None)]
+
+
+def test_unpaid_countdown_list_ignores_a_warrior_who_is_getting_paid():
+    payroll = Payroll(
+        warrior_list=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
+        budget=30,
+        leader_id=3,
+    )
+
+    assert [entry.warrior.id for entry in payroll.unpaid_countdown_list] == [2]
+
+
 def test_deserting_warrior_list_names_the_man_on_his_last_month():
     """
     Two months already gone without, so the month being projected is the third - which is what
