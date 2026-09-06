@@ -198,10 +198,12 @@ def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsW
     # enemy cell would restore a man completely.
     #
     # Settled, not an oversight left next to a healing sweep that was taught the opposite lesson: a
-    # captive keeps whatever morale the fight left him for as long as he is held, and only starts
-    # recovering once "handle_recruit_captured_warrior" puts him on a roster and this sweep reaches
-    # him the following month. Nobody is stranded routed by it either - prisoners are taken from the
-    # unconscious alone ("handle_finish_skirmish"), and a man who fled the field walked off it.
+    # captive keeps whatever morale the fight left him for as long as he is held, and gets it back
+    # the moment "handle_recruit_captured_warrior" puts him under a banner - that handler fills him
+    # up itself rather than leaving him to this sweep, which would not reach him until the following
+    # month and would send him into a fight with nothing in him first. Nobody is stranded routed here
+    # either - prisoners are taken from the unconscious alone ("handle_finish_skirmish"), and a man
+    # who fled the field walked off it.
     #
     # A man who was not paid does not cheer up either, and this is what makes that stick:
     # "handle_replenish_warrior_morale" refills to the maximum, so without the "unpaid_months"

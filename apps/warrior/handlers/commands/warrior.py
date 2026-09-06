@@ -118,6 +118,15 @@ def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
 
 @message_registry.register_command(command=RecruitCapturedWarrior)
 def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[Event] | Event:
+    """
+    A man taken out of the cell and put under a new banner, at the price of a quarter of his spirit.
+
+    The ceiling is what captivity costs him, permanently. What is left of it he gets in full: the
+    monthly morale sweep passes captives by, so a man recruited any month later than the one he was
+    taken in has nothing between his release and his first fight to fill him back up, and would march
+    out at whatever the beating left him - routing on the first blow for no reason a player can see.
+    Holding a prisoner longer must not make him worse.
+    """
     # Set new faction
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
     # Remove from captured warriors
@@ -125,13 +134,34 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
     # Reduce morale
     Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=0.25)
 
-    return WarriorRecruited(
+    # Measured after the cut, so the refill is to the ceiling he is left with and never past it
+    recovered_morale = context.warrior.max_morale - context.warrior.current_morale
+
+    recruited = WarriorRecruited(
         warrior=context.warrior,
         faction=context.faction,
         # Recruiting a captured warrior is always for free
         recruitment_price=0,
         month=context.month,
     )
+
+    # Nothing recovered is not a recovery. "reduce_max_morale" clamps his current morale to the new
+    # ceiling, so a man captured with his spirit intact arrives already full, and the month log would
+    # otherwise report a replenishment that never happened
+    if recovered_morale == 0:
+        return recruited
+
+    Warrior.objects.replenish_current_morale(obj=context.warrior, recovered_morale_points=recovered_morale)
+
+    return [
+        recruited,
+        WarriorMoraleReplenished(
+            warrior=context.warrior,
+            faction=context.faction,
+            recovered_morale=recovered_morale,
+            month=context.month,
+        ),
+    ]
 
 
 @message_registry.register_command(command=EnslaveCapturedWarrior)

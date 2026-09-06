@@ -4,7 +4,7 @@ import pytest
 
 from apps.faction.handlers.commands.faction import handle_create_new_faction
 from apps.faction.messages.commands.faction import CreateNewFaction
-from apps.faction.messages.events.warrior import WarriorWasSoldIntoSlavery
+from apps.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.faction.tests.factories.culture import CultureFactory
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.item.models.item_type import ItemType
@@ -17,12 +17,14 @@ from apps.warrior.handlers.commands.warrior import (
     handle_enslave_captured_warrior,
     handle_heal_injured_warrior,
     handle_punish_unpaid_warrior,
+    handle_recruit_captured_warrior,
     handle_replenish_warrior_morale,
 )
 from apps.warrior.messages.commands.warrior import (
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
+    RecruitCapturedWarrior,
     ReplenishWarriorMorale,
 )
 from apps.warrior.messages.events.warrior import (
@@ -291,3 +293,44 @@ def test_handle_enslave_captured_warrior_carries_the_slavers_price():
 
     assert result == WarriorWasSoldIntoSlavery(warrior=captive, selling_faction=faction, price=48, month=3)
     assert list(faction.captured_warriors.all()) == []
+
+
+@pytest.mark.django_db
+def test_handle_recruit_captured_warrior_gives_a_captive_his_nerve_back():
+    """
+    The monthly morale sweep passes captives by, so a man recruited later than the month he was taken
+    in has nothing between his release and his first fight to fill him back up.
+    """
+    faction = FactionFactory()
+    captive = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, current_morale=0, max_morale=20
+    )
+    faction.captured_warriors.add(captive)
+
+    result = handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    assert result == [
+        WarriorRecruited(warrior=captive, faction=faction, recruitment_price=0, month=3),
+        WarriorMoraleReplenished(warrior=captive, faction=faction, recovered_morale=15, month=3),
+    ]
+    captive.refresh_from_db()
+    assert captive.current_morale == 15
+
+
+@pytest.mark.django_db
+def test_handle_recruit_captured_warrior_reports_no_recovery_from_a_captive_at_full_morale():
+    """
+    A quarter off his maximum takes his current morale down with it, so a man captured with his
+    spirit intact arrives full and has nothing to recover.
+    """
+    faction = FactionFactory()
+    captive = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, current_morale=20, max_morale=20
+    )
+    faction.captured_warriors.add(captive)
+
+    result = handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    assert result == WarriorRecruited(warrior=captive, faction=faction, recruitment_price=0, month=3)
+    captive.refresh_from_db()
+    assert captive.current_morale == 15
