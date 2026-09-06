@@ -14,13 +14,13 @@
         {# men stays one readable comma-separated run instead of nesting punctuation two deep. #}
         <p class="uk-margin-remove">
             Going unpaid:
+            {# Nothing may break the line directly before the closing parenthesis: whitespace inside #}
+            {# an "if" body is rendered, so a newline there reaches the player as "unpaid months )". #}
             {% for entry in wage_bill_payroll.unpaid_countdown_list %}
                 {{ entry.warrior }} ({{ entry.warrior.monthly_salary }} silver,
-                {% if entry.months_unpaid %}
-                    {{ entry.months_unpaid }} of {{ wage_bill_payroll.months_until_desertion }} unpaid months
-                {% else %}
-                    your leader, who never walks
-                {% endif %}){% if not forloop.last %}, {% endif %}
+                {% if entry.months_unpaid %}{{ entry.months_unpaid }} of
+                {{ wage_bill_payroll.months_until_desertion }} unpaid months{% else %}your leader,
+                who never walks{% endif %}){% if not forloop.last %}, {% endif %}
             {% endfor %}
         </p>
         {% if wage_bill_payroll.deserting_warrior_list %}
