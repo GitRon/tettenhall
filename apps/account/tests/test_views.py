@@ -105,8 +105,8 @@ def test_dashboard_view_is_reachable_without_an_active_savegame(logged_in_client
 @pytest.mark.django_db
 def test_dashboard_view_lists_the_month_logs_of_the_player_faction(logged_in_client, current_savegame):
     """
-    Scoped the way PlayerMonthLogListView is, since that htmx view replaces this block on every
-    refresh - a rival's line rendered here would vanish again on the first swap.
+    The dashboard is the only place the month log is rendered, and the log is the player faction's -
+    scoping to the savegame would put a rival's bookkeeping in front of him.
     """
     player_month_log = PlayerMonthLogFactory(faction=current_savegame.player_faction)
     PlayerMonthLogFactory(faction=FactionFactory(savegame=current_savegame))
@@ -114,7 +114,7 @@ def test_dashboard_view_lists_the_month_logs_of_the_player_faction(logged_in_cli
     response = logged_in_client.get(reverse("account:dashboard-view"))
 
     assert response.status_code == 200
-    assert list(response.context["player_month_logs"]) == [player_month_log]
+    assert response.context["player_month_logs"].consequence == [player_month_log]
     assert response.context["faction"] == current_savegame.player_faction
 
 
@@ -131,7 +131,7 @@ def test_dashboard_view_lists_no_month_logs_without_a_player_faction(logged_in_c
     response = logged_in_client.get(reverse("account:dashboard-view"))
 
     assert response.status_code == 200
-    assert list(response.context["player_month_logs"]) == []
+    assert response.context["player_month_logs"].is_empty is True
 
 
 @pytest.mark.django_db

@@ -7,6 +7,7 @@ from django.views import generic
 
 from apps.account.forms.login import LoginForm
 from apps.month.models.player_month_log import PlayerMonthLog
+from apps.month.services.player_month_log import group_player_month_logs
 from apps.savegame.models.savegame import Savegame
 from apps.savegame.services.current_savegame import get_current_savegame_for_request
 
@@ -54,13 +55,11 @@ class DashboardView(generic.TemplateView):
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         if current_savegame:
-            # Scoped the same way PlayerMonthLogListView is, because that htmx view replaces this
-            # very block on every refresh: the log the player reads is his own faction's, and the two
-            # renderings asking different questions is how a line could show up once and then vanish
-            # on its own. A savegame without a player faction has no log of his to read yet.
-            context["player_month_logs"] = (
-                PlayerMonthLog.objects.for_player_faction(faction_id=current_savegame.player_faction_id).order_by(
-                    "-month"
+            # The log the player reads is his own faction's, never his savegame's, or the rivals'
+            # bookkeeping joins his. A savegame without a player faction has no log of his to read yet.
+            context["player_month_logs"] = group_player_month_logs(
+                player_month_logs=PlayerMonthLog.objects.for_player_faction(
+                    faction_id=current_savegame.player_faction_id
                 )
                 if current_savegame.player_faction_id
                 else PlayerMonthLog.objects.none()

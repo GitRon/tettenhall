@@ -1,36 +1,37 @@
-{% load l10n %}
-<div hx-get="{% url 'month:player-month-log-list-view' %}"
-     hx-trigger="loadMessageList from:body"
-     hx-swap="outerHTML"
-     class="uk-child-width-1-4@s" uk-grid>
-    {% for message in object_list %}
-        <div id="message-card-{{ message.id|unlocalize }}">
-            <div class="uk-card uk-card-default">
-                <div class="uk-card-header">
-                    <div class="uk-grid-small uk-flex-middle" uk-grid>
-                        <div class="uk-width-expand">
-                            <h3 class="uk-card-title uk-margin-remove-bottom">
-                                <i class="fa-solid fa-scroll"></i> {{ message.title }}
-                            </h3>
-                            <p class="uk-text-meta uk-margin-remove-top">
-                                <time datetime="2016-04-01T19:00">Month #{{ message.month }}</time>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="uk-card-footer">
-                    <a hx-delete="{% url 'month:player-month-log-remove-view' message.id %}"
-                       hx-target="#message-card-{{ message.id|unlocalize }}"
-                       hx-swap="none"
-                       class="uk-button uk-button-text">Acknowledge</a>
-                </div>
-            </div>
-        </div>
-    {% empty %}
-        <div class="uk-card uk-card-default">
-            <div class="uk-card-header">
-                No messages yet.
-            </div>
+{# Three weights, one list. What the player must act on is a full-width alert, what his own decisions #}
+{# produced is a plain line, and the recovery sweeps - which write one row per warrior and would #}
+{# otherwise be most of the month - are tallied into a single sentence with the rows behind it. #}
+<div class="uk-margin">
+    {% for message in player_month_logs.attention %}
+        <div class="uk-alert-danger" uk-alert>
+            <h4 class="uk-margin-remove">
+                <i class="fa-solid fa-triangle-exclamation"></i> {{ message.title }}
+            </h4>
         </div>
     {% endfor %}
+
+    {% if player_month_logs.consequence %}
+        <ul class="uk-list uk-list-divider">
+            {% for message in player_month_logs.consequence %}
+                <li>
+                    <i class="fa-solid fa-scroll uk-text-muted"></i> {{ message.title }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if player_month_logs.upkeep %}
+        <details class="uk-text-meta">
+            <summary>{{ player_month_logs.upkeep_summary|join:" · " }}</summary>
+            <ul class="uk-list uk-margin-remove-top">
+                {% for message in player_month_logs.upkeep %}
+                    <li>{{ message.title }}</li>
+                {% endfor %}
+            </ul>
+        </details>
+    {% endif %}
+
+    {% if player_month_logs.is_empty %}
+        <p class="uk-text-meta">Nothing to report this month.</p>
+    {% endif %}
 </div>
