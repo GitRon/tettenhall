@@ -465,6 +465,59 @@ def test_battle_history_update_htmx_view_hides_history_of_another_savegame(logge
 
 
 @pytest.mark.django_db
+def test_battle_history_update_htmx_view_reports_a_fight_that_is_over(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    skirmish.victorious_faction = current_savegame.player_faction
+    skirmish.save()
+
+    response = logged_in_client.get(reverse("skirmish:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
+
+    assert response.status_code == 200
+    assert response.context["report"].is_victory is True
+
+
+@pytest.mark.django_db
+def test_battle_history_update_htmx_view_reports_nothing_while_the_fight_is_still_on(
+    logged_in_client, current_savegame
+):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("skirmish:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
+
+    assert response.status_code == 200
+    assert response.context["report"] is None
+
+
+@pytest.mark.django_db
+def test_battle_history_update_htmx_view_reports_nothing_on_a_fight_between_two_rivals(
+    logged_in_client, current_savegame
+):
+    """
+    A report has a side, and the player has none in a fight he only watched.
+    """
+    skirmish = SkirmishFactory(attacking_faction=FactionFactory(savegame=current_savegame))
+    skirmish.victorious_faction = skirmish.attacking_faction
+    skirmish.save()
+
+    response = logged_in_client.get(reverse("skirmish:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
+
+    assert response.status_code == 200
+    assert response.context["report"] is None
+
+
+@pytest.mark.django_db
+def test_battle_history_update_htmx_view_reports_nothing_without_a_player_faction(
+    logged_in_client, savegame_without_player_faction
+):
+    skirmish = SkirmishFactory(attacking_faction=FactionFactory(savegame=savegame_without_player_faction))
+
+    response = logged_in_client.get(reverse("skirmish:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
+
+    assert response.status_code == 200
+    assert response.context["report"] is None
+
+
+@pytest.mark.django_db
 def test_faction_warrior_list_update_htmx_view_lists_the_warriors_of_the_attacking_faction(
     logged_in_client, current_savegame
 ):

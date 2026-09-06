@@ -1,3 +1,105 @@
-{% for log in object_list %}
-    <div>{{ log.message }}</div>
-{% endfor %}
+{# While the fight is running the blow-by-blow is all there is to say, so it stays exactly as it was. #}
+{# Once it is decided the panel leads with what the fight yielded and the log goes behind a disclosure - #}
+{# still one click away, because it is the technical record and somebody wants it. #}
+{% if report %}
+    <div class="uk-margin">
+        {% if report.is_victory %}
+            <h3 class="uk-margin-remove-bottom"><i class="fa-solid fa-trophy"></i> The field is yours</h3>
+        {% else %}
+            <h3 class="uk-margin-remove-bottom"><i class="fa-solid fa-skull"></i> The field is lost</h3>
+        {% endif %}
+
+        {% if report.has_anything_to_report %}
+            {% if report.silver_won %}
+                <ul class="uk-list uk-list-divider">
+                    {% if report.quest_reward %}
+                        <li>
+                            <i class="fa-solid fa-sack-dollar uk-text-muted"></i>
+                            {{ report.quest_reward }} silver for
+                            {% if report.quest_name %}“{{ report.quest_name }}”{% else %}the contract{% endif %}
+                        </li>
+                    {% endif %}
+                    {% if report.silver_looted %}
+                        <li>
+                            <i class="fa-solid fa-coins uk-text-muted"></i>
+                            {{ report.silver_looted }} silver off the fallen
+                        </li>
+                    {% endif %}
+                </ul>
+            {% endif %}
+
+            {% if report.items_won %}
+                <h4 class="uk-margin-small-bottom">Gear taken</h4>
+                <ul class="uk-list uk-list-divider">
+                    {% for spoil in report.items_won %}
+                        <li>
+                            {% include 'common/components/svg_icon.html' with icon_name=spoil.item.type.svg_image_name %}
+                            {{ spoil.item.display_name }}
+                            <span class="uk-text-meta">
+                                {{ spoil.item.type.base_value }}{{ spoil.item.get_modifier_as_string }}
+                                {% if spoil.taken_from %}· from {{ spoil.taken_from }}{% endif %}
+                            </span>
+                            {% if spoil.is_upgrade %}
+                                {# The one sentence that makes the risk worth taking again. Without it #}
+                                {# the sword sits in Unused Items until somebody sells it. #}
+                                <span class="uk-label uk-label-success">Better than anything your men carry</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if report.growth_list %}
+                <h4 class="uk-margin-small-bottom">Your men</h4>
+                <ul class="uk-list uk-list-divider">
+                    {% for growth in report.growth_list %}
+                        <li>
+                            <i class="fa-solid fa-arrow-trend-up uk-text-muted"></i>
+                            {{ growth.warrior }}: {{ growth.gained_experience }} experience
+                            {% if growth.reached_level %}
+                                · reached level {{ growth.reached_level }}
+                                <span class="uk-text-meta">
+                                    strength +{{ growth.gained_strength }},
+                                    dexterity +{{ growth.gained_dexterity }},
+                                    health +{{ growth.gained_max_health }},
+                                    morale +{{ growth.gained_max_morale }}{% if growth.new_monthly_salary %},
+                                        now {{ growth.new_monthly_salary }} silver a month{% endif %}
+                                </span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if report.items_lost or report.silver_lost %}
+                <h4 class="uk-margin-small-bottom">Stripped from your fallen</h4>
+                <ul class="uk-list uk-list-divider">
+                    {% for spoil in report.items_lost %}
+                        <li class="uk-text-muted">
+                            {{ spoil.item.display_name }}
+                            {% if spoil.warrior %}<span class="uk-text-meta">· off {{ spoil.warrior }}</span>{% endif %}
+                        </li>
+                    {% endfor %}
+                    {% if report.silver_lost %}
+                        <li class="uk-text-muted">{{ report.silver_lost }} silver</li>
+                    {% endif %}
+                </ul>
+            {% endif %}
+        {% else %}
+            <p class="uk-text-meta">The fight yielded nothing.</p>
+        {% endif %}
+    </div>
+
+    <details class="uk-text-meta">
+        <summary>Blow by blow</summary>
+        <div class="uk-margin-small-top">
+            {% for log in object_list %}
+                <div>{{ log.message }}</div>
+            {% endfor %}
+        </div>
+    </details>
+{% else %}
+    {% for log in object_list %}
+        <div>{{ log.message }}</div>
+    {% endfor %}
+{% endif %}

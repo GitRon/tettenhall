@@ -20,6 +20,7 @@ from apps.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.skirmish.projections.skirmish_report import SkirmishReport
 from apps.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
 
 
@@ -255,6 +256,40 @@ class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView)
         # The mixin scopes to the current savegame, otherwise any skirmish id from the URL would
         # expose another player's battle history
         return super().get_queryset().filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
+
+    def _get_report(self) -> SkirmishReport | None:
+        """
+        The summary of a fight that is over, from the player's side of it - or nothing at all.
+
+        Built here rather than behind a URL of its own because this is the fragment the winning round
+        swaps in. A report reachable only by reloading the page would arrive after the moment it is
+        about.
+        """
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+        if current_savegame is None or current_savegame.player_faction_id is None:
+            return None
+
+        # Through the scoped queryset, for the same reason the log itself goes through one
+        skirmish = (
+            Skirmish.objects.for_savegame(savegame_id=current_savegame.id)
+            .filter(id=self.kwargs.get("skirmish_id", -1))
+            .first()
+        )
+        # A fight still being fought has no outcome to report, and a fight the player only watched
+        # has no side of his to report it from
+        if (
+            skirmish is None
+            or skirmish.victorious_faction_id is None
+            or current_savegame.player_faction_id not in (skirmish.attacking_faction_id, skirmish.defending_faction_id)
+        ):
+            return None
+
+        return SkirmishReport.for_skirmish(skirmish=skirmish, faction=current_savegame.player_faction)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["report"] = self._get_report()
+        return context
 
 
 class FactionWarriorListUpdateHtmxView(generic.TemplateView):
