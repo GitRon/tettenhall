@@ -19,15 +19,21 @@ def handle_create_training_for_new_faction(*, context: CreateNewTraining) -> lis
 
 @message_registry.register_command(command=TrainWarriors)
 def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] | Event:
-    training_category = context.training.category
+    # TODO (#101): store this months training somewhere -> in savegame?
+    training = Training.objects.filter_faction(faction_id=context.faction.id).first()
+
+    # A faction without a training row has no regimen to train by. Every faction gets one from
+    # NewFactionCreated on, so this is the savegame that predates the row rather than an ordinary month
+    if training is None:
+        return []
+
+    training_category = training.category
     warriors_to_train = context.faction.warriors.filter_healthy()
 
     event_list = []
 
     for warrior in warriors_to_train:
-        attribute, improvement = context.training.get_random_attribute_and_improvement_for_category(
-            category=training_category
-        )
+        attribute, improvement = training.get_random_attribute_and_improvement_for_category(category=training_category)
 
         attribute_progress_name = f"{attribute}_progress"
         new_value = getattr(warrior, attribute_progress_name) + improvement

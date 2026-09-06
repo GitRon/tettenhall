@@ -5,7 +5,6 @@ from queuebie.messages import Event
 from apps.faction.models.faction import Faction
 from apps.month.models import PlayerMonthLog
 from apps.savegame.models.savegame import Savegame
-from apps.training.models import Training
 
 
 @dataclass(kw_only=True)
@@ -37,18 +36,12 @@ class PlayerMonthPrepared(Event):
     FactionMonthPrepared and guards itself in its command handler, the way the rival income refuses
     the player.
 
-    The training regimen sits here too, and does not belong: every faction owns a Training row
-    from NewFactionCreated on, so training is a player-only activity by registration only.
-    Moving it is #48.
-
     Moving a handler from here to FactionMonthPrepared is how a player-only activity becomes
     something rivals do too - the field names match so that the move is the whole change.
     """
 
     faction: Faction
     savegame: Savegame
-    # None when the player faction has no training row yet - consumers have to guard
-    training: Training | None
     current_month: int
 
 

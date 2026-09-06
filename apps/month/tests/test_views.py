@@ -11,6 +11,7 @@ from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+from apps.training.models import Training
 from apps.training.tests.factories.training import TrainingFactory
 
 
@@ -182,6 +183,34 @@ def test_finish_month_view_weighs_a_rivals_draft_against_the_purse_the_month_ope
 
     assert response.status_code == 200
     assert Warrior.objects.filter(faction=rival_faction).count() == 1
+
+
+@pytest.mark.django_db
+def test_finish_month_view_trains_a_rivals_warriors(logged_in_client, current_savegame):
+    """
+    Flow test rather than a unit test: which event the training hangs off is the whole of this story,
+    and that lives only in the registry.
+
+    No patched randomness and none tolerated either - the outcome is pinned by the setup. Swiftness
+    draws its attribute from a single-entry tuple, and the improvement is floored at 1, so a bar
+    standing at 99 fills whatever the roll. Patching here would reach further than the training:
+    "random.choice" is one module object, and the same month restocks a shop and a pub off it.
+
+    The player's log stays his own throughout - every upgrade emits a line, and a war band of rivals
+    improving every month would bury his.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_warrior = WarriorFactory(
+        faction=rival_faction, savegame=current_savegame, dexterity=10, dexterity_progress=99
+    )
+    TrainingFactory(faction=rival_faction, category=Training.TrainingCategory.SWIFTNESS)
+
+    response = logged_in_client.post(reverse("month:finish-month-view"))
+
+    assert response.status_code == 200
+    rival_warrior.refresh_from_db()
+    assert (rival_warrior.dexterity, rival_warrior.dexterity_progress) == (11, 0)
+    assert PlayerMonthLog.objects.filter(faction=rival_faction).exists() is False
 
 
 @pytest.mark.django_db
