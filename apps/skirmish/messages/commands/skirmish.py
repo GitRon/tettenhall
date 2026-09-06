@@ -40,6 +40,7 @@ class StartDuel(Command):
 @dataclass(kw_only=True)
 class DetermineAttacker(Command):
     skirmish: Skirmish
+    round_number: int
     warrior_1: Warrior
     action_1: SkirmishActionTypeHint
     warrior_2: Warrior
@@ -49,6 +50,7 @@ class DetermineAttacker(Command):
 @dataclass(kw_only=True)
 class WarriorAttacksWarrior(Command):
     skirmish: Skirmish
+    round_number: int
     attacker: Warrior
     attacker_action: SkirmishActionTypeHint
     defender: Warrior

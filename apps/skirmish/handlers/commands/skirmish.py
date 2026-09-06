@@ -75,6 +75,12 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
 def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Event] | Event:
     message_list = []
 
+    # Read once, here, and carried on every message the round produces. This is the handler that
+    # starts the round, so "current_round" is the round being fought by definition rather than by
+    # ordering luck - and it is the last point at which that is true, because "FinishRound"
+    # increments and saves before any of the events below are handled
+    round_number = context.skirmish.current_round
+
     # Determine larger group
     assign_fighter_pairs_service = AssignFighterPairsService()
     skirmish_participants_1, skirmish_participants_2 = assign_fighter_pairs_service.determine_larger_group(
@@ -105,6 +111,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Event] |
             message_list.append(
                 FighterPairsMatched(
                     skirmish=context.skirmish,
+                    round_number=round_number,
                     warrior_1=participant_1.warrior,
                     warrior_2=participant_2.warrior,
                     attack_action_1=participant_1.skirmish_action,
@@ -115,6 +122,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Event] |
             message_list.append(
                 AttackerDefenderDecided(
                     skirmish=context.skirmish,
+                    round_number=round_number,
                     attacker=participant_1.warrior,
                     attacker_action=participant_1.skirmish_action,
                     defender=participant_2.warrior,
@@ -156,6 +164,7 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
 
     return AttackerDefenderDecided(
         skirmish=context.skirmish,
+        round_number=context.round_number,
         attacker=attacker,
         attacker_action=attack_action,
         defender=defender,
@@ -170,6 +179,7 @@ def handle_warrior_attacks_warrior(
 ) -> list[Event] | Event:
     service = SkirmishDamageService(
         skirmish=context.skirmish,
+        round_number=context.round_number,
         attacker=context.attacker,
         attacker_action=context.attacker_action,
         defender=context.defender,

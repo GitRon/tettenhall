@@ -1,6 +1,9 @@
 import pytest
 
+from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.handlers.events.warrior import (
     handle_capture_unconscious_warriors,
     handle_experience_gain_after_battle_for_victor,
@@ -40,10 +43,13 @@ def test_handle_reduce_health_and_update_condition_costs_the_defender_health_and
     result = handle_reduce_health_and_update_condition(
         context=WarriorTookDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=7,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=7), value=7),
             defender=defender,
-            defender_damage=2,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
             damage=5,
         )
     )
@@ -141,11 +147,14 @@ def test_handle_morale_change_on_warrior_defends_all_damage_rewards_a_real_defen
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=5,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=5), value=5),
             defender=defender,
-            defender_damage=5,
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=5), value=5),
+            outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
         )
     )
 
@@ -165,11 +174,14 @@ def test_handle_morale_change_on_warrior_defends_all_damage_wears_down_a_turtle(
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=5,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=5), value=5),
             defender=defender,
-            defender_damage=5,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=5), value=5),
+            outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
         )
     )
 
@@ -190,11 +202,14 @@ def test_handle_morale_change_on_warrior_defends_all_damage_rewards_nothing_on_a
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=5,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=5), value=5),
             defender=defender,
-            defender_damage=5,
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=5), value=5),
+            outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
         )
     )
 
@@ -214,11 +229,14 @@ def test_handle_morale_change_on_warrior_defends_all_damage_always_costs_at_leas
     result = handle_morale_change_on_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=5,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=5), value=5),
             defender=defender,
-            defender_damage=5,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=5), value=5),
+            outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
         )
     )
 

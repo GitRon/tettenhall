@@ -28,6 +28,7 @@ def handle_create_skirmish_for_attack(*, context: skirmish.FactionWasAttacked) -
 def handle_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided) -> Command:
     return WarriorAttacksWarrior(
         skirmish=context.skirmish,
+        round_number=context.round_number,
         attacker=context.attacker,
         attacker_action=context.attacker_action,
         defender=context.defender,

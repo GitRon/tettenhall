@@ -1,7 +1,10 @@
 import pytest
 from queuebie.runner import handle_message
 
+from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.messages.commands.warrior import IncreaseExperience
 from apps.skirmish.messages.events.warrior import WarriorDefendedAllDamage
 from apps.skirmish.models.battle_history import BattleHistory
@@ -37,11 +40,14 @@ def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
     handle_message(
         WarriorDefendedAllDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=0,
+            attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            attack=ActionRoll(roll=None, value=0, outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN),
             defender=exhausted_defender,
-            defender_damage=20,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=4), value=8),
+            outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN,
         )
     )
 
