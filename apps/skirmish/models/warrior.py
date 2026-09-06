@@ -2,7 +2,7 @@ from math import isqrt
 
 from django.db import models
 
-from apps.common.domain.dice import DiceNotation
+from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.faction.models.culture import Culture
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
@@ -193,10 +193,17 @@ class Warrior(models.Model):
             )
         )
 
-    def roll_attack(self) -> int:
-        item = self.get_weapon_or_fallback()
-        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
+    def roll_attack(self) -> DiceRoll:
+        """
+        The throw and the notation behind it, rather than the number alone.
 
-    def roll_defense(self) -> int:
+        What the fight does with the number - scaling it by strength, then doubling or halving it for
+        the action - leaves nothing of the die in it, so the die has to travel alongside if a record
+        of the blow is ever to say what the man could have rolled.
+        """
+        item = self.get_weapon_or_fallback()
+        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).roll()
+
+    def roll_defense(self) -> DiceRoll:
         item = self.get_armor_or_fallback()
-        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
+        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).roll()
