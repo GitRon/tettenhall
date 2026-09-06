@@ -54,18 +54,34 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
     This reads cultures from the database, which is why it is a command handler - the event handler
     emitting it runs under strict mode's database blocker.
     """
-    culture = Culture.objects.get_or_none(id=context.faction_culture_id)
-    # Cultures are reference data, and a database missing them used to die one line down on
-    # "NoneType has no attribute locale". Says what is missing instead, the way the item generator
-    # already does for its own fixture. This guards the rival draw below as well: a culture coming
-    # back here is proof the table has rows for "random.choice" to pick from.
-    if culture is None:
+    player_culture = Culture.objects.get_or_none(id=context.faction_culture_id)
+    # Cultures are reference data, so an id with no row behind it is a half-seeded database rather than
+    # bad input, and it wants naming as such - the way the item generator does for its own fixture. This
+    # guards the rival draw below as well: a culture coming back here is proof the table has rows for
+    # "random.choice" to pick from.
+    if player_culture is None:
         raise RuntimeError(
             f"Culture {context.faction_culture_id} does not exist. "
             f"Load the reference data with 'loaddata culture itemtype'."
         )
 
-    faker = Faker([culture.locale])
+    cultures = list(Culture.objects.all())
+
+    rival_factions = []
+    for _ in range(random.randint(3, 5)):
+        rival_culture = random.choice(cultures)
+        # A rival is named in the culture on its own row, because that is the culture its warriors are
+        # generated from - naming it from anything else puts a Norse town in front of a Frisian war band.
+        faker = Faker([rival_culture.locale])
+        rival_factions.append(
+            CreateNewFaction(
+                name=faker.city(),
+                town_name=faker.city(),
+                culture_id=rival_culture.id,
+                savegame=context.savegame,
+                is_player_faction=False,
+            )
+        )
 
     return [
         CreateNewFaction(
@@ -74,16 +90,8 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
             savegame=context.savegame,
             culture_id=context.faction_culture_id,
             is_player_faction=True,
-        )
-    ] + [
-        CreateNewFaction(
-            name=faker.city(),
-            town_name=faker.city(),
-            culture_id=random.choice(Culture.objects.all()).id,
-            savegame=context.savegame,
-            is_player_faction=False,
-        )
-        for _ in range(random.randint(3, 5))
+        ),
+        *rival_factions,
     ]
 
 
