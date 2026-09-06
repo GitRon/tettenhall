@@ -19,8 +19,8 @@ A factory has to produce a *valid* domain object. `FactionFactory` therefore car
 Reach through it to set up a case rather than building the related object separately:
 
 ```python
-FactionFactory(town__marketplace=2)      # a faction whose town has a trading post
-FactionFactory(town=None)                # no town at all
+FactionFactory(town__marketplace=2)  # a faction whose town has a trading post
+FactionFactory(town=None)  # no town at all
 WarriorFactory(faction__town__sanctuary=3)
 ```
 

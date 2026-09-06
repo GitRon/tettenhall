@@ -4,20 +4,21 @@ version = "0.1.0"
 description = "A Django browser game about Anglo-Saxon factions"
 requires-python = ">=3.14"
 dependencies = [
-    "Django~=5.2",
-    "ambient-toolbox~=12.1",
-    "django-axes~=7.0",
-    "django-crispy-forms~=1.14",
-    "django-queuebie~=0.2",
-    "faker~=33.1",
+    "Django~=6.1",
+    "ambient-toolbox~=12.13",
+    "crispy-bootstrap5~=2026.9",
+    "django-axes~=8.3",
+    "django-crispy-forms~=2.7",
+    "django-queuebie~=0.5",
+    "faker~=40.38",
 ]
 
 [dependency-groups]
 dev = [
     "django-removals",
     "factory-boy~=3.3",
-    "pytest~=8.3",
-    "pytest-cov~=6.0",
+    "pytest~=9.1",
+    "pytest-cov~=7.1",
     "pytest-django~=4.11",
 ]
 

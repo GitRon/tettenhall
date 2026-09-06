@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
+    rev: v0.16.6
 
     hooks:
       # Run the Ruff formatter.
@@ -10,17 +10,17 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.31.1
+    rev: 1.32.0
     hooks:
       - id: django-upgrade
-        args: [--target-version, "4.2"]
+        args: [--target-version, "6.1"]
         language_version: python3.14
 
   - repo: https://github.com/adamchainz/djade-pre-commit
     rev: 1.9.0
     hooks:
       - id: djade
-        args: [ --target-version, "4.2" ]
+        args: [ --target-version, "6.0" ]
         exclude: |
           (?x)^(
             charts/.*
@@ -28,7 +28,7 @@ repos:
           )$
 
   - repo: https://github.com/ambient-innovation/boa-restrictor
-    rev: v1.16.2
+    rev: v1.18.0
     hooks:
       - id: boa-restrictor
         args: [ --config=pyproject.toml ]
