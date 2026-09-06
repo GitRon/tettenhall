@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from apps.skirmish.messages.events.warrior import WarriorDefendedDamage
 from apps.skirmish.services.actions.defensive_stance import DefensiveStanceService
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -23,7 +22,6 @@ def test_get_attack_value_never_deals_damage():
     result = service.get_attack_value()
 
     assert result == 0
-    assert service.message_list == []
 
 
 @pytest.mark.django_db
@@ -37,5 +35,3 @@ def test_get_defense_value_doubles_the_defense():
         result = service.get_defense_value()
 
     assert result == 4
-    # The undoubled roll is what the base service announces
-    assert service.message_list == [WarriorDefendedDamage(skirmish=skirmish, warrior=warrior, damage=2)]

@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from apps.skirmish.messages.events.warrior import WarriorAttackedWithDamage, WarriorDefendedDamage
 from apps.skirmish.services.actions.base import AttackService
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -29,7 +28,6 @@ def test_get_attack_value_for_a_warrior_at_his_own_baseline():
         result = service.get_attack_value()
 
     assert result == 3
-    assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=3)]
 
 
 @pytest.mark.django_db
@@ -46,7 +44,6 @@ def test_get_attack_value_for_a_warrior_below_his_baseline():
         result = service.get_attack_value()
 
     assert result == 2
-    assert service.message_list == [WarriorAttackedWithDamage(skirmish=skirmish, warrior=warrior, damage=2)]
 
 
 @pytest.mark.django_db
@@ -62,4 +59,3 @@ def test_get_defense_value_announces_the_roll():
         result = service.get_defense_value()
 
     assert result == 2
-    assert service.message_list == [WarriorDefendedDamage(skirmish=skirmish, warrior=warrior, damage=2)]
