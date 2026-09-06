@@ -3,6 +3,8 @@ from django.db.models import F
 
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
+from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
+from apps.skirmish.models.skirmish_warrior_growth import SkirmishWarriorGrowth
 from apps.skirmish.models.warrior import Warrior
 
 
@@ -32,3 +34,7 @@ class Command(BaseCommand):
         skirmish.defending_faction.captured_warriors.remove(*skirmish.defending_faction.captured_warriors.all())
 
         BattleHistory.objects.filter(skirmish=skirmish).delete()
+        # The recorded outcome goes with the log it summarises, otherwise a refought skirmish reports
+        # the spoils of the run before it on top of its own
+        SkirmishSpoil.objects.filter(skirmish=skirmish).delete()
+        SkirmishWarriorGrowth.objects.filter(skirmish=skirmish).delete()

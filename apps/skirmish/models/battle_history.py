@@ -15,6 +15,9 @@ class BattleHistory(models.Model):
         verbose_name = "Battle log"
         verbose_name_plural = "Battle logs"
         default_related_name = "battle_logs"
+        # The one panel in the game that has to read chronologically, so the order it is written in
+        # is part of what it is rather than a detail left to the database
+        ordering = ("id",)
 
     def __str__(self) -> str:
         return self.message
