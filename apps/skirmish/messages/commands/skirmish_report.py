@@ -4,6 +4,8 @@ from queuebie.messages import Command
 
 from apps.faction.models.faction import Faction
 from apps.item.models.item import Item
+from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -30,3 +32,17 @@ class RecordWarriorGrowth(Command):
     gained_max_health: int = 0
     gained_max_morale: int = 0
     new_monthly_salary: int = None
+
+
+@dataclass(kw_only=True)
+class RecordSkirmishBlow(Command):
+    skirmish: Skirmish
+    round_number: int
+    attacker: Warrior
+    attacker_action: SkirmishActionTypeHint
+    attack: ActionRoll
+    defender: Warrior
+    defender_action: SkirmishActionTypeHint
+    defense: ActionRoll
+    outcome: int
+    damage: int = 0

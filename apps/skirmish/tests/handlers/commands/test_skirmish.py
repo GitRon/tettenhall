@@ -255,6 +255,7 @@ def test_handle_assign_fighter_pairs_matches_equally_sized_groups():
     assert result == [
         FighterPairsMatched(
             skirmish=skirmish,
+            round_number=skirmish.current_round,
             warrior_1=attacking_participant.warrior,
             warrior_2=enemy_participant.warrior,
             attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
@@ -292,6 +293,7 @@ def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_g
     assert result == [
         FighterPairsMatched(
             skirmish=skirmish,
+            round_number=skirmish.current_round,
             warrior_1=first_attacking_participant.warrior,
             warrior_2=enemy_participant.warrior,
             attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
@@ -299,6 +301,7 @@ def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_g
         ),
         AttackerDefenderDecided(
             skirmish=skirmish,
+            round_number=skirmish.current_round,
             attacker=second_attacking_participant.warrior,
             attacker_action=SkirmishActionChoices.FAST_ATTACK,
             defender=enemy_participant.warrior,
@@ -318,6 +321,7 @@ def test_handle_determine_attacker_and_defender_lets_the_first_warrior_attack():
         result = handle_determine_attacker_and_defender(
             context=DetermineAttacker(
                 skirmish=skirmish,
+                round_number=2,
                 warrior_1=attacking_warrior,
                 action_1=SkirmishActionChoices.SIMPLE_ATTACK,
                 warrior_2=enemy_warrior,
@@ -327,6 +331,7 @@ def test_handle_determine_attacker_and_defender_lets_the_first_warrior_attack():
 
     assert result == AttackerDefenderDecided(
         skirmish=skirmish,
+        round_number=2,
         attacker=attacking_warrior,
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=enemy_warrior,
@@ -345,6 +350,7 @@ def test_handle_determine_attacker_and_defender_lets_the_second_warrior_attack()
         result = handle_determine_attacker_and_defender(
             context=DetermineAttacker(
                 skirmish=skirmish,
+                round_number=2,
                 warrior_1=attacking_warrior,
                 action_1=SkirmishActionChoices.SIMPLE_ATTACK,
                 warrior_2=enemy_warrior,
@@ -354,6 +360,7 @@ def test_handle_determine_attacker_and_defender_lets_the_second_warrior_attack()
 
     assert result == AttackerDefenderDecided(
         skirmish=skirmish,
+        round_number=2,
         attacker=enemy_warrior,
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=attacking_warrior,
@@ -370,6 +377,7 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
     result = handle_determine_attacker_and_defender(
         context=DetermineAttacker(
             skirmish=skirmish,
+            round_number=2,
             warrior_1=attacking_warrior,
             action_1=SkirmishActionChoices.DEFENSIVE_STANCE,
             warrior_2=enemy_warrior,
@@ -379,6 +387,7 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
 
     assert result == AttackerDefenderDecided(
         skirmish=skirmish,
+        round_number=2,
         attacker=attacking_warrior,
         attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
         defender=enemy_warrior,

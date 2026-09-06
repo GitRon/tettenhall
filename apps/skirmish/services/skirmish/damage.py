@@ -1,6 +1,8 @@
 from queuebie.messages import Event
 
+from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.messages.events.warrior import WarriorDefendedAllDamage, WarriorTookDamage
 from apps.skirmish.models import Skirmish, Warrior
 from apps.skirmish.services.actions.utils import get_service_by_attack_action
@@ -21,6 +23,7 @@ class SkirmishDamageService:
     MINIMUM_DAMAGE_SHARE = 0.25
 
     skirmish: Skirmish
+    round_number: int
     message_list: list[Event]
 
     attacker: Warrior
@@ -33,12 +36,14 @@ class SkirmishDamageService:
         self,
         *,
         skirmish: Skirmish,
+        round_number: int,
         attacker: Warrior,
         attacker_action: SkirmishActionTypeHint,
         defender: Warrior,
         defender_action: SkirmishActionTypeHint,
     ):
         self.skirmish = skirmish
+        self.round_number = round_number
         self.message_list = []
 
         self.attacker = attacker
@@ -47,17 +52,20 @@ class SkirmishDamageService:
         self.defender = defender
         self.defender_action = defender_action
 
-    def _deal_damage(self, *, attack: int, defense: int) -> int:
-        damage = max(attack - defense, round(attack * self.MINIMUM_DAMAGE_SHARE))
+    def _deal_damage(self, *, attack: ActionRoll, defense: ActionRoll) -> int:
+        damage = max(attack.value - defense.value, round(attack.value * self.MINIMUM_DAMAGE_SHARE))
 
         if damage > 0:
             self.message_list.append(
                 WarriorTookDamage(
                     skirmish=self.skirmish,
+                    round_number=self.round_number,
                     attacker=self.attacker,
-                    attacker_damage=attack,
+                    attacker_action=self.attack_action,
+                    attack=attack,
                     defender=self.defender,
-                    defender_damage=defense,
+                    defender_action=self.defender_action,
+                    defense=defense,
                     damage=damage,
                 )
             )
@@ -65,11 +73,17 @@ class SkirmishDamageService:
             self.message_list.append(
                 WarriorDefendedAllDamage(
                     skirmish=self.skirmish,
+                    round_number=self.round_number,
                     attacker=self.attacker,
+                    attacker_action=self.attack_action,
+                    attack=attack,
                     defender=self.defender,
-                    attacker_damage=attack,
-                    defender_damage=defense,
                     defender_action=self.defender_action,
+                    defense=defense,
+                    # An action that threw nothing says so itself. Anything else that got nothing
+                    # through was stopped by the armour, which is a different thing entirely and used
+                    # to be recorded as the same zero
+                    outcome=attack.outcome if attack.outcome is not None else BlowOutcomeChoices.OUTCOME_ABSORBED,
                 )
             )
 

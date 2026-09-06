@@ -2,6 +2,9 @@ from unittest import mock
 
 import pytest
 
+from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.item.models.item_type import ItemType
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.services.actions.fast_attack import FastAttackService
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -23,7 +26,11 @@ def test_get_attack_value_halves_the_damage():
     with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
         result = service.get_attack_value()
 
-    assert result == 3
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        value=3,
+    )
 
 
 @pytest.mark.django_db
@@ -39,4 +46,8 @@ def test_get_attack_value_halves_a_blow_measured_against_a_lower_baseline():
     with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
         result = service.get_attack_value()
 
-    assert result == 6
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d3"), result=3),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        value=6,
+    )

@@ -4,6 +4,7 @@ from queuebie.messages import Event
 
 from apps.faction.models.faction import Faction
 from apps.skirmish.choices.skirmish_action import SkirmishActionTypeHint
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.warrior import Warrior
 
@@ -18,23 +19,35 @@ class LastUsedSkirmishActionStored(Event):
 @dataclass(kw_only=True)
 class WarriorTookDamage(Event):
     skirmish: Skirmish
+    # Carried rather than read off the skirmish downstream, because "current_round" has already moved
+    # on to the round nobody has fought yet by the time an event handler runs
+    round_number: int
     attacker: Warrior
-    attacker_damage: int
+    attacker_action: SkirmishActionTypeHint
+    # The whole swing rather than the single number it comes to: the die, and the value the fight
+    # compared. A record holding only the second can never be read back as the first
+    attack: ActionRoll
     defender: Warrior
-    defender_damage: int
+    defender_action: SkirmishActionTypeHint
+    defense: ActionRoll
     damage: int
 
 
 @dataclass(kw_only=True)
 class WarriorDefendedAllDamage(Event):
     skirmish: Skirmish
+    round_number: int
     attacker: Warrior
-    attacker_damage: int
+    attacker_action: SkirmishActionTypeHint
+    attack: ActionRoll
     defender: Warrior
-    defender_damage: int
     # Carried because turning a blow aside and simply standing there behind a shield are worth
     # opposite things to a warrior's nerve, and the damage alone cannot tell them apart
     defender_action: SkirmishActionTypeHint
+    defense: ActionRoll
+    # Which of the three ways nothing got through this was: a swing that went wide, an action that
+    # threw nothing at all, or armour that took the whole blow
+    outcome: int
 
 
 @dataclass(kw_only=True)

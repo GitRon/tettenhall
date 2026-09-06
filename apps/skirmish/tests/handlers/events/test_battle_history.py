@@ -1,6 +1,9 @@
+from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.item.tests.factories.item import ItemFactory
+from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.handlers.events.battle_history import (
     handle_log_attacker_defender_decided,
     handle_log_item_dropped,
@@ -48,10 +51,13 @@ def test_handle_log_warrior_takes_damage_logs_both_rolls():
     result = handle_log_warrior_takes_damage(
         context=WarriorTookDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=7,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=7), value=7),
             defender=defender,
-            defender_damage=2,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
             damage=5,
         )
     )
@@ -74,10 +80,13 @@ def test_handle_log_warrior_takes_damage_when_the_defence_outrolls_the_attack():
     result = handle_log_warrior_takes_damage(
         context=WarriorTookDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=12,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=12), value=12),
             defender=defender,
-            defender_damage=20,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=20), value=20),
             damage=3,
         )
     )
@@ -96,11 +105,14 @@ def test_handle_log_warrior_defends_all_damage_logs_the_successful_defense():
     result = handle_log_warrior_defends_all_damage(
         context=WarriorDefendedAllDamage(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
-            attacker_damage=2,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=2),
             defender=defender,
-            defender_damage=7,
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
+            outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
         )
     )
 
@@ -118,6 +130,7 @@ def test_handle_log_attacker_defender_decided_logs_the_chosen_action():
     result = handle_log_attacker_defender_decided(
         context=AttackerDefenderDecided(
             skirmish=skirmish,
+            round_number=1,
             attacker=attacker,
             attacker_action=SkirmishActionChoices.RISKY_ATTACK,
             defender=defender,

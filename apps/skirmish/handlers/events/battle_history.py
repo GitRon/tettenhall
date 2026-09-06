@@ -10,8 +10,8 @@ from apps.skirmish.messages.events import item, skirmish, transaction, warrior
 def handle_log_warrior_takes_damage(*, context: warrior.WarriorTookDamage) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
-        message=f"{context.attacker} strikes at {context.attacker_damage} against {context.defender}'s "
-        f"{context.defender_damage} defense, and {context.damage} damage gets through.",
+        message=f"{context.attacker} strikes at {context.attack.value} against {context.defender}'s "
+        f"{context.defense.value} defense, and {context.damage} damage gets through.",
     )
 
 
@@ -19,8 +19,8 @@ def handle_log_warrior_takes_damage(*, context: warrior.WarriorTookDamage) -> Co
 def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
-        message=f"{context.defender} defended {context.attacker_damage} damage from {context.attacker} "
-        f"with {context.defender_damage} defense.",
+        message=f"{context.defender} defended {context.attack.value} damage from {context.attacker} "
+        f"with {context.defense.value} defense.",
     )
 
 

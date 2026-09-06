@@ -33,6 +33,7 @@ TERMINAL_MESSAGES: frozenset[str] = frozenset(
         "apps.quest.messages.events.quest_contract.QuestContractAsActiveQuestRemoved",
         "apps.quest.messages.events.quest_contract.SkirmishToQuestContractAssigned",
         "apps.skirmish.messages.events.battle_history.BattleHistoryCreated",
+        "apps.skirmish.messages.events.skirmish_report.SkirmishBlowRecorded",
         "apps.skirmish.messages.events.skirmish_report.SkirmishSpoilRecorded",
         "apps.skirmish.messages.events.skirmish_report.WarriorGrowthRecorded",
         "apps.skirmish.messages.events.warrior.LastUsedSkirmishActionStored",

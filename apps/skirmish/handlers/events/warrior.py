@@ -20,6 +20,7 @@ from apps.skirmish.messages.events import skirmish, warrior
 def handle_determine_attacker(*, context: skirmish.FighterPairsMatched) -> Command:
     return DetermineAttacker(
         skirmish=context.skirmish,
+        round_number=context.round_number,
         warrior_1=context.warrior_1,
         warrior_2=context.warrior_2,
         action_1=context.attack_action_1,

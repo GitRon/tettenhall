@@ -29,6 +29,10 @@ class SkirmishCreated(Event):
 @dataclass(kw_only=True)
 class FighterPairsMatched(Event):
     skirmish: Skirmish
+    # The round these two are about to fight, stamped by the command handler that starts it. Every
+    # message down the chain to the blow itself carries it, because none of them may read it back off
+    # the skirmish - "increment_round" saves, so afterwards it names the round nobody has fought yet
+    round_number: int
     warrior_1: Warrior
     warrior_2: Warrior
     attack_action_1: int
@@ -38,6 +42,7 @@ class FighterPairsMatched(Event):
 @dataclass(kw_only=True)
 class AttackerDefenderDecided(Event):
     skirmish: Skirmish
+    round_number: int
     attacker: Warrior
     attacker_action: SkirmishActionTypeHint
     defender: Warrior

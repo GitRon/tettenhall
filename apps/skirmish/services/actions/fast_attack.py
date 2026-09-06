@@ -1,5 +1,6 @@
 from queuebie.messages import Command
 
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.messages.commands.skirmish import (
     WarriorAttacksWarrior,
 )
@@ -14,7 +15,6 @@ class FastAttackService(AttackService):
         # Fast attack will double the base points for being the attacker instead of the defender
         return AttackService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 2
 
-    def get_attack_value(self) -> int:
+    def get_attack_value(self) -> ActionRoll:
         # Attack will cause only 50% damage since it's a fast one
-        # Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater
-        return round(self.warrior.roll_attack() * 0.5 * self.warrior.strength / self.warrior.strength_baseline)
+        return self._scaled_by_strength(attack=self.warrior.roll_attack(), action_multiplier=0.5)

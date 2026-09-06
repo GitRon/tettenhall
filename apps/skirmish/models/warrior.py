@@ -7,6 +7,7 @@ from apps.faction.models.culture import Culture
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.managers.warrior import WarriorManager
 from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 
@@ -193,10 +194,23 @@ class Warrior(models.Model):
             )
         )
 
-    def roll_attack(self) -> int:
-        item = self.get_weapon_or_fallback()
-        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
+    def roll_attack(self) -> ActionRoll:
+        """
+        The weapon's own throw, the die behind it and the gear that threw it - before the fight
+        scales any of it.
 
-    def roll_defense(self) -> int:
-        item = self.get_armor_or_fallback()
-        return DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).result
+        What the fight does with the number - scaling it by strength, then doubling or halving it for
+        the action - leaves nothing of the die in it, so the die has to travel alongside if a record
+        of the blow is ever to say what the man could have rolled. "value" is the bare roll here; the
+        action service replaces it with what the fight actually compares.
+        """
+        return self._roll_gear(item=self.get_weapon_or_fallback())
+
+    def roll_defense(self) -> ActionRoll:
+        return self._roll_gear(item=self.get_armor_or_fallback())
+
+    @staticmethod
+    def _roll_gear(*, item: Item) -> ActionRoll:
+        roll = DiceNotation(dice_string=item.type.base_value, modifier=item.modifier).roll()
+
+        return ActionRoll(roll=roll, item_type=item.type, value=roll.result)

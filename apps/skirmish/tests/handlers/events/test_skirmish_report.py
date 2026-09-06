@@ -1,17 +1,33 @@
+from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.item.tests.factories.item import ItemFactory
+from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.handlers.events.skirmish_report import (
     handle_record_gained_experience,
     handle_record_gained_level,
     handle_record_improved_stats,
+    handle_record_landed_blow,
     handle_record_looted_item,
     handle_record_looted_silver,
     handle_record_quest_reward,
+    handle_record_stopped_blow,
 )
-from apps.skirmish.messages.commands.skirmish_report import RecordSkirmishSpoil, RecordWarriorGrowth
+from apps.skirmish.messages.commands.skirmish_report import (
+    RecordSkirmishBlow,
+    RecordSkirmishSpoil,
+    RecordWarriorGrowth,
+)
 from apps.skirmish.messages.events.item import ItemDroppedAsLoot
 from apps.skirmish.messages.events.skirmish import SkirmishFinished
 from apps.skirmish.messages.events.transaction import WarriorDroppedSilver
-from apps.skirmish.messages.events.warrior import WarriorGainedExperience, WarriorGainedLevel, WarriorImprovedStats
+from apps.skirmish.messages.events.warrior import (
+    WarriorDefendedAllDamage,
+    WarriorGainedExperience,
+    WarriorGainedLevel,
+    WarriorImprovedStats,
+    WarriorTookDamage,
+)
 from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -152,4 +168,77 @@ def test_handle_record_improved_stats_carries_the_four_gains_and_the_wage():
         gained_max_health=3,
         gained_max_morale=4,
         new_monthly_salary=15,
+    )
+
+
+def test_handle_record_landed_blow_states_the_outcome_it_is_raised_for():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build()
+    defender = WarriorFactory.build()
+    attack = ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6", modifier=1), result=9), value=9)
+    defense = ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2)
+
+    result = handle_record_landed_blow(
+        context=WarriorTookDamage(
+            skirmish=skirmish,
+            round_number=2,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=attack,
+            defender=defender,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=defense,
+            damage=7,
+        )
+    )
+
+    assert result == RecordSkirmishBlow(
+        skirmish=skirmish,
+        round_number=2,
+        attacker=attacker,
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        attack=attack,
+        defender=defender,
+        defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defense=defense,
+        outcome=BlowOutcomeChoices.OUTCOME_HIT,
+        damage=7,
+    )
+
+
+def test_handle_record_stopped_blow_carries_which_kind_of_nothing_it_was():
+    """
+    The outcome comes off the event rather than being decided here: a swing that went wide, a stance
+    that threw nothing and armour that held are one zero and three different records.
+    """
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build()
+    defender = WarriorFactory.build()
+    attack = ActionRoll(roll=None, value=0, outcome=BlowOutcomeChoices.OUTCOME_MISSED)
+    defense = ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), value=3)
+
+    result = handle_record_stopped_blow(
+        context=WarriorDefendedAllDamage(
+            skirmish=skirmish,
+            round_number=2,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+            attack=attack,
+            defender=defender,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=defense,
+            outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+        )
+    )
+
+    assert result == RecordSkirmishBlow(
+        skirmish=skirmish,
+        round_number=2,
+        attacker=attacker,
+        attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+        attack=attack,
+        defender=defender,
+        defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defense=defense,
+        outcome=BlowOutcomeChoices.OUTCOME_MISSED,
     )
