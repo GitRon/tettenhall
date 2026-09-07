@@ -40,10 +40,15 @@ to a positive integer column, where anything below one truncates to nothing.
 | Fyrd reserve | `fyrd_change` | `ChangeFyrdReserve` — `apps/faction/handlers/events/incident.py` |
 | Morale ceiling | `max_morale_share` + `warrior` | `ChangeWarriorMaxMorale` — `apps/warrior/handlers/events/incident.py` |
 | A piece of gear | `lost_item` | `LoseItem` — `apps/item/handlers/events/incident.py` |
-| The log line | `title` + `body` | `CreatePlayerMonthLog` — `apps/month/handlers/events/incident.py` |
 
-A lever left at its default is a lever the entry does not pull, and each handler refuses an outcome
-that does not name its own. **The reactions live in the apps that own them**, not in
+A lever left at its default is a lever the entry does not pull, and each of those four handlers
+refuses an outcome that does not name its own.
+
+The log line is not one of them: `title` and `body` have no default to leave alone, so
+`handle_write_incident_to_month_log` in `apps/month/handlers/events/incident.py` is the one reaction
+every incident has, unguarded.
+
+**The reactions live in the apps that own them**, not in
 `apps/incident/` — per [where code goes](app-layout.md), a handler belongs to the app owning the
 command it emits, in a module named after the app the event came from. So `apps/incident/` chooses,
 and nothing there writes another app's rows. A new lever costs a field on the outcome and a handler
