@@ -1,9 +1,10 @@
 from django.contrib import messages
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.urls import reverse
 from django.views import generic
 from queuebie.runner import handle_message
 
+from apps.common.http import hx_redirect
 from apps.finance.models import Transaction
 from apps.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.savegame.models.savegame import Savegame
@@ -11,6 +12,7 @@ from apps.savegame.services.current_savegame import get_current_savegame_for_req
 from apps.town.buildings import BUILDINGS
 from apps.town.messages.commands.town import UpgradeTownBuilding
 from apps.town.models import Town
+from apps.town.services.building_upgrade import get_building_upgrade_refusal
 
 
 class PlayerTownMixin(PlayerFactionScopedQuerysetMixin):
@@ -99,54 +101,30 @@ class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic
         if building_type not in BUILDINGS:
             raise Http404(f"Unknown building type: {building_type}")
 
-        building_class = BUILDINGS[building_type]
         town = self.get_object()
-
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
-        current_silver_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
 
-        current_building_level = getattr(town, building_type)
+        refusal = get_building_upgrade_refusal(
+            town=town, building_type=building_type, current_savegame=current_savegame
+        )
+        if refusal is not None:
+            messages.add_message(request, messages.WARNING, refusal)
 
-        # The top level is the last one there is, so this has to stop there - asking for the next one
-        # up would leave "get_building_by_type" without a match
-        if current_building_level >= building_class.get_max_level():
-            messages.add_message(request, messages.WARNING, "You already have the maximum building level.")
+            return hx_redirect(url=reverse("town:town-upgrade-view"))
 
-            # TODO (#100): encapsulate this logic somewhere so we don't need to return this n times
-            #  -> create validation service
-            response = HttpResponse()
-            response["HX-Redirect"] = reverse("town:town-upgrade-view")
-            return response
-
-        # Checked before the price: both guards can apply at once, and the month is the one the player
-        # cannot do anything about until it is over, so it is the one worth reporting
-        if town.last_constructed_building_at == current_savegame.current_month:
-            messages.add_message(request, messages.WARNING, "You've already commissioned a building this month.")
-
-            response = HttpResponse()
-            response["HX-Redirect"] = reverse("town:town-upgrade-view")
-            return response
-
-        desired_building = building_class.get_building_by_type(building_type=current_building_level + 1)
-        if current_silver_balance < desired_building.BUILDING_COSTS:
-            messages.add_message(request, messages.WARNING, "You don't have the silver to pay for the building.")
-
-            response = HttpResponse()
-            response["HX-Redirect"] = reverse("town:town-upgrade-view")
-            return response
+        new_level = getattr(town, building_type) + 1
+        desired_building = BUILDINGS[building_type].get_building_by_type(building_type=new_level)
 
         handle_message(
             UpgradeTownBuilding(
                 town=town,
                 faction=town.faction,
                 building_type=building_type,
-                new_level=current_building_level + 1,
+                new_level=new_level,
                 costs=desired_building.BUILDING_COSTS,
                 month=current_savegame.current_month,
             )
         )
         messages.add_message(request, messages.SUCCESS, "Building upgraded.")
 
-        response = HttpResponse()
-        response["HX-Redirect"] = reverse("town:town-upgrade-view")
-        return response
+        return hx_redirect(url=reverse("town:town-upgrade-view"))
