@@ -21,6 +21,7 @@ inferring the conventions from nearby code.
 - [Writing a handler](docs/patterns/handlers.md) — signature, registration, return values
 - [Adding a new flow](docs/patterns/adding-a-flow.md) — the end-to-end checklist
 - [Strict mode](docs/patterns/strict-mode.md) — what it enforces, and where it does not
+- [Raising](docs/patterns/exceptions.md) — `RuntimeError` vs a custom exception, and where one lives
 - [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
 - [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a
   balance number belongs

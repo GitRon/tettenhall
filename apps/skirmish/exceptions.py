@@ -2,12 +2,18 @@ class UnknownSkirmishParticipantError(Exception):
     """
     Raised when a posted warrior id names somebody who is not fighting this skirmish.
 
-    Deliberately not the "RuntimeError" the rest of the codebase raises: those mark states that should
-    be unreachable - an unknown building type, a difficulty that is not a difficulty - while this one is
-    ordinary bad input from a request, which the view answers with the 400 it gives every other piece of
-    unusable input. A "RuntimeError" here would be the very shape this story fixes, where an action that
-    named no action reached the damage services and answered 500.
+    Ordinary bad input from a request rather than an unreachable state, so it is a custom exception the
+    view catches and answers with the 400 it gives every other piece of unusable input - see
+    docs/patterns/exceptions.md.
+    """
 
-    It lives here rather than beside the service that raises it because it crosses a layer: the service
-    raises it and the view catches it, so it belongs to neither.
+
+class UnknownSkirmishActionError(Exception):
+    """
+    Raised when a number that is not a skirmish action is asked for its attack service.
+
+    Same kind as "UnknownSkirmishParticipantError": the number arrives in a request, so whoever asks has
+    to be able to catch this and refuse the input rather than let a 500 out.
+    "SkirmishFinishRoundView.post" already refuses an unknown action at the boundary; this is the
+    guarantee for the next caller, which may have no such boundary.
     """
