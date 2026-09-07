@@ -125,9 +125,7 @@ def test_process_prices_a_quest_against_the_men_who_could_turn_out():
     WarriorFactory.create_batch(3, faction=savegame.player_faction)
     rival_faction = FactionFactory(savegame=savegame)
     WarriorFactory(faction=rival_faction)
-    WarriorFactory.create_batch(
-        2, faction=rival_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
-    )
+    WarriorFactory.create_batch(2, faction=rival_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
     quest = QuestGenerator(savegame=savegame).process()
 
