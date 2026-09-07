@@ -69,9 +69,14 @@ Do **not** call handler functions directly outside tests, and do **not** put mul
 the view — validate the input, build the initial Command, and hand it to `handle_message`. Everything
 after that belongs in handlers and services.
 
-Validation guards (can they afford it? already built this month?) currently sit in the view before
-dispatch, see `apps/town/views/town_upgrade.py`. There is a standing TODO to move them into a validation
-service.
+Validation guards (can they afford it? already built this month?) belong in a service the view asks once
+before dispatch, not in the view itself: `get_building_upgrade_refusal`
+(`apps/town/services/building_upgrade.py`) answers with the first guard's message or `None`, and
+`UpgradeBuildingView.post` turns a message into a warning and a redirect. The guards and the order they
+are reported in are game rules, so they live where something other than one view can reach them.
+
+What stays in the view is input validation the game has no opinion about — the `BUILDINGS` whitelist on
+the building type from the URL, which answers `Http404` rather than a message.
 
 ## When a side effect actually lands
 

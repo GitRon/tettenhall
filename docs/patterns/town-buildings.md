@@ -44,14 +44,16 @@ holding that level's numbers:
 - **Only one building per month**, guarded by `Town.last_constructed_building_at`. Months count from
   1, so **0 means "nothing built yet"** — a town created with the current month in that field cannot
   build for the rest of it, which is why a new town leaves the field at its default.
-- **The guard is enforced twice on purpose.** The view checks it to give the player a message, and
+- **The guard is enforced twice on purpose.** `get_building_upgrade_refusal`
+  (`apps/town/services/building_upgrade.py`) checks it to give the player a message, and
   `handle_upgrade_town_building` re-checks it as a single conditional `UPDATE ... WHERE`. Two
-  overlapping requests both pass the view's check, and the command handler returning `None` for the
+  overlapping requests both pass the first check, and the command handler returning `None` for the
   loser is what keeps the player from being charged twice. Don't turn that back into a
   read-modify-save.
-- **The month guard is reported before the price.** Both can apply to the same click, and the month is the
-  one the player cannot do anything about until it is over — naming the price instead sends them off to
-  raise silver they may not spend yet. The price is a disabled button on the page anyway, so a click
+- **The month guard is reported before the price**, which is why `get_building_upgrade_refusal` answers
+  with the *first* refusal rather than collecting them. Both can apply to the same click, and the month is
+  the one the player cannot do anything about until it is over — naming the price instead sends them off
+  to raise silver they may not spend yet. The price is a disabled button on the page anyway, so a click
   reaching the view at all means the page was stale.
 - **A rival's town is created at chosen levels, and stays there.** The player starts at every default;
   a rival is handed the sanctuary level named by `NPC_STARTING_SANCTUARY_LEVEL`

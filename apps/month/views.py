@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.views import generic
 from queuebie.runner import handle_message
 
+from apps.common.http import hx_redirect
 from apps.month.messages.commands.month import PrepareMonth
 from apps.savegame.mixins import RunningSavegameRequiredMixin
 from apps.savegame.models.savegame import Savegame
@@ -38,6 +39,4 @@ class FinishMonthView(RunningSavegameRequiredMixin, generic.View):
             )
         )
 
-        response = HttpResponse(status=HTTPStatus.OK)
-        response["HX-Redirect"] = reverse("account:dashboard-view")
-        return response
+        return hx_redirect(url=reverse("account:dashboard-view"))
