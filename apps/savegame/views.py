@@ -1,10 +1,8 @@
-from http import HTTPStatus
-
-from django.http import HttpResponse
 from django.urls import reverse, reverse_lazy
 from django.views import generic
 from queuebie.runner import handle_message
 
+from apps.common.http import hx_redirect
 from apps.savegame.forms.create_savegame import SavegameCreateForm
 from apps.savegame.messages.commands.savegame import CreateNewSavegame
 from apps.savegame.mixins import CurrentSavegameMixin
@@ -53,6 +51,4 @@ class SavegameLoadView(generic.DetailView):
 
         Savegame.objects.activate_savegame(savegame=savegame)
 
-        response = HttpResponse(status=HTTPStatus.OK)
-        response["HX-Redirect"] = reverse("account:dashboard-view")
-        return response
+        return hx_redirect(url=reverse("account:dashboard-view"))
