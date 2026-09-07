@@ -62,8 +62,8 @@ except UnknownSkirmishParticipantError:
 ```
 
 The better place to refuse bad input is the boundary, before the service is reached at all —
-`SkirmishActionView.post` constructs `SkirmishActionChoices(int(...))` off the request and answers 400
-when that fails, so an unknown action never gets as far as `get_service_by_attack_action`. The custom
+`SkirmishFinishRoundView.post` constructs `SkirmishActionChoices(int(...))` off the request and answers
+400 when that fails, so an unknown action never gets as far as `get_service_by_attack_action`. The custom
 exception is the guarantee for the *next* caller, which may have no such boundary.
 
 ## See also

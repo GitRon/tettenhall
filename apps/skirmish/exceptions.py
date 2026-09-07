@@ -13,7 +13,7 @@ class UnknownSkirmishActionError(Exception):
     Raised when a number that is not a skirmish action is asked for its attack service.
 
     Same kind as "UnknownSkirmishParticipantError": the number arrives in a request, so whoever asks has
-    to be able to catch this and refuse the input rather than let a 500 out. "SkirmishActionView.post"
-    already refuses an unknown action at the boundary; this is the guarantee for the next caller, which
-    may have no such boundary.
+    to be able to catch this and refuse the input rather than let a 500 out.
+    "SkirmishFinishRoundView.post" already refuses an unknown action at the boundary; this is the
+    guarantee for the next caller, which may have no such boundary.
     """
