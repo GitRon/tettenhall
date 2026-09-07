@@ -121,7 +121,7 @@ is readable rather than reconstructed:
 
 ```
 DEBUG   queuebie: Handling command '….month.PrepareMonth' (…) with handler 'handle_prepare_month'.
-DEBUG   queuebie: New messages: ['PlayerMonthPrepared (…)']
+DEBUG   queuebie: New messages: ["<class 'apps.month.messages.events.month.PlayerMonthPrepared'> (…)"]
 ```
 
 Read it top to bottom and the batching above is visible: every message a handler returns appears in a

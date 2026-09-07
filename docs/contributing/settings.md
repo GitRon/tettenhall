@@ -33,11 +33,16 @@ returned:
 
 ```
 2026-09-07 10:14:22,001 DEBUG   queuebie: Handling command 'apps.month.messages.commands.month.PrepareMonth' (…) with handler 'handle_prepare_month'.
-2026-09-07 10:14:22,004 DEBUG   queuebie: New messages: ['PlayerMonthPrepared (…)']
+2026-09-07 10:14:22,004 DEBUG   queuebie: New messages: ["<class 'apps.month.messages.events.month.PlayerMonthPrepared'> (…)"]
 ```
 
 That is the record of an ordering question — which handler's writes were visible to which — and it is
 the cheapest answer to one, see [the message bus](../patterns/message-bus.md).
+
+Autodiscovery writes to the same logger, so the first thing in the log of a fresh process is queuebie
+registering every handler it found, one line each plus a dump of every message and the handlers it
+maps to — a couple of hundred lines before the first message is drained. That is the registry, not the
+queue.
 
 Two things about the dict are deliberate rather than stylistic:
 
@@ -46,8 +51,10 @@ Two things about the dict are deliberate rather than stylistic:
   would print every Django record twice — once there, once on the root handler. Listing it hands its
   records to the one console handler. It also drops `mail_admins` from that chain; the project
   configures neither `ADMINS` nor a mail backend.
-- **`django.server` is not listed.** It turns propagation off itself, so the runserver request lines
-  keep their own format and reach the console exactly once.
+- **The loggers below it come along.** `logging.config` resets every existing logger under a
+  configured one, so naming `django` leaves `django.server` and `django.request` with no handler of
+  their own and propagation on. The runserver request lines therefore arrive in the format above,
+  timestamped and named, rather than in Django's `[server_time] message`.
 
 An application logger is not part of this: nothing in `apps/` calls `getLogger`, and the record of what
 the *game* did is the month log, not the console.

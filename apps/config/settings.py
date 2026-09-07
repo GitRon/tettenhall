@@ -233,8 +233,12 @@ LOGGING = {
         # without turning propagation off, so leaving it alone would print every Django record
         # twice - once there and once on the root handler. It keeps its level and loses its
         # handler, which also drops "mail_admins" from the chain: the project configures neither
-        # ADMINS nor a mail backend, so nothing was ever sent. "django.server" turns propagation
-        # off itself and keeps both its handler and its own format for the request lines.
+        # ADMINS nor a mail backend, so nothing was ever sent.
+        # Naming it here also resets every logger below it - "django.server" and "django.request" -
+        # to no handler of its own and propagation on, which is what "logging.config" does to the
+        # children of a configured logger. So the runserver request lines arrive in the format
+        # below rather than in Django's own "[server_time] message", and every Django record
+        # reaches the console through the one handler.
         "django": {
             "handlers": [],
             "level": "INFO" if DEBUG else "WARNING",
