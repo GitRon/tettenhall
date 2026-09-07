@@ -13,3 +13,6 @@ class QuestFactory(DjangoModelFactory):
     loot = 200
     target_faction = factory.SubFactory(FactionFactory)
     difficulty = Quest.DifficultyChoices.DIFFICULTY_EASY
+    # The top of the easy band the difficulty above carries, so a quest out of this factory is one
+    # written against a target that can field a full war band
+    expected_opposition = 5

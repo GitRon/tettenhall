@@ -3,6 +3,7 @@ import random
 from apps.faction.models.faction import Faction
 from apps.quest.models.quest import Quest
 from apps.savegame.models.savegame import Savegame
+from apps.skirmish.models.warrior import Warrior
 
 
 class QuestGenerator:
@@ -59,7 +60,31 @@ class QuestGenerator:
         difficulty = random.choice(Quest.DifficultyChoices.choices)
 
         quest = Quest(name=name, target_faction=target_faction, difficulty=difficulty[0])
+        quest.expected_opposition = self._expected_opposition(quest=quest)
         quest.loot = quest.calculate_loot()
         quest.save()
 
         return quest
+
+    def _expected_opposition(self, *, quest: Quest) -> int:
+        """
+        How big a war band this quest can honestly be written against.
+
+        The band's top or the target's roster, whichever runs out first. A rival opens a savegame
+        with a single warrior and gains at most one a month, so for the first several months the top
+        of either band is out of reach - and a purse measured against a number nobody can field is a
+        purse that is never paid.
+
+        Counted the way "_muster_defenders" musters, because that is who will actually turn out:
+        healthy, this faction's, and not already committed to a fight. Never zero, because
+        "attackable_targets" has already established that the chosen target can field a defender.
+        """
+        _, band_maximum = quest.get_min_max_number_of_opponents()
+        musterable_warriors = (
+            Warrior.objects.filter_healthy()
+            .filter_faction(faction_id=quest.target_faction_id)
+            .exclude_currently_busy(month=self.savegame.current_month)
+            .count()
+        )
+
+        return min(band_maximum, musterable_warriors)

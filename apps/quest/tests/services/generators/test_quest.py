@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from apps.faction.tests.factories.faction import FactionFactory
@@ -70,6 +72,64 @@ def test_process_without_a_rival_that_can_be_fought():
     quest = QuestGenerator(savegame=savegame).process()
 
     assert quest is None
+
+
+@pytest.mark.django_db
+def test_process_prices_a_quest_against_a_roster_below_the_band():
+    """
+    A rival opens a savegame with a single warrior and gains at most one a month, so for the first
+    several months neither band's top can turn out. The contract is written for the war band there
+    is, and both bands start above two.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    rival_faction = FactionFactory(savegame=savegame)
+    WarriorFactory.create_batch(2, faction=rival_faction)
+
+    quest = QuestGenerator(savegame=savegame).process()
+
+    assert quest.expected_opposition == 2
+
+
+@pytest.mark.django_db
+def test_process_prices_a_quest_at_full_price_for_a_roster_past_the_band():
+    """
+    A target with more men than the difficulty musters is the case the band tops were written for,
+    and it signs the contract at its face value.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    rival_faction = FactionFactory(savegame=savegame)
+    # Past the top of either band, so the difficulty the generator rolls cannot change the answer
+    WarriorFactory.create_batch(9, faction=rival_faction)
+
+    # Patched at the boundary: the loot roll
+    with mock.patch("apps.quest.models.quest.random.randint", return_value=300):
+        quest = QuestGenerator(savegame=savegame).process()
+
+    assert quest.expected_opposition == quest.get_min_max_number_of_opponents()[1]
+    assert quest.loot == 300
+
+
+@pytest.mark.django_db
+def test_process_prices_a_quest_against_the_men_who_could_turn_out():
+    """
+    The same muster "_muster_defenders" will run on the day: a warrior who is down does not defend
+    his town, and the player's own war band is not the opposition.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    WarriorFactory.create_batch(3, faction=savegame.player_faction)
+    rival_faction = FactionFactory(savegame=savegame)
+    WarriorFactory(faction=rival_faction)
+    WarriorFactory.create_batch(2, faction=rival_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    quest = QuestGenerator(savegame=savegame).process()
+
+    assert quest.expected_opposition == 1
 
 
 @pytest.mark.django_db
