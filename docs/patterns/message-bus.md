@@ -107,11 +107,26 @@ Two things follow:
   transaction, a log line or anything else routed through an event becomes visible.
 - **A comment claiming otherwise is not evidence.** Several in this codebase asserted that registration
   order was what billed wages before income; the conclusion held and the stated reason did not. Read
-  `queuebie/runner.py` — it is 60 lines — or assert the registry order in a shell, rather than trusting
+  the log the bus writes — see below — or `queuebie/runner.py`, which is 60 lines, rather than trusting
   the nearest comment.
 
 If a decision genuinely needs post-batch state, it cannot live in that batch. Move it behind the event
 whose handler writes what you need to read.
+
+## Watching the queue drain
+
+The bus writes a `DEBUG` line per message it handles, naming the handler it goes to, and one for the
+messages that handler returned. Under `DEBUG` those reach the console, so the order a run actually took
+is readable rather than reconstructed:
+
+```
+DEBUG   queuebie: Handling command '….month.PrepareMonth' (…) with handler 'handle_prepare_month'.
+DEBUG   queuebie: New messages: ["<class 'apps.month.messages.events.month.PlayerMonthPrepared'> (…)"]
+```
+
+Read it top to bottom and the batching above is visible: every message a handler returns appears in a
+`New messages:` line before it appears in a `Handling command` line, and everything already queued sits
+between the two. Where the console handler comes from is in [settings](../contributing/settings.md).
 
 ## See also
 
