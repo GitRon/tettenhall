@@ -45,22 +45,18 @@ def handle_store_last_used_skirmish_action(*, context: skirmish.AttackerDefender
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
-def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDamage) -> list[Command]:
-    return [
-        # Reduce health
-        ReduceHealth(
-            skirmish=context.skirmish,
-            warrior=context.defender,
-            attacker=context.attacker,
-            lost_health=context.damage,
-        ),
-        # Taking damages causes loss of 10% morale
-        ReduceMorale(
-            skirmish=context.skirmish,
-            warrior=context.defender,
-            lost_morale=round(context.defender.max_morale * 0.1),
-        ),
-    ]
+def handle_reduce_health_and_update_condition(*, context: warrior.WarriorTookDamage) -> Command:
+    """
+    The health a blow cost. What it did to the defender's nerve is decided by
+    handle_morale_change_on_resolved_blow, which weighs the two rolls against each other rather than
+    only the damage - a wound is not the same thing as a guard that was beaten.
+    """
+    return ReduceHealth(
+        skirmish=context.skirmish,
+        warrior=context.defender,
+        attacker=context.attacker,
+        lost_health=context.damage,
+    )
 
 
 @message_registry.register_event(event=warrior.WarriorHasFled)
@@ -102,46 +98,76 @@ def handle_stat_growth_on_warrior_level_up(*, context: warrior.WarriorGainedLeve
     return IncreaseWarriorStatsOnLevelUp(skirmish=context.skirmish, warrior=context.warrior)
 
 
+@message_registry.register_event(event=warrior.WarriorTookDamage)
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
-def handle_morale_change_on_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command | None:
+def handle_morale_change_on_resolved_blow(
+    *,
+    context: [
+        warrior.WarriorTookDamage,
+        warrior.WarriorDefendedAllDamage,
+    ],
+) -> Command | None:
     """
-    Turning a blow aside steadies a warrior. Cowering behind a shield wears him down.
+    What one exchange costs or pays the defender's nerve, weighed on the two rolls.
 
-    Without the second half a fight could not end. Below a quarter of his health a warrior always
-    picks a defensive stance, and that stance zeroes his attack: once both sides are in it neither
-    deals anything, and the only other two things that move morale in this game are taking damage and
-    watching a comrade fall. Neither happens, so nobody routs, no side ever loses its last healthy
-    warrior, and the round counter climbs for ever. That matters more than it sounds: the month cannot
-    be advanced while a skirmish is unresolved, so such a fight ends the savegame's life rather than
-    its own.
+    Turning a blow aside steadies a warrior. Having his guard beaten shakes him. Cowering behind a
+    shield wears him down. A swing nobody threw does none of the three.
+
+    The rolls rather than the damage, because armour blunts a blow rather than stopping it: a share of
+    any positive attack always lands, so "nothing got through" is only ever true of an attack of two
+    or less. Read off the damage, the reward would go to whoever is poked at by the feeblest men in
+    the game and never to a warrior in the best mail turning a real blow aside.
+
+    The stance is answered first, whatever the attacker managed, and without that drain a fight could
+    not end. Below a quarter of his health a warrior always picks a defensive stance, and that stance
+    zeroes his attack: once both sides are in it neither deals anything, and the only other two things
+    that move morale in this game are taking damage and watching a comrade fall. Neither happens, so
+    nobody routs, no side ever loses its last healthy warrior, and the round counter climbs for ever.
+    That matters more than it sounds: the month cannot be advanced while a skirmish is unresolved, so
+    such a fight ends the savegame's life rather than its own.
 
     Draining instead of merely withholding the reward is the whole point - a warrior sitting at the
     same morale for ever is exactly the fight that never ends. Dropping him to zero raises
     WarriorHasFled, and a fleeing warrior is not a healthy one, which is what the defeat check in
     handle_finish_round already counts.
     """
-    # Ten percent of what he can hold, the lever the reward and the damage penalty already use
+    # Ten percent of what he can hold, the lever every morale move in a fight uses
     morale_at_stake = round(context.defender.max_morale * 0.1)
 
     if context.defender_action == SkirmishActionChoices.DEFENSIVE_STANCE:
         # Floored at one point, and only here: a tenth of a small morale pool rounds away to nothing,
-        # and a stance that costs nothing is the unwinnable fight all over again. The reward keeps its
-        # old shape below, because no such argument applies to it - inventing a point of morale for a
-        # warrior too brittle to have earned one would be a balance change with nothing behind it.
+        # and a stance that costs nothing is the unwinnable fight all over again. The reward and the
+        # shaken guard below keep the bare tenth, because no such argument applies to them - inventing
+        # a point of morale for a warrior too brittle to have earned one would be a balance change
+        # with nothing behind it.
         return ReduceMorale(
             skirmish=context.skirmish,
             warrior=context.defender,
             lost_morale=max(1, morale_at_stake),
         )
 
-    if morale_at_stake > 0:
+    # An outcome on the attack is the action saying it threw nothing at all: a swing that went wide,
+    # or a stance that never attacks. Neither tested the defender, so neither is worth anything to him
+    if context.attack.outcome is not None:
+        return None
+
+    if morale_at_stake == 0:
+        return None
+
+    # Met or beaten is a block: the share the floor let past is what armour cannot prevent, not a
+    # failure of the man holding it
+    if context.defense.value >= context.attack.value:
         return IncreaseMorale(
             skirmish=context.skirmish,
             warrior=context.defender,
             increased_morale=morale_at_stake,
         )
 
-    return None
+    return ReduceMorale(
+        skirmish=context.skirmish,
+        warrior=context.defender,
+        lost_morale=morale_at_stake,
+    )
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
