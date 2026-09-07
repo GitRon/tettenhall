@@ -213,7 +213,7 @@ class WarriorManager(manager.Manager):
         0.1) is 0 for every v from 1 to 5, five included, because Python rounds halves to even. The
         fyrd generator sits at STATS_MU = 5 and MORALE_MU = 5, so a levy would otherwise level up,
         gain a single hit point off his health, and charge more for it. Same reasoning and same shape
-        as max(1, morale_at_stake) in handle_morale_change_on_warrior_defends_all_damage.
+        as max(1, morale_at_stake) in handle_morale_change_on_resolved_blow.
 
         The *_progress columns are deliberately not involved. They belong to training, which fills and
         resets them, so keeping a fractional remainder there would mean a level-up eats a month of
