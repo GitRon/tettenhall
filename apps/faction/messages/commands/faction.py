@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from queuebie.messages import Command
 
 from apps.faction.models.faction import Faction
-from apps.quest.models import Quest
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models import Warrior
 
@@ -78,13 +77,6 @@ class AddWarriorToPub(Command):
     savegame: Savegame
     faction: Faction
     warrior: Warrior
-    month: int
-
-
-@dataclass(kw_only=True)
-class RemoveQuestFromBulletinBoard(Command):
-    faction: Faction
-    quest: Quest
     month: int
 
 

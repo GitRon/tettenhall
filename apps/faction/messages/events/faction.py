@@ -4,7 +4,6 @@ from queuebie.messages import Event
 
 from apps.faction.models.faction import Faction
 from apps.item.services.generators.item.base import BaseItemGenerator
-from apps.quest.models import Quest
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 
@@ -101,14 +100,6 @@ class WarriorWasAddedToPub(Event):
     # TODO (#93): warrior.py?
     faction: Faction
     warrior: Warrior
-    month: int
-
-
-@dataclass(kw_only=True)
-class QuestWasRemovedFromBulletinBoard(Event):
-    # TODO (#93): quest.py?
-    faction: Faction
-    quest: Quest
     month: int
 
 
