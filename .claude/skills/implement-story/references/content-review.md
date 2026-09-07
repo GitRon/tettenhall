@@ -108,7 +108,7 @@ not show enough of it.
 One browser, one tab, driven from this session. Do not hand this phase to parallel agents: there is a
 single browser behind the Playwright tools and two drivers would fight over it.
 
-## The browser is shared with every other checkout on this machine
+## The browser is shared with every other worktree on this machine
 
 `@playwright/mcp` does not launch a browser per server. Unless it was started with `--isolated`, it asks
 a machine-wide daemon for the *unnamed* browser, and every other unnamed server gets the same one. Two
@@ -119,21 +119,33 @@ snapshot, and the other loses its page mid-navigation to
 Error: async initializeServer: Target page, context or browser has been closed
 ```
 
-That error is not your story and no amount of restarting the smoke server fixes it. When you see it, or
-when a snapshot shows a tab you never opened, check whether another checkout is in Phase 6
-(`git worktree list`, then look for a live `content/.pid` in each).
+That error is not your story and no amount of restarting the smoke server fixes it.
 
-Two ways out, in order of preference:
+**Isolate the server** and the problem disappears: once, in the `playwright` entry of `~/.claude.json`,
+add `"--isolated"` to its `args`. Concurrent servers then each get their own browser, verified up to three
+at a time. The cost is that the profile lives in memory, so nothing survives an MCP restart - which for
+this phase is no cost at all, because every round logs in from scratch anyway. With `--isolated` in place,
+skip the rest of this section.
 
-1. **Isolate the server**, once, in the `playwright` entry of `~/.claude.json` - add `"--isolated"` to
-   its `args`. Concurrent servers then each get their own browser, verified up to three at a time. The
-   cost is that the profile lives in memory, so nothing survives an MCP restart - which for this phase is
-   no cost at all, because every round logs in from scratch anyway.
-2. **Serialise the phase.** Wait for the other checkout's content review to finish, or record this one as
-   `blocked` with the reason and ship without it, the same as any other phase that could not run.
+Without it, ask before the first click rather than finding out mid-navigation:
 
-Either way, never `browser_close` your way out of a collision: on a shared daemon browser that is the
-other run's browser too.
+1. Read the neighbouring worktrees' `state.json`, the same ones Phase 1 scanned. A neighbour whose `phase`
+   is `content` and whose `content.status` is still `pending` is the one in the browser. None, no
+   contention - go.
+2. Message that neighbour, and only it, at the `session` name its `state.json` records. One `SendMessage`,
+   carrying `notify_when_idle: true` so the same call both asks the question and subscribes to the notice
+   for when it goes idle. Do not send a second one, and never message a name that no `state.json` claims -
+   `ListAgents` also lists sessions working on entirely different projects.
+3. Do not wait in a loop and do not follow up. If no answer arrives, or it does not arrive inside this
+   phase's budget, record `content.status` as `blocked` with the reason and ship - a phase that could not
+   run is a gap like any other, and naming it beats guessing at it.
+
+`notify_when_idle` fires when that session finishes its turn, not when it leaves Phase 6. As an
+approximation that is enough; as a guarantee it is not, so re-check with a cheap `browser_snapshot`
+before committing to the journey.
+
+Never `browser_close` your way out of a collision: on a shared daemon browser that is the other run's
+browser too.
 
 Budget: the baseline journey, the story journey, and **at most ten exploratory interactions beyond them.**
 Past that, write down what you have and stop. A browser is an excellent place to lose an hour.
@@ -173,9 +185,9 @@ story-caused: yes | no
   an unreachable feature, severity high.
 - **Playwright is not connected.** Record the phase as skipped with the reason. Never report a pass you
   did not see.
-- **Another checkout is already driving the browser.** `Target page, context or browser has been closed`,
-  or tabs you never opened. Isolate the MCP server or wait - see above - and record the phase as
-  `blocked` if you do neither.
+- **A neighbour is already driving the browser.** `Target page, context or browser has been closed`, or
+  tabs you never opened. Isolate the MCP server, or ask and wait for the idle notice - see above - and
+  record the phase as `blocked` if neither gets you a browser.
 
 ## Teardown
 
