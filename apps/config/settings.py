@@ -199,6 +199,54 @@ SILENCED_SYSTEM_CHECKS = ["axes.W006"]
 # so a dependency shipping a "handlers/commands/" directory would register handlers on our bus.
 QUEUEBIE_APP_BASE_PATH = BASE_DIR / "apps"
 QUEUEBIE_STRICT_MODE = True
+# Named here rather than left to queuebie's own default, so the logger this project configures below
+# and the one the bus writes to cannot drift apart.
+QUEUEBIE_LOGGER_NAME = "queuebie"
+
+
+# Logging
+# https://docs.djangoproject.com/en/stable/topics/logging/
+# Django configures its own "django" logger and nothing else, so any other logger propagates to a
+# root logger with no handler and falls back to "logging.lastResort", which drops everything below
+# WARNING. One console handler for the whole project, on the root logger.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "{asctime} {levelname:<7} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        # Django applies its own config first and gives this logger a console handler of its own,
+        # without turning propagation off, so leaving it alone would print every Django record
+        # twice - once there and once on the root handler. It keeps its level and loses its
+        # handler, which also drops "mail_admins" from the chain: the project configures neither
+        # ADMINS nor a mail backend, so nothing was ever sent. "django.server" turns propagation
+        # off itself and keeps both its handler and its own format for the request lines.
+        "django": {
+            "handlers": [],
+            "level": "INFO" if DEBUG else "WARNING",
+        },
+        # The bus narrates itself: one line per message drained, naming the handler it goes to, and
+        # one for the messages that handler returned. That is the record of an ordering question -
+        # which is otherwise answered by reading "queuebie/runner.py" - so it is on in development.
+        QUEUEBIE_LOGGER_NAME: {
+            "level": "DEBUG" if DEBUG else "WARNING",
+        },
+    },
+}
 
 
 # Hide development server warning
