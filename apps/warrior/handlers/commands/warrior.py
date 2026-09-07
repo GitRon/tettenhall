@@ -8,6 +8,7 @@ from apps.faction.models.faction import Faction
 from apps.skirmish.models.warrior import Warrior
 from apps.town.buildings.sanctuary import Sanctuary
 from apps.warrior.messages.commands.warrior import (
+    ChangeWarriorMaxMorale,
     CreateNewLeaderWarrior,
     CreateWarrior,
     EnslaveCapturedWarrior,
@@ -22,6 +23,7 @@ from apps.warrior.messages.events.warrior import (
     WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
+    WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
 )
 from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
@@ -83,6 +85,31 @@ def handle_replenish_warrior_morale(*, context: ReplenishWarriorMorale) -> list[
         warrior=context.warrior,
         faction=context.warrior.faction,
         recovered_morale=recovered_morale,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=ChangeWarriorMaxMorale)
+def handle_change_warrior_max_morale(*, context: ChangeWarriorMaxMorale) -> Event:
+    """
+    Move a warrior's morale ceiling, up or down by the share the caller named.
+
+    The ceiling is read back rather than calculated: both manager methods truncate the share against
+    what the man actually has, and a raise is floored at a point where a cut is not, so the only
+    honest source for what changed is the row afterwards.
+    """
+    context.warrior.refresh_from_db()
+    previous_max_morale = context.warrior.max_morale
+
+    if context.share >= 0:
+        Warrior.objects.increase_max_morale(obj=context.warrior, gained_max_morale_in_percent=context.share)
+    else:
+        Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=-context.share)
+
+    return WarriorMaxMoraleChanged(
+        warrior=context.warrior,
+        faction=context.faction,
+        changed_max_morale=context.warrior.max_morale - previous_max_morale,
         month=context.month,
     )
 

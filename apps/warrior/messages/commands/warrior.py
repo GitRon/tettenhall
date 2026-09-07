@@ -40,6 +40,25 @@ class PunishUnpaidWarrior(Command):
 
 
 @dataclass(kw_only=True)
+class ChangeWarriorMaxMorale(Command):
+    """
+    Move the ceiling a warrior's morale is measured against, permanently.
+
+    A share rather than a number of points, so a levy and a veteran are asked for the same fraction
+    of what they have. Signed: the same lever raises and lowers, and the caller pricing both against
+    each other is what keeps a permanent change from drifting one way over a savegame.
+
+    The ceiling and not "current_morale" on purpose. The monthly sweep refills every warrior to his
+    maximum, so a change to the current value made early in a month is erased before the month ends.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    share: float
+    month: int
+
+
+@dataclass(kw_only=True)
 class HealInjuredWarrior(Command):
     # The faction mending him, which is not always the one he belongs to: a captive is healed by the
     # faction holding him, and capture has cleared his own

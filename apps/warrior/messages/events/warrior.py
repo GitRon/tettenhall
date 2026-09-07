@@ -32,6 +32,22 @@ class WarriorDesertedOverUnpaidSalary(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorMaxMoraleChanged(Event):
+    """
+    A warrior's morale ceiling moved for good.
+
+    Carries the points it actually moved by rather than the share it was asked for: the share is
+    truncated against what the man has, so what happened to a levy and to a veteran are different
+    numbers.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    changed_max_morale: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorHealthHealed(Event):
     warrior: Warrior
     faction: Faction

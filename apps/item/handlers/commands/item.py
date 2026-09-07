@@ -2,7 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.item.messages.commands import item
-from apps.item.messages.events.item import ItemBought, ItemCreated, ItemSold, OwnershipChanged
+from apps.item.messages.events.item import ItemBought, ItemCreated, ItemSold, ItemWasLost, OwnershipChanged
 from apps.item.models.item import Item
 from apps.skirmish.models import Warrior
 from apps.town.buildings.marketplace import Marketplace
@@ -62,6 +62,23 @@ def handle_buy_item(*, context: item.BuyItem) -> list[Event] | Event:
         price=context.price,
         month=context.month,
     )
+
+
+@message_registry.register_command(command=item.LoseItem)
+def handle_lose_item(*, context: item.LoseItem) -> list[Event] | Event:
+    """
+    Take a piece of gear out of the game.
+
+    Off the man carrying it first: the row is about to go, and a warrior left pointing at nothing is
+    a warrior fighting with a null weapon. Its name is read before the delete, because deleting an
+    instance clears the primary key its display name is assembled from.
+    """
+    item_name = context.item.display_name
+
+    Warrior.objects.take_item_away(item=context.item)
+    context.item.delete()
+
+    return ItemWasLost(faction=context.faction, item_name=item_name, month=context.month)
 
 
 @message_registry.register_command(command=item.ChangeOwnership)

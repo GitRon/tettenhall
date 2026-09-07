@@ -1,4 +1,5 @@
-{# Three weights, one list. What the player must act on is a full-width alert, what his own decisions #}
+{# Four weights, one list. What the player must act on is a full-width alert, what happened to him #}
+{# without his asking is a chronicle entry with room for a second sentence, what his own decisions #}
 {# produced is a plain line, and the recovery sweeps - which write one row per warrior and would #}
 {# otherwise be most of the month - are tallied into a single sentence with the rows behind it. #}
 <div class="uk-margin">
@@ -7,6 +8,17 @@
             <h4 class="uk-margin-remove">
                 <i class="fa-solid fa-triangle-exclamation"></i> {{ message.title }}
             </h4>
+        </div>
+    {% endfor %}
+
+    {% for message in player_month_logs.chronicle %}
+        <div class="uk-card uk-card-secondary uk-card-small uk-card-body uk-margin-small-bottom">
+            <h4 class="uk-margin-remove">
+                <i class="fa-solid fa-feather"></i> {{ message.title }}
+            </h4>
+            {% if message.body %}
+                <p class="uk-margin-remove-bottom uk-margin-small-top">{{ message.body }}</p>
+            {% endif %}
         </div>
     {% endfor %}
 

@@ -31,6 +31,21 @@ class ReplenishFyrdReserve(Command):
 
 
 @dataclass(kw_only=True)
+class ChangeFyrdReserve(Command):
+    """
+    Move the fyrd reserve by a named amount, up or down.
+
+    Signed rather than one command per direction: the reserve is a lever the catalogue of incidents
+    both gives and takes with, and two commands would double the plumbing for no reader's benefit.
+    Distinct from [ReplenishFyrdReserve], which is the monthly roll and decides its own amount.
+    """
+
+    faction: Faction
+    change: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class PayMonthlyWarriorSalaries(Command):
     faction: Faction
     month: int

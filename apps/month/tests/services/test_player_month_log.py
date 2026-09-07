@@ -25,6 +25,22 @@ def test_group_player_month_logs_splits_by_category():
 
 
 @pytest.mark.django_db
+def test_group_player_month_logs_puts_an_incident_in_the_chronicle():
+    """
+    What happened to the player rather than what he did, and the only weight whose rows have a body.
+    """
+    incident = PlayerMonthLogFactory(
+        kind=PlayerMonthLog.KindChoices.KIND_INCIDENT,
+        category=PlayerMonthLog.CategoryChoices.CATEGORY_CHRONICLE,
+    )
+
+    result = group_player_month_logs(player_month_logs=[incident])
+
+    assert result.chronicle == [incident]
+    assert result.is_empty is False
+
+
+@pytest.mark.django_db
 def test_group_player_month_logs_tallies_the_upkeep_per_kind():
     """
     The recovery sweeps write one row per warrior, so the upkeep is most of a fought month and none

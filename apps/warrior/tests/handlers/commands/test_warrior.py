@@ -14,6 +14,7 @@ from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warrior.handlers.commands.warrior import (
+    handle_change_warrior_max_morale,
     handle_enslave_captured_warrior,
     handle_heal_injured_warrior,
     handle_punish_unpaid_warrior,
@@ -21,6 +22,7 @@ from apps.warrior.handlers.commands.warrior import (
     handle_replenish_warrior_morale,
 )
 from apps.warrior.messages.commands.warrior import (
+    ChangeWarriorMaxMorale,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
@@ -31,6 +33,7 @@ from apps.warrior.messages.events.warrior import (
     WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
+    WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
 )
 
@@ -334,3 +337,33 @@ def test_handle_recruit_captured_warrior_reports_no_recovery_from_a_captive_at_f
     assert result == WarriorRecruited(warrior=captive, faction=faction, recruitment_price=0, month=3)
     captive.refresh_from_db()
     assert captive.current_morale == 15
+
+
+@pytest.mark.django_db
+def test_handle_change_warrior_max_morale_raises_the_ceiling():
+    warrior = WarriorFactory(current_morale=10, max_morale=20)
+
+    result = handle_change_warrior_max_morale(
+        context=ChangeWarriorMaxMorale(warrior=warrior, faction=warrior.faction, share=0.2, month=3)
+    )
+
+    assert result == WarriorMaxMoraleChanged(warrior=warrior, faction=warrior.faction, changed_max_morale=4, month=3)
+    warrior.refresh_from_db()
+    assert warrior.max_morale == 24
+
+
+@pytest.mark.django_db
+def test_handle_change_warrior_max_morale_lowers_the_ceiling():
+    """
+    Reported as the points it moved rather than the share it was asked for: the share is truncated
+    against what the man has, so a levy and a veteran lose different numbers.
+    """
+    warrior = WarriorFactory(current_morale=20, max_morale=20)
+
+    result = handle_change_warrior_max_morale(
+        context=ChangeWarriorMaxMorale(warrior=warrior, faction=warrior.faction, share=-0.2, month=3)
+    )
+
+    assert result == WarriorMaxMoraleChanged(warrior=warrior, faction=warrior.faction, changed_max_morale=-4, month=3)
+    warrior.refresh_from_db()
+    assert warrior.max_morale == 16

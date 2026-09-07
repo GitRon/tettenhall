@@ -24,6 +24,12 @@ TERMINAL_MESSAGES: frozenset[str] = frozenset(
         "apps.faction.messages.events.faction.WarriorWasAddedToPub",
         "apps.faction.messages.events.item.ItemWasAddedToShop",
         "apps.faction.messages.events.item.ItemWasRemovedFromShop",
+        # The three levers an incident pulls in somebody else's app. Each announces a change its own
+        # command handler has already made, and the incident wrote the player's line about it before
+        # any of them ran - a consumer here would be a second line for one event
+        "apps.faction.messages.events.faction.FyrdReserveChanged",
+        "apps.item.messages.events.item.ItemWasLost",
+        "apps.warrior.messages.events.warrior.WarriorMaxMoraleChanged",
         "apps.finance.messages.events.transaction.TransactionCreated",
         "apps.item.messages.events.item.OwnershipChanged",
         "apps.month.messages.events.month.PlayerMonthLogCleared",

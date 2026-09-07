@@ -25,6 +25,8 @@ inferring the conventions from nearby code.
 - [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
 - [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a
   balance number belongs
+- [Month incidents](docs/patterns/month-incidents.md) — the pool the world draws from each month, its
+  weights, its levers and its register
 
 ### Testing
 

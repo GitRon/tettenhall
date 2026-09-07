@@ -1,9 +1,10 @@
 import pytest
 
 from apps.faction.tests.factories.faction import FactionFactory
-from apps.item.handlers.commands.item import handle_change_ownership, handle_sell_item
-from apps.item.messages.commands.item import ChangeOwnership, SellItem
-from apps.item.messages.events.item import ItemSold, OwnershipChanged
+from apps.item.handlers.commands.item import handle_change_ownership, handle_lose_item, handle_sell_item
+from apps.item.messages.commands.item import ChangeOwnership, LoseItem, SellItem
+from apps.item.messages.events.item import ItemSold, ItemWasLost, OwnershipChanged
+from apps.item.models.item import Item
 from apps.item.tests.factories.item import ItemFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -96,3 +97,35 @@ def test_handle_change_ownership_takes_the_item_off_its_wielder():
 
     previous_owner.refresh_from_db()
     assert previous_owner.weapon is None
+
+
+@pytest.mark.django_db
+def test_handle_lose_item_takes_the_gear_out_of_the_game():
+    """
+    The name is read before the row goes: deleting an instance clears the primary key its display
+    name is assembled from, so an event built afterwards would report a nameless loss.
+    """
+    faction = FactionFactory()
+    item = ItemFactory(savegame=faction.savegame, owner=faction)
+    item_name = item.display_name
+
+    result = handle_lose_item(context=LoseItem(faction=faction, item=item, month=3))
+
+    assert result == ItemWasLost(faction=faction, item_name=item_name, month=3)
+    assert Item.objects.filter(id=item.id).exists() is False
+
+
+@pytest.mark.django_db
+def test_handle_lose_item_takes_it_off_the_man_carrying_it():
+    """
+    A warrior left pointing at a deleted row is a warrior fighting with a null weapon.
+    """
+    warrior = WarriorFactory()
+    item = ItemFactory(savegame=warrior.savegame, owner=warrior.faction)
+    warrior.weapon = item
+    warrior.save()
+
+    handle_lose_item(context=LoseItem(faction=warrior.faction, item=item, month=3))
+
+    warrior.refresh_from_db()
+    assert warrior.weapon is None

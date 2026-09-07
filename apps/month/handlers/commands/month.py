@@ -44,6 +44,7 @@ def handle_create_player_month_log(*, context: CreatePlayerMonthLog) -> Event | 
 
     player_month_log = PlayerMonthLog.objects.create_record(
         title=context.title,
+        body=context.body,
         kind=context.kind,
         month=context.month,
         faction_id=context.faction.id,
