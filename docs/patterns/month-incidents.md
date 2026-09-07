@@ -34,16 +34,20 @@ to a positive integer column, where anything below one truncates to nothing.
 
 ## The levers
 
-| Lever | Field on the outcome | Command it reaches |
+| Lever | Field on the outcome | Command, and the handler that emits it |
 |---|---|---|
-| Silver | `silver_change` | `CreateTransaction` (`apps/finance`) |
-| Fyrd reserve | `fyrd_change` | `ChangeFyrdReserve` (`apps/faction`) |
-| Morale ceiling | `max_morale_share` + `warrior` | `ChangeWarriorMaxMorale` (`apps/warrior`) |
-| A piece of gear | `lost_item` | `LoseItem` (`apps/item`) |
+| Silver | `silver_change` | `CreateTransaction` — `apps/finance/handlers/events/incident.py` |
+| Fyrd reserve | `fyrd_change` | `ChangeFyrdReserve` — `apps/faction/handlers/events/incident.py` |
+| Morale ceiling | `max_morale_share` + `warrior` | `ChangeWarriorMaxMorale` — `apps/warrior/handlers/events/incident.py` |
+| A piece of gear | `lost_item` | `LoseItem` — `apps/item/handlers/events/incident.py` |
+| The log line | `title` + `body` | `CreatePlayerMonthLog` — `apps/month/handlers/events/incident.py` |
 
-A lever left at its default is a lever the entry does not pull. Each has one event handler in
-`apps/incident/handlers/events/incident.py` that refuses an outcome not naming its own — so a new
-lever costs a field and a handler there, while a new entry using the existing ones costs a class.
+A lever left at its default is a lever the entry does not pull, and each handler refuses an outcome
+that does not name its own. **The reactions live in the apps that own them**, not in
+`apps/incident/` — per [where code goes](app-layout.md), a handler belongs to the app owning the
+command it emits, in a module named after the app the event came from. So `apps/incident/` chooses,
+and nothing there writes another app's rows. A new lever costs a field on the outcome and a handler
+in the owning app; a new entry using the levers that exist costs a class.
 
 An entry that needs a lever this list has not got is not a baseline incident. It is a mechanic
 wearing an incident's clothes, and it wants its own issue.
@@ -55,11 +59,11 @@ PlayerMonthPrepared (evt)
   └─ handle_choose_incident_for_new_month → ChooseIncident (cmd)
        └─ handle_choose_incident            ← queries: which entries are possible, then draws one
             └─ IncidentOccurred (evt), carrying the resolved outcome
-                 ├─ handle_write_incident_to_month_log → CreatePlayerMonthLog
-                 ├─ handle_incident_silver             → CreateTransaction
-                 ├─ handle_incident_fyrd_reserve       → ChangeFyrdReserve
-                 ├─ handle_incident_max_morale         → ChangeWarriorMaxMorale
-                 └─ handle_incident_lost_item          → LoseItem
+                 ├─ month:   handle_write_incident_to_month_log → CreatePlayerMonthLog
+                 ├─ finance: handle_incident_silver             → CreateTransaction
+                 ├─ faction: handle_incident_fyrd_reserve       → ChangeFyrdReserve
+                 ├─ warrior: handle_incident_max_morale         → ChangeWarriorMaxMorale
+                 └─ item:    handle_incident_lost_item          → LoseItem
 ```
 
 **Drawing is a command handler because it has to ask questions** — does the treasury cover the

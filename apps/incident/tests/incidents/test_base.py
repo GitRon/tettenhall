@@ -41,6 +41,17 @@ def test_roster_excludes_the_dead():
 
 
 @pytest.mark.django_db
+def test_roster_excludes_another_factions_men():
+    """
+    Without the faction filter, a relic reaches a rival's warrior and a chronicle line names him.
+    """
+    faction = FactionFactory()
+    WarriorFactory(faction=FactionFactory(savegame=faction.savegame))
+
+    assert roster(faction=faction) == []
+
+
+@pytest.mark.django_db
 def test_losable_items_excludes_the_finest_of_each_function():
     faction = FactionFactory()
     finest_weapon = ItemFactory(owner=faction, savegame=faction.savegame, price=200)
@@ -77,6 +88,26 @@ def test_losable_items_ignores_gear_nobody_carries():
     worn_weapon = ItemFactory(owner=faction, savegame=faction.savegame, price=200)
     ItemFactory(owner=faction, savegame=faction.savegame, price=30)
     WarriorFactory(faction=faction, weapon=worn_weapon)
+
+    assert losable_items(faction=faction) == []
+
+
+@pytest.mark.django_db
+def test_losable_items_excludes_another_factions_gear():
+    """
+    Without the owner filter, a moor swallows a rival's spear and the row deleted is not the acting
+    faction's to lose.
+    """
+    faction = FactionFactory()
+    rival_faction = FactionFactory(savegame=faction.savegame)
+    WarriorFactory(
+        faction=rival_faction,
+        weapon=ItemFactory(owner=rival_faction, savegame=faction.savegame, price=200),
+    )
+    WarriorFactory(
+        faction=rival_faction,
+        weapon=ItemFactory(owner=rival_faction, savegame=faction.savegame, price=30),
+    )
 
     assert losable_items(faction=faction) == []
 
