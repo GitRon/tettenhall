@@ -34,6 +34,20 @@ class ItemBought(Event):
 
 
 @dataclass(kw_only=True)
+class ItemWasLost(Event):
+    """
+    The item is gone, which is why this carries a name and not an item.
+
+    Django clears the primary key of a deleted instance, so an item row is the one thing a past-tense
+    event cannot point at - the same reason ItemSold and ItemBought carry their name alongside.
+    """
+
+    faction: Faction
+    item_name: str
+    month: int
+
+
+@dataclass(kw_only=True)
 class OwnershipChanged(Event):
     previous_owner: Warrior
     item: Item

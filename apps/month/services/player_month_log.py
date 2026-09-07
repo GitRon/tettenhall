@@ -7,22 +7,26 @@ from apps.month.models.player_month_log import PlayerMonthLog
 @dataclass(kw_only=True)
 class GroupedPlayerMonthLog:
     """
-    One month's log, split into the three weights it is read at.
+    One month's log, split into the four weights it is read at.
 
     "upkeep_summary" is what keeps the list short: the recovery sweeps write one line per warrior, so
     a war band coming out of a fought month produces more upkeep than everything else put together,
     and none of it is worth a line of its own. The rows themselves stay in "upkeep" for the reader
     who wants them.
+
+    "chronicle" is what happened to the player rather than what he did, and the only weight whose
+    rows carry a body.
     """
 
     attention: list[PlayerMonthLog] = field(default_factory=list)
+    chronicle: list[PlayerMonthLog] = field(default_factory=list)
     consequence: list[PlayerMonthLog] = field(default_factory=list)
     upkeep: list[PlayerMonthLog] = field(default_factory=list)
     upkeep_summary: list[str] = field(default_factory=list)
 
     @property
     def is_empty(self) -> bool:
-        return not (self.attention or self.consequence or self.upkeep)
+        return not (self.attention or self.chronicle or self.consequence or self.upkeep)
 
 
 def group_player_month_logs(*, player_month_logs) -> GroupedPlayerMonthLog:
@@ -36,6 +40,7 @@ def group_player_month_logs(*, player_month_logs) -> GroupedPlayerMonthLog:
 
     buckets = {
         PlayerMonthLog.CategoryChoices.CATEGORY_ATTENTION: grouped.attention,
+        PlayerMonthLog.CategoryChoices.CATEGORY_CHRONICLE: grouped.chronicle,
         PlayerMonthLog.CategoryChoices.CATEGORY_CONSEQUENCE: grouped.consequence,
         PlayerMonthLog.CategoryChoices.CATEGORY_UPKEEP: grouped.upkeep,
     }

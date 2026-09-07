@@ -325,6 +325,40 @@ def test_replenish_current_morale_does_not_rally_a_warrior_whose_morale_is_still
 
 
 @pytest.mark.django_db
+def test_increase_max_morale_raises_the_ceiling():
+    warrior = WarriorFactory(current_morale=10, max_morale=20)
+
+    result = Warrior.objects.increase_max_morale(obj=warrior, gained_max_morale_in_percent=0.2)
+
+    assert result.max_morale == 24
+
+
+@pytest.mark.django_db
+def test_increase_max_morale_leaves_the_current_morale_alone():
+    """
+    A raised ceiling is room to recover into. Filling it here would hand out this month's morale as
+    well as next year's.
+    """
+    warrior = WarriorFactory(current_morale=10, max_morale=20)
+
+    result = Warrior.objects.increase_max_morale(obj=warrior, gained_max_morale_in_percent=0.2)
+
+    assert result.current_morale == 10
+
+
+@pytest.mark.django_db
+def test_increase_max_morale_floors_the_gain_at_one_point():
+    """
+    A fifth of a levy's five points of morale rounds to nothing, and a gain of zero is not one.
+    """
+    warrior = WarriorFactory(current_morale=5, max_morale=5)
+
+    result = Warrior.objects.increase_max_morale(obj=warrior, gained_max_morale_in_percent=0.1)
+
+    assert result.max_morale == 6
+
+
+@pytest.mark.django_db
 def test_increase_morale_adds_the_gained_points():
     warrior = WarriorFactory(current_morale=10, max_morale=20)
 

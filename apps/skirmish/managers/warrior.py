@@ -176,6 +176,23 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def increase_max_morale(self, *, obj, gained_max_morale_in_percent: float):
+        """
+        Raise the ceiling a warrior's morale is measured against.
+
+        Floored at one point the way "apply_level_up_growth" floors its gains: a fifth of a levy's
+        five points of morale rounds to nothing, and a gain of zero is not one.
+
+        The current morale is left where it is. A raised ceiling is room to recover into, and the
+        monthly sweep is what fills it - topping him up here would hand out this month's morale as
+        well as next year's.
+        """
+        obj.refresh_from_db()
+        obj.max_morale += max(1, int(obj.max_morale * gained_max_morale_in_percent))
+        obj.save(update_fields=("max_morale",))
+
+        return obj
+
     def increase_morale(self, *, obj, increased_morale: int):
         """
         Increase morale to a defined maximum

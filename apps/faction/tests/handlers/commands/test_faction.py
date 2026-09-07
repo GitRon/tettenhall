@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.faction.handlers.commands.faction import (
+    handle_change_fyrd_reserve,
     handle_create_factions_for_new_savegame,
     handle_create_new_faction,
     handle_defeat_faction_of_lost_leader,
@@ -16,6 +17,7 @@ from apps.faction.handlers.commands.faction import (
     handle_restock_shop_items,
 )
 from apps.faction.messages.commands.faction import (
+    ChangeFyrdReserve,
     CreateFactionsForNewSavegame,
     CreateNewFaction,
     DefeatFactionOfLostLeader,
@@ -33,6 +35,7 @@ from apps.faction.messages.events.faction import (
     FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
     FactionWasOccupied,
+    FyrdReserveChanged,
     MonthlyBuildingMoneyEarned,
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
@@ -322,6 +325,28 @@ def test_handle_replenish_fyrd_reserve_without_new_recruits():
     assert result is None
     faction.refresh_from_db()
     assert faction.fyrd_reserve == 3
+
+
+@pytest.mark.django_db
+def test_handle_change_fyrd_reserve_upwards():
+    faction = FactionFactory(fyrd_reserve=3)
+
+    result = handle_change_fyrd_reserve(context=ChangeFyrdReserve(faction=faction, change=2, month=3))
+
+    assert result == FyrdReserveChanged(faction=faction, change=2, month=3)
+    faction.refresh_from_db()
+    assert faction.fyrd_reserve == 5
+
+
+@pytest.mark.django_db
+def test_handle_change_fyrd_reserve_downwards():
+    faction = FactionFactory(fyrd_reserve=3)
+
+    result = handle_change_fyrd_reserve(context=ChangeFyrdReserve(faction=faction, change=-2, month=3))
+
+    assert result == FyrdReserveChanged(faction=faction, change=-2, month=3)
+    faction.refresh_from_db()
+    assert faction.fyrd_reserve == 1
 
 
 @pytest.mark.django_db

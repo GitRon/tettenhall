@@ -37,3 +37,35 @@ def test_create_record_derives_the_category_from_the_kind():
     )
 
     assert result.category == PlayerMonthLog.CategoryChoices.CATEGORY_ATTENTION
+
+
+@pytest.mark.django_db
+def test_create_record_writes_the_body_a_chronicle_entry_carries():
+    """
+    The room the title has not got, filled only by the producers that have a second sentence to say.
+    """
+    faction = FactionFactory()
+
+    result = PlayerMonthLog.objects.create_record(
+        title="Wighelm has lost his spear in the moor.",
+        body="He reports a revenant. Others report beer.",
+        kind=PlayerMonthLog.KindChoices.KIND_INCIDENT,
+        month=3,
+        faction_id=faction.id,
+    )
+
+    assert result.body == "He reports a revenant. Others report beer."
+
+
+@pytest.mark.django_db
+def test_create_record_leaves_the_body_empty_for_every_other_producer():
+    faction = FactionFactory()
+
+    result = PlayerMonthLog.objects.create_record(
+        title="Monthly salaries of 300 silver paid.",
+        kind=PlayerMonthLog.KindChoices.KIND_SALARIES_PAID,
+        month=3,
+        faction_id=faction.id,
+    )
+
+    assert result.body == ""

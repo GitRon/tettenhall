@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.faction",
     "apps.finance",
+    "apps.incident",
     "apps.item",
     "apps.quest",
     "apps.savegame",

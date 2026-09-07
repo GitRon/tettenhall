@@ -11,6 +11,7 @@ class PlayerMonthLog(models.Model):
         CATEGORY_ATTENTION = 1, "Demands attention"
         CATEGORY_CONSEQUENCE = 2, "Consequence"
         CATEGORY_UPKEEP = 3, "Upkeep"
+        CATEGORY_CHRONICLE = 4, "Chronicle"
 
     class KindChoices(models.IntegerChoices):
         KIND_UNPAID_SALARIES = 1, "Salaries unpaid"
@@ -24,6 +25,10 @@ class PlayerMonthLog(models.Model):
         KIND_QUESTS_OFFERED = 9, "Quests offered"
         KIND_PUB_RESTOCKED = 10, "Pub restocked"
         KIND_SHOP_RESTOCKED = 11, "Shop restocked"
+        # One kind for every incident rather than one per incident: adding an entry to the catalogue
+        # has to cost a single class, and a kind of its own would touch this model, its choices and
+        # KIND_CATEGORIES every time
+        KIND_INCIDENT = 12, "Incident"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -39,6 +44,7 @@ class PlayerMonthLog(models.Model):
         KindChoices.KIND_QUESTS_OFFERED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_PUB_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_SHOP_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        KindChoices.KIND_INCIDENT: CategoryChoices.CATEGORY_CHRONICLE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each
@@ -51,6 +57,10 @@ class PlayerMonthLog(models.Model):
     }
 
     title = models.CharField("Title", max_length=100)
+    # The room a chronicle entry needs and no other kind has: a report sentence fits in the title,
+    # the sentence that undercuts it does not. Empty for every other producer, so the log stays one
+    # line wherever it always was
+    body = models.TextField("Body", blank=True, default="")
     kind = models.PositiveSmallIntegerField("Kind", choices=KindChoices.choices)
     category = models.PositiveSmallIntegerField("Category", choices=CategoryChoices.choices)
     month = models.PositiveSmallIntegerField("Month")

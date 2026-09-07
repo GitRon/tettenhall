@@ -8,6 +8,7 @@ from queuebie.messages import Command, Event
 from apps.faction.domain.occupation_spoils import OccupationSpoils
 from apps.faction.domain.rival_income import RivalIncome
 from apps.faction.messages.commands.faction import (
+    ChangeFyrdReserve,
     CreateFactionsForNewSavegame,
     CreateNewFaction,
     DefeatFactionOfLostLeader,
@@ -26,6 +27,7 @@ from apps.faction.messages.events.faction import (
     FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
     FactionWasOccupied,
+    FyrdReserveChanged,
     MonthlyBuildingMoneyEarned,
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
@@ -195,6 +197,23 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | N
         new_recruits=new_recruits,
         month=context.month,
     )
+
+
+@message_registry.register_command(command=ChangeFyrdReserve)
+def handle_change_fyrd_reserve(*, context: ChangeFyrdReserve) -> Event:
+    """
+    Move the reserve by the amount the caller named, in whichever direction that is.
+
+    The manager floors a reduction at zero, so this cannot drive the column negative. A caller that
+    cares what actually happened clamps its own request instead - the event repeats what was asked
+    for, and a log line written from a number the reserve could not honour would be a lie.
+    """
+    if context.change >= 0:
+        Faction.objects.replenish_fyrd_reserve(faction=context.faction, new_recruits=context.change)
+    else:
+        Faction.objects.reduce_fyrd_reserve(faction=context.faction, drafted_warriors=-context.change)
+
+    return FyrdReserveChanged(faction=context.faction, change=context.change, month=context.month)
 
 
 @message_registry.register_command(command=DetermineWarriorsWithReducedMorale)

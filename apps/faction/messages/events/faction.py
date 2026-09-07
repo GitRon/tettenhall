@@ -29,6 +29,20 @@ class FactionFyrdReserveReplenished(Event):
 
 
 @dataclass(kw_only=True)
+class FyrdReserveChanged(Event):
+    """
+    The reserve moved by something other than the monthly roll.
+
+    Separate from FactionFyrdReserveReplenished rather than reusing it: that one is logged as "The
+    fyrd has grown by ...", and the caller here has already written its own line about why.
+    """
+
+    faction: Faction
+    change: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class MonthlyWarriorSalariesPaid(Event):
     faction: Faction
     amount: int

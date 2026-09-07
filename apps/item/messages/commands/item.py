@@ -34,6 +34,20 @@ class BuyItem(Command):
 
 
 @dataclass(kw_only=True)
+class LoseItem(Command):
+    """
+    A piece of gear is gone from the game, not sold and not handed on.
+
+    The faction rides along because the item's own owner is about to stop existing, and whoever
+    reacts to the loss still has to know whose it was.
+    """
+
+    faction: Faction
+    item: Item
+    month: int
+
+
+@dataclass(kw_only=True)
 class ChangeOwnership(Command):
     previous_owner: Warrior
     item: Item

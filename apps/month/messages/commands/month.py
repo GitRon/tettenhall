@@ -17,6 +17,8 @@ class CreatePlayerMonthLog(Command):
     kind: int
     month: int
     faction: Faction
+    # Only a chronicle entry has a second sentence to say, so every other producer leaves it alone
+    body: str = ""
 
 
 @dataclass(kw_only=True)
