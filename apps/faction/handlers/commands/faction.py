@@ -16,7 +16,6 @@ from apps.faction.messages.commands.faction import (
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
     OccupyFaction,
-    RemoveQuestFromBulletinBoard,
     ReplenishFyrdReserve,
     RestockTownShopItems,
     SetNewLeaderWarrior,
@@ -30,7 +29,6 @@ from apps.faction.messages.events.faction import (
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
-    QuestWasRemovedFromBulletinBoard,
     RequestNewItemForTownShop,
 )
 from apps.faction.messages.events.item import TownShopRestocked
@@ -170,14 +168,6 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
     )
 
     return message_list
-
-
-@message_registry.register_command(command=RemoveQuestFromBulletinBoard)
-def handle_remove_quest_from_bulletin_board(*, context: RemoveQuestFromBulletinBoard) -> Event:
-    # TODO (#93): in quest.py?
-    context.faction.available_quests.remove(context.quest)
-
-    return QuestWasRemovedFromBulletinBoard(faction=context.faction, quest=context.quest, month=context.month)
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)

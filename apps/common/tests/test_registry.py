@@ -21,7 +21,6 @@ from queuebie.messages import Command, Event
 TERMINAL_MESSAGES: frozenset[str] = frozenset(
     {
         "apps.faction.messages.events.faction.NewLeaderWarriorSet",
-        "apps.faction.messages.events.faction.QuestWasRemovedFromBulletinBoard",
         "apps.faction.messages.events.faction.WarriorWasAddedToPub",
         "apps.faction.messages.events.item.ItemWasAddedToShop",
         "apps.faction.messages.events.item.ItemWasRemovedFromShop",
