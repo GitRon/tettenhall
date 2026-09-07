@@ -1,6 +1,7 @@
 import pytest
 
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.skirmish.exceptions import UnknownSkirmishActionError
 from apps.skirmish.services.actions.defensive_stance import DefensiveStanceService
 from apps.skirmish.services.actions.fast_attack import FastAttackService
 from apps.skirmish.services.actions.risky_attack import RiskyAttackService
@@ -33,5 +34,5 @@ def test_get_service_by_attack_action_defensive_stance():
 
 
 def test_get_service_by_attack_action_unknown_action():
-    with pytest.raises(RuntimeError, match="Invalid attack action"):
+    with pytest.raises(UnknownSkirmishActionError, match="Attack action 99 is not a skirmish action"):
         get_service_by_attack_action(attack_action=99)
