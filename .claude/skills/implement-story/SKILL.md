@@ -1,6 +1,6 @@
 ---
 name: implement-story
-description: Implement a story end to end - resolve it from a GitHub issue link, issue number or plain text, plan it, write it, get the local CI gates green, run a resumable sharded code review that never blocks on a dying reviewer, fix what it finds, play the story in a real browser to confirm it works, then commit, push and open the PR. Use when asked to implement an issue or story, or to resume an interrupted run.
+description: Implement a story end to end - resolve it from a GitHub issue link, issue number or plain text, check it out into its own worktree, plan it, write it, get the local CI gates green, run a resumable sharded code review that never blocks on a dying reviewer, fix what it finds, play the story in a real browser to confirm it works, then commit, push and open the PR. Use when asked to implement an issue or story, or to resume an interrupted run.
 ---
 
 # Implement a story
@@ -13,6 +13,7 @@ that confirms the thing actually works.
 ```
 /implement-story <github issue url | issue number | free text describing the story>
 /implement-story --resume [slug]           # pick an interrupted run back up
+/implement-story <story> --no-worktree      # work in this checkout instead of a fresh worktree
 /implement-story <story> --native          # use the built-in /code-review instead of sharded review
 /implement-story <story> --deadline=900    # review wall-clock budget in seconds (default 720)
 /implement-story <story> --no-content-review # skip the browser phase
@@ -22,12 +23,12 @@ that confirms the thing actually works.
 
 ## The run directory
 
-Everything durable lives in `.claude/runs/<slug>/` (gitignored). This directory *is* the state - it is
-what makes a dead reviewer cost one lens instead of the whole run.
+Everything durable lives in `.claude/runs/<slug>/` (gitignored) inside the story's own worktree. This
+directory *is* the state - it is what makes a dead reviewer cost one lens instead of the whole run.
 
 ```
 .claude/runs/
-  .lock                this checkout's one-run-at-a-time lock: slug, branch, epoch seconds
+  .lock                this worktree's one-run-at-a-time lock: slug, branch, epoch seconds
 .claude/runs/<slug>/
   spec.md              the story, resolved once, never re-fetched
   plan.md              the approved implementation plan
@@ -66,6 +67,7 @@ means that lens was never reviewed, which is reported as a gap rather than block
   "phase": "review",
   "deadline_seconds": 720,
   "ci_attempts": 2,
+  "touches": ["apps/faction/models/faction.py", "apps/faction/tests/models/test_faction.py"],
   "review": {
     "head_sha": "c753616",
     "shards": {
@@ -82,7 +84,9 @@ means that lens was never reviewed, which is reported as a gap rather than block
 }
 ```
 
-`phase` is one of `spec`, `plan`, `implement`, `ci`, `review`, `triage`, `content`, `ship`. A shard
+`base` is what every diff and the PR are taken against - `main`, or a neighbour's branch when this story
+stacks on one. `touches` is the file list this run claims, which is how the neighbouring worktrees see it
+coming. `phase` is one of `spec`, `plan`, `implement`, `ci`, `review`, `triage`, `content`, `ship`. A shard
 `status` is one of `running`, `complete`, `partial`, `gap`. A `content.status` is one of `pending`,
 `pass`, `findings`, `blocked`, `skipped`. Write the file after every phase transition and every shard
 state change - it is cheap, and it is the only thing standing between an interrupted run and a restart.
@@ -93,33 +97,27 @@ Read [AGENTS.md](../../../AGENTS.md) and the docs it points at for the area you 
 are normative, and this project deviates from Django defaults on purpose. Do not infer conventions from
 nearby code.
 
-A checkout also has to be able to run the gates. A fresh `git worktree` carries no untracked files, so it
-has no `.venv` - and Phase 3 is where that surfaces, long after the story is written. Check it here:
-
-```bash
-[ -x .venv/bin/python ] || [ -x .venv/Scripts/python.exe ] || uv sync
-```
-
-`pre-commit` and `uv` are installed machine-wide and their caches are shared, so they need nothing per
-checkout. `node_modules` is missing in a fresh worktree too, but `content-server.sh` installs it in
-Phase 6 rather than failing.
-
 ## Parallel runs
 
-Several checkouts of this repository work on stories at the same time - `git worktree list` shows them.
-Most of what a run touches is already per-checkout: the run directory, `db.sqlite3`, the smoke database
-inside `content/`, and the port, which `content-server.sh` probes upward from the default rather than
-assuming it is free. Two things are not.
-
-**One run at a time per checkout.** Phase 1 checks out a branch and Phase 2 rewrites the working tree, so
-a second run in the same directory pulls the ground out from under the first. `.claude/runs/.lock` is one
-line - `<slug> <branch> <epoch seconds>` - written in Phase 0 and deleted in Phase 7. To work two stories
-at once, use a second worktree, never a second session in this one.
+One story, one worktree - Phase 0 creates it. Nearly everything a run touches is per-checkout that way:
+the branch, the run directory, `db.sqlite3`, the smoke database inside `content/`, and the port, which
+`content-server.sh` probes upward from the default rather than assuming it is free. Three things still
+reach across.
 
 **The browser is shared across the whole machine.** `@playwright/mcp` gives every server started without
 `--isolated` the same daemon browser, so two content reviews land in one Chrome: one of them sees the
 other's tabs and the other dies mid-navigation with `Target page, context or browser has been closed`.
-[Content review](references/content-review.md) carries the check and the fix.
+Phase 6 asks the neighbours before the first click; [content review](references/content-review.md) carries
+the handshake and the fix.
+
+**The neighbours are working the same repository.** Two stories editing the same files find that out at
+the merge otherwise, so Phase 1 reads what the other worktrees have claimed and puts the overlap in front
+of you at the approval stop.
+
+**One run at a time per worktree.** Phase 2 rewrites the working tree, so a second run in the same
+directory pulls the ground out from under the first. `.claude/runs/.lock` is one line -
+`<slug> <branch> <epoch seconds>` - written in Phase 0 and deleted in Phase 7. In practice it only catches
+a second session opened on a `--resume`.
 
 ## Phase 0 - Resolve the story
 
@@ -133,10 +131,51 @@ Derive `<slug>` as a short kebab-case name for the story (`faction-defeat`, `tow
 
 Resolve once. Later phases read `spec.md`, they do not re-fetch.
 
-If the working tree is dirty or a rebase/merge is in progress, stop and say so. Do not start a story on
-top of someone else's half-finished work.
+### Into its own worktree
 
-Then take the checkout's lock:
+One story, one checkout. The branch, the run directory and the smoke database all belong to it and to
+nothing else, which is what lets several stories run at once.
+
+```bash
+[ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ] || echo "already in a worktree"
+```
+
+**Already in a worktree**, or `--no-worktree`: adopt the branch that is checked out and create nothing. A
+worktree sitting on `main` still needs its own branch - take the `-b` name from the next step with
+`git switch -c`. This is the case where a dirty tree matters: if `git status --porcelain` is not empty or
+a rebase/merge is in progress, stop and say so rather than building on someone else's half-finished work.
+
+**In the main checkout**: create one. A new worktree starts from a remote ref, so whatever is lying around
+uncommitted here does not come with it and does not block the run.
+
+```bash
+git fetch github
+git worktree add -b feature/<slug> .claude/worktrees/issue-<n>-<slug> github/main
+```
+
+`feature/` for new behaviour, `fix/` for a defect, `chore/` for maintenance. The directory drops the
+`issue-<n>-` prefix when the story came in as free text. The remote is `github`, not `origin` - which is
+also why the worktree is created here rather than by `EnterWorktree`'s own `name`, whose base ref is
+`origin/<default>`.
+
+Then call `EnterWorktree` with `path` pointing at the new directory: the session moves in, and the rest of
+the run happens there.
+
+A fresh worktree carries no untracked files, so it has no `.venv`, and Phase 3 is where that would
+surface - long after the story is written:
+
+```bash
+[ -x .venv/bin/python ] || [ -x .venv/Scripts/python.exe ] || uv sync
+```
+
+`pre-commit` and `uv` are installed machine-wide and their caches are shared, so they need nothing per
+checkout. `node_modules` is missing too, but `content-server.sh` installs it in Phase 6 rather than
+failing.
+
+The worktree stays behind when the run ends. Phase 7 opens a PR, it does not merge one, and review
+comments need a checkout to be answered in.
+
+### Then take the worktree's lock
 
 ```bash
 mkdir -p .claude/runs
@@ -150,12 +189,27 @@ delete the lock deliberately and say you did.
 
 ## Phase 1 - Plan, then stop
 
-Create the branch from an up-to-date `main`: `feature/<slug>` for new behaviour, `fix/<slug>` for a
-defect, `chore/<slug>` for maintenance. The remote is `github`, not `origin`.
-
 Write `plan.md`: the files you will touch, the messages/handlers you will add, the tests you will write,
 and anything in the story you consider out of scope. Follow
-[adding a new flow](../../../docs/patterns/adding-a-flow.md) if the story crosses the message bus.
+[adding a new flow](../../../docs/patterns/adding-a-flow.md) if the story crosses the message bus. Record
+the file list as `touches` in `state.json` - that is what the neighbouring worktrees read.
+
+### Neighbours
+
+The other worktrees are working stories of their own, and their run directories are sitting right there:
+
+```bash
+git worktree list --porcelain               # absolute paths - read them straight, do not cd
+cat <other worktree>/.claude/runs/*/state.json
+```
+
+Intersect your `touches` with theirs. Anything shared goes into `plan.md` under **Neighbours**, naming the
+neighbour's slug, branch and phase. `ListAgents` says which of those sessions is still alive - a dead one
+is a merge conflict waiting in the future, a live one is a moving target. Decide nothing here: the stop
+below is where the call gets made.
+
+If the call is to build on a neighbour's branch, record it as `base` in `state.json`. Later phases diff
+and open the PR against `base`, so a stacked story reviews its own change instead of the neighbour's too.
 
 **Present the plan and stop for approval.** This is the only mandatory stop in the run.
 
@@ -167,6 +221,9 @@ Work the plan. Tests are part of the story, not a follow-up - see
 Keep commits in logical chunks as you go, following
 [commit messages](../../../docs/contributing/commit-messages.md): one capitalized subject line, no
 trailing period, no issue tag.
+
+When the work is done, refresh `touches` from `git diff <base>...HEAD --name-only`. A neighbour planning
+its story next reads that list, and a plan's guess is worth less to it than the diff.
 
 ## Phase 3 - CI gates
 
@@ -199,10 +256,10 @@ change.
 ### Launch
 
 1. **`git status --porcelain` must be empty.** Commit everything first. The shards review
-   `git diff main...HEAD`, so uncommitted work is invisible to all of them and the round would come back
+   `git diff <base>...HEAD`, so uncommitted work is invisible to all of them and the round would come back
    clean having reviewed nothing - the one failure this design must not have. Do not launch on a dirty
    tree.
-2. `git diff main...HEAD --stat` - count changed lines and decide the shard count:
+2. `git diff <base>...HEAD --stat` - count changed lines and decide the shard count:
 
    | Changed lines | Shards |
    |---|---|
@@ -295,9 +352,9 @@ habits, how to reach a game state honestly, and what counts as a finding.
 2. Write `content/journey.md` - the baseline journey plus the steps the story adds, each with its expected
    outcome - **before** you touch the browser. A journey written afterwards only describes what happened.
 3. Walk it with the Playwright tools, from this session, in one browser. **Do not fan this out to agents**:
-   there is a single browser behind those tools and parallel drivers would fight over it. The same is true
-   across checkouts - see [content review](references/content-review.md) on the shared daemon browser
-   before starting this phase while another run is in it.
+   there is a single browser behind those tools and parallel drivers would fight over it. The neighbouring
+   worktrees share it too, unless the Playwright server runs `--isolated`: ask them before the first click
+   - [content review](references/content-review.md) carries the handshake.
 4. Record the result of every step in `journey.md` and every defect in `content/findings.md`. Check the
    network requests after each mutating click - a failed htmx call leaves the page looking fine.
 5. Fix what the story broke, `content-server.sh restart` (the server does not autoreload, so without this
@@ -322,7 +379,7 @@ other - say so plainly, and never report a pass you did not see.
 Commit the fixes, push with `git push -u github <branch>`, and open the PR:
 
 ```bash
-gh pr create --base main --title "<story title>" --body-file <body>
+gh pr create --base <base> --title "<story title>" --body-file <body>
 ```
 
 The body carries: what the story asked for, what you built, `Closes #<n>` when there is an issue, the CI
@@ -330,13 +387,21 @@ result, a **Review coverage** line naming any lens that was skipped or partial, 
 line saying which journey was walked in the browser and what it showed - or that the phase was skipped,
 and why. Unless `--no-pr`.
 
-Release the checkout's lock once the PR is open - `rm -f .claude/runs/.lock`. A lock left behind blocks
-the next story in this worktree for no reason.
+A PR onto a neighbour's branch rather than `main` says so in the body, so a reviewer knows half the story
+is elsewhere.
+
+Release the worktree's lock once the PR is open - `rm -f .claude/runs/.lock`. A lock left behind blocks
+the next story in this worktree for no reason. The worktree itself stays; it is where review comments get
+answered.
 
 End with a short report: what shipped, what CI said, what the review found and what you fixed, what the
-browser confirmed or broke, what was skipped and why, and the out-of-scope list.
+browser confirmed or broke, what was skipped and why, the out-of-scope list, and the worktree path and
+branch - so it is clear what can be removed once the PR is merged.
 
 ## Resuming
+
+A `--resume` runs in the worktree that already holds the run directory, so start the session there.
+Phase 0 creates no second one: with `spec.md` present it only re-takes the lock.
 
 `state.json` carries `phase`. On `--resume`, read it and re-enter at that phase. Within Phase 4, relaunch
 only the shards whose status is not `complete`, and only if `review/.head_sha` still matches `HEAD` - if
@@ -355,12 +420,14 @@ it is missing.
 
 The point of the sharding is to spend wall-clock once. Hold these:
 
-- Review the diff against `main`, never the repository.
+- Review the diff against `base`, never the repository.
+- The neighbour scan is a file read, not a broadcast. At most one message per neighbour per run, and only
+  when an overlap or the browser actually needs an answer.
 - Never re-run a shard that produced a complete file.
 - Never re-review after fixes; check the fix delta instead.
 - Never spend review wall-clock on anything `ruff`, `boa-restrictor` or the coverage gate already catches.
 - One retry per shard, at half scope. Then it is a gap.
 - One browser, driven from this session. The content review is never fanned out - and never run at the
-  same time as another checkout's, unless the MCP server is `--isolated`.
+  same time as a neighbour's, unless the MCP server is `--isolated`.
 - Walk the journey you wrote, plus at most ten exploratory clicks. Then write down what you have.
 - Two content fix rounds, then stop. And always stop the server - a stale one costs the next run a round.

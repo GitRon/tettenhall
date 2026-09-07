@@ -46,7 +46,7 @@ chat is read. Write findings into that file as you confirm them, one at a time, 
 them to the end. If you are killed halfway through, everything already written still counts, and that is
 the point.
 
-The change under review is `git diff main...HEAD`<SCOPE_NOTE>. Review only that diff. Problems on lines
+The change under review is `git diff <BASE>...HEAD`<SCOPE_NOTE>. Review only that diff. Problems on lines
 this change did not touch are out of scope.
 
 **Your lens: <LENS_NAME>.** <LENS_DESCRIPTION>
