@@ -430,67 +430,36 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_attacking_facti
         defeated_unconscious_warriors=[unconscious_enemy_warrior],
         victorious_healthy_warriors=[healthy_attacking_warrior],
         quest_name=quest_contract.quest.name,
-        # Two defenders turned out against an easy quest's band of up to five, so the contract pays
-        # two fifths of its face value
-        quest_loot=100,
+        quest_loot=250,
         month=3,
     )
 
 
 @pytest.mark.django_db
-def test_handle_faction_wins_skirmish_pays_the_full_loot_for_a_full_muster():
+def test_handle_faction_wins_skirmish_pays_the_contract_whatever_turned_out():
     """
-    The advertised figure is never an undersell: the turnout is drawn from the difficulty band, so a
-    faction that fields the top of it earns the contract's whole face value.
+    Signed price, paid in full. The purse was priced against the war band the target could field when
+    the quest was pinned to the board, so a hard contract met by a single defender is a contract that
+    was written small - not a large one settled at a fraction.
     """
     skirmish = SkirmishFactory()
     quest_contract = QuestContractFactory(
         faction=skirmish.attacking_faction,
         skirmish=skirmish,
-        quest__loot=300,
-        quest__difficulty=Quest.DifficultyChoices.DIFFICULTY_EASY,
+        quest__loot=800,
+        quest__difficulty=Quest.DifficultyChoices.DIFFICULTY_HARD,
+        quest__expected_opposition=8,
     )
     skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
-    # An easy quest musters up to five
-    for _ in range(5):
-        skirmish.defending_warriors.add(
-            WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
-        )
+    skirmish.defending_warriors.add(
+        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    )
 
     result = handle_faction_wins_skirmish(
         context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
     )
 
     assert result.quest_loot == quest_contract.quest.loot
-
-
-@pytest.mark.django_db
-def test_handle_faction_wins_skirmish_pays_less_for_a_thin_warband():
-    """
-    The money follows the opposition rather than the opposition being padded to fit the money: a hard
-    quest against a faction that can field two men is an easy fight and pays like one.
-    """
-    skirmish = SkirmishFactory()
-    QuestContractFactory(
-        faction=skirmish.attacking_faction,
-        skirmish=skirmish,
-        quest__loot=800,
-        quest__difficulty=Quest.DifficultyChoices.DIFFICULTY_HARD,
-    )
-    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
-    skirmish.defending_warriors.add(
-        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
-    )
-    skirmish.defending_warriors.add(
-        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
-    )
-
-    result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
-    )
-
-    # Two of the eight a hard quest musters, so a quarter of the 800 on the contract
-    assert result.quest_loot == 200
 
 
 @pytest.mark.django_db

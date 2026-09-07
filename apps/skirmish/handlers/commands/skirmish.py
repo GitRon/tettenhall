@@ -188,24 +188,6 @@ def handle_warrior_attacks_warrior(
     return service.process()
 
 
-def _scaled_quest_loot(*, quest_contract: QuestContract, skirmish: Skirmish) -> int:
-    """
-    What the contract actually pays, given how thin a war band the target turned out to be.
-
-    The money follows the opposition rather than the opposition being padded to fit the money: the
-    difficulty says how many of the rival's warriors turn out, and a hard quest against a faction
-    that can field two men is an easy fight and pays like one. "Quest.loot" is therefore a ceiling
-    rather than a promise, measured against the top of the difficulty band.
-
-    Never an undersell: the turnout is drawn from that same band, so the ratio is one at a full
-    muster and less below it. And never a number the player is disappointed against either - the
-    quest board runs the loot through "obscurify", so what was advertised was "High", not a figure.
-    """
-    _, band_maximum = quest_contract.quest.get_min_max_number_of_opponents()
-
-    return round(quest_contract.quest.loot * skirmish.defending_warriors.count() / band_maximum)
-
-
 @message_registry.register_command(command=skirmish.WinSkirmish)
 def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event | None:
     # A fight is won once. The manager refuses a skirmish that already has a victor, and stopping here
@@ -223,8 +205,13 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         # outcome funded the rival who beat you out of your own quest. Decided here rather than in
         # the finance handler because reading the contract's faction is a query, which strict mode
         # forbids in an event handler.
+        #
+        # The face value, whatever turned out on the day. The purse was already priced against the
+        # war band the target could field when the quest was pinned to the board - see
+        # "Quest._priced_for_expected_opposition" - so a thin turnout is a thin contract rather than
+        # a fraction of a fat one, and the figure the player accepted is the figure he is paid.
         if quest_contract.faction_id == context.victorious_faction.pk:
-            quest_loot = _scaled_quest_loot(quest_contract=quest_contract, skirmish=context.skirmish)
+            quest_loot = quest_contract.quest.loot
         else:
             quest_loot = 0
     except QuestContract.DoesNotExist:
