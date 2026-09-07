@@ -129,10 +129,13 @@ skip the rest of this section.
 
 Without it, ask before the first click rather than finding out mid-navigation:
 
-1. `ListAgents`. No other local session, no contention - go.
-2. Otherwise send each listed neighbour exactly one `SendMessage` asking whether it is driving the
-   browser right now. If it is, send that same message with `notify_when_idle: true` so its answer is
-   followed by a notice when it goes idle.
+1. Read the neighbouring worktrees' `state.json`, the same ones Phase 1 scanned. A neighbour whose `phase`
+   is `content` and whose `content.status` is still `pending` is the one in the browser. None, no
+   contention - go.
+2. Message that neighbour, and only it, at the `session` name its `state.json` records. One `SendMessage`,
+   carrying `notify_when_idle: true` so the same call both asks the question and subscribes to the notice
+   for when it goes idle. Do not send a second one, and never message a name that no `state.json` claims -
+   `ListAgents` also lists sessions working on entirely different projects.
 3. Do not wait in a loop and do not follow up. If no answer arrives, or it does not arrive inside this
    phase's budget, record `content.status` as `blocked` with the reason and ship - a phase that could not
    run is a gap like any other, and naming it beats guessing at it.

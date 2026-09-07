@@ -63,7 +63,8 @@ means that lens was never reviewed, which is reported as a gap rather than block
   "slug": "faction-defeat",
   "issue": 21,
   "branch": "feature/faction-defeat",
-  "base": "main",
+  "base": "github/main",
+  "session": "faction-defeat [f69956]",
   "phase": "review",
   "deadline_seconds": 720,
   "ci_attempts": 2,
@@ -84,9 +85,12 @@ means that lens was never reviewed, which is reported as a gap rather than block
 }
 ```
 
-`base` is what every diff and the PR are taken against - `main`, or a neighbour's branch when this story
-stacks on one. `touches` is the file list this run claims, which is how the neighbouring worktrees see it
-coming. `phase` is one of `spec`, `plan`, `implement`, `ci`, `review`, `triage`, `content`, `ship`. A shard
+`base` is the ref every diff is taken against: `github/main`, or a neighbour's branch when this story
+stacks on one. Phase 7 strips a `github/` prefix off it for `gh pr create --base`, which wants a branch
+name. `session` is what `ListAgents` calls this run - it tells each session its own name, and writing it
+down here is what lets a neighbour address this one instead of guessing. `touches` is the file list this
+run claims, which is how the neighbouring worktrees see it coming. `phase` is one of `spec`, `plan`,
+`implement`, `ci`, `review`, `triage`, `content`, `ship`. A shard
 `status` is one of `running`, `complete`, `partial`, `gap`. A `content.status` is one of `pending`,
 `pass`, `findings`, `blocked`, `skipped`. Write the file after every phase transition and every shard
 state change - it is cheap, and it is the only thing standing between an interrupted run and a restart.
@@ -121,6 +125,12 @@ a second session opened on a `--resume`.
 
 ## Phase 0 - Resolve the story
 
+**On `--resume`, find the run before anything else.** The run directory lives inside the story's own
+worktree, so a resume started anywhere else sees no `spec.md` and would resolve the story a second time
+and try to create a branch that already exists. Walk `git worktree list --porcelain`, take the one whose
+`.claude/runs/<slug>/spec.md` exists, `EnterWorktree` with its `path`, and skip the rest of this phase
+apart from the lock.
+
 Derive `<slug>` as a short kebab-case name for the story (`faction-defeat`, `town-shop-restock`).
 
 - **Issue URL or number** - `gh issue view <n> --json number,title,body,labels,comments`. Write the title,
@@ -137,19 +147,23 @@ One story, one checkout. The branch, the run directory and the smoke database al
 nothing else, which is what lets several stories run at once.
 
 ```bash
+git fetch github
 [ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ] || echo "already in a worktree"
 ```
 
+Fetch first, whichever way this goes. The branch is cut from `github/main`, never from local `main`, which
+only moves on a `pull` and is stale on any machine that has been reviewing more than merging.
+
 **Already in a worktree**, or `--no-worktree`: adopt the branch that is checked out and create nothing. A
-worktree sitting on `main` still needs its own branch - take the `-b` name from the next step with
-`git switch -c`. This is the case where a dirty tree matters: if `git status --porcelain` is not empty or
-a rebase/merge is in progress, stop and say so rather than building on someone else's half-finished work.
+worktree sitting on `main` still needs its own branch - `git switch -c <branch> github/main`, taking the
+name from the next step. This is the case where a dirty tree matters: if `git status --porcelain` is not
+empty or a rebase/merge is in progress, stop and say so rather than building on someone else's
+half-finished work.
 
 **In the main checkout**: create one. A new worktree starts from a remote ref, so whatever is lying around
 uncommitted here does not come with it and does not block the run.
 
 ```bash
-git fetch github
 git worktree add -b feature/<slug> .claude/worktrees/issue-<n>-<slug> github/main
 ```
 
@@ -175,7 +189,12 @@ failing.
 The worktree stays behind when the run ends. Phase 7 opens a PR, it does not merge one, and review
 comments need a checkout to be answered in.
 
-### Then take the worktree's lock
+### Then take the worktree's lock, and say who you are
+
+Record `base` as `github/main` and `session` as the name `ListAgents` reports for this session - it opens
+with "This session is `<name> [ref]`". A neighbour reads that name out of `state.json` to reach this run;
+without it, the rows `ListAgents` returns are just names, some of them sessions on other projects
+entirely.
 
 ```bash
 mkdir -p .claude/runs
@@ -203,13 +222,21 @@ git worktree list --porcelain               # absolute paths - read them straigh
 cat <other worktree>/.claude/runs/*/state.json
 ```
 
-Intersect your `touches` with theirs. Anything shared goes into `plan.md` under **Neighbours**, naming the
-neighbour's slug, branch and phase. `ListAgents` says which of those sessions is still alive - a dead one
-is a merge conflict waiting in the future, a live one is a moving target. Decide nothing here: the stop
-below is where the call gets made.
+Skip your own worktree, and skip any run whose `phase` is `ship` - that story is on a PR, its files come
+back through the merge, and every worktree left standing after its run would otherwise pile into this list
+forever.
 
-If the call is to build on a neighbour's branch, record it as `base` in `state.json`. Later phases diff
-and open the PR against `base`, so a stacked story reviews its own change instead of the neighbour's too.
+Intersect your `touches` with what is left. Anything shared goes into `plan.md` under **Neighbours**,
+naming the neighbour's slug, branch and phase. Match each neighbour's `session` against `ListAgents` to
+say whether it is still alive - a dead one is a merge conflict waiting in the future, a live one is a
+moving target. Rows that no `state.json` claims are other people's work; leave them alone. Decide nothing
+here: the stop below is where the call gets made.
+
+If the call is to build on a neighbour's branch, record that branch as `base` in `state.json`. Later
+phases diff and open the PR against `base`, so a stacked story reviews its own change instead of the
+neighbour's too. Only stack on a branch the neighbour has already pushed - it does that in its Phase 7,
+and `gh pr create --base` wants a branch that exists on the remote. A neighbour still writing its story
+is a reason to wait or to scope around it, not to stack.
 
 **Present the plan and stop for approval.** This is the only mandatory stop in the run.
 
@@ -379,8 +406,11 @@ other - say so plainly, and never report a pass you did not see.
 Commit the fixes, push with `git push -u github <branch>`, and open the PR:
 
 ```bash
-gh pr create --base <base> --title "<story title>" --body-file <body>
+gh pr create --base ${base#github/} --title "<story title>" --body-file <body>
 ```
+
+`--base` wants a branch name, so the `github/` comes off: a run based on `github/main` opens against
+`main`, a stacked one against the neighbour's branch as recorded.
 
 The body carries: what the story asked for, what you built, `Closes #<n>` when there is an issue, the CI
 result, a **Review coverage** line naming any lens that was skipped or partial, and a **Content review**
@@ -400,8 +430,8 @@ branch - so it is clear what can be removed once the PR is merged.
 
 ## Resuming
 
-A `--resume` runs in the worktree that already holds the run directory, so start the session there.
-Phase 0 creates no second one: with `spec.md` present it only re-takes the lock.
+Phase 0 opens with finding the worktree that holds the run and moving into it, so a resume can be started
+from anywhere. It creates no second worktree and resolves no story twice.
 
 `state.json` carries `phase`. On `--resume`, read it and re-enter at that phase. Within Phase 4, relaunch
 only the shards whose status is not `complete`, and only if `review/.head_sha` still matches `HEAD` - if
