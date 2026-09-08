@@ -22,7 +22,7 @@
                         {# A faction can be without a leader, and reversing the url with no id raises #}
                         <td>
                             {% if object.leader %}
-                                <a href="{% url "warrior:warrior-detail-view" object.leader.id %}">{{ object.leader }}</a>
+                                <a href="{% url "warrior:warrior-detail-view" object.leader.id %}">{{ object.leader.display_name }}</a>
                             {% else %}
                                 -
                             {% endif %}

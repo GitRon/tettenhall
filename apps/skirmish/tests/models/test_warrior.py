@@ -9,6 +9,76 @@ from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warrior.services.nickname import (
+    HEALTH_NICKNAMES,
+    MORALE_NICKNAMES,
+    STATS_FLOOR_NICKNAMES,
+    STRENGTH_NICKNAMES,
+)
+
+
+def test_str_leaves_the_epithet_off():
+    """
+    Every generated string the game persists flows through "__str__" - the battle history, the
+    monthly log, the reasons on transactions - and those rows outlive an epithet derived from
+    attributes that move.
+    """
+    warrior = WarriorFactory.build(name="Collum", strength=20)
+
+    assert str(warrior) == "Collum"
+
+
+def test_nickname_reads_the_attributes_against_the_warriors_own_distribution():
+    warrior = WarriorFactory.build(strength=20)
+
+    assert warrior.nickname == STRENGTH_NICKNAMES[0]
+
+
+def test_nickname_reads_health_off_its_own_baseline_and_spread():
+    """
+    Six baseline and spread columns feed one rule, and a pairing that reaches for the wrong two is
+    invisible from the attributes alone - so each of the three distributions gets a test that only
+    passes while its own pair is the one being read. Forty against a mean of twenty and a spread of
+    ten is two spreads out; read against any other pair on the row it is four, or nothing.
+    """
+    warrior = WarriorFactory.build(max_health=40, health_baseline=20, health_spread=10)
+
+    assert warrior.nickname == HEALTH_NICKNAMES[0]
+
+
+def test_nickname_reads_morale_off_its_own_baseline_and_spread():
+    warrior = WarriorFactory.build(max_morale=30, morale_baseline=20, morale_spread=5)
+
+    assert warrior.nickname == MORALE_NICKNAMES[0]
+
+
+def test_nickname_hands_the_stats_floor_to_both_arm_draws():
+    """
+    The floor is a column of its own and only strength and dexterity pass it - health and morale take
+    the default of one. Three is the floor here, so a man on it in both arms earns the epithet; were
+    the column not reaching the draws, three would sit above a floor of one and he would earn nothing.
+    """
+    warrior = WarriorFactory.build(strength=3, dexterity=3, stats_minimum=3)
+
+    assert warrior.nickname == STATS_FLOOR_NICKNAMES[0]
+
+
+def test_display_name_carries_the_epithet():
+    warrior = WarriorFactory.build(name="Collum", strength=20)
+
+    assert warrior.display_name == f"Collum {STRENGTH_NICKNAMES[0]}"
+
+
+def test_display_name_phrases_the_epithet_by_the_warriors_own_variant():
+    warrior = WarriorFactory.build(name="Collum", strength=20, nickname_variant=1)
+
+    assert warrior.display_name == f"Collum {STRENGTH_NICKNAMES[1]}"
+
+
+def test_display_name_for_an_ordinary_man():
+    warrior = WarriorFactory.build(name="Collum")
+
+    assert warrior.display_name == "Collum"
 
 
 def test_is_dead_for_a_killed_warrior():

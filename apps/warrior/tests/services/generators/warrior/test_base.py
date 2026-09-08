@@ -145,3 +145,71 @@ def test_process_stamps_the_leader_baseline_on_the_warrior():
     result = generator.process()
 
     assert result.strength_baseline == LeaderWarriorGenerator.STATS_MU
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_levy_spread_on_the_warrior():
+    """
+    The spread travels for the same reason the baseline does: it is what an exceptional roll is
+    recognised by, and the archetypes differ in it by nearly a factor of three.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.stats_spread == FyrdWarriorGenerator.STATS_SIGMA
+    assert Warrior.objects.get(pk=result.pk).stats_spread == FyrdWarriorGenerator.STATS_SIGMA
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_levy_floor_on_the_warrior():
+    """
+    The floor travels too, because it is the whole of the downward end: the roll is clamped to it, so
+    that is where a quarter of every levy lands and the only position a feeble man can be in.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.stats_minimum == FyrdWarriorGenerator.STATS_MIN
+    assert Warrior.objects.get(pk=result.pk).stats_minimum == FyrdWarriorGenerator.STATS_MIN
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_levy_health_draw_on_the_warrior():
+    """
+    Health carries its own mean and spread rather than borrowing the stats ones: a fyrd man is rolled
+    for ten health against a spread of ten and for five strength against a spread of five, and the
+    two pairs stand in no fixed ratio across the archetypes.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.health_baseline == FyrdWarriorGenerator.HEALTH_MU
+    assert result.health_spread == FyrdWarriorGenerator.HEALTH_SIGMA
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_levy_morale_draw_on_the_warrior():
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.morale_baseline == FyrdWarriorGenerator.MORALE_MU
+    assert result.morale_spread == FyrdWarriorGenerator.MORALE_SIGMA
+
+
+@pytest.mark.django_db
+def test_process_draws_the_warriors_nickname_variant_once():
+    """
+    Which wording his epithet takes is settled when he is generated and then held, so he reads the
+    same on every page for the rest of the savegame.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    with mock.patch("apps.warrior.services.generators.warrior.base.random.randrange", return_value=2):
+        result = generator.process()
+
+    assert result.nickname_variant == 2
+    assert Warrior.objects.get(pk=result.pk).nickname_variant == 2
