@@ -3,9 +3,11 @@ import pytest
 from apps.item.models.item_type import ItemType
 from apps.item.tests.factories.item import ItemFactory
 from apps.item.tests.factories.item_type import ItemTypeFactory
+from apps.skirmish.models.skirmish_casualty import SkirmishCasualty
 from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.skirmish.projections.skirmish_report import SkirmishReport
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.skirmish.tests.factories.skirmish_casualty import SkirmishCasualtyFactory
 from apps.skirmish.tests.factories.skirmish_spoil import SkirmishSpoilFactory
 from apps.skirmish.tests.factories.skirmish_warrior_growth import SkirmishWarriorGrowthFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -221,3 +223,177 @@ def test_a_fight_that_yielded_only_silver_still_has_something_to_report():
     report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
 
     assert report.has_anything_to_report is True
+
+
+@pytest.mark.django_db
+def test_own_casualties_names_the_faction_s_own_dead():
+    skirmish = SkirmishFactory()
+    own_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_warrior)
+    casualty = SkirmishCasualtyFactory(
+        skirmish=skirmish, warrior=own_warrior, fate=SkirmishCasualty.FateChoices.FATE_KILLED
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert report.own_casualties == [casualty]
+    assert report.has_anything_to_report is True
+
+
+@pytest.mark.django_db
+def test_own_casualties_names_a_man_taken_prisoner_in_this_very_fight():
+    """
+    A capture clears the warrior's faction, so reading it would hand the player's own man to the
+    enemy's column. The roster is what still knows whose he was.
+    """
+    skirmish = SkirmishFactory()
+    own_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_warrior)
+    casualty = SkirmishCasualtyFactory(
+        skirmish=skirmish, warrior=own_warrior, fate=SkirmishCasualty.FateChoices.FATE_CAPTURED
+    )
+    own_warrior.faction = None
+    own_warrior.save()
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert report.own_casualties == [casualty]
+
+
+@pytest.mark.django_db
+def test_own_casualties_names_a_man_merely_knocked_out_on_the_winning_side():
+    """
+    He keeps his gear and his place on the roster, so the fate is what says he is not a loss - but
+    he was out of the fight, and the panel accounts for him.
+    """
+    skirmish = SkirmishFactory()
+    own_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_warrior)
+    casualty = SkirmishCasualtyFactory(
+        skirmish=skirmish, warrior=own_warrior, fate=SkirmishCasualty.FateChoices.FATE_INCAPACITATED
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert report.own_casualties == [casualty]
+    assert casualty.get_fate_display() == "Knocked unconscious"
+
+
+@pytest.mark.django_db
+def test_own_casualties_reports_a_man_who_fell_carrying_nothing():
+    """
+    The case with no spoil row at all: no weapon, no armour and a zero purse. The panel used to
+    print "the fight yielded nothing" over him.
+    """
+    skirmish = SkirmishFactory()
+    own_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_warrior)
+    SkirmishCasualtyFactory(skirmish=skirmish, warrior=own_warrior, fate=SkirmishCasualty.FateChoices.FATE_KILLED)
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert report.has_anything_to_report is True
+    assert (report.items_won, report.items_lost, report.silver_won) == ([], [], 0)
+
+
+@pytest.mark.django_db
+def test_own_routed_is_kept_apart_from_the_casualties():
+    skirmish = SkirmishFactory()
+    own_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_warrior)
+    routed = SkirmishCasualtyFactory(
+        skirmish=skirmish, warrior=own_warrior, fate=SkirmishCasualty.FateChoices.FATE_FLED
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert (report.own_routed, report.own_casualties) == ([routed], [])
+    assert report.has_anything_to_report is True
+
+
+@pytest.mark.django_db
+def test_a_won_fight_does_not_file_the_faction_s_own_dead_mans_gear_as_booty():
+    """
+    His gear and purse go to the victor, who is his own faction, so they arrived as gains off a man
+    on the roster. That is the stash getting its kit back - not booty, and not a loss either.
+    """
+    skirmish = SkirmishFactory()
+    own_dead = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_dead)
+    skirmish.victorious_faction = skirmish.attacking_faction
+    skirmish.save()
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN,
+        item=ItemFactory(savegame=skirmish.attacking_faction.savegame),
+        warrior=own_dead,
+    )
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_SILVER_LOOTED,
+        amount=9,
+        warrior=own_dead,
+    )
+    SkirmishCasualtyFactory(skirmish=skirmish, warrior=own_dead, fate=SkirmishCasualty.FateChoices.FATE_KILLED)
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert (report.items_won, report.silver_looted) == ([], 0)
+    assert (report.items_lost, report.silver_lost) == ([], 0)
+
+
+@pytest.mark.django_db
+def test_prisoners_taken_names_the_enemy_and_not_the_captor_s_own_downed_men():
+    skirmish = SkirmishFactory()
+    own_downed = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_downed)
+    enemy = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(enemy)
+    SkirmishCasualtyFactory(skirmish=skirmish, warrior=own_downed, fate=SkirmishCasualty.FateChoices.FATE_INCAPACITATED)
+    prisoner = SkirmishCasualtyFactory(
+        skirmish=skirmish, warrior=enemy, fate=SkirmishCasualty.FateChoices.FATE_CAPTURED
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert report.prisoners_taken == [prisoner]
+    assert report.own_casualties == [SkirmishCasualty.objects.get(warrior=own_downed)]
+
+
+@pytest.mark.django_db
+def test_the_enemy_s_dead_are_counted_and_told_apart_from_the_ones_merely_left_lying():
+    """
+    The overkill threshold decides which, and the report says which happened without naming eight
+    men over the two of the player's own that matter.
+    """
+    skirmish = SkirmishFactory()
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+    SkirmishCasualtyFactory(
+        skirmish=skirmish,
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        fate=SkirmishCasualty.FateChoices.FATE_KILLED,
+    )
+    SkirmishCasualtyFactory(
+        skirmish=skirmish,
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        fate=SkirmishCasualty.FateChoices.FATE_INCAPACITATED,
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert (report.enemy_killed_count, report.enemy_downed_count) == (1, 1)
+    assert report.has_anything_to_report is True
+
+
+@pytest.mark.django_db
+def test_a_fight_the_faction_lost_nobody_in_reports_no_casualties():
+    skirmish = SkirmishFactory()
+    own_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(own_warrior)
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert (report.own_casualties, report.own_routed, report.prisoners_taken) == ([], [], [])
+    assert (report.enemy_killed_count, report.enemy_downed_count) == (0, 0)

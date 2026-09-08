@@ -35,6 +35,13 @@ class RecordWarriorGrowth(Command):
 
 
 @dataclass(kw_only=True)
+class RecordSkirmishCasualty(Command):
+    skirmish: Skirmish
+    warrior: Warrior
+    fate: int
+
+
+@dataclass(kw_only=True)
 class RecordSkirmishBlow(Command):
     skirmish: Skirmish
     round_number: int

@@ -4,17 +4,22 @@ from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.handlers.events.skirmish_report import (
+    handle_record_captured_warrior,
     handle_record_gained_experience,
     handle_record_gained_level,
     handle_record_improved_stats,
+    handle_record_incapacitated_warrior,
+    handle_record_killed_warrior,
     handle_record_landed_blow,
     handle_record_looted_item,
     handle_record_looted_silver,
     handle_record_quest_reward,
+    handle_record_routed_warrior,
     handle_record_stopped_blow,
 )
 from apps.skirmish.messages.commands.skirmish_report import (
     RecordSkirmishBlow,
+    RecordSkirmishCasualty,
     RecordSkirmishSpoil,
     RecordWarriorGrowth,
 )
@@ -25,9 +30,14 @@ from apps.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
     WarriorGainedExperience,
     WarriorGainedLevel,
+    WarriorHasFled,
     WarriorImprovedStats,
     WarriorTookDamage,
+    WarriorWasCaptured,
+    WarriorWasIncapacitated,
+    WarriorWasKilled,
 )
+from apps.skirmish.models.skirmish_casualty import SkirmishCasualty
 from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.skirmish.tests.factories.warrior import WarriorFactory
@@ -241,4 +251,77 @@ def test_handle_record_stopped_blow_carries_which_kind_of_nothing_it_was():
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defense=defense,
         outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+    )
+
+
+def test_handle_record_killed_warrior_records_the_death():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build()
+
+    result = handle_record_killed_warrior(
+        context=WarriorWasKilled(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build())
+    )
+
+    assert result == RecordSkirmishCasualty(
+        skirmish=skirmish,
+        warrior=warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_KILLED,
+    )
+
+
+def test_handle_record_incapacitated_warrior_records_him_as_merely_down():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build()
+
+    result = handle_record_incapacitated_warrior(
+        context=WarriorWasIncapacitated(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build())
+    )
+
+    assert result == RecordSkirmishCasualty(
+        skirmish=skirmish,
+        warrior=warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_INCAPACITATED,
+    )
+
+
+def test_handle_record_captured_warrior_records_the_capture():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build()
+
+    result = handle_record_captured_warrior(
+        context=WarriorWasCaptured(skirmish=skirmish, warrior=warrior, capturing_faction=skirmish.attacking_faction)
+    )
+
+    assert result == RecordSkirmishCasualty(
+        skirmish=skirmish,
+        warrior=warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_CAPTURED,
+    )
+
+
+def test_handle_record_captured_warrior_records_nothing_for_a_capture_without_a_fight():
+    """
+    An occupation takes a leader without a fight, so there is no report for him to be a casualty of.
+    """
+    skirmish = SkirmishFactory.build()
+
+    result = handle_record_captured_warrior(
+        context=WarriorWasCaptured(
+            skirmish=None, warrior=WarriorFactory.build(), capturing_faction=skirmish.attacking_faction
+        )
+    )
+
+    assert result is None
+
+
+def test_handle_record_routed_warrior_records_the_rout():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build()
+
+    result = handle_record_routed_warrior(context=WarriorHasFled(skirmish=skirmish, warrior=warrior))
+
+    assert result == RecordSkirmishCasualty(
+        skirmish=skirmish,
+        warrior=warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_FLED,
     )
