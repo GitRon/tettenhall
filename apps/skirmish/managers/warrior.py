@@ -345,6 +345,39 @@ class WarriorManager(manager.Manager):
 
         return equipment
 
+    def set_pub_stock(self, *, obj, is_pub_stock: bool):
+        """
+        Say whether the next restock may sweep this man off the pub's shelf.
+        """
+        obj.is_pub_stock = is_pub_stock
+        obj.save(update_fields=("is_pub_stock",))
+
+        return obj
+
+    def release_from_roster(self, *, obj, faction) -> int:
+        """
+        Send a warrior away: off the roster and out of the gear the faction paid for.
+
+        The gear stays behind for the reason [strip_equipment] gives - an item belongs to the faction
+        and is only wielded by a warrior, so a man who walks off still holding his sword takes it out
+        of everyone's reach rather than with him.
+
+        One conditional statement rather than a read, a decision and a save, and the same shape as
+        "handle_upgrade_town_building" for the same reason: two overlapping clicks on the one button
+        both pass whatever the page checked, and the loser matching no row is what keeps the faction
+        from paying severance twice for one man. It also puts the two rules that must never be broken
+        in the statement itself - he has to still be on this roster, and he must never be the leader,
+        whose loss is what defeats a faction.
+
+        Returns how many rows were released, so a caller can tell the man who went from the click
+        that came too late.
+        """
+        return (
+            self.filter(id=obj.id, faction=faction)
+            .exclude(id=faction.leader_id)
+            .update(faction=None, weapon=None, armor=None)
+        )
+
     def set_faction(self, *, obj, faction) -> int:
         """
         Set a new faction for the given warrior.

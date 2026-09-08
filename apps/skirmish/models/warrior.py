@@ -33,6 +33,15 @@ class Warrior(models.Model):
     UNPAID_MORALE_LOSS = 0.25
     UNPAID_MONTHS_UNTIL_DESERTION = 3
 
+    # What a warrior's monthly wage is worth as a share of what it costs to hire him. One number for
+    # both directions: the generators price a wage off a rolled recruitment price, and the pub prices
+    # a hire off the wage the man draws today - see [hiring_price].
+    SALARY_SHARE_OF_PRICE = 0.5
+    # Months of wages a warrior is owed for being sent away. The silver insolvency would have taken
+    # off the player anyway, which is what makes letting a man go a decision with a price rather than
+    # a way to walk out of a wage bill for nothing.
+    SEVERANCE_SALARY_MONTHS = 1
+
     class ConditionChoices(models.IntegerChoices):
         CONDITION_HEALTHY = 1, "Healthy"
         CONDITION_UNCONSCIOUS = 2, "Unconscious"
@@ -76,6 +85,14 @@ class Warrior(models.Model):
     unpaid_months = models.PositiveSmallIntegerField("Unpaid months", default=0)
 
     recruitment_price = models.PositiveSmallIntegerField("Recruitment price", default=0)
+
+    # Whether this man is stock a pub generated and may sweep out again at the next restock.
+    # "handle_restock_pub_mercenaries" clears the shelf with a row delete, and a warrior who left a
+    # roster waits on that same shelf - so what may be destroyed has to be stated on the row rather
+    # than read off an empty faction, which describes a dismissed veteran just as well as a mercenary
+    # nobody hired. Written where the pub takes a man in, by "handle_add_warrior_to_pub" and nowhere
+    # else, so a man hired out of the pub and later sent away is marked afresh on the way back in.
+    is_pub_stock = models.BooleanField("Is pub stock", default=False)
 
     last_used_skirmish_action = models.PositiveSmallIntegerField(
         choices=SkirmishActionChoices.choices, blank=True, null=True
@@ -140,6 +157,27 @@ class Warrior(models.Model):
     @property
     def slavery_selling_price(self) -> int:
         return int(self.recruitment_price / 2)
+
+    @property
+    def hiring_price(self) -> int:
+        """
+        What it costs to take this man onto a roster today.
+
+        Read off the wage he draws rather than off "recruitment_price", which was rolled when he was
+        generated and describes the levy he was: every level raises his salary, so a veteran who has
+        been through a war and come back out of it would otherwise be the cheapest strong man in the
+        game. Inverting the share the generators price a wage with is what keeps a mercenary nobody
+        has hired at the price he has always had, while a man who earned his levels costs what he
+        now costs to keep.
+        """
+        return round(self.monthly_salary / self.SALARY_SHARE_OF_PRICE)
+
+    @property
+    def severance_pay(self) -> int:
+        """
+        What the faction owes a man it sends away.
+        """
+        return self.monthly_salary * self.SEVERANCE_SALARY_MONTHS
 
     @staticmethod
     def level_for(*, experience: int) -> int:

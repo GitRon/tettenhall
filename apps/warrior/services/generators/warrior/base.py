@@ -126,7 +126,9 @@ class BaseWarriorGenerator:
             dexterity=dexterity,
             dexterity_progress=dexterity_progress,
             recruitment_price=recruitment_price,
-            monthly_salary=round(recruitment_price * 0.5),
+            # The share is the warrior's own number rather than this generator's, because the pub
+            # prices a hire by inverting it - see "Warrior.hiring_price"
+            monthly_salary=round(recruitment_price * Warrior.SALARY_SHARE_OF_PRICE),
             weapon=weapon,
             armor=armor,
         )

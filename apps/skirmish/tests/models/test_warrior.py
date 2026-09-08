@@ -29,6 +29,28 @@ def test_is_fleeing_for_a_warrior_out_of_morale():
     assert warrior.is_fleeing is True
 
 
+def test_hiring_price_inverts_the_share_a_wage_is_priced_with():
+    warrior = WarriorFactory.build(monthly_salary=90)
+
+    assert warrior.hiring_price == 180
+
+
+def test_hiring_price_ignores_the_price_he_was_rolled_at():
+    """
+    "recruitment_price" describes the levy a man was generated as, so a veteran whose levels raised
+    his wage would otherwise be the cheapest strong man in the game.
+    """
+    warrior = WarriorFactory.build(monthly_salary=200, recruitment_price=96)
+
+    assert warrior.hiring_price == 400
+
+
+def test_severance_pay_is_a_month_of_wages():
+    warrior = WarriorFactory.build(monthly_salary=120)
+
+    assert warrior.severance_pay == 120
+
+
 def test_level_for_an_untested_warrior():
     assert Warrior.level_for(experience=0) == 1
 
