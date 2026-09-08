@@ -10,6 +10,7 @@ from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.managers.warrior import WarriorManager
 from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
+from apps.warrior.services.nickname import get_nickname
 
 
 # TODO (#95): move to warrior app?
@@ -65,6 +66,12 @@ class Warrior(models.Model):
     # as one number for the whole game, because the archetypes do not share a mean - a single pivot would
     # be a standing discount for whichever archetypes sit below it, which is most of them.
     strength_baseline = models.PositiveSmallIntegerField("Strength baseline")
+    # The spread of that same population, stamped on him by the same generator. It is what tells an
+    # exceptional roll from an ordinary one: the archetypes differ in spread by a factor of nearly
+    # three, so how far from the mean is far depends on which kind of man was rolled. It describes
+    # his dexterity as well as his strength, both being drawn from the one "STATS_SIGMA" - see
+    # "get_nickname".
+    stats_spread = models.PositiveSmallIntegerField("Stats spread")
 
     dexterity = models.PositiveSmallIntegerField("Dexterity")
     dexterity_progress = models.PositiveSmallIntegerField("Dexterity progress", default=0)
@@ -129,10 +136,36 @@ class Warrior(models.Model):
         default_related_name = "warriors"
 
     def __str__(self) -> str:
+        """
+        The bare name, deliberately without the epithet - see [display_name].
+        """
         return self.name
 
-    # TODO (#42): add property when a certain value is really high to add a nickname like "Victor the Fast"
-    #  (good and bad cases)
+    @property
+    def nickname(self) -> str | None:
+        return get_nickname(
+            strength=self.strength,
+            dexterity=self.dexterity,
+            baseline=self.strength_baseline,
+            spread=self.stats_spread,
+        )
+
+    @property
+    def display_name(self) -> str:
+        """
+        The warrior as he is introduced to the player: his name, and the epithet he has earned.
+
+        Kept out of "__str__", which every generated user-facing string flows through - the twelve
+        battle-history templates, the monthly player log, the reasons on finance transactions. Those
+        are all persisted as frozen strings, so an epithet in "__str__" would both be written into
+        rows that outlive it and, since it is derived from attributes training moves, leave old rows
+        carrying whatever he was called the month they were written. Whether the battle log adopts
+        the epithet is its own call; the pages that present a warrior as a person ask for him by this
+        name.
+        """
+        nickname = self.nickname
+
+        return f"{self.name} {nickname}" if nickname else self.name
 
     @property
     def avatar_url(self) -> str:

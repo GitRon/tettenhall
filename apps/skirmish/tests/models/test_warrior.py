@@ -9,6 +9,36 @@ from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warrior.services.nickname import STRENGTH_HIGH_NICKNAME
+
+
+def test_str_leaves_the_epithet_off():
+    """
+    Every generated string the game persists flows through "__str__" - the battle history, the
+    monthly log, the reasons on transactions - and those rows outlive an epithet derived from
+    attributes that move.
+    """
+    warrior = WarriorFactory.build(name="Collum", strength=18)
+
+    assert str(warrior) == "Collum"
+
+
+def test_nickname_reads_the_attributes_against_the_warriors_own_distribution():
+    warrior = WarriorFactory.build(strength=18)
+
+    assert warrior.nickname == STRENGTH_HIGH_NICKNAME
+
+
+def test_display_name_carries_the_epithet():
+    warrior = WarriorFactory.build(name="Collum", strength=18)
+
+    assert warrior.display_name == f"Collum {STRENGTH_HIGH_NICKNAME}"
+
+
+def test_display_name_for_an_ordinary_man():
+    warrior = WarriorFactory.build(name="Collum")
+
+    assert warrior.display_name == "Collum"
 
 
 def test_is_dead_for_a_killed_warrior():
