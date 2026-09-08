@@ -32,11 +32,11 @@ from apps.warrior.messages.commands.warrior import (
     ReplenishWarriorMorale,
 )
 from apps.warrior.messages.events.warrior import (
-    WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
+    WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
 )
 
@@ -245,16 +245,18 @@ def test_handle_punish_unpaid_warrior_lets_him_walk_on_the_third_month():
 
     result = handle_punish_unpaid_warrior(context=PunishUnpaidWarrior(warrior=warrior, faction=faction, month=3))
 
-    assert result == WarriorDesertedOverUnpaidSalary(warrior=warrior, faction=faction, month=3)
+    assert result == WarriorWalkedOutOverUnpaidSalary(
+        warrior=warrior, faction=faction, savegame=faction.savegame, month=3
+    )
     warrior.refresh_from_db()
     assert warrior.faction is None
 
 
 @pytest.mark.django_db
-def test_handle_punish_unpaid_warrior_leaves_a_deserters_gear_with_the_faction():
+def test_handle_punish_unpaid_warrior_leaves_the_gear_of_the_man_who_walked_out_with_the_faction():
     """
     An item belongs to the faction and is only wielded by a warrior, so gear walking off the roster
-    on a deserter can never be re-equipped or sold again.
+    on the man who left can never be re-equipped or sold again.
     """
     faction = FactionFactory()
     weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
@@ -271,7 +273,7 @@ def test_handle_punish_unpaid_warrior_leaves_a_deserters_gear_with_the_faction()
 def test_handle_punish_unpaid_warrior_keeps_the_leader_however_long_he_goes_unpaid():
     """
     Faction.leader is a CASCADE FK and losing the leader is what defeats a faction, so a leader
-    deserting would end the game over a wage bill instead of shrinking the war band.
+    walking out would end the game over a wage bill instead of shrinking the war band.
     """
     faction = FactionFactory()
     leader = WarriorFactory(faction=faction, current_morale=20, max_morale=20, unpaid_months=9)

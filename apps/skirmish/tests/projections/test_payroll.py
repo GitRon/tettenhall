@@ -67,10 +67,10 @@ def test_is_short_stays_false_while_the_wages_are_covered():
     assert payroll.is_short is False
 
 
-def test_months_until_desertion_names_the_number_the_punishment_reads():
+def test_months_until_walkout_names_the_number_the_punishment_reads():
     payroll = Payroll(warrior_list=[], budget=0, leader_id=1)
 
-    assert payroll.months_until_desertion == 3
+    assert payroll.months_until_walkout == 3
 
 
 def test_unpaid_countdown_list_counts_the_month_being_projected():
@@ -115,7 +115,7 @@ def test_unpaid_countdown_list_ignores_a_warrior_who_is_getting_paid():
     assert [entry.warrior.id for entry in payroll.unpaid_countdown_list] == [2]
 
 
-def test_deserting_warrior_list_names_the_man_on_his_last_month():
+def test_warriors_about_to_walk_out_names_the_man_on_his_last_month():
     """
     Two months already gone without, so the month being projected is the third - which is what
     handle_punish_unpaid_warrior acts on, since the salary run has recorded the failure by then.
@@ -124,18 +124,18 @@ def test_deserting_warrior_list_names_the_man_on_his_last_month():
         warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=2)], budget=0, leader_id=1
     )
 
-    assert [warrior.id for warrior in payroll.deserting_warrior_list] == [2]
+    assert [warrior.id for warrior in payroll.warriors_about_to_walk_out] == [2]
 
 
-def test_deserting_warrior_list_leaves_out_a_warrior_with_months_to_go():
+def test_warriors_about_to_walk_out_leaves_out_a_warrior_with_months_to_go():
     payroll = Payroll(
         warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=1)], budget=0, leader_id=1
     )
 
-    assert payroll.deserting_warrior_list == []
+    assert payroll.warriors_about_to_walk_out == []
 
 
-def test_deserting_warrior_list_leaves_out_the_leader():
+def test_warriors_about_to_walk_out_leaves_out_the_leader():
     """
     He never walks over wages - losing him defeats the faction, so he sulks indefinitely - and a
     warning saying otherwise would promise something the month does not deliver.
@@ -144,15 +144,15 @@ def test_deserting_warrior_list_leaves_out_the_leader():
         warrior_list=[WarriorFactory.build(id=1, monthly_salary=30, unpaid_months=5)], budget=0, leader_id=1
     )
 
-    assert payroll.deserting_warrior_list == []
+    assert payroll.warriors_about_to_walk_out == []
 
 
-def test_deserting_warrior_list_ignores_a_warrior_who_is_getting_paid():
+def test_warriors_about_to_walk_out_ignores_a_warrior_who_is_getting_paid():
     payroll = Payroll(
         warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=2)], budget=30, leader_id=1
     )
 
-    assert payroll.deserting_warrior_list == []
+    assert payroll.warriors_about_to_walk_out == []
 
 
 @pytest.mark.django_db
@@ -169,4 +169,4 @@ def test_for_faction_reads_the_roster_and_the_leader_off_the_faction():
     payroll = Payroll.for_faction(faction=faction, budget=30)
 
     assert (payroll.paid_amount, payroll.missing_amount) == (30, 40)
-    assert payroll.deserting_warrior_list == []
+    assert payroll.warriors_about_to_walk_out == []

@@ -36,8 +36,8 @@ def test_in_pub_of_leaves_out_another_factions_pub():
 @pytest.mark.django_db
 def test_in_pub_of_leaves_out_a_warrior_who_is_merely_factionless():
     """
-    A deserter and a captive whose banner was cleared have no faction either, and neither is standing
-    in the pub - membership is what this asks about, not a missing faction.
+    A man who walked out and a captive whose banner was cleared have no faction either, and neither is
+    standing in the pub - membership is what this asks about, not a missing faction.
     """
     faction = FactionFactory()
     WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
@@ -496,7 +496,7 @@ def test_record_salaries_unpaid_counts_another_month():
 def test_record_salaries_unpaid_leaves_the_instances_carrying_the_new_count():
     """
     The unpaid warriors go straight onto an event, and the handler at the other end decides whether
-    a man deserts by reading this count off them - so the objects have to be right, not just the rows.
+    a man walks out by reading this count off them - so the objects have to be right, not just the rows.
     """
     warrior = WarriorFactory(unpaid_months=2)
 
@@ -522,10 +522,23 @@ def test_strip_equipment_takes_back_weapon_and_armor():
 
 
 @pytest.mark.django_db
+def test_forgive_unpaid_months_wipes_what_he_was_owed():
+    """
+    Somebody has settled it another way - the hiring price a man off the shelf is bought back with.
+    """
+    warrior = WarriorFactory(unpaid_months=3)
+
+    Warrior.objects.forgive_unpaid_months(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert warrior.unpaid_months == 0
+
+
+@pytest.mark.django_db
 def test_strip_equipment_leaves_the_owning_faction_alone():
     """
     Taking the gear back is what keeps it sellable - the faction has to still own it afterwards, or
-    a deserter has robbed the war band on his way out.
+    the man who left has robbed the war band on his way out.
     """
     faction = FactionFactory()
     weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)

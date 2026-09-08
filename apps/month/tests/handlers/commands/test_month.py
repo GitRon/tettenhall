@@ -101,7 +101,7 @@ def test_handle_create_player_month_log_derives_the_category_from_the_kind():
     handle_create_player_month_log(
         context=CreatePlayerMonthLog(
             title="Oswine left the war band over unpaid wages.",
-            kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+            kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_WALKED_OUT,
             month=3,
             faction=savegame.player_faction,
         )

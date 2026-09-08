@@ -295,6 +295,28 @@ def test_handle_recruit_pub_mercenary_hands_his_gear_to_the_faction():
 
 
 @pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_clears_what_he_was_owed():
+    """
+    The shelf holds the man who walked out over the full term of unpaid wages. Carried over, his
+    count would put him one failed payroll from walking again the month after he was paid for, and
+    the wage-bill warning would read "4 of 3 unpaid months" meanwhile.
+    """
+    faction = _player_faction()
+    mercenary = WarriorFactory(
+        faction=None,
+        savegame=faction.savegame,
+        culture=faction.culture,
+        unpaid_months=Warrior.UNPAID_MONTHS_UNTIL_WALKOUT,
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
+
+    mercenary.refresh_from_db()
+    assert mercenary.unpaid_months == 0
+
+
+@pytest.mark.django_db
 def test_handle_recruit_pub_mercenary_who_carries_nothing():
     """
     A mercenary rolls his weapon at 75% and his armor at 25%, so an empty-handed one is the common

@@ -169,8 +169,12 @@ def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event]
     sent away, whose rolled price describes the levy they were rather than the veteran standing there
     now. One number for both, so a man costs the same whether he was generated for the shelf or
     walked onto it.
+
+    What he owes is cleared, because the shelf also holds the man who walked out over the full term
+    of unpaid wages - see [forgive_unpaid_months].
     """
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
+    Warrior.objects.forgive_unpaid_months(obj=context.warrior)
     Warrior.objects.transfer_equipment_ownership(obj=context.warrior, new_owner=context.faction)
     Faction.objects.remove_mercenary_from_pub(faction=context.faction, warrior=context.warrior)
 

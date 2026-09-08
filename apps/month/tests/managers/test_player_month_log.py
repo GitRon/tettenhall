@@ -31,7 +31,7 @@ def test_create_record_derives_the_category_from_the_kind():
 
     result = PlayerMonthLog.objects.create_record(
         title="Oswine left the war band over unpaid wages.",
-        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_WALKED_OUT,
         month=3,
         faction_id=faction.id,
     )

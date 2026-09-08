@@ -31,7 +31,7 @@ class Warrior(models.Model):
     # such months in a row he puts up with before walking. Two drops and then he is gone, so the
     # player watches the war band sour for two months before it starts shrinking.
     UNPAID_MORALE_LOSS = 0.25
-    UNPAID_MONTHS_UNTIL_DESERTION = 3
+    UNPAID_MONTHS_UNTIL_WALKOUT = 3
 
     # What a warrior's monthly wage is worth as a share of what it costs to hire him. One number for
     # both directions: the generators price a wage off a rolled recruitment price, and the pub prices

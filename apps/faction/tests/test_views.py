@@ -794,7 +794,7 @@ def test_recruit_pub_mercenary_view_cannot_hire_a_warrior_outside_the_pub(
     logged_in_client, current_savegame, queuebie_registry
 ):
     """
-    Being in the savegame is not enough: rival warriors, captives and deserters are all "Warrior"
+    Being in the savegame is not enough: rival warriors, captives and men who walked out are all "Warrior"
     rows, and the price check alone would hand most of them over for nothing.
     """
     TransactionFactory(faction=current_savegame.player_faction, amount=500)

@@ -24,10 +24,22 @@ class WarriorLostMoraleOverUnpaidSalary(Event):
 
 
 @dataclass(kw_only=True)
-class WarriorDesertedOverUnpaidSalary(Event):
+class WarriorWalkedOutOverUnpaidSalary(Event):
+    """
+    Three months without wages and a man takes himself off the roster.
+
+    Named for what he does rather than for desertion, which in this game is [CONDITION_FLEEING] - a
+    rout he recovers from next month without ever leaving his faction. This is the other thing, and
+    it is permanent.
+
+    Carries the faction he walked out on, because his own FK is cleared by the time anybody reacts to
+    this, and the savegame for the pub, which belongs to the player rather than to any faction on the
+    message.
+    """
+
     warrior: Warrior
-    # The faction he walked out on - his own FK is cleared by then
     faction: Faction
+    savegame: Savegame
     month: int
 
 

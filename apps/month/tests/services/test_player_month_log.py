@@ -7,8 +7,8 @@ from apps.month.tests.factories.player_month_log import PlayerMonthLogFactory
 
 @pytest.mark.django_db
 def test_group_player_month_logs_splits_by_category():
-    deserted = PlayerMonthLogFactory(
-        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+    walked_out = PlayerMonthLogFactory(
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_WALKED_OUT,
         category=PlayerMonthLog.CategoryChoices.CATEGORY_ATTENTION,
     )
     salaries_paid = PlayerMonthLogFactory(kind=PlayerMonthLog.KindChoices.KIND_SALARIES_PAID)
@@ -17,9 +17,9 @@ def test_group_player_month_logs_splits_by_category():
         category=PlayerMonthLog.CategoryChoices.CATEGORY_UPKEEP,
     )
 
-    result = group_player_month_logs(player_month_logs=[deserted, salaries_paid, healed])
+    result = group_player_month_logs(player_month_logs=[walked_out, salaries_paid, healed])
 
-    assert result.attention == [deserted]
+    assert result.attention == [walked_out]
     assert result.consequence == [salaries_paid]
     assert result.upkeep == [healed]
 

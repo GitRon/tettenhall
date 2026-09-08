@@ -38,7 +38,7 @@ class ReplenishWarriorMorale(Command):
 class PunishUnpaidWarrior(Command):
     warrior: Warrior
     # The faction that failed to pay him. Taken off the command rather than off the warrior because
-    # the handler asks it who its leader is, and the warrior's own FK is what desertion clears
+    # the handler asks it who its leader is, and the warrior's own FK is what walking out clears
     faction: Faction
     month: int
 

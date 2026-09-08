@@ -27,8 +27,8 @@ class WarriorQuerySet(models.QuerySet):
         The mercenaries standing in this faction's pub, waiting to be hired.
 
         Membership of "available_mercenaries" rather than a missing faction: a mercenary nobody has
-        hired has none, and so does a deserter and a captive whose banner was cleared - hiring one of
-        those out of the pub would be hiring a man who is not in it.
+        hired has none, and so does a captive whose banner was cleared and a man who walked out of a
+        rival's war band - hiring one of those out of the pub would be hiring a man who is not in it.
 
         Parameterised by faction on purpose. Every faction owns a pub set already, and the caller
         passing the player's is what says "the player hires from his own town" - not this method.
@@ -377,6 +377,24 @@ class WarriorManager(manager.Manager):
             .exclude(id=faction.leader_id)
             .update(faction=None, weapon=None, armor=None)
         )
+
+    def forgive_unpaid_months(self, *, obj):
+        """
+        Wipe what a warrior is owed, because somebody has settled it another way.
+
+        A man taken onto a roster out of the pub brings the count he left with, and a veteran who
+        walked out over unpaid wages left with the full term on him. Carried over, it would put him
+        one failed payroll from walking again the month after the faction paid twice his wage to have
+        him back - and the warning meanwhile reads "4 of 3 unpaid months", which is a count nothing
+        else in the game can produce.
+
+        Not "record_salaries_paid": no wages were paid, a hiring price was.
+        """
+        obj.refresh_from_db()
+        obj.unpaid_months = 0
+        obj.save(update_fields=("unpaid_months",))
+
+        return obj
 
     def set_faction(self, *, obj, faction) -> int:
         """

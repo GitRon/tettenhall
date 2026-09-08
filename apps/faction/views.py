@@ -337,7 +337,8 @@ class RecruitPubMercenaryView(
     Scoped by pub membership rather than by "PlayerFactionScopedQuerysetMixin": a mercenary nobody has
     hired has no faction at all, so the stricter mixin would narrow every candidate away. The savegame
     scope underneath it is not enough on its own - "Warrior" rows include rival warriors, captives and
-    deserters, all of whom would otherwise be hireable by id, and most of them for nothing.
+    the men who walked out on a rival, all of whom would otherwise be hireable by id, and most of them
+    for nothing.
 
     The URL carries the warrior only. Which pub he is taken from is the player's, read off the
     savegame, because the player hires from his own town - a posted faction could only ever lie about

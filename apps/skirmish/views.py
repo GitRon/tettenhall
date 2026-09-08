@@ -150,7 +150,7 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
             return HttpResponse(status=HTTPStatus.NOT_FOUND)
 
         # A fight that has a victor is over, and another round of it fields men who have no business
-        # on the field any more - a deserter still on the roster, a prisoner taken when his town fell.
+        # on the field any more - a man who has walked out, a prisoner taken when his town fell.
         # It needs no crafted request to reach: a double-click on the last "Fight!" is two posts, and
         # the second arrives here. A conflict rather than bad input, because the post is well formed
         # and it is the fight that has moved on.
