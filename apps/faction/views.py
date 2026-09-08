@@ -25,6 +25,7 @@ from apps.savegame.models.savegame import Savegame
 from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.messages.commands.skirmish import AttackFaction
 from apps.skirmish.models.warrior import Warrior
+from apps.warrior.services.dismissal import get_dismissal_refusals
 
 
 class PlayerFactionAwareContextMixin:
@@ -54,13 +55,51 @@ class PlayerFactionAwareContextMixin:
         return context
 
 
-class FactionDetailView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionRosterContextMixin:
+    """
+    Assembles the roster a faction page renders, and says of each man whether he may be sent away.
+
+    Shared by the faction page and the htmx partial that replaces its warrior list, because a roster
+    the player got a Dismiss control on once and lost on the first "loadFactionWarriorList" swap is
+    the same defect [PlayerFactionAwareContextMixin] exists to prevent.
+
+    The refusals come off the one service the dismiss view asks before it dispatches, so a control
+    the card offers and a click the view accepts cannot come apart. Asked once for the whole roster
+    rather than per card - see "get_dismissal_refusals" - and only for the player's own faction: a
+    rival's men carry no control to explain, and the balance being weighed would be the wrong purse.
+
+    The refusal is attached to each warrior rather than handed over as a dict, because the card is
+    rendered per warrior and a template cannot index a dict by a variable key.
+    """
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        warrior_list = list(Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.id))
+
+        if context["is_player_faction"]:
+            refusals = get_dismissal_refusals(
+                faction=self.current_savegame.player_faction,
+                warrior_list=warrior_list,
+                month=self.current_savegame.current_month,
+                balance=Transaction.objects.current_balance(faction_id=self.current_savegame.player_faction_id),
+            )
+            for warrior in warrior_list:
+                warrior.dismissal_refusal = refusals.get(warrior.id)
+
+        context["warrior_list"] = warrior_list
+
+        return context
+
+
+class FactionDetailView(
+    FactionRosterContextMixin, PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView
+):
     model = Faction
     template_name = "faction/faction_detail.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["warrior_list"] = Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.id)
 
         # Asked through the same queryset the attack view resolves its target with, so the button
         # and the page it leads to can never disagree about who may be attacked
@@ -251,14 +290,11 @@ class FactionItemListView(PlayerFactionAwareContextMixin, SavegameScopedQueryset
     template_name = "faction/item/components/item_list.html"
 
 
-class FactionWarriorListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionWarriorListView(
+    FactionRosterContextMixin, PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView
+):
     model = Faction
     template_name = "faction/warrior/components/warrior_list.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["warrior_list"] = Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.id)
-        return context
 
 
 class FactionCapturedWarriorListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
@@ -323,7 +359,7 @@ class RecruitPubMercenaryView(
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
-        if current_balance < obj.recruitment_price:
+        if current_balance < obj.hiring_price:
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
             response["HX-Trigger"] = json.dumps(
                 {
@@ -345,7 +381,7 @@ class RecruitPubMercenaryView(
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
-                "notification": f"{obj} joins your war band for {obj.recruitment_price} silver.",
+                "notification": f"{obj} joins your war band for {obj.hiring_price} silver.",
                 "updateResourceBar": "-",
             }
         )

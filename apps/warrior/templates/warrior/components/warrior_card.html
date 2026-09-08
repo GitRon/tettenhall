@@ -92,6 +92,22 @@
                 Enslave for <i class="fa-solid fa-coins"></i> <i>{{ warrior.slavery_selling_price }}</i>&nbsp;</a>
         {% else %}
             <a href="{% url 'warrior:warrior-detail-view' warrior.id %}" class="uk-button uk-button-text">Detail</a>
+            {% comment %}
+                Only on the player's own roster, and only where "FactionRosterContextMixin" answered
+                the question - a rival's card carries no control to offer and the captured list above
+                has its own two. The refusal is shown rather than the button simply vanishing, the way
+                the faction page explains a missing Attack button: "your leader stays" and "he is
+                spoken for this month" are rules the player would otherwise meet as an absence.
+            {% endcomment %}
+            {% if is_player_faction %}
+                {% if warrior.dismissal_refusal %}
+                    <span class="uk-text-meta">{{ warrior.dismissal_refusal }}</span>
+                {% else %}
+                    / <a hx-post="{% url 'warrior:warrior-dismiss-view' warrior.id %}"
+                         class="uk-button uk-button-text">
+                        Dismiss for <i class="fa-solid fa-coins"></i> <i>{{ warrior.severance_pay }}</i>&nbsp;</a>
+                {% endif %}
+            {% endif %}
         {% endif %}
     </div>
 </div>

@@ -38,8 +38,10 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
     if context.faction.savegame.player_faction_id != context.faction.id:
         return []
 
-    # Clean up previous stock
-    context.faction.available_mercenaries.all().delete()
+    # Clean up previous stock, and only the stock. This is a warrior queryset, so it deletes the rows
+    # themselves - right for a mercenary nobody hired, and fatal for a man the player sent away, who
+    # waits on the same shelf and would be destroyed at the start of the next month.
+    context.faction.available_mercenaries.filter(is_pub_stock=True).delete()
 
     events = []
 
@@ -77,6 +79,10 @@ def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Even
     # target - the warrior arrives here without a faction of its own. handle_restock_pub_mercenaries
     # only requests these for the player faction, so nothing else ends up in this pub.
     context.savegame.player_faction.available_mercenaries.add(context.warrior)
+    # Written here rather than by whoever generated or released the man, because this is the one
+    # place a warrior ever ends up on the shelf: a mercenary hired out of the pub and later sent away
+    # comes back through this same command and is marked afresh, so the flag cannot go stale on him.
+    Warrior.objects.set_pub_stock(obj=context.warrior, is_pub_stock=context.is_pub_stock)
 
     return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)
 
@@ -158,6 +164,11 @@ def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event]
 
     The price rides on the event rather than being spent here, so the ledger row is the finance app's
     to write the way every other payment in the game is.
+
+    What he costs is "hiring_price" and not "recruitment_price": the pub also holds the men the player
+    sent away, whose rolled price describes the levy they were rather than the veteran standing there
+    now. One number for both, so a man costs the same whether he was generated for the shelf or
+    walked onto it.
     """
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
     Warrior.objects.transfer_equipment_ownership(obj=context.warrior, new_owner=context.faction)
@@ -166,7 +177,7 @@ def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event]
     return WarriorRecruited(
         warrior=context.warrior,
         faction=context.faction,
-        recruitment_price=context.warrior.recruitment_price,
+        recruitment_price=context.warrior.hiring_price,
         month=context.month,
     )
 

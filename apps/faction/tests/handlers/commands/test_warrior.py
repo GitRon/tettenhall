@@ -1,20 +1,25 @@
 import pytest
 
 from apps.faction.handlers.commands.warrior import (
+    handle_add_warrior_to_pub,
     handle_consider_fyrd_draft,
     handle_draft_warrior_from_fyrd,
     handle_recruit_pub_mercenary,
     handle_restock_pub_mercenaries,
     handle_warrior_monthly_salaries,
 )
-from apps.faction.messages.commands.faction import PayMonthlyWarriorSalaries
+from apps.faction.messages.commands.faction import AddWarriorToPub, PayMonthlyWarriorSalaries
 from apps.faction.messages.commands.warrior import (
     ConsiderFyrdDraft,
     DraftWarriorFromFyrd,
     RecruitPubMercenary,
     RestockTownMercenaries,
 )
-from apps.faction.messages.events.faction import MonthlyWarriorSalariesPaid, MonthlyWarriorSalariesUnpaid
+from apps.faction.messages.events.faction import (
+    MonthlyWarriorSalariesPaid,
+    MonthlyWarriorSalariesUnpaid,
+    WarriorWasAddedToPub,
+)
 from apps.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubMercenarySlotOpened,
@@ -78,11 +83,26 @@ def test_handle_restock_pub_mercenaries_announces_the_whole_pub_once():
 @pytest.mark.django_db
 def test_handle_restock_pub_mercenaries_removes_previous_stock():
     faction = _player_faction()
-    faction.available_mercenaries.add(WarriorFactory(faction=faction))
+    faction.available_mercenaries.add(WarriorFactory(faction=faction, is_pub_stock=True))
 
     handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
 
     assert faction.available_mercenaries.count() == 0
+
+
+@pytest.mark.django_db
+def test_handle_restock_pub_mercenaries_leaves_a_dismissed_warrior_standing():
+    """
+    The clean-up is a row delete, so a man the player sent away and could take back would otherwise
+    be destroyed at the start of the next month.
+    """
+    faction = _player_faction()
+    dismissed_warrior = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.available_mercenaries.add(dismissed_warrior)
+
+    handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=faction, month=3))
+
+    assert list(faction.available_mercenaries.all()) == [dismissed_warrior]
 
 
 @pytest.mark.django_db
@@ -101,6 +121,43 @@ def test_handle_restock_pub_mercenaries_skips_a_rival_faction():
     assert result == []
     # Bailing out before the clean-up, so the rival keeps whatever it had
     assert list(rival_faction.available_mercenaries.all()) == [previous_stock]
+
+
+@pytest.mark.django_db
+def test_handle_add_warrior_to_pub_marks_generated_stock():
+    faction = _player_faction()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+
+    result = handle_add_warrior_to_pub(
+        context=AddWarriorToPub(
+            savegame=faction.savegame, faction=faction, warrior=mercenary, is_pub_stock=True, month=3
+        )
+    )
+
+    assert result == WarriorWasAddedToPub(faction=faction, warrior=mercenary, month=3)
+    mercenary.refresh_from_db()
+    assert mercenary.is_pub_stock is True
+
+
+@pytest.mark.django_db
+def test_handle_add_warrior_to_pub_marks_a_dismissed_warrior_as_no_stock():
+    """
+    Written here rather than where the man was released, so a mercenary hired out of the pub and
+    later sent away is marked afresh on the way back in instead of keeping the flag he arrived with.
+    """
+    faction = _player_faction()
+    dismissed_warrior = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, is_pub_stock=True
+    )
+
+    handle_add_warrior_to_pub(
+        context=AddWarriorToPub(
+            savegame=faction.savegame, faction=faction, warrior=dismissed_warrior, is_pub_stock=False, month=3
+        )
+    )
+
+    dismissed_warrior.refresh_from_db()
+    assert dismissed_warrior.is_pub_stock is False
 
 
 @pytest.mark.django_db
@@ -181,7 +238,9 @@ def test_handle_draft_warrior_from_fyrd_with_empty_reserve():
 @pytest.mark.django_db
 def test_handle_recruit_pub_mercenary_takes_him_onto_the_roster():
     faction = _player_faction()
-    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, recruitment_price=180)
+    # Priced off the wage he draws rather than off "recruitment_price", so a veteran the player sent
+    # away costs what he is worth now - see "Warrior.hiring_price"
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, monthly_salary=90)
     faction.available_mercenaries.add(mercenary)
 
     result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))

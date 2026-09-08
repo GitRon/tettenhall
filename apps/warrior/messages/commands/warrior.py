@@ -83,3 +83,20 @@ class EnslaveCapturedWarrior(Command):
     warrior: Warrior
     faction: Faction
     month: int
+
+
+@dataclass(kw_only=True)
+class DismissWarrior(Command):
+    """
+    Send a warrior away, off the roster and out of the gear the faction paid for.
+
+    The savegame rides along because the pub he ends up standing in is the player's, and the handler
+    reacting to this may not look one up. The faction is carried for the same reason
+    [PunishUnpaidWarrior] carries it: the handler asks it who its leader is, and his own FK is what
+    this clears.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    savegame: Savegame
+    month: int

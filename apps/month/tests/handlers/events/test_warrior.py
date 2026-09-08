@@ -3,6 +3,7 @@ from apps.month.handlers.events.warrior import (
     handle_warrior_deserted_over_unpaid_salary,
     handle_warrior_health_healed,
     handle_warrior_morale_replenished,
+    handle_warrior_was_dismissed,
 )
 from apps.month.messages.commands.month import CreatePlayerMonthLog
 from apps.month.models.player_month_log import PlayerMonthLog
@@ -11,6 +12,7 @@ from apps.warrior.messages.events.warrior import (
     WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
     WarriorMoraleReplenished,
+    WarriorWasDismissed,
 )
 
 
@@ -61,6 +63,28 @@ def test_handle_warrior_deserted_over_unpaid_salary_logs_the_departure():
     assert result == CreatePlayerMonthLog(
         title="Oswine left the war band over unpaid wages.",
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+        month=3,
+        faction=faction,
+    )
+
+
+def test_handle_warrior_was_dismissed_logs_what_letting_him_go_cost():
+    """
+    The faction comes off the event rather than off the warrior, the way desertion's line does:
+    being sent away clears his own FK, so there is nothing left on him to log against.
+    """
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Cuthbert", faction=None, savegame=faction.savegame, culture=faction.culture)
+
+    result = handle_warrior_was_dismissed(
+        context=WarriorWasDismissed(
+            warrior=warrior, faction=faction, savegame=faction.savegame, severance_pay=120, month=3
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Cuthbert was sent away for 120 silver.",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DISMISSED,
         month=3,
         faction=faction,
     )

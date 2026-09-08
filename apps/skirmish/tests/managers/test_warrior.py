@@ -575,3 +575,88 @@ def test_transfer_equipment_ownership_of_a_warrior_carrying_nothing():
     result = Warrior.objects.transfer_equipment_ownership(obj=warrior, new_owner=faction)
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_set_pub_stock_marks_a_man_as_sweepable():
+    warrior = WarriorFactory(is_pub_stock=False)
+
+    Warrior.objects.set_pub_stock(obj=warrior, is_pub_stock=True)
+
+    warrior.refresh_from_db()
+    assert warrior.is_pub_stock is True
+
+
+@pytest.mark.django_db
+def test_release_from_roster_clears_the_faction_and_the_gear():
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
+    armor = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR), owner=faction)
+    warrior = WarriorFactory(faction=faction, weapon=weapon, armor=armor)
+
+    result = Warrior.objects.release_from_roster(obj=warrior, faction=faction)
+
+    assert result == 1
+    warrior.refresh_from_db()
+    assert (warrior.faction, warrior.weapon, warrior.armor) == (None, None, None)
+
+
+@pytest.mark.django_db
+def test_release_from_roster_leaves_the_owning_faction_alone():
+    """
+    An item belongs to the faction and is only wielded by a warrior, so a man who leaves still
+    holding his sword takes it out of everyone's reach rather than with him.
+    """
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
+    warrior = WarriorFactory(faction=faction, weapon=weapon)
+
+    Warrior.objects.release_from_roster(obj=warrior, faction=faction)
+
+    weapon.refresh_from_db()
+    assert weapon.owner == faction
+
+
+@pytest.mark.django_db
+def test_release_from_roster_refuses_the_leader():
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    faction.leader = leader
+    faction.save()
+
+    result = Warrior.objects.release_from_roster(obj=leader, faction=faction)
+
+    assert result == 0
+    leader.refresh_from_db()
+    assert leader.faction == faction
+
+
+@pytest.mark.django_db
+def test_release_from_roster_refuses_a_man_on_another_roster():
+    """
+    The statement is the second enforcement point, so a click that arrives after the man has gone -
+    or names somebody else's warrior - matches no row rather than being paid for.
+    """
+    faction = FactionFactory()
+    other_faction = FactionFactory(savegame=faction.savegame, culture=faction.culture)
+    warrior = WarriorFactory(faction=other_faction, savegame=faction.savegame, culture=faction.culture)
+
+    result = Warrior.objects.release_from_roster(obj=warrior, faction=faction)
+
+    assert result == 0
+    warrior.refresh_from_db()
+    assert warrior.faction == other_faction
+
+
+@pytest.mark.django_db
+def test_release_from_roster_of_a_faction_without_a_leader():
+    """
+    Unreachable in ordinary play, where a leader who falls takes his faction with him, so the
+    carve-out has to stay a guard rather than turn into "nobody may be released".
+    """
+    faction = FactionFactory(leader=None)
+    warrior = WarriorFactory(faction=faction)
+
+    result = Warrior.objects.release_from_roster(obj=warrior, faction=faction)
+
+    assert result == 1

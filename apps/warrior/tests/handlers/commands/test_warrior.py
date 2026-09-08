@@ -15,6 +15,7 @@ from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warrior.handlers.commands.warrior import (
     handle_change_warrior_max_morale,
+    handle_dismiss_warrior,
     handle_enslave_captured_warrior,
     handle_heal_injured_warrior,
     handle_punish_unpaid_warrior,
@@ -23,6 +24,7 @@ from apps.warrior.handlers.commands.warrior import (
 )
 from apps.warrior.messages.commands.warrior import (
     ChangeWarriorMaxMorale,
+    DismissWarrior,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
@@ -35,6 +37,7 @@ from apps.warrior.messages.events.warrior import (
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
+    WarriorWasDismissed,
 )
 
 
@@ -280,6 +283,75 @@ def test_handle_punish_unpaid_warrior_keeps_the_leader_however_long_he_goes_unpa
     assert result == WarriorLostMoraleOverUnpaidSalary(warrior=leader, faction=faction, lost_morale=5, month=3)
     leader.refresh_from_db()
     assert leader.faction == faction
+
+
+@pytest.mark.django_db
+def test_handle_dismiss_warrior_takes_him_off_the_roster():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, monthly_salary=120)
+
+    result = handle_dismiss_warrior(
+        context=DismissWarrior(warrior=warrior, faction=faction, savegame=faction.savegame, month=3)
+    )
+
+    assert result == WarriorWasDismissed(
+        warrior=warrior, faction=faction, savegame=faction.savegame, severance_pay=120, month=3
+    )
+    warrior.refresh_from_db()
+    assert warrior.faction is None
+
+
+@pytest.mark.django_db
+def test_handle_dismiss_warrior_leaves_his_gear_with_the_faction():
+    """
+    An item belongs to the faction and is only wielded by a warrior, so gear walking off the roster
+    could never be re-equipped or sold again - and that silver is the point of sending him away.
+    """
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
+    warrior = WarriorFactory(faction=faction, weapon=weapon)
+
+    handle_dismiss_warrior(context=DismissWarrior(warrior=warrior, faction=faction, savegame=faction.savegame, month=3))
+
+    warrior.refresh_from_db()
+    weapon.refresh_from_db()
+    assert (warrior.weapon, weapon.owner) == (None, faction)
+
+
+@pytest.mark.django_db
+def test_handle_dismiss_warrior_refuses_the_leader():
+    """
+    Faction.leader is a CASCADE FK and losing him is what defeats a faction, so dismissing him would
+    end the savegame through a roster control.
+    """
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    faction.leader = leader
+    faction.save()
+
+    result = handle_dismiss_warrior(
+        context=DismissWarrior(warrior=leader, faction=faction, savegame=faction.savegame, month=3)
+    )
+
+    assert result is None
+    leader.refresh_from_db()
+    assert leader.faction == faction
+
+
+@pytest.mark.django_db
+def test_handle_dismiss_warrior_raises_nothing_for_a_man_already_gone():
+    """
+    Two overlapping clicks on the one button both pass whatever the page checked, and a second event
+    would bill the faction severance twice for one man.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+
+    result = handle_dismiss_warrior(
+        context=DismissWarrior(warrior=warrior, faction=faction, savegame=faction.savegame, month=3)
+    )
+
+    assert result is None
 
 
 @pytest.mark.django_db
