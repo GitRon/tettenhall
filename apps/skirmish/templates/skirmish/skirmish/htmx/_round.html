@@ -1,6 +1,7 @@
 <div hx-get="{% url 'skirmish:skirmish-round-update-htmx' skirmish.id %}"
      hx-trigger="updateSkirmishRound from:body"
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
+     hx-disinherit="hx-swap">
     {# "current_round" is the round about to be fought, which is the right heading over a fight in #}
     {# progress and a round nobody will ever fight once the thing is decided. The largest text on #}
     {# the screen then names the outcome instead, which is what is left to say. #}
