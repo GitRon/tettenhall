@@ -13,11 +13,12 @@ from queuebie.messages import Command
 from apps.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.skirmish.messages.commands.skirmish_report import (
     RecordSkirmishBlow,
+    RecordSkirmishCasualty,
     RecordSkirmishSpoil,
     RecordWarriorGrowth,
 )
 from apps.skirmish.messages.events import item, skirmish, transaction, warrior
-from apps.skirmish.models import SkirmishSpoil
+from apps.skirmish.models import SkirmishCasualty, SkirmishSpoil
 
 
 @message_registry.register_event(event=item.ItemDroppedAsLoot)
@@ -90,6 +91,60 @@ def handle_record_improved_stats(*, context: warrior.WarriorImprovedStats) -> Co
         gained_max_health=context.gained_max_health,
         gained_max_morale=context.gained_max_morale,
         new_monthly_salary=context.new_monthly_salary,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorWasKilled)
+def handle_record_killed_warrior(*, context: warrior.WarriorWasKilled) -> Command:
+    return RecordSkirmishCasualty(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_KILLED,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorWasIncapacitated)
+def handle_record_incapacitated_warrior(*, context: warrior.WarriorWasIncapacitated) -> Command:
+    """
+    A man left lying on the field, which is not yet the same thing as a man lost.
+
+    The beaten side's unconscious are taken prisoner once the fight is decided and this row is
+    overwritten; the winner's keep their gear and their place on the roster, and this is the whole
+    of what happened to them.
+    """
+    return RecordSkirmishCasualty(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_INCAPACITATED,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorWasCaptured)
+def handle_record_captured_warrior(*, context: warrior.WarriorWasCaptured) -> Command | None:
+    # A leader seized in an occupied town was taken without a fight, so there is no fight for the
+    # capture to be a casualty of - the same refusal the battle log makes
+    if context.skirmish is None:
+        return None
+
+    return RecordSkirmishCasualty(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_CAPTURED,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorHasFled)
+def handle_record_routed_warrior(*, context: warrior.WarriorHasFled) -> Command:
+    """
+    Recorded although it costs the player nothing: he keeps his gear and rallies next month.
+
+    It is here because a report that only named the fallen could not account for the men - five
+    marched and three fought, and nothing else on the panel says where the other two went.
+    """
+    return RecordSkirmishCasualty(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_FLED,
     )
 
 

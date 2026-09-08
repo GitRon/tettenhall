@@ -8,7 +8,7 @@ from apps.finance.models import Transaction
 
 @message_registry.register_command(command=CreateTransaction)
 def handle_create_transaction(*, context: CreateTransaction) -> list[Event] | Event:
-    Transaction.objects.create_transaction(
+    Transaction.objects.create_record(
         reason=context.reason,
         amount=context.amount,
         faction=context.faction,

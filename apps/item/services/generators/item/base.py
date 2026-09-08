@@ -99,7 +99,6 @@ class BaseItemGenerator:
             max(dice_notation.expectancy_value, self.MINIMUM_EXPECTED_DAMAGE) * self.PRICE_PER_EXPECTED_DAMAGE
         )
 
-        # TODO (#102): move in "create_record" method
         return Item.objects.create(
             type=item_type,
             condition=self._determine_condition(modifier=modifier),

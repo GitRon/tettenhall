@@ -20,7 +20,11 @@ class CreateWarrior(Command):
 
 @dataclass(kw_only=True)
 class CreateNewLeaderWarrior(Command):
-    # TODO (#102): entweder mach ich alle so oder ich nutze hier das generische event mit generator_class?
+    # What a creation command carries is decided by what its producer is allowed to read, not by the
+    # kind of warrior it makes. This one is raised by an event handler that has nothing but the
+    # faction - strict mode forbids it the traversal to the culture and the savegame - so its own
+    # handler resolves them, where a query is allowed. "CreateWarrior" carries them already resolved
+    # because the event its producer reacts to was given them by a command handler that could query.
     faction: Faction
 
 

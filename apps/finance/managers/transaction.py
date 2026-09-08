@@ -19,7 +19,7 @@ class TransactionQuerySet(models.QuerySet):
 
 
 class TransactionManager(manager.Manager):
-    def create_transaction(self, *, reason: str, amount: int, faction: Faction, month: int):
+    def create_record(self, *, reason: str, amount: int, faction: Faction, month: int):
         return self.create(reason=reason, amount=amount, faction=faction, month=month)
 
     def current_balance(self, *, faction_id: int) -> int:

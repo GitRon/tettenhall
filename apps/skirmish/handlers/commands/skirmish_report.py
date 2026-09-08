@@ -3,15 +3,17 @@ from queuebie.messages import Event
 
 from apps.skirmish.messages.commands.skirmish_report import (
     RecordSkirmishBlow,
+    RecordSkirmishCasualty,
     RecordSkirmishSpoil,
     RecordWarriorGrowth,
 )
 from apps.skirmish.messages.events.skirmish_report import (
     SkirmishBlowRecorded,
+    SkirmishCasualtyRecorded,
     SkirmishSpoilRecorded,
     WarriorGrowthRecorded,
 )
-from apps.skirmish.models import SkirmishBlow, SkirmishSpoil, SkirmishWarriorGrowth
+from apps.skirmish.models import SkirmishBlow, SkirmishCasualty, SkirmishSpoil, SkirmishWarriorGrowth
 
 
 @message_registry.register_command(command=RecordSkirmishSpoil)
@@ -47,6 +49,17 @@ def handle_record_warrior_growth(*, context: RecordWarriorGrowth) -> Event:
     )
 
     return WarriorGrowthRecorded(growth=growth)
+
+
+@message_registry.register_command(command=RecordSkirmishCasualty)
+def handle_record_skirmish_casualty(*, context: RecordSkirmishCasualty) -> Event:
+    casualty = SkirmishCasualty.objects.record_casualty(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        fate=context.fate,
+    )
+
+    return SkirmishCasualtyRecorded(casualty=casualty)
 
 
 @message_registry.register_command(command=RecordSkirmishBlow)

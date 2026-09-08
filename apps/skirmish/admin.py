@@ -6,6 +6,7 @@ from apps.item.models.item_type import ItemType
 from apps.skirmish.models.battle_history import BattleHistory
 from apps.skirmish.models.skirmish import Skirmish
 from apps.skirmish.models.skirmish_blow import SkirmishBlow
+from apps.skirmish.models.skirmish_casualty import SkirmishCasualty
 from apps.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.skirmish.models.skirmish_warrior_growth import SkirmishWarriorGrowth
 from apps.skirmish.models.warrior import Warrior
@@ -30,6 +31,12 @@ class SkirmishBlowAdmin(admin.ModelAdmin):
         "damage",
     )
     list_filter = ("outcome", "attack_item_type", "skirmish")
+
+
+@admin.register(SkirmishCasualty)
+class SkirmishCasualtyAdmin(admin.ModelAdmin):
+    list_display = ("skirmish", "warrior", "fate")
+    list_filter = ("fate", "skirmish")
 
 
 @admin.register(SkirmishSpoil)
