@@ -1,7 +1,9 @@
+from ambient_toolbox.admin.model_admins.classes import ReadOnlyAdmin
 from django.contrib import admin
 
 from apps.quest.models.quest import Quest
 from apps.quest.models.quest_contract import QuestContract
+from apps.quest.models.quest_name import QuestName
 
 
 @admin.register(Quest)
@@ -13,3 +15,8 @@ class QuestAdmin(admin.ModelAdmin):
 @admin.register(QuestContract)
 class QuestContractAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(QuestName)
+class QuestNameAdmin(ReadOnlyAdmin):
+    list_display = ("name",)

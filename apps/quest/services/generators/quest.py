@@ -2,6 +2,7 @@ import random
 
 from apps.faction.models.faction import Faction
 from apps.quest.models.quest import Quest
+from apps.quest.models.quest_name import QuestName
 from apps.savegame.models.savegame import Savegame
 from apps.skirmish.models.warrior import Warrior
 
@@ -47,15 +48,15 @@ class QuestGenerator:
         if not target_faction_list:
             return None
 
-        # TODO (#102): move to model?
-        quest_name_list = (
-            "Hunt down raiders",
-            "Pillage village",
-            "Avenge lost villager lives",
-            "Raid cattle",
-        )
+        quest_name_list = list(QuestName.objects.all())
 
-        name = random.choice(quest_name_list)
+        if not quest_name_list:
+            raise RuntimeError(
+                "There are no quest names to draw from. "
+                "Load the reference data with 'loaddata culture itemtype questname'."
+            )
+
+        name = random.choice(quest_name_list).name
         target_faction = random.choice(target_faction_list)
         difficulty = random.choice(Quest.DifficultyChoices.choices)
 

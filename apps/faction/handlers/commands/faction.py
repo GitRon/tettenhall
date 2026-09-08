@@ -63,7 +63,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
     if player_culture is None:
         raise RuntimeError(
             f"Culture {context.faction_culture_id} does not exist. "
-            f"Load the reference data with 'loaddata culture itemtype'."
+            f"Load the reference data with 'loaddata culture itemtype questname'."
         )
 
     cultures = list(Culture.objects.all())

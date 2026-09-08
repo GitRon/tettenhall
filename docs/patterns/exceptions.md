@@ -13,7 +13,8 @@ a caught one would be a bug reported as a shrug. Most raises in this project are
 
 ```python
 raise RuntimeError(
-    f"Culture {context.faction_culture_id} does not exist. Load the reference data with 'loaddata culture itemtype'."
+    f"Culture {context.faction_culture_id} does not exist. "
+    f"Load the reference data with 'loaddata culture itemtype questname'."
 )
 ```
 

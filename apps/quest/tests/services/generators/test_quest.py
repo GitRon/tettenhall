@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.faction.tests.factories.faction import FactionFactory
+from apps.quest.models.quest_name import QuestName
 from apps.quest.services.generators.quest import QuestGenerator
 from apps.savegame.tests.factories.savegame import SavegameFactory
 from apps.skirmish.models.warrior import Warrior
@@ -147,4 +148,31 @@ def test_process_without_a_rival_faction():
     savegame.save()
 
     with pytest.raises(RuntimeError, match="has no rival faction a quest could target"):
+        QuestGenerator(savegame=savegame).process()
+
+
+@pytest.mark.django_db
+def test_process_names_a_quest_from_the_reference_data():
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    WarriorFactory(faction=FactionFactory(savegame=savegame))
+
+    quest = QuestGenerator(savegame=savegame).process()
+
+    assert quest.name in QuestName.objects.values_list("name", flat=True)
+
+
+@pytest.mark.django_db
+def test_process_without_quest_names():
+    """
+    A half-seeded database rather than a savegame that ran out of errands, so it is named as one.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    WarriorFactory(faction=FactionFactory(savegame=savegame))
+    QuestName.objects.all().delete()
+
+    with pytest.raises(RuntimeError, match="no quest names to draw from"):
         QuestGenerator(savegame=savegame).process()
