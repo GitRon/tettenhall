@@ -7,6 +7,7 @@ from apps.warrior.messages.events.warrior import (
     WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
     WarriorMoraleReplenished,
+    WarriorWasDismissed,
 )
 
 
@@ -41,6 +42,18 @@ def handle_warrior_deserted_over_unpaid_salary(*, context: WarriorDesertedOverUn
     return CreatePlayerMonthLog(
         title=f"{context.warrior} left the war band over unpaid wages.",
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+        month=context.month,
+        faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=WarriorWasDismissed)
+def handle_warrior_was_dismissed(*, context: WarriorWasDismissed) -> Command:
+    # The faction comes off the event rather than off the warrior, for the same reason desertion's
+    # line does: being sent away clears his own FK, so there is nothing left on him to log against
+    return CreatePlayerMonthLog(
+        title=f"{context.warrior} was sent away for {context.severance_pay} silver.",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DISMISSED,
         month=context.month,
         faction=context.faction,
     )

@@ -11,6 +11,7 @@ from apps.warrior.messages.commands.warrior import (
     ChangeWarriorMaxMorale,
     CreateNewLeaderWarrior,
     CreateWarrior,
+    DismissWarrior,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
@@ -25,6 +26,7 @@ from apps.warrior.messages.events.warrior import (
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
+    WarriorWasDismissed,
 )
 from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 
@@ -66,6 +68,39 @@ def handle_punish_unpaid_warrior(*, context: PunishUnpaidWarrior) -> Event:
         warrior=context.warrior,
         faction=context.faction,
         lost_morale=lost_morale,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=DismissWarrior)
+def handle_dismiss_warrior(*, context: DismissWarrior) -> Event | None:
+    """
+    Let a warrior go, because the player says so rather than because the wage bill got there first.
+
+    The same exit desertion takes, down to the gear: he leaves the roster and leaves what the faction
+    paid for behind, which is the silver the player raises by selling it. What is different is that
+    somebody chose it, so it is priced - the severance is read off the man before he is released,
+    while his salary is still a fact about a warrior on this roster.
+
+    Nothing when no row was released. The rules that must hold whatever the page showed - he is on
+    this roster, and he is not the leader whose loss ends the game - live in the statement
+    [release_from_roster] makes, so a second click on a man already gone raises no event and the
+    faction is not billed for him twice.
+    """
+    severance_pay = context.warrior.severance_pay
+
+    if Warrior.objects.release_from_roster(obj=context.warrior, faction=context.faction) == 0:
+        return None
+
+    # A conditional UPDATE writes the row and leaves this instance holding the faction and the gear
+    # it had a moment ago, and the instance is what travels on the event
+    context.warrior.refresh_from_db()
+
+    return WarriorWasDismissed(
+        warrior=context.warrior,
+        faction=context.faction,
+        savegame=context.savegame,
+        severance_pay=severance_pay,
         month=context.month,
     )
 

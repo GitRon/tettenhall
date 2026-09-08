@@ -32,6 +32,28 @@ class WarriorDesertedOverUnpaidSalary(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorWasDismissed(Event):
+    """
+    The player sent this man away.
+
+    Carries the faction he was sent away from, because dismissal clears his own FK and by the time
+    anybody reacts to this there is nothing on him left to log, bill or stock a pub against. The
+    savegame comes along for the pub, which belongs to the player rather than to any faction on the
+    message.
+
+    The severance is on the event rather than read back off the warrior, the way [WarriorRecruited]
+    carries its price: what the faction owes is fixed at the moment he goes, and the ledger row and
+    the sentence the player reads have to name the same number.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    savegame: Savegame
+    severance_pay: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorMaxMoraleChanged(Event):
     """
     A warrior's morale ceiling moved for good.

@@ -29,6 +29,7 @@ class PlayerMonthLog(models.Model):
         # has to cost a single class, and a kind of its own would touch this model, its choices and
         # KIND_CATEGORIES every time
         KIND_INCIDENT = 12, "Incident"
+        KIND_WARRIOR_DISMISSED = 13, "Warrior dismissed"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -45,6 +46,9 @@ class PlayerMonthLog(models.Model):
         KindChoices.KIND_PUB_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_SHOP_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_INCIDENT: CategoryChoices.CATEGORY_CHRONICLE,
+        # A consequence and not something demanding attention, unlike desertion: the player decided
+        # this one, so the line records what he did rather than warning him it happened to him
+        KindChoices.KIND_WARRIOR_DISMISSED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each
