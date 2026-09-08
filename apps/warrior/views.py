@@ -1,12 +1,14 @@
 import json
 from http import HTTPStatus
 
+from django.db.models import QuerySet
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.faction.models.faction import Faction
+from apps.finance.models import Transaction
 from apps.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -16,7 +18,8 @@ from apps.savegame.models.savegame import Savegame
 from apps.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.skirmish.models.warrior import Warrior
 from apps.warrior.forms.warrior import WarriorForm
-from apps.warrior.messages.commands.warrior import EnslaveCapturedWarrior, RecruitCapturedWarrior
+from apps.warrior.messages.commands.warrior import DismissWarrior, EnslaveCapturedWarrior, RecruitCapturedWarrior
+from apps.warrior.services.dismissal import get_dismissal_refusals
 
 
 class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
@@ -84,6 +87,68 @@ class WarriorWeaponUpdateView(PlayerFactionScopedQuerysetMixin, generic.UpdateVi
         # editable by construction - without this the control removes itself after one use
         context["can_edit_gear"] = True
         return context
+
+
+class DismissWarriorView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, generic.DetailView):
+    """
+    Sends a warrior off the player's roster and into the pub, stripped of the gear he was carrying.
+
+    Only the player's own men, so the savegame is not scope enough: a rival's warriors are in it too,
+    and the id from the URL was all it would take to empty a rival's war band for him - or to bill
+    the player severance for doing it.
+
+    The dead are narrowed away rather than refused. Death leaves a man on the roster but off the
+    page, he draws no wages, and there is nothing about him for a dismissal to fix - so a post naming
+    one is a 404 rather than a sentence explaining itself.
+    """
+
+    model = Warrior
+    http_method_names = ("post",)
+
+    def get_queryset(self) -> QuerySet:
+        return super().get_queryset().exclude_dead()
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        obj = self.get_object()
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+        player_faction = current_savegame.player_faction
+
+        # The same function the card asks before it offers the control, so a refusal here means the
+        # page the player clicked from was stale rather than that the two disagree
+        refusal = get_dismissal_refusals(
+            faction=player_faction,
+            warrior_list=[obj],
+            month=current_savegame.current_month,
+            balance=Transaction.objects.current_balance(faction_id=player_faction.id),
+        ).get(obj.id)
+
+        if refusal is not None:
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps({"notification": refusal})
+            return response
+
+        severance_pay = obj.severance_pay
+        handle_message(
+            DismissWarrior(
+                warrior=obj,
+                faction=player_faction,
+                savegame=current_savegame,
+                month=current_savegame.current_month,
+            )
+        )
+
+        response = HttpResponse(status=HTTPStatus.OK)
+        response["HX-Trigger"] = json.dumps(
+            {
+                "notification": f"{obj} leaves your war band for {severance_pay} silver. He waits in the pub.",
+                # The gear he leaves behind is what the player sells to raise silver, so the item list
+                # has to come back with it on the shelf
+                "loadFactionWarriorList": "-",
+                "loadFactionItemList": "-",
+                "updateResourceBar": "-",
+            }
+        )
+        return response
 
 
 class CapturedWarriorActionMixin(SavegameScopedQuerysetMixin):

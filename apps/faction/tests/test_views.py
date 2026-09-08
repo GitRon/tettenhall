@@ -23,6 +23,7 @@ from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.town.buildings.hall import MediumHall
 from apps.town.models import Town
 from apps.training.tests.factories.training import TrainingFactory
+from apps.warrior.services.dismissal import LEADER_REFUSAL
 
 
 @pytest.fixture
@@ -488,6 +489,52 @@ def test_faction_warrior_list_view_hides_factions_of_other_savegames(logged_in_c
 
 
 @pytest.mark.django_db
+def test_faction_warrior_list_view_offers_the_dismissal_of_a_free_warrior(logged_in_client, current_savegame):
+    """
+    The list replaces itself over htmx, so it has to answer this on its own - a control the player
+    got once and lost on the first swap is the same defect the "is_player_faction" tests pin.
+    """
+    WarriorFactory(faction=current_savegame.player_faction, monthly_salary=120)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.get(
+        reverse("faction:faction-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["warrior_list"][0].dismissal_refusal is None
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_view_says_why_the_leader_may_not_be_dismissed(logged_in_client, current_savegame):
+    leader = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=120)
+    current_savegame.player_faction.leader = leader
+    current_savegame.player_faction.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.get(
+        reverse("faction:faction-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["warrior_list"][0].dismissal_refusal == LEADER_REFUSAL
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_view_asks_nothing_about_dismissing_a_rivals_men(logged_in_client, current_savegame):
+    """
+    A rival's card carries no control to explain, and the purse being weighed would be the wrong one.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=120)
+
+    response = logged_in_client.get(reverse("faction:faction-warrior-list-htmx", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert hasattr(response.context["warrior_list"][0], "dismissal_refusal") is False
+
+
+@pytest.mark.django_db
 def test_faction_captured_warrior_list_view_shows_the_faction(logged_in_client, current_savegame):
     response = logged_in_client.get(
         reverse("faction:faction-captured-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
@@ -610,6 +657,9 @@ def pub_mercenary(current_savegame) -> Warrior:
     """
     A mercenary standing in the player's pub, priced at 180 silver.
 
+    The price is read off the wage he draws rather than off "recruitment_price", so that the pub
+    charges a veteran the player sent away what he is worth now - see "Warrior.hiring_price".
+
     Unhired stock has no faction of its own, so the factory cannot reach through one for the savegame
     and the culture the way it does everywhere else.
     """
@@ -618,7 +668,7 @@ def pub_mercenary(current_savegame) -> Warrior:
         faction=None,
         savegame=current_savegame,
         culture=faction.culture,
-        recruitment_price=180,
+        monthly_salary=90,
     )
     faction.available_mercenaries.add(mercenary)
 
@@ -728,7 +778,7 @@ def test_recruit_pub_mercenary_view_hides_the_pub_of_another_savegame(
     other_savegame = SavegameFactory()
     other_faction = FactionFactory(savegame=other_savegame)
     other_mercenary = WarriorFactory(
-        faction=None, savegame=other_savegame, culture=other_faction.culture, recruitment_price=180
+        faction=None, savegame=other_savegame, culture=other_faction.culture, monthly_salary=90
     )
     other_faction.available_mercenaries.add(other_mercenary)
 
@@ -749,7 +799,7 @@ def test_recruit_pub_mercenary_view_cannot_hire_a_warrior_outside_the_pub(
     """
     TransactionFactory(faction=current_savegame.player_faction, amount=500)
     rival_faction = FactionFactory(savegame=current_savegame)
-    rival_warrior = WarriorFactory(faction=rival_faction, recruitment_price=180)
+    rival_warrior = WarriorFactory(faction=rival_faction, monthly_salary=90)
 
     response = logged_in_client.post(reverse("faction:pub-mercenary-recruit-view", kwargs={"pk": rival_warrior.id}))
 

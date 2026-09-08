@@ -3,8 +3,10 @@ from django.urls import reverse
 
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.finance.models import Transaction
+from apps.finance.tests.factories.transaction import TransactionFactory
 from apps.item.models.item_type import ItemType
 from apps.item.tests.factories.item import ItemFactory
+from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -431,3 +433,106 @@ def test_warrior_weapon_update_view_rejects_an_unknown_attribute(logged_in_clien
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_warrior_dismiss_view_sends_him_to_the_pub(logged_in_client, current_savegame):
+    """
+    The whole chain, because the pub, the ledger and the month log all hang off the event - and two
+    of those handlers run behind the database blocker, which a direct handler call lifts.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=120)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warrior:warrior-dismiss-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert "HX-Trigger" in response.headers
+    warrior.refresh_from_db()
+    assert warrior.faction is None
+    assert list(current_savegame.player_faction.available_mercenaries.all()) == [warrior]
+    assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == 880
+
+
+@pytest.mark.django_db
+def test_warrior_dismiss_view_leaves_his_gear_on_the_shelf(logged_in_client, current_savegame):
+    """
+    The silver the player raises by selling it is the point, and unoccupied is what
+    "get_all_unoccupied_items" needs to see before the faction page will offer it.
+    """
+    weapon = ItemFactory(
+        type=ItemType.objects.get(name="Short sword"),
+        owner=current_savegame.player_faction,
+        savegame=current_savegame,
+    )
+    warrior = WarriorFactory(faction=current_savegame.player_faction, weapon=weapon)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warrior:warrior-dismiss-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert list(current_savegame.player_faction.get_all_unoccupied_items()) == [weapon]
+
+
+@pytest.mark.django_db
+def test_warrior_dismiss_view_refuses_the_leader(logged_in_client, current_savegame):
+    """
+    A refusal here means the page was stale rather than that the card and the view disagree - the
+    control is not offered for him in the first place.
+    """
+    leader = WarriorFactory(faction=current_savegame.player_faction)
+    current_savegame.player_faction.leader = leader
+    current_savegame.player_faction.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warrior:warrior-dismiss-view", kwargs={"pk": leader.id}))
+
+    assert response.status_code == 204
+    leader.refresh_from_db()
+    assert leader.faction == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warrior_dismiss_view_refuses_a_purse_that_cannot_pay_him_off(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=120)
+
+    response = logged_in_client.post(reverse("warrior:warrior-dismiss-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 204
+    warrior.refresh_from_db()
+    assert warrior.faction == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warrior_dismiss_view_cannot_empty_a_rivals_war_band(logged_in_client, current_savegame):
+    """
+    A rival's men are in the player's savegame too, so the savegame is not scope enough: the id from
+    the URL was all it would take to shrink a rival's roster for him.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_warrior = WarriorFactory(faction=rival_faction, savegame=current_savegame)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warrior:warrior-dismiss-view", kwargs={"pk": rival_warrior.id}))
+
+    assert response.status_code == 404
+    rival_warrior.refresh_from_db()
+    assert rival_warrior.faction == rival_faction
+
+
+@pytest.mark.django_db
+def test_warrior_dismiss_view_refuses_a_dead_warrior(logged_in_client, current_savegame):
+    """
+    Death leaves a man on the roster but off the page, he draws no wages, and there is nothing about
+    him for a dismissal to fix - so he is narrowed away rather than refused with a sentence.
+    """
+    dead_warrior = WarriorFactory(
+        faction=current_savegame.player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warrior:warrior-dismiss-view", kwargs={"pk": dead_warrior.id}))
+
+    assert response.status_code == 404
+    dead_warrior.refresh_from_db()
+    assert dead_warrior.faction == current_savegame.player_faction
