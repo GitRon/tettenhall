@@ -6,7 +6,8 @@
 <div class="uk-navbar-item"
      hx-get="{% url 'common:resource-bar-htmx' %}"
      hx-trigger="updateResourceBar from:body"
-     hx-swap="outerHTML">
+     hx-swap="outerHTML"
+     hx-disinherit="hx-swap">
     {# "open_skirmishes" is only in the context once there is a savegame, so the guard travels with #}
     {# the counters rather than staying behind in base.html - this template is also rendered on its #}
     {# own, by the view the hx-get above reaches. #}

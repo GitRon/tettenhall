@@ -1,6 +1,8 @@
 {% if not skirmish.victorious_faction %}
     <div hx-get="{% url 'skirmish:skirmish-fight-button-update-htmx' skirmish.id %}"
-         hx-trigger="updateFightButton from:body">
+         hx-trigger="updateFightButton from:body"
+         hx-swap="outerHTML"
+         hx-disinherit="hx-swap">
         <button hx-post="{% url 'skirmish:skirmish-finish-round-view' skirmish.id %}"
                 hx-target="#hidden-box"
                 hx-include="select, input"
