@@ -66,12 +66,14 @@ class Warrior(models.Model):
     # as one number for the whole game, because the archetypes do not share a mean - a single pivot would
     # be a standing discount for whichever archetypes sit below it, which is most of them.
     strength_baseline = models.PositiveSmallIntegerField("Strength baseline")
-    # The spread of that same population, stamped on him by the same generator. It is what tells an
-    # exceptional roll from an ordinary one: the archetypes differ in spread by a factor of nearly
-    # three, so how far from the mean is far depends on which kind of man was rolled. It describes
-    # his dexterity as well as his strength, both being drawn from the one "STATS_SIGMA" - see
-    # "get_nickname".
+    # The spread of that same population, and the lowest it can roll, stamped on him by the same
+    # generator. Together they are what tells an exceptional roll from an ordinary one: the archetypes
+    # differ in spread by a factor of nearly three, so how far from the mean is far depends on which
+    # kind of man was rolled, and the minimum is where the whole of the left tail ends up. Both
+    # describe his dexterity as well as his strength, drawn as it is from the same "STATS_SIGMA" and
+    # "STATS_MIN" - see "get_nickname".
     stats_spread = models.PositiveSmallIntegerField("Stats spread")
+    stats_minimum = models.PositiveSmallIntegerField("Stats minimum")
 
     dexterity = models.PositiveSmallIntegerField("Dexterity")
     dexterity_progress = models.PositiveSmallIntegerField("Dexterity progress", default=0)
@@ -148,6 +150,7 @@ class Warrior(models.Model):
             dexterity=self.dexterity,
             baseline=self.strength_baseline,
             spread=self.stats_spread,
+            minimum=self.stats_minimum,
         )
 
     @property

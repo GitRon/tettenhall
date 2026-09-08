@@ -123,9 +123,11 @@ class BaseWarriorGenerator:
             # What this warrior's strength is measured against in a fight: the mean of the archetype he
             # was drawn from, so a man of his own kind's average deals his weapon's full damage
             strength_baseline=self.STATS_MU,
-            # And the spread of that population, which is what makes an extreme roll recognisable as
-            # one - see "get_nickname". It covers dexterity too, drawn from the same sigma.
+            # And the spread of that population and the floor it rolls against, which together make
+            # an extreme roll recognisable as one - see "get_nickname". Both cover dexterity too,
+            # drawn as it is from the same sigma and the same minimum.
             stats_spread=self.STATS_SIGMA,
+            stats_minimum=self.STATS_MIN,
             dexterity=dexterity,
             dexterity_progress=dexterity_progress,
             recruitment_price=recruitment_price,

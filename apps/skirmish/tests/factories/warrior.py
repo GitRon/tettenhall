@@ -19,9 +19,11 @@ class WarriorFactory(DjangoModelFactory):
     # A warrior sitting exactly at his baseline deals his weapon's full damage, which is what the
     # arithmetic in most of the suite is written against
     strength_baseline = 10
-    # A middling spread, and with both stats sitting on the baseline it leaves the factory's warrior
-    # an ordinary man: no test's warrior picks up an epithet he was never written to have
+    # A middling spread and the mercenary's floor. With both stats sitting on the baseline, well
+    # clear of that floor, it leaves the factory's warrior an ordinary man: no test's warrior picks
+    # up an epithet he was never written to have
     stats_spread = 5
+    stats_minimum = 3
     dexterity = 10
     current_health = 20
     max_health = 20

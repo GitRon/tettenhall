@@ -18,19 +18,19 @@ def test_str_leaves_the_epithet_off():
     monthly log, the reasons on transactions - and those rows outlive an epithet derived from
     attributes that move.
     """
-    warrior = WarriorFactory.build(name="Collum", strength=18)
+    warrior = WarriorFactory.build(name="Collum", strength=20)
 
     assert str(warrior) == "Collum"
 
 
 def test_nickname_reads_the_attributes_against_the_warriors_own_distribution():
-    warrior = WarriorFactory.build(strength=18)
+    warrior = WarriorFactory.build(strength=20)
 
     assert warrior.nickname == STRENGTH_HIGH_NICKNAME
 
 
 def test_display_name_carries_the_epithet():
-    warrior = WarriorFactory.build(name="Collum", strength=18)
+    warrior = WarriorFactory.build(name="Collum", strength=20)
 
     assert warrior.display_name == f"Collum {STRENGTH_HIGH_NICKNAME}"
 

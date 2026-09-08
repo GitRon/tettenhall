@@ -150,7 +150,7 @@ def test_process_stamps_the_leader_baseline_on_the_warrior():
 @pytest.mark.django_db
 def test_process_stamps_the_levy_spread_on_the_warrior():
     """
-    The spread travels for the same reason the baseline does: it is what an extreme roll is
+    The spread travels for the same reason the baseline does: it is what an exceptional roll is
     recognised by, and the archetypes differ in it by nearly a factor of three.
     """
     generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
@@ -159,3 +159,17 @@ def test_process_stamps_the_levy_spread_on_the_warrior():
 
     assert result.stats_spread == FyrdWarriorGenerator.STATS_SIGMA
     assert Warrior.objects.get(pk=result.pk).stats_spread == FyrdWarriorGenerator.STATS_SIGMA
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_levy_floor_on_the_warrior():
+    """
+    The floor travels too, because it is the whole of the downward end: the roll is clamped to it, so
+    that is where a quarter of every levy lands and the only position a feeble man can be in.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.stats_minimum == FyrdWarriorGenerator.STATS_MIN
+    assert Warrior.objects.get(pk=result.pk).stats_minimum == FyrdWarriorGenerator.STATS_MIN
