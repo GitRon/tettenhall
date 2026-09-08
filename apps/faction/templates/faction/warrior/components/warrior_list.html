@@ -1,5 +1,6 @@
 <div hx-get="{% url 'faction:faction-warrior-list-htmx' faction.id %}"
-     hx-trigger="loadFactionWarriorList from:body">
+     hx-trigger="loadFactionWarriorList from:body"
+     hx-swap="outerHTML">
     <h2>Warriors</h2>
     {% for warrior in warrior_list %}
         {% include 'warrior/components/warrior_card.html' with warrior=warrior %}
