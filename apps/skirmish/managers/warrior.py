@@ -378,6 +378,24 @@ class WarriorManager(manager.Manager):
             .update(faction=None, weapon=None, armor=None)
         )
 
+    def forgive_unpaid_months(self, *, obj):
+        """
+        Wipe what a warrior is owed, because somebody has settled it another way.
+
+        A man taken onto a roster out of the pub brings the count he left with, and a veteran who
+        walked out over unpaid wages left with the full term on him. Carried over, it would put him
+        one failed payroll from walking again the month after the faction paid twice his wage to have
+        him back - and the warning meanwhile reads "4 of 3 unpaid months", which is a count nothing
+        else in the game can produce.
+
+        Not "record_salaries_paid": no wages were paid, a hiring price was.
+        """
+        obj.refresh_from_db()
+        obj.unpaid_months = 0
+        obj.save(update_fields=("unpaid_months",))
+
+        return obj
+
     def set_faction(self, *, obj, faction) -> int:
         """
         Set a new faction for the given warrior.

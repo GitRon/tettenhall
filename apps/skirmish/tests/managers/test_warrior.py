@@ -522,6 +522,19 @@ def test_strip_equipment_takes_back_weapon_and_armor():
 
 
 @pytest.mark.django_db
+def test_forgive_unpaid_months_wipes_what_he_was_owed():
+    """
+    Somebody has settled it another way - the hiring price a man off the shelf is bought back with.
+    """
+    warrior = WarriorFactory(unpaid_months=3)
+
+    Warrior.objects.forgive_unpaid_months(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert warrior.unpaid_months == 0
+
+
+@pytest.mark.django_db
 def test_strip_equipment_leaves_the_owning_faction_alone():
     """
     Taking the gear back is what keeps it sellable - the faction has to still own it afterwards, or
