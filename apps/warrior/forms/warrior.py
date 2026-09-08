@@ -2,22 +2,29 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout, Submit
 from django import forms
 from django.db.models import Q
-from django.forms import HiddenInput
 from django.urls import reverse
 
 from apps.item.models.item import Item
 from apps.item.models.item_type import ItemType
 from apps.skirmish.models.warrior import Warrior
 
+# The item function each gear slot may be filled from, and by being that, the list of slots this form
+# will build at all. One mapping rather than a tuple of names beside it: a slot the form cannot say
+# what belongs in is a slot it has no business rendering, and the view's own allowlist reads the same
+# names back out of "Meta.fields"
+SLOT_FUNCTIONS = {
+    "weapon": ItemType.FunctionChoices.FUNCTION_WEAPON,
+    "armor": ItemType.FunctionChoices.FUNCTION_ARMOR,
+}
+
 
 class WarriorForm(forms.ModelForm):
     class Meta:
         model = Warrior
-        fields = ("weapon", "armor")
+        fields = tuple(SLOT_FUNCTIONS)
 
     def __init__(self, *args, **kwargs):
         # Ensure that only allowed fields can be rendered
-        # TODO (#102): would be nicer to replace the original fields
         htmx_field = kwargs.pop("htmx_field", None)
         htmx_field = htmx_field if htmx_field in self.Meta.fields else None
 
@@ -35,8 +42,7 @@ class WarriorForm(forms.ModelForm):
         }
         self.helper.form_method = "post"
         self.helper.layout = Layout(
-            Div(Field("weapon", css_class="uk-select")),
-            Div(Field("armor", css_class="uk-select")),
+            Div(Field(htmx_field, css_class="uk-select")),
             Div(
                 Submit(
                     "submit",
@@ -48,21 +54,18 @@ class WarriorForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
-        # Populate querysets
-        self.fields["weapon"].queryset = Item.objects.filter(
-            Q(warrior_weapon__isnull=True) | Q(warrior_weapon=self.instance),
-            type__function=ItemType.FunctionChoices.FUNCTION_WEAPON,
-            owner_id=self.instance.faction,
-        )
-        self.fields["armor"].queryset = Item.objects.filter(
-            Q(warrior_armor__isnull=True) | Q(warrior_armor=self.instance),
-            type__function=ItemType.FunctionChoices.FUNCTION_ARMOR,
-            owner_id=self.instance.faction,
-        )
+        # One slot per request, so the form is built down to it rather than built whole and then
+        # covered up. A field that is gone is not rendered, not posted and not written back: what the
+        # warrior carries in the other hand survives the save because nothing here has an opinion
+        # about it
+        self.fields = {htmx_field: self.fields[htmx_field]}
+        self.fields[htmx_field].label = ""
 
-        for _field_name in self.fields:
-            if _field_name == htmx_field:
-                self.fields[_field_name].label = ""
-            else:
-                self.fields[_field_name].widget = HiddenInput()
-                self.fields[_field_name].disabled = True
+        # What the faction has spare, plus what this warrior is already carrying - the slot's own
+        # item would otherwise be missing from the list that is supposed to contain the current value
+        equipped_relation = f"warrior_{htmx_field}"
+        self.fields[htmx_field].queryset = Item.objects.filter(
+            Q(**{f"{equipped_relation}__isnull": True}) | Q(**{equipped_relation: self.instance}),
+            type__function=SLOT_FUNCTIONS[htmx_field],
+            owner_id=self.instance.faction,
+        )

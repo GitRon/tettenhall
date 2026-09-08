@@ -169,9 +169,9 @@ prepare_database() {
     return 1
   }
 
-  # The item and warrior generators query cultures and item types by name and raise without them.
-  "$PY" manage.py loaddata culture itemtype >> "$SETUP_LOG" 2>&1 || {
-    echo "loaddata culture itemtype failed, see ${SETUP_LOG#"$REPO_ROOT/"}" >&2
+  # The item, warrior and quest generators query this reference data and raise without it.
+  "$PY" manage.py loaddata culture itemtype questname >> "$SETUP_LOG" 2>&1 || {
+    echo "loaddata culture itemtype questname failed, see ${SETUP_LOG#"$REPO_ROOT/"}" >&2
     return 1
   }
 

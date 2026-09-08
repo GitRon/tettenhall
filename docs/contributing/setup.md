@@ -13,14 +13,14 @@ uv run python manage.py createsuperuser
 uv run python manage.py runserver
 ```
 
-Cultures and item types are reference data shipped as fixtures, and the item and warrior generators
-query them by name — a database without them raises `RuntimeError` during generation:
+Cultures, item types and quest names are reference data shipped as fixtures, and the item, warrior and
+quest generators query them — a database without them raises `RuntimeError` during generation:
 
 ```bash
-uv run python manage.py loaddata culture itemtype
+uv run python manage.py loaddata culture itemtype questname
 ```
 
-The test suite loads both automatically, see [test data](../patterns/testing-data.md).
+The test suite loads all three automatically, see [test data](../patterns/testing-data.md).
 
 ## Running the tests
 

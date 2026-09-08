@@ -28,6 +28,11 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
         return []
 
     training_category = training.category
+
+    # Condition is the whole test, because standing in a fight is not a state a warrior can be in
+    # while this runs: the advance is refused outright when a skirmish is unresolved
+    # ("FinishMonthView", apps/month/views.py:27), and nothing the advance itself raises creates one -
+    # both paths into a skirmish are player clicks, accepting a quest and marching on a rival.
     warriors_to_train = context.faction.warriors.filter_healthy()
 
     event_list = []
