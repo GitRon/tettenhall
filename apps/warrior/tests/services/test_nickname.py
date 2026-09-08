@@ -196,11 +196,22 @@ def test_get_nickname_leaves_a_wide_spread_short_of_its_own_bottom(ordinary):
     assert result is None
 
 
-def test_get_nickname_names_the_rarer_of_two_failings(ordinary):
+def test_get_nickname_names_the_arms_ahead_of_a_second_failing(ordinary):
     """
-    Down at the bottom in health and in nerve at once. Health is the rarer state of the two, so it is
-    the one he is called for.
+    On the floor in both arms and down at the bottom in health at once. The arms are the completest
+    failing - two attributes gone rather than one - so they are what he is called for, whichever of
+    the two is rarer for his archetype.
     """
+    ordinary["strength"] = AttributeDraw(value=3, baseline=10, spread=4, minimum=3)
+    ordinary["dexterity"] = AttributeDraw(value=3, baseline=10, spread=4, minimum=3)
+    ordinary["health"] = AttributeDraw(value=11, baseline=20, spread=5)
+
+    result = get_nickname(**ordinary)
+
+    assert result == STATS_FLOOR_NICKNAMES[0]
+
+
+def test_get_nickname_names_health_ahead_of_nerve(ordinary):
     ordinary["health"] = AttributeDraw(value=11, baseline=20, spread=5)
     ordinary["morale"] = AttributeDraw(value=5, baseline=10, spread=3)
 

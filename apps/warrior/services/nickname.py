@@ -45,7 +45,7 @@ def _has_fallen_to_the_bottom(*, draw: AttributeDraw) -> bool:
     distance lands underneath the floor. A fyrd man's health is drawn at a mean of ten with a spread of
     ten, so 1.75 spreads below it is a negative figure and the clamp puts the cut on the floor itself,
     where 3% of them sit. A leader's is a mean of twenty against a spread of five, the tail is intact,
-    and the cut lands at 13.
+    and the cut lands at 11.
     """
     return draw.value <= max(draw.minimum, round(draw.baseline - NICKNAME_DESCENT_THRESHOLD * draw.spread))
 
@@ -83,8 +83,11 @@ def get_nickname(
     and morale are floored only by the generator's refusal of zero, which leaves them a bottom of
     their own to fall to, so each carries its own epithet - see [_has_fallen_to_the_bottom].
 
-    The unflattering states are checked in the order they are rarest, so the more distinguishing thing
-    about a man is the thing he is called.
+    A man can be in two of the three at once, and the arms are named first - not because they are the
+    rarest, which they are not, but because they are the completest failing: two attributes gone at the
+    same time rather than one. Rarest-first is not available to any fixed order, because the ranking
+    flips between archetypes - the arms are the rarest failing a leader has at 1.5% against health's
+    4.4%, and the commonest a mercenary has at 6.7% against health's 1.5%.
     """
     candidates = (
         (strength, STRENGTH_NICKNAMES, STRENGTH_FAR_NICKNAMES),
