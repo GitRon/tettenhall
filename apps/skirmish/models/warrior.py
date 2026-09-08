@@ -10,6 +10,7 @@ from apps.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.managers.warrior import WarriorManager
 from apps.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
+from apps.warrior.domain.attribute_draw import AttributeDraw
 from apps.warrior.services.nickname import get_nickname
 
 
@@ -74,6 +75,10 @@ class Warrior(models.Model):
     # "STATS_MIN" - see "get_nickname".
     stats_spread = models.PositiveSmallIntegerField("Stats spread")
     stats_minimum = models.PositiveSmallIntegerField("Stats minimum")
+    # Which of the several wordings his epithet is phrased with, drawn once when he is generated. On
+    # the row rather than derived from his id, because the wording has to hold still: a man called
+    # "the Bear" on the roster and "the Ox" in the pub is two men to the player.
+    nickname_variant = models.PositiveSmallIntegerField("Nickname variant", default=0)
 
     dexterity = models.PositiveSmallIntegerField("Dexterity")
     dexterity_progress = models.PositiveSmallIntegerField("Dexterity progress", default=0)
@@ -81,10 +86,17 @@ class Warrior(models.Model):
     current_health = models.SmallIntegerField("Current health")
     max_health = models.PositiveSmallIntegerField("Maximum health")
     health_progress = models.PositiveSmallIntegerField("Health progress", default=0)
+    # The mean and the spread of the health this warrior's kind is rolled with, its own pair because
+    # the archetypes' health means and spreads stand in no fixed ratio to their stats ones - see
+    # "get_nickname"
+    health_baseline = models.PositiveSmallIntegerField("Health baseline")
+    health_spread = models.PositiveSmallIntegerField("Health spread")
 
     current_morale = models.SmallIntegerField("Current morale")
     max_morale = models.PositiveSmallIntegerField("Maximum morale")
     morale_progress = models.PositiveSmallIntegerField("Morale progress", default=0)
+    morale_baseline = models.PositiveSmallIntegerField("Morale baseline")
+    morale_spread = models.PositiveSmallIntegerField("Morale spread")
 
     experience = models.PositiveIntegerField("Experience", default=0)
     monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
@@ -145,12 +157,15 @@ class Warrior(models.Model):
 
     @property
     def nickname(self) -> str | None:
+        # Strength and dexterity share a baseline and a spread, both being drawn from the one
+        # "STATS_MU"/"STATS_SIGMA" pair. Health and morale each have their own.
         return get_nickname(
-            strength=self.strength,
-            dexterity=self.dexterity,
-            baseline=self.strength_baseline,
-            spread=self.stats_spread,
-            minimum=self.stats_minimum,
+            strength=AttributeDraw(value=self.strength, baseline=self.strength_baseline, spread=self.stats_spread),
+            dexterity=AttributeDraw(value=self.dexterity, baseline=self.strength_baseline, spread=self.stats_spread),
+            health=AttributeDraw(value=self.max_health, baseline=self.health_baseline, spread=self.health_spread),
+            morale=AttributeDraw(value=self.max_morale, baseline=self.morale_baseline, spread=self.morale_spread),
+            stats_minimum=self.stats_minimum,
+            variant=self.nickname_variant,
         )
 
     @property

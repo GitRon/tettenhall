@@ -29,3 +29,9 @@ class WarriorFactory(DjangoModelFactory):
     max_health = 20
     current_morale = 20
     max_morale = 20
+    # Every baseline matches the value beside it, so the factory's warrior sits exactly at his kind's
+    # mean in all four attributes and earns no epithet. A test that wants one moves one attribute
+    health_baseline = 20
+    health_spread = 10
+    morale_baseline = 20
+    morale_spread = 5

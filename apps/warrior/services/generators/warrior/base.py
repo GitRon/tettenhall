@@ -7,6 +7,7 @@ from apps.faction.models.faction import Faction
 from apps.item.models.item_type import ItemType
 from apps.item.services.generators.item.base import BaseItemGenerator
 from apps.skirmish.models.warrior import Warrior
+from apps.warrior.services.nickname import NICKNAME_VARIANT_BOUND
 
 
 class BaseWarriorGenerator:
@@ -115,9 +116,15 @@ class BaseWarriorGenerator:
             current_health=max_health,
             max_health=max_health,
             health_progress=health_progress,
+            # The health and morale distributions travel per attribute: their means and spreads stand
+            # in no fixed ratio to the stats ones, so neither can be read off the other
+            health_baseline=self.HEALTH_MU,
+            health_spread=self.HEALTH_SIGMA,
             current_morale=max_morale,
             max_morale=max_morale,
             morale_progress=morale_progress,
+            morale_baseline=self.MORALE_MU,
+            morale_spread=self.MORALE_SIGMA,
             strength=strength,
             strength_progress=strength_progress,
             # What this warrior's strength is measured against in a fight: the mean of the archetype he
@@ -128,6 +135,8 @@ class BaseWarriorGenerator:
             # drawn as it is from the same sigma and the same minimum.
             stats_spread=self.STATS_SIGMA,
             stats_minimum=self.STATS_MIN,
+            # Drawn once and kept, so whatever he ends up being called he is called it everywhere
+            nickname_variant=random.randrange(NICKNAME_VARIANT_BOUND),
             dexterity=dexterity,
             dexterity_progress=dexterity_progress,
             recruitment_price=recruitment_price,

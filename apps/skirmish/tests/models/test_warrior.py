@@ -9,7 +9,7 @@ from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warrior.services.nickname import STRENGTH_HIGH_NICKNAME
+from apps.warrior.services.nickname import MORALE_NICKNAMES, STRENGTH_NICKNAMES
 
 
 def test_str_leaves_the_epithet_off():
@@ -26,13 +26,30 @@ def test_str_leaves_the_epithet_off():
 def test_nickname_reads_the_attributes_against_the_warriors_own_distribution():
     warrior = WarriorFactory.build(strength=20)
 
-    assert warrior.nickname == STRENGTH_HIGH_NICKNAME
+    assert warrior.nickname == STRENGTH_NICKNAMES[0]
+
+
+def test_nickname_reads_morale_off_its_own_baseline_and_spread():
+    """
+    Health and morale carry a mean and a spread apiece, so a warrior can be named for his nerve as
+    readily as for his arm. Two columns of four, and the wrong pairing would be invisible from the
+    stats alone.
+    """
+    warrior = WarriorFactory.build(max_morale=30, morale_baseline=20, morale_spread=5)
+
+    assert warrior.nickname == MORALE_NICKNAMES[0]
 
 
 def test_display_name_carries_the_epithet():
     warrior = WarriorFactory.build(name="Collum", strength=20)
 
-    assert warrior.display_name == f"Collum {STRENGTH_HIGH_NICKNAME}"
+    assert warrior.display_name == f"Collum {STRENGTH_NICKNAMES[0]}"
+
+
+def test_display_name_phrases_the_epithet_by_the_warriors_own_variant():
+    warrior = WarriorFactory.build(name="Collum", strength=20, nickname_variant=1)
+
+    assert warrior.display_name == f"Collum {STRENGTH_NICKNAMES[1]}"
 
 
 def test_display_name_for_an_ordinary_man():
