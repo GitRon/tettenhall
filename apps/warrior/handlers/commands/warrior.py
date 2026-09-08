@@ -21,11 +21,11 @@ from apps.warrior.messages.commands.warrior import (
 from apps.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
     WarriorCreated,
-    WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
+    WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
 )
 from apps.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
@@ -36,7 +36,7 @@ def handle_punish_unpaid_warrior(*, context: PunishUnpaidWarrior) -> Event:
     """
     What a month without wages does to the man who went without it.
 
-    Morale first and desertion after, so the war band sours visibly before it starts shrinking and
+    Morale first and the walk-out after, so the war band sours visibly before it starts shrinking and
     the player has a couple of months to sell something. Low morale is what routs a warrior
     mid-fight, so an unpaid band breaks early without any of this having to say so.
 
@@ -45,17 +45,22 @@ def handle_punish_unpaid_warrior(*, context: PunishUnpaidWarrior) -> Event:
     silver it fetches is exactly what a broke faction needs.
     """
     # The leader is the one man who never walks. Faction.leader is a CASCADE FK and losing him is
-    # what defeats a faction, so a leader deserting would end the game over a wage bill instead of
+    # what defeats a faction, so a leader walking out would end the game over a wage bill instead of
     # shrinking the war band to what it can afford. He sulks indefinitely instead.
     is_leader = context.faction.leader_id == context.warrior.id
 
-    if context.warrior.unpaid_months >= Warrior.UNPAID_MONTHS_UNTIL_DESERTION and not is_leader:
+    if context.warrior.unpaid_months >= Warrior.UNPAID_MONTHS_UNTIL_WALKOUT and not is_leader:
         Warrior.objects.strip_equipment(obj=context.warrior)
         Warrior.objects.set_faction(obj=context.warrior, faction=None)
 
-        return WarriorDesertedOverUnpaidSalary(
+        # The savegame is read here rather than carried down from the month, because nothing above
+        # holds one: the whole chain from "FactionMonthPrepared" through the salary run to this
+        # command travels on a faction and a month. Reading it is a command handler's privilege, and
+        # the pub the event feeds belongs to a savegame rather than to a faction
+        return WarriorWalkedOutOverUnpaidSalary(
             warrior=context.warrior,
             faction=context.faction,
+            savegame=context.faction.savegame,
             month=context.month,
         )
 
@@ -77,7 +82,7 @@ def handle_dismiss_warrior(*, context: DismissWarrior) -> Event | None:
     """
     Let a warrior go, because the player says so rather than because the wage bill got there first.
 
-    The same exit desertion takes, down to the gear: he leaves the roster and leaves what the faction
+    The same exit a walk-out takes, down to the gear: he leaves the roster and leaves what the faction
     paid for behind, which is the silver the player raises by selling it. What is different is that
     somebody chose it, so it is priced - the severance is read off the man before he is released,
     while his salary is still a fact about a warrior on this roster.

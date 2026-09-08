@@ -1,17 +1,17 @@
 from apps.faction.tests.factories.faction import FactionFactory
 from apps.month.handlers.events.warrior import (
-    handle_warrior_deserted_over_unpaid_salary,
     handle_warrior_health_healed,
     handle_warrior_morale_replenished,
+    handle_warrior_walked_out_over_unpaid_salary,
     handle_warrior_was_dismissed,
 )
 from apps.month.messages.commands.month import CreatePlayerMonthLog
 from apps.month.models.player_month_log import PlayerMonthLog
 from apps.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warrior.messages.events.warrior import (
-    WarriorDesertedOverUnpaidSalary,
     WarriorHealthHealed,
     WarriorMoraleReplenished,
+    WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
 )
 
@@ -48,21 +48,21 @@ def test_handle_warrior_health_healed_logs_the_healed_points():
     )
 
 
-def test_handle_warrior_deserted_over_unpaid_salary_logs_the_departure():
+def test_handle_warrior_walked_out_over_unpaid_salary_logs_the_departure():
     """
-    The faction comes off the event rather than off the warrior: desertion clears his own FK, so by
+    The faction comes off the event rather than off the warrior: walking out clears his own FK, so by
     the time this runs there is nothing on him left to log against.
     """
     faction = FactionFactory.build()
     warrior = WarriorFactory.build(name="Oswine", faction=None, savegame=faction.savegame, culture=faction.culture)
 
-    result = handle_warrior_deserted_over_unpaid_salary(
-        context=WarriorDesertedOverUnpaidSalary(warrior=warrior, faction=faction, month=3)
+    result = handle_warrior_walked_out_over_unpaid_salary(
+        context=WarriorWalkedOutOverUnpaidSalary(warrior=warrior, faction=faction, savegame=faction.savegame, month=3)
     )
 
     assert result == CreatePlayerMonthLog(
         title="Oswine left the war band over unpaid wages.",
-        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DESERTED,
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_WALKED_OUT,
         month=3,
         faction=faction,
     )
@@ -70,7 +70,7 @@ def test_handle_warrior_deserted_over_unpaid_salary_logs_the_departure():
 
 def test_handle_warrior_was_dismissed_logs_what_letting_him_go_cost():
     """
-    The faction comes off the event rather than off the warrior, the way desertion's line does:
+    The faction comes off the event rather than off the warrior, the way the walk-out line does:
     being sent away clears his own FK, so there is nothing left on him to log against.
     """
     faction = FactionFactory.build()

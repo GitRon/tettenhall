@@ -70,7 +70,7 @@ class FactionQuerySet(models.QuerySet):
         from apps.skirmish.models.warrior import Warrior
 
         # The non-null guard is what makes this the negation of [rivals_still_standing] and not an
-        # empty queryset. Captives, pub mercenaries and deserters all carry no faction, so without it
+        # empty queryset. Captives, pub mercenaries and the men who left carry no faction, so without it
         # the subquery yields a NULL, "id NOT IN (..., NULL)" is NULL for every row in SQL, and
         # nothing at all comes back the moment a single prisoner exists. The positive form the sibling
         # method uses is immune to that, which is why only this one needs the filter.

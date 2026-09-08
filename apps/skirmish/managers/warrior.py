@@ -27,8 +27,8 @@ class WarriorQuerySet(models.QuerySet):
         The mercenaries standing in this faction's pub, waiting to be hired.
 
         Membership of "available_mercenaries" rather than a missing faction: a mercenary nobody has
-        hired has none, and so does a deserter and a captive whose banner was cleared - hiring one of
-        those out of the pub would be hiring a man who is not in it.
+        hired has none, and so does a captive whose banner was cleared and a man who walked out of a
+        rival's war band - hiring one of those out of the pub would be hiring a man who is not in it.
 
         Parameterised by faction on purpose. Every faction owns a pub set already, and the caller
         passing the player's is what says "the player hires from his own town" - not this method.

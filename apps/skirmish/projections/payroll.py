@@ -10,8 +10,8 @@ class UnpaidWarriorCountdown:
 
     "months_unpaid" counts the month being projected, so it is the number
     "handle_punish_unpaid_warrior" reads rather than the one standing in the database now: a man who
-    has never gone without reads one, and a man who reads the full term is the man the desertion
-    list names.
+    has never gone without reads one, and a man who reads the full term is the man the walk-out list
+    names.
 
     It is None for the leader, because his count is not merely long - it never matures at all. A
     number for him would invite the player to read a deadline into it.
@@ -40,7 +40,7 @@ class Payroll:
     # given instead of sorting again and getting to disagree.
     warrior_list: list
     budget: int
-    # Read for the desertion projection only, because the leader is the one man who never walks.
+    # Read for the walk-out projection only, because the leader is the one man who never walks.
     leader_id: int | None
 
     paid_warrior_list: list = field(init=False, default_factory=list)
@@ -95,12 +95,12 @@ class Payroll:
         return len(self.unpaid_warrior_list) > 0
 
     @property
-    def months_until_desertion(self) -> int:
+    def months_until_walkout(self) -> int:
         """
         How many unpaid months a man takes before he walks, so a template can say the number without
         holding a copy of it.
         """
-        return Warrior.UNPAID_MONTHS_UNTIL_DESERTION
+        return Warrior.UNPAID_MONTHS_UNTIL_WALKOUT
 
     @property
     def unpaid_countdown_list(self) -> list[UnpaidWarriorCountdown]:
@@ -130,7 +130,7 @@ class Payroll:
         ]
 
     @property
-    def deserting_warrior_list(self) -> list:
+    def warriors_about_to_walk_out(self) -> list:
         """
         The men a shortfall would cost the faction outright rather than only in morale.
 
@@ -142,5 +142,5 @@ class Payroll:
         return [
             entry.warrior
             for entry in self.unpaid_countdown_list
-            if entry.months_unpaid is not None and entry.months_unpaid >= Warrior.UNPAID_MONTHS_UNTIL_DESERTION
+            if entry.months_unpaid is not None and entry.months_unpaid >= Warrior.UNPAID_MONTHS_UNTIL_WALKOUT
         ]

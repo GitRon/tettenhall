@@ -19,17 +19,17 @@
             {% for entry in wage_bill_payroll.unpaid_countdown_list %}
                 {{ entry.warrior }} ({{ entry.warrior.monthly_salary }} silver,
                 {% if entry.months_unpaid %}{{ entry.months_unpaid }} of
-                {{ wage_bill_payroll.months_until_desertion }} unpaid months{% else %}your leader,
+                {{ wage_bill_payroll.months_until_walkout }} unpaid months{% else %}your leader,
                 who never walks{% endif %}){% if not forloop.last %}, {% endif %}
             {% endfor %}
         </p>
-        {% if wage_bill_payroll.deserting_warrior_list %}
+        {% if wage_bill_payroll.warriors_about_to_walk_out %}
             <p class="uk-margin-remove uk-text-bold">
                 Leaving the war band over it:
-                {% for warrior in wage_bill_payroll.deserting_warrior_list %}
+                {% for warrior in wage_bill_payroll.warriors_about_to_walk_out %}
                     {{ warrior }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
-                — {{ wage_bill_payroll.months_until_desertion }} months without wages and a man strips his
+                — {{ wage_bill_payroll.months_until_walkout }} months without wages and a man strips his
                 gear and walks.
             </p>
         {% endif %}

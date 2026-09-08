@@ -128,8 +128,8 @@ def test_skirmish_finish_round_view_advances_the_round(logged_in_client, current
 def test_skirmish_finish_round_view_refuses_a_fight_that_is_already_decided(logged_in_client, current_savegame):
     """
     A double-click on the last "Fight!" is two posts, and the second arrives at a resolved skirmish.
-    Fighting round 13 of a fight decided in round 12 turns out deserters and prisoners still sitting
-    on the roster, and pays everybody the after-battle experience a second time.
+    Fighting round 13 of a fight decided in round 12 turns out men who have left and prisoners still
+    sitting on the roster, and pays everybody the after-battle experience a second time.
     """
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     player_warrior = WarriorFactory(faction=skirmish.attacking_faction)

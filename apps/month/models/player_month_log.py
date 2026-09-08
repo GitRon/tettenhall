@@ -15,7 +15,7 @@ class PlayerMonthLog(models.Model):
 
     class KindChoices(models.IntegerChoices):
         KIND_UNPAID_SALARIES = 1, "Salaries unpaid"
-        KIND_WARRIOR_DESERTED = 2, "Warrior deserted"
+        KIND_WARRIOR_WALKED_OUT = 2, "Warrior walked out"
         KIND_SALARIES_PAID = 3, "Salaries paid"
         KIND_BUILDING_INCOME = 4, "Building income"
         KIND_FYRD_GROWTH = 5, "Fyrd growth"
@@ -35,7 +35,7 @@ class PlayerMonthLog(models.Model):
     # producer names one thing and the two can never disagree about the same line.
     KIND_CATEGORIES: ClassVar[dict[int, int]] = {
         KindChoices.KIND_UNPAID_SALARIES: CategoryChoices.CATEGORY_ATTENTION,
-        KindChoices.KIND_WARRIOR_DESERTED: CategoryChoices.CATEGORY_ATTENTION,
+        KindChoices.KIND_WARRIOR_WALKED_OUT: CategoryChoices.CATEGORY_ATTENTION,
         KindChoices.KIND_SALARIES_PAID: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_BUILDING_INCOME: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_FYRD_GROWTH: CategoryChoices.CATEGORY_CONSEQUENCE,
@@ -46,8 +46,8 @@ class PlayerMonthLog(models.Model):
         KindChoices.KIND_PUB_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_SHOP_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_INCIDENT: CategoryChoices.CATEGORY_CHRONICLE,
-        # A consequence and not something demanding attention, unlike desertion: the player decided
-        # this one, so the line records what he did rather than warning him it happened to him
+        # A consequence and not something demanding attention, unlike a man walking out: the player
+        # decided this one, so the line records what he did rather than warning him it happened to him
         KindChoices.KIND_WARRIOR_DISMISSED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 

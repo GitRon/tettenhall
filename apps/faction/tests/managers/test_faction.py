@@ -110,7 +110,7 @@ def test_occupiable_by_ignores_healthy_warriors_of_another_faction(player_factio
     A healthy man somewhere else must not keep an undefended town off the list.
 
     The trap this pins is SQL rather than game logic: the exclusion runs against a subquery of
-    faction ids, and a warrior with no faction at all - a captive, a pub mercenary, a deserter -
+    faction ids, and a warrior with no faction at all - a captive, a pub mercenary, a man who left -
     contributes a NULL to it, which makes "id NOT IN (..., NULL)" NULL for every row and empties the
     result entirely. Both are present here, so a missing guard returns nothing rather than too much.
     """
