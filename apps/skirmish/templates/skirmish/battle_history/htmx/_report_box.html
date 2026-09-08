@@ -10,6 +10,53 @@
         {% endif %}
 
         {% if report.has_anything_to_report %}
+            {# The men come first. A warrior is a recruitment price, a wage and however many fights' #}
+            {# worth of experience, and he is the only outcome of a fight the player cannot undo. #}
+            {% if report.own_casualties or report.own_routed %}
+                <h4 class="uk-margin-small-bottom">What it cost your men</h4>
+                <ul class="uk-list uk-list-divider">
+                    {% for casualty in report.own_casualties %}
+                        <li>
+                            <i class="fa-solid fa-skull-crossbones uk-text-danger"></i>
+                            {{ casualty.warrior }}
+                            <span class="uk-text-meta">· {{ casualty.get_fate_display|lower }}</span>
+                        </li>
+                    {% endfor %}
+                    {% if report.own_routed %}
+                        {# Muted and apart from the fallen: he kept his kit and he rallies next month, #}
+                        {# so this explains the gap in the war band rather than reporting a loss. #}
+                        <li class="uk-text-meta">
+                            {{ report.own_routed|length }}
+                            of your men lost their nerve and left the field
+                        </li>
+                    {% endif %}
+                </ul>
+            {% endif %}
+
+            {% if report.prisoners_taken or report.enemy_killed_count or report.enemy_downed_count %}
+                <h4 class="uk-margin-small-bottom">What you did to theirs</h4>
+                <ul class="uk-list uk-list-divider">
+                    {% for casualty in report.prisoners_taken %}
+                        <li>
+                            <i class="fa-solid fa-lock uk-text-muted"></i>
+                            {{ casualty.warrior }} <span class="uk-text-meta">· taken prisoner</span>
+                        </li>
+                    {% endfor %}
+                    {% if report.enemy_killed_count %}
+                        <li class="uk-text-meta">
+                            {{ report.enemy_killed_count }}
+                            of theirs killed
+                        </li>
+                    {% endif %}
+                    {% if report.enemy_downed_count %}
+                        <li class="uk-text-meta">
+                            {{ report.enemy_downed_count }}
+                            of theirs left on the field
+                        </li>
+                    {% endif %}
+                </ul>
+            {% endif %}
+
             {% if report.silver_won %}
                 <ul class="uk-list uk-list-divider">
                     {% if report.quest_reward %}
