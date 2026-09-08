@@ -9,7 +9,12 @@ from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warrior.services.nickname import HEALTH_NICKNAMES, MORALE_NICKNAMES, STRENGTH_NICKNAMES
+from apps.warrior.services.nickname import (
+    HEALTH_NICKNAMES,
+    MORALE_NICKNAMES,
+    STATS_FLOOR_NICKNAMES,
+    STRENGTH_NICKNAMES,
+)
 
 
 def test_str_leaves_the_epithet_off():
@@ -45,6 +50,17 @@ def test_nickname_reads_morale_off_its_own_baseline_and_spread():
     warrior = WarriorFactory.build(max_morale=30, morale_baseline=20, morale_spread=5)
 
     assert warrior.nickname == MORALE_NICKNAMES[0]
+
+
+def test_nickname_hands_the_stats_floor_to_both_arm_draws():
+    """
+    The floor is a column of its own and only strength and dexterity pass it - health and morale take
+    the default of one. Three is the floor here, so a man on it in both arms earns the epithet; were
+    the column not reaching the draws, three would sit above a floor of one and he would earn nothing.
+    """
+    warrior = WarriorFactory.build(strength=3, dexterity=3, stats_minimum=3)
+
+    assert warrior.nickname == STATS_FLOOR_NICKNAMES[0]
 
 
 def test_display_name_carries_the_epithet():

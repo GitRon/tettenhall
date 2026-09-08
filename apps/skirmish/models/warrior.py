@@ -157,14 +157,25 @@ class Warrior(models.Model):
 
     @property
     def nickname(self) -> str | None:
-        # Strength and dexterity share a baseline and a spread, both being drawn from the one
-        # "STATS_MU"/"STATS_SIGMA" pair. Health and morale each have their own.
+        # Strength and dexterity share a baseline, a spread and a floor, all three being drawn from
+        # the one "STATS_MU"/"STATS_SIGMA"/"STATS_MIN" trio. Health and morale each have their own
+        # pair, and take the default floor of one: their generator re-rolls a zero rather than
+        # flooring them, so one is as low as they come.
         return get_nickname(
-            strength=AttributeDraw(value=self.strength, baseline=self.strength_baseline, spread=self.stats_spread),
-            dexterity=AttributeDraw(value=self.dexterity, baseline=self.strength_baseline, spread=self.stats_spread),
+            strength=AttributeDraw(
+                value=self.strength,
+                baseline=self.strength_baseline,
+                spread=self.stats_spread,
+                minimum=self.stats_minimum,
+            ),
+            dexterity=AttributeDraw(
+                value=self.dexterity,
+                baseline=self.strength_baseline,
+                spread=self.stats_spread,
+                minimum=self.stats_minimum,
+            ),
             health=AttributeDraw(value=self.max_health, baseline=self.health_baseline, spread=self.health_spread),
             morale=AttributeDraw(value=self.max_morale, baseline=self.morale_baseline, spread=self.morale_spread),
-            stats_minimum=self.stats_minimum,
             variant=self.nickname_variant,
         )
 
