@@ -9,7 +9,7 @@ from apps.item.tests.factories.item_type import ItemTypeFactory
 from apps.skirmish.domain.action_roll import ActionRoll
 from apps.skirmish.models.warrior import Warrior
 from apps.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warrior.services.nickname import MORALE_NICKNAMES, STRENGTH_NICKNAMES
+from apps.warrior.services.nickname import HEALTH_NICKNAMES, MORALE_NICKNAMES, STRENGTH_NICKNAMES
 
 
 def test_str_leaves_the_epithet_off():
@@ -29,12 +29,19 @@ def test_nickname_reads_the_attributes_against_the_warriors_own_distribution():
     assert warrior.nickname == STRENGTH_NICKNAMES[0]
 
 
+def test_nickname_reads_health_off_its_own_baseline_and_spread():
+    """
+    Six baseline and spread columns feed one rule, and a pairing that reaches for the wrong two is
+    invisible from the attributes alone - so each of the three distributions gets a test that only
+    passes while its own pair is the one being read. Forty against a mean of twenty and a spread of
+    ten is two spreads out; read against any other pair on the row it is four, or nothing.
+    """
+    warrior = WarriorFactory.build(max_health=40, health_baseline=20, health_spread=10)
+
+    assert warrior.nickname == HEALTH_NICKNAMES[0]
+
+
 def test_nickname_reads_morale_off_its_own_baseline_and_spread():
-    """
-    Health and morale carry a mean and a spread apiece, so a warrior can be named for his nerve as
-    readily as for his arm. Two columns of four, and the wrong pairing would be invisible from the
-    stats alone.
-    """
     warrior = WarriorFactory.build(max_morale=30, morale_baseline=20, morale_spread=5)
 
     assert warrior.nickname == MORALE_NICKNAMES[0]
