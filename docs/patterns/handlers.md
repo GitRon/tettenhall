@@ -27,8 +27,9 @@ def handle_pay_building_costs(*, context: TownBuildingUpgraded) -> Command | Non
 - Return a **list** to emit several messages at once, see `handle_assign_fighter_pairs` and
   `handle_restock_pub_mercenaries`. `handle_message()` normalises a bare message, a list and `None`
   alike.
-- A single event can have multiple handlers **in different apps** — that is the point of the bus.
-  `TownBuildingUpgraded` is emitted in `town` and also handled in `finance`.
+- A single event can have multiple handlers **in different topic packages** — that is the point of the
+  bus, and the reason events are not scope-checked. `TownBuildingUpgraded` is emitted in `town` and also
+  handled in `finance`. A *command* handler is scope-checked, see [strict mode](strict-mode.md).
 - A handler can be registered for **several messages** by stacking the decorators. It may then only read
   attributes that *all* of those messages carry — nothing but the
   [registry tests](registry-tests.md) connects the two.

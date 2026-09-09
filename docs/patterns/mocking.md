@@ -19,7 +19,7 @@ Mocking at the **boundary** is fine and expected: time, randomness, filesystem, 
 
 Randomness in particular has to be patched rather than tolerated, because a branch behind a dice roll is
 otherwise only *sometimes* covered and the [coverage](coverage.md) gate flips at random. Both
-`apps/item/services/generators/` and `apps/warrior/services/generators/` are random by nature — patch the
+`apps/warband/item/services/generators/` and `apps/warband/warrior/services/generators/` are random by nature — patch the
 RNG rather than asserting on chance.
 
 ## Spelling

@@ -10,13 +10,14 @@ inferring the conventions from nearby code.
 ### Getting started
 
 - [Local setup](docs/contributing/setup.md) — stack, dependencies, running the app and the suite
-- [Linting](docs/contributing/linting.md) — ruff, boa-restrictor, pre-commit
+- [Linting](docs/contributing/linting.md) — ruff, boa-restrictor, import-linter, pre-commit
 - [Settings](docs/contributing/settings.md) — application vs test settings, queuebie configuration
 - [Commit messages](docs/contributing/commit-messages.md)
 
 ### Architecture
 
-- [Where code goes](docs/patterns/app-layout.md) — app layout and which layer holds business logic
+- [Where code goes](docs/patterns/app-layout.md) — the one domain app, its topic packages, what has to
+  sit at the app root, and which layer holds business logic
 - [The message bus](docs/patterns/message-bus.md) — commands vs events, the golden rule, dispatching
 - [Writing a handler](docs/patterns/handlers.md) — signature, registration, return values
 - [Adding a new flow](docs/patterns/adding-a-flow.md) — the end-to-end checklist

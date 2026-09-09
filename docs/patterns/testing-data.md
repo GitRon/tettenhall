@@ -29,8 +29,8 @@ WarriorFactory(faction__town__sanctuary=3)
 ## Reference data is the one exception
 
 `Culture`, `ItemType` and `QuestName` are lookup tables, not test data. They ship as fixtures
-(`apps/faction/fixtures/culture.json`, `apps/item/fixtures/itemtype.json`,
-`apps/quest/fixtures/questname.json`) and every environment has them. The generators query them —
+(`apps/warband/faction/fixtures/culture.json`, `apps/warband/item/fixtures/itemtype.json`,
+`apps/warband/quest/fixtures/questname.json`) and every environment has them. The generators query them —
 `FyrdItemGenerator` even filters weapons by name — so without them item, warrior and quest generation
 raises `RuntimeError`.
 

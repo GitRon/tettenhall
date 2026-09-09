@@ -5,7 +5,7 @@ A town is created there rather than in reaction to `NewFactionCreated`, because 
 event already read `faction.town` and an event handler emitting a `CreateTown` command would land in the
 same batch as those, with no guaranteed order.
 
-The town stores only a **level** per building. `apps/town/buildings/` turns a level back into the variant
+The town stores only a **level** per building. `apps/warband/town/buildings/` turns a level back into the variant
 holding that level's numbers:
 
 - A **family** class names the building (`Hall`, `Weaponsmith`, `Marketplace`, `Sanctuary`) and lists its
@@ -13,7 +13,7 @@ holding that level's numbers:
   variants are defined below the family class.
 - `Building.get_building_by_type()` indexes that tuple, and `get_max_level()` is its last index — no
   building hardcodes how many levels it has.
-- `BUILDINGS` in `apps/town/buildings/__init__.py` maps the town field name to the family class. It is
+- `BUILDINGS` in `apps/warband/town/buildings/__init__.py` maps the town field name to the family class. It is
   both the dispatch table and the whitelist for the upgrade URL; a building missing from it cannot be
   upgraded.
 - `get_effects()` describes a level for the player, as `BuildingEffect(label, value)` pairs. It is
@@ -23,13 +23,13 @@ holding that level's numbers:
 
 ## Rules
 
-- **Every number a building levers lives in `apps/town/buildings/`** — the building costs and each
+- **Every number a building levers lives in `apps/warband/town/buildings/`** — the building costs and each
   building's effect. Don't hardcode a number in a handler that a building should own; the handler reads the
   constant. The upgrade page names the effects too, and reads them from the same place through
   `get_effects()`.
 - **A balance number no building levers lives with the system that owns the mechanic**, as a class constant
   on that service or generator — `SkirmishDamageService.MINIMUM_DAMAGE_SHARE`, an item generator's
-  `MODIFIER_ROLLS_MU`, a warrior generator's `STATS_MU`. `apps/town/buildings/` is the home for levers, not
+  `MODIFIER_ROLLS_MU`, a warrior generator's `STATS_MU`. `apps/warband/town/buildings/` is the home for levers, not
   a registry of every number in the game.
 - **A number that differs per warrior or per item is a column, not a constant.** `Warrior.strength_baseline`
   is the archetype mean a man's strength is measured against, written by the generator that drew him: one
@@ -45,7 +45,7 @@ holding that level's numbers:
   1, so **0 means "nothing built yet"** — a town created with the current month in that field cannot
   build for the rest of it, which is why a new town leaves the field at its default.
 - **The guard is enforced twice on purpose.** `get_building_upgrade_refusal`
-  (`apps/town/services/building_upgrade.py`) checks it to give the player a message, and
+  (`apps/warband/town/services/building_upgrade.py`) checks it to give the player a message, and
   `handle_upgrade_town_building` re-checks it as a single conditional `UPDATE ... WHERE`. Two
   overlapping requests both pass the first check, and the command handler returning `None` for the
   loser is what keeps the player from being charged twice. Don't turn that back into a
@@ -57,7 +57,7 @@ holding that level's numbers:
   reaching the view at all means the page was stale.
 - **A rival's town is created at chosen levels, and stays there.** The player starts at every default;
   a rival is handed the sanctuary level named by `NPC_STARTING_SANCTUARY_LEVEL`
-  (`apps/town/buildings/sanctuary.py`), because the healing ceiling is the one lever that decides
+  (`apps/warband/town/buildings/sanctuary.py`), because the healing ceiling is the one lever that decides
   something for a faction the player never reaches into. Its other three buildings stay at 0 — their
   levers price or stock things only the player can use. The level is derived from `get_levels()` rather
   than written as a number, and `handle_heal_injured_warrior` keeps a single lookup for every faction, so
@@ -72,7 +72,7 @@ holding that level's numbers:
 - **NPC factions never build.** Nothing upgrades a rival's town, so every building effect is a
   player-only power curve. Construction proper is #68. The hall income is player-only to match: it hangs
   off `PlayerMonthPrepared`, the event for the things a rival has no equivalent of, and a rival earns off
-  its war band instead (`apps/faction/domain/rival_income.py`). Hall revenue is flat per level while a
+  its war band instead (`apps/warband/faction/domain/rival_income.py`). Hall revenue is flat per level while a
   wage bill scales with the roster, so paying rivals through the town would move the constant and never
   the slope.
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
@@ -81,8 +81,8 @@ holding that level's numbers:
   resale ratio is worth little in silver. Its stock size is the real draw, which is why it is priced below
   the other buildings.
 - **The wage bill outweighs building costs early.** A warrior's salary is `round(recruitment_price * 0.5)`
-  (`apps/warrior/services/generators/warrior/base.py:126`), around 150 silver a month, and grows with
+  (`apps/warband/warrior/services/generators/warrior/base.py:126`), around 150 silver a month, and grows with
   `LEVEL_UP_GROWTH` alongside his attributes. A faction opens with 1000 silver
-  (`apps/finance/handlers/events/faction.py:76`) and the cheapest upgrade in the game is the marketplace's
+  (`apps/warband/finance/handlers/events/faction.py:76`) and the cheapest upgrade in the game is the marketplace's
   first paid level at 600, so four men on the roster bill as much every month as that building costs once.
   Buildings are what the player saves for; wages are what stops him.

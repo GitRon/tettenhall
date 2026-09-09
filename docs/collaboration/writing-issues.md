@@ -55,7 +55,7 @@ next reader has no way to check it.
 **so that** …
 
 <!-- What the code does today, with references. This is the part that makes the issue actionable. -->
-`handle_x` sets `CONDITION_FLEEING` (`apps/skirmish/handlers/commands/warrior.py:123`). Nothing ever
+`handle_x` sets `CONDITION_FLEEING` (`apps/warband/skirmish/handlers/commands/warrior.py:123`). Nothing ever
 sets it back, because …
 
 ### Why it matters

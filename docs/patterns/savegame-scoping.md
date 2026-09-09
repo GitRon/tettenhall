@@ -14,7 +14,7 @@ or changes another player's data.
 
 ## The two mixins
 
-Both live in `apps/savegame/mixins.py` and narrow `super().get_queryset()`:
+Both live in `apps/warband/savegame/mixins.py` and narrow `super().get_queryset()`:
 
 - **`SavegameScopedQuerysetMixin`** — restricts to the current savegame. The model's queryset must
   provide `for_savegame()`.
@@ -24,7 +24,7 @@ Both live in `apps/savegame/mixins.py` and narrow `super().get_queryset()`:
   model's queryset must provide `for_player_faction()`.
 
 Both return `.none()` when there is no active savegame, so a view resolving a single object still has to
-handle "nothing found" — see `PlayerTownMixin` in `apps/town/views/town_upgrade.py`, which turns it into a
+handle "nothing found" — see `PlayerTownMixin` in `apps/warband/town/views/town_upgrade.py`, which turns it into a
 404 rather than dereferencing `None`.
 
 ## Traps
@@ -37,7 +37,7 @@ handle "nothing found" — see `PlayerTownMixin` in `apps/town/views/town_upgrad
 - **Never build a URL parameter into `getattr`/`setattr`** on a model without checking it against a
   whitelist first, or the URL reaches any attribute of the object.
 
-`apps/common/tests/test_view_scoping.py` enforces the first three across every view at once, and carries
+`apps/warband/tests/architecture/test_view_scoping.py` enforces the first three across every view at once, and carries
 `UNSCOPED_VIEWS` for the deliberate exceptions — each entry needs a reason.
 
 ## See also

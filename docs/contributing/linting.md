@@ -1,16 +1,36 @@
 # Linting and formatting
 
-Two linters, both configured in `pyproject.toml`:
+Three linters, all configured in `pyproject.toml`:
 
 - **`ruff`** — formatting and lint rules, including import sorting.
 - **`boa-restrictor`** — Ambient's own linter. Its `PBR`/`DBR` codes are registered with ruff via
   `lint.external`, so ruff does not flag their `noqa` comments as unknown. It also runs this project's
   own rules, see below.
+- **`import-linter`** — the direction of dependency between the apps, see below.
 
 Respect the **line length of 120**.
 
-Both run as pre-commit hooks together with `django-upgrade` and `Djade`. A commit that reformats files
-fails the first time and passes on the retry — stage the reformatted files and commit again.
+ruff and boa-restrictor run as pre-commit hooks together with `django-upgrade` and `Djade`. A commit
+that reformats files fails the first time and passes on the retry — stage the reformatted files and
+commit again.
+
+## Import boundaries
+
+`lint-imports` checks the contracts under `[tool.importlinter]` and runs in CI next to the test job,
+not as a pre-commit hook — it builds the whole import graph, which is too slow for a commit.
+
+Two contracts, both `forbidden`:
+
+- **`apps.common` must not import `apps.warband`.** A satellite is domain-independent by definition, and
+  the direction of dependency is the entire reason for splitting one out. Nothing enforced this before,
+  which is how a game-balance decision and the navbar's resource bar came to live in `common`.
+- **Neither app may import `apps.config`.** Settings are read through `django.conf.settings`.
+
+There are deliberately **no contracts between the topic packages** inside `apps.warband`. They are meant
+to be cheap to move, and the boundary that does need enforcing — a command handler outside the scope of
+its command — is queuebie's [strict mode](../patterns/strict-mode.md).
+
+Run it locally with `uv run lint-imports`. A broken contract names the importing module and the line.
 
 ## Project rules
 
