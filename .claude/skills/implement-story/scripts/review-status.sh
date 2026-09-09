@@ -10,8 +10,11 @@ RUN_DIR="${1:?usage: review-status.sh <run-dir> [deadline_seconds]}"
 DEADLINE="${2:-720}"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
+# A drive letter is an absolute path too. Without that arm "C:/workspace/..." falls through as relative
+# and gets the repo root prefixed onto it, so a running round reports as one that never started.
 case "$RUN_DIR" in
   /*) ;;
+  ?:/*) ;;
   *) RUN_DIR="$REPO_ROOT/$RUN_DIR" ;;
 esac
 
