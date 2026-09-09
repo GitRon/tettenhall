@@ -74,6 +74,22 @@ def handler_files() -> list[Path]:
     return [file for file in files if file.stem != "__init__"]
 
 
+def production_module_files() -> list[Path]:
+    """
+    Every module under "apps/" that ships, tests and migrations excluded.
+
+    Walked from the directory rather than from the app configs, because not everything under "apps/"
+    is an app: a satellite that registers with something other than Django owns no app config and
+    would be missed by a walk that starts from one.
+    """
+    excluded = get_queuebie_excluded_directories()
+    apps_path = (Path(settings.BASE_DIR) / "apps").resolve()
+
+    return sorted(
+        path for path in apps_path.rglob("*.py") if not _is_excluded(path=path, app_path=apps_path, excluded=excluded)
+    )
+
+
 def view_module_files() -> list[Path]:
     """
     Every module a view class can be defined in, at any depth below an app root.

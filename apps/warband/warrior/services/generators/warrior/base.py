@@ -1,13 +1,12 @@
 import random
 
-from faker import Faker
-
 from apps.warband.faction.models.culture import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.services.nickname import NICKNAME_VARIANT_BOUND
+from apps.warband.warrior.services.unique_name import draw_warrior_name
 
 
 class BaseWarriorGenerator:
@@ -37,8 +36,6 @@ class BaseWarriorGenerator:
         self.savegame_id = savegame_id
 
     def process(self) -> Warrior:
-        faker = Faker([self.culture.locale])
-
         # Every roll is rounded to the integer its column holds, and rounded before the guard sees
         # it. The guards compare against zero, and a raw "random.gauss" float of 0.42 satisfies them
         # and is then truncated to zero on the way into the column - a warrior with no health at
@@ -108,7 +105,7 @@ class BaseWarriorGenerator:
             armor = None
 
         return Warrior.objects.create(
-            name=faker.first_name_male(),
+            name=draw_warrior_name(culture=self.culture, savegame_id=self.savegame_id),
             culture=self.culture,
             faction=self.faction,
             savegame_id=self.savegame_id,

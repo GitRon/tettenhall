@@ -587,7 +587,7 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
             "apps.warband.faction.handlers.commands.faction.random.choice", side_effect=[norse_rival, frisian_rival]
         ),
         mock.patch(
-            "apps.warband.faction.handlers.commands.faction.Faker",
+            "apps.warband.faction.services.faker.Faker",
             side_effect=lambda locales: mock.Mock(city=mock.Mock(return_value=f"Town of {locales[0]}")),
         ),
     ):

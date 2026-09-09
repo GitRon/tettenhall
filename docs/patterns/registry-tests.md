@@ -5,8 +5,8 @@ Four tests in `apps/warband/tests/architecture/test_registry.py` cover every edg
 handlers form a chain is decided at runtime by the registry, so neither the IDE nor a type checker notices
 when a message is emitted that nobody consumes.
 
-They sit beside the other three whole-tree tests in `apps/warband/tests/architecture/`, all four of
-which find their input through `discovery.py` rather than a glob of their own. That module reads
+They sit beside the other whole-tree tests in `apps/warband/tests/architecture/`. Every one of those
+that walks the Python tree finds its input through `discovery.py` rather than a glob of its own. That module reads
 queuebie's own exclusion setting to decide where handlers can live, so a test cannot quietly disagree
 with what the bus actually imports — and the three that used to carry a private copy disagreed on glob
 depth and on whether `__init__.py` counts, which is how a view in a `views/` package came to be checked

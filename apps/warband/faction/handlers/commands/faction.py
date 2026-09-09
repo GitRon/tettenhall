@@ -1,7 +1,6 @@
 import random
 
 from django.db.models import F, Q
-from faker import Faker
 from queuebie import message_registry
 from queuebie.messages import Command, Event
 
@@ -36,6 +35,7 @@ from apps.warband.faction.messages.events.faction import (
 from apps.warband.faction.messages.events.item import TownShopRestocked
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
+from apps.warband.faction.services.faker import faker_for_locale
 from apps.warband.finance.models import Transaction
 from apps.warband.item.models import ItemType
 from apps.warband.item.services.generators.item.mercenary import MercenaryItemGenerator
@@ -73,7 +73,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
         rival_culture = random.choice(cultures)
         # A rival is named in the culture on its own row, because that is the culture its warriors are
         # generated from - naming it from anything else puts a Norse town in front of a Frisian war band.
-        faker = Faker([rival_culture.locale])
+        faker = faker_for_locale(locale=rival_culture.locale)
         rival_factions.append(
             CreateNewFaction(
                 name=faker.city(),
