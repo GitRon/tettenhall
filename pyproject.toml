@@ -249,13 +249,21 @@ root_packages = ["apps"]
 [[tool.importlinter.contracts]]
 name = "Satellites do not import the domain"
 type = "forbidden"
-source_modules = ["apps.common"]
+source_modules = ["apps.common", "apps.faker_old_english"]
 forbidden_modules = ["apps.warband"]
+
+# The name provider is a name provider and nothing else. It reaches for no other package of ours -
+# "common" included - which is what keeps it lifting out into a library on the day the API settles.
+[[tool.importlinter.contracts]]
+name = "The name provider stands on its own"
+type = "forbidden"
+source_modules = ["apps.faker_old_english"]
+forbidden_modules = ["apps.common"]
 
 # "apps.config" is the settings package, not an app. Settings are read through "django.conf.settings",
 # which is lazy and overridable in tests; importing the module directly bypasses both.
 [[tool.importlinter.contracts]]
 name = "No app imports the settings package"
 type = "forbidden"
-source_modules = ["apps.warband", "apps.common"]
+source_modules = ["apps.warband", "apps.common", "apps.faker_old_english"]
 forbidden_modules = ["apps.config"]
