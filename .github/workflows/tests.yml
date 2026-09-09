@@ -35,6 +35,11 @@ jobs:
       - name: Run tests
         run: uv run pytest --cov
 
+      # The contracts live in pyproject.toml. This is the only thing standing between "apps/common is
+      # a satellite" and a comment saying so, which is why it is a gate rather than a review habit.
+      - name: Check the import boundaries
+        run: uv run lint-imports
+
   pre-commit:
     runs-on: ubuntu-latest
 

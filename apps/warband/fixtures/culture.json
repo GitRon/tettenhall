@@ -1,0 +1,42 @@
+[
+  {
+    "model": "warband.culture",
+    "pk": 1,
+    "fields": {
+      "name": "Norse",
+      "locale": "no_NO"
+    }
+  },
+  {
+    "model": "warband.culture",
+    "pk": 2,
+    "fields": {
+      "name": "Danish",
+      "locale": "da_DK"
+    }
+  },
+  {
+    "model": "warband.culture",
+    "pk": 3,
+    "fields": {
+      "name": "Saxon",
+      "locale": "en_GB"
+    }
+  },
+  {
+    "model": "warband.culture",
+    "pk": 4,
+    "fields": {
+      "name": "Frisian",
+      "locale": "nl_NL"
+    }
+  },
+  {
+    "model": "warband.culture",
+    "pk": 5,
+    "fields": {
+      "name": "Irish",
+      "locale": "ga_IE"
+    }
+  }
+]

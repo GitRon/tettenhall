@@ -2,12 +2,12 @@
 
 Between the player's own decisions, the world does something on its own. One incident is drawn per
 month — most months draw nothing — and what it does reaches the game through the levers that already
-exist. `apps/incident/` owns the pool, the weights and the drawing; the effects belong to the apps
+exist. `apps/warband/incident/` owns the pool, the weights and the drawing; the effects belong to the apps
 that own the rows.
 
 ## Adding one
 
-An entry is a class in `apps/incident/incidents/`, plus a line in the `INCIDENTS` tuple in that
+An entry is a class in `apps/warband/incident/incidents/`, plus a line in the `INCIDENTS` tuple in that
 package's `__init__.py`. Nothing else — a new entry does not touch the model, the log, or a handler:
 
 ```python
@@ -25,7 +25,7 @@ outcome depends on the faction — which man the title names, which item goes mi
 reserve is actually left to lose — and override `is_possible()` where the entry needs something to
 be there at all.
 
-**Balance numbers live on the class**, the way a building's do in `apps/town/buildings/`. The handler
+**Balance numbers live on the class**, the way a building's do in `apps/warband/town/buildings/`. The handler
 reads them and hardcodes nothing.
 
 **A magnitude is a constant, never a roll.** The variety is the pool's job. A rolled magnitude puts a
@@ -36,23 +36,24 @@ to a positive integer column, where anything below one truncates to nothing.
 
 | Lever | Field on the outcome | Command, and the handler that emits it |
 |---|---|---|
-| Silver | `silver_change` | `CreateTransaction` — `apps/finance/handlers/events/incident.py` |
-| Fyrd reserve | `fyrd_change` | `ChangeFyrdReserve` — `apps/faction/handlers/events/incident.py` |
-| Morale ceiling | `max_morale_share` + `warrior` | `ChangeWarriorMaxMorale` — `apps/warrior/handlers/events/incident.py` |
-| A piece of gear | `lost_item` | `LoseItem` — `apps/item/handlers/events/incident.py` |
+| Silver | `silver_change` | `CreateTransaction` — `apps/warband/finance/handlers/events/incident.py` |
+| Fyrd reserve | `fyrd_change` | `ChangeFyrdReserve` — `apps/warband/faction/handlers/events/incident.py` |
+| Morale ceiling | `max_morale_share` + `warrior` | `ChangeWarriorMaxMorale` — `apps/warband/warrior/handlers/events/incident.py` |
+| A piece of gear | `lost_item` | `LoseItem` — `apps/warband/item/handlers/events/incident.py` |
 
 A lever left at its default is a lever the entry does not pull, and each of those four handlers
 refuses an outcome that does not name its own.
 
 The log line is not one of them: `title` and `body` have no default to leave alone, so
-`handle_write_incident_to_month_log` in `apps/month/handlers/events/incident.py` is the one reaction
+`handle_write_incident_to_month_log` in `apps/warband/month/handlers/events/incident.py` is the one reaction
 every incident has, unguarded.
 
-**The reactions live in the apps that own them**, not in
-`apps/incident/` — per [where code goes](app-layout.md), a handler belongs to the app owning the
-command it emits, in a module named after the app the event came from. So `apps/incident/` chooses,
-and nothing there writes another app's rows. A new lever costs a field on the outcome and a handler
-in the owning app; a new entry using the levers that exist costs a class.
+**The reactions live in the topic packages that own them**, not in
+`apps/warband/incident/` — per [where code goes](app-layout.md), a handler belongs to the topic owning
+the command it emits, in a module named after the topic the event came from. So
+`apps/warband/incident/` chooses, and nothing there writes another topic's rows. A new lever costs a
+field on the outcome and a handler in the owning topic; a new entry using the levers that exist costs a
+class.
 
 An entry that needs a lever this list has not got is not a baseline incident. It is a mechanic
 wearing an incident's clothes, and it wants its own issue.
@@ -96,7 +97,7 @@ why the entries moving it are weighted against each other.
 
 ## Weights
 
-`QUIET_MONTH_WEIGHT` sits in `apps/incident/incidents/__init__.py` beside the pool and stands in the
+`QUIET_MONTH_WEIGHT` sits in `apps/warband/incident/incidents/__init__.py` beside the pool and stands in the
 draw as the month where nothing happens. Two things follow: the odds of a quiet month are one number
 somebody chose rather than a side effect of how many entries exist, and a month with nothing possible
 is quiet for the same reason as any other month is.

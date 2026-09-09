@@ -22,20 +22,6 @@ urlpatterns = [
     # Default
     path("admin/", admin.site.urls),
     # Custom
-    path("", RedirectView.as_view(pattern_name="account:login-view", permanent=False)),
-    path("account/", include(("apps.account.urls", "apps.account"), namespace="account")),
-    path("common/", include(("apps.common.urls", "apps.common"), namespace="common")),
-    path("faction/", include(("apps.faction.urls", "apps.faction"), namespace="faction")),
-    path("finance/", include(("apps.finance.urls", "apps.finance"), namespace="finance")),
-    path("item/", include(("apps.item.urls", "apps.item"), namespace="item")),
-    path("quest/", include(("apps.quest.urls", "apps.quest"), namespace="quest")),
-    path("savegame/", include(("apps.savegame.urls", "apps.savegame"), namespace="savegame")),
-    path(
-        "skirmish/",
-        include(("apps.skirmish.urls", "apps.skirmish"), namespace="skirmish"),
-    ),
-    path("training/", include(("apps.training.urls", "apps.training"), namespace="training")),
-    path("town/", include(("apps.town.urls", "apps.town"), namespace="town")),
-    path("warrior/", include(("apps.warrior.urls", "apps.month"), namespace="warrior")),
-    path("month/", include(("apps.month.urls", "apps.month"), namespace="month")),
+    path("", RedirectView.as_view(pattern_name="warband:login-view", permanent=False)),
+    path("", include("apps.warband.urls")),
 ]

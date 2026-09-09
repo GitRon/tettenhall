@@ -11,12 +11,14 @@ so without that reset registrations leak between tests.
 
 ## Layout
 
-- Each app's `tests/` package mirrors the structure of its production code:
-  `apps/item/services/generators/item.py` → `apps/item/tests/services/generators/test_item.py`.
+- Each topic package's `tests/` mirrors the structure of its production code:
+  `apps/warband/item/services/generators/item.py` → `apps/warband/item/tests/services/generators/test_item.py`.
+  The tests that check the whole tree at once rather than one testee live in
+  `apps/warband/tests/architecture/`, see [registry tests](registry-tests.md).
 - One test module per testee. If a module would have to hold tests for two testees, split it.
-- **Always add `__init__.py`** to every `tests/` package and sub-package. Without it, two apps that both
-  contain e.g. `tests/test_item.py` collide during collection and pytest fails on the duplicate module
-  name.
+- **Always add `__init__.py`** to every `tests/` package and sub-package. Without it, two topics that
+  both contain e.g. `tests/test_item.py` collide during collection and pytest fails on the duplicate
+  module name.
 - Order tests to reflect the order of functions and methods in the code under test.
 - Group with plain functions. Use a `Test…` class only when several tests genuinely share fixtures, never
   just to namespace them.

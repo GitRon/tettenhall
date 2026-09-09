@@ -1,0 +1,11 @@
+<div class="uk-tile-default uk-padding-large">
+    {% include 'common/components/box_header.html' with title=faction.name object_list=warrior_list %}
+    <div class="uk-child-width-1-2@s uk-grid-small uk-grid-match"
+         hx-get="{% url 'warband:faction-warrior-list-update-htmx' skirmish.id faction.id %}"
+         hx-trigger="updateFactionWarriorList from:body"
+         hx-target="this"
+         hx-swap="innerHTML"
+         uk-grid>
+        {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=warrior_list is_player=is_player %}
+    </div>
+</div>

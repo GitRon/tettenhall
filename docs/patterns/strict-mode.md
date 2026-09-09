@@ -5,8 +5,23 @@
 
 ## At registration time
 
-It rejects a command handler that lives in another app than its command. This applies whenever the
-handler module is imported, so it holds in every test too.
+It rejects a command handler whose **scope** differs from its command's. A scope is the package owning
+the `handlers/` or `messages/` directory a module sits in — here, the topic package. So
+`apps/warband/faction/handlers/commands/item.py` may handle commands from
+`apps/warband/faction/messages/`, and is refused a command out of `apps/warband/skirmish/messages/`:
+
+```
+Command "AddItemToTownShop" (scope "apps.warband.faction") cannot be handled by
+"handle_add_item_to_town_shop" (scope "apps.warband.skirmish").
+```
+
+This applies whenever the handler module is imported, so it holds in every test too.
+
+The check is on `register_command` only. Events are deliberately not scope-checked — crossing topics
+is what events are for, see [writing a handler](handlers.md).
+
+A command defined outside any `messages/` directory has its full module path as its scope, which only
+a handler in that very module could share. Keep commands in a `messages/` directory.
 
 ## At dispatch time
 

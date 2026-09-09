@@ -19,7 +19,7 @@ Mocking at the **boundary** is fine and expected: time, randomness, filesystem, 
 
 Randomness in particular has to be patched rather than tolerated, because a branch behind a dice roll is
 otherwise only *sometimes* covered and the [coverage](coverage.md) gate flips at random. Both
-`apps/item/services/generators/` and `apps/warrior/services/generators/` are random by nature — patch the
+`apps/warband/item/services/generators/` and `apps/warband/warrior/services/generators/` are random by nature — patch the
 RNG rather than asserting on chance.
 
 ## Spelling
@@ -28,7 +28,7 @@ Import as `from unittest import mock` and always spell it `mock.patch(...)`, nev
 `from unittest.mock import patch`. One consistent spelling across the suite.
 
 Patch the name **where it is used**, not where it is defined:
-`mock.patch("apps.warrior.handlers.commands.warrior.random.randrange", return_value=8)`.
+`mock.patch("apps.warband.warrior.handlers.commands.warrior.random.randrange", return_value=8)`.
 
 Always pass `return_value` when the patched call feeds an expression. A bare `mock.patch` of a function
 whose result is compared or arithmetic'd raises `TypeError` on the `MagicMock`.

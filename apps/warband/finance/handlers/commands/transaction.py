@@ -1,0 +1,22 @@
+from queuebie import message_registry
+from queuebie.messages import Event
+
+from apps.warband.finance.messages.commands.transaction import CreateTransaction
+from apps.warband.finance.messages.events.transaction import TransactionCreated
+from apps.warband.finance.models import Transaction
+
+
+@message_registry.register_command(command=CreateTransaction)
+def handle_create_transaction(*, context: CreateTransaction) -> list[Event] | Event:
+    Transaction.objects.create_record(
+        reason=context.reason,
+        amount=context.amount,
+        faction=context.faction,
+        month=context.month,
+    )
+
+    return TransactionCreated(
+        amount=context.amount,
+        faction=context.faction,
+        month=context.month,
+    )

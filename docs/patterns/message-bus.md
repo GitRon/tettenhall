@@ -31,7 +31,7 @@ class UpgradeTownBuilding(Command):
 
 Messages carry already-resolved data — model **instances**, not IDs. Evaluate querysets to lists *before*
 putting them on a message so downstream handlers don't hit the database unexpectedly; see
-`handle_faction_wins_skirmish` in `apps/skirmish/handlers/commands/skirmish.py`, which wraps its results
+`handle_faction_wins_skirmish` in `apps/warband/skirmish/handlers/commands/skirmish.py`, which wraps its results
 in `list(...)` with the comment *"We need to evaluate the QS to avoid hitting the DB in the events"*.
 
 ## The golden rule
@@ -71,7 +71,7 @@ after that belongs in handlers and services.
 
 Validation guards (can they afford it? already built this month?) belong in a service the view asks once
 before dispatch, not in the view itself: `get_building_upgrade_refusal`
-(`apps/town/services/building_upgrade.py`) answers with the first guard's message or `None`, and
+(`apps/warband/town/services/building_upgrade.py`) answers with the first guard's message or `None`, and
 `UpgradeBuildingView.post` turns a message into a warning and a redirect. The guards and the order they
 are reported in are game rules, so they live where something other than one view can reach them.
 
@@ -86,8 +86,8 @@ worth knowing before you reason about what a handler can see:
 > A command handler's own writes land immediately. Anything reached **through an event it returns** lands
 > only after every message already queued has been handled.
 
-So a handler that writes a row and a handler that *asks another app* to write one are not comparable in
-timing, even when they sit side by side. Compare the two halves of the monthly salary run:
+So a handler that writes a row and a handler that *asks another topic* to write one are not comparable
+in timing, even when they sit side by side. Compare the two halves of the monthly salary run:
 
 ```
 FactionMonthPrepared (evt)
@@ -126,7 +126,7 @@ is readable rather than reconstructed:
 
 ```
 DEBUG   queuebie: Handling command '….month.PrepareMonth' (…) with handler 'handle_prepare_month'.
-DEBUG   queuebie: New messages: ["<class 'apps.month.messages.events.month.PlayerMonthPrepared'> (…)"]
+DEBUG   queuebie: New messages: ["<class 'apps.warband.month.messages.events.month.PlayerMonthPrepared'> (…)"]
 ```
 
 Read it top to bottom and the batching above is visible: every message a handler returns appears in a

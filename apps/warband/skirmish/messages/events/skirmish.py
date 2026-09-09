@@ -1,0 +1,71 @@
+from dataclasses import dataclass
+
+from queuebie.messages import Event
+
+from apps.warband.faction.models import Faction
+from apps.warband.quest.models import QuestContract
+from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
+from apps.warband.skirmish.models.skirmish import Skirmish
+from apps.warband.skirmish.models.warrior import Warrior
+
+
+@dataclass(kw_only=True)
+class FactionWasAttacked(Event):
+    attacking_faction: Faction
+    defending_faction: Faction
+    # Both rosters arrive already resolved: whom the defender fields is a query, and the event
+    # handler reacting to this is not allowed to run one
+    attacking_warriors: list[Warrior]
+    defending_warriors: list[Warrior]
+    month: int
+
+
+@dataclass(kw_only=True)
+class SkirmishCreated(Event):
+    skirmish: Skirmish
+    quest_contract: QuestContract = None
+
+
+@dataclass(kw_only=True)
+class FighterPairsMatched(Event):
+    skirmish: Skirmish
+    # The round these two are about to fight, stamped by the command handler that starts it. Every
+    # message down the chain to the blow itself carries it, because none of them may read it back off
+    # the skirmish - "increment_round" saves, so afterwards it names the round nobody has fought yet
+    round_number: int
+    warrior_1: Warrior
+    warrior_2: Warrior
+    attack_action_1: int
+    attack_action_2: int
+
+
+@dataclass(kw_only=True)
+class AttackerDefenderDecided(Event):
+    skirmish: Skirmish
+    round_number: int
+    attacker: Warrior
+    attacker_action: SkirmishActionTypeHint
+    defender: Warrior
+    defender_action: SkirmishActionTypeHint
+
+
+@dataclass(kw_only=True)
+class RoundFinished(Event):
+    skirmish: Skirmish
+    # The round that just resolved, read off the skirmish before it is incremented. Carried rather
+    # than looked up again, because by the time an event handler runs "current_round" has already
+    # moved on to the round nobody has fought yet
+    round_number: int
+    victor: Faction | None
+    month: int
+
+
+@dataclass(kw_only=True)
+class SkirmishFinished(Event):
+    skirmish: Skirmish
+    incapacitated_warriors: list[Warrior]
+    defeated_unconscious_warriors: list[Warrior]
+    victorious_healthy_warriors: list[Warrior]
+    quest_name: str
+    quest_loot: int
+    month: int

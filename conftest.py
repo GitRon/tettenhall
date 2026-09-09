@@ -6,10 +6,10 @@ from django.test import Client
 from queuebie import message_registry
 from queuebie.settings import get_queuebie_cache_key
 
-from apps.account.tests.factories.user import UserFactory
-from apps.faction.tests.factories.faction import FactionFactory
-from apps.savegame.models.savegame import Savegame
-from apps.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.account.tests.factories.user import UserFactory
+from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 
 
 def _reset_queuebie_registry() -> None:

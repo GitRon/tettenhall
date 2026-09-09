@@ -11,16 +11,26 @@
 ## Queuebie settings
 
 ```python
-QUEUEBIE_APP_BASE_PATH = BASE_DIR
+QUEUEBIE_APP_BASE_PATH = BASE_DIR / "apps"
 QUEUEBIE_STRICT_MODE = True
 QUEUEBIE_LOGGER_NAME = "queuebie"
 ```
 
-`QUEUEBIE_APP_BASE_PATH` is where autodiscovery starts looking for handler modules.
+`QUEUEBIE_APP_BASE_PATH` is where autodiscovery starts looking for handler modules. It points at
+`apps/` rather than `BASE_DIR` on purpose: uv puts the virtualenv inside the project, so `BASE_DIR`
+would make every installed package a local app, and a dependency shipping a `handlers/commands/`
+directory would register handlers on our bus.
 
-`QUEUEBIE_STRICT_MODE` enforces the command→event / event→command contract. If a handler returns the
-wrong message category, strict mode complains — fix the handler, don't disable the mode. What it does
-and does not catch is in [strict mode](../patterns/strict-mode.md).
+`QUEUEBIE_STRICT_MODE` enforces the command→event / event→command contract, and rejects a command
+handler outside the scope of its command. If a handler returns the wrong message category, strict mode
+complains — fix the handler, don't disable the mode. What it does and does not catch is in
+[strict mode](../patterns/strict-mode.md).
+
+`QUEUEBIE_EXCLUDED_DIRECTORIES` is not set, so queuebie's default applies: autodiscovery walks the
+whole subtree of both apps but skips `__pycache__`, `fixtures`, `locale`, `media`, `migrations`,
+`node_modules`, `static`, `templates` and `tests`. That last one is what keeps the test mirror under
+`<topic>/tests/handlers/` out of the registry, so do not name a topic package after any of them — see
+[where code goes](../patterns/app-layout.md).
 
 `QUEUEBIE_LOGGER_NAME` names the logger the bus writes to. It is queuebie's own default, spelled out
 here because `LOGGING` below has to name the same logger — and the two drifting apart is silent.
@@ -32,8 +42,8 @@ on, so every message drained shows up with the handler it went to and the messag
 returned:
 
 ```
-2026-09-07 10:14:22,001 DEBUG   queuebie: Handling command 'apps.month.messages.commands.month.PrepareMonth' (…) with handler 'handle_prepare_month'.
-2026-09-07 10:14:22,004 DEBUG   queuebie: New messages: ["<class 'apps.month.messages.events.month.PlayerMonthPrepared'> (…)"]
+2026-09-07 10:14:22,001 DEBUG   queuebie: Handling command 'apps.warband.month.messages.commands.month.PrepareMonth' (…) with handler 'handle_prepare_month'.
+2026-09-07 10:14:22,004 DEBUG   queuebie: New messages: ["<class 'apps.warband.month.messages.events.month.PlayerMonthPrepared'> (…)"]
 ```
 
 That is the record of an ordering question — which handler's writes were visible to which — and it is

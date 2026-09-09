@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Skirmishes</h1>
+
+    <table class="uk-table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Attacker</th>
+            <th>Defender</th>
+            <th>Rounds</th>
+            <th>Victor</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for skirmish in object_list %}
+            <tr>
+                <td>{{ skirmish.name }}</td>
+                <td>{{ skirmish.attacking_faction }}</td>
+                <td>{{ skirmish.defending_faction }}</td>
+                {# What the fight has cost so far, not which round is next - the header over the fight #}
+                {# itself is the one that wants "current_round" #}
+                <td>{{ skirmish.rounds_fought }}</td>
+                <td>{{ skirmish.victorious_faction|default_if_none:"-" }}</td>
+                <td>
+                    {% if skirmish.victorious_faction %}
+                        <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
+                           class="uk-button uk-button-default uk-button-small uk-button-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    {% else %}
+                        <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
+                           class="uk-button uk-button-default uk-button-small uk-button-danger">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    {% endif %}
+                    </a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="uk-text-meta">No skirmishes have been fought yet.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock content %}

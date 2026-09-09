@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tettenhall - The Game</title>
+    <link rel="icon" href="{% static 'svg/icons/crossed_swords.svg' %}" type="image/svg+xml">
+    <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
+    <link rel="stylesheet" href="{% static 'css/colors.css' %}">
+    <link rel="stylesheet" href="{% static 'css/icons.css' %}">
+    <link rel="stylesheet" href="{% static 'css/progress-bar.css' %}">
+</head>
+<body>
+<nav class="uk-navbar-container uk-margin" uk-navbar>
+    <div class="uk-navbar-left">
+        <a class="uk-navbar-item uk-logo uk-margin-left" href="{% url 'warband:dashboard-view' %}">Tettenhall</a>
+
+        {% if request.user.is_authenticated and current_savegame %}
+            <ul class="uk-navbar-nav">
+                {# A savegame can be without a player faction, and reversing these urls with no id raises #}
+                {% if current_savegame.player_faction_id %}
+                    <li>
+                        <a href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}">
+                            {{ current_savegame.player_faction }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">
+                            {{ current_savegame.player_faction.town_name }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'warband:town-upgrade-view' %}">
+                            Town upgrades
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'warband:rival-faction-list-view' %}">
+                            Rivals
+                        </a>
+                    </li>
+                {% endif %}
+                <li>
+                    <a href="{% url 'warband:training-list-view' %}">
+                        Training
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'warband:skirmish-list-view' %}">
+                        Skirmishes
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'warband:transaction-list-view' %}">
+                        Finance
+                    </a>
+                </li>
+                {# todo: implement estates, then put this entry back. A nav link to "#" reads as a #}
+                {# feature that is merely broken, so it stays out until there is a page behind it. #}
+                {% comment %}
+                    <li>
+                        <a href="#">
+                            Estates
+                        </a>
+                    </li>
+                {% endcomment %}
+            </ul>
+            {% include 'faction/components/resource_bar.html' %}
+        {% endif %}
+    </div>
+    <div class="uk-navbar-right uk-margin-right">
+        <ul class="uk-navbar-nav">
+            {% if request.user.is_authenticated and current_savegame %}
+                <li class="uk-active">
+                    <a hx-post="{% url 'warband:finish-month-view' %}">
+                        Finish month
+                    </a>
+                </li>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+                <li>
+                    <a href="#">{{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}</a>
+                    <div class="uk-navbar-dropdown">
+                        <ul class="uk-nav uk-navbar-dropdown-nav">
+                            <li><a href="{% url "warband:savegame-list-view" %}">Savegames</a></li>
+                            <li><a href="{% url "warband:logout-view" %}">Logout</a></li>
+                        </ul>
+                    </div>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="uk-container-expand uk-margin-left uk-margin-right">
+    {% block content %}{% endblock %}
+</div>
+
+<div id="hidden-box" class="uk-hidden"></div>
+
+<script src="{% static 'htmx.org/dist/htmx.js' %}"></script>
+<script src="{% static 'uikit/dist/js/uikit.js' %}"></script>
+<script type="text/javascript">
+    // Add CSRF token to HTMX plugin for being able to make AJAX calls
+    document.body.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    });
+    // Notifications
+    // UIkit's own default. A second is not long enough to read a sentence like "This game is over.
+    // Start a new savegame to play on.", and for several actions the toast is the only feedback there
+    // is. Named once so the three call sites below cannot drift apart again.
+    const NOTIFICATION_TIMEOUT = 5000;
+
+    // Every toast sits at the bottom, because the navbar is the first thing in the body and has no
+    // offset under it: a top-centre notification covers the nav links and the resource counters, and
+    // the counters are what several of these toasts are reporting a change to.
+    const NOTIFICATION_POSITION = 'bottom-center';
+
+    document.body.addEventListener("notification", function (e) {
+        UIkit.notification({
+            message: e.detail.value,
+            status: 'success',
+            pos: NOTIFICATION_POSITION,
+            timeout: NOTIFICATION_TIMEOUT,
+        });
+    });
+    document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
+        if (500 <= evt.detail.xhr.status && evt.detail.xhr.status < 600) {
+            UIkit.notification({
+                message: "An error has occurred.",
+                status: 'danger',
+                pos: NOTIFICATION_POSITION,
+                timeout: NOTIFICATION_TIMEOUT,
+            });
+        }
+    });
+
+    {# Two sinks, two filters, and both are load-bearing. "escapejs" is the one for this position: a #}
+    {# message holding a double quote closes the string literal, and a SyntaxError costs the whole #}
+    {# block above - the CSRF header, the notification listener and the 5xx toast all stop being #}
+    {# registered. "escape" is for the sink underneath: UIkit inserts "message" as HTML, so a "<" #}
+    {# would otherwise be parsed as markup rather than shown. "level_tag" is a fixed vocabulary #}
+    {# today, but it sits in the same position, so it is escaped too rather than left to be worked #}
+    {# out again later. #}
+    {% for message in messages %}
+        UIkit.notification({
+            message: "{{ message|escape|escapejs }}",
+            status: "{{ message.level_tag|escapejs }}",
+            pos: NOTIFICATION_POSITION,
+            timeout: NOTIFICATION_TIMEOUT,
+        });
+    {% endfor %}
+</script>
+</body>
+</html>

@@ -35,7 +35,7 @@ has to let it out as a 500 nobody meant.
 
 ## Where a custom exception lives
 
-In an app-level `exceptions.py` — `apps/skirmish/exceptions.py`. These cross layers: a service raises and
+In an app-level `exceptions.py` — `apps/warband/skirmish/exceptions.py`. These cross layers: a service raises and
 a view catches, so the exception belongs to neither and sits above both.
 
 Name it for what is wrong and end it in `Error`. Subclass `Exception`; there is no project base class,
