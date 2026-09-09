@@ -168,14 +168,14 @@ wheels = [
 
 [[package]]
 name = "django-queuebie"
-version = "0.5.0"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/cc/054f082e17e0db744d4d01aa9717fe0c03585c6ef1dcde3d95c423715278/django_queuebie-0.5.0.tar.gz", hash = "sha256:bfde4d82353467e94f25c2206f1133da26a8884563ef24d12d0b25b0fce9b982", size = 99816, upload-time = "2026-08-27T09:07:51.927Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/72/79045effbc4150f9b90dba23c0f33af29a31ff3e74160f670466293842f3/django_queuebie-0.6.0.tar.gz", hash = "sha256:d1a9def900b4736ec0ea905995db6fd1799d9f2a619f7801d9e3fa24b9e8f18b", size = 105474, upload-time = "2026-09-09T08:38:04.011Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/f4/2a376d26dcc16b6789f7478fc9140821cb9a48c2b17177e173750dccf94d/django_queuebie-0.5.0-py3-none-any.whl", hash = "sha256:2e3cc14c7e57ebcc86ed20bc52b3bd4ee14e5c346699532cb67bc2c464b7713e", size = 12068, upload-time = "2026-08-27T09:07:50.625Z" },
+    { url = "https://files.pythonhosted.org/packages/86/e6/e506688c4bb3b5bf314521b085bc5c7b9f7cf65fc8a2b19b6f27cf808fc9/django_queuebie-0.6.0-py3-none-any.whl", hash = "sha256:3f7c554973702bd3094e2a6907818608d57df1324e0f11d8ae3867ad2248103f", size = 13367, upload-time = "2026-09-09T08:38:02.827Z" },
 ]
 
 [[package]]
@@ -353,7 +353,7 @@ requires-dist = [
     { name = "django", specifier = "~=6.1" },
     { name = "django-axes", specifier = "~=8.3" },
     { name = "django-crispy-forms", specifier = "~=2.7" },
-    { name = "django-queuebie", specifier = "~=0.5" },
+    { name = "django-queuebie", specifier = "~=0.6" },
     { name = "faker", specifier = "~=40.38" },
 ]
 
