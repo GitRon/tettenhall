@@ -7,14 +7,15 @@ the app, in *topic packages*.
 
 Everything in the app layer sits directly under `apps/`, so that directory lists the whole
 architecture. Not all of it is an app: a satellite that owns no models and needs no Django
-configuration is a plain package there, the way `config/` and `faker_old_english/` are, and stays out
+configuration is a plain package there, the way `config/` and the two name providers are, and stays out
 of `INSTALLED_APPS`.
 
 ```
 apps/
 ├── config/                      # the settings package, deliberately not an app
 ├── common/                      # a satellite: no domain concept, imports no domain code
-├── faker_old_english/           # a satellite, and not an app: it registers with Faker, not Django
+├── faker_gaelic/                # a satellite, and not an app: it registers with Faker, not Django
+├── faker_old_english/           # its sibling, for the Saxon culture
 └── warband/                     # the domain app
     ├── apps.py  urls.py  admin.py
     ├── migrations/              # one per change, for the whole game

@@ -1,16 +1,15 @@
 """
 Architectural test for where a ``Faker`` may be built.
 
-The Saxon culture's locale is ``ang``, which is the ISO 639-3 code for Old English and not a Faker
-locale - Faker accepts the locales it ships provider data for and refuses the rest before it imports a
-single provider. The Old English name stock therefore arrives through ``Faker.add_provider()``, and the
-factory in the faction topic is what knows to do that.
+Two of the five cultures carry a locale Faker has never heard of: the Saxon one is ``ang`` and the
+Irish one is ``sga``, the ISO 639-3 codes for Old English and Old Irish. Faker accepts the locales it
+ships provider data for and refuses the rest before it imports a single provider, so both name stocks
+arrive through ``Faker.add_provider()``, and the factory in the faction topic is what knows to do that.
 
-So ``Faker([culture.locale])`` written anywhere else raises ``AttributeError`` - but only for the one
-culture out of five whose locale Faker has never heard of. Every test that reaches for a culture by
-``Culture.objects.first()`` or by a factory gets Norse or ``en_GB`` and stays green, and the crash waits
-in the savegame of whoever picks Saxon. That is why this is checked over the sources, once, for every
-construction site at all.
+So ``Faker([culture.locale])`` written anywhere else raises ``AttributeError`` - but only for those two
+rows. Every test that reaches for a culture by ``Culture.objects.first()`` or by a factory can just as
+easily get Norse and stay green, and the crash waits in the savegame of whoever picks Saxon or Irish.
+That is why this is checked over the sources, once, for every construction site at all.
 """
 
 import ast
@@ -55,8 +54,8 @@ def _faker_constructions(*, file: Path) -> list[str]:
 
 def test_only_the_factory_builds_a_faker():
     """
-    Anything needing a faker asks the factory for one, so the Old English provider is reachable from
-    every call site rather than from the one that remembered it.
+    Anything needing a faker asks the factory for one, so both providers are reachable from every call
+    site rather than from the one that remembered them.
     """
     violations = [
         location

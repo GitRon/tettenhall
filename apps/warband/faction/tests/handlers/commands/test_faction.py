@@ -596,7 +596,7 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
                 savegame=savegame,
                 faction_name="Wessex",
                 town_name="Winchester",
-                faction_culture_id=CultureFactory(locale="ga_IE").id,
+                faction_culture_id=CultureFactory(locale="da_DK").id,
             )
         )
 
