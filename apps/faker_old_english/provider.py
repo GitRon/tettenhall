@@ -29,7 +29,10 @@ from faker.providers import BaseProvider
 
 from apps.faker_old_english.data import GIVEN_NAMES, PLACE_ELEMENTS, PLACE_GENERICS
 
-# What "Culture.locale" carries for the Saxon culture. Not a Faker locale and it cannot become one.
+# What "Culture.locale" carries for the Saxon culture: the ISO 639-3 code for Old English. Not a Faker
+# locale, and not something we can make into one - Faker accepts the locales it ships provider data for
+# and nothing else, so any key we picked would be refused the same way. A standard code at least tells
+# a reader what the row means.
 OLD_ENGLISH_LOCALE = "ang"
 
 # The locale a provider-equipped instance is built on, and therefore what everything this provider
