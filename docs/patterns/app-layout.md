@@ -29,7 +29,7 @@ with no error anywhere:
 |---|---|
 | `migrations/` | `<app>/migrations/` |
 | `models/__init__.py` | `<app>/models` — a model missing from it gets no table |
-| `templates/` | `<app>/templates/` |
+| `templates/` | `<app>/templates/` — one subdirectory per topic, named after it, plus `base.html` |
 | `templatetags/` | `<app>/templatetags/` |
 | `management/commands/` | `<app>/management/commands/` |
 | `fixtures/` | `<app>/fixtures/` |

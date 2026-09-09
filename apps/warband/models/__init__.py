@@ -6,7 +6,7 @@ from apps.warband.finance.models import Transaction
 from apps.warband.item.models import Item, ItemType
 from apps.warband.month.models import PlayerMonthLog
 from apps.warband.quest.models import Quest, QuestContract, QuestName
-from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.savegame.models import Savegame
 from apps.warband.skirmish.models import (
     BattleHistory,
     Skirmish,

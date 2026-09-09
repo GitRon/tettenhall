@@ -251,3 +251,11 @@ name = "Satellites do not import the domain"
 type = "forbidden"
 source_modules = ["apps.common"]
 forbidden_modules = ["apps.warband"]
+
+# "apps.config" is the settings package, not an app. Settings are read through "django.conf.settings",
+# which is lazy and overridable in tests; importing the module directly bypasses both.
+[[tool.importlinter.contracts]]
+name = "No app imports the settings package"
+type = "forbidden"
+source_modules = ["apps.warband", "apps.common"]
+forbidden_modules = ["apps.config"]
