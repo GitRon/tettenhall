@@ -10,8 +10,11 @@ RUN_DIR="${1:?usage: ci.sh <run-dir>}"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT" || exit 1
 
+# A drive letter is an absolute path too. Without that arm "C:/workspace/..." falls through as relative
+# and gets the repo root prefixed onto it, so ci.md and the logs land in a directory nobody reads.
 case "$RUN_DIR" in
   /*) ;;
+  ?:/*) ;;
   *) RUN_DIR="$REPO_ROOT/$RUN_DIR" ;;
 esac
 
