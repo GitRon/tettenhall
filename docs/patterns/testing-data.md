@@ -29,8 +29,9 @@ WarriorFactory(faction__town__sanctuary=3)
 ## Reference data is the one exception
 
 `Culture`, `ItemType` and `QuestName` are lookup tables, not test data. They ship as fixtures
-(`apps/warband/faction/fixtures/culture.json`, `apps/warband/item/fixtures/itemtype.json`,
-`apps/warband/quest/fixtures/questname.json`) and every environment has them. The generators query them —
+(`apps/warband/fixtures/culture.json`, `apps/warband/fixtures/itemtype.json`,
+`apps/warband/fixtures/questname.json` — Django discovers fixtures at `<app>/fixtures/` only, so they sit
+at the app root rather than in the topic package that owns the model) and every environment has them. The generators query them —
 `FyrdItemGenerator` even filters weapons by name — so without them item, warrior and quest generation
 raises `RuntimeError`.
 

@@ -19,12 +19,10 @@ commit again.
 `lint-imports` checks the contracts under `[tool.importlinter]` and runs in CI next to the test job,
 not as a pre-commit hook — it builds the whole import graph, which is too slow for a commit.
 
-Two contracts, both `forbidden`:
-
-- **`apps.common` must not import `apps.warband`.** A satellite is domain-independent by definition, and
-  the direction of dependency is the entire reason for splitting one out. Nothing enforced this before,
-  which is how a game-balance decision and the navbar's resource bar came to live in `common`.
-- **Neither app may import `apps.config`.** Settings are read through `django.conf.settings`.
+One contract, `forbidden`: **`apps.common` must not import `apps.warband`.** A satellite is
+domain-independent by definition, and the direction of dependency is the entire reason for splitting one
+out. Nothing enforced this before, which is how a game-balance decision and the navbar's resource bar
+came to live in `common`.
 
 There are deliberately **no contracts between the topic packages** inside `apps.warband`. They are meant
 to be cheap to move, and the boundary that does need enforcing — a command handler outside the scope of

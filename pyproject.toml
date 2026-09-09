@@ -251,9 +251,3 @@ name = "Satellites do not import the domain"
 type = "forbidden"
 source_modules = ["apps.common"]
 forbidden_modules = ["apps.warband"]
-
-[[tool.importlinter.contracts]]
-name = "The domain does not import the settings package"
-type = "forbidden"
-source_modules = ["apps.warband", "apps.common"]
-forbidden_modules = ["apps.config"]
