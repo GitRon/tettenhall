@@ -18,6 +18,7 @@ dev = [
     "boa-restrictor~=1.18",
     "django-removals",
     "factory-boy~=3.3",
+    "import-linter~=2.5",
     "pytest~=9.1",
     "pytest-cov~=7.1",
     "pytest-django~=4.11",
@@ -234,3 +235,25 @@ exclude_also = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
+
+[tool.importlinter]
+root_packages = ["apps"]
+
+# A satellite is domain-independent by definition, so the direction of dependency is the whole point
+# of splitting one out. Nothing enforced it before this contract existed, which is what let a
+# game-balance decision ("High"/"Low"/"Mediocre") and the navbar's resource bar sit in "common".
+#
+# There are deliberately no contracts between the topic packages inside "apps.warband". They are
+# meant to be free to move on a Wednesday afternoon, and the boundary that does need enforcing -
+# a command handler living outside the scope of its command - is queuebie's strict mode.
+[[tool.importlinter.contracts]]
+name = "Satellites do not import the domain"
+type = "forbidden"
+source_modules = ["apps.common"]
+forbidden_modules = ["apps.warband"]
+
+[[tool.importlinter.contracts]]
+name = "The domain does not import the settings package"
+type = "forbidden"
+source_modules = ["apps.warband", "apps.common"]
+forbidden_modules = ["apps.config"]
