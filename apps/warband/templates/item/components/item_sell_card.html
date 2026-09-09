@@ -1,0 +1,40 @@
+{% load l10n %}
+<div class="uk-card uk-card-default uk-margin-bottom">
+    <div class="uk-card-header">
+        <div id="item-card-{{ item.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-auto">
+                {% include 'common/components/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
+            </div>
+            <div class="uk-width-expand">
+                <h3 class="uk-card-title uk-margin-remove-bottom">
+                    {{ item.display_name }}
+                </h3>
+                <p class="uk-text-meta uk-margin-remove-top">
+                    <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
+                    {% if item.is_weapon %}
+                        {% include 'common/components/svg_icon.html' with icon_name='axe-sword' %}
+                    {% else %}
+                        {% include 'common/components/svg_icon.html' with icon_name='shield' %}
+                    {% endif %}
+                    <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>&nbsp;
+                    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value }}</i>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-body uk-text-left">
+        <p>Worn by: {{ item.worn_by|default_if_none:"-" }}</p>
+    </div>
+    {% comment %}
+        Only the player's own items can be sold: "ItemSellView" is scoped to the player faction, so on
+        a rival's page this is a control that could only ever 404.
+    {% endcomment %}
+    {% if is_player_faction %}
+        <div class="uk-card-footer">
+            <a hx-post="{% url 'warband:item-sell-view' item.id %}"
+               hx-target="#item-card-{{ item.id|unlocalize }}"
+               hx-swap="none"
+               class="uk-button uk-button-text">Sell</a>
+        </div>
+    {% endif %}
+</div>

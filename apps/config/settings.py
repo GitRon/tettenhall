@@ -41,19 +41,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "crispy_forms",
     "crispy_bootstrap5",
-    "apps.account",
+    # One domain app, plus satellites for domain-independent logic. A Django app is a unit of
+    # persistence and Django configuration, not of code organisation, so the game's structure lives in
+    # topic packages inside "apps.warband" rather than in an app per topic.
+    "apps.warband",
     "apps.common",
-    "apps.faction",
-    "apps.finance",
-    "apps.incident",
-    "apps.item",
-    "apps.quest",
-    "apps.savegame",
-    "apps.skirmish",
-    "apps.town",
-    "apps.training",
-    "apps.warrior",
-    "apps.month",
     "axes",
 ]
 
@@ -80,7 +72,7 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-LOGIN_URL = "account:login-view"
+LOGIN_URL = "warband:login-view"
 
 ROOT_URLCONF = "apps.config.urls"
 
@@ -96,10 +88,10 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 # Custom
-                "apps.finance.context_processors.get_current_balance",
-                "apps.savegame.context_processors.current_savegame.current_savegame",
-                "apps.skirmish.context_processors.get_open_skirmishes",
-                "apps.warrior.context_processors.get_current_amount_warriors",
+                "apps.warband.finance.context_processors.get_current_balance",
+                "apps.warband.savegame.context_processors.current_savegame.current_savegame",
+                "apps.warband.skirmish.context_processors.get_open_skirmishes",
+                "apps.warband.warrior.context_processors.get_current_amount_warriors",
             ],
         },
     },

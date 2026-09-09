@@ -1,0 +1,291 @@
+import random
+
+from queuebie import message_registry
+from queuebie.messages import Event
+
+from apps.warband.quest.models import QuestContract
+from apps.warband.skirmish.messages.commands import skirmish
+from apps.warband.skirmish.messages.events.skirmish import (
+    AttackerDefenderDecided,
+    FactionWasAttacked,
+    FighterPairsMatched,
+    RoundFinished,
+    SkirmishCreated,
+    SkirmishFinished,
+)
+from apps.warband.skirmish.models.skirmish import Skirmish
+from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.warband.skirmish.services.actions.utils import get_service_by_attack_action
+from apps.warband.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
+from apps.warband.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
+from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
+
+
+@message_registry.register_command(command=skirmish.AttackFaction)
+def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | Event:
+    # Whom the rival fields is a query, so it is answered here rather than in the event handler that
+    # turns this into a skirmish - strict mode blocks the database there. Only the ones still on
+    # their feet turn out: a warrior who is down does not defend his town, and an unhealthy side
+    # would count as beaten before the first round.
+    #
+    # And only the ones not already in a fight, the same rule the quest muster applies. A defender
+    # standing in two open skirmishes strands whichever is resolved second: the side that lost him
+    # has nobody healthy left to post, so it cannot be played out, and the month refuses to turn
+    # while a skirmish is open. "attackable_targets" asks this same question, so a target that
+    # reaches here has somebody to field.
+    defending_warriors = list(
+        Warrior.objects.filter_healthy()
+        .filter_faction(faction_id=context.target_faction.id)
+        .exclude_currently_busy(month=context.month)
+    )
+
+    return FactionWasAttacked(
+        attacking_faction=context.attacking_faction,
+        defending_faction=context.target_faction,
+        attacking_warriors=list(context.assigned_warriors),
+        defending_warriors=defending_warriors,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=skirmish.CreateSkirmish)
+def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
+    # Both rosters arrive resolved. Whom a faction fields is its own business and is answered by the
+    # command handler that raised the event leading here - handle_attack_faction for a march,
+    # handle_accept_quest for an errand - so there is exactly one answer to it and this only stages
+    # the fight.
+    skirmish_generator = BaseSkirmishGenerator(
+        name=context.name,
+        warriors_faction_1=context.warrior_list_1,
+        warriors_faction_2=context.warrior_list_2,
+        month=context.month,
+    )
+    new_skirmish = skirmish_generator.process()
+
+    # Linking the contract to the skirmish is the quest app's reaction to SkirmishCreated, see
+    # handle_link_quest_contract_to_its_skirmish - writing it here as well meant doing it twice
+    return SkirmishCreated(
+        skirmish=new_skirmish,
+        quest_contract=context.quest_contract,
+    )
+
+
+@message_registry.register_command(command=skirmish.StartDuel)
+def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Event] | Event:
+    message_list = []
+
+    # Read once, here, and carried on every message the round produces. This is the handler that
+    # starts the round, so "current_round" is the round being fought by definition rather than by
+    # ordering luck - and it is the last point at which that is true, because "FinishRound"
+    # increments and saves before any of the events below are handled
+    round_number = context.skirmish.current_round
+
+    # Determine larger group
+    assign_fighter_pairs_service = AssignFighterPairsService()
+    skirmish_participants_1, skirmish_participants_2 = assign_fighter_pairs_service.determine_larger_group(
+        skirmish_participants_1=context.skirmish_participants_1, skirmish_participants_2=context.skirmish_participants_2
+    )
+
+    # Shuffle both lists to have more interaction going on
+    random.shuffle(skirmish_participants_1)
+    random.shuffle(skirmish_participants_2)
+
+    # This flag indicates when warriors from list 1 are more numerous, and so they can attack the other side without
+    # to decide who attacks first. Having more guys will result in a free attack.
+    used_warriors_from_list_2 = 0
+    free_attack_due_to_being_more_numerous = False
+
+    # For every warrior in list 1...
+    participant_1: SkirmishParticipant
+    for participant_1 in skirmish_participants_1:
+        # If list 2 is shorter, list 1 warriors get matched again
+        if used_warriors_from_list_2 == len(skirmish_participants_2):
+            free_attack_due_to_being_more_numerous = True
+
+        # Fetch a random defender
+        participant_2: SkirmishParticipant = random.choice(skirmish_participants_2)
+        used_warriors_from_list_2 += 1  # noqa: SIM113
+
+        if not free_attack_due_to_being_more_numerous:
+            message_list.append(
+                FighterPairsMatched(
+                    skirmish=context.skirmish,
+                    round_number=round_number,
+                    warrior_1=participant_1.warrior,
+                    warrior_2=participant_2.warrior,
+                    attack_action_1=participant_1.skirmish_action,
+                    attack_action_2=participant_2.skirmish_action,
+                )
+            )
+        else:
+            message_list.append(
+                AttackerDefenderDecided(
+                    skirmish=context.skirmish,
+                    round_number=round_number,
+                    attacker=participant_1.warrior,
+                    attacker_action=participant_1.skirmish_action,
+                    defender=participant_2.warrior,
+                    defender_action=participant_2.skirmish_action,
+                )
+            )
+
+    return message_list
+
+
+@message_registry.register_command(command=skirmish.DetermineAttacker)
+def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacker) -> list[Event] | Event:
+    warrior_1_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_1)
+    warrior_2_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_2)
+
+    warrior_1_matching_points = warrior_1_attack_action_service_class.get_pair_matching_points(
+        warrior_dexterity=context.warrior_1.dexterity
+    )
+    warrior_2_matching_points = warrior_2_attack_action_service_class.get_pair_matching_points(
+        warrior_dexterity=context.warrior_2.dexterity
+    )
+
+    random_value = random.random()
+
+    # Catch edge case that both have zero values
+    if (
+        warrior_1_matching_points + warrior_2_matching_points == 0
+        or warrior_1_matching_points / (warrior_1_matching_points + warrior_2_matching_points) > random_value
+    ):
+        attacker: Warrior = context.warrior_1
+        defender: Warrior = context.warrior_2
+        attack_action = context.action_1
+        defend_action = context.action_2
+    else:
+        attacker: Warrior = context.warrior_2
+        defender: Warrior = context.warrior_1
+        attack_action = context.action_2
+        defend_action = context.action_1
+
+    return AttackerDefenderDecided(
+        skirmish=context.skirmish,
+        round_number=context.round_number,
+        attacker=attacker,
+        attacker_action=attack_action,
+        defender=defender,
+        defender_action=defend_action,
+    )
+
+
+@message_registry.register_command(command=skirmish.WarriorAttacksWarrior)
+def handle_warrior_attacks_warrior(
+    *,
+    context: skirmish.WarriorAttacksWarrior,
+) -> list[Event] | Event:
+    service = SkirmishDamageService(
+        skirmish=context.skirmish,
+        round_number=context.round_number,
+        attacker=context.attacker,
+        attacker_action=context.attacker_action,
+        defender=context.defender,
+        defender_action=context.defender_action,
+    )
+    return service.process()
+
+
+@message_registry.register_command(command=skirmish.WinSkirmish)
+def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event | None:
+    # A fight is won once. The manager refuses a skirmish that already has a victor, and stopping here
+    # is what keeps the silver, the experience, the quest reward and the log line to a single helping:
+    # the savegame ending force-resolves the very fight it ended in, so the round that ended it arrives
+    # behind a victory that has already been paid out.
+    if not Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction):
+        return None
+
+    try:
+        quest_contract = context.skirmish.quest_contract
+        quest_name = quest_contract.quest.name
+        # A quest only pays the faction that signed the contract, and only if it actually won: the
+        # reward is handed to the victor further down the chain, so carrying it regardless of the
+        # outcome funded the rival who beat you out of your own quest. Decided here rather than in
+        # the finance handler because reading the contract's faction is a query, which strict mode
+        # forbids in an event handler.
+        #
+        # The face value, whatever turned out on the day. The purse was already priced against the
+        # war band the target could field when the quest was pinned to the board - see
+        # "Quest._priced_for_expected_opposition" - so a thin turnout is a thin contract rather than
+        # a fraction of a fat one, and the figure the player accepted is the figure he is paid.
+        if quest_contract.faction_id == context.victorious_faction.pk:
+            quest_loot = quest_contract.quest.loot
+        else:
+            quest_loot = 0
+    except QuestContract.DoesNotExist:
+        # There might be skirmishes with no assigned quest contract
+        # TODO (#102): this shouldn't be handled here that explicitly -> model method?
+        quest_name = None
+        quest_loot = 0
+
+    # Everything below is about the winner and the loser, so the two sides get sorted into those
+    # roles exactly once - "attacking_warriors" and "defending_warriors" only coincide with them when
+    # the side that marched is the side that won
+    if context.skirmish.victorious_faction == context.skirmish.attacking_faction:
+        victorious_warriors = context.skirmish.attacking_warriors
+        defeated_warriors = context.skirmish.defending_warriors
+    else:
+        victorious_warriors = context.skirmish.defending_warriors
+        defeated_warriors = context.skirmish.attacking_warriors
+
+    # Only a warrior left lying on the field can be stripped: the dead and the unconscious. One who
+    # fled took his kit with him, so a warband that merely routs loses nothing but the fight. That
+    # distinction matters more than it looks: a defeat is declared exactly when nobody on that side
+    # is healthy any more, so "everyone not healthy" would have meant the whole roster, not its
+    # casualties.
+    defeated_warriors_on_the_field = list(
+        defeated_warriors.filter(
+            condition__in=(
+                Warrior.ConditionChoices.CONDITION_DEAD,
+                Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
+            )
+        )
+    )
+
+    # The winner's own dead take the same route, reassigned to the victor - who is their own faction,
+    # so it amounts to their gear returning to the stash. His unconscious survive and keep theirs.
+    incapacitated_warriors = [
+        *victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_DEAD),
+        *defeated_warriors_on_the_field,
+    ]
+
+    # The unconscious among them are the ones taken prisoner, and are already loaded above
+    defeated_unconscious_warriors = [warrior for warrior in defeated_warriors_on_the_field if warrior.is_unconscious]
+
+    # Only the ones still standing when it was over share in the victory: a warrior who was knocked
+    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did
+    victorious_healthy_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+
+    # We need to evaluate the QS to avoid hitting the DB in the events
+    return SkirmishFinished(
+        skirmish=context.skirmish,
+        incapacitated_warriors=incapacitated_warriors,
+        defeated_unconscious_warriors=defeated_unconscious_warriors,
+        victorious_healthy_warriors=list(victorious_healthy_warriors),
+        month=context.month,
+        quest_name=quest_name,
+        quest_loot=quest_loot,
+    )
+
+
+@message_registry.register_command(command=skirmish.FinishRound)
+def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event:
+    # Read before the increment: this is the round that just resolved, and it is what the battle log
+    # names. Afterwards "current_round" points at the round nobody has fought yet
+    finished_round = context.skirmish.current_round
+
+    # Increment round
+    Skirmish.objects.increment_round(skirmish=context.skirmish)
+
+    # Check if one faction has been defeated
+    victor = None
+    if not context.skirmish.defending_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+        # Checked first on purpose: if both sides are wiped out in the same round, the tie goes to
+        # the side that marched
+        victor = context.skirmish.attacking_faction
+    elif not context.skirmish.attacking_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+        victor = context.skirmish.defending_faction
+
+    return RoundFinished(skirmish=context.skirmish, round_number=finished_round, victor=victor, month=context.month)

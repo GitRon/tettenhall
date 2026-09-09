@@ -1,0 +1,113 @@
+{% load static %}
+<div class="uk-card uk-card-default uk-margin-bottom">
+    <div class="uk-card-header">
+        <div class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-auto">
+                <img class="uk-border-circle" width="40" height="40" src="{% static warrior.avatar_url %}" alt="Avatar">
+            </div>
+            <div class="uk-width-expand">
+                <h3 class="uk-card-title uk-margin-remove-bottom">{{ warrior.display_name }}</h3>
+                <p class="uk-text-meta uk-margin-remove-top">
+                    <i class="fa-solid fa-award"></i> <i>Level {{ warrior.level }}</i>&nbsp;
+                    <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
+                    <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>&nbsp;
+                    {% comment %}
+                        Health, morale and gear are what the rivals list calls knowledge the player has
+                        not earned without scouting, so a rival's card withholds exactly those three and
+                        nothing else. Without this the overview counted a rival's men while his own page
+                        gave away every number about them.
+                    {% endcomment %}
+                    {% if is_player_faction %}
+                        <i class="fa-solid fa-heart"></i>
+                        <i>{{ warrior.current_health }}/{{ warrior.max_health }}</i>&nbsp;
+                        <i class="fa-solid fa-bolt"></i>
+                        <i>{{ warrior.current_morale }}/{{ warrior.max_morale }}</i>&nbsp;
+                    {% endif %}
+                    {# The condition is a state, not a scale: it says the warrior is still on his #}
+                    {# feet, and the health beside it says at what cost. #}
+                    {% if warrior.is_healthy %}
+                        <i class="fa-solid fa-user-injured"></i> <i>Able to fight</i>
+                    {% else %}
+                        <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-body uk-text-left">
+        <div class="uk-grid uk-child-width-expand@s" uk-grid>
+            <div>
+                <table class="uk-table">
+                    <tr>
+                        <td>Faction</td>
+                        <td>
+                            {{ warrior.faction.name }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Strength</td>
+                        <td>{{ warrior.strength }}</td>
+                    </tr>
+                    <tr>
+                        <td>Dexterity</td>
+                        <td>{{ warrior.dexterity }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <table class="uk-table">
+                    <tr>
+                        <td>Culture</td>
+                        <td>{{ warrior.culture.name }}</td>
+                    </tr>
+                    {% if is_player_faction %}
+                        <tr>
+                            <td>Weapon</td>
+                            <td>{{ warrior.weapon|default_if_none:'-' }}</td>
+                        </tr>
+                        <tr>
+                            <td>Armor</td>
+                            <td>{{ warrior.armor|default_if_none:'-' }}</td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="uk-card-footer">
+        {% comment %}
+            Only the player may act on his own prisoners. On a rival's page these two posted to a view
+            that answers for the faction in the URL, so recruiting a rival's captive staffed the rival's
+            war band and enslaving one paid the rival - both on the player's click.
+        {% endcomment %}
+        {% if is_captured and is_player_faction %}
+            {# The nought is written out rather than read off anything, and mirrors the "recruitment_price=0" #}
+            {# in "handle_recruit_captured_warrior": a man already in your cells costs no silver, only #}
+            {# the quarter of his nerve that handler takes off him. #}
+            <a hx-post="{% url 'warband:warrior-recruit-captured-view' warrior.id faction.id %}"
+               class="uk-button uk-button-text">
+                Recruit for <i class="fa-solid fa-coins"></i> <i>0</i></a> /
+            <a hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
+               class="uk-button uk-button-text">
+                Enslave for <i class="fa-solid fa-coins"></i> <i>{{ warrior.slavery_selling_price }}</i>&nbsp;</a>
+        {% else %}
+            <a href="{% url 'warband:warrior-detail-view' warrior.id %}" class="uk-button uk-button-text">Detail</a>
+            {% comment %}
+                Only on the player's own roster, and only where "FactionRosterContextMixin" answered
+                the question - a rival's card carries no control to offer and the captured list above
+                has its own two. The refusal is shown rather than the button simply vanishing, the way
+                the faction page explains a missing Attack button: "your leader stays" and "he is
+                spoken for this month" are rules the player would otherwise meet as an absence.
+            {% endcomment %}
+            {% if is_player_faction %}
+                {% if warrior.dismissal_refusal %}
+                    <span class="uk-text-meta">{{ warrior.dismissal_refusal }}</span>
+                {% else %}
+                    / <a hx-post="{% url 'warband:warrior-dismiss-view' warrior.id %}"
+                         class="uk-button uk-button-text">
+                        Dismiss for <i class="fa-solid fa-coins"></i> <i>{{ warrior.severance_pay }}</i>&nbsp;</a>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </div>
+</div>

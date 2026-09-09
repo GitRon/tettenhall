@@ -1,0 +1,134 @@
+from apps.warband.faction.messages.events.faction import (
+    FactionWasOccupied,
+    MonthlyBuildingMoneyEarned,
+    MonthlyFactionIncomeEarned,
+    MonthlyWarriorSalariesPaid,
+    NewFactionCreated,
+)
+from apps.warband.faction.messages.events.warrior import WarriorRecruited
+from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.finance.handlers.events.faction import (
+    handle_building_money_earnings,
+    handle_hand_out_starting_silver_for_new_factions,
+    handle_monthly_faction_income,
+    handle_pay_warrior_salaries,
+    handle_plunder_occupied_faction_treasury,
+    handle_warrior_recruited,
+)
+from apps.warband.finance.messages.commands.transaction import CreateTransaction
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+
+
+def test_handle_warrior_recruited_debits_the_recruitment_price():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(faction=faction)
+
+    result = handle_warrior_recruited(
+        context=WarriorRecruited(faction=faction, warrior=warrior, recruitment_price=300, month=3)
+    )
+
+    assert result == CreateTransaction(faction=faction, amount=-300, reason=f"{warrior} recruited", month=3)
+
+
+def test_handle_warrior_recruited_writes_nothing_for_a_free_draft():
+    """
+    A levy called up out of the fyrd costs nothing, and a row reading "-0 silver" is not a payment.
+    Every faction drafts every month it can, so those rows would bury the ledger they sit in.
+    """
+    faction = FactionFactory.build()
+
+    result = handle_warrior_recruited(
+        context=WarriorRecruited(
+            faction=faction, warrior=WarriorFactory.build(faction=faction), recruitment_price=0, month=3
+        )
+    )
+
+    assert result is None
+
+
+def test_handle_pay_warrior_salaries_debits_what_was_actually_paid():
+    """
+    The amount is what the faction managed to pay, not what it owed - a purse that covered three of
+    five men is only ever charged for the three.
+    """
+    faction = FactionFactory.build()
+
+    result = handle_pay_warrior_salaries(context=MonthlyWarriorSalariesPaid(faction=faction, amount=250, month=3))
+
+    assert result == CreateTransaction(faction=faction, amount=-250, reason="Salaries paid in month 3.", month=3)
+
+
+def test_handle_building_money_earnings_credits_the_faction():
+    faction = FactionFactory.build()
+
+    result = handle_building_money_earnings(context=MonthlyBuildingMoneyEarned(faction=faction, amount=300, month=3))
+
+    assert result == CreateTransaction(faction=faction, amount=300, reason="Building earnings in month 3.", month=3)
+
+
+def test_handle_hand_out_starting_silver_for_new_factions_credits_the_starting_purse():
+    faction = FactionFactory.build()
+
+    result = handle_hand_out_starting_silver_for_new_factions(
+        context=NewFactionCreated(faction=faction, current_month=1)
+    )
+
+    assert result == CreateTransaction(faction=faction, amount=1000, reason="Starting silver", month=1)
+
+
+def test_handle_monthly_faction_income_credits_the_faction():
+    """
+    Its own line rather than the building one: a rival has no buildings to have earned it with.
+    """
+    faction = FactionFactory.build()
+
+    result = handle_monthly_faction_income(context=MonthlyFactionIncomeEarned(faction=faction, amount=450, month=3))
+
+    assert result == CreateTransaction(faction=faction, amount=450, reason="Faction income in month 3.", month=3)
+
+
+def test_handle_plunder_occupied_faction_treasury_moves_the_silver_across():
+    occupying_faction = FactionFactory.build()
+    faction = FactionFactory.build()
+    leader = WarriorFactory.build(faction=faction)
+
+    result = handle_plunder_occupied_faction_treasury(
+        context=FactionWasOccupied(
+            faction=faction,
+            occupying_faction=occupying_faction,
+            leader=leader,
+            plundered_silver=400,
+            month=3,
+        )
+    )
+
+    assert result == [
+        CreateTransaction(
+            faction=faction,
+            amount=-400,
+            reason=f"{occupying_faction} plundered the treasury",
+            month=3,
+        ),
+        CreateTransaction(
+            faction=occupying_faction,
+            amount=400,
+            reason=f"Treasury of {faction} plundered",
+            month=3,
+        ),
+    ]
+
+
+def test_handle_plunder_occupied_faction_treasury_of_an_empty_treasury():
+    faction = FactionFactory.build()
+
+    result = handle_plunder_occupied_faction_treasury(
+        context=FactionWasOccupied(
+            faction=faction,
+            occupying_faction=FactionFactory.build(),
+            leader=WarriorFactory.build(faction=faction),
+            plundered_silver=0,
+            month=3,
+        )
+    )
+
+    assert result is None
