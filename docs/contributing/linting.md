@@ -19,13 +19,16 @@ commit again.
 `lint-imports` checks the contracts under `[tool.importlinter]` and runs in CI next to the test job,
 not as a pre-commit hook — it builds the whole import graph, which is too slow for a commit.
 
-Three contracts, all `forbidden`:
+Four contracts:
 
 - **No satellite may import `apps.warband`.** A satellite is domain-independent by definition, and
   the direction of dependency is the entire reason for splitting one out. Nothing enforced this before,
   which is how a game-balance decision and the navbar's resource bar came to live in `common`.
-- **`apps.faker_old_english` must not import `apps.common` either.** It is a name provider and nothing
-  else, which is what keeps it liftable into a library of its own.
+- **Neither name provider may import `apps.common`.** `apps.faker_gaelic` and
+  `apps.faker_old_english` are name providers and nothing else, which is what keeps each liftable
+  into a library of its own.
+- **The two name providers are `independence`-checked against each other.** They share a shape and
+  nothing more; a helper reached across would tie both to whichever lifts out first.
 - **Neither app may import `apps.config`.** It is the settings package, not an app. Settings are read
   through `django.conf.settings`, which is lazy and which `override_settings` can reach; importing the
   module directly bypasses both and binds the value at import time.

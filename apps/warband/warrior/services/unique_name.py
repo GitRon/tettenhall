@@ -1,9 +1,10 @@
 """
 Drawing a warrior a name no living man in the savegame already answers to.
 
-A pool of names is not enough on its own. At 339 given names the chance that twenty living warriors
-hold a duplicate between them is 43% - the birthday problem, not a small pool - and two men called
-Wulfstan in one war band is a bug report about the roster, not flavour.
+A pool of names is not enough on its own. Even at the 339 given names of the largest of them, the
+chance that twenty living warriors hold a duplicate between them is 43% - the birthday problem, not a
+small pool - and two men called Wulfstan in one war band is a bug report about the roster, not
+flavour.
 """
 
 from apps.warband.faction.models.culture import Culture

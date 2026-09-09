@@ -20,8 +20,8 @@ Five where getting it wrong is both expensive and silent:
 | add a model, template, template tag, fixture, admin or management command | [Where code goes](docs/patterns/app-layout.md) |
 
 **There are two Django apps, and neither is a topic.** `apps.warband` is the whole game and
-`apps.common` is its one satellite app — `apps.faker_old_english` is a satellite as well, but a plain
-package under `apps/` rather than an app. The game's structure lives in topic packages *inside* `warband`
+`apps.common` is its one satellite app — `apps.faker_gaelic` and `apps.faker_old_english` are satellites
+as well, but plain packages under `apps/` rather than apps. The game's structure lives in topic packages *inside* `warband`
 (`apps/warband/faction/`, `apps/warband/skirmish/`, …). Django looks exactly one fixed path into an app
 for everything it discovers, so a model, template, template tag, fixture, admin registration or
 management command put in a topic package instead of the app root simply never loads — with no error
