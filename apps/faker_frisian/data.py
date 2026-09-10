@@ -564,9 +564,10 @@ PLACE_GENERICS = (
     "wier",
 )
 
-# Bynames for telling two men of the same name apart. Colour and provenance only - "Adward Swart",
-# "Folkmer Dena" - so none of them makes a claim about the man's build, his speed, his health or his
-# nerve, which is what his nickname is already for and could then contradict.
+# Bynames for telling two men of the same name apart. Colour, age and provenance - "Adward Swart",
+# "Folkmer Dena", "Bernhard Ald" - so none of them makes a claim about the man's build, his speed, his
+# health or his nerve, which is what his nickname is already for and could then contradict. Age is in
+# because nothing the game measures is an age, so no nickname can disagree with one.
 BYNAMES = (
     "Ald",
     "Blank",
