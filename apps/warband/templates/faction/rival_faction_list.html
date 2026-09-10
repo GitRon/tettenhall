@@ -5,7 +5,9 @@
 
     {# The reasons the player's own war band cannot march are facts about him, not about any one rival, #}
     {# so they are said once here instead of on every row #}
-    {% if has_marched_this_month %}
+    {% if savegame_is_over %}
+        <p class="uk-text-meta">This game is over. Start a new savegame to march again.</p>
+    {% elif has_marched_this_month %}
         <p class="uk-text-meta">Your warriors have already fought this month.</p>
     {% elif leader_cannot_march %}
         <p class="uk-text-meta">Your leader is in no condition to march.</p>

@@ -3,6 +3,7 @@ import pytest
 from apps.warband.faction.forms.faction_attack import FactionAttackForm
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -46,6 +47,65 @@ def test_assignable_warriors_exclude_another_factions_warrior():
     form = FactionAttackForm(leader=leader, month=3)
 
     assert list(form.fields["assigned_warriors"].queryset) == []
+
+
+@pytest.mark.django_db
+def test_empty_help_text_stays_away_while_somebody_can_march():
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    WarriorFactory(faction=faction)
+
+    form = FactionAttackForm(leader=leader, month=3)
+
+    assert form.fields["assigned_warriors"].help_text == ""
+
+
+@pytest.mark.django_db
+def test_empty_help_text_names_a_roster_of_one():
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+
+    form = FactionAttackForm(leader=leader, month=3)
+
+    assert form.fields["assigned_warriors"].help_text == (
+        f"{FactionAttackForm.EMPTY_NO_OTHERS} {FactionAttackForm.EMPTY_TAIL}"
+    )
+
+
+@pytest.mark.django_db
+def test_empty_help_text_names_the_wounded():
+    """
+    The state the entry was found in: one man unconscious, one dead, and a picker with no options in
+    it that said nothing about either.
+    """
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    form = FactionAttackForm(leader=leader, month=3)
+
+    assert form.fields["assigned_warriors"].help_text == (
+        f"{FactionAttackForm.EMPTY_NONE_ABLE} {FactionAttackForm.EMPTY_TAIL}"
+    )
+
+
+@pytest.mark.django_db
+def test_empty_help_text_names_the_committed():
+    """
+    Able to march and spoken for, which is the one of the three the player can still do something
+    about - next month.
+    """
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    quest_contract = QuestContractFactory(faction=faction, accepted_in_month=3)
+    quest_contract.assigned_warriors.add(WarriorFactory(faction=faction))
+
+    form = FactionAttackForm(leader=leader, month=3)
+
+    assert form.fields["assigned_warriors"].help_text == (
+        f"{FactionAttackForm.EMPTY_ALL_COMMITTED} {FactionAttackForm.EMPTY_TAIL}"
+    )
 
 
 @pytest.mark.django_db

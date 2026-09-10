@@ -74,11 +74,20 @@
     <div class="uk-navbar-right uk-margin-right">
         <ul class="uk-navbar-nav">
             {% if request.user.is_authenticated and current_savegame %}
-                <li class="uk-active">
-                    <a hx-post="{% url 'warband:finish-month-view' %}">
-                        Finish month
-                    </a>
-                </li>
+                {# A control whose only answer is a refusal is worse than no control. The guard behind #}
+                {# every command view turns a decided savegame away with a toast, so this says which #}
+                {# state the game is in instead of offering the month again. #}
+                {% if current_savegame.is_over %}
+                    <li>
+                        <span class="uk-navbar-item uk-text-muted">Game over</span>
+                    </li>
+                {% else %}
+                    <li class="uk-active">
+                        <a hx-post="{% url 'warband:finish-month-view' %}">
+                            Finish month
+                        </a>
+                    </li>
+                {% endif %}
             {% endif %}
             {% if request.user.is_authenticated %}
                 <li>

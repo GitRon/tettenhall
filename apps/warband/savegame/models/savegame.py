@@ -49,3 +49,13 @@ class Savegame(models.Model):
         # Set all other savegames of this savegames user to inactive
         if self.is_active:
             Savegame.objects.set_all_others_from_user_to_inactive(savegame_id=self.id, user_id=self.created_by.id)
+
+    @property
+    def is_over(self) -> bool:
+        """
+        Whether the game has been decided, either way.
+
+        Three places ask this: the guard that refuses every command, the dashboard that names the
+        outcome, and the navbar - which cannot compare against the enum itself.
+        """
+        return self.outcome != self.OutcomeChoices.OUTCOME_RUNNING

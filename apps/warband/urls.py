@@ -39,6 +39,11 @@ urlpatterns = [
         faction_views.FactionCapturedWarriorListView.as_view(),
         name="faction-captured-warrior-list-htmx",
     ),
+    path(
+        "faction/faction/<int:pk>/pub/htmx",
+        faction_views.FactionPubMercenaryListView.as_view(),
+        name="pub-mercenary-list-htmx",
+    ),
     # Above the detail route for readability only - "rivals" is not an int, so the two cannot collide
     path("faction/faction/rivals", faction_views.RivalFactionListView.as_view(), name="rival-faction-list-view"),
     path("faction/faction/<int:pk>", faction_views.FactionDetailView.as_view(), name="faction-detail-view"),

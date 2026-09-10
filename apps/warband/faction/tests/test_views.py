@@ -367,6 +367,25 @@ def test_rival_faction_list_view_says_the_war_band_has_already_marched(
 
 
 @pytest.mark.django_db
+def test_rival_faction_list_view_says_the_game_is_over(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    The decided savegame outranks the month: with this unsaid the page explained a missing Attack
+    button with "your warriors have already fought this month", which is true of a month nobody will
+    ever play.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
+
+    assert response.context["savegame_is_over"] is True
+
+
+@pytest.mark.django_db
 def test_rival_faction_list_view_says_the_leader_cannot_march(logged_in_client, current_savegame):
     """
     Nothing is keeping the war band busy, so the reason is the leader himself - here a faction that
@@ -438,6 +457,30 @@ def test_faction_item_list_view_does_not_mark_a_rival_as_the_players_own(logged_
 
     assert response.status_code == 200
     assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
+def test_faction_pub_mercenary_list_view_shows_the_faction(logged_in_client, current_savegame):
+    """
+    The pub's own partial, so that hiring the last mercenary re-renders the list rather than only the
+    card that left it - which is what lets the empty state fire.
+    """
+    response = logged_in_client.get(
+        reverse("warband:pub-mercenary-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["object"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_faction_pub_mercenary_list_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
+    other_savegame = SavegameFactory()
+    foreign_faction = FactionFactory(savegame=other_savegame)
+
+    response = logged_in_client.get(reverse("warband:pub-mercenary-list-htmx", kwargs={"pk": foreign_faction.id}))
+
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

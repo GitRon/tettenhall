@@ -67,7 +67,7 @@ class DashboardView(generic.TemplateView):
             context["faction"] = current_savegame.player_faction
             # Only set once the game has been decided, so the template can ask a single question
             # instead of comparing against the running value itself
-            if current_savegame.outcome != Savegame.OutcomeChoices.OUTCOME_RUNNING:
+            if current_savegame.is_over:
                 context["savegame_outcome"] = current_savegame.get_outcome_display()
 
         return context

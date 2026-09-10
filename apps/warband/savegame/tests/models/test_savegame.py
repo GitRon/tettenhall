@@ -36,3 +36,17 @@ def test_a_savegame_deletes_together_with_everything_hanging_off_it():
 
     assert Savegame.objects.count() == 0
     assert Faction.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_is_over_while_the_game_is_being_played():
+    savegame = SavegameFactory()
+
+    assert savegame.is_over is False
+
+
+@pytest.mark.django_db
+def test_is_over_once_the_game_has_been_decided():
+    savegame = SavegameFactory(outcome=Savegame.OutcomeChoices.OUTCOME_LOST)
+
+    assert savegame.is_over is True
