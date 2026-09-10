@@ -2,7 +2,8 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-    <h1>Training overview</h1>
+    {# Its own name, not the list's: choosing next month's training looked like the page just left #}
+    <h1>Choose next month's training</h1>
     <div uk-grid>
         <div class="uk-width-2-3">
             {% crispy form %}

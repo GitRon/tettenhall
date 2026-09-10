@@ -83,3 +83,21 @@ def test_handle_determine_savegame_outcome_carries_the_unresolved_skirmish():
     result = handle_determine_savegame_outcome(context=DetermineSavegameOutcome(savegame=savegame))
 
     assert result.open_skirmish_list == [skirmish]
+
+
+@pytest.mark.django_db
+def test_handle_determine_savegame_outcome_moves_the_last_saved_timestamp():
+    """
+    Django refreshes an "auto_now" column only when "update_fields" names it, so the savegame list
+    dated a finished game to the minute it was created - on the one screen with nothing else to
+    tell it apart from a running one.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame, is_defeated=True)
+    savegame.save()
+    lastmodified_at_before = Savegame.objects.values_list("lastmodified_at", flat=True).get(id=savegame.id)
+
+    handle_determine_savegame_outcome(context=DetermineSavegameOutcome(savegame=savegame))
+
+    savegame.refresh_from_db()
+    assert savegame.lastmodified_at > lastmodified_at_before

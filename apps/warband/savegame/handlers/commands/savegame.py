@@ -48,7 +48,11 @@ def handle_determine_savegame_outcome(*, context: DetermineSavegameOutcome) -> E
         return None
 
     context.savegame.outcome = outcome
-    context.savegame.save(update_fields=("outcome",))
+    # "lastmodified_at" is named explicitly because Django refreshes an "auto_now" column only when
+    # "update_fields" lists it. Without it the savegame list dated a game that ended at 14:03 to the
+    # minute it was created, on the one screen that has nothing else to tell a finished game from a
+    # running one.
+    context.savegame.save(update_fields=("outcome", "lastmodified_at"))
 
     # The fight the game ended in is still open, and deciding it needs a query the consuming event
     # handler is not allowed to make. Both sides are pulled in with it: that handler picks the victor

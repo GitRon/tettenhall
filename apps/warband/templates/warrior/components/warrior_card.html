@@ -35,44 +35,43 @@
         </div>
     </div>
     <div class="uk-card-body uk-text-left">
-        <div class="uk-grid uk-child-width-expand@s" uk-grid>
-            <div>
-                <table class="uk-table">
-                    <tr>
-                        <td>Faction</td>
-                        <td>
-                            {{ warrior.faction.name }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Strength</td>
-                        <td>{{ warrior.strength }}</td>
-                    </tr>
-                    <tr>
-                        <td>Dexterity</td>
-                        <td>{{ warrior.dexterity }}</td>
-                    </tr>
-                </table>
-            </div>
-            <div>
-                <table class="uk-table">
-                    <tr>
-                        <td>Culture</td>
-                        <td>{{ warrior.culture.name }}</td>
-                    </tr>
-                    {% if is_player_faction %}
-                        <tr>
-                            <td>Weapon</td>
-                            <td>{{ warrior.weapon|default_if_none:'-' }}</td>
-                        </tr>
-                        <tr>
-                            <td>Armor</td>
-                            <td>{{ warrior.armor|default_if_none:'-' }}</td>
-                        </tr>
-                    {% endif %}
-                </table>
-            </div>
-        </div>
+        {% comment %}
+            One table rather than two side by side. The card is narrow because the faction page puts
+            it in a three-column grid, not because the viewport is small, so a breakpoint that stacks
+            below 640px never fires for it: the left table's value ran into the right table's label
+            and the card read "PlaytestersCulture". A single column cannot collide with itself at any
+            width.
+        {% endcomment %}
+        <table class="uk-table">
+            <tr>
+                <td>Faction</td>
+                <td>
+                    {{ warrior.faction.name }}
+                </td>
+            </tr>
+            <tr>
+                <td>Culture</td>
+                <td>{{ warrior.culture.name }}</td>
+            </tr>
+            <tr>
+                <td>Strength</td>
+                <td>{{ warrior.strength }}</td>
+            </tr>
+            <tr>
+                <td>Dexterity</td>
+                <td>{{ warrior.dexterity }}</td>
+            </tr>
+            {% if is_player_faction %}
+                <tr>
+                    <td>Weapon</td>
+                    <td>{{ warrior.weapon|default_if_none:'-' }}</td>
+                </tr>
+                <tr>
+                    <td>Armor</td>
+                    <td>{{ warrior.armor|default_if_none:'-' }}</td>
+                </tr>
+            {% endif %}
+        </table>
     </div>
     <div class="uk-card-footer">
         {% comment %}

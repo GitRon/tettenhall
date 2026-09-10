@@ -46,7 +46,12 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         # them: the player may read what they carry, but only his own men can be re-equipped - the
         # update view resolves nobody else. Rendering the edit control for them would be exactly the
         # control-that-can-only-fail this batch removed twice already.
-        context["can_edit_gear"] = player_faction is not None and self.object.faction_id == player_faction.id
+        #
+        # Named the way the roster card names it, because the page now withholds the same three
+        # things the card withholds - health, morale and condition - and one predicate has to decide
+        # both or a rival's numbers leak on whichever screen was updated second.
+        context["is_player_faction"] = player_faction is not None and self.object.faction_id == player_faction.id
+        context["can_edit_gear"] = context["is_player_faction"]
         context["can_see_gear"] = player_faction is not None and (
             context["can_edit_gear"]
             or player_faction.captured_warriors.filter(id=self.object.id).exists()

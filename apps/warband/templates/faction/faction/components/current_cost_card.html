@@ -13,10 +13,28 @@
             </td>
             <td>{{ building_income_amount }}</td>
         </tr>
+        {% comment %}
+            Both rows stay behind the same guard. "remaining_amount" is what the bankruptcy warning
+            below reads, and a shortfall showing the income-fed figure beside a red counter would
+            read as reassurance the faction has not earned - the income arrives after the wages have
+            already failed.
+
+            The sum is taken here rather than in the view because the two halves reach the card from
+            different places: the payroll rides in on the finance context processor, which is
+            deliberate - the view assembling its own would let the card and the month disagree about
+            who goes unpaid - and only the income is this view's own.
+        {% endcomment %}
         {% if not wage_bill_payroll.is_short %}
             <tr>
                 <td>Left after next month's wages</td>
                 <td>{{ wage_bill_payroll.remaining_amount }}</td>
+            </tr>
+            <tr>
+                <td>
+                    In the purse next month
+                    <span class="uk-text-meta">wages paid, income in</span>
+                </td>
+                <td>{{ wage_bill_payroll.remaining_amount|add:building_income_amount }}</td>
             </tr>
         {% endif %}
         </tbody>
