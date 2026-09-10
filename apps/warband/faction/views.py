@@ -26,6 +26,7 @@ from apps.warband.savegame.services.current_savegame import get_current_savegame
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
+from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
 class PlayerFactionAwareContextMixin:
@@ -57,7 +58,8 @@ class PlayerFactionAwareContextMixin:
 
 class FactionRosterContextMixin:
     """
-    Assembles the roster a faction page renders, and says of each man whether he may be sent away.
+    Assembles the roster a faction page renders, says of each man whether he may be sent away, and
+    says where he stands on his wages.
 
     Shared by the faction page and the htmx partial that replaces its warrior list, because a roster
     the player got a Dismiss control on once and lost on the first "loadFactionWarriorList" swap is
@@ -67,25 +69,34 @@ class FactionRosterContextMixin:
     the card offers and a click the view accepts cannot come apart. Asked once for the whole roster
     rather than per card - see "get_dismissal_refusals" - and only for the player's own faction: a
     rival's men carry no control to explain, and the balance being weighed would be the wrong purse.
+    The wage note is gated on the same answer, for the same reason the card withholds health and
+    morale: a rival's wage troubles are knowledge the player has not earned.
 
-    The refusal is attached to each warrior rather than handed over as a dict, because the card is
-    rendered per warrior and a template cannot index a dict by a variable key.
+    Both are attached to each warrior rather than handed over as dicts, because the card is rendered
+    per warrior and a template cannot index a dict by a variable key.
     """
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        warrior_list = list(Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.id))
+        # The card prints the man's faction, so the join is one query instead of one per card
+        warrior_list = list(
+            Warrior.objects.select_related("faction").exclude_dead().filter_faction(faction_id=self.object.id)
+        )
 
         if context["is_player_faction"]:
+            player_faction = self.current_savegame.player_faction
             refusals = get_dismissal_refusals(
-                faction=self.current_savegame.player_faction,
+                faction=player_faction,
                 warrior_list=warrior_list,
                 month=self.current_savegame.current_month,
                 balance=Transaction.objects.current_balance(faction_id=self.current_savegame.player_faction_id),
             )
             for warrior in warrior_list:
                 warrior.dismissal_refusal = refusals.get(warrior.id)
+                # The leader is handed over rather than read off the warrior's own faction, which
+                # would be a query per card for a number the page already holds
+                warrior.unpaid_wages_note = get_unpaid_wages_note(warrior=warrior, leader_id=player_faction.leader_id)
 
         context["warrior_list"] = warrior_list
 

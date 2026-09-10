@@ -24,6 +24,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     RecruitCapturedWarrior,
 )
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
+from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
 class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
@@ -56,6 +57,15 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             context["can_edit_gear"]
             or player_faction.captured_warriors.filter(id=self.object.id).exists()
             or player_faction.available_mercenaries.filter(id=self.object.id).exists()
+        )
+        # Where the man stands on his wages, behind the same gate for the same reason: it is read off
+        # his own morale being stuck, which a rival's card does not give away either. Carried here as
+        # well as on the card, because the card links to this page and a page showing less about a man
+        # than the tile clicked to reach it is what the gear rows above exist to correct.
+        context["unpaid_wages_note"] = (
+            get_unpaid_wages_note(warrior=self.object, leader_id=player_faction.leader_id)
+            if context["is_player_faction"]
+            else None
         )
         return context
 
