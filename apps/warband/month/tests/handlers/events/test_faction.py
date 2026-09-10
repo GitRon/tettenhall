@@ -1,5 +1,6 @@
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
     MonthlyWarriorSalariesPaid,
     MonthlyWarriorSalariesUnpaid,
@@ -7,12 +8,14 @@ from apps.warband.faction.messages.events.faction import (
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.handlers.events.faction import (
     handle_faction_fyrd_reserve_replenished,
+    handle_log_rival_defeat,
     handle_monthly_building_earnings,
     handle_pay_monthly_salary,
     handle_unpaid_warrior_salaries,
 )
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -98,6 +101,77 @@ def test_handle_unpaid_warrior_salaries_keeps_a_single_unpaid_warrior_singular()
         month=3,
         faction=faction,
     )
+
+
+def test_handle_log_rival_defeat_names_the_leader_who_fell():
+    player_faction = FactionFactory.build(name="Tettenhall")
+    faction = FactionFactory.build(name="Kristinefoss")
+    leader = WarriorFactory.build(name="Vincent")
+
+    result = handle_log_rival_defeat(
+        context=FactionWasDefeated(
+            faction=faction,
+            savegame=SavegameFactory.build(),
+            player_faction=player_faction,
+            leader=leader,
+            leader_was_killed=True,
+            month=3,
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Kristinefoss is out of the war.",
+        body="Vincent led them, and he fell in the fighting. There is nobody left to answer for the faction.",
+        kind=PlayerMonthLog.KindChoices.KIND_RIVAL_DEFEATED,
+        month=3,
+        faction=player_faction,
+    )
+
+
+def test_handle_log_rival_defeat_names_a_captured_leader_as_a_prisoner():
+    player_faction = FactionFactory.build(name="Tettenhall")
+    faction = FactionFactory.build(name="Kristinefoss")
+    leader = WarriorFactory.build(name="Vincent")
+
+    result = handle_log_rival_defeat(
+        context=FactionWasDefeated(
+            faction=faction,
+            savegame=SavegameFactory.build(),
+            player_faction=player_faction,
+            leader=leader,
+            leader_was_killed=False,
+            month=3,
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Kristinefoss is out of the war.",
+        body="Vincent led them, and he is your prisoner. There is nobody left to answer for the faction.",
+        kind=PlayerMonthLog.KindChoices.KIND_RIVAL_DEFEATED,
+        month=3,
+        faction=player_faction,
+    )
+
+
+def test_handle_log_rival_defeat_says_nothing_about_the_players_own_faction():
+    """
+    His own leader falling ends the savegame, and the line about that is written against
+    SavegameEnded - a second one here would be two announcements of the one faction.
+    """
+    player_faction = FactionFactory.build(name="Tettenhall")
+
+    result = handle_log_rival_defeat(
+        context=FactionWasDefeated(
+            faction=player_faction,
+            savegame=SavegameFactory.build(),
+            player_faction=player_faction,
+            leader=WarriorFactory.build(),
+            leader_was_killed=True,
+            month=3,
+        )
+    )
+
+    assert result is None
 
 
 def test_handle_monthly_building_earnings_logs_the_earned_amount():

@@ -246,6 +246,9 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
     Most warriors are nobody's leader, so the usual answer is None. "Faction.leader" is looked up
     rather than "warrior.faction" because capture clears the latter before this runs - the leader
     relation is the only remaining record of who led whom.
+
+    The player's faction, the month and the fallen man are read here and put on the event, because
+    the handlers announcing the knockout run under strict mode's database blocker and could not.
     """
     faction = (
         Faction.objects.still_in_play(savegame_id=context.warrior.savegame_id).filter(leader=context.warrior).first()
@@ -257,7 +260,18 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
     faction.is_defeated = True
     faction.save(update_fields=("is_defeated",))
 
-    return FactionWasDefeated(faction=faction, savegame=faction.savegame)
+    savegame = faction.savegame
+
+    return FactionWasDefeated(
+        faction=faction,
+        savegame=savegame,
+        player_faction=savegame.player_faction,
+        leader=context.warrior,
+        # Dead or merely taken, which is the difference between the two sentences the log can write.
+        # A captured leader is knocked out first and taken afterwards, so anything but dead is taken
+        leader_was_killed=context.warrior.is_dead,
+        month=savegame.current_month,
+    )
 
 
 @message_registry.register_command(command=OccupyFaction)
