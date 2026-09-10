@@ -2,13 +2,15 @@
 The one place that turns a ``Culture.locale`` into the faker that names its people and its places.
 
 It sits in the domain app rather than in a satellite because it is the only thing in the project that
-knows which locale keys the culture fixture actually carries - "ang" and "sga" are rows in that table,
-not facts about Faker.
+knows which locale keys the culture fixture actually carries - "ang", "sga" and "ofs" are rows in that
+table, not facts about Faker.
 """
 
 from faker import Faker
 from faker.providers import BaseProvider
 
+from apps.faker_frisian import BYNAMES as FRISIAN_BYNAMES
+from apps.faker_frisian import FRISIAN_BASE_LOCALE, FRISIAN_LOCALE, FrisianProvider
 from apps.faker_gaelic import BYNAMES as GAELIC_BYNAMES
 from apps.faker_gaelic import GAELIC_BASE_LOCALE, GAELIC_LOCALE, GaelicProvider
 from apps.faker_old_english import BYNAMES as OLD_ENGLISH_BYNAMES
@@ -21,11 +23,13 @@ from apps.faker_old_english import OLD_ENGLISH_BASE_LOCALE, OLD_ENGLISH_LOCALE, 
 PROVIDERS_BY_LOCALE: dict[str, tuple[str, type[BaseProvider]]] = {
     OLD_ENGLISH_LOCALE: (OLD_ENGLISH_BASE_LOCALE, OldEnglishProvider),
     GAELIC_LOCALE: (GAELIC_BASE_LOCALE, GaelicProvider),
+    FRISIAN_LOCALE: (FRISIAN_BASE_LOCALE, FrisianProvider),
 }
 
 BYNAMES_BY_LOCALE: dict[str, tuple[str, ...]] = {
     OLD_ENGLISH_LOCALE: OLD_ENGLISH_BYNAMES,
     GAELIC_LOCALE: GAELIC_BYNAMES,
+    FRISIAN_LOCALE: FRISIAN_BYNAMES,
 }
 
 

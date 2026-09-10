@@ -249,7 +249,7 @@ root_packages = ["apps"]
 [[tool.importlinter.contracts]]
 name = "Satellites do not import the domain"
 type = "forbidden"
-source_modules = ["apps.common", "apps.faker_gaelic", "apps.faker_old_english"]
+source_modules = ["apps.common", "apps.faker_frisian", "apps.faker_gaelic", "apps.faker_old_english"]
 forbidden_modules = ["apps.warband"]
 
 # A name provider is a name provider and nothing else. It reaches for no other package of ours,
@@ -258,22 +258,23 @@ forbidden_modules = ["apps.warband"]
 [[tool.importlinter.contracts]]
 name = "The name providers stand on their own"
 type = "forbidden"
-source_modules = ["apps.faker_gaelic", "apps.faker_old_english"]
+source_modules = ["apps.faker_frisian", "apps.faker_gaelic", "apps.faker_old_english"]
 forbidden_modules = ["apps.common"]
 
-# And that includes each other. The two languages share a shape - a name stock, an orthography, a
+# And that includes each other. The three languages share a shape - a name stock, an orthography, a
 # handful of joining rules - and nothing else: a rule that fits Old English spelling has no business
-# being reached for from the Gaelic one, and a shared helper between them would tie both to whichever
-# lifts out first.
+# being reached for from the Gaelic or the Frisian one, and a shared helper between them would tie all
+# three to whichever lifts out first. Frisian is where this bites hardest, its joining rules being the
+# Old English ones with the endings changed - and restating them is the point.
 [[tool.importlinter.contracts]]
 name = "The name providers do not import each other"
 type = "independence"
-modules = ["apps.faker_gaelic", "apps.faker_old_english"]
+modules = ["apps.faker_frisian", "apps.faker_gaelic", "apps.faker_old_english"]
 
 # "apps.config" is the settings package, not an app. Settings are read through "django.conf.settings",
 # which is lazy and overridable in tests; importing the module directly bypasses both.
 [[tool.importlinter.contracts]]
 name = "No app imports the settings package"
 type = "forbidden"
-source_modules = ["apps.warband", "apps.common", "apps.faker_gaelic", "apps.faker_old_english"]
+source_modules = ["apps.warband", "apps.common", "apps.faker_frisian", "apps.faker_gaelic", "apps.faker_old_english"]
 forbidden_modules = ["apps.config"]
