@@ -45,9 +45,16 @@ class FactionQuerySet(models.QuerySet):
             id__in=Warrior.objects.filter_healthy().values("faction_id")
         )
 
-    def occupiable_by(self, *, player_faction):
+    def occupiable_by(self, *, savegame):
         """
-        Every rival of "player_faction" whose town can simply be ridden into.
+        Every rival of the player of "savegame" whose town can simply be ridden into.
+
+        A decided savegame offers none, for the reason [attackable_by] gives: the rivals table said
+        the game was over, dropped every Attack link and went on drawing "Ride in" on the row beside
+        them. FactionOccupyView carries RunningSavegameRequiredMixin, so the press was answered - but
+        two controls on one row cannot answer the same question differently.
+
+        Takes the savegame for the same reason as well, and so that the pair of them read alike.
 
         The mirror of [rivals_still_standing] rather than the complement of [attackable_by]: a rival
         can be unattackable for having its healthy men already committed to a fight, and a town whose
@@ -65,6 +72,13 @@ class FactionQuerySet(models.QuerySet):
         month for the rest of the savegame. Unreachable in ordinary play, where a leader who falls
         takes his faction with him, so this is a guard rather than a rule the player will meet.
         """
+        if savegame.is_over:
+            return self.none()
+
+        player_faction = savegame.player_faction
+        if player_faction is None:
+            return self.none()
+
         # Imported here because the faction model imports this module while being defined itself,
         # and the warrior model reaches back into the faction app
         from apps.warband.skirmish.models.warrior import Warrior

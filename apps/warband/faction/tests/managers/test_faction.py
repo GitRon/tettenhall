@@ -96,9 +96,38 @@ def test_occupiable_by_returns_a_rival_nobody_healthy_is_left_to_hold(player_fac
     rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     rival.save()
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == [rival]
+
+
+@pytest.mark.django_db
+def test_occupiable_by_offers_nobody_once_the_game_is_decided(player_faction):
+    """
+    The sibling rule to "attackable_by". The rivals table dropped every Attack link on a finished
+    game and went on drawing "Ride in" on the row beside them, which is one row answering the same
+    question two ways.
+    """
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    savegame = player_faction.savegame
+    savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    savegame.save()
+
+    result = Faction.objects.occupiable_by(savegame=savegame)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_occupiable_by_without_a_player_faction():
+    """
+    The reachable state before the player has a faction of his own: nobody's town to ride into.
+    """
+    result = Faction.objects.occupiable_by(savegame=SavegameFactory())
+
+    assert list(result) == []
 
 
 @pytest.mark.django_db
@@ -108,7 +137,7 @@ def test_occupiable_by_excludes_a_rival_with_a_healthy_warrior(player_faction):
     rival.save()
     WarriorFactory(faction=rival)
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -130,7 +159,7 @@ def test_occupiable_by_ignores_healthy_warriors_of_another_faction(player_factio
     captive.faction = None
     captive.save()
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == [rival]
 
@@ -139,7 +168,7 @@ def test_occupiable_by_ignores_healthy_warriors_of_another_faction(player_factio
 def test_occupiable_by_excludes_a_rival_without_a_leader(player_faction):
     FactionFactory(savegame=player_faction.savegame, leader=None)
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -149,7 +178,7 @@ def test_occupiable_by_excludes_the_player_faction(player_faction):
     player_faction.leader.condition = Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     player_faction.leader.save()
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -160,7 +189,7 @@ def test_occupiable_by_excludes_a_defeated_faction(player_faction):
     rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     rival.save()
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -171,7 +200,7 @@ def test_occupiable_by_excludes_factions_of_another_savegame(player_faction):
     rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     rival.save()
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -188,7 +217,7 @@ def test_occupiable_by_offers_a_rival_whose_men_are_committed_but_healthy_nothin
     skirmish = SkirmishFactory(month=3, attacking_faction=player_faction, defending_faction=rival)
     skirmish.defending_warriors.add(rival.leader)
 
-    result = Faction.objects.occupiable_by(player_faction=player_faction)
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 

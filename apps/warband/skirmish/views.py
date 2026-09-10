@@ -43,12 +43,14 @@ class OccupiableSideMixin:
     """
 
     def get_occupiable_faction(self, *, skirmish) -> Faction | None:
+        # Not guarded against a missing savegame: both views using this carry
+        # SavegameScopedQuerysetMixin, so the skirmish itself is already unresolvable without one and
+        # answers 404 before any context is built. "occupiable_by" asks the savegame about a player
+        # faction it may not have, which is the case that does reach here.
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        if current_savegame is None or current_savegame.player_faction is None:
-            return None
 
         return (
-            Faction.objects.occupiable_by(player_faction=current_savegame.player_faction)
+            Faction.objects.occupiable_by(savegame=current_savegame)
             .filter(id__in=(skirmish.attacking_faction_id, skirmish.defending_faction_id))
             .first()
         )
