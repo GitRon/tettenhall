@@ -301,7 +301,7 @@ def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list
 
     Never asked of a rival rather than refused for one: this hangs off PlayerMonthPrepared, the event
     for the things a rival has no equivalent of. A rival's town is created at every default and would
-    collect NoHall's 50 silver against a leader's salary of around 150 - and hall revenue is flat per
+    collect NoHall's 50 silver against a leader's salary of around 135 - and hall revenue is flat per
     level while a wage bill scales with the roster, so letting rivals build their way out of that
     would move the constant and never the slope. They earn off their war band instead, see
     [RivalIncome].

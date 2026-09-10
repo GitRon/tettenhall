@@ -81,7 +81,7 @@ holding that level's numbers:
   resale ratio is worth little in silver. Its stock size is the real draw, which is why it is priced below
   the other buildings.
 - **The wage bill outweighs building costs early.** A warrior's salary is `round(recruitment_price * 0.5)`
-  (`apps/warband/warrior/services/generators/warrior/base.py:164`), and what that comes to is the archetype's
+  (`apps/warband/warrior/services/generators/warrior/base.py:161`), and what that comes to is the archetype's
   to decide — around 90 silver a month for a fyrd levy, 135 for a leader and 170 for a pub mercenary,
   priced against `PRICE_STATS_YARDSTICK` and `PRICE_HEALTH_YARDSTICK`. Each grows with `LEVEL_UP_GROWTH`
   alongside his attributes. A faction opens with 1000 silver
