@@ -60,7 +60,7 @@ passes and tests nothing.
 
 ## Defects these tests found
 
-Writing them surfaced three real defects, all since fixed. Each is now covered by one of the four tests.
+Writing them surfaced three real defects, all since fixed. Each is now covered by one of these tests.
 
 - **`DropWarriorItems`** — emitted by an event handler, but its command handler was commented out with a
   TODO. Dead edge. The TODO was right that `handle_distribute_loot()` supersedes it, so the command, its

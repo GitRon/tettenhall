@@ -78,8 +78,11 @@ apps/warband/<topic>/handlers/events/<domain>.py     # functions handling Events
 
   Under `handlers/events/` the origin is what makes a cross-topic subscription findable:
   `apps/warband/finance/handlers/events/town.py` holds finance's reactions to events raised by the
-  `town` topic. When a topic subscribes to its **own** events the origin only repeats the directory,
-  so `<domain>` falls back to the subject — `apps/warband/skirmish/handlers/events/warrior.py`.
+  `town` topic. Naming an origin only works while there is exactly one worth naming, so `<domain>`
+  falls back to the subject in the two cases where there is not — a topic subscribing to its **own**
+  events (`apps/warband/skirmish/handlers/events/warrior.py`), and a module whose handlers react to
+  **several** topics: `apps/warband/faction/handlers/events/item.py` is named after the shop it
+  stocks, and reacts to `item`, `faction` and `month` events to do it.
 
   The mirror in the second row is not a convention to remember: a
   [registry test](registry-tests.md) fails when a command and its handler sit in differently-named
