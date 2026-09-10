@@ -70,33 +70,17 @@
             offered - his own men, his prisoners, and the mercenaries in his pub, whose weapon the
             town square is already charging him for.
         {% endcomment %}
-        {% comment %}
-            The mean sits beside the slot rather than only on the options the slot is edited from,
-            and it is this man's rather than the item's: a blow is scaled by his strength, which is
-            two rows up, so the axe that averages 4.5 in the shop is not what he swings for. Armour
-            carries no strength at all, hence one figure quoted a blow and the other flat.
-
-            Written out for an empty slot too - the fight hands an empty slot the fallback type
-            rather than nothing, and a blank would read as a man who can neither hurt anybody nor
-            take a blow.
-        {% endcomment %}
         {% if can_see_gear %}
             <tr>
                 <td>Weapon</td>
                 <td>
                     {% include 'warrior/components/warrior_field_display.html' with object=object attribute='weapon' field_value=object.weapon %}
-                    <span class="uk-text-meta">
-                        {{ object.expected_damage|floatformat }} damage a blow on average
-                    </span>
                 </td>
             </tr>
             <tr>
                 <td>Armor</td>
                 <td>
                     {% include 'warrior/components/warrior_field_display.html' with object=object attribute='armor' field_value=object.armor %}
-                    <span class="uk-text-meta">
-                        {{ object.expected_protection|floatformat }} protection turned aside on average
-                    </span>
                 </td>
             </tr>
         {% endif %}
