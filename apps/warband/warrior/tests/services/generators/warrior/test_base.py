@@ -7,6 +7,7 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
+from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
 @pytest.mark.django_db
@@ -94,6 +95,53 @@ def test_process_floors_the_stats_at_the_generator_minimum():
 
     assert result.strength == 4
     assert result.dexterity == 4
+
+
+@pytest.mark.django_db
+def test_process_prices_an_average_levy_against_the_shared_yardstick():
+    """
+    Every roll comes out at its own mean, so this is the average man of his kind and the price is the
+    archetype's alone rather than a draw. A levy lands at half a mercenary's wage - three of these,
+    one per generator, because the yardstick is the only thing keeping them apart: priced against
+    each archetype's own mean instead, all three come out at 150 and nothing notices.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    with mock.patch(
+        "apps.warband.warrior.services.generators.warrior.base.random.gauss", side_effect=lambda mu, sigma: mu
+    ):
+        result = generator.process()
+
+    assert result.recruitment_price == 150
+    assert result.monthly_salary == 75
+
+
+@pytest.mark.django_db
+def test_process_prices_an_average_mercenary_against_the_shared_yardstick():
+    generator = MercenaryWarriorGenerator(
+        culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id
+    )
+
+    with mock.patch(
+        "apps.warband.warrior.services.generators.warrior.base.random.gauss", side_effect=lambda mu, sigma: mu
+    ):
+        result = generator.process()
+
+    assert result.recruitment_price == 300
+    assert result.monthly_salary == 150
+
+
+@pytest.mark.django_db
+def test_process_prices_an_average_leader_against_the_shared_yardstick():
+    generator = LeaderWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    with mock.patch(
+        "apps.warband.warrior.services.generators.warrior.base.random.gauss", side_effect=lambda mu, sigma: mu
+    ):
+        result = generator.process()
+
+    assert result.recruitment_price == 260
+    assert result.monthly_salary == 130
 
 
 @pytest.mark.django_db

@@ -17,9 +17,12 @@ class RivalIncome:
     player's: a game-balance number gets one home.
     """
 
-    # A fyrd levy's salary lands around 150, so a warrior brings in roughly 50 more than he costs at
-    # level 1. A rival therefore accumulates slowly and the fyrd reserve stays the real brake on its
-    # growth, which is the shape "handle_replenish_fyrd_reserve" was already built to be.
+    # A fyrd levy's salary lands around 90, so a warrior brings in roughly 110 more than he costs at
+    # level 1. The fyrd reserve is the brake on a rival's growth rather than its purse, which is the
+    # shape "handle_replenish_fyrd_reserve" was already built to be - a rival grows by drafting, and
+    # a draft is free. What the surplus decides is how long it takes for levelling to eat it: every
+    # level adds a tenth to a salary, so the men a rival keeps alive turn from an income into a bill
+    # on their own.
     BASE_REVENUE_PER_MONTH = 50
     REVENUE_PER_HEALTHY_WARRIOR = 200
 

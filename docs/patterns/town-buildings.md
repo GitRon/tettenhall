@@ -81,8 +81,10 @@ holding that level's numbers:
   resale ratio is worth little in silver. Its stock size is the real draw, which is why it is priced below
   the other buildings.
 - **The wage bill outweighs building costs early.** A warrior's salary is `round(recruitment_price * 0.5)`
-  (`apps/warband/warrior/services/generators/warrior/base.py:126`), around 150 silver a month, and grows with
-  `LEVEL_UP_GROWTH` alongside his attributes. A faction opens with 1000 silver
+  (`apps/warband/warrior/services/generators/warrior/base.py:164`), and what that comes to is the archetype's
+  to decide — around 90 silver a month for a fyrd levy, 135 for a leader and 170 for a pub mercenary,
+  priced against `PRICE_STATS_YARDSTICK` and `PRICE_HEALTH_YARDSTICK`. Each grows with `LEVEL_UP_GROWTH`
+  alongside his attributes. A faction opens with 1000 silver
   (`apps/warband/finance/handlers/events/faction.py:76`) and the cheapest upgrade in the game is the marketplace's
-  first paid level at 600, so four men on the roster bill as much every month as that building costs once.
-  Buildings are what the player saves for; wages are what stops him.
+  first paid level at 600, so a band of four mercenaries bills more every month than that building costs
+  once. Buildings are what the player saves for; wages are what stops him.
