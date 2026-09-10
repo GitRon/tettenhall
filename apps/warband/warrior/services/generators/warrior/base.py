@@ -22,6 +22,24 @@ class BaseWarriorGenerator:
     PROGRESS_MU: int
     PROGRESS_SIGMA: int
 
+    # What a price is measured against, and the one pair of numbers on this class every archetype
+    # shares rather than declaring its own. A price answers how good a man is, not how good he is
+    # for his own kind: dividing a levy's rolled strength by a levy's mean and a mercenary's by a
+    # mercenary's lands both near one, and the archetype cancels out of the very number it ought to
+    # decide.
+    #
+    # The pair is the mercenary's own means, so a professional fighting man is what a full wage buys
+    # and the other two archetypes fall out of their attributes instead of being asserted beside
+    # them - a levy at roughly half of him because he has half the strength and two thirds of the
+    # health, a leader at four fifths because he is steadier rather than stronger.
+    #
+    # Deliberately not "strength_baseline", which a fight scales a blow by (see
+    # "Warrior.expected_damage"). That one is relative on purpose: a man of his own kind's average
+    # deals his weapon's full damage. Relative is the right answer to what a blow is worth and the
+    # wrong answer to what a man is worth, which is why pricing carries its own pair.
+    PRICE_STATS_YARDSTICK = 10
+    PRICE_HEALTH_YARDSTICK = 20
+
     item_generator_class: type(BaseItemGenerator)
     chance_for_weapon = 1
     chance_for_armor = 1
@@ -81,7 +99,8 @@ class BaseWarriorGenerator:
         while base_recruitment_price == 0:
             base_recruitment_price = max(round(random.gauss(100, 50)), 0)
         recruitment_price = int(
-            (((strength + dexterity) / self.STATS_MU) + (max_health / self.HEALTH_MU)) * base_recruitment_price
+            (((strength + dexterity) / self.PRICE_STATS_YARDSTICK) + (max_health / self.PRICE_HEALTH_YARDSTICK))
+            * base_recruitment_price
         )
 
         if random.uniform(0, 1) <= self.chance_for_weapon:

@@ -18,5 +18,5 @@ class PloughHoard(Incident):
         "and the man sent to count it kept back two."
     )
 
-    # Two thirds of a levy's monthly wage. Enough to be worth reading, not enough to be a plan
+    # Getting on for two months of a levy's wage. Enough to be worth reading, not enough to be a plan
     SILVER_CHANGE = 150

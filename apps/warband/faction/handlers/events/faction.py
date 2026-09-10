@@ -68,7 +68,7 @@ def handle_pay_monthly_warrior_salaries_for_new_month(*, context: FactionMonthPr
 
 
 # A rival has no buildings, so it earns off its war band instead - and its town sits at every default,
-# which would pay it 50 silver against a leader's salary of around 150. The player's half of this is
+# which would pay it 50 silver against a leader's salary of around 135. The player's half of this is
 # the one handler here that stays on PlayerMonthPrepared, further down.
 @message_registry.register_event(event=FactionMonthPrepared)
 def handle_earn_monthly_faction_income_for_new_month(*, context: FactionMonthPrepared) -> Command:
