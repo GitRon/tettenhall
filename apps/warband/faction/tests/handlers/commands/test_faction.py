@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 
+from apps.faker_frisian import FRISIAN_BASE_LOCALE, FRISIAN_LOCALE
 from apps.warband.faction.handlers.commands.faction import (
     handle_change_fyrd_reserve,
     handle_create_factions_for_new_savegame,
@@ -576,11 +577,14 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
     """
     savegame = SavegameFactory()
     norse_rival = CultureFactory(locale="no_NO")
-    frisian_rival = CultureFactory(locale="nl_NL")
+    frisian_rival = CultureFactory(locale=FRISIAN_LOCALE)
 
     # Faker is third party and random by nature. Standing it in for a stub that echoes the locale it was
     # built with is the only way to tie a generated name back to the culture it was drawn from; seeding
     # the real one is process-global and would leak into the rest of the session.
+    #
+    # The Frisian rival echoes its base locale rather than "ofs", which is the factory doing its job:
+    # Faker refuses "ofs" and the instance is built on "nl_NL" with the provider added on top.
     with (
         mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=2),
         mock.patch(
@@ -608,8 +612,8 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
         is_player_faction=False,
     )
     assert result[2] == CreateNewFaction(
-        name="Town of nl_NL",
-        town_name="Town of nl_NL",
+        name=f"Town of {FRISIAN_BASE_LOCALE}",
+        town_name=f"Town of {FRISIAN_BASE_LOCALE}",
         culture_id=frisian_rival.id,
         savegame=savegame,
         is_player_faction=False,

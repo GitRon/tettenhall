@@ -1,3 +1,6 @@
+from apps.faker_frisian import BYNAMES as FRISIAN_BYNAMES
+from apps.faker_frisian import FRISIAN_LOCALE
+from apps.faker_frisian.data import GIVEN_NAMES as FRISIAN_GIVEN_NAMES
 from apps.faker_gaelic import BYNAMES as GAELIC_BYNAMES
 from apps.faker_gaelic import GAELIC_LOCALE
 from apps.faker_gaelic.data import GIVEN_NAMES as GAELIC_GIVEN_NAMES
@@ -32,6 +35,26 @@ def test_faker_for_locale_names_a_gaelic_warrior():
     assert result.first_name_male() in [name.nominative for name in GAELIC_GIVEN_NAMES]
 
 
+def test_faker_for_locale_names_a_frisian_warrior():
+    """
+    And "ofs" is the third, which is why this is a table rather than a pair of factories.
+    """
+    result = faker_for_locale(locale=FRISIAN_LOCALE)
+
+    assert result.first_name_male() in FRISIAN_GIVEN_NAMES
+
+
+def test_faker_for_locale_builds_a_frisian_instance_on_dutch():
+    """
+    Frisian is the one of ours whose base locale is not a form of English, and the one whose base is
+    not broken either - "nl_NL" has a person provider and an address provider, and both answer with the
+    modern Netherlands. The provider shadows them for the century, not for the coverage.
+    """
+    result = faker_for_locale(locale=FRISIAN_LOCALE)
+
+    assert result.locales == ["nl_NL"]
+
+
 def test_faker_for_locale_builds_a_gaelic_instance_on_irish_english():
     """
     "en_IE" rather than "en_GB", so anything the game asks for beyond the two shadowed methods stays
@@ -62,6 +85,12 @@ def test_bynames_for_locale_hands_out_the_gaelic_ones():
     result = bynames_for_locale(locale=GAELIC_LOCALE)
 
     assert result == GAELIC_BYNAMES
+
+
+def test_bynames_for_locale_hands_out_the_frisian_ones():
+    result = bynames_for_locale(locale=FRISIAN_LOCALE)
+
+    assert result == FRISIAN_BYNAMES
 
 
 def test_bynames_for_locale_has_none_for_another_culture():

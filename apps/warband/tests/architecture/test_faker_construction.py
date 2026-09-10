@@ -1,15 +1,17 @@
 """
 Architectural test for where a ``Faker`` may be built.
 
-Two of the five cultures carry a locale Faker has never heard of: the Saxon one is ``ang`` and the
-Irish one is ``sga``, the ISO 639-3 codes for Old English and Old Irish. Faker accepts the locales it
-ships provider data for and refuses the rest before it imports a single provider, so both name stocks
-arrive through ``Faker.add_provider()``, and the factory in the faction topic is what knows to do that.
+Three of the five cultures carry a locale Faker has never heard of: the Saxon one is ``ang``, the Irish
+one ``sga`` and the Frisian one ``ofs``, the ISO 639-3 codes for Old English, Old Irish and Old Frisian.
+Faker accepts the locales it ships provider data for and refuses the rest before it imports a single
+provider, so all three name stocks arrive through ``Faker.add_provider()``, and the factory in the
+faction topic is what knows to do that.
 
-So ``Faker([culture.locale])`` written anywhere else raises ``AttributeError`` - but only for those two
-rows. Every test that reaches for a culture by ``Culture.objects.first()`` or by a factory can just as
-easily get Norse and stay green, and the crash waits in the savegame of whoever picks Saxon or Irish.
-That is why this is checked over the sources, once, for every construction site at all.
+So ``Faker([culture.locale])`` written anywhere else raises ``AttributeError`` - but only for those
+three rows. Every test that reaches for a culture by ``Culture.objects.first()`` or by a factory can
+just as easily get Norse and stay green, and the crash waits in the savegame of whoever picks Saxon,
+Irish or Frisian. That is why this is checked over the sources, once, for every construction site at
+all.
 """
 
 import ast
