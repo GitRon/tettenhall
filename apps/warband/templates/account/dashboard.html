@@ -3,6 +3,20 @@
 {% block content %}
     <h1>Dashboard</h1>
 
+    {# The first screen of the game, and the only one a fresh account reaches without the user #}
+    {# dropdown. Without this the page is a heading over nothing: every block below it is silent #}
+    {# when there is no savegame to report on. #}
+    {% if not current_savegame %}
+        <div class="uk-alert-primary" uk-alert>
+            <h3>No savegame loaded</h3>
+            <p>
+                There is no war band to report on yet.
+                <a href="{% url 'warband:savegame-create-view' %}">Start a new savegame</a>,
+                or <a href="{% url 'warband:savegame-list-view' %}">pick one you have already begun</a>.
+            </p>
+        </div>
+    {% endif %}
+
     {% if savegame_outcome %}
         <div class="uk-alert-primary" uk-alert>
             <h3>{{ savegame_outcome }}</h3>
