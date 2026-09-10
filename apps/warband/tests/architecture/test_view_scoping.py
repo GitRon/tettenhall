@@ -33,6 +33,24 @@ UNSCOPED_VIEWS: frozenset[str] = frozenset(
     }
 )
 
+# Views this check cannot see at all. The collection below takes "SingleObjectMixin" and
+# "MultipleObjectMixin", because those are what resolve an object from the URL - so a plain
+# "TemplateView" that queries a scoped manager itself is outside it, however much scoping it does.
+#
+# Listed rather than left silent: "UNSCOPED_VIEWS" above states its exceptions and this blind spot
+# stated nothing, which is the difference worth closing. Each entry names the test that does cover
+# it, and the test below keeps the list from outliving the shape that put a view on it.
+UNCOLLECTED_SCOPED_VIEWS: frozenset[str] = frozenset(
+    {
+        # A "TemplateView" rendering the player faction's month log through "for_player_faction".
+        # The id it scopes by comes off the session's current savegame rather than the URL, which is
+        # the risk this module exists to catch, and
+        # "account/tests/test_views.py::test_dashboard_view_lists_the_month_logs_of_the_player_faction"
+        # plants a rival's row in the same savegame and asserts it is excluded.
+        "DashboardView",
+    }
+)
+
 
 def _project_view_classes() -> list[type]:
     """
@@ -72,6 +90,24 @@ def test_model_backed_views_scope_their_queryset():
     ]
 
     assert unscoped == []
+
+
+def test_views_the_check_cannot_see_are_still_out_of_its_reach():
+    """
+    Keeps "UNCOLLECTED_SCOPED_VIEWS" honest.
+
+    A view named there is claiming to be outside the collection above, so its scoping is vouched for
+    by a test of its own instead. The moment one grows a "SingleObjectMixin" or a
+    "MultipleObjectMixin" the claim stops being true, the real check starts covering it, and the
+    entry has to come off the list rather than sit there excusing a view nobody excluded.
+    """
+    collected = {
+        view_class.__name__
+        for view_class in _project_view_classes()
+        if issubclass(view_class, SingleObjectMixin | MultipleObjectMixin)
+    }
+
+    assert UNCOLLECTED_SCOPED_VIEWS & collected == set()
 
 
 def _resolve(*, node: ast.expr, module) -> object | None:
