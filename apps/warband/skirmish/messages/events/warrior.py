@@ -59,8 +59,19 @@ class WarriorWasIncapacitated(Event):
 
 @dataclass(kw_only=True)
 class WarriorHasFled(Event):
+    """
+    A warrior has left the field, either way it can happen.
+
+    One event for both, because everything downstream cares only that he is gone: the report counts him
+    among the men who did not fight, and his comrades lose the same nerve over an empty place in the
+    line whichever emptied it. Only the battle log has to tell them apart, which is what the flag is
+    for - a man ordered to withdraw at full morale was not out of it.
+    """
+
     skirmish: Skirmish
     warrior: Warrior
+    # False for a rout, which is the way a warrior leaves when nobody chose it
+    was_ordered: bool = False
 
 
 @dataclass(kw_only=True)

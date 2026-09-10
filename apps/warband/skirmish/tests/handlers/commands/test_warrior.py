@@ -214,7 +214,7 @@ def test_handle_warrior_withdraws_from_skirmish_walks_him_off_and_charges_him():
 
     result = handle_warrior_withdraws_from_skirmish(context=WithdrawFromSkirmish(skirmish=skirmish, warrior=warrior))
 
-    assert result == WarriorHasFled(skirmish=skirmish, warrior=warrior)
+    assert result == WarriorHasFled(skirmish=skirmish, warrior=warrior, was_ordered=True)
     warrior.refresh_from_db()
     assert (warrior.current_morale, warrior.max_morale, warrior.condition) == (
         0,

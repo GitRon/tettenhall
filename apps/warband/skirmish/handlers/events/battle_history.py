@@ -122,10 +122,16 @@ def handle_warrior_lost_morale(*, context: warrior.WarriorLostMorale) -> Command
 
 @message_registry.register_event(event=warrior.WarriorHasFled)
 def handle_warrior_has_fled(*, context: warrior.WarriorHasFled) -> Command:
-    return CreateBattleHistory(
-        skirmish=context.skirmish,
-        message=f"{context.warrior} is out of morale and fled the field.",
-    )
+    # The log is the one place the two ways off the field have to read differently. Telling a player
+    # who has just ordered a retreat that his man was out of morale names a cause that is not only
+    # absent but usually false - he is most likely to pull a warrior out while there is still nerve
+    # in him.
+    if context.was_ordered:
+        message = f"{context.warrior} was ordered to withdraw and left the field."
+    else:
+        message = f"{context.warrior} is out of morale and fled the field."
+
+    return CreateBattleHistory(skirmish=context.skirmish, message=message)
 
 
 @message_registry.register_event(event=warrior.WarriorGainedExperience)

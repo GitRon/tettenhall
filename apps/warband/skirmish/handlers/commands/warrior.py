@@ -180,6 +180,7 @@ def handle_warrior_withdraws_from_skirmish(*, context: warrior.WithdrawFromSkirm
     return WarriorHasFled(
         skirmish=context.skirmish,
         warrior=context.warrior,
+        was_ordered=True,
     )
 
 
