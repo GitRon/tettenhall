@@ -18,3 +18,7 @@ class LeaderWarriorGenerator(BaseWarriorGenerator):
     item_generator_class = LeaderItemGenerator
     chance_for_weapon = 1
     chance_for_armor = 1
+
+    # The player's own hand in the world rather than a hireling, so he is the one archetype off the
+    # payroll - see "BaseWarriorGenerator.draws_a_wage"
+    draws_a_wage = False

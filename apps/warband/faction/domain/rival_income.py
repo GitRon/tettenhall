@@ -5,7 +5,7 @@ class RivalIncome:
     A rival has an income of its own rather than the player's building revenue. Hall revenue is flat
     per level while a wage bill scales with the roster, so routing rivals through the town would move
     the constant and never the slope: a rival is pinned to "NoHall" - its town is created at every
-    default - and a single leader already costs more than that level pays.
+    default - and a single fyrd levy already costs more than that level pays.
 
     So it scales with the roster too, and on the *healthy* part of it deliberately, while the wage
     bill covers everybody who is not dead. A faction that cannot field a warrior should not be

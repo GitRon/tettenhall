@@ -31,6 +31,22 @@ def test_paid_warrior_list_stops_where_the_silver_does():
     assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [2]
 
 
+def test_paid_warrior_list_covers_a_man_who_draws_no_wage_and_still_leaves_the_next_one_short():
+    """
+    Both sides of the budget test with a leader's zero in the list. Nothing is spent on him, so a
+    purse that could not cover the man behind him still cannot - a wage of zero always satisfies the
+    test and would otherwise be able to carry the unpaid arm out of reach of every assertion here.
+    """
+    payroll = Payroll(
+        warrior_list=[WarriorFactory.build(id=1, monthly_salary=0), WarriorFactory.build(id=2, monthly_salary=40)],
+        budget=30,
+        leader_id=1,
+    )
+
+    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1]
+    assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [2]
+
+
 def test_paid_warrior_list_is_empty_on_an_empty_purse():
     payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=0, leader_id=1)
 

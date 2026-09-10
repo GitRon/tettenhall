@@ -121,6 +121,29 @@ def test_severance_pay_is_a_month_of_wages():
     assert warrior.severance_pay == 120
 
 
+def test_the_two_wage_derived_prices_of_a_man_who_draws_no_wage():
+    """
+    A leader, and the reason his generator zeroes the wage alone. Being hired and being sent away are
+    both employment, and neither is a thing that happens to him - so both come out at nothing rather
+    than at a figure nobody could act on.
+    """
+    warrior = WarriorFactory.build(monthly_salary=0, recruitment_price=260)
+
+    assert warrior.hiring_price == 0
+    assert warrior.severance_pay == 0
+
+
+def test_slavery_selling_price_survives_a_wage_of_zero():
+    """
+    The third derived price is read off "recruitment_price" instead, which is why the wage is the only
+    column zeroed: a captured leader is worth what a captor gets for him whatever his own faction was
+    paying him.
+    """
+    warrior = WarriorFactory.build(monthly_salary=0, recruitment_price=260)
+
+    assert warrior.slavery_selling_price == 130
+
+
 def test_level_for_an_untested_warrior():
     assert Warrior.level_for(experience=0) == 1
 
