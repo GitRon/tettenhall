@@ -26,7 +26,7 @@ def test_handle_victorious_faction_gets_quest_reward_creates_transaction_for_loo
     assert result == CreateTransaction(
         faction=victorious_faction,
         amount=250,
-        reason="Quest 'Rescue the ealdorman' finished! 250 silver looted.",
+        reason="Quest 'Rescue the ealdorman' finished! 250 silver looted",
         month=4,
     )
 

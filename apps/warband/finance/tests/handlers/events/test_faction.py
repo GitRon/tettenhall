@@ -55,7 +55,7 @@ def test_handle_pay_warrior_salaries_debits_what_was_actually_paid():
 
     result = handle_pay_warrior_salaries(context=MonthlyWarriorSalariesPaid(faction=faction, amount=250, month=3))
 
-    assert result == CreateTransaction(faction=faction, amount=-250, reason="Salaries paid in month 3.", month=3)
+    assert result == CreateTransaction(faction=faction, amount=-250, reason="Salaries paid", month=3)
 
 
 def test_handle_building_money_earnings_credits_the_faction():
@@ -63,7 +63,7 @@ def test_handle_building_money_earnings_credits_the_faction():
 
     result = handle_building_money_earnings(context=MonthlyBuildingMoneyEarned(faction=faction, amount=300, month=3))
 
-    assert result == CreateTransaction(faction=faction, amount=300, reason="Building earnings in month 3.", month=3)
+    assert result == CreateTransaction(faction=faction, amount=300, reason="Building earnings", month=3)
 
 
 def test_handle_hand_out_starting_silver_for_new_factions_credits_the_starting_purse():
@@ -84,7 +84,7 @@ def test_handle_monthly_faction_income_credits_the_faction():
 
     result = handle_monthly_faction_income(context=MonthlyFactionIncomeEarned(faction=faction, amount=450, month=3))
 
-    assert result == CreateTransaction(faction=faction, amount=450, reason="Faction income in month 3.", month=3)
+    assert result == CreateTransaction(faction=faction, amount=450, reason="Faction income", month=3)
 
 
 def test_handle_plunder_occupied_faction_treasury_moves_the_silver_across():

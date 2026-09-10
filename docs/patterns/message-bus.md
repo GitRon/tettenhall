@@ -53,6 +53,11 @@ UpgradeTownBuilding (cmd)
 The bus keeps draining the resulting messages until nothing new is produced, all inside **one**
 transaction.
 
+**A message carries facts, never display text.** Each consumer words its own output. `MonthlyWarriorSalariesPaid`
+reaches both the ledger and the month log, and they say different things about it — *"Salaries paid"* on a
+receipt, *"Monthly salaries of 120 silver paid."* in a chronicle. A wording string on the event would force
+one of them to read like the other.
+
 ## Dispatching (the entry point)
 
 Views and other outer code kick off a flow with `handle_message`:
