@@ -9,6 +9,7 @@ from apps.warband.skirmish.handlers.commands.warrior import (
     handle_warrior_increasing_morale,
     handle_warrior_is_captured,
     handle_warrior_losing_morale,
+    handle_warrior_withdraws_from_skirmish,
 )
 from apps.warband.skirmish.messages.commands.warrior import (
     CaptureWarrior,
@@ -18,6 +19,7 @@ from apps.warband.skirmish.messages.commands.warrior import (
     ReduceHealth,
     ReduceMorale,
     ReduceMoraleOfRemainingWarriors,
+    WithdrawFromSkirmish,
 )
 from apps.warband.skirmish.messages.events.warrior import (
     WarriorGainedExperience,
@@ -203,6 +205,39 @@ def test_handle_warrior_losing_morale_stays_silent_without_a_morale_loss():
     result = handle_warrior_losing_morale(context=ReduceMorale(skirmish=skirmish, warrior=warrior, lost_morale=0))
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_warrior_withdraws_from_skirmish_walks_him_off_and_charges_him():
+    warrior = WarriorFactory(current_morale=20, max_morale=20)
+    skirmish = SkirmishFactory()
+
+    result = handle_warrior_withdraws_from_skirmish(context=WithdrawFromSkirmish(skirmish=skirmish, warrior=warrior))
+
+    assert result == WarriorHasFled(skirmish=skirmish, warrior=warrior)
+    warrior.refresh_from_db()
+    assert (warrior.current_morale, warrior.max_morale, warrior.condition) == (
+        0,
+        19,
+        Warrior.ConditionChoices.CONDITION_FLEEING,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_warrior_withdraws_from_skirmish_ignores_a_warrior_already_out_of_the_fight():
+    """
+    Reachable rather than defensive: an order to flee is drained after the round's other messages, so a
+    comrade falling can rout the man in the meantime. Charging him a second time would price one
+    retreat twice.
+    """
+    warrior = WarriorFactory(current_morale=0, max_morale=20, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
+    skirmish = SkirmishFactory()
+
+    result = handle_warrior_withdraws_from_skirmish(context=WithdrawFromSkirmish(skirmish=skirmish, warrior=warrior))
+
+    assert result == []
+    warrior.refresh_from_db()
+    assert warrior.max_morale == 20
 
 
 @pytest.mark.django_db

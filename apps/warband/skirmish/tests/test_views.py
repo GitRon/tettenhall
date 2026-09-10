@@ -150,6 +150,42 @@ def test_skirmish_finish_round_view_advances_the_round(logged_in_client, current
 
 
 @pytest.mark.django_db
+def test_skirmish_finish_round_view_walks_a_warrior_off_the_field_when_ordered_to_flee(
+    logged_in_client, current_savegame
+):
+    """
+    Flow test for the retreat: the real queue, from the posted action to the man leaving and the price
+    he pays for it.
+
+    His is the player's only warrior, so the side he walks off is emptied and the fight goes to the
+    rival - which is the honest end of a retreat, not a special case anywhere in the chain.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction, current_morale=20, max_morale=20)
+    opposing_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(opposing_warrior)
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][faction_id]": skirmish.attacking_faction_id,
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.FLEE,
+        },
+    )
+
+    assert response.status_code == 200
+    player_warrior.refresh_from_db()
+    assert (player_warrior.condition, player_warrior.max_morale) == (
+        Warrior.ConditionChoices.CONDITION_FLEEING,
+        19,
+    )
+    skirmish.refresh_from_db()
+    assert skirmish.victorious_faction_id == skirmish.defending_faction_id
+
+
+@pytest.mark.django_db
 def test_skirmish_finish_round_view_refuses_a_fight_that_is_already_decided(logged_in_client, current_savegame):
     """
     A double-click on the last "Fight!" is two posts, and the second arrives at a resolved skirmish.

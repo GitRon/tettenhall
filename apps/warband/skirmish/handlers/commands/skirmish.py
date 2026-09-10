@@ -1,10 +1,12 @@
 import random
 
 from queuebie import message_registry
-from queuebie.messages import Event
+from queuebie.messages import Command, Event
 
 from apps.warband.quest.models import QuestContract
+from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands import skirmish
+from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
 from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
@@ -71,9 +73,48 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
     )
 
 
+def _withdrawing_and_remaining(
+    *, skirmish: Skirmish, participants: list[SkirmishParticipant]
+) -> tuple[list[Command], list[SkirmishParticipant]]:
+    """
+    Splits one side into the orders to walk away and the men who are still in the fight.
+
+    Flight is answered here rather than by a service of its own under "services/actions/", because it
+    is the one action that is not something a warrior does to somebody: it removes him from the round
+    before there is anyone to do it to, so it never reaches "get_service_by_attack_action".
+    """
+    withdrawals = []
+    remaining = []
+
+    for participant in participants:
+        if participant.skirmish_action == SkirmishActionChoices.FLEE:
+            withdrawals.append(WithdrawFromSkirmish(skirmish=skirmish, warrior=participant.warrior))
+        else:
+            remaining.append(participant)
+
+    return withdrawals, remaining
+
+
 @message_registry.register_command(command=skirmish.StartDuel)
-def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Event] | Event:
-    message_list = []
+def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command | Event]:
+    # Everyone ordered off the field leaves before anybody is matched, and the orders are returned
+    # ahead of the pairings so the battle log reads in the order the round happened: a man walks away,
+    # and then the blows he is not there for are struck. The runner routes each message on its own
+    # type, so commands and events travelling together is no different from returning either alone.
+    withdrawals_1, participants_1 = _withdrawing_and_remaining(
+        skirmish=context.skirmish, participants=context.skirmish_participants_1
+    )
+    withdrawals_2, participants_2 = _withdrawing_and_remaining(
+        skirmish=context.skirmish, participants=context.skirmish_participants_2
+    )
+    message_list = [*withdrawals_1, *withdrawals_2]
+
+    # A side the retreat emptied has nobody left to pair, and the matching below picks a random
+    # opponent out of the other list - which raises on an empty one. Leaving with the orders alone is
+    # the whole of this round: "handle_finish_round" counts healthy warriors, and a side that walked
+    # off has none, so the fight is lost by the men who left it rather than by a special case here.
+    if len(participants_1) == 0 or len(participants_2) == 0:
+        return message_list
 
     # Read once, here, and carried on every message the round produces. This is the handler that
     # starts the round, so "current_round" is the round being fought by definition rather than by
@@ -84,7 +125,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Event] |
     # Determine larger group
     assign_fighter_pairs_service = AssignFighterPairsService()
     skirmish_participants_1, skirmish_participants_2 = assign_fighter_pairs_service.determine_larger_group(
-        skirmish_participants_1=context.skirmish_participants_1, skirmish_participants_2=context.skirmish_participants_2
+        skirmish_participants_1=participants_1, skirmish_participants_2=participants_2
     )
 
     # Shuffle both lists to have more interaction going on

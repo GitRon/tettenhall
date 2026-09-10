@@ -363,6 +363,27 @@ def test_handle_determine_warriors_with_reduced_morale_skips_warriors_at_full_mo
 
 
 @pytest.mark.django_db
+def test_handle_determine_warriors_with_reduced_morale_reaches_a_warrior_ordered_to_flee():
+    """
+    The freeze #43 closed, reachable again through a deliberate retreat unless the withdrawal leaves a
+    man the way a rout does.
+
+    This sweep is the only road to "replenish_current_morale", which is the only thing that clears
+    FLEEING. It selects on "current_morale__lt=F('max_morale')", so a warrior merely charged a point
+    off his ceiling - and therefore clamped to it - would never appear here again.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, current_morale=20, max_morale=20)
+    Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
+
+    result = handle_determine_warriors_with_reduced_morale(
+        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
+    )
+
+    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[warrior], month=3)
+
+
+@pytest.mark.django_db
 def test_handle_determine_warriors_with_reduced_morale_skips_an_unpaid_warrior():
     """
     A man who was not paid does not cheer up either. Without this the sweep would hand back every

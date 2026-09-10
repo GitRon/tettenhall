@@ -22,6 +22,7 @@ from apps.warband.skirmish.messages.commands.skirmish import (
     StartDuel,
     WinSkirmish,
 )
+from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
 from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
@@ -311,6 +312,100 @@ def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_g
 
 
 @pytest.mark.django_db
+def test_handle_assign_fighter_pairs_walks_a_fleeing_warrior_off_before_matching_the_rest():
+    """
+    The order to leave comes back ahead of the pairings, so the battle log reads the way the round
+    happened - and the man who left is not matched with anyone.
+    """
+    skirmish = SkirmishFactory()
+    fleeing_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.FLEE,
+    )
+    staying_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+    enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+    )
+
+    # Boundary randomness: both groups get shuffled, so pin the resulting order
+    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"):
+        result = handle_assign_fighter_pairs(
+            context=StartDuel(
+                skirmish=skirmish,
+                skirmish_participants_1=[fleeing_participant, staying_participant],
+                skirmish_participants_2=[enemy_participant],
+            )
+        )
+
+    assert result == [
+        WithdrawFromSkirmish(skirmish=skirmish, warrior=fleeing_participant.warrior),
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=staying_participant.warrior,
+            warrior_2=enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack_action_2=SkirmishActionChoices.DEFENSIVE_STANCE,
+        ),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_assign_fighter_pairs_matches_nobody_when_a_side_walks_away_entirely():
+    """
+    A side the retreat emptied has nobody to pair, and the matching picks a random opponent out of the
+    other list - which raises on an empty one. The fight is then lost by the men who left it:
+    "handle_finish_round" counts healthy warriors, and a warrior who walked off is not one.
+    """
+    skirmish = SkirmishFactory()
+    fleeing_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.FLEE,
+    )
+    enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+    )
+
+    result = handle_assign_fighter_pairs(
+        context=StartDuel(
+            skirmish=skirmish,
+            skirmish_participants_1=[fleeing_participant],
+            skirmish_participants_2=[enemy_participant],
+        )
+    )
+
+    assert result == [WithdrawFromSkirmish(skirmish=skirmish, warrior=fleeing_participant.warrior)]
+
+
+@pytest.mark.django_db
+def test_handle_assign_fighter_pairs_matches_nobody_when_the_enemy_walks_away_entirely():
+    skirmish = SkirmishFactory()
+    attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+    fleeing_enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.FLEE,
+    )
+
+    result = handle_assign_fighter_pairs(
+        context=StartDuel(
+            skirmish=skirmish,
+            skirmish_participants_1=[attacking_participant],
+            skirmish_participants_2=[fleeing_enemy_participant],
+        )
+    )
+
+    assert result == [WithdrawFromSkirmish(skirmish=skirmish, warrior=fleeing_enemy_participant.warrior)]
+
+
+@pytest.mark.django_db
 def test_handle_determine_attacker_and_defender_lets_the_first_warrior_attack():
     skirmish = SkirmishFactory()
     attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction, dexterity=10)
@@ -433,6 +528,31 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_attacking_facti
         quest_loot=250,
         month=3,
     )
+
+
+@pytest.mark.django_db
+def test_handle_faction_wins_skirmish_leaves_out_a_victor_who_walked_off_the_field():
+    """
+    A warrior ordered to flee shares in none of what the fight pays out, and this is where that is
+    decided for all of it: "victorious_healthy_warriors" is what the experience reward is handed, so a
+    man who was not there when it ended earns nothing for it.
+    """
+    skirmish = SkirmishFactory()
+    healthy_attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    fled_attacking_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING
+    )
+    unconscious_enemy_warrior = WarriorFactory(
+        faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    skirmish.attacking_warriors.add(healthy_attacking_warrior, fled_attacking_warrior)
+    skirmish.defending_warriors.add(unconscious_enemy_warrior)
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
+    )
+
+    assert result.victorious_healthy_warriors == [healthy_attacking_warrior]
 
 
 @pytest.mark.django_db
