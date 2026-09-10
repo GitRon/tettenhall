@@ -42,6 +42,10 @@
                         </button>
                     </form>
                     <p class="uk-text-meta">Nobody is left to hold this town. Take its leader and its silver.</p>
+                {% elif savegame_is_over %}
+                    {# Said ahead of the month, and in the rivals list's words: the game being decided is #}
+                    {# why nothing of his marches, and which month it stopped in is beside the point #}
+                    <p class="uk-text-meta">This game is over. Start a new savegame to march again.</p>
                 {% elif has_marched_this_month %}
                     {# Otherwise the button is simply gone and nothing says why #}
                     <p class="uk-text-meta">Your warriors have already fought this month.</p>
