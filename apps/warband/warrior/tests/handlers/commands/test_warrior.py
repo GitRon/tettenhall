@@ -53,6 +53,24 @@ def test_handle_replenish_warrior_morale_fills_up_to_the_maximum():
 
 
 @pytest.mark.django_db
+def test_handle_replenish_warrior_morale_rallies_a_warrior_who_was_ordered_to_flee():
+    """
+    The other half of the #43 regression: the sweep has to reach a warrior who left the field on
+    purpose, and this has to hand him his nerve back and clear the condition once it does. Written
+    against a real withdrawal rather than a hand-built row, because what has to hold is that the two
+    agree - the retreat leaves exactly the state this handler knows how to undo.
+    """
+    warrior = WarriorFactory(current_morale=20, max_morale=20)
+    Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
+
+    handle_replenish_warrior_morale(context=ReplenishWarriorMorale(warrior=warrior, month=3))
+
+    warrior.refresh_from_db()
+    assert warrior.current_morale == 19
+    assert warrior.condition == Warrior.ConditionChoices.CONDITION_HEALTHY
+
+
+@pytest.mark.django_db
 def test_handle_replenish_warrior_morale_does_nothing_on_full_morale():
     warrior = WarriorFactory(current_morale=20, max_morale=20)
 

@@ -196,6 +196,48 @@ def test_put_out_of_the_fight_leaves_a_warrior_dropped_exactly_to_nothing_alone(
 
 
 @pytest.mark.django_db
+def test_withdraw_from_the_fight_takes_his_nerve_his_ceiling_and_his_condition():
+    warrior = WarriorFactory(current_morale=20, max_morale=20)
+
+    result = Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
+
+    assert (result.current_morale, result.max_morale) == (0, 19)
+    assert result.condition == Warrior.ConditionChoices.CONDITION_FLEEING
+
+
+@pytest.mark.django_db
+def test_withdraw_from_the_fight_leaves_a_warrior_the_monthly_sweep_can_reach():
+    """
+    The state a retreat ends in has to be the state a rout ends in, or the man never comes back.
+
+    The sweep selects on "current_morale__lt=F('max_morale')" and is the only road to
+    "replenish_current_morale", which is the only thing that clears FLEEING. A warrior charged a point
+    off his ceiling and left at full morale would be clamped to that new ceiling, match neither side of
+    the comparison, and stand routed for the rest of the savegame.
+    """
+    warrior = WarriorFactory(current_morale=20, max_morale=20)
+
+    result = Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
+
+    assert result.current_morale < result.max_morale
+
+
+@pytest.mark.django_db
+def test_withdraw_from_the_fight_never_lets_the_ceiling_reach_nothing():
+    """
+    The floor is load-bearing, not tidiness. At "max_morale = 0" the sweep refills a man to zero, and
+    "replenish_current_morale" asks for more than zero before it clears the condition - so a warrior
+    whose ceiling ran out would be frozen FLEEING exactly as #43 described.
+    """
+    warrior = WarriorFactory(current_morale=1, max_morale=1)
+
+    result = Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
+
+    assert result.max_morale == Warrior.objects.MINIMUM_MAX_MORALE
+    assert result.max_morale > 0
+
+
+@pytest.mark.django_db
 def test_replenish_current_health_caps_at_the_maximum():
     warrior = WarriorFactory(current_health=18, max_health=20)
 

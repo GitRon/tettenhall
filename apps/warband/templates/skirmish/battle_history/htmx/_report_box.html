@@ -25,9 +25,12 @@
                     {% if report.own_routed %}
                         {# Muted and apart from the fallen: he kept his kit and he rallies next month, #}
                         {# so this explains the gap in the war band rather than reporting a loss. #}
+                        {# The count covers both ways off the field, so it names neither: half of these #}
+                        {# men may have been ordered out at full morale, and "lost their nerve" would #}
+                        {# be telling the player his own command was a rout. #}
                         <li class="uk-text-meta">
                             {{ report.own_routed|length }}
-                            of your men lost their nerve and left the field
+                            of your men left the field
                         </li>
                     {% endif %}
                 </ul>

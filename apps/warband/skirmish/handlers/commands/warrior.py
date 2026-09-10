@@ -18,6 +18,11 @@ from apps.warband.skirmish.messages.events.warrior import (
 )
 from apps.warband.skirmish.models.warrior import Warrior
 
+# What walking away from a fight costs, permanently. A flat point rather than a share, so the price is
+# the same for a levy and for a veteran - and because a share re-opens the freeze #43 closed: it reaches
+# a ceiling of zero from any starting morale, where the flat point stops at the manager's floor.
+MAX_MORALE_COST_OF_WITHDRAWAL = 1
+
 
 @message_registry.register_command(command=warrior.ReduceMoraleOfRemainingWarriors)
 def handle_reduce_morale_of_remaining_warriors(*, context: warrior.ReduceMoraleOfRemainingWarriors) -> list[Command]:
@@ -149,6 +154,34 @@ def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event
         )
 
     return message_list
+
+
+@message_registry.register_command(command=warrior.WithdrawFromSkirmish)
+def handle_warrior_withdraws_from_skirmish(*, context: warrior.WithdrawFromSkirmish) -> list[Event] | Event:
+    """
+    Walks a warrior off the field on his commander's order, and charges him for it.
+
+    The same guard "handle_warrior_losing_morale" opens with, for the same reason: a man who is already
+    down, dead or gone is not somewhere he can leave. It is reachable rather than defensive - a warrior
+    ordered to flee can be routed by a comrade falling before this command is drained.
+
+    Ends in WarriorHasFled, which is the point of doing it this way. Leaving the field is one fact
+    however it came about, so the battle log, the skirmish report and the nerve of the men left behind
+    all react to a deliberate retreat exactly as they react to a rout, and none of them had to be told
+    about this handler.
+    """
+    if not context.warrior.is_healthy:
+        return []
+
+    context.warrior = Warrior.objects.withdraw_from_the_fight(
+        obj=context.warrior, lost_max_morale=MAX_MORALE_COST_OF_WITHDRAWAL
+    )
+
+    return WarriorHasFled(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        was_ordered=True,
+    )
 
 
 @message_registry.register_command(command=warrior.IncreaseMorale)

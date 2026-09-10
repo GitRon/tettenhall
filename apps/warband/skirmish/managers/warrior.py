@@ -69,6 +69,11 @@ class WarriorQuerySet(models.QuerySet):
 
 
 class WarriorManager(manager.Manager):
+    # No warrior's morale ceiling may reach zero. A man at "max_morale = 0" is refilled to zero by
+    # "replenish_current_morale", whose "current_morale > 0" guard then never clears his condition, so
+    # he stays FLEEING for the rest of the savegame. Every permanent cut goes through this floor.
+    MINIMUM_MAX_MORALE = 1
+
     def reduce_current_health(self, *, obj, damage: int):
         obj.refresh_from_db()
 
@@ -93,6 +98,36 @@ class WarriorManager(manager.Manager):
         obj.current_health = max(obj.current_health, 0)
         obj.condition = condition
         obj.save(update_fields=("current_health", "condition"))
+
+        return obj
+
+    def withdraw_from_the_fight(self, *, obj, lost_max_morale: int):
+        """
+        Settles a warrior his commander has pulled out: his nerve, his ceiling and his condition.
+
+        The three belong in one write for the reason "put_out_of_the_fight" pairs its two: a warrior
+        who is half withdrawn is a warrior some other reader can catch mid-retreat.
+
+        The point of the current morale going to nothing is that it leaves him in exactly the state a
+        rout leaves him in. That is what a man walking off the field is, and it is what keeps him
+        reachable: the monthly sweep selects on "current_morale__lt=F('max_morale')", so a warrior
+        pulled out at full morale and merely charged a point off his ceiling would come back clamped
+        to his new maximum, match neither side of that comparison, and never reach the one method that
+        clears FLEEING. Nothing anywhere else has to learn that a retreat can be deliberate.
+
+        It is not a second price either. The sweep refills every warrior to his maximum, and nobody
+        fights twice in a month, so the only man who can ever see the zero is one his faction failed to
+        pay - and an unpaid warrior sits out the sweep today however he left the field.
+
+        The ceiling is what the retreat actually costs, and it is a flat point rather than a share:
+        the price of walking away is the same for a levy and for a veteran.
+        """
+        obj.refresh_from_db()
+
+        obj.current_morale = 0
+        obj.max_morale = max(obj.max_morale - lost_max_morale, self.MINIMUM_MAX_MORALE)
+        obj.condition = obj.ConditionChoices.CONDITION_FLEEING
+        obj.save(update_fields=("current_morale", "max_morale", "condition"))
 
         return obj
 

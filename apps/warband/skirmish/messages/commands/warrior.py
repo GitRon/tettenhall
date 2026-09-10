@@ -45,6 +45,19 @@ class ReduceMorale(Command):
 
 
 @dataclass(kw_only=True)
+class WithdrawFromSkirmish(Command):
+    """
+    Take a warrior off the field because his commander told him to.
+
+    The deliberate twin of the rout "ReduceMorale" ends in, and it carries no morale of its own: what
+    leaving costs is the retreat's business, not the caller's, so a single handler prices it once.
+    """
+
+    skirmish: Skirmish
+    warrior: Warrior
+
+
+@dataclass(kw_only=True)
 class ReduceMoraleOfRemainingWarriors(Command):
     skirmish: Skirmish
     warrior: Warrior

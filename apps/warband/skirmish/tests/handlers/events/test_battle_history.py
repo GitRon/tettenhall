@@ -333,6 +333,21 @@ def test_handle_warrior_has_fled_logs_the_retreat():
     assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred is out of morale and fled the field.")
 
 
+def test_handle_warrior_has_fled_names_the_right_cause_for_an_ordered_withdrawal():
+    """
+    The rout wording asserts a cause, and on an ordered retreat that cause is usually false - a player
+    pulls a man out while there is still nerve in him.
+    """
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Cuthred")
+
+    result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior, was_ordered=True))
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="Cuthred was ordered to withdraw and left the field."
+    )
+
+
 def test_handle_warrior_gained_experience_logs_the_gained_points():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Beorn")
