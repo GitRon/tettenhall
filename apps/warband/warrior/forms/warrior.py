@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout, Submit
 from django import forms
 from django.db.models import Q
+from django.template.defaultfilters import floatformat
 from django.urls import reverse
 
 from apps.warband.item.models.item import Item
@@ -18,10 +19,31 @@ SLOT_FUNCTIONS = {
 }
 
 
+class ItemChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj: Item) -> str:  # noqa: PBR001
+        """
+        The item, its dice and what those dice average - the figure the choice actually turns on.
+
+        "__str__" carries the name and the notation already, and the mean is what tells a rusty
+        battle axe from a traditional spear: "1d6+1" and "2d4" are two strings a player has to do
+        arithmetic on. The item's own mean rather than this warrior's, so the options rank the way
+        the shop's cards rank; what the man in front of us makes of it is on his page, next to the
+        strength that scales it.
+
+        Whether the number is damage or protection is written out rather than left to the heading
+        above, because a select option is read out on its own.
+        """
+        measure = "damage" if obj.is_weapon else "protection"
+
+        return f"{obj} - {floatformat(obj.expectancy_value)} {measure} on average"
+
+
 class WarriorForm(forms.ModelForm):
     class Meta:
         model = Warrior
         fields = tuple(SLOT_FUNCTIONS)
+        # Both slots hold an item, so both are offered with the item's figures on the option
+        field_classes = dict.fromkeys(SLOT_FUNCTIONS, ItemChoiceField)
 
     def __init__(self, *args, **kwargs):
         # Ensure that only allowed fields can be rendered

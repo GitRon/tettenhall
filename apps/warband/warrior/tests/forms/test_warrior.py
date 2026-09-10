@@ -1,10 +1,50 @@
 import pytest
 
+from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.forms.warrior import WarriorForm
+
+
+@pytest.mark.django_db
+def test_label_from_instance_names_a_weapon_by_its_average_damage():
+    """
+    Asked through the form rather than of the field on its own, so the slot is shown to be built
+    from the field that carries the figures at all.
+    """
+    warrior = WarriorFactory()
+    weapon = ItemFactory(
+        type=ItemTypeFactory(name="Battle axe", base_value="1d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        condition=Item.ConditionChoices.CONDITION_RUSTY,
+        modifier=1,
+        owner=warrior.faction,
+        savegame=warrior.savegame,
+    )
+
+    form = WarriorForm(instance=warrior, htmx_field="weapon")
+
+    assert form.fields["weapon"].label_from_instance(weapon) == "Rusty Battle axe (1d6+1) - 4.5 damage on average"
+
+
+@pytest.mark.django_db
+def test_label_from_instance_names_armour_by_its_average_protection():
+    warrior = WarriorFactory()
+    armor = ItemFactory(
+        type=ItemTypeFactory(
+            name="Studded leather", base_value="2d3", function=ItemType.FunctionChoices.FUNCTION_ARMOR
+        ),
+        owner=warrior.faction,
+        savegame=warrior.savegame,
+    )
+
+    form = WarriorForm(instance=warrior, htmx_field="armor")
+
+    assert (
+        form.fields["armor"].label_from_instance(armor)
+        == "Traditional Studded leather (2d3+0) - 4 protection on average"
+    )
 
 
 def test_init_rejects_a_field_the_form_does_not_render():

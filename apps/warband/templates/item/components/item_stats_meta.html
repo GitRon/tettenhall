@@ -16,5 +16,7 @@
     <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>
 </span>&nbsp;
 <span title="Expected {% if item.is_weapon %}damage{% else %}protection{% endif %} per roll">
-    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value }}</i>
+    {# Trimmed, so a weapon averaging a whole number reads "5" rather than "5.0" - and reads the #}
+    {# same here as it does on the option a warrior is equipped from #}
+    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value|floatformat }}</i>
 </span>
