@@ -1,0 +1,20 @@
+{% comment %}
+    The three figures every item card carries, in one place because the buy card and the sell card
+    print exactly the same line.
+
+    Each pair is wrapped in a titled span: the icons are standing in for units, and a die beside a
+    bare "1.5" says nothing about what the number counts. The price needs none - it writes its own
+    unit out.
+{% endcomment %}
+<i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
+<span title="{% if item.is_weapon %}Damage{% else %}Protection{% endif %} roll">
+    {% if item.is_weapon %}
+        {% include 'common/components/svg_icon.html' with icon_name='axe-sword' %}
+    {% else %}
+        {% include 'common/components/svg_icon.html' with icon_name='shield' %}
+    {% endif %}
+    <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>
+</span>&nbsp;
+<span title="Expected {% if item.is_weapon %}damage{% else %}protection{% endif %} per roll">
+    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value }}</i>
+</span>

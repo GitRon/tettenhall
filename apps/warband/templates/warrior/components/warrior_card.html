@@ -10,7 +10,11 @@
                 <p class="uk-text-meta uk-margin-remove-top">
                     <i class="fa-solid fa-award"></i> <i>Level {{ warrior.level }}</i>&nbsp;
                     <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
-                    <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>&nbsp;
+                    {# A coin and a bare number sits two icons away from the pub card's recruitment #}
+                    {# price, which is also a coin and a bare number, and they are not the same figure. #}
+                    <span title="Monthly salary in silver">
+                        <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>
+                    </span>&nbsp;
                     {% comment %}
                         Health, morale and gear are what the rivals list calls knowledge the player has
                         not earned without scouting, so a rival's card withholds exactly those three and
@@ -46,7 +50,16 @@
             <tr>
                 <td>Faction</td>
                 <td>
-                    {{ warrior.faction.name }}
+                    {% comment %}
+                        Capture clears the warrior's faction, so on the captured list this row was a
+                        label with nothing beside it. Written as a state rather than left blank: a
+                        prisoner belongs to nobody, and that is a fact about him, not a missing value.
+                    {% endcomment %}
+                    {% if warrior.faction %}
+                        {{ warrior.faction.name }}
+                    {% else %}
+                        <span class="uk-text-meta">None, until he is recruited or sold</span>
+                    {% endif %}
                 </td>
             </tr>
             <tr>
