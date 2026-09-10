@@ -35,7 +35,7 @@ def handle_determine_savegame_outcome(*, context: DetermineSavegameOutcome) -> E
     Returning None while it is still running is also what stops this from looping: force-resolving the
     open skirmish below captures warriors, which can defeat another faction, which lands back here.
     """
-    if context.savegame.outcome != Savegame.OutcomeChoices.OUTCOME_RUNNING:
+    if context.savegame.is_over:
         return None
 
     still_standing = Faction.objects.still_in_play(savegame_id=context.savegame.id)

@@ -113,14 +113,25 @@ class FactionQuerySet(models.QuerySet):
             id__in=available_defenders.values("faction_id")
         )
 
-    def attackable_by(self, *, player_faction, month: int):
+    def attackable_by(self, *, savegame):
         """
-        Every rival "player_faction" may march against this month.
+        Every rival the player of "savegame" may march against this month.
 
         All of it lives in the queryset rather than in a template condition, because the target's id
         comes from the URL and hiding a button guards nothing. The leader is checked here too even
         though he stands on the attacking side: an attack he cannot march on is no attack at all,
         and a rule kept somewhere else is how the button and the view drift apart.
+
+        A decided savegame offers nobody, for the same reason. Three screens read this - the rivals
+        list, the faction page and the attack view - and each of them drew an Attack control on
+        every standing rival one line under the sentence saying the game was over. Nothing broke:
+        RunningSavegameRequiredMixin answers the press with a redirect and a message. But a control
+        whose only possible answer is a refusal is the thing the sentence above it already said.
+
+        Takes the savegame rather than the faction and the month held on it. The outcome is a fourth
+        thing to ask about, all three callers were unpacking the same two attributes off it anyway,
+        and a rule about the game being over belongs beside the rules about the month and the leader
+        rather than in each of the three templates separately.
 
         How often the player may attack is not asked here either, and deliberately so. Every warrior
         fights once a month, the leader joins every attack, so a war band that has marched is a
@@ -128,6 +139,12 @@ class FactionQuerySet(models.QuerySet):
         is. A separate per-rival cap sat here once; it never got to decide anything and only looked
         like a rule.
         """
+        if savegame.is_over:
+            return self.none()
+
+        player_faction = savegame.player_faction
+        month = savegame.current_month
+
         if player_faction is None or player_faction.get_available_leader(month=month) is None:
             return self.none()
 
