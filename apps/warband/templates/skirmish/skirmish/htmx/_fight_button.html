@@ -20,4 +20,10 @@
             Ride into {{ occupiable_faction.town_name }}
         </button>
     </form>
+{% else %}
+    {# The fight is over and there is no town to ride into. Without this the box is empty and the #}
+    {# navbar is the only way off a screen that has nothing left on it to press. #}
+    <a href="{% url 'warband:skirmish-list-view' %}" class="uk-button uk-button-default uk-float-right">
+        Back to the skirmishes
+    </a>
 {% endif %}

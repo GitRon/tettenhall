@@ -266,6 +266,10 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
             )
         context[self.context_object_name] = rival_list
 
+        # The first of the facts about the player, and the one that outranks the other two: a
+        # decided savegame is why no war band of his is marching, and the month it happens to be in
+        # is beside the point.
+        context["savegame_is_over"] = self.current_savegame.is_over
         # Said once above the table rather than on every row: both are facts about the player's own
         # war band, so no rival is what decides them, and a row each would be the same sentence
         # repeated as many times as there are rivals. Only said at all while somebody is still
@@ -288,6 +292,19 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
 class FactionItemListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/item/components/item_list.html"
+
+
+class FactionPubMercenaryListView(SavegameScopedQuerysetMixin, generic.DetailView):
+    """
+    The pub's own htmx partial, so hiring the last mercenary can leave a sentence behind.
+
+    Scoped to the savegame rather than to the player faction, the same as the town square that holds
+    it: the page is reachable for any faction of the savegame, and the pub is what that page shows.
+    Hiring stays the player's own - "RecruitPubMercenaryView" scopes that to his pub.
+    """
+
+    model = Faction
+    template_name = "faction/warrior/components/pub_mercenary_list.html"
 
 
 class FactionWarriorListView(
@@ -377,12 +394,14 @@ class RecruitPubMercenaryView(
             )
         )
 
-        # An empty body on purpose: the button swaps its own card out, and the town square has no htmx
-        # partial for the pub list to reload in its place.
+        # An empty body on purpose: nothing is swapped in place of the card. The pub list reloads
+        # itself on "loadPubMercenaryList", which is what renders its empty state when the man just
+        # hired was the last one in it.
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
                 "notification": f"{obj} joins your war band for {obj.hiring_price} silver.",
+                "loadPubMercenaryList": "-",
                 "updateResourceBar": "-",
             }
         )

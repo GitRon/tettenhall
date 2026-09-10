@@ -81,6 +81,10 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
         context["defender_is_player"] = self.object.defending_faction_id == player_faction_id
         context["battle_log"] = self.object.battle_logs.all()
         context["occupiable_faction"] = self.get_occupiable_faction(skirmish=self.object)
+        # A decided fight has no next round, so the cards stop offering to choose an action for one.
+        # On the context of the page and of the partial below, for the reason "occupiable_faction" is
+        # on both: the swap that follows the winning round renders the cards on their own.
+        context["skirmish_is_decided"] = self.object.victorious_faction_id is not None
 
         return context
 
@@ -317,5 +321,6 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         # Which roster to show is the skirmish's business, but whether the human commands it is the
         # savegame's: being the attacker no longer means being the player
         context["is_player"] = faction.pk == current_savegame.player_faction_id
+        context["skirmish_is_decided"] = skirmish.victorious_faction_id is not None
 
         return context

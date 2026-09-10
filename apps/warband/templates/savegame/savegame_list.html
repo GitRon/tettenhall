@@ -60,6 +60,10 @@
                             </button>
                         </td>
                     </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="uk-text-meta">You have no savegames yet.</td>
+                    </tr>
                 {% endfor %}
                 </tbody>
             </table>

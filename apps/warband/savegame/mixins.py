@@ -7,7 +7,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic.base import ContextMixin
 
-from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 
 
@@ -70,7 +69,7 @@ class RunningSavegameRequiredMixin:
     def dispatch(self, request, *args, **kwargs) -> HttpResponse:
         current_savegame = get_current_savegame_for_request(request=request)
 
-        if current_savegame is not None and current_savegame.outcome != Savegame.OutcomeChoices.OUTCOME_RUNNING:
+        if current_savegame is not None and current_savegame.is_over:
             if request.headers.get("HX-Request"):
                 response = HttpResponse(status=HTTPStatus.NO_CONTENT)
                 response["HX-Trigger"] = json.dumps({"notification": self.REFUSAL_NOTICE})

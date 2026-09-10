@@ -8,7 +8,13 @@ from apps.warband.faction.models import Culture
 class SavegameCreateForm(forms.Form):
     town_name = forms.CharField(label="Town Name", max_length=100)
     faction_name = forms.CharField(label="Faction Name", max_length=100)
-    faction_culture = forms.ModelChoiceField(label="Faction culture", queryset=Culture.objects.all())
+    faction_culture = forms.ModelChoiceField(
+        label="Faction culture",
+        queryset=Culture.objects.all(),
+        # The one choice on this form that cannot be taken back, and the only honest thing to say
+        # about it today: perks are not implemented, so the tongue is all it decides.
+        help_text="The tongue your own men are named in. It decides nothing else, for now.",
+    )
 
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
