@@ -1,4 +1,4 @@
-from apps.warband.faction.messages.events.faction import RequestNewItemForTownShop
+from apps.warband.faction.messages.events.item import RequestNewItemForTownShop
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.handlers.events.faction import handle_request_new_item_for_town_shop
 from apps.warband.item.messages.commands.item import CreateItem

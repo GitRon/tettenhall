@@ -8,23 +8,24 @@ from apps.warband.faction.handlers.commands.warrior import (
     handle_restock_pub_mercenaries,
     handle_warrior_monthly_salaries,
 )
-from apps.warband.faction.messages.commands.faction import AddWarriorToPub, PayMonthlyWarriorSalaries
 from apps.warband.faction.messages.commands.warrior import (
+    AddWarriorToPub,
     ConsiderFyrdDraft,
     DraftWarriorFromFyrd,
+    PayMonthlyWarriorSalaries,
     RecruitPubMercenary,
     RestockTownMercenaries,
 )
 from apps.warband.faction.messages.events.faction import (
     MonthlyWarriorSalariesPaid,
     MonthlyWarriorSalariesUnpaid,
-    WarriorWasAddedToPub,
 )
 from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubMercenarySlotOpened,
     TownMercenariesRestocked,
     WarriorRecruited,
+    WarriorWasAddedToPub,
 )
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory

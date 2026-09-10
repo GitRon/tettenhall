@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.warband.faction.models.faction import Faction
-from apps.warband.item.services.generators.item.base import BaseItemGenerator
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -97,24 +96,6 @@ class FactionWarriorsWithReducedMoraleDetermined(Event):
 class NewLeaderWarriorSet(Event):
     faction: Faction
     warrior: Warrior
-
-
-@dataclass(kw_only=True)
-class RequestNewItemForTownShop(Event):
-    # TODO (#93): item.py?
-    faction: Faction
-    generator_class: type[BaseItemGenerator]
-    item_function: int
-    month: int
-    quality_bonus: int = 0
-
-
-@dataclass(kw_only=True)
-class WarriorWasAddedToPub(Event):
-    # TODO (#93): warrior.py?
-    faction: Faction
-    warrior: Warrior
-    month: int
 
 
 @dataclass(kw_only=True)

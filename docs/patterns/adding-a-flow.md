@@ -11,6 +11,9 @@
 6. Unit-test each handler directly, and let the [registry tests](registry-tests.md) prove the chain
    actually connects.
 
+`<domain>` is not free-form — [where code goes](app-layout.md#messages-and-handlers) says which module
+each of these lands in, and a test enforces it for the command/handler pair.
+
 Every command you emit needs a handler — an instruction nobody executes is always a bug, and the registry
 tests fail on it with no allowlist. An event without a consumer can be legitimate; add it to
 `TERMINAL_MESSAGES`.

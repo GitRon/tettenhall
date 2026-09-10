@@ -6,8 +6,7 @@ from apps.warband.faction.handlers.events.warrior import (
     handle_add_warrior_who_walked_out_to_pub,
     handle_draft_warrior_for_approved_fyrd_draft,
 )
-from apps.warband.faction.messages.commands.faction import AddWarriorToPub
-from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd
+from apps.warband.faction.messages.commands.warrior import AddWarriorToPub, DraftWarriorFromFyrd
 from apps.warband.faction.messages.events.warrior import FyrdDraftApproved
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory

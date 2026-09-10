@@ -4,6 +4,16 @@ from queuebie.messages import Event
 
 from apps.warband.faction.models import Faction
 from apps.warband.item.models import Item
+from apps.warband.item.services.generators.item.base import BaseItemGenerator
+
+
+@dataclass(kw_only=True)
+class RequestNewItemForTownShop(Event):
+    faction: Faction
+    generator_class: type[BaseItemGenerator]
+    item_function: int
+    month: int
+    quality_bonus: int = 0
 
 
 @dataclass(kw_only=True)

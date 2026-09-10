@@ -62,11 +62,31 @@ apps/warband/<topic>/handlers/events/<domain>.py     # functions handling Events
 - `<topic>` is the topic package that *owns* the handler or message. It is also the **scope** queuebie
   enforces: a command handler may only handle commands of its own topic, see
   [strict mode](strict-mode.md).
-- `<domain>.py` is named after the topic the message **originates from**, not where the handler lives.
-  So `apps/warband/finance/handlers/events/town.py` holds finance's reactions to events raised by the
-  `town` topic, and `apps/warband/finance/handlers/events/skirmish.py` holds its reactions to skirmish
-  events. This makes cross-topic subscriptions easy to locate. Which module a *message* goes in is
-  still open — #93 owns that.
+- **`<domain>.py` names whatever the topic package does not already name.** The path carries two
+  coordinates, and the second one never repeats the first:
+
+  | Directory | The topic package is | So `<domain>` is |
+  |---|---|---|
+  | `messages/commands/`, `messages/events/` | the origin — strict mode lets a topic raise only its own | the **subject**: the model the message is about |
+  | `handlers/commands/` | the origin, again | whatever `messages/commands/` chose — the two modules **mirror** |
+  | `handlers/events/` | the *reactor*, not the origin | the **originating topic** |
+
+  Subject names are spelled as the model's module under `models/`, and a message about the topic's own
+  central model lands in `<topic>.py`. So `apps/warband/item/messages/commands/item.py` holds
+  `CreateItem` while `apps/warband/skirmish/messages/commands/transaction.py` holds
+  `WarriorDropsSilver` — one topic, two subjects.
+
+  Under `handlers/events/` the origin is what makes a cross-topic subscription findable:
+  `apps/warband/finance/handlers/events/town.py` holds finance's reactions to events raised by the
+  `town` topic. Naming an origin only works while there is exactly one worth naming, so `<domain>`
+  falls back to the subject in the two cases where there is not — a topic subscribing to its **own**
+  events (`apps/warband/skirmish/handlers/events/warrior.py`), and a module whose handlers react to
+  **several** topics: `apps/warband/faction/handlers/events/item.py` is named after the shop it
+  stocks, and reacts to `item`, `faction` and `month` events to do it.
+
+  The mirror in the second row is not a convention to remember: a
+  [registry test](registry-tests.md) fails when a command and its handler sit in differently-named
+  modules.
 - Keep new modules importable so autodiscovery picks up the decorators. An `__init__.py` is no longer
   strictly required — Python treats the directory as a namespace package without one — but every
   existing `handlers/` directory has one and new ones should match.

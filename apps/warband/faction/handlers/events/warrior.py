@@ -1,8 +1,12 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.warband.faction.messages.commands.faction import AddWarriorToPub, SetNewLeaderWarrior
-from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd, RestockTownMercenaries
+from apps.warband.faction.messages.commands.faction import SetNewLeaderWarrior
+from apps.warband.faction.messages.commands.warrior import (
+    AddWarriorToPub,
+    DraftWarriorFromFyrd,
+    RestockTownMercenaries,
+)
 from apps.warband.faction.messages.events.faction import NewFactionCreated
 from apps.warband.faction.messages.events.warrior import FyrdDraftApproved
 from apps.warband.month.messages.events.month import PlayerMonthPrepared
