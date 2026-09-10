@@ -529,6 +529,57 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
 
 
 @pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_never_deals_a_rival_the_players_culture():
+    """
+    A rival on the player's own culture is named by the generator the player's war band is named by,
+    so the rivals list came back reading as one people under five flags.
+    """
+    savegame = SavegameFactory()
+    player_culture = CultureFactory(locale="da_DK")
+
+    # Five rivals against the cultures the fixtures ship plus this one, so the draw has every chance
+    # to land on the player's and the assertion is not passing by luck of a short pool
+    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=5):
+        result = handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                faction_culture_id=player_culture.id,
+            )
+        )
+
+    rival_culture_ids = {command.culture_id for command in result if not command.is_player_faction}
+    assert rival_culture_ids
+    assert player_culture.id not in rival_culture_ids
+
+
+@pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_falls_back_to_the_only_culture_there_is():
+    """
+    Excluding the player's culture from a table holding nothing else would leave nothing to draw
+    from, and a savegame with no rivals in it is worse than a rival sharing the player's people.
+    """
+    savegame = SavegameFactory()
+    only_culture = CultureFactory(locale="da_DK")
+    # The reference fixtures ship five, and this is the one path where the table holding a single row
+    # is the whole point
+    Culture.objects.exclude(id=only_culture.id).delete()
+
+    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3):
+        result = handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                faction_culture_id=only_culture.id,
+            )
+        )
+
+    assert {command.culture_id for command in result if not command.is_player_faction} == {only_culture.id}
+
+
+@pytest.mark.django_db
 def test_handle_create_factions_for_new_savegame_without_the_culture():
     """
     Cultures are reference data every environment ships with, so a missing one is a half-seeded
