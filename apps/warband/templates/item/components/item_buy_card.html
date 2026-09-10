@@ -16,9 +16,11 @@
         </div>
     </div>
     <div class="uk-card-footer">
-        <a hx-post="{% url 'warband:item-buy-view' item.id %}"
-           hx-target="#item-card-{{ item.id|unlocalize }}"
-           hx-swap="none"
-           class="uk-button uk-button-text">Buy</a>
+        <button type="button"
+                hx-post="{% url 'warband:item-buy-view' item.id %}"
+                hx-target="#item-card-{{ item.id|unlocalize }}"
+                hx-swap="none"
+                class="uk-button uk-button-text">Buy
+        </button>
     </div>
 </div>

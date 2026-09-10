@@ -41,10 +41,12 @@
     {% endcomment %}
     {% if is_player_faction %}
         <div class="uk-card-footer">
-            <a hx-post="{% url 'warband:item-sell-view' item.id %}"
-               hx-target="#item-card-{{ item.id|unlocalize }}"
-               hx-swap="none"
-               class="uk-button uk-button-text">Sell</a>
+            <button type="button"
+                    hx-post="{% url 'warband:item-sell-view' item.id %}"
+                    hx-target="#item-card-{{ item.id|unlocalize }}"
+                    hx-swap="none"
+                    class="uk-button uk-button-text">Sell
+            </button>
         </div>
     {% endif %}
 </div>

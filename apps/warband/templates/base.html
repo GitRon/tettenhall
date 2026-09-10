@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
     <link rel="stylesheet" href="{% static 'css/colors.css' %}">
     <link rel="stylesheet" href="{% static 'css/icons.css' %}">
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
     <link rel="stylesheet" href="{% static 'css/progress-bar.css' %}">
 </head>
 <body>
@@ -83,9 +84,14 @@
                     </li>
                 {% else %}
                     <li class="uk-active">
-                        <a hx-post="{% url 'warband:finish-month-view' %}">
+                        {# A button rather than an anchor, because this posts the month: an "a" with no #}
+                        {# href is out of Tab's reach and announced as text. "navbar.css" is what keeps #}
+                        {# it looking like the nav entry beside it. #}
+                        <button type="button"
+                                hx-post="{% url 'warband:finish-month-view' %}"
+                                class="uk-navbar-item">
                             Finish month
-                        </a>
+                        </button>
                     </li>
                 {% endif %}
             {% endif %}
