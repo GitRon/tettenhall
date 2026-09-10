@@ -1368,6 +1368,21 @@ def test_faction_occupy_view_hides_factions_of_other_savegames(logged_in_client,
 
 
 @pytest.mark.django_db
+def test_faction_occupy_view_without_an_active_savegame(logged_in_client):
+    """
+    Answering 404 rather than a server error: with no savegame there is nothing to scope against,
+    and no savegame to ask "occupiable_by" about either.
+    """
+    rival = FactionFactory()
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+
+    response = logged_in_client.post(reverse("warband:faction-occupy-view", kwargs={"pk": rival.id}))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_faction_occupy_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
     rival = FactionFactory(savegame=savegame_without_player_faction)
     rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)

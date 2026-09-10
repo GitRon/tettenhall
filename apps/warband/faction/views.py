@@ -162,8 +162,7 @@ class FactionDetailView(
         # button and the page it leads to cannot disagree. No month, and nothing about the player's
         # own leader - see "occupiable_by".
         context["can_be_occupied"] = (
-            player_faction is not None
-            and Faction.objects.occupiable_by(player_faction=player_faction).filter(id=self.object.id).exists()
+            Faction.objects.occupiable_by(savegame=current_savegame).filter(id=self.object.id).exists()
         )
 
         return context
@@ -246,9 +245,7 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
         # row. Not the complement of either set above - a rival can be out of both while its healthy
         # men are merely spoken for elsewhere, and that town is still defended.
         occupiable_rival_ids = set(
-            Faction.objects.occupiable_by(player_faction=self.current_savegame.player_faction).values_list(
-                "id", flat=True
-            )
+            Faction.objects.occupiable_by(savegame=self.current_savegame).values_list("id", flat=True)
         )
 
         rival_list = list(context[self.context_object_name])
@@ -497,10 +494,10 @@ class FactionOccupyView(RunningSavegameRequiredMixin, SingleObjectMixin, generic
 
     def get_queryset(self) -> QuerySet:
         current_savegame: Savegame = Savegame.objects.get_current_savegame(user_id=self.request.user.id)
-        if current_savegame is None or current_savegame.player_faction is None:
+        if current_savegame is None:
             return super().get_queryset().none()
 
-        return super().get_queryset().occupiable_by(player_faction=current_savegame.player_faction)
+        return super().get_queryset().occupiable_by(savegame=current_savegame)
 
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
