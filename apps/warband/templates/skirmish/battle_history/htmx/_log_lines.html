@@ -1,14 +1,23 @@
-{# The lines where a man was taken out of the fight are the only ones marked. The swings, the misses #}
-{# and the rounds closing stay plain - twenty marked lines mark nothing. #}
-{# Three weights, because losing a man and felling one are both worth reading and are not the same #}
-{# news: his own in danger, theirs in success, and neither on a fight between two rivals he is only #}
-{# watching, where colouring a stranger's death as a gain would be a lie. #}
-{% for log in object_list %}
-    {% if log.is_casualty %}
-        <div class="{% if not player_faction_id %}uk-text-emphasis{% elif log.faction_id == player_faction_id %}uk-text-danger{% else %}uk-text-success{% endif %}">
-            <i class="fa-solid {{ log.icon }}"></i> <strong>{{ log.message }}</strong>
-        </div>
-    {% else %}
-        <div>{{ log.message }}</div>
-    {% endif %}
+{# The newest round on top, so a fight that has run for twenty rounds opens on the one just fought #}
+{# instead of on the one the player has long stopped caring about. Inside a round the lines stay in #}
+{# the order they were struck - see "BattleLog". #}
+{# The heading is the round's boundary line, which the grouping consumes rather than renders. #}
+{% for log_round in battle_log.round_list %}
+    <div class="uk-margin-small-bottom">
+        <div class="uk-text-meta uk-text-uppercase">Round {{ log_round.number }}</div>
+        {# The lines where a man was taken out of the fight are the only ones marked. The swings and #}
+        {# the misses stay plain - twenty marked lines mark nothing. #}
+        {# Three weights, because losing a man and felling one are both worth reading and are not the #}
+        {# same news: his own in danger, theirs in success, and neither on a fight between two rivals #}
+        {# he is only watching, where colouring a stranger's death as a gain would be a lie. #}
+        {% for log in log_round.line_list %}
+            {% if log.is_casualty %}
+                <div class="{% if not player_faction_id %}uk-text-emphasis{% elif log.faction_id == player_faction_id %}uk-text-danger{% else %}uk-text-success{% endif %}">
+                    <i class="fa-solid {{ log.icon }}"></i> <strong>{{ log.message }}</strong>
+                </div>
+            {% else %}
+                <div>{{ log.message }}</div>
+            {% endif %}
+        {% endfor %}
+    </div>
 {% endfor %}

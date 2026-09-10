@@ -19,6 +19,7 @@ from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError
 from apps.warband.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
+from apps.warband.skirmish.projections.battle_log import BattleLog
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.warband.skirmish.projections.skirmish_report import SkirmishReport
 from apps.warband.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
@@ -81,7 +82,6 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
         context["defending_faction"] = self.object.defending_faction
         context["attacker_is_player"] = self.object.attacking_faction_id == player_faction_id
         context["defender_is_player"] = self.object.defending_faction_id == player_faction_id
-        context["battle_log"] = self.object.battle_logs.all()
         context["occupiable_faction"] = self.get_occupiable_faction(skirmish=self.object)
         # A decided fight has no next round, so the cards stop offering to choose an action for one.
         # On the context of the page and of the partial below, for the reason "occupiable_faction" is
@@ -324,6 +324,9 @@ class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView)
         # off the report, because a man goes down while it is still being fought and there is no
         # report until it is decided
         context["player_faction_id"] = player_faction_id
+        # Grouped from the list the scoped queryset already produced rather than from a read of its
+        # own, which is what keeps the log reachable one way only
+        context["battle_log"] = BattleLog.from_lines(line_list=list(context["object_list"]))
         return context
 
 

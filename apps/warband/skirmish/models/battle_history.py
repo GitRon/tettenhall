@@ -18,6 +18,10 @@ class BattleHistory(models.Model):
         # ordered a retreat must not be told his man broke; the marking does not, because what it
         # answers is whether the man is gone.
         KIND_WARRIOR_LEFT_THE_FIELD = 4, "Warrior left the field"
+        # The one line whose content is structure rather than narration, and the only thing that
+        # marks where one round ends and the next begins. No row carries its round number, so the
+        # panel cuts the log at these.
+        KIND_ROUND_FINISHED = 5, "Round finished"
 
     # The kinds that take a man out of the fight, and the icon each is marked with. Keyed by kind and
     # kept on the model because a Django template cannot compare a value against a choices constant -
@@ -47,8 +51,9 @@ class BattleHistory(models.Model):
         verbose_name = "Battle log"
         verbose_name_plural = "Battle logs"
         default_related_name = "battle_logs"
-        # The one panel in the game that has to read chronologically, so the order it is written in
-        # is part of what it is rather than a detail left to the database
+        # A fight reads forwards, so the order the lines were written in is part of what the model
+        # is rather than a detail left to the database. "BattleLog" cuts the log into rounds by
+        # walking it, and cannot do that on rows the database handed back in whatever order it liked.
         ordering = ("id",)
 
     def __str__(self) -> str:
@@ -60,6 +65,13 @@ class BattleHistory(models.Model):
         Whether this line reports a man being taken out of the fight, which is what the panel marks.
         """
         return self.kind in self.KIND_ICONS
+
+    @property
+    def is_round_boundary(self) -> bool:
+        """
+        Whether this line is the one that closes a round, which is where the panel cuts the log.
+        """
+        return self.kind == self.KindChoices.KIND_ROUND_FINISHED
 
     @property
     def icon(self) -> str:
