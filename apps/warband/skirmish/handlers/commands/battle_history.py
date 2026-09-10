@@ -11,6 +11,8 @@ def handle_create_battle_history(*, context: CreateBattleHistory) -> Event:
     history = BattleHistory.objects.create_record(
         skirmish=context.skirmish,
         message=context.message,
+        kind=context.kind,
+        warrior=context.warrior,
     )
 
     return BattleHistoryCreated(history=history)

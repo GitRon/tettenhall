@@ -41,6 +41,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorWasIncapacitated,
     WarriorWasKilled,
 )
+from apps.warband.skirmish.models import BattleHistory
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -218,7 +219,12 @@ def test_handle_log_warrior_incapacitation_logs_the_knockout():
         )
     )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred is out of the fight being unconscious.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Cuthred is out of the fight being unconscious.",
+        kind=BattleHistory.KindChoices.KIND_WARRIOR_INCAPACITATED,
+        warrior=warrior,
+    )
 
 
 def test_handle_log_warrior_death_logs_the_kill():
@@ -229,7 +235,12 @@ def test_handle_log_warrior_death_logs_the_kill():
         context=WarriorWasKilled(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn"))
     )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred is out of the fight being killed.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Cuthred is out of the fight being killed.",
+        kind=BattleHistory.KindChoices.KIND_WARRIOR_KILLED,
+        warrior=warrior,
+    )
 
 
 def test_handle_log_round_finished_names_the_round_that_resolved():
@@ -330,7 +341,12 @@ def test_handle_warrior_has_fled_logs_the_retreat():
 
     result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior))
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred is out of morale and fled the field.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Cuthred is out of morale and fled the field.",
+        kind=BattleHistory.KindChoices.KIND_WARRIOR_LEFT_THE_FIELD,
+        warrior=warrior,
+    )
 
 
 def test_handle_warrior_has_fled_names_the_right_cause_for_an_ordered_withdrawal():
@@ -344,7 +360,11 @@ def test_handle_warrior_has_fled_names_the_right_cause_for_an_ordered_withdrawal
     result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior, was_ordered=True))
 
     assert result == CreateBattleHistory(
-        skirmish=skirmish, message="Cuthred was ordered to withdraw and left the field."
+        skirmish=skirmish,
+        message="Cuthred was ordered to withdraw and left the field.",
+        # The same kind as a rout: the sentences differ, the fact that he is gone does not
+        kind=BattleHistory.KindChoices.KIND_WARRIOR_LEFT_THE_FIELD,
+        warrior=warrior,
     )
 
 

@@ -263,38 +263,67 @@ class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView)
         # expose another player's battle history
         return super().get_queryset().filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
 
-    def _get_report(self) -> SkirmishReport | None:
+    @staticmethod
+    def _get_player_faction_id_in_fight(*, current_savegame: Savegame | None, skirmish: Skirmish | None) -> int | None:
+        """
+        The player's own faction, but only where it is one of the two sides in this fight.
+
+        A player can open the log of a fight between two of his rivals, and there neither side's
+        losses are his news - so the answer is nothing rather than his faction, and the panel reports
+        and marks that fight without taking a side. A savegame with no player faction answers nothing
+        for the same reason: "None" is not one of the two sides either.
+
+        One question, asked once, because the report and the marking of the log both turn on it. Asked
+        twice they could disagree, and the disagreement would show as the enemy's dead being coloured
+        the player's gain.
+        """
+        if current_savegame is None or skirmish is None:
+            return None
+
+        if current_savegame.player_faction_id not in (skirmish.attacking_faction_id, skirmish.defending_faction_id):
+            return None
+
+        return current_savegame.player_faction_id
+
+    @staticmethod
+    def _get_report(
+        *, current_savegame: Savegame, skirmish: Skirmish, player_faction_id: int | None
+    ) -> SkirmishReport | None:
         """
         The summary of a fight that is over, from the player's side of it - or nothing at all.
 
         Built here rather than behind a URL of its own because this is the fragment the winning round
         swaps in. A report reachable only by reloading the page would arrive after the moment it is
         about.
-        """
-        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
-        if current_savegame is None or current_savegame.player_faction_id is None:
-            return None
 
-        # Through the scoped queryset, for the same reason the log itself goes through one
-        skirmish = (
-            Skirmish.objects.for_savegame(savegame_id=current_savegame.id)
-            .filter(id=self.kwargs.get("skirmish_id", -1))
-            .first()
-        )
-        # A fight still being fought has no outcome to report, and a fight the player only watched
-        # has no side of his to report it from
-        if (
-            skirmish is None
-            or skirmish.victorious_faction_id is None
-            or current_savegame.player_faction_id not in (skirmish.attacking_faction_id, skirmish.defending_faction_id)
-        ):
+        A fight still being fought has no outcome to report, and whether the player has a side in it
+        at all is what "player_faction_id" already answers - so a report exists exactly when that
+        answer and an outcome both do.
+        """
+        if player_faction_id is None or skirmish.victorious_faction_id is None:
             return None
 
         return SkirmishReport.for_skirmish(skirmish=skirmish, faction=current_savegame.player_faction)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["report"] = self._get_report()
+        current_savegame: Savegame | None = get_current_savegame_for_request(request=self.request)
+        # Through the scoped queryset, for the same reason the log itself goes through one: the id
+        # comes straight from the URL. The savegame's own id is asked with a fallback that matches
+        # nothing, the way the skirmish id beside it already is
+        skirmish = (
+            Skirmish.objects.for_savegame(savegame_id=getattr(current_savegame, "id", -1))
+            .filter(id=self.kwargs.get("skirmish_id", -1))
+            .first()
+        )
+        player_faction_id = self._get_player_faction_id_in_fight(current_savegame=current_savegame, skirmish=skirmish)
+        context["report"] = self._get_report(
+            current_savegame=current_savegame, skirmish=skirmish, player_faction_id=player_faction_id
+        )
+        # The side the log marks its casualty lines against. Answered from the fight rather than read
+        # off the report, because a man goes down while it is still being fought and there is no
+        # report until it is decided
+        context["player_faction_id"] = player_faction_id
         return context
 
 

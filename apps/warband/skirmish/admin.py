@@ -14,8 +14,8 @@ from apps.warband.skirmish.models.warrior import Warrior
 
 @admin.register(BattleHistory)
 class BattleHistoryAdmin(admin.ModelAdmin):
-    list_display = ("message", "skirmish", "created_at")
-    list_filter = ("skirmish",)
+    list_display = ("message", "kind", "skirmish", "faction", "created_at")
+    list_filter = ("kind", "skirmish")
 
 
 @admin.register(SkirmishBlow)

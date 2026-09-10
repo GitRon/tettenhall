@@ -555,6 +555,10 @@ def test_battle_history_update_htmx_view_reports_nothing_on_a_fight_between_two_
 ):
     """
     A report has a side, and the player has none in a fight he only watched.
+
+    The log has none either, which is what the second assertion is for: the player does have a faction
+    here, it is simply not in this fight - so answering with it would colour a stranger's death as his
+    own gain.
     """
     skirmish = SkirmishFactory(attacking_faction=FactionFactory(savegame=current_savegame))
     skirmish.victorious_faction = skirmish.attacking_faction
@@ -564,6 +568,7 @@ def test_battle_history_update_htmx_view_reports_nothing_on_a_fight_between_two_
 
     assert response.status_code == 200
     assert response.context["report"] is None
+    assert response.context["player_faction_id"] is None
 
 
 @pytest.mark.django_db
@@ -596,6 +601,21 @@ def test_battle_history_update_htmx_view_reports_nothing_without_a_player_factio
 
     assert response.status_code == 200
     assert response.context["report"] is None
+    assert response.context["player_faction_id"] is None
+
+
+@pytest.mark.django_db
+def test_battle_history_update_htmx_view_says_whose_men_the_log_is_about(logged_in_client, current_savegame):
+    """
+    The side the log marks its casualties against, which the panel needs while the fight is still
+    being fought - long before there is a report to read it off.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
+
+    assert response.status_code == 200
+    assert response.context["player_faction_id"] == current_savegame.player_faction_id
 
 
 @pytest.mark.django_db
