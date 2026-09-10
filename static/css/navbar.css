@@ -6,6 +6,11 @@
  * arrives with the browser's own chrome and without the nav item's presentation. These rules hand it
  * back: the reset undoes the chrome, and the rest repeats what ".uk-navbar-nav > li > a" states -
  * uppercase, the muted grey, and the darker shades on hover and while active.
+ *
+ * "height: 100%" is the one that is not cosmetic. The account entry beside this one carries its
+ * dropdown in flow, which makes the whole bar taller than a nav item's 80px, and UIkit's anchor rule
+ * stretches to match it. A button left at "min-height" alone centres its label in the top 80px while
+ * its neighbour centres in the full height, so the two labels sit on different lines.
  */
 .uk-navbar-nav > li > button.uk-navbar-item {
     background: none;
@@ -15,6 +20,7 @@
     font-size: 0.875rem;
     text-transform: uppercase;
     color: #999;
+    height: 100%;
     transition: 0.1s ease-in-out;
     transition-property: color, background-color;
 }
