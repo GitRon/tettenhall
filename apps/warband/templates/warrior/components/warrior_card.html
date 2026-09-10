@@ -96,12 +96,14 @@
             {# The nought is written out rather than read off anything, and mirrors the "recruitment_price=0" #}
             {# in "handle_recruit_captured_warrior": a man already in your cells costs no silver, only #}
             {# the quarter of his nerve that handler takes off him. #}
-            <a hx-post="{% url 'warband:warrior-recruit-captured-view' warrior.id faction.id %}"
-               class="uk-button uk-button-text">
-                Recruit for <i class="fa-solid fa-coins"></i> <i>0</i></a> /
-            <a hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
-               class="uk-button uk-button-text">
-                Enslave for <i class="fa-solid fa-coins"></i> <i>{{ warrior.slavery_selling_price }}</i>&nbsp;</a>
+            <button type="button"
+                    hx-post="{% url 'warband:warrior-recruit-captured-view' warrior.id faction.id %}"
+                    class="uk-button uk-button-text">
+                Recruit for <i class="fa-solid fa-coins"></i> <i>0</i></button> /
+            <button type="button"
+                    hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
+                    class="uk-button uk-button-text">
+                Enslave for <i class="fa-solid fa-coins"></i> <i>{{ warrior.slavery_selling_price }}</i>&nbsp;</button>
         {% else %}
             <a href="{% url 'warband:warrior-detail-view' warrior.id %}" class="uk-button uk-button-text">Detail</a>
             {% comment %}
@@ -115,9 +117,10 @@
                 {% if warrior.dismissal_refusal %}
                     <span class="uk-text-meta">{{ warrior.dismissal_refusal }}</span>
                 {% else %}
-                    / <a hx-post="{% url 'warband:warrior-dismiss-view' warrior.id %}"
-                         class="uk-button uk-button-text">
-                        Dismiss for <i class="fa-solid fa-coins"></i> <i>{{ warrior.severance_pay }}</i>&nbsp;</a>
+                    / <button type="button"
+                              hx-post="{% url 'warband:warrior-dismiss-view' warrior.id %}"
+                              class="uk-button uk-button-text">
+                        Dismiss for <i class="fa-solid fa-coins"></i> <i>{{ warrior.severance_pay }}</i>&nbsp;</button>
                 {% endif %}
             {% endif %}
         {% endif %}
