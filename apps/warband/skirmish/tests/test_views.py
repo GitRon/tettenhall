@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.battle_history import BattleHistoryFactory
@@ -510,6 +511,22 @@ def test_battle_history_update_htmx_view_lists_the_history_of_the_skirmish(logge
 
     assert response.status_code == 200
     assert list(response.context["battlehistory_list"]) == [battle_history]
+
+
+@pytest.mark.django_db
+def test_battle_history_update_htmx_view_groups_the_log_into_rounds(logged_in_client, current_savegame):
+    """
+    The panel renders the grouped log rather than the flat list, so the view has to put it on the
+    context - and it has to be grouped from the scoped queryset, not from a read of its own.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    BattleHistoryFactory(skirmish=skirmish, message="a blow")
+    BattleHistoryFactory(skirmish=skirmish, kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED)
+
+    response = logged_in_client.get(reverse("warband:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
+
+    assert response.status_code == 200
+    assert [log.message for log in response.context["battle_log"].round_list[0].line_list] == ["a blow"]
 
 
 @pytest.mark.django_db
