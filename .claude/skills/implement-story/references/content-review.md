@@ -42,9 +42,9 @@ the story turns on them.
 3. **Most of the game needs an active savegame.** Without one the nav is nearly empty and half the URLs
    have nothing to resolve. A savegame with no player faction is a legal state, so an empty nav is not
    automatically a defect.
-4. **The interactive parts are htmx.** `hx-post` sits on `<a>` elements with no `href`, which reach the
-   accessibility tree as a generic element with a pointer cursor rather than a link - click them by their
-   text. After a mutating click the URL often does not change; snapshot again to see what swapped.
+4. **The interactive parts are htmx.** `hx-post` sits on `<button>` elements, so they reach the
+   accessibility tree as buttons: addressable by role and name, and operable by click, Enter or Space.
+   After a mutating click the URL often does not change; snapshot again to see what swapped.
 5. **A failing htmx request does not look like a failure.** `base.html` turns any 5xx into a UIkit toast
    reading "An error has occurred." that disappears after one second, and htmx does not swap on error, so
    the page just sits there looking fine. **Check `browser_network_requests` after every mutating
