@@ -5,6 +5,7 @@ from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.warrior.messages.events.warrior import (
     WarriorHealthHealed,
+    WarriorLostMoraleOverUnpaidSalary,
     WarriorMoraleReplenished,
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
@@ -30,6 +31,22 @@ def handle_warrior_health_healed(*, context: WarriorHealthHealed) -> Command:
     return CreatePlayerMonthLog(
         title=f"Warrior {context.warrior} healed {context.healed_points} HP.",
         kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_HEALED,
+        month=context.month,
+        faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=WarriorLostMoraleOverUnpaidSalary)
+def handle_warrior_lost_morale_over_unpaid_salary(*, context: WarriorLostMoraleOverUnpaidSalary) -> Command:
+    """
+    The quieter half of a month without wages, beside the walk-out that is the loud one.
+
+    A line per man, which the upkeep tally turns back into one sentence - the reason this is worth
+    reporting at all is the count, and low morale is what routs a warrior in the next fight.
+    """
+    return CreatePlayerMonthLog(
+        title=f"{context.warrior} lost {context.lost_morale} morale over unpaid wages.",
+        kind=PlayerMonthLog.KindChoices.KIND_MORALE_LOST_UNPAID,
         month=context.month,
         faction=context.faction,
     )

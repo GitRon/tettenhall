@@ -21,6 +21,7 @@ def test_handle_determine_savegame_outcome_is_lost_without_the_player():
     assert result == SavegameEnded(
         savegame=savegame,
         outcome=Savegame.OutcomeChoices.OUTCOME_LOST,
+        player_faction=savegame.player_faction,
         open_skirmish_list=[],
         month=savegame.current_month,
     )

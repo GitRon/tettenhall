@@ -1,5 +1,6 @@
 import pytest
 
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.savegame.messages.events.savegame import SavegameEnded
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
@@ -16,6 +17,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_gives_a_won_game_to_the_p
         context=SavegameEnded(
             savegame=SavegameFactory.build(player_faction=skirmish.attacking_faction),
             outcome=Savegame.OutcomeChoices.OUTCOME_WON,
+            player_faction=skirmish.attacking_faction,
             open_skirmish_list=[skirmish],
             month=3,
         )
@@ -32,6 +34,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_gives_a_lost_game_to_the_
         context=SavegameEnded(
             savegame=SavegameFactory.build(player_faction=skirmish.attacking_faction),
             outcome=Savegame.OutcomeChoices.OUTCOME_LOST,
+            player_faction=skirmish.attacking_faction,
             open_skirmish_list=[skirmish],
             month=3,
         )
@@ -54,6 +57,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_gives_a_won_game_to_the_d
         context=SavegameEnded(
             savegame=SavegameFactory.build(player_faction=skirmish.defending_faction),
             outcome=Savegame.OutcomeChoices.OUTCOME_WON,
+            player_faction=skirmish.defending_faction,
             open_skirmish_list=[skirmish],
             month=3,
         )
@@ -67,6 +71,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_without_an_open_fight():
         context=SavegameEnded(
             savegame=SavegameFactory.build(),
             outcome=Savegame.OutcomeChoices.OUTCOME_WON,
+            player_faction=FactionFactory.build(),
             open_skirmish_list=[],
             month=3,
         )

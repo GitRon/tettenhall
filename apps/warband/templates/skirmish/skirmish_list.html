@@ -25,12 +25,16 @@
                 <td>{{ skirmish.rounds_fought }}</td>
                 <td>{{ skirmish.victorious_faction|default_if_none:"-" }}</td>
                 <td>
+                    {# The icon is the whole control, so the label is the only thing a screen reader #}
+                    {# has - and it carries the same distinction the two icons draw #}
                     {% if skirmish.victorious_faction %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
+                           aria-label="Read the report of {{ skirmish.name }}"
                            class="uk-button uk-button-default uk-button-small uk-button-primary">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     {% else %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
+                           aria-label="Continue the fight at {{ skirmish.name }}"
                            class="uk-button uk-button-default uk-button-small uk-button-danger">
                         <i class="fa-solid fa-arrow-right"></i>
                     {% endif %}
