@@ -2,6 +2,7 @@ import pytest
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -11,14 +12,22 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 @pytest.fixture
 def player_faction() -> Faction:
     """
-    A faction ready to march: a healthy leader, free of any quest.
+    A faction ready to march: a healthy leader, free of any quest, and the player's own.
 
     Shared because every case below needs one before anything about the target is even looked at,
     and building it inline four times over would bury the rule each test is actually about.
+
+    Wired onto its savegame as the player faction, and the month set on it, because "attackable_by"
+    reads all three off the savegame - the faction, the month and whether the game is still running.
     """
     faction = FactionFactory()
     faction.leader = WarriorFactory(faction=faction)
     faction.save()
+
+    savegame = faction.savegame
+    savegame.player_faction = faction
+    savegame.current_month = 3
+    savegame.save()
 
     return faction
 
@@ -189,9 +198,29 @@ def test_attackable_by_returns_the_rival(player_faction):
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == [rival_faction]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("outcome", [Savegame.OutcomeChoices.OUTCOME_WON, Savegame.OutcomeChoices.OUTCOME_LOST])
+def test_attackable_by_offers_nobody_once_the_game_is_decided(player_faction, outcome):
+    """
+    Both ways of finishing, because a won savegame reaches these screens exactly as a lost one does.
+
+    The rival is left standing and still fieldable - only the outcome changes - so this fails if the
+    queryset goes on asking about the month and the leader and never about the game being over.
+    """
+    rival_faction = FactionFactory(savegame=player_faction.savegame)
+    WarriorFactory(faction=rival_faction)
+    savegame = player_faction.savegame
+    savegame.outcome = outcome
+    savegame.save()
+
+    result = Faction.objects.attackable_by(savegame=savegame)
+
+    assert list(result) == []
 
 
 @pytest.mark.django_db
@@ -199,7 +228,7 @@ def test_attackable_by_without_a_player_faction():
     """
     The reachable state before the player has a faction of his own: nobody to attack with.
     """
-    result = Faction.objects.attackable_by(player_faction=None, month=3)
+    result = Faction.objects.attackable_by(savegame=SavegameFactory())
 
     assert list(result) == []
 
@@ -214,14 +243,14 @@ def test_attackable_by_without_an_available_leader(player_faction):
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
 
 @pytest.mark.django_db
 def test_attackable_by_excludes_the_player_faction(player_faction):
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -231,7 +260,7 @@ def test_attackable_by_excludes_a_defeated_faction(player_faction):
     rival_faction = FactionFactory(savegame=player_faction.savegame, is_defeated=True)
     WarriorFactory(faction=rival_faction)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -244,7 +273,7 @@ def test_attackable_by_excludes_a_faction_without_a_healthy_warrior(player_facti
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -260,7 +289,7 @@ def test_attackable_by_excludes_a_faction_whose_defenders_are_already_in_a_fight
     committed_defender = WarriorFactory(faction=rival_faction)
     SkirmishFactory(defending_faction=rival_faction).defending_warriors.add(committed_defender)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -283,7 +312,7 @@ def test_attackable_by_offers_nobody_once_the_war_band_has_marched(player_factio
     )
     skirmish.attacking_warriors.add(player_faction.leader)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -300,7 +329,7 @@ def test_attackable_by_offers_a_rival_again_the_month_after(player_faction):
     )
     skirmish.attacking_warriors.add(player_faction.leader)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == [rival_faction]
 
@@ -316,7 +345,7 @@ def test_attackable_by_offers_nobody_while_a_fight_is_still_undecided(player_fac
     skirmish = SkirmishFactory(attacking_faction=player_faction, defending_faction=rival_faction, month=2)
     skirmish.attacking_warriors.add(player_faction.leader)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 
@@ -326,7 +355,7 @@ def test_attackable_by_excludes_factions_of_another_savegame(player_faction):
     foreign_faction = FactionFactory()
     WarriorFactory(faction=foreign_faction)
 
-    result = Faction.objects.attackable_by(player_faction=player_faction, month=3)
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == []
 

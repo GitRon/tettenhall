@@ -105,11 +105,7 @@ class FactionDetailView(
         # and the page it leads to can never disagree about who may be attacked
         current_savegame = self.current_savegame
         context["can_be_attacked"] = (
-            Faction.objects.attackable_by(
-                player_faction=current_savegame.player_faction, month=current_savegame.current_month
-            )
-            .filter(id=self.object.id)
-            .exists()
+            Faction.objects.attackable_by(savegame=current_savegame).filter(id=self.object.id).exists()
         )
         # A button that simply vanishes teaches the player nothing, and "every warrior fights once a
         # month" is the rule he is most likely to walk into without noticing. Three separate things can
@@ -230,9 +226,7 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
         # them per row is a query per row - and it is the same "attackable_by" the attack view
         # resolves its target with, so a button here and the page it leads to cannot disagree.
         attackable_rival_ids = set(
-            Faction.objects.attackable_by(
-                player_faction=player_faction, month=self.current_savegame.current_month
-            ).values_list("id", flat=True)
+            Faction.objects.attackable_by(savegame=self.current_savegame).values_list("id", flat=True)
         )
         # Wider by exactly the "their men are already in a fight" rule, which is what makes it the
         # right guard for the sentences below: outside it a rival never offered a fight in the first
@@ -445,14 +439,7 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         if self.current_savegame is None:
             return super().get_queryset().none()
 
-        return (
-            super()
-            .get_queryset()
-            .attackable_by(
-                player_faction=self.current_savegame.player_faction,
-                month=self.current_savegame.current_month,
-            )
-        )
+        return super().get_queryset().attackable_by(savegame=self.current_savegame)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
