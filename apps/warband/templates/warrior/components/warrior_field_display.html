@@ -13,4 +13,27 @@
             <i class="fa-solid fa-feather-pointed"></i>
         </button>
     {% endif %}
+    {% comment %}
+        The mean is what the choice turns on, and it is this man's rather than the item's: a blow is
+        scaled by his strength before it lands, so the axe averaging 12 in the shop is not what he
+        swings for. Armour carries no strength at all, hence one figure quoted a blow and the other
+        flat.
+
+        Inside the container rather than beside it in the cell. This div is the whole of what the
+        htmx save swaps, so a figure one level out would go on quoting the item that was in the slot
+        before the swap - the row would name the new sword and price the old one.
+
+        Written out for an empty slot too: the fight hands an empty slot the fallback type rather
+        than nothing, and a blank would read as a man who can neither hurt anybody nor take a blow.
+
+        "with his strength" is the whole reason this figure and the one on the option the slot is
+        edited from are two different numbers for one axe - 12 for the weapon, 10.5 for the man
+        holding it. Armour needs no such qualifier, and the two figures agreeing there is itself
+        the honest signal that no strength went into them.
+    {% endcomment %}
+    {% if attribute == 'weapon' %}
+        <span class="uk-text-meta">{{ object.expected_damage|floatformat }} damage a blow on average, with his strength</span>
+    {% elif attribute == 'armor' %}
+        <span class="uk-text-meta">{{ object.expected_protection|floatformat }} protection turned aside on average</span>
+    {% endif %}
 </div>

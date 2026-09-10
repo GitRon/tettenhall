@@ -154,6 +154,44 @@ def test_experience_for_next_level_is_the_threshold_ahead():
 
 
 @pytest.mark.django_db
+def test_expected_damage_scales_the_weapon_by_the_strength_behind_it():
+    """
+    The same axe is worth more in stronger hands, which is why the figure is quoted about the man
+    and not about the item.
+    """
+    weapon_type = ItemTypeFactory(base_value="2d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON)
+    warrior = WarriorFactory(weapon=ItemFactory(type=weapon_type), strength=15, strength_baseline=10)
+
+    assert warrior.expected_damage == 10.5
+
+
+@pytest.mark.django_db
+def test_expected_damage_falls_back_to_bare_hands():
+    warrior = WarriorFactory(weapon=None, strength=20, strength_baseline=10)
+
+    assert warrior.expected_damage == 4.0
+
+
+@pytest.mark.django_db
+def test_expected_protection_leaves_strength_out_of_it():
+    """
+    Defence is the armour's own roll, so a strong man in the same mail turns aside no more than a
+    weak one - the asymmetry the two figures exist to show.
+    """
+    armor_type = ItemTypeFactory(base_value="3d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR)
+    warrior = WarriorFactory(armor=ItemFactory(type=armor_type), strength=20, strength_baseline=10)
+
+    assert warrior.expected_protection == 7.5
+
+
+@pytest.mark.django_db
+def test_expected_protection_falls_back_to_no_armour():
+    warrior = WarriorFactory(armor=None)
+
+    assert warrior.expected_protection == 1.5
+
+
+@pytest.mark.django_db
 def test_roll_attack_hands_back_the_notation_and_the_gear_it_rolled():
     """
     Both halves travel with the number, because the fight is about to blend the number away: a

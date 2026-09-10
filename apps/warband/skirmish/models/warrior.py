@@ -294,6 +294,32 @@ class Warrior(models.Model):
             )
         )
 
+    @property
+    def expected_damage(self) -> float:
+        """
+        What this man averages with what he is holding, on a plain attack.
+
+        His, not his weapon's: a blow is scaled by "strength / strength_baseline" before it lands
+        (`AttackService._scaled_by_strength`), so the same axe is worth a quarter more in the hands of
+        a man a quarter above his kind's mean. The plain attack is the baseline the two other swings
+        are quoted against - the fast one halves this and the risky one doubles it, half the time.
+
+        Read off the fallback when the slot is empty, the way the fight reads it: a bare-handed
+        warrior still throws 1d3, and a blank here would say he cannot hurt anybody.
+        """
+        return self.get_weapon_or_fallback().expectancy_value * self.strength / self.strength_baseline
+
+    @property
+    def expected_protection(self) -> float:
+        """
+        What his armour turns aside on average - the item's own figure and nothing else.
+
+        No strength in it, and so no baseline either: defence is the armour's own roll
+        (`AttackService.get_defense_value`), which is why this and [expected_damage] are not the same
+        calculation with a different item in it.
+        """
+        return self.get_armor_or_fallback().expectancy_value
+
     def roll_attack(self) -> ActionRoll:
         """
         The weapon's own throw, the die behind it and the gear that threw it - before the fight
