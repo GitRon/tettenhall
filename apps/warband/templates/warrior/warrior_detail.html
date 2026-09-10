@@ -29,10 +29,10 @@
         </tr>
         {% comment %}
             The card that links here carried these and the page did not, so clicking "Detail" showed
-            the player less about a man than the tile he clicked. Strength, dexterity and the salary
-            are on a rival's card too and stay unguarded; health, morale and the condition are the
-            three the rivals list calls knowledge not earned without scouting, so they follow the
-            same gate the card puts them behind.
+            the player less about a man than the tile he clicked. Strength, dexterity, the salary and
+            the condition are on a rival's card too and stay unguarded; health and morale are the two
+            the rivals list calls knowledge not earned without scouting, so they follow the same gate
+            the card puts them behind.
         {% endcomment %}
         <tr>
             <td>Strength</td>
@@ -51,15 +51,15 @@
                 <td>Morale</td>
                 <td>{{ object.current_morale }} / {{ object.max_morale }}</td>
             </tr>
-            <tr>
-                <td>Condition</td>
-                {# The condition is a state, not a scale: it says whether he is still on his feet, #}
-                {# and the health above says at what cost. #}
-                <td>
-                    {% if object.is_healthy %}Able to fight{% else %}{{ object.get_condition_display }}{% endif %}
-                </td>
-            </tr>
         {% endif %}
+        <tr>
+            <td>Condition</td>
+            {# The condition is a state, not a scale: it says whether he is still on his feet, and #}
+            {# the health above - where the player has earned it - says at what cost. #}
+            <td>
+                {% if object.is_healthy %}Able to fight{% else %}{{ object.get_condition_display }}{% endif %}
+            </td>
+        </tr>
         <tr>
             <td>Salary</td>
             <td>{{ object.monthly_salary }} silver a month</td>

@@ -26,37 +26,34 @@
         </div>
     </div>
     <div class="uk-card-body uk-text-left">
-        <div class="uk-grid uk-child-width-expand@s" uk-grid>
-            <div>
-                <table class="uk-table">
-                    <tr>
-                        <td>Culture</td>
-                        <td>{{ warrior.culture.name }}</td>
-                    </tr>
-                    <tr>
-                        <td>Strength</td>
-                        <td>{{ warrior.strength|obscurify:10 }}</td>
-                    </tr>
-                    <tr>
-                        <td>Dexterity</td>
-                        <td>{{ warrior.dexterity|obscurify:10 }}</td>
-                    </tr>
-                </table>
-            </div>
-            <div>
-                <table class="uk-table">
-
-                    <tr>
-                        <td>Weapon</td>
-                        <td>{% if warrior.weapon %}{{ warrior.weapon.display_name }}{% else %}-{% endif %}</td>
-                    </tr>
-                    <tr>
-                        <td>Armor</td>
-                        <td>{% if warrior.armor %}{{ warrior.armor.display_name }}{% else %}-{% endif %}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
+        {% comment %}
+            One table, the same as the roster card. Two side by side only stack below 640px, and this
+            card is narrow because the town square puts it in a three-column grid - so the breakpoint
+            never fires for it, the left table's value ran into the right table's label, and the
+            weapon name spilled out of the card into the shop column beside it.
+        {% endcomment %}
+        <table class="uk-table">
+            <tr>
+                <td>Culture</td>
+                <td>{{ warrior.culture.name }}</td>
+            </tr>
+            <tr>
+                <td>Strength</td>
+                <td>{{ warrior.strength|obscurify:10 }}</td>
+            </tr>
+            <tr>
+                <td>Dexterity</td>
+                <td>{{ warrior.dexterity|obscurify:10 }}</td>
+            </tr>
+            <tr>
+                <td>Weapon</td>
+                <td>{% if warrior.weapon %}{{ warrior.weapon.display_name }}{% else %}-{% endif %}</td>
+            </tr>
+            <tr>
+                <td>Armor</td>
+                <td>{% if warrior.armor %}{{ warrior.armor.display_name }}{% else %}-{% endif %}</td>
+            </tr>
+        </table>
     </div>
     <div class="uk-card-footer">
         {# The card swaps itself out: the town square has no htmx partial for the pub list, and a hired #}

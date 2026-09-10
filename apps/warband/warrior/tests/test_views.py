@@ -421,10 +421,11 @@ def test_warrior_detail_view_hides_the_gear_of_a_rival_warrior(logged_in_client,
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_shows_the_condition_of_the_players_own_warrior(logged_in_client, current_savegame):
+def test_warrior_detail_view_shows_the_health_of_the_players_own_warrior(logged_in_client, current_savegame):
     """
-    Health, morale and the condition are the three the rivals list calls knowledge not earned
-    without scouting, so the page gates them on the same predicate the roster card does.
+    Health and morale are the two the rivals list calls knowledge not earned without scouting, so
+    the page gates them on the same predicate the roster card does - and no more than the card
+    does, or "Detail" would go back to showing less than the tile that links to it.
     """
     warrior = WarriorFactory(faction=current_savegame.player_faction)
 
@@ -435,7 +436,7 @@ def test_warrior_detail_view_shows_the_condition_of_the_players_own_warrior(logg
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_hides_the_condition_of_a_captive(logged_in_client, current_savegame):
+def test_warrior_detail_view_hides_the_health_of_a_captive(logged_in_client, current_savegame):
     """
     A prisoner's gear is readable and his health is not: he carries no faction, so the gear gate
     lets him through on the strength of who holds him and this one does not.
