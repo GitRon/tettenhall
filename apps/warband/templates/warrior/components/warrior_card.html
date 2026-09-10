@@ -34,6 +34,19 @@
                     {% else %}
                         <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
                     {% endif %}
+                    {% comment %}
+                        Why the morale two icons to the left is stuck. The monthly sweep skips a man
+                        carrying unpaid months, so he sits below his ceiling while every other
+                        warrior refills for free - and without this the player reads the low figure
+                        and no cause. Attached by "FactionRosterContextMixin" and only for the
+                        player's own faction, so the captured list and a rival's roster print
+                        nothing here rather than an empty label.
+                    {% endcomment %}
+                    {% if warrior.unpaid_wages_note %}
+                        &nbsp;<span class="uk-text-danger" title="A man who goes unpaid loses morale and cannot recover it">
+                            <i class="fa-solid fa-sack-xmark"></i> <i>{{ warrior.unpaid_wages_note }}</i>
+                        </span>
+                    {% endif %}
                 </p>
             </div>
         </div>

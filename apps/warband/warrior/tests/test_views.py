@@ -451,6 +451,31 @@ def test_warrior_detail_view_hides_the_health_of_a_captive(logged_in_client, cur
 
 
 @pytest.mark.django_db
+def test_warrior_detail_view_says_how_long_the_player_has_left_him_unpaid(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction, unpaid_months=2)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["unpaid_wages_note"] == "2 of 3 unpaid months"
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_says_nothing_about_a_rivals_wage_troubles(logged_in_client, current_savegame):
+    """
+    A rival's payroll is #90's question. The card withholds it, and this page is where the card's
+    "Detail" link leads.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_warrior = WarriorFactory(faction=rival_faction, savegame=current_savegame, unpaid_months=2)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": rival_warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["unpaid_wages_note"] is None
+
+
+@pytest.mark.django_db
 def test_warrior_weapon_update_view_rejects_an_unknown_attribute(logged_in_client, current_savegame):
     """
     The attribute is a free URL segment, so a hand-typed one used to reach a RuntimeError in the

@@ -24,6 +24,7 @@ from apps.warband.town.buildings.hall import MediumHall
 from apps.warband.town.models import Town
 from apps.warband.training.tests.factories.training import TrainingFactory
 from apps.warband.warrior.services.dismissal import LEADER_REFUSAL
+from apps.warband.warrior.services.unpaid_wages import LEADER_NOTE
 
 
 @pytest.fixture
@@ -594,6 +595,53 @@ def test_faction_warrior_list_view_asks_nothing_about_dismissing_a_rivals_men(lo
 
     assert response.status_code == 200
     assert hasattr(response.context["warrior_list"][0], "dismissal_refusal") is False
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_view_says_how_long_a_man_has_gone_unpaid(logged_in_client, current_savegame):
+    """
+    The roster is where the player scans, and the morale sweep skips an unpaid man - so without this
+    he reads a figure stuck below its ceiling and no cause for it.
+    """
+    WarriorFactory(faction=current_savegame.player_faction, monthly_salary=120, unpaid_months=2)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.get(
+        reverse("warband:faction-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["warrior_list"][0].unpaid_wages_note == "2 of 3 unpaid months"
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_view_gives_the_unpaid_leader_no_deadline(logged_in_client, current_savegame):
+    leader = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=120, unpaid_months=2)
+    current_savegame.player_faction.leader = leader
+    current_savegame.player_faction.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.get(
+        reverse("warband:faction-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["warrior_list"][0].unpaid_wages_note == LEADER_NOTE
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_view_asks_nothing_about_a_rivals_wage_troubles(logged_in_client, current_savegame):
+    """
+    The card withholds health and morale from a rival's men for the same reason it withholds this:
+    a rival's payroll is knowledge the player has not earned - #90's question, not the roster's.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=120, unpaid_months=2)
+
+    response = logged_in_client.get(reverse("warband:faction-warrior-list-htmx", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert hasattr(response.context["warrior_list"][0], "unpaid_wages_note") is False
 
 
 @pytest.mark.django_db

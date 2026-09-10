@@ -65,6 +65,18 @@
             <td>{{ object.monthly_salary }} silver a month</td>
         </tr>
         {% comment %}
+            Beside the salary rather than beside the morale, because it is a fact about his wages and
+            the player who wonders why the morale is stuck comes looking for it here. The row hides
+            itself for the paid majority: an "Unpaid months: 0" on every man in the game would be
+            noise, and the view answers None for a rival's warrior as well as for a paid one.
+        {% endcomment %}
+        {% if unpaid_wages_note %}
+            <tr class="uk-text-danger">
+                <td>Wages</td>
+                <td>{{ unpaid_wages_note }}</td>
+            </tr>
+        {% endif %}
+        {% comment %}
             Gear is knowledge the player has not earned without scouting, the same rule the rivals
             list and the roster card follow. Shown for everyone he commands, holds or is being
             offered - his own men, his prisoners, and the mercenaries in his pub, whose weapon the
