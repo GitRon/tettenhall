@@ -4,7 +4,7 @@
      hx-disinherit="hx-swap">
     <h2>Pub</h2>
     {% for warrior in faction.available_mercenaries.all %}
-        {# todo: use different cards here which obscurify most values #}
+        {# TODO (#90): use different cards here which obscurify most values #}
         {% include 'faction/warrior/components/pub_warrior_card.html' with warrior=warrior %}
     {% empty %}
         <p class="uk-text-meta">Nobody is drinking here this month.</p>

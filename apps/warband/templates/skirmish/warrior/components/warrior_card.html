@@ -64,7 +64,7 @@
         {# still on his feet when it ends was being offered next round's attack in a skirmish that #}
         {# has a victor and will never have another round. #}
         {% if warrior.is_healthy and not skirmish_is_decided %}
-            {# todo: put this in a crispy-form? maybe later, might be hard to create forms in the view #}
+            {# TODO (#64): put this in a crispy-form? maybe later, might be hard to create forms in the view #}
             <form method="post">
                 {# The warrior id is the participant key: it is unique within a skirmish, so it needs no separator. Concatenating faction id and loop index did - faction 1/index 10 and faction 11/index 0 both produced "110", and one participant silently overwrote the other. No faction is posted: the view reads the sides off the skirmish rosters, since a posted one can lie and "warrior.faction" changes the moment a captive is recruited. #}
                 {% if is_player %}
