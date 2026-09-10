@@ -1290,6 +1290,25 @@ def test_faction_detail_view_blames_the_march_rather_than_the_leader_when_he_has
     assert response.context["leader_cannot_march"] is False
 
 
+@pytest.mark.django_db
+def test_faction_detail_view_says_the_game_is_over_rather_than_blaming_the_month(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    The navbar reads "Game over" and the rivals list says so above its table, and this page - the third
+    with the same sentence to say - explained the missing Attack button with "your warriors have already
+    fought this month", which is true of a month nobody will ever play.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["savegame_is_over"] is True
+
+
 @pytest.fixture
 def undefended_rival(current_savegame) -> Faction:
     """

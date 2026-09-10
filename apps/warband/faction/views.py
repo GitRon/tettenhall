@@ -164,6 +164,11 @@ class FactionDetailView(
         context["can_be_occupied"] = (
             Faction.objects.occupiable_by(savegame=current_savegame).filter(id=self.object.id).exists()
         )
+        # The first of the three explanations, and the one that outranks the other two: a decided
+        # savegame is why no war band of his is marching, and the month it happens to be in is beside
+        # the point. Not asked about the two offers above - "attackable_by" and "occupiable_by" both
+        # hold the same guard, so a second one here would answer a question they have settled.
+        context["savegame_is_over"] = current_savegame.is_over
 
         return context
 
