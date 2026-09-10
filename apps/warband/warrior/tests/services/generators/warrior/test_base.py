@@ -140,6 +140,10 @@ def test_process_prices_an_average_mercenary_against_the_shared_yardstick():
 
 @pytest.mark.django_db
 def test_process_prices_an_average_leader_against_the_shared_yardstick():
+    """
+    His price is still the yardstick's answer even though no wage comes out of it: what a leader is
+    worth is what a captor gets for him, and "slavery_selling_price" reads this column.
+    """
     generator = LeaderWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
 
     with mock.patch(
@@ -148,7 +152,37 @@ def test_process_prices_an_average_leader_against_the_shared_yardstick():
         result = generator.process()
 
     assert result.recruitment_price == 260
-    assert result.monthly_salary == 130
+    assert result.monthly_salary == 0
+
+
+@pytest.mark.django_db
+def test_process_leaves_the_leader_off_the_wage_bill():
+    """
+    The one archetype that draws nothing, on an unpatched draw so it holds for every leader rather
+    than for the average one. The price beside it is what says only the wage was zeroed: a leader who
+    came out at zero on both would have no value to a captor either, and the two other archetype
+    price tests are what stop a wage of zero spreading to them.
+    """
+    generator = LeaderWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.monthly_salary == 0
+    assert result.recruitment_price > 0
+
+
+@pytest.mark.django_db
+def test_process_puts_a_levy_on_the_wage_bill():
+    """
+    The other side of "draws_a_wage", so the flag cannot be flipped on the base class and take every
+    archetype off the payroll with it.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.monthly_salary > 0
+    assert Warrior.objects.get(pk=result.pk).monthly_salary == result.monthly_salary
 
 
 @pytest.mark.django_db

@@ -44,6 +44,18 @@ class BaseWarriorGenerator:
     chance_for_weapon = 1
     chance_for_armor = 1
 
+    # Whether this archetype is on the payroll at all. A wage is what a faction pays to keep a man it
+    # decided to take on and could decide to let go, and the leader is neither: he is bought by
+    # nobody, refused a dismissal by "get_dismissal_refusals", and exempt from the walk-out because
+    # losing him defeats the faction. Billing for him would be billing for the one man the player
+    # never chose and can never be rid of.
+    #
+    # It zeroes the wage and nothing else. "recruitment_price" stays as rolled, so
+    # "slavery_selling_price" still says what a captured leader fetches - the one of the three
+    # derived prices a leader can actually reach. The other two read off the wage and so read zero,
+    # which is right for a man who is never hired and never sent away.
+    draws_a_wage = True
+
     culture: Culture
     faction: Faction
     savegame_id: int
@@ -158,7 +170,7 @@ class BaseWarriorGenerator:
             recruitment_price=recruitment_price,
             # The share is the warrior's own number rather than this generator's, because the pub
             # prices a hire by inverting it - see "Warrior.hiring_price"
-            monthly_salary=round(recruitment_price * Warrior.SALARY_SHARE_OF_PRICE),
+            monthly_salary=round(recruitment_price * Warrior.SALARY_SHARE_OF_PRICE) if self.draws_a_wage else 0,
             weapon=weapon,
             armor=armor,
         )
