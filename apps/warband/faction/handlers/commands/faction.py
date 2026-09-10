@@ -59,11 +59,18 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
             f"Load the reference data with 'loaddata culture itemtype questname'."
         )
 
-    cultures = list(Culture.objects.all())
+    # A rival dealt the player's own culture is named out of the same generator the player's war band
+    # is, so the rivals list reads as one people under five flags - which is also the one thing the
+    # player chose about his faction handed back to him as somebody else's.
+    #
+    # The player's culture is kept as the fallback rather than the draw failing: five cultures ship,
+    # so this leaves four, but a database seeded with a single one would otherwise produce a savegame
+    # with no rivals in it at all.
+    rival_cultures = list(Culture.objects.exclude(id=player_culture.id)) or [player_culture]
 
     rival_factions = []
     for _ in range(random.randint(3, 5)):
-        rival_culture = random.choice(cultures)
+        rival_culture = random.choice(rival_cultures)
         # A rival is named in the culture on its own row, because that is the culture its warriors are
         # generated from - naming it from anything else puts a Norse town in front of a Frisian war band.
         faker = faker_for_locale(locale=rival_culture.locale)
