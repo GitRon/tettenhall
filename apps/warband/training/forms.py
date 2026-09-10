@@ -15,7 +15,7 @@ def build_training_category_help_text() -> str:
     something else says so here without anybody remembering to come back.
     """
     return " ".join(
-        f"{label} grows {' or '.join(attribute.capitalize() for attribute in Training.CATEGORY_ATTRIBUTES[value])}."
+        f"{label} grows {Training.attributes_display_for_category(category=value)}."
         for value, label in Training.TrainingCategory.choices
     )
 
