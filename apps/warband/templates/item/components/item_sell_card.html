@@ -10,20 +10,30 @@
                     {{ item.display_name }}
                 </h3>
                 <p class="uk-text-meta uk-margin-remove-top">
-                    <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
-                    {% if item.is_weapon %}
-                        {% include 'common/components/svg_icon.html' with icon_name='axe-sword' %}
-                    {% else %}
-                        {% include 'common/components/svg_icon.html' with icon_name='shield' %}
-                    {% endif %}
-                    <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>&nbsp;
-                    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value }}</i>
+                    {% include 'item/components/item_stats_meta.html' with item=item %}
                 </p>
             </div>
         </div>
     </div>
     <div class="uk-card-body uk-text-left">
-        <p>Worn by: {{ item.worn_by|default_if_none:"-" }}</p>
+        {% comment %}
+            Equipping is the half of the loot economy this column never mentions. "Sell" being the
+            only control here reads as the only thing loot is for, and a war band ends up selling a
+            Superior Long sword while its leader fights in what he marched out in - the route is two
+            clicks away on the warrior's own page and nothing points down it.
+
+            Both branches are written even though "get_all_unoccupied_items" feeds the one list that
+            includes this card today: the card is a component, and a wearer named without a way to
+            reach him would be the same dead end one step along.
+        {% endcomment %}
+        {% with wearer=item.worn_by %}
+            {% if wearer %}
+                <p>Worn by: <a href="{% url 'warband:warrior-detail-view' wearer.id %}">{{ wearer }}</a></p>
+            {% else %}
+                <p>Worn by: -</p>
+                <p class="uk-text-meta">Nobody has it. Weapons and armour are handed out on a warrior's own page.</p>
+            {% endif %}
+        {% endwith %}
     </div>
     {% comment %}
         Only the player's own items can be sold: "ItemSellView" is scoped to the player faction, so on

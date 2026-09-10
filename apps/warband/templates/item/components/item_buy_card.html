@@ -10,14 +10,7 @@
                     {{ item.display_name }}
                 </h3>
                 <p class="uk-text-meta uk-margin-remove-top">
-                    <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
-                    {% if item.is_weapon %}
-                        {% include 'common/components/svg_icon.html' with icon_name='axe-sword' %}
-                    {% else %}
-                        {% include 'common/components/svg_icon.html' with icon_name='shield' %}
-                    {% endif %}
-                    <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>&nbsp;
-                    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value }}</i>
+                    {% include 'item/components/item_stats_meta.html' with item=item %}
                 </p>
             </div>
         </div>
