@@ -17,7 +17,17 @@
     <div uk-grid>
         <div class="uk-width-2-3">
             <div class="uk-alert-primary" uk-alert>
-                Current training: {{ current_training }}
+                {% comment %}
+                    The three category names name no attribute between them, and the table below is
+                    headed Strength, Dexterity, Health and Morale - so the choice was read against
+                    columns nothing connected it to. Named off "CATEGORY_ATTRIBUTES", the same
+                    mapping the month rolls from and the form's help text is built out of.
+                {% endcomment %}
+                {% if current_training %}
+                    Current training: {{ current_training }} - grows {{ current_training.grown_attributes_display }}.
+                {% else %}
+                    No training is set. Nobody improves in a month without one.
+                {% endif %}
             </div>
         </div>
     </div>

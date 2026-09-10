@@ -95,3 +95,25 @@ def test_get_random_attribute_and_improvement_for_category_floors_a_roll_that_ro
         )
 
     assert result == ("dexterity", 1)
+
+
+def test_attributes_display_for_category_names_a_pair():
+    result = Training.attributes_display_for_category(category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    assert result == "Strength or Morale"
+
+
+def test_attributes_display_for_category_names_a_single_attribute():
+    result = Training.attributes_display_for_category(category=Training.TrainingCategory.SWIFTNESS)
+
+    assert result == "Dexterity"
+
+
+def test_grown_attributes_display_reads_the_category_of_the_row():
+    """
+    What the overview prints above its four columns, so it and the form's help text cannot word the
+    same mapping two ways.
+    """
+    training = TrainingFactory.build(category=Training.TrainingCategory.SHIELD_WALL)
+
+    assert training.grown_attributes_display == "Health or Morale"

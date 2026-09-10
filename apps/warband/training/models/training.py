@@ -44,6 +44,24 @@ class Training(models.Model):
     def __str__(self) -> str:
         return f"{self.get_category_display()}"
 
+    @classmethod
+    def attributes_display_for_category(cls, *, category: int) -> str:
+        """
+        What a category grows, written the way the overview's columns are headed.
+
+        One phrasing rule rather than one per screen: the form's help text names all three
+        categories and the overview names the chosen one, and a card reading "Strength or Morale"
+        against a column headed "strength" is the mismatch this exists to prevent.
+        """
+        return " or ".join(attribute.capitalize() for attribute in cls.CATEGORY_ATTRIBUTES[category])
+
+    @property
+    def grown_attributes_display(self) -> str:
+        """
+        What this training grows. The mapping the month rolls from, read for a single row.
+        """
+        return self.attributes_display_for_category(category=self.category)
+
     def get_random_attribute_and_improvement_for_category(self, *, category: int) -> tuple[str, int]:
         """
         Determine which attribute gets improved and by how much.
