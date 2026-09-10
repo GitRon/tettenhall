@@ -72,6 +72,31 @@ def test_skirmish_fight_view_marks_the_player_who_was_marched_against(logged_in_
 
 
 @pytest.mark.django_db
+def test_skirmish_fight_view_marks_a_fight_still_running(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.context["skirmish_is_decided"] is False
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_marks_a_decided_fight(logged_in_client, current_savegame):
+    """
+    What the warrior cards read to stop offering next round's action in a fight that will never have
+    another round.
+    """
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction,
+        victorious_faction=current_savegame.player_faction,
+    )
+
+    response = logged_in_client.get(reverse("warband:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.context["skirmish_is_decided"] is True
+
+
+@pytest.mark.django_db
 def test_skirmish_fight_view_cannot_show_a_skirmish_of_another_savegame(logged_in_client, current_savegame):
     other_skirmish = SkirmishFactory()
 
@@ -573,6 +598,29 @@ def test_faction_warrior_list_update_htmx_view_lists_the_warriors_of_the_defendi
 
     assert response.status_code == 200
     assert list(response.context["object_list"]) == [opposing_warrior]
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_update_htmx_view_marks_a_decided_fight(logged_in_client, current_savegame):
+    """
+    On the partial as well as on the page: this is the fragment the winning round swaps in, so a flag
+    only the page carried would leave the action dropdown standing on exactly the render that ends
+    the fight.
+    """
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction,
+        victorious_faction=current_savegame.player_faction,
+    )
+
+    response = logged_in_client.get(
+        reverse(
+            "warband:faction-warrior-list-update-htmx",
+            kwargs={"skirmish_id": skirmish.pk, "faction_id": skirmish.attacking_faction_id},
+        )
+    )
+
+    assert response.status_code == 200
+    assert response.context["skirmish_is_decided"] is True
 
 
 @pytest.mark.django_db

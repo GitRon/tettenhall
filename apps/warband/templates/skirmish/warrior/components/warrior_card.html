@@ -41,7 +41,12 @@
             {# that decides whether to press "Fight!" again was the only one the card withheld. #}
             <div class="color-corale">
                 <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
-                <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
+                {# The morale is what decides whether a man keeps fighting, so it is shown while he #}
+                {# still can. "put_out_of_the_fight" normalises his health to nothing and leaves the #}
+                {# morale where the last round left it, which read "11 / 11" beside a skull. #}
+                {% if warrior.is_healthy %}
+                    <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
+                {% endif %}
             </div>
         </div>
         <div>
@@ -55,7 +60,10 @@
     </div>
     <div class="uk-card-footer">
         <div class="uk-form-controls">
-        {% if warrior.is_healthy %}
+        {# Two conditions, and the second is about the fight rather than the man: a warrior who is #}
+        {# still on his feet when it ends was being offered next round's attack in a skirmish that #}
+        {# has a victor and will never have another round. #}
+        {% if warrior.is_healthy and not skirmish_is_decided %}
             {# todo: put this in a crispy-form? maybe later, might be hard to create forms in the view #}
             <form method="post">
                 {# The warrior id is the participant key: it is unique within a skirmish, so it needs no separator. Concatenating faction id and loop index did - faction 1/index 10 and faction 11/index 0 both produced "110", and one participant silently overwrote the other. No faction is posted: the view reads the sides off the skirmish rosters, since a posted one can lie and "warrior.faction" changes the moment a captive is recruited. #}
