@@ -263,7 +263,7 @@ class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView)
         # expose another player's battle history
         return super().get_queryset().filter(skirmish_id=self.kwargs.get("skirmish_id", -1))
 
-    def _get_report(self) -> SkirmishReport | None:
+    def _get_report(self, *, current_savegame: Savegame | None) -> SkirmishReport | None:
         """
         The summary of a fight that is over, from the player's side of it - or nothing at all.
 
@@ -271,7 +271,6 @@ class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView)
         swaps in. A report reachable only by reloading the page would arrive after the moment it is
         about.
         """
-        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
         if current_savegame is None or current_savegame.player_faction_id is None:
             return None
 
@@ -294,7 +293,14 @@ class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["report"] = self._get_report()
+        current_savegame: Savegame | None = get_current_savegame_for_request(request=self.request)
+        context["report"] = self._get_report(current_savegame=current_savegame)
+        # What the log marks its casualty lines against. Taken from the savegame rather than off the
+        # report, because a man goes down while the fight is still being fought and there is no
+        # report until it is decided. Asked with a default because the savegame itself can be absent,
+        # and empty either way on a fight the player is only watching - where neither side's losses
+        # are his news.
+        context["player_faction_id"] = getattr(current_savegame, "player_faction_id", None)
         return context
 
 

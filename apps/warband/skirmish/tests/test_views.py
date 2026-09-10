@@ -596,6 +596,21 @@ def test_battle_history_update_htmx_view_reports_nothing_without_a_player_factio
 
     assert response.status_code == 200
     assert response.context["report"] is None
+    assert response.context["player_faction_id"] is None
+
+
+@pytest.mark.django_db
+def test_battle_history_update_htmx_view_says_whose_men_the_log_is_about(logged_in_client, current_savegame):
+    """
+    The side the log marks its casualties against, which the panel needs while the fight is still
+    being fought - long before there is a report to read it off.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
+
+    assert response.status_code == 200
+    assert response.context["player_faction_id"] == current_savegame.player_faction_id
 
 
 @pytest.mark.django_db

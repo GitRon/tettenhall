@@ -143,13 +143,9 @@
     <details class="uk-text-meta">
         <summary>Blow by blow</summary>
         <div class="uk-margin-small-top">
-            {% for log in object_list %}
-                <div>{{ log.message }}</div>
-            {% endfor %}
+            {% include 'skirmish/battle_history/htmx/_log_lines.html' %}
         </div>
     </details>
 {% else %}
-    {% for log in object_list %}
-        <div>{{ log.message }}</div>
-    {% endfor %}
+    {% include 'skirmish/battle_history/htmx/_log_lines.html' %}
 {% endif %}

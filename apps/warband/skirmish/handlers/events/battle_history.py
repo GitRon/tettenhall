@@ -5,6 +5,7 @@ from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands.battle_history import CreateBattleHistory
 from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
+from apps.warband.skirmish.models import BattleHistory
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
@@ -56,6 +57,8 @@ def handle_log_warrior_incapacitation(*, context: warrior.WarriorWasIncapacitate
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of the fight being unconscious.",
+        kind=BattleHistory.KindChoices.KIND_WARRIOR_INCAPACITATED,
+        warrior=context.warrior,
     )
 
 
@@ -64,6 +67,8 @@ def handle_log_warrior_death(*, context: warrior.WarriorWasKilled) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of the fight being killed.",
+        kind=BattleHistory.KindChoices.KIND_WARRIOR_KILLED,
+        warrior=context.warrior,
     )
 
 
@@ -131,7 +136,14 @@ def handle_warrior_has_fled(*, context: warrior.WarriorHasFled) -> Command:
     else:
         message = f"{context.warrior} is out of morale and fled the field."
 
-    return CreateBattleHistory(skirmish=context.skirmish, message=message)
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=message,
+        # One kind for both, although the sentences differ: the panel marks the line because the man
+        # is gone, and how he came to be gone is what the sentence above is for
+        kind=BattleHistory.KindChoices.KIND_WARRIOR_LEFT_THE_FIELD,
+        warrior=context.warrior,
+    )
 
 
 @message_registry.register_event(event=warrior.WarriorGainedExperience)
