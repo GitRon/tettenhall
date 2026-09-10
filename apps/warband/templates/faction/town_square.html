@@ -9,6 +9,8 @@
             {% for warrior in object.available_mercenaries.all %}
                 {# todo: use different cards here which obscurify most values #}
                 {% include 'faction/warrior/components/pub_warrior_card.html' with warrior=warrior %}
+            {% empty %}
+                <p class="uk-text-meta">Nobody is drinking here this month.</p>
             {% endfor %}
         </div>
         <div class="uk-margin-bottom">
@@ -18,6 +20,8 @@
             <h2>Board</h2>
             {% for quest in quest_list %}
                 {% include 'quest/components/quest_card.html' with quest=quest %}
+            {% empty %}
+                <p class="uk-text-meta">Nothing is pinned to the board this month.</p>
             {% endfor %}
         </div>
     </div>

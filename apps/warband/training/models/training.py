@@ -1,4 +1,5 @@
 import random
+import typing
 
 from django.db import models
 from django.db.models import UniqueConstraint
@@ -20,6 +21,15 @@ class Training(models.Model):
         SWIFTNESS = 2, "Swiftness"
         SHIELD_WALL = 3, "Shield wall"
 
+    # What each category can grow, and the only place that decides it. The month rolls one of these
+    # attributes and the training form tells the player which - a category naming nothing is a choice
+    # made blind, and two copies of the mapping would let the label and the roll drift apart.
+    CATEGORY_ATTRIBUTES: typing.ClassVar[dict[int, tuple[str, ...]]] = {
+        TrainingCategory.WEAPON_MASTERY: ("strength", "morale"),
+        TrainingCategory.SWIFTNESS: ("dexterity",),
+        TrainingCategory.SHIELD_WALL: ("health", "morale"),
+    }
+
     category = models.PositiveSmallIntegerField("Category", choices=TrainingCategory.choices)
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
@@ -38,14 +48,11 @@ class Training(models.Model):
         """
         Determine which attribute gets improved and by how much.
         """
-        if category == self.TrainingCategory.WEAPON_MASTERY:
-            attribute = random.choice(("strength", "morale"))
-        elif category == self.TrainingCategory.SWIFTNESS:
-            attribute = random.choice(("dexterity",))
-        elif category == self.TrainingCategory.SHIELD_WALL:
-            attribute = random.choice(("health", "morale"))
-        else:
+        attribute_options = self.CATEGORY_ATTRIBUTES.get(category)
+        if attribute_options is None:
             raise RuntimeError("Invalid training category provided.")
+
+        attribute = random.choice(attribute_options)
 
         # Rounded to an int: the improvement ends up in a progress bar stored as a positive small
         # integer, so a float would only survive until the next refresh from the database.

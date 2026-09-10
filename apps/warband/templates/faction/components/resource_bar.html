@@ -1,8 +1,8 @@
-{# The three counters the whole game is spent against. They come from context processors, so a full #}
+{# The four counters the whole game is spent against. They come from context processors, so a full #}
 {# page render always has them right - but almost every action in the game is an htmx swap that #}
 {# leaves the navbar alone, and a counter showing the silver from before the purchase is worse than #}
 {# no counter, because the same number is the bankruptcy warning below. So the bar re-fetches itself #}
-{# on "updateResourceBar", which every view that moves one of the three fires. #}
+{# on "updateResourceBar", which every view that moves one of them fires. #}
 <div class="uk-navbar-item"
      hx-get="{% url 'warband:resource-bar-htmx' %}"
      hx-trigger="updateResourceBar from:body"
@@ -28,5 +28,13 @@
             <span>{% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}</span>
         {% endif %}
         <span>{% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}</span>
+        {# Every cost in the game is denominated in months - healing, training, building, one fight #}
+        {# per faction per month - and the month was on no screen the player is looking at while #}
+        {# spending them. It sits here rather than in "base.html" so that finishing a month, which #}
+        {# redirects, and every htmx swap that leaves the navbar alone both leave it right. Font #}
+        {# Awesome rather than an "svg_icon": the icon set carries no month. #}
+        <span title="Month">
+            <i class="fa-solid fa-calendar-days"></i> {{ current_savegame.current_month }}
+        </span>
     {% endif %}
 </div>

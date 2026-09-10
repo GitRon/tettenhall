@@ -53,6 +53,18 @@ def test_get_random_attribute_and_improvement_for_category_unknown_category(trai
         training.get_random_attribute_and_improvement_for_category(category=99)
 
 
+def test_category_attributes_names_what_every_category_grows():
+    """
+    The mapping is what the training form reads to tell the player what a category does, so a
+    category the roll knows and the label does not is the drift this pins down.
+    """
+    assert Training.CATEGORY_ATTRIBUTES == {
+        Training.TrainingCategory.WEAPON_MASTERY: ("strength", "morale"),
+        Training.TrainingCategory.SWIFTNESS: ("dexterity",),
+        Training.TrainingCategory.SHIELD_WALL: ("health", "morale"),
+    }
+
+
 def test_get_random_attribute_and_improvement_for_category_always_improves_by_at_least_one(training):
     """
     A roll below 0.5 rounds to nothing, which at MU 15 / SIGMA 15 is about one month in six. A month of
