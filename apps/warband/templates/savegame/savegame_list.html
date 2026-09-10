@@ -31,8 +31,11 @@
                 <tr>
                     <th>Name</th>
                     <th>Player faction</th>
-                    <th>Played months</th>
-                    <th>Created by</th>
+                    {# "Month", not "Played months": this is "current_month", the number every other #}
+                    {# screen shows, and a second convention for the same figure is worse than a #}
+                    {# header that counts one too many #}
+                    <th>Month</th>
+                    <th>Outcome</th>
                     <th>Created at</th>
                     <th>Last saved at</th>
                     <th></th>
@@ -44,8 +47,10 @@
                         <td>{{ savegame.name }}</td>
                         <td>{{ savegame.player_faction.name }}</td>
                         <td>{{ savegame.current_month }}</td>
-                        {# Accounts are registered with an email only, so a full name is the exception #}
-                        <td>{{ savegame.created_by.get_full_name|default:savegame.created_by.username }}</td>
+                        {# The one thing the row could not say: a finished game sat in the same shape #}
+                        {# as a live one. "Load" stays on both - a finished savegame is still the only #}
+                        {# route to its own history #}
+                        <td>{{ savegame.get_outcome_display }}</td>
                         <td>{{ savegame.created_at|date:"d.m.Y H:i" }}</td>
                         <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
                         <td>

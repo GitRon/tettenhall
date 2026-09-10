@@ -66,6 +66,9 @@ def handle_determine_savegame_outcome(*, context: DetermineSavegameOutcome) -> E
     return SavegameEnded(
         savegame=context.savegame,
         outcome=outcome,
+        # Read here rather than downstream: the log line about the ending is written against it, and
+        # a command handler is the one place allowed to follow the relation
+        player_faction=context.savegame.player_faction,
         open_skirmish_list=open_skirmish_list,
         month=context.savegame.current_month,
     )

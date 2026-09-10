@@ -1,6 +1,7 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
+from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands.battle_history import CreateBattleHistory
 from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
@@ -17,11 +18,28 @@ def handle_log_warrior_takes_damage(*, context: warrior.WarriorTookDamage) -> Co
 
 @message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
 def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAllDamage) -> Command:
-    return CreateBattleHistory(
-        skirmish=context.skirmish,
-        message=f"{context.defender} defended {context.attack.value} damage from {context.attacker} "
-        f"with {context.defense.value} defense.",
-    )
+    """
+    An exchange that cost the defender nothing, worded as whichever of the three it was.
+
+    "OUTCOME_HIT" cannot arrive here - damage above zero is what makes an exchange the other event -
+    so the three below are exhaustive over what this handler can see, and a fourth outcome added to
+    the choices raises rather than picking up a fallback sentence nobody wrote.
+    """
+    if context.outcome == BlowOutcomeChoices.OUTCOME_NOT_THROWN:
+        message = f"{context.attacker} throws nothing at {context.defender} this round."
+    elif context.outcome == BlowOutcomeChoices.OUTCOME_MISSED:
+        message = f"{context.attacker} swings at {context.defender} and misses."
+    elif context.outcome == BlowOutcomeChoices.OUTCOME_ABSORBED:
+        # The sibling line's wording with its tail changed: the two describe one exchange, and
+        # naming the same two rolls the same way is what lets them be read as a pair
+        message = (
+            f"{context.attacker} strikes at {context.attack.value} against {context.defender}'s "
+            f"{context.defense.value} defense, and nothing gets through."
+        )
+    else:
+        raise RuntimeError(f"No battle log sentence for blow outcome {context.outcome}.")
+
+    return CreateBattleHistory(skirmish=context.skirmish, message=message)
 
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)

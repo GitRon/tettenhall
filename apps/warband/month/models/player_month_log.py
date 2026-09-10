@@ -30,6 +30,8 @@ class PlayerMonthLog(models.Model):
         # KIND_CATEGORIES every time
         KIND_INCIDENT = 12, "Incident"
         KIND_WARRIOR_DISMISSED = 13, "Warrior dismissed"
+        KIND_MORALE_LOST_UNPAID = 14, "Morale lost over unpaid wages"
+        KIND_SAVEGAME_ENDED = 15, "Savegame ended"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -49,6 +51,13 @@ class PlayerMonthLog(models.Model):
         # A consequence and not something demanding attention, unlike a man walking out: the player
         # decided this one, so the line records what he did rather than warning him it happened to him
         KindChoices.KIND_WARRIOR_DISMISSED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        # Upkeep and not attention, even though morale is what routs a man mid-fight: the shortfall
+        # line is the one asking to be acted on, and a second loud line about the same month's wages
+        # would compete with it. This one is the count of who took it to heart
+        KindChoices.KIND_MORALE_LOST_UNPAID: CategoryChoices.CATEGORY_UPKEEP,
+        # A chronicle entry, like an incident: it is the one thing in the log that happened to the
+        # player rather than something he did, and the only other kind with a second sentence to say
+        KindChoices.KIND_SAVEGAME_ENDED: CategoryChoices.CATEGORY_CHRONICLE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each
@@ -58,6 +67,10 @@ class PlayerMonthLog(models.Model):
     UPKEEP_SUMMARY_PHRASES: ClassVar[dict[int, tuple[str, str]]] = {
         KindChoices.KIND_MORALE_RECOVERED: ("warrior recovered his morale", "warriors recovered their morale"),
         KindChoices.KIND_WOUNDS_HEALED: ("warrior was healed", "warriors were healed"),
+        KindChoices.KIND_MORALE_LOST_UNPAID: (
+            "warrior lost heart over unpaid wages",
+            "warriors lost heart over unpaid wages",
+        ),
     }
 
     title = models.CharField("Title", max_length=100)

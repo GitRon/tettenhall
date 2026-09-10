@@ -1,3 +1,5 @@
+import pytest
+
 from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.tests.factories.item import ItemFactory
@@ -97,7 +99,7 @@ def test_handle_log_warrior_takes_damage_when_the_defence_outrolls_the_attack():
     )
 
 
-def test_handle_log_warrior_defends_all_damage_logs_the_successful_defense():
+def test_handle_log_warrior_defends_all_damage_names_both_rolls_when_the_armour_took_it():
     skirmish = SkirmishFactory.build()
     attacker = WarriorFactory.build(name="Beorn")
     defender = WarriorFactory.build(name="Cuthred")
@@ -118,8 +120,70 @@ def test_handle_log_warrior_defends_all_damage_logs_the_successful_defense():
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
-        message="Cuthred defended 2 damage from Beorn with 7 defense.",
+        message="Beorn strikes at 2 against Cuthred's 7 defense, and nothing gets through.",
     )
+
+
+def test_handle_log_warrior_defends_all_damage_says_a_miss_is_a_miss():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Beorn")
+    defender = WarriorFactory.build(name="Cuthred")
+
+    result = handle_log_warrior_defends_all_damage(
+        context=WarriorDefendedAllDamage(
+            skirmish=skirmish,
+            round_number=1,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=0),
+            defender=defender,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
+            outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+        )
+    )
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Beorn swings at Cuthred and misses.")
+
+
+def test_handle_log_warrior_defends_all_damage_says_a_blow_was_never_thrown():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Beorn")
+    defender = WarriorFactory.build(name="Cuthred")
+
+    result = handle_log_warrior_defends_all_damage(
+        context=WarriorDefendedAllDamage(
+            skirmish=skirmish,
+            round_number=1,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=0),
+            defender=defender,
+            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
+            outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN,
+        )
+    )
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Beorn throws nothing at Cuthred this round.")
+
+
+def test_handle_log_warrior_defends_all_damage_refuses_an_outcome_it_has_no_sentence_for():
+    skirmish = SkirmishFactory.build()
+    context = WarriorDefendedAllDamage(
+        skirmish=skirmish,
+        round_number=1,
+        attacker=WarriorFactory.build(name="Beorn"),
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=9), value=9),
+        defender=WarriorFactory.build(name="Cuthred"),
+        defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
+        outcome=BlowOutcomeChoices.OUTCOME_HIT,
+    )
+
+    with pytest.raises(RuntimeError, match="No battle log sentence for blow outcome"):
+        handle_log_warrior_defends_all_damage(context=context)
 
 
 def test_handle_log_attacker_defender_decided_logs_the_chosen_action():
