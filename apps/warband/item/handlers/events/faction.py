@@ -1,7 +1,7 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.warband.faction.messages.events.faction import RequestNewItemForTownShop
+from apps.warband.faction.messages.events.item import RequestNewItemForTownShop
 from apps.warband.item.messages.commands.item import CreateItem
 
 

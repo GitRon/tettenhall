@@ -52,6 +52,13 @@ class WarriorWasSoldIntoSlavery(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorWasAddedToPub(Event):
+    faction: Faction
+    warrior: Warrior
+    month: int
+
+
+@dataclass(kw_only=True)
 class TownMercenariesRestocked(Event):
     """
     The pub has been emptied and this month's mercenaries requested.

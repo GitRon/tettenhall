@@ -46,12 +46,6 @@ class ChangeFyrdReserve(Command):
 
 
 @dataclass(kw_only=True)
-class PayMonthlyWarriorSalaries(Command):
-    faction: Faction
-    month: int
-
-
-@dataclass(kw_only=True)
 class EarnMoneyFromBuildings(Command):
     faction: Faction
     month: int
@@ -79,30 +73,6 @@ class DetermineInjuredWarriors(Command):
 class SetNewLeaderWarrior(Command):
     warrior: Warrior
     faction: Faction
-
-
-@dataclass(kw_only=True)
-class RestockTownShopItems(Command):
-    faction: Faction
-    month: int
-
-
-@dataclass(kw_only=True)
-class AddWarriorToPub(Command):
-    """
-    Stand a warrior in the player's pub, and say whether the next restock may sweep him out again.
-
-    "is_pub_stock" is the whole difference between a mercenary the pub generated, whose row exists
-    only until somebody hires him, and a man who left a roster and is waiting to be taken back. The
-    restock clears its shelf with a row delete, so it has to be told which of the two it is looking
-    at - see "Warrior.is_pub_stock".
-    """
-
-    savegame: Savegame
-    faction: Faction
-    warrior: Warrior
-    is_pub_stock: bool
-    month: int
 
 
 @dataclass(kw_only=True)

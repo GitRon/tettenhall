@@ -3,7 +3,7 @@ Wiring tests for the queuebie message registry.
 
 Unit tests can only ever verify a single handler. Whether the handlers actually form a chain is
 decided at runtime by the registry, so neither the IDE nor a type checker will notice when a
-message is emitted that nobody consumes. These four tests cover all of those edges at once.
+message is emitted that nobody consumes. These five tests cover all of those edges at once.
 """
 
 import ast
@@ -21,7 +21,7 @@ from apps.warband.tests.architecture.discovery import handler_files, module_path
 TERMINAL_MESSAGES: frozenset[str] = frozenset(
     {
         "apps.warband.faction.messages.events.faction.NewLeaderWarriorSet",
-        "apps.warband.faction.messages.events.faction.WarriorWasAddedToPub",
+        "apps.warband.faction.messages.events.warrior.WarriorWasAddedToPub",
         "apps.warband.faction.messages.events.item.ItemWasAddedToShop",
         "apps.warband.faction.messages.events.item.ItemWasRemovedFromShop",
         # The three levers an incident pulls in somebody else's app. Each announces a change its own
@@ -216,3 +216,32 @@ def test_handlers_only_read_attributes_all_of_their_messages_carry(queuebie_regi
     violations = _context_attribute_violations(registry=queuebie_registry)
 
     assert violations == []
+
+
+def _command_module_mismatches(*, registry) -> list[str]:
+    """
+    Every command whose handler sits in a module named differently from the command's own.
+    """
+    mismatches = []
+
+    for command_path, handler_list in registry.command_dict.items():
+        command_module, class_name = command_path.rsplit(".", 1)
+        domain = command_module.rsplit(".", 1)[-1]
+
+        for definition in handler_list:
+            if definition["module"].rsplit(".", 1)[-1] != domain:
+                mismatches.append(f"{class_name} is defined in {command_module} but handled in {definition['module']}")
+
+    return mismatches
+
+
+def test_a_command_is_handled_in_the_module_named_after_the_one_defining_it(queuebie_registry):
+    """
+    Which module a message belongs in is a judgement call about its subject, see
+    "docs/patterns/app-layout.md". That a command and its handler agree on the answer is not, and
+    nothing else notices when they drift: queuebie discovers by directory, so a command handled two
+    modules away wires up and runs exactly the same.
+    """
+    mismatches = _command_module_mismatches(registry=queuebie_registry)
+
+    assert mismatches == []

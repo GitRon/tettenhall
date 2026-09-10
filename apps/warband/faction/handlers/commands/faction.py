@@ -17,7 +17,6 @@ from apps.warband.faction.messages.commands.faction import (
     EarnMonthlyFactionIncome,
     OccupyFaction,
     ReplenishFyrdReserve,
-    RestockTownShopItems,
     SetNewLeaderWarrior,
 )
 from apps.warband.faction.messages.events.faction import (
@@ -30,19 +29,13 @@ from apps.warband.faction.messages.events.faction import (
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
-    RequestNewItemForTownShop,
 )
-from apps.warband.faction.messages.events.item import TownShopRestocked
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.faker import faker_for_locale
 from apps.warband.finance.models import Transaction
-from apps.warband.item.models import ItemType
-from apps.warband.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.warband.skirmish.models.warrior import Warrior
-from apps.warband.town.buildings.marketplace import Marketplace
 from apps.warband.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
-from apps.warband.town.buildings.weaponsmith import Weaponsmith
 from apps.warband.town.models import Town
 from apps.warband.warrior.messages.commands.warrior import HealInjuredWarrior
 
@@ -127,49 +120,6 @@ def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Eve
         faction=faction,
         current_month=context.savegame.current_month,
     )
-
-
-@message_registry.register_command(command=RestockTownShopItems)
-def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] | Event:
-    # TODO (#93): in item.py?
-    # Clean up previous stock
-    context.faction.available_items.all().delete()
-
-    message_list = []
-
-    # The market decides how many stalls there are, the weaponsmith how good their wares
-    marketplace = Marketplace.get_building_by_type(building_type=context.faction.town.marketplace)
-    weaponsmith = Weaponsmith.get_building_by_type(building_type=context.faction.town.weaponsmith)
-
-    for _ in range(marketplace.AVAILABLE_ITEMS):
-        if bool(random.getrandbits(1)):
-            message_list.append(
-                RequestNewItemForTownShop(
-                    faction=context.faction,
-                    generator_class=MercenaryItemGenerator,
-                    item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
-                    month=context.month,
-                    quality_bonus=weaponsmith.QUALITY_BONUS,
-                )
-            )
-        else:
-            message_list.append(
-                RequestNewItemForTownShop(
-                    faction=context.faction,
-                    generator_class=MercenaryItemGenerator,
-                    item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
-                    month=context.month,
-                    quality_bonus=weaponsmith.QUALITY_BONUS,
-                )
-            )
-
-    # After the loop, and counting the whole shop rather than each item: the player wants to know
-    # whether it is worth walking over, not that a stall was filled
-    message_list.append(
-        TownShopRestocked(faction=context.faction, new_items=marketplace.AVAILABLE_ITEMS, month=context.month)
-    )
-
-    return message_list
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)

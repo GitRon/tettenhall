@@ -1,8 +1,11 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.warband.faction.messages.commands.faction import RestockTownShopItems
-from apps.warband.faction.messages.commands.item import AddItemToTownShop, RemoveItemFromTownShop
+from apps.warband.faction.messages.commands.item import (
+    AddItemToTownShop,
+    RemoveItemFromTownShop,
+    RestockTownShopItems,
+)
 from apps.warband.faction.messages.events.faction import NewFactionCreated
 from apps.warband.item.messages.events import item
 from apps.warband.month.messages.events.month import PlayerMonthPrepared

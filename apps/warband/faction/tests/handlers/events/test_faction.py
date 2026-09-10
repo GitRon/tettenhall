@@ -15,10 +15,9 @@ from apps.warband.faction.messages.commands.faction import (
     DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
-    PayMonthlyWarriorSalaries,
     ReplenishFyrdReserve,
 )
-from apps.warband.faction.messages.commands.warrior import ConsiderFyrdDraft
+from apps.warband.faction.messages.commands.warrior import ConsiderFyrdDraft, PayMonthlyWarriorSalaries
 from apps.warband.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared

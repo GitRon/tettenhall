@@ -1,6 +1,6 @@
 # Registry tests
 
-Four tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
+Five tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
 [message bus](message-bus.md) at once. Unit tests can only ever verify a single handler; whether the
 handlers form a chain is decided at runtime by the registry, so neither the IDE nor a type checker notices
 when a message is emitted that nobody consumes.
@@ -20,6 +20,10 @@ for savegame scoping and skipped by the finished-savegame guard.
    having no consumer can be legitimate.
 4. **Handlers only read attributes all of their messages carry** — catches the multi-registration contract
    bug, where a handler stacked on two decorators reads a field only one of the messages has.
+5. **A command is handled in the module named after the one defining it.** Which module a message
+   belongs in is a judgement call about its subject, see [where code goes](app-layout.md); that the
+   command and its handler agree on the answer is not. Autodiscovery walks directories, so a command
+   handled two modules away wires up and runs identically — this is the only thing that notices.
 
 `TERMINAL_MESSAGES` is a deliberately maintained allowlist of events nobody is meant to consume. A new
 dead edge turns the test red without a single extra flow test.
@@ -50,7 +54,7 @@ def _resolve(*, node: ast.expr, module) -> object | None:
 ```
 
 Note that the registry keys handlers by `message.module_path()` **strings**
-(`"apps.warband.faction.messages.commands.faction.RestockTownShopItems"`), not by classes, and the values are
+(`"apps.warband.faction.messages.commands.item.RestockTownShopItems"`), not by classes, and the values are
 `{"module": ..., "name": ...}` dicts rather than functions. Comparing classes against those keys silently
 passes and tests nothing.
 
