@@ -3,8 +3,8 @@
 {# the order they were struck - see "BattleLog". #}
 {# The heading is the round's boundary line, which the grouping consumes rather than renders. #}
 {% for log_round in battle_log.round_list %}
-    <div class="uk-margin-small-bottom">
-        <div class="uk-text-meta uk-text-uppercase">Round {{ log_round.number }}</div>
+    <div class="mb-2.5">
+        <div class="text-sm uppercase leading-snug text-[#999]">Round {{ log_round.number }}</div>
         {# The lines where a man was taken out of the fight are the only ones marked. The swings and #}
         {# the misses stay plain - twenty marked lines mark nothing. #}
         {# Three weights, because losing a man and felling one are both worth reading and are not the #}
@@ -12,7 +12,7 @@
         {# he is only watching, where colouring a stranger's death as a gain would be a lie. #}
         {% for log in log_round.line_list %}
             {% if log.is_casualty %}
-                <div class="{% if not player_faction_id %}uk-text-emphasis{% elif log.faction_id == player_faction_id %}uk-text-danger{% else %}uk-text-success{% endif %}">
+                <div class="{% if not player_faction_id %}text-[#333]{% elif log.faction_id == player_faction_id %}text-[#f0506e]{% else %}text-[#32d296]{% endif %}">
                     <i class="fa-solid {{ log.icon }}"></i> <strong>{{ log.message }}</strong>
                 </div>
             {% else %}

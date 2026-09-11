@@ -3,19 +3,21 @@
 {% block content %}
     <h1>Town square in {{ object.town_name }}</h1>
 
-    <div class="uk-child-width-expand@s uk-text-center uk-grid-medium" uk-grid>
+    {# The pub, the shop and the board: three lists that have nothing to say to each other, so they #}
+    {# stack in that order on a phone and sit side by side from "md:" up. #}
+    <div class="grid grid-cols-1 gap-7 text-center md:grid-cols-3">
         <div>
             {% include 'faction/warrior/components/pub_mercenary_list.html' %}
         </div>
-        <div class="uk-margin-bottom">
+        <div>
             {% include "faction/item/components/shop_item_list.html" with item_list=object.available_items.all %}
         </div>
-        <div class="uk-margin-bottom">
+        <div>
             <h2>Board</h2>
             {% for quest in quest_list %}
                 {% include 'quest/components/quest_card.html' with quest=quest %}
             {% empty %}
-                <p class="uk-text-meta">Nothing is pinned to the board this month.</p>
+                <p class="text-sm leading-snug text-[#999]">Nothing is pinned to the board this month.</p>
             {% endfor %}
         </div>
     </div>

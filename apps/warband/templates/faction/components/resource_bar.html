@@ -19,8 +19,8 @@
         {# month", so it is where the wage bill has to speak up. The detail stays on the #}
         {# cost card and on the dashboard; this is a marker and a way to reach them. #}
         {% if wage_bill_payroll.is_short %}
-            <span class="uk-text-danger">
-                <a class="uk-text-danger" href="{% url 'warband:transaction-list-view' %}"
+            <span class="text-[#f0506e]">
+                <a class="text-[#f0506e]" href="{% url 'warband:transaction-list-view' %}"
                    title="{{ wage_bill_payroll.missing_amount }} silver short of next month's wages">
                     {% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %}
                     {{ current_balance }} <i class="fa-solid fa-triangle-exclamation"></i>

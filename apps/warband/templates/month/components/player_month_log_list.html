@@ -2,40 +2,42 @@
 {# without his asking is a chronicle entry with room for a second sentence, what his own decisions #}
 {# produced is a plain line, and the recovery sweeps - which write one row per warrior and would #}
 {# otherwise be most of the month - are tallied into a single sentence with the rows behind it. #}
-<div class="uk-margin">
+<div class="mb-5">
     {% for message in player_month_logs.attention %}
-        <div class="uk-alert-danger" uk-alert>
-            <h4 class="uk-margin-remove">
+        <div class="mb-5 bg-[#fef4f6] py-[15px] pl-[15px] pr-[29px] text-[#f0506e]">
+            <h4 class="m-0">
                 <i class="fa-solid fa-triangle-exclamation"></i> {{ message.title }}
             </h4>
         </div>
     {% endfor %}
 
     {% for message in player_month_logs.chronicle %}
-        <div class="uk-card uk-card-secondary uk-card-small uk-card-body uk-margin-small-bottom">
-            <h4 class="uk-margin-remove">
+        <div class="mb-2.5 box-border bg-[#222] p-5 text-white shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+            <h4 class="m-0">
                 <i class="fa-solid fa-feather"></i> {{ message.title }}
             </h4>
             {% if message.body %}
-                <p class="uk-margin-remove-bottom uk-margin-small-top">{{ message.body }}</p>
+                <p class="mt-2.5 mb-0">{{ message.body }}</p>
             {% endif %}
         </div>
     {% endfor %}
 
     {% if player_month_logs.consequence %}
-        <ul class="uk-list uk-list-divider">
+        {# "divide-y" draws the rule between rows rather than above the first, which is what the list #}
+        {# divider did; the padding goes with it so the rule is not tight against the text. #}
+        <ul class="list-none divide-y divide-[#e5e5e5] p-0">
             {% for message in player_month_logs.consequence %}
-                <li>
-                    <i class="fa-solid fa-scroll uk-text-muted"></i> {{ message.title }}
+                <li class="py-2.5">
+                    <i class="fa-solid fa-scroll text-[#999]"></i> {{ message.title }}
                 </li>
             {% endfor %}
         </ul>
     {% endif %}
 
     {% if player_month_logs.upkeep %}
-        <details class="uk-text-meta">
-            <summary>{{ player_month_logs.upkeep_summary|join:" · " }}</summary>
-            <ul class="uk-list uk-margin-remove-top">
+        <details class="text-sm leading-snug text-[#999]">
+            <summary class="cursor-pointer">{{ player_month_logs.upkeep_summary|join:" · " }}</summary>
+            <ul class="mt-0 list-none space-y-2.5 p-0">
                 {% for message in player_month_logs.upkeep %}
                     <li>{{ message.title }}</li>
                 {% endfor %}
@@ -44,6 +46,6 @@
     {% endif %}
 
     {% if player_month_logs.is_empty %}
-        <p class="uk-text-meta">Nothing to report this month.</p>
+        <p class="text-sm leading-snug text-[#999]">Nothing to report this month.</p>
     {% endif %}
 </div>

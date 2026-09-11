@@ -15,7 +15,6 @@
     {# version control - see docs/contributing/setup.md, and docs/patterns/responsive-layout.md for #}
     {# what the classes are allowed to say. #}
     <link rel="stylesheet" href="{% static 'dist/tailwind.css' %}">
-    <link rel="stylesheet" href="{% static 'css/colors.css' %}">
     <link rel="stylesheet" href="{% static 'css/icons.css' %}">
     <link rel="stylesheet" href="{% static 'css/progress-bar.css' %}">
 </head>
@@ -159,11 +158,11 @@
     </div>
 </nav>
 
-<div class="uk-container-expand uk-margin-left uk-margin-right">
+<div class="px-4 lg:px-8">
     {% block content %}{% endblock %}
 </div>
 
-<div class="uk-hidden" id="hidden-box"></div>
+<div class="hidden" id="hidden-box"></div>
 
 {# Django's messages travel as document nodes. A "template" element is parsed but not rendered, so #}
 {# autoescaping handles the value on the way in and the "textContent" in #}

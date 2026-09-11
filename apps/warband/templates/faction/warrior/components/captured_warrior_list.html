@@ -8,9 +8,9 @@
     {% empty %}
         {# The same list serves a rival's page, where the captives being described are not the player's #}
         {% if is_player_faction %}
-            <p class="uk-text-meta">You hold no captives.</p>
+            <p class="text-sm leading-snug text-[#999]">You hold no captives.</p>
         {% else %}
-            <p class="uk-text-meta">They hold no captives.</p>
+            <p class="text-sm leading-snug text-[#999]">They hold no captives.</p>
         {% endif %}
     {% endfor %}
 </div>
