@@ -62,6 +62,11 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
     return message_list
 
 
+# What the shop holds is the faction's "available_items" and nothing else - see ItemQuerySet.on_sale_at,
+# which is the other end of the same rule. Who owns an item is a separate fact the "item" package keeps,
+# through Item.objects.update_ownership(), and it already says the right thing by the time either of
+# these two commands is dispatched: shop stock is generated unowned, a sale drops the owner before it
+# announces itself, and a purchase sets him.
 @message_registry.register_command(command=AddItemToTownShop)
 def handle_add_item_to_shop(*, context: AddItemToTownShop) -> list[Event] | Event:
     context.faction.available_items.add(context.item)
@@ -71,19 +76,6 @@ def handle_add_item_to_shop(*, context: AddItemToTownShop) -> list[Event] | Even
 
 @message_registry.register_command(command=RemoveItemFromTownShop)
 def handle_buy_item_for_faction(*, context: RemoveItemFromTownShop) -> Event:
-    context.item.owner = context.faction
-    context.item.save()
-
     context.faction.available_items.remove(context.item)
 
     return ItemWasRemovedFromShop(faction=context.faction, item=context.item, month=context.month)
-
-
-@message_registry.register_command(command=AddItemToTownShop)
-def handle_sell_item_from_faction(*, context: AddItemToTownShop) -> Event:
-    context.item.owner = None
-    context.item.save()
-
-    context.faction.available_items.add(context.item)
-
-    return ItemWasAddedToShop(faction=context.faction, item=context.item, month=context.month)

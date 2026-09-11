@@ -1,6 +1,6 @@
 # Registry tests
 
-Five tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
+Six tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
 [message bus](message-bus.md) at once. Unit tests can only ever verify a single handler; whether the
 handlers form a chain is decided at runtime by the registry, so neither the IDE nor a type checker notices
 when a message is emitted that nobody consumes.
@@ -16,11 +16,15 @@ for savegame scoping and skipped by the finished-savegame guard.
    `register_event` ends up in the registry.
 2. **Every emitted command has a handler.** A command is an instruction, so one that nobody executes is
    *always* a bug. Deliberately **no allowlist**.
-3. **Every emitted event is consumed or listed in `TERMINAL_MESSAGES`.** Events only announce a fact, so
+3. **Every command has exactly one handler.** A command names the one piece of work it wants done, so a
+   second handler on it is a second answer to a question that has one — and the two run in registration
+   order, both against a message that reads like an instruction to one of them. Events are the message
+   type that fans out, see [writing a handler](handlers.md).
+4. **Every emitted event is consumed or listed in `TERMINAL_MESSAGES`.** Events only announce a fact, so
    having no consumer can be legitimate.
-4. **Handlers only read attributes all of their messages carry** — catches the multi-registration contract
+5. **Handlers only read attributes all of their messages carry** — catches the multi-registration contract
    bug, where a handler stacked on two decorators reads a field only one of the messages has.
-5. **A command is handled in the module named after the one defining it.** Which module a message
+6. **A command is handled in the module named after the one defining it.** Which module a message
    belongs in is a judgement call about its subject, see [where code goes](app-layout.md); that the
    command and its handler agree on the answer is not. Autodiscovery walks directories, so a command
    handled two modules away wires up and runs identically — this is the only thing that notices.

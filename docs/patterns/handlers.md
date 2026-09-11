@@ -30,6 +30,9 @@ def handle_pay_building_costs(*, context: TownBuildingUpgraded) -> Command | Non
 - A single event can have multiple handlers **in different topic packages** — that is the point of the
   bus, and the reason events are not scope-checked. `TownBuildingUpgraded` is emitted in `town` and also
   handled in `finance`. A *command* handler is scope-checked, see [strict mode](strict-mode.md).
+- A **command has exactly one handler**, and the [registry tests](registry-tests.md) enforce it. A command
+  names the one piece of work it wants done; a reaction that belongs to somebody else hangs off the event
+  that handler returns. Fanning out is what events are for.
 - A handler can be registered for **several messages** by stacking the decorators. It may then only read
   attributes that *all* of those messages carry — nothing but the
   [registry tests](registry-tests.md) connects the two.
