@@ -7,7 +7,7 @@
     {# dropdown. Without this the page is a heading over nothing: every block below it is silent #}
     {# when there is no savegame to report on. #}
     {% if not current_savegame %}
-        <div class="uk-alert-primary" uk-alert>
+        <div class="mb-5 bg-[#d8eafc] py-[15px] pl-[15px] pr-[29px] text-[#1e87f0]">
             <h3>No savegame loaded</h3>
             <p>
                 There is no war band to report on yet.
@@ -18,7 +18,7 @@
     {% endif %}
 
     {% if savegame_outcome %}
-        <div class="uk-alert-primary" uk-alert>
+        <div class="mb-5 bg-[#d8eafc] py-[15px] pl-[15px] pr-[29px] text-[#1e87f0]">
             <h3>{{ savegame_outcome }}</h3>
             <p>
                 This game is over.
@@ -33,17 +33,15 @@
     {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
 
     {% for active_quest in faction.active_quests.all %}
-        <div uk-alert>
-            <div>
-                <strong>Active quest:</strong> {{ active_quest }}
-                {# The skirmish is nullable (SET_NULL on delete), and reversing the url with no id raises #}
-                {% if active_quest.skirmish_id %}
-                    <a class="uk-button uk-button-primary"
-                       href="{% url 'warband:skirmish-fight-view' active_quest.skirmish_id %}">
-                        Fight skirmish
-                    </a>
-                {% endif %}
-            </div>
+        <div class="mb-5 flex flex-col items-start gap-y-2.5 bg-[#f8f8f8] py-[15px] pl-[15px] pr-[29px] text-[#666] md:flex-row md:items-center md:justify-between md:gap-x-5">
+            <div><strong>Active quest:</strong> {{ active_quest }}</div>
+            {# The skirmish is nullable (SET_NULL on delete), and reversing the url with no id raises #}
+            {% if active_quest.skirmish_id %}
+                <a class="box-border inline-block shrink-0 cursor-pointer border border-transparent bg-[#1e87f0] px-[30px] py-0 text-sm uppercase leading-[38px] text-white no-underline hover:bg-[#0f7ae5] hover:text-white"
+                   href="{% url 'warband:skirmish-fight-view' active_quest.skirmish_id %}">
+                    Fight skirmish
+                </a>
+            {% endif %}
         </div>
     {% endfor %}
 

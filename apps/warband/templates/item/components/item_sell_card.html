@@ -1,21 +1,23 @@
 {% load l10n %}
-<div class="uk-card uk-card-default uk-margin-bottom">
-    <div class="uk-card-header">
-        <div id="item-card-{{ item.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
-            <div class="uk-width-auto">
+<div class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+    <div class="border-b border-[#e5e5e5] px-[30px] py-[15px]">
+        {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
+        {# classes rather than handing either to a wrapper. #}
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2" id="item-card-{{ item.id|unlocalize }}">
+            <div class="w-auto">
                 {% include 'common/components/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
             </div>
-            <div class="uk-width-expand">
-                <h3 class="uk-card-title uk-margin-remove-bottom">
+            <div class="flex-1">
+                <h3 class="mb-0 text-2xl leading-snug text-[#333]">
                     {{ item.display_name }}
                 </h3>
-                <p class="uk-text-meta uk-margin-remove-top">
+                <p class="mt-0 text-sm leading-snug text-[#999]">
                     {% include 'item/components/item_stats_meta.html' with item=item %}
                 </p>
             </div>
         </div>
     </div>
-    <div class="uk-card-body uk-text-left">
+    <div class="p-[30px] text-left">
         {% comment %}
             Equipping is the half of the loot economy this column never mentions. "Sell" being the
             only control here reads as the only thing loot is for, and a war band ends up selling a
@@ -31,7 +33,7 @@
                 <p>Worn by: <a href="{% url 'warband:warrior-detail-view' wearer.id %}">{{ wearer }}</a></p>
             {% else %}
                 <p>Worn by: -</p>
-                <p class="uk-text-meta">Nobody has it. Weapons and armour are handed out on a warrior's own page.</p>
+                <p class="text-sm leading-snug text-[#999]">Nobody has it. Weapons and armour are handed out on a warrior's own page.</p>
             {% endif %}
         {% endwith %}
     </div>
@@ -40,12 +42,12 @@
         a rival's page this is a control that could only ever 404.
     {% endcomment %}
     {% if is_player_faction %}
-        <div class="uk-card-footer">
-            <button type="button"
+        <div class="border-t border-[#e5e5e5] px-[30px] py-[15px]">
+            <button class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-[#333] hover:underline"
                     hx-post="{% url 'warband:item-sell-view' item.id %}"
-                    hx-target="#item-card-{{ item.id|unlocalize }}"
                     hx-swap="none"
-                    class="uk-button uk-button-text">Sell
+                    hx-target="#item-card-{{ item.id|unlocalize }}"
+                    type="button">Sell
             </button>
         </div>
     {% endif %}

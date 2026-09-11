@@ -1,21 +1,25 @@
 {% load l10n obscurify %}
-<div class="uk-card uk-card-default uk-margin-bottom">
-    <div class="uk-card-header">
-        <div id="quest-card-{{ quest.id|unlocalize }}" class="uk-grid-small uk-flex-middle" uk-grid>
-            <div class="uk-width-expand">
-                <h3 class="uk-card-title uk-margin-remove-bottom">
+{# The card shell repeats across the eight hand-rolled cards. #64 owns collecting them into one #}
+{# component; this keeps them where they are and only changes what they are built from. #}
+<div class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+    <div class="border-b border-[#e5e5e5] px-[30px] py-[15px]">
+        {# The swap target keeps its id on the element that carries it, and its classes with it: this #}
+        {# is replaced whole, so styling moved to a wrapper would be dropped on the second render. #}
+        <div class="flex flex-wrap items-center gap-x-4" id="quest-card-{{ quest.id|unlocalize }}">
+            <div class="flex-1">
+                <h3 class="mb-0 text-2xl leading-snug text-[#333]">
                     {{ quest.name }}
                 </h3>
             </div>
         </div>
     </div>
-    <div class="uk-card-body uk-text-left">
+    <div class="p-[30px] text-left">
         <p>Faction: {{ quest.target_faction }}</p>
         <p>Difficulty: {{ quest.get_difficulty_display }}</p>
         <p>Loot: {{ quest.loot|obscurify:quest.average_loot }}</p>
     </div>
-        <div class="uk-card-footer">
-            <a href="{% url 'warband:quest-accept-view' quest.id %}"
-               class="uk-button uk-button-text">Accept</a>
-        </div>
+    <div class="border-t border-[#e5e5e5] px-[30px] py-[15px]">
+        <a class="cursor-pointer bg-none p-0 uppercase leading-normal text-[#333] no-underline hover:text-[#333] hover:underline"
+           href="{% url 'warband:quest-accept-view' quest.id %}">Accept</a>
+    </div>
 </div>

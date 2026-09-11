@@ -1,18 +1,18 @@
 {# Silent while the wages are covered: the card and the dashboard both include this unconditionally, #}
 {# so a faction in the black gets no alert rather than a green one saying nothing happened. #}
 {% if wage_bill_payroll.is_short %}
-    <div class="uk-alert-danger" uk-alert>
-        <h4 class="uk-margin-remove-bottom">
+    <div class="mb-5 bg-[#fef4f6] py-[15px] pl-[15px] pr-[29px] text-[#f0506e]">
+        <h4 class="mb-0">
             <i class="fa-solid fa-triangle-exclamation"></i>
             {{ wage_bill_payroll.missing_amount }} silver short of next month's wages
         </h4>
-        <p class="uk-margin-remove-top uk-text-small">
+        <p class="mt-0 text-sm leading-normal">
             Wages are paid cheapest man first out of the silver you hold when the month turns. Your
             buildings pay out after them, so that income covers the month after this one.
         </p>
         {# The count rides inside the parenthesis rather than after a dash, so a roster of several #}
         {# men stays one readable comma-separated run instead of nesting punctuation two deep. #}
-        <p class="uk-margin-remove">
+        <p class="m-0">
             Going unpaid:
             {# Nothing may break the line directly before the closing parenthesis: whitespace inside #}
             {# an "if" body is rendered, so a newline there reaches the player as "unpaid months )". #}
@@ -24,7 +24,7 @@
             {% endfor %}
         </p>
         {% if wage_bill_payroll.warriors_about_to_walk_out %}
-            <p class="uk-margin-remove uk-text-bold">
+            <p class="m-0 font-bold">
                 Leaving the war band over it:
                 {% for warrior in wage_bill_payroll.warriors_about_to_walk_out %}
                     {{ warrior }}{% if not forloop.last %}, {% endif %}
@@ -34,7 +34,7 @@
             </p>
         {% endif %}
         {% if show_finance_link %}
-            <p class="uk-margin-remove-bottom">
+            <p class="mb-0">
                 <a href="{% url 'warband:transaction-list-view' %}">Look at the books</a>
             </p>
         {% endif %}

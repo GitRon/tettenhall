@@ -1,45 +1,47 @@
 {% load crispy_forms_tags l10n utils %}
-<div class="uk-card uk-card-small uk-card-default"
+<div class="box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]"
      data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}">
-    <div class="uk-card-header">
-        <h3 class="uk-card-title">{{ warrior.display_name }}</h3>
-        <ul class="uk-subnav uk-subnav-divider uk-margin-remove-top">
+    <div class="border-b border-[#e5e5e5] px-5 py-[13px]">
+        <h3 class="text-2xl leading-snug text-[#333]">{{ warrior.display_name }}</h3>
+        {# The faction and the level read as one line with a rule between them. They stay on one line #}
+        {# at every width - together they are four words, and a phone has room for them. #}
+        <ul class="mt-0 flex list-none flex-wrap items-center gap-x-5 p-0 text-sm text-[#999]">
             <li>{{ warrior.faction }}</li>
             {# The level goes on the card in the fight because this is where a level-up is actually #}
             {# witnessed: the growth happens mid-skirmish and the log announces it right beside here. #}
-            <li><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</li>
+            <li class="border-l border-[#e5e5e5] pl-5"><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</li>
         </ul>
     </div>
-    <div class="uk-card-body">
-        <div uk-grid>
+    <div class="p-5">
+        <div class="flex flex-wrap items-start gap-x-7 gap-y-2">
             <div>
                 {# "Healthy" is the name of a state and not a reading of the health beside it: nothing #}
                 {# between full health and zero moves the condition, so a man at 1 of 20 is in it as #}
                 {# much as one who has not been touched. What the state says is that he is still on #}
                 {# his feet, and the number says at what cost. #}
                 {% if warrior.is_healthy %}
-                    <p class="uk-text-success">
+                    <p class="text-[#32d296]">
                         <i class="fa-solid fa-feather-pointed"></i> Able to fight
                     </p>
                 {% elif warrior.is_unconscious %}
-                    <p class="uk-text-warning">
+                    <p class="text-[#faa05a]">
                         <i class="fa-solid fa-moon"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% elif warrior.is_fleeing %}
-                    <p class="uk-text-warning">
+                    <p class="text-[#faa05a]">
                         <i class="fa-solid fa-person-running"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% else %}
-                    <p class="uk-text-danger">
+                    <p class="text-[#f0506e]">
                         <i class="fa-solid fa-skull"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% endif %}
             </div>
             {# Health as text beside the morale, the way the faction page's card already prints both. #}
-            {# It used to be a "uk-progress" bar in the subnav above, where UIkit's "width: 100%" #}
-            {# resolved against a zero-width flex item and rendered nothing at all - so the one number #}
-            {# that decides whether to press "Fight!" again was the only one the card withheld. #}
-            <div class="color-corale">
+            {# A progress bar in the divided line above resolves its width against a zero-width flex #}
+            {# item and draws nothing, which would withhold the one number that decides whether to #}
+            {# press "Fight!" again. #}
+            <div class="text-[Coral]">
                 <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
                 {# The morale is what decides whether a man keeps fighting, so it is shown while he #}
                 {# still can. "put_out_of_the_fight" normalises his health to nothing and leaves the #}
@@ -58,8 +60,8 @@
             {{ warrior.get_armor_or_fallback }}
         </div>
     </div>
-    <div class="uk-card-footer">
-        <div class="uk-form-controls">
+    <div class="border-t border-[#e5e5e5] px-5 py-[13px]">
+        <div>
         {# Two conditions, and the second is about the fight rather than the man: a warrior who is #}
         {# still on his feet when it ends was being offered next round's attack in a skirmish that #}
         {# has a victor and will never have another round. #}
@@ -69,7 +71,8 @@
                 {# The warrior id is the participant key: it is unique within a skirmish, so it needs no separator. Concatenating faction id and loop index did - faction 1/index 10 and faction 11/index 0 both produced "110", and one participant silently overwrote the other. No faction is posted: the view reads the sides off the skirmish rosters, since a posted one can lie and "warrior.faction" changes the moment a captive is recruited. #}
                 {% if is_player %}
                     <label>
-                        <select class="uk-select" name="skirmish_participant[{{ warrior.id }}][skirmish_action]">
+                        <select class="box-border h-10 w-full border border-[#e5e5e5] bg-white py-0 pl-2.5 pr-5 text-base text-[#666]"
+                                name="skirmish_participant[{{ warrior.id }}][skirmish_action]">
                             {% for action in warrior.get_skirmish_actions %}
                                 <option value="{{ action.0 }}" {% if warrior.last_used_skirmish_action == action.0 %}selected="selected"{% endif %}>{{ action.1 }}</option>
                             {% endfor %}
@@ -85,7 +88,7 @@
                         about this side is posted any more, which is why the hidden warrior id goes with
                         it: the roster names who fights.
                     {% endcomment %}
-                    <p class="uk-text-meta uk-margin-remove">{{ warrior.decide_skirmish_action.1 }}</p>
+                    <p class="m-0 text-sm leading-snug text-[#999]">{{ warrior.decide_skirmish_action.1 }}</p>
                 {% endif %}
             </form>
         {% endif %}

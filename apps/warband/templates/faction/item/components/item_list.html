@@ -8,9 +8,9 @@
     {% empty %}
         {# The same list serves a rival's page, where the property being described is not the player's #}
         {% if is_player_faction %}
-            <p class="uk-text-meta">Every item you own is being worn.</p>
+            <p class="text-sm leading-snug text-[#999]">Every item you own is being worn.</p>
         {% else %}
-            <p class="uk-text-meta">Every item they own is being worn.</p>
+            <p class="text-sm leading-snug text-[#999]">Every item they own is being worn.</p>
         {% endif %}
     {% endfor %}
 </div>

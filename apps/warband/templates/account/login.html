@@ -3,7 +3,9 @@
 
 {% block content %}
     <h1>Login</h1>
-    <div class="uk-grid-medium uk-flex-middle" uk-grid>
-    {% crispy form form.helper %}
+    {# Full width on a phone, half from "md:" up: a login is two fields, and stretching them across a #}
+    {# desk makes the form read as a text editor. #}
+    <div class="md:w-1/2">
+        {% crispy form form.helper %}
     </div>
 {% endblock content %}

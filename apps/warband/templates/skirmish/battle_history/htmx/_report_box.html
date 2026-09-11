@@ -2,24 +2,24 @@
 {# Once it is decided the panel leads with what the fight yielded and the log goes behind a disclosure - #}
 {# still one click away, because it is the technical record and somebody wants it. #}
 {% if report %}
-    <div class="uk-margin">
+    <div class="mb-5">
         {% if report.is_victory %}
-            <h3 class="uk-margin-remove-bottom"><i class="fa-solid fa-trophy"></i> The field is yours</h3>
+            <h3 class="mb-0"><i class="fa-solid fa-trophy"></i> The field is yours</h3>
         {% else %}
-            <h3 class="uk-margin-remove-bottom"><i class="fa-solid fa-skull"></i> The field is lost</h3>
+            <h3 class="mb-0"><i class="fa-solid fa-skull"></i> The field is lost</h3>
         {% endif %}
 
         {% if report.has_anything_to_report %}
             {# The men come first. A warrior is a recruitment price, a wage and however many fights' #}
             {# worth of experience, and he is the only outcome of a fight the player cannot undo. #}
             {% if report.own_casualties or report.own_routed %}
-                <h4 class="uk-margin-small-bottom">What it cost your men</h4>
-                <ul class="uk-list uk-list-divider">
+                <h4 class="mb-2.5">What it cost your men</h4>
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for casualty in report.own_casualties %}
                         <li>
-                            <i class="fa-solid fa-skull-crossbones uk-text-danger"></i>
+                            <i class="fa-solid fa-skull-crossbones text-[#f0506e]"></i>
                             {{ casualty.warrior }}
-                            <span class="uk-text-meta">· {{ casualty.get_fate_display|lower }}</span>
+                            <span class="text-sm leading-snug text-[#999]">· {{ casualty.get_fate_display|lower }}</span>
                         </li>
                     {% endfor %}
                     {% if report.own_routed %}
@@ -28,7 +28,7 @@
                         {# The count covers both ways off the field, so it names neither: half of these #}
                         {# men may have been ordered out at full morale, and "lost their nerve" would #}
                         {# be telling the player his own command was a rout. #}
-                        <li class="uk-text-meta">
+                        <li class="text-sm leading-snug text-[#999]">
                             {{ report.own_routed|length }}
                             of your men left the field
                         </li>
@@ -37,22 +37,22 @@
             {% endif %}
 
             {% if report.prisoners_taken or report.enemy_killed_count or report.enemy_downed_count %}
-                <h4 class="uk-margin-small-bottom">What you did to theirs</h4>
-                <ul class="uk-list uk-list-divider">
+                <h4 class="mb-2.5">What you did to theirs</h4>
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for casualty in report.prisoners_taken %}
                         <li>
-                            <i class="fa-solid fa-lock uk-text-muted"></i>
-                            {{ casualty.warrior }} <span class="uk-text-meta">· taken prisoner</span>
+                            <i class="fa-solid fa-lock text-[#999]"></i>
+                            {{ casualty.warrior }} <span class="text-sm leading-snug text-[#999]">· taken prisoner</span>
                         </li>
                     {% endfor %}
                     {% if report.enemy_killed_count %}
-                        <li class="uk-text-meta">
+                        <li class="text-sm leading-snug text-[#999]">
                             {{ report.enemy_killed_count }}
                             of theirs killed
                         </li>
                     {% endif %}
                     {% if report.enemy_downed_count %}
-                        <li class="uk-text-meta">
+                        <li class="text-sm leading-snug text-[#999]">
                             {{ report.enemy_downed_count }}
                             of theirs left on the field
                         </li>
@@ -61,17 +61,17 @@
             {% endif %}
 
             {% if report.silver_won %}
-                <ul class="uk-list uk-list-divider">
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% if report.quest_reward %}
                         <li>
-                            <i class="fa-solid fa-sack-dollar uk-text-muted"></i>
+                            <i class="fa-solid fa-sack-dollar text-[#999]"></i>
                             {{ report.quest_reward }} silver for
                             {% if report.quest_name %}“{{ report.quest_name }}”{% else %}the contract{% endif %}
                         </li>
                     {% endif %}
                     {% if report.silver_looted %}
                         <li>
-                            <i class="fa-solid fa-coins uk-text-muted"></i>
+                            <i class="fa-solid fa-coins text-[#999]"></i>
                             {{ report.silver_looted }} silver off the fallen
                         </li>
                     {% endif %}
@@ -79,20 +79,20 @@
             {% endif %}
 
             {% if report.items_won %}
-                <h4 class="uk-margin-small-bottom">Gear taken</h4>
-                <ul class="uk-list uk-list-divider">
+                <h4 class="mb-2.5">Gear taken</h4>
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for spoil in report.items_won %}
                         <li>
                             {% include 'common/components/svg_icon.html' with icon_name=spoil.item.type.svg_image_name %}
                             {{ spoil.item.display_name }}
-                            <span class="uk-text-meta">
+                            <span class="text-sm leading-snug text-[#999]">
                                 {{ spoil.item.type.base_value }}{{ spoil.item.get_modifier_as_string }}
                                 {% if spoil.taken_from %}· from {{ spoil.taken_from }}{% endif %}
                             </span>
                             {% if spoil.is_upgrade %}
                                 {# The one sentence that makes the risk worth taking again. Without it #}
                                 {# the sword sits in Unused Items until somebody sells it. #}
-                                <span class="uk-label uk-label-success">Better than anything your men carry</span>
+                                <span class="inline-block rounded-xs bg-[#32d296] px-2.5 align-middle text-sm uppercase leading-normal whitespace-nowrap text-white">Better than anything your men carry</span>
                             {% endif %}
                         </li>
                     {% endfor %}
@@ -100,15 +100,15 @@
             {% endif %}
 
             {% if report.growth_list %}
-                <h4 class="uk-margin-small-bottom">Your men</h4>
-                <ul class="uk-list uk-list-divider">
+                <h4 class="mb-2.5">Your men</h4>
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for growth in report.growth_list %}
                         <li>
-                            <i class="fa-solid fa-arrow-trend-up uk-text-muted"></i>
+                            <i class="fa-solid fa-arrow-trend-up text-[#999]"></i>
                             {{ growth.warrior }}: {{ growth.gained_experience }} experience
                             {% if growth.reached_level %}
                                 · reached level {{ growth.reached_level }}
-                                <span class="uk-text-meta">
+                                <span class="text-sm leading-snug text-[#999]">
                                     strength +{{ growth.gained_strength }},
                                     dexterity +{{ growth.gained_dexterity }},
                                     health +{{ growth.gained_max_health }},
@@ -122,27 +122,27 @@
             {% endif %}
 
             {% if report.items_lost or report.silver_lost %}
-                <h4 class="uk-margin-small-bottom">Stripped from your fallen</h4>
-                <ul class="uk-list uk-list-divider">
+                <h4 class="mb-2.5">Stripped from your fallen</h4>
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for spoil in report.items_lost %}
-                        <li class="uk-text-muted">
+                        <li class="text-[#999]">
                             {{ spoil.item.display_name }}
-                            {% if spoil.warrior %}<span class="uk-text-meta">· off {{ spoil.warrior }}</span>{% endif %}
+                            {% if spoil.warrior %}<span class="text-sm leading-snug text-[#999]">· off {{ spoil.warrior }}</span>{% endif %}
                         </li>
                     {% endfor %}
                     {% if report.silver_lost %}
-                        <li class="uk-text-muted">{{ report.silver_lost }} silver</li>
+                        <li class="text-[#999]">{{ report.silver_lost }} silver</li>
                     {% endif %}
                 </ul>
             {% endif %}
         {% else %}
-            <p class="uk-text-meta">The fight yielded nothing.</p>
+            <p class="text-sm leading-snug text-[#999]">The fight yielded nothing.</p>
         {% endif %}
     </div>
 
-    <details class="uk-text-meta">
-        <summary>Blow by blow</summary>
-        <div class="uk-margin-small-top">
+    <details class="text-sm leading-snug text-[#999]">
+        <summary class="cursor-pointer">Blow by blow</summary>
+        <div class="mt-2.5">
             {% include 'skirmish/battle_history/htmx/_log_lines.html' %}
         </div>
     </details>
