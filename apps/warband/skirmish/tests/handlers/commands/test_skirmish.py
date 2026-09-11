@@ -337,8 +337,16 @@ def test_handle_assign_fighter_pairs_gives_each_man_an_opponent_of_his_own():
         skirmish_action=SkirmishActionChoices.RISKY_ATTACK,
     )
 
-    # Boundary randomness: both groups get shuffled, so pin the resulting order
-    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"):
+    # Boundary randomness: both groups get shuffled, so pin the resulting order. The draw is pinned
+    # too, although an even fight never reaches it - a pairing that went back to drawing its defender
+    # would otherwise land on the expectation below by chance about one run in four.
+    with (
+        mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"),
+        mock.patch(
+            "apps.warband.skirmish.handlers.commands.skirmish.random.choice",
+            return_value=first_enemy_participant,
+        ),
+    ):
         result = handle_assign_fighter_pairs(
             context=StartDuel(
                 skirmish=skirmish,
