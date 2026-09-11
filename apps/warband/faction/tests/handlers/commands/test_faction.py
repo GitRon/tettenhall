@@ -139,14 +139,26 @@ def test_handle_create_new_faction_gives_a_rival_a_chosen_sanctuary():
 
 @pytest.mark.django_db
 def test_handle_defeat_faction_of_lost_leader_knocks_the_faction_out():
-    faction = FactionFactory()
-    leader = WarriorFactory(faction=faction, savegame=faction.savegame)
+    player_faction = FactionFactory()
+    savegame = player_faction.savegame
+    savegame.player_faction = player_faction
+    savegame.current_month = 4
+    savegame.save()
+    faction = FactionFactory(savegame=savegame)
+    leader = WarriorFactory(faction=faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD)
     faction.leader = leader
     faction.save()
 
     result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
 
-    assert result == FactionWasDefeated(faction=faction, savegame=faction.savegame)
+    assert result == FactionWasDefeated(
+        faction=faction,
+        savegame=savegame,
+        player_faction=player_faction,
+        leader=leader,
+        leader_was_killed=True,
+        month=4,
+    )
     faction.refresh_from_db()
     assert faction.is_defeated is True
 
@@ -156,9 +168,18 @@ def test_handle_defeat_faction_of_lost_leader_for_a_captured_leader():
     """
     Capture clears the warrior's own faction before this runs, so the lookup has to go through
     Faction.leader - the only remaining record of who led whom.
+
+    A captured man is knocked out and taken rather than killed, which is what tells the announcement
+    to call him a prisoner instead of one of the fallen.
     """
-    faction = FactionFactory()
-    leader = WarriorFactory(faction=faction, savegame=faction.savegame)
+    player_faction = FactionFactory()
+    savegame = player_faction.savegame
+    savegame.player_faction = player_faction
+    savegame.save()
+    faction = FactionFactory(savegame=savegame)
+    leader = WarriorFactory(
+        faction=faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
     faction.leader = leader
     faction.save()
     leader.faction = None
@@ -166,7 +187,14 @@ def test_handle_defeat_faction_of_lost_leader_for_a_captured_leader():
 
     result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
 
-    assert result == FactionWasDefeated(faction=faction, savegame=faction.savegame)
+    assert result == FactionWasDefeated(
+        faction=faction,
+        savegame=savegame,
+        player_faction=player_faction,
+        leader=leader,
+        leader_was_killed=False,
+        month=1,
+    )
 
 
 @pytest.mark.django_db

@@ -15,8 +15,25 @@ class NewFactionCreated(Event):
 
 @dataclass(kw_only=True)
 class FactionWasDefeated(Event):
+    """
+    A faction lost the man who led it and is out of the game.
+
+    Everything below the savegame rides along resolved, because every consumer is an event handler
+    under strict mode's database blocker and none of them could look it up. "player_faction" is what
+    the announcement is written against - the month log drops a line whose faction is not the
+    player's, so passing the defeated rival there would write nothing at all. "leader" is the fallen
+    man himself: capture clears his own faction, and reaching "faction.leader" downstream would be a
+    lazy query for a warrior the raising handler already holds.
+    """
+
     faction: Faction
     savegame: Savegame
+    player_faction: Faction
+    leader: Warrior
+    # Which of the two blows it was. Resolved here rather than carried down from the skirmish, whose
+    # handler is registered for the kill and the capture alike and may only read what both events have
+    leader_was_killed: bool
+    month: int
 
 
 @dataclass(kw_only=True)

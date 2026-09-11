@@ -3,6 +3,7 @@ from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
     MonthlyWarriorSalariesPaid,
     MonthlyWarriorSalariesUnpaid,
@@ -45,6 +46,39 @@ def handle_unpaid_warrior_salaries(*, context: MonthlyWarriorSalariesUnpaid) -> 
         kind=PlayerMonthLog.KindChoices.KIND_UNPAID_SALARIES,
         month=context.month,
         faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=FactionWasDefeated)
+def handle_log_rival_defeat(*, context: FactionWasDefeated) -> Command | None:
+    """
+    Says that a rival is out of the game, and that the fight the player just won is what did it.
+
+    Until this line existed the knockout was invisible: the rival's row drops off the rivals list
+    because a defeated faction stops getting a month, and that vanishing was the whole of the
+    notification. It says who fell and which faction he led, because the causal link between the man
+    the player put down and the faction leaving the war is the part he cannot reconstruct - the
+    battle report names the prisoner and says nothing about what taking him ended.
+
+    Silent for the player's own faction: his leader falling ends the savegame, and the line about
+    that is already written against SavegameEnded. Two lines for the one faction would compete.
+    """
+    # The instances rather than their ids: Django compares two unsaved rows by identity instead of
+    # by a primary key they both lack, so this stays right for a handler called with built factions
+    if context.faction == context.player_faction:
+        return None
+
+    if context.leader_was_killed:
+        fate = f"{context.leader} led them, and he fell in the fighting."
+    else:
+        fate = f"{context.leader} led them, and he is your prisoner."
+
+    return CreatePlayerMonthLog(
+        title=f"{context.faction} is out of the war.",
+        body=f"{fate} There is nobody left to answer for the faction.",
+        kind=PlayerMonthLog.KindChoices.KIND_RIVAL_DEFEATED,
+        month=context.month,
+        faction=context.player_faction,
     )
 
 

@@ -32,6 +32,7 @@ class PlayerMonthLog(models.Model):
         KIND_WARRIOR_DISMISSED = 13, "Warrior dismissed"
         KIND_MORALE_LOST_UNPAID = 14, "Morale lost over unpaid wages"
         KIND_SAVEGAME_ENDED = 15, "Savegame ended"
+        KIND_RIVAL_DEFEATED = 16, "Rival defeated"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -58,6 +59,10 @@ class PlayerMonthLog(models.Model):
         # A chronicle entry, like an incident: it is the one thing in the log that happened to the
         # player rather than something he did, and the only other kind with a second sentence to say
         KindChoices.KIND_SAVEGAME_ENDED: CategoryChoices.CATEGORY_CHRONICLE,
+        # A chronicle entry as well: a rival dropping out is the board changing under the player
+        # rather than anything he set out to do, and naming the man it cost them takes a second
+        # sentence
+        KindChoices.KIND_RIVAL_DEFEATED: CategoryChoices.CATEGORY_CHRONICLE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each
