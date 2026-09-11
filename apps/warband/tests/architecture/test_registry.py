@@ -177,6 +177,21 @@ def test_every_emitted_command_has_a_handler(queuebie_registry):
     assert emitted_commands - set(queuebie_registry.command_dict) == set()
 
 
+def test_every_command_has_exactly_one_handler(queuebie_registry):
+    """
+    A command names the one piece of work it wants done, so a second handler on it is a second
+    answer to a question that has one. Events are the message type that fans out - see the handler
+    docs - and nothing but this notices when a command starts behaving like one.
+    """
+    commands_with_several_handlers = {
+        message_path: sorted(f"{definition['module']}.{definition['name']}" for definition in handler_list)
+        for message_path, handler_list in queuebie_registry.command_dict.items()
+        if len(handler_list) > 1
+    }
+
+    assert commands_with_several_handlers == {}
+
+
 def test_every_emitted_event_is_either_consumed_or_terminal(queuebie_registry):
     emitted_events = _emitted_message_paths(message_type=Event)
 
