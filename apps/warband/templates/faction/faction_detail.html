@@ -74,4 +74,10 @@
             {% include "faction/warrior/components/captured_warrior_list.html" with faction=object %}
         </div>
     </div>
+
+    {# Only of his own men: where a rival's warriors stand on their attributes is knowledge the #}
+    {# player has not earned, the same rule the roster card and the rivals list follow. #}
+    {% if is_player_faction %}
+        {% include "training/components/warrior_progress_table.html" %}
+    {% endif %}
 {% endblock content %}

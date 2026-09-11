@@ -8,6 +8,7 @@ from apps.warband.quest.tests.factories.quest_contract import QuestContractFacto
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.training.tests.factories.training import TrainingFactory
 
 
 @pytest.mark.django_db
@@ -183,3 +184,32 @@ def test_dashboard_view_shows_the_outcome_of_a_finished_savegame(logged_in_clien
 
     assert response.status_code == 200
     assert response.context["savegame_outcome"] == "Won"
+
+
+@pytest.mark.django_db
+def test_dashboard_view_names_the_training_of_the_player_faction(logged_in_client, current_savegame):
+    """
+    Every faction of the savegame owns a training row, so scoping to the savegame would name
+    whichever one happens to come first - a rival's, half the time.
+    """
+    TrainingFactory(faction=FactionFactory(savegame=current_savegame))
+    own_training = TrainingFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["current_training"] == own_training
+
+
+@pytest.mark.django_db
+def test_dashboard_view_names_no_training_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    The lookup needs a faction id, and the template reverses the edit url off whatever it gets - so
+    an answer of None is what keeps the page from reversing with an empty id.
+    """
+    TrainingFactory(faction=FactionFactory(savegame=savegame_without_player_faction))
+
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["current_training"] is None

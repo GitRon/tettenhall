@@ -122,7 +122,6 @@ urlpatterns = [
         name="upgrade-building-view",
     ),
     # Training
-    path("training/", training_views.TrainingListView.as_view(), name="training-list-view"),
     path("training/<int:pk>/edit", training_views.TrainingEditView.as_view(), name="training-edit-view"),
     # Warrior
     path("warrior/warrior/<int:pk>", warrior_views.WarriorDetailView.as_view(), name="warrior-detail-view"),

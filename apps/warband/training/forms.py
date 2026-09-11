@@ -40,7 +40,7 @@ class TrainingForm(forms.ModelForm):
                 # The only way off this page otherwise is the navbar, which leaves the player on a
                 # form they have already changed with no way to abandon it.
                 HTML(
-                    "<a href=\"{% url 'warband:training-list-view' %}\""
+                    "<a href=\"{% url 'warband:dashboard-view' %}\""
                     f' class="{form_styles.BUTTON_DEFAULT_SMALL}">Cancel</a>'
                 ),
             ),

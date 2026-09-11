@@ -10,6 +10,7 @@ from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.month.services.player_month_log import group_player_month_logs
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
+from apps.warband.training.models.training import Training
 
 
 class LoginView(RequestInFormKwargsMixin, generic.FormView):
@@ -65,6 +66,15 @@ class DashboardView(generic.TemplateView):
                 else PlayerMonthLog.objects.none()
             )
             context["faction"] = current_savegame.player_faction
+            # The training is one faction-wide row the savegame arrives with a value for, and it is
+            # read rather than chosen in most months - so it is a line on the page the month begins
+            # on rather than a place of its own. Every faction of the savegame owns such a row, so
+            # this has to name the player's own.
+            context["current_training"] = (
+                Training.objects.for_player_faction(faction_id=current_savegame.player_faction_id).first()
+                if current_savegame.player_faction_id
+                else None
+            )
             # Only set once the game has been decided, so the template can ask a single question
             # instead of comparing against the running value itself
             if current_savegame.is_over:

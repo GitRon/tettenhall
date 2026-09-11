@@ -3,9 +3,6 @@ from django.db.models import manager
 
 
 class TrainingQuerySet(models.QuerySet):
-    def for_savegame(self, *, savegame_id: int):
-        return self.filter(faction__savegame=savegame_id)
-
     def filter_faction(self, *, faction_id: int):
         # The regimen this faction trains by. Parameterised rather than player-scoped: every faction
         # of the savegame owns a row and trains by it, and the caller passing a faction is what says
