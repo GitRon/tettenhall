@@ -60,6 +60,14 @@
         </div>
     </div>
     <div class="border-t border-[#e5e5e5] px-[30px] py-[15px]">
+        {# Why the price is not the one the player remembers. Shown only once the surcharge is real, #}
+        {# so the generated mercenary and the man sent away last month carry no line at all. #}
+        {% if warrior.idle_surcharge %}
+            <p class="mb-2 mt-0 text-sm leading-snug text-[#999]">
+                <i class="fa-solid fa-hourglass-half"></i>
+                <i>{{ warrior.months_in_pub }} months waiting here, and {{ warrior.idle_surcharge }} silver of back wages on his price</i>
+            </p>
+        {% endif %}
         {# Swaps nothing: the pub list reloads itself on the trigger the response carries, which is #}
         {# what lets the empty state fire on the path that empties it. A refused hire swaps nothing #}
         {# either and leaves the card standing. #}

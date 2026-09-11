@@ -390,8 +390,13 @@ class RecruitPubMercenaryView(
         obj = self.get_object()
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
+        # Read once, and before the message goes out: hiring him ends the wait his price is partly
+        # made of, and the handler clears it on this very instance - so a second read afterwards
+        # would tell the player a figure the ledger never charged. See [Warrior.idle_surcharge].
+        hiring_price = obj.hiring_price
+
         current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
-        if current_balance < obj.hiring_price:
+        if current_balance < hiring_price:
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
             response["HX-Trigger"] = json.dumps(
                 {
@@ -414,7 +419,7 @@ class RecruitPubMercenaryView(
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
-                "notification": f"{obj} joins your war band for {obj.hiring_price} silver.",
+                "notification": f"{obj} joins your war band for {hiring_price} silver.",
                 "loadPubMercenaryList": "-",
                 "updateResourceBar": "-",
             }

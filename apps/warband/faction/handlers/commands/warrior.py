@@ -84,6 +84,11 @@ def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Even
     # place a warrior ever ends up on the shelf: a mercenary hired out of the pub and later sent away
     # comes back through this same command and is marked afresh, so the flag cannot go stale on him.
     Warrior.objects.set_pub_stock(obj=context.warrior, is_pub_stock=context.is_pub_stock)
+    # Stamped here for the same reason, and it is the same one place: all three routes onto the shelf
+    # - the mercenary the restock rolled, the man the player sent away and the man who walked out
+    # over unpaid wages - arrive through this command. A man who comes back a second time starts his
+    # wait again rather than inheriting the date of the first.
+    Warrior.objects.set_pub_arrival(obj=context.warrior, month=context.month)
 
     return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)
 
@@ -174,15 +179,21 @@ def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event]
     What he owes is cleared, because the shelf also holds the man who walked out over the full term
     of unpaid wages - see [forgive_unpaid_months].
     """
+    # Read before anything below moves him, because taking him off the shelf ends the wait his price
+    # is partly made of - see [Warrior.idle_surcharge]. Reading it at the bottom would bill a veteran
+    # the price of a man who had never been parked, which is the loophole the surcharge closes.
+    hiring_price = context.warrior.hiring_price
+
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
     Warrior.objects.forgive_unpaid_months(obj=context.warrior)
     Warrior.objects.transfer_equipment_ownership(obj=context.warrior, new_owner=context.faction)
     Faction.objects.remove_mercenary_from_pub(faction=context.faction, warrior=context.warrior)
+    Warrior.objects.set_pub_arrival(obj=context.warrior, month=None)
 
     return WarriorRecruited(
         warrior=context.warrior,
         faction=context.faction,
-        recruitment_price=context.warrior.hiring_price,
+        recruitment_price=hiring_price,
         month=context.month,
     )
 

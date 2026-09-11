@@ -43,6 +43,19 @@ class Warrior(models.Model):
     # off the player anyway, which is what makes letting a man go a decision with a price rather than
     # a way to walk out of a wage bill for nothing.
     SEVERANCE_SALARY_MONTHS = 1
+    # How long a man may stand in the pub before his price starts climbing, and what every month
+    # past it adds - see [hiring_price].
+    #
+    # The threshold is what the round trip already costs, counted in months of his wage: one month of
+    # severance to send him away, and the inverse of SALARY_SHARE_OF_PRICE - two - to take him back.
+    # So the wages saved by parking him catch up with the trip exactly on the third month, and every
+    # month after that is the one the surcharge exists to price. Derived rather than written down as
+    # a three, because a three would go on saying three after either of the numbers under it moved.
+    IDLE_MONTHS_BEFORE_SURCHARGE = SEVERANCE_SALARY_MONTHS + round(1 / SALARY_SHARE_OF_PRICE)
+    # A month of his wage per month over the threshold, which is what makes the surcharge cancel the
+    # saving rather than merely blunt it. Anything less leaves parking profitable at a later month
+    # instead of at the fourth, and anything more punishes a dismissal the player regretted.
+    IDLE_SURCHARGE_SALARY_MONTHS = 1
 
     class ConditionChoices(models.IntegerChoices):
         CONDITION_HEALTHY = 1, "Healthy"
@@ -114,6 +127,13 @@ class Warrior(models.Model):
     # nobody hired. Written where the pub takes a man in, by "handle_add_warrior_to_pub" and nowhere
     # else, so a man hired out of the pub and later sent away is marked afresh on the way back in.
     is_pub_stock = models.BooleanField("Is pub stock", default=False)
+
+    # The month this man went onto the pub's shelf, and null whenever he is not standing on it. What
+    # reads it is [hiring_price]: a veteran parked there draws no wages, so without a date nothing
+    # can tell a man sent away last month from one sent away last year, and the second is the one
+    # who was being kept off the payroll. Written by "handle_add_warrior_to_pub" and cleared by
+    # "handle_recruit_pub_mercenary", which are the one way in and the one way out.
+    pub_arrival_month = models.PositiveSmallIntegerField("Pub arrival month", null=True, blank=True)
 
     last_used_skirmish_action = models.PositiveSmallIntegerField(
         choices=SkirmishActionChoices.choices, blank=True, null=True
@@ -221,6 +241,42 @@ class Warrior(models.Model):
         return int(self.recruitment_price / 2)
 
     @property
+    def months_in_pub(self) -> int:
+        """
+        How long this man has been standing on the pub's shelf, and nothing if he is not on it.
+
+        The month is read off his own savegame rather than handed in, so that the button the player
+        clicks, the balance the view checks it against and the row the ledger gets all name one
+        number. It is a foreign key read per warrior, on a card that already dereferences his
+        culture, his weapon and his armour to render.
+        """
+        if self.pub_arrival_month is None:
+            return 0
+
+        return self.savegame.current_month - self.pub_arrival_month
+
+    @property
+    def idle_surcharge(self) -> int:
+        """
+        What a man adds to his price for having been left to wait.
+
+        A veteran parked in the pub draws no wages, so the months he spends there are months his old
+        faction did not pay for. Without this the round trip - severance, then the hiring price -
+        costs three months of his wage whatever happens, while the wages dodged go on mounting, and
+        a man is cheaper on the shelf than on the roster from the fourth month onward. Charging the
+        wage back from the threshold on is what makes the shelf cost what the roster costs, so
+        parking is never a saving and a dismissal the player regrets inside the quarter is never a
+        punishment.
+
+        It applies to the generated mercenary too, and comes to nothing for him on its own: the
+        restock empties and refills its shelf every month, so his stay is always the month he was
+        rolled in.
+        """
+        idle_months = max(0, self.months_in_pub - self.IDLE_MONTHS_BEFORE_SURCHARGE)
+
+        return self.monthly_salary * self.IDLE_SURCHARGE_SALARY_MONTHS * idle_months
+
+    @property
     def hiring_price(self) -> int:
         """
         What it costs to take this man onto a roster today.
@@ -231,8 +287,11 @@ class Warrior(models.Model):
         game. Inverting the share the generators price a wage with is what keeps a mercenary nobody
         has hired at the price he has always had, while a man who earned his levels costs what he
         now costs to keep.
+
+        What the wait adds on top is [idle_surcharge]. A man who draws no wage is free either way,
+        which is what keeps a leader out of both halves of this.
         """
-        return round(self.monthly_salary / self.SALARY_SHARE_OF_PRICE)
+        return round(self.monthly_salary / self.SALARY_SHARE_OF_PRICE) + self.idle_surcharge
 
     @property
     def severance_pay(self) -> int:

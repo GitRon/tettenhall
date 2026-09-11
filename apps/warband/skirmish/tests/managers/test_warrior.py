@@ -643,6 +643,26 @@ def test_set_pub_stock_marks_a_man_as_sweepable():
 
 
 @pytest.mark.django_db
+def test_set_pub_arrival_records_the_month_he_got_there():
+    warrior = WarriorFactory(pub_arrival_month=None)
+
+    Warrior.objects.set_pub_arrival(obj=warrior, month=4)
+
+    warrior.refresh_from_db()
+    assert warrior.pub_arrival_month == 4
+
+
+@pytest.mark.django_db
+def test_set_pub_arrival_ends_the_wait_of_a_man_somebody_hired():
+    warrior = WarriorFactory(pub_arrival_month=4)
+
+    Warrior.objects.set_pub_arrival(obj=warrior, month=None)
+
+    warrior.refresh_from_db()
+    assert warrior.pub_arrival_month is None
+
+
+@pytest.mark.django_db
 def test_release_from_roster_clears_the_faction_and_the_gear():
     faction = FactionFactory()
     weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)

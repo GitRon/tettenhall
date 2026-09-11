@@ -389,6 +389,19 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def set_pub_arrival(self, *, obj, month: int | None):
+        """
+        Say since when this man has been standing in the pub, or that he no longer is.
+
+        A month going in, and None coming back out when somebody hires him: the column is what
+        [Warrior.idle_surcharge] prices the wait with, and a veteran back on a roster still carrying
+        the date he was last parked would be charged for a wait that ended.
+        """
+        obj.pub_arrival_month = month
+        obj.save(update_fields=("pub_arrival_month",))
+
+        return obj
+
     def release_from_roster(self, *, obj, faction) -> int:
         """
         Send a warrior away: off the roster and out of the gear the faction paid for.

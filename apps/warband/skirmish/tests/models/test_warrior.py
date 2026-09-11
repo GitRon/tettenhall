@@ -99,10 +99,61 @@ def test_is_fleeing_for_a_warrior_out_of_morale():
     assert warrior.is_fleeing is True
 
 
+def test_months_in_pub_counts_from_the_month_he_arrived():
+    warrior = WarriorFactory.build(faction__savegame__current_month=7, pub_arrival_month=2)
+
+    assert warrior.months_in_pub == 5
+
+
+def test_months_in_pub_of_a_man_who_is_standing_in_none():
+    """
+    Everybody on a roster, which is most of the game's warriors and every row written before the
+    column existed.
+    """
+    warrior = WarriorFactory.build(pub_arrival_month=None)
+
+    assert warrior.months_in_pub == 0
+
+
+def test_idle_surcharge_is_nothing_up_to_and_including_the_threshold():
+    """
+    The third month on the shelf is the last free one: severance and the hiring price together come
+    to three months of his wage, so that is where the wages the player dodged catch up with the
+    round trip and not before.
+    """
+    warrior = WarriorFactory.build(monthly_salary=90, faction__savegame__current_month=4, pub_arrival_month=1)
+
+    assert warrior.idle_surcharge == 0
+
+
+def test_idle_surcharge_charges_a_wage_for_every_month_past_the_threshold():
+    warrior = WarriorFactory.build(monthly_salary=90, faction__savegame__current_month=7, pub_arrival_month=1)
+
+    assert warrior.idle_surcharge == 270
+
+
 def test_hiring_price_inverts_the_share_a_wage_is_priced_with():
     warrior = WarriorFactory.build(monthly_salary=90)
 
     assert warrior.hiring_price == 180
+
+
+def test_hiring_price_of_a_man_left_waiting_carries_the_back_wages():
+    warrior = WarriorFactory.build(monthly_salary=90, faction__savegame__current_month=7, pub_arrival_month=1)
+
+    assert warrior.hiring_price == 450
+
+
+def test_parking_a_man_for_a_year_costs_what_keeping_him_would_have():
+    """
+    The arithmetic the surcharge exists for, stated as the player meets it: sending a man away and
+    taking him back a year later comes to the twelve months of wages he did not draw meanwhile. The
+    pub stops being a warehouse a war band can be parked in whenever the wage bill gets tight,
+    without the round trip ever costing more than the roster it dodged.
+    """
+    veteran = WarriorFactory.build(monthly_salary=90, faction__savegame__current_month=13, pub_arrival_month=1)
+
+    assert veteran.severance_pay + veteran.hiring_price == 90 * 12
 
 
 def test_hiring_price_ignores_the_price_he_was_rolled_at():

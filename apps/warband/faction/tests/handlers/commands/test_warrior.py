@@ -39,14 +39,17 @@ from apps.warband.town.models import Town
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
-def _player_faction(*, hall: int = Town.HallChoices.HALL_NONE) -> Faction:
+def _player_faction(*, hall: int = Town.HallChoices.HALL_NONE, current_month: int = 1) -> Faction:
     """
     A faction its own savegame points to as the player's.
 
     FactionFactory leaves "savegame.player_faction" unset, and only the player's town has a pub to
     restock, so a plain factory faction is skipped by the handler.
+
+    The month is the savegame's own, which is what a man standing in the pub measures his wait
+    against - see [Warrior.months_in_pub].
     """
-    faction = FactionFactory(town__hall=hall)
+    faction = FactionFactory(town__hall=hall, savegame__current_month=current_month)
     faction.savegame.player_faction = faction
     faction.savegame.save()
 
@@ -162,6 +165,28 @@ def test_handle_add_warrior_to_pub_marks_a_dismissed_warrior_as_no_stock():
 
 
 @pytest.mark.django_db
+def test_handle_add_warrior_to_pub_stamps_the_month_he_got_there():
+    """
+    All three routes onto the shelf arrive through this command, so this is the one place the wait
+    [Warrior.idle_surcharge] prices can begin - and a man standing here a second time starts it
+    again rather than keeping the date of the first.
+    """
+    faction = _player_faction()
+    returning_veteran = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, pub_arrival_month=1
+    )
+
+    handle_add_warrior_to_pub(
+        context=AddWarriorToPub(
+            savegame=faction.savegame, faction=faction, warrior=returning_veteran, is_pub_stock=False, month=9
+        )
+    )
+
+    returning_veteran.refresh_from_db()
+    assert returning_veteran.pub_arrival_month == 9
+
+
+@pytest.mark.django_db
 def test_handle_consider_fyrd_draft_approves_a_rival_that_can_afford_it():
     rival_faction = FactionFactory(fyrd_reserve=2)
     WarriorFactory(faction=rival_faction, monthly_salary=150)
@@ -249,6 +274,44 @@ def test_handle_recruit_pub_mercenary_takes_him_onto_the_roster():
     assert result == WarriorRecruited(warrior=mercenary, faction=faction, recruitment_price=180, month=3)
     mercenary.refresh_from_db()
     assert mercenary.faction == faction
+
+
+@pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_bills_the_wait_he_was_left_to():
+    """
+    The price has to be read before the man is moved, because taking him off the shelf is what ends
+    the wait it is partly made of - see [Warrior.idle_surcharge]. Read afterwards it would bill a
+    veteran parked half a year as though he had never left, which is the loophole this closes.
+    """
+    faction = _player_faction(current_month=7)
+    veteran = WarriorFactory(
+        faction=None,
+        savegame=faction.savegame,
+        culture=faction.culture,
+        monthly_salary=90,
+        pub_arrival_month=1,
+    )
+    faction.available_mercenaries.add(veteran)
+
+    result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=veteran, faction=faction, month=7))
+
+    assert result == WarriorRecruited(warrior=veteran, faction=faction, recruitment_price=450, month=7)
+
+
+@pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_ends_his_wait():
+    """
+    A veteran back on a roster still carrying the month he was last parked would be charged for a
+    wait that ended the day the player paid for it.
+    """
+    faction = _player_faction(current_month=7)
+    veteran = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, pub_arrival_month=1)
+    faction.available_mercenaries.add(veteran)
+
+    handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=veteran, faction=faction, month=7))
+
+    veteran.refresh_from_db()
+    assert veteran.pub_arrival_month is None
 
 
 @pytest.mark.django_db
