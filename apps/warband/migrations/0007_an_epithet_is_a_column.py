@@ -5,6 +5,10 @@ from django.db import migrations, models
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
 from apps.warband.warrior.services.nickname import draw_nickname_state
 
+# How many warriors are held in memory at a time. SQLite caps a statement's parameters, and a
+# bulk_update spends one per column per row, so the batch is well under what a single UPDATE may carry.
+BACKFILL_BATCH_SIZE = 500
+
 
 def freeze_every_warriors_epithet(apps, schema_editor):
     """
@@ -16,10 +20,14 @@ def freeze_every_warriors_epithet(apps, schema_editor):
 
     The rule comes from the service rather than a copy of it, so a savegame migrated now and a warrior
     generated now are decided the same way.
+
+    Read and written in batches, the way the manager writes a whole roster: every warrior of every
+    savegame is in scope here, which is more rows than any one thing in the game ever touches at once.
     """
     Warrior = apps.get_model("warband", "Warrior")
+    batch = []
 
-    for warrior in Warrior.objects.iterator():
+    for warrior in Warrior.objects.iterator(chunk_size=BACKFILL_BATCH_SIZE):
         warrior.nickname_state = draw_nickname_state(
             strength=AttributeDraw(
                 value=warrior.strength,
@@ -40,7 +48,13 @@ def freeze_every_warriors_epithet(apps, schema_editor):
                 value=warrior.max_morale, baseline=warrior.morale_baseline, spread=warrior.morale_spread
             ),
         )
-        warrior.save(update_fields=("nickname_state",))
+        batch.append(warrior)
+
+        if len(batch) == BACKFILL_BATCH_SIZE:
+            Warrior.objects.bulk_update(batch, ("nickname_state",))
+            batch = []
+
+    Warrior.objects.bulk_update(batch, ("nickname_state",))
 
 
 class Migration(migrations.Migration):
