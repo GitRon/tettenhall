@@ -14,7 +14,7 @@
             {# worth of experience, and he is the only outcome of a fight the player cannot undo. #}
             {% if report.own_casualties or report.own_routed %}
                 <h4 class="mb-2.5">What it cost your men</h4>
-                <ul class="list-none divide-y divide-[#e5e5e5] p-0 [&>li]:py-2.5">
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for casualty in report.own_casualties %}
                         <li>
                             <i class="fa-solid fa-skull-crossbones text-[#f0506e]"></i>
@@ -38,7 +38,7 @@
 
             {% if report.prisoners_taken or report.enemy_killed_count or report.enemy_downed_count %}
                 <h4 class="mb-2.5">What you did to theirs</h4>
-                <ul class="list-none divide-y divide-[#e5e5e5] p-0 [&>li]:py-2.5">
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for casualty in report.prisoners_taken %}
                         <li>
                             <i class="fa-solid fa-lock text-[#999]"></i>
@@ -61,7 +61,7 @@
             {% endif %}
 
             {% if report.silver_won %}
-                <ul class="list-none divide-y divide-[#e5e5e5] p-0 [&>li]:py-2.5">
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% if report.quest_reward %}
                         <li>
                             <i class="fa-solid fa-sack-dollar text-[#999]"></i>
@@ -80,7 +80,7 @@
 
             {% if report.items_won %}
                 <h4 class="mb-2.5">Gear taken</h4>
-                <ul class="list-none divide-y divide-[#e5e5e5] p-0 [&>li]:py-2.5">
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for spoil in report.items_won %}
                         <li>
                             {% include 'common/components/svg_icon.html' with icon_name=spoil.item.type.svg_image_name %}
@@ -92,7 +92,7 @@
                             {% if spoil.is_upgrade %}
                                 {# The one sentence that makes the risk worth taking again. Without it #}
                                 {# the sword sits in Unused Items until somebody sells it. #}
-                                <span class="inline-block rounded-sm bg-[#32d296] px-2.5 align-middle text-sm uppercase leading-normal whitespace-nowrap text-white">Better than anything your men carry</span>
+                                <span class="inline-block rounded-xs bg-[#32d296] px-2.5 align-middle text-sm uppercase leading-normal whitespace-nowrap text-white">Better than anything your men carry</span>
                             {% endif %}
                         </li>
                     {% endfor %}
@@ -101,7 +101,7 @@
 
             {% if report.growth_list %}
                 <h4 class="mb-2.5">Your men</h4>
-                <ul class="list-none divide-y divide-[#e5e5e5] p-0 [&>li]:py-2.5">
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for growth in report.growth_list %}
                         <li>
                             <i class="fa-solid fa-arrow-trend-up text-[#999]"></i>
@@ -123,7 +123,7 @@
 
             {% if report.items_lost or report.silver_lost %}
                 <h4 class="mb-2.5">Stripped from your fallen</h4>
-                <ul class="list-none divide-y divide-[#e5e5e5] p-0 [&>li]:py-2.5">
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
                     {% for spoil in report.items_lost %}
                         <li class="text-[#999]">
                             {{ spoil.item.display_name }}

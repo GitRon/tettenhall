@@ -2,7 +2,7 @@
     {% include 'common/components/box_header.html' with title=faction.name object_list=warrior_list %}
     {# The swap target keeps its own classes: "innerHTML" replaces what is inside it, so the grid has #}
     {# to be declared on this element or the cards lose their columns on the first update. #}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2"
          hx-get="{% url 'warband:faction-warrior-list-update-htmx' skirmish.id faction.id %}"
          hx-trigger="updateFactionWarriorList from:body"
          hx-target="this"

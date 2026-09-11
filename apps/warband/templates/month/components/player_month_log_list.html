@@ -23,11 +23,13 @@
     {% endfor %}
 
     {% if player_month_logs.consequence %}
-        {# "divide-y" draws the rule between rows rather than above the first, which is what the list #}
-        {# divider did; the padding goes with it so the rule is not tight against the text. #}
-        <ul class="list-none divide-y divide-[#e5e5e5] p-0">
+        {# The rule goes on every row after the first, so it separates two consequences rather than #}
+        {# sitting over the top of the set. It is carried by the lower row, between that row's margin #}
+        {# and its padding, which is what centres it in the gap instead of tucking it under the text #}
+        {# above. #}
+        <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
             {% for message in player_month_logs.consequence %}
-                <li class="py-2.5">
+                <li>
                     <i class="fa-solid fa-scroll text-[#999]"></i> {{ message.title }}
                 </li>
             {% endfor %}

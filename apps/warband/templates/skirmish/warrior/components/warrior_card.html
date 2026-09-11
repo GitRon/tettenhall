@@ -1,10 +1,10 @@
 {% load crispy_forms_tags l10n utils %}
 <div class="box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]"
      data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}">
-    <div class="border-b border-[#e5e5e5] p-5">
+    <div class="border-b border-[#e5e5e5] px-5 py-[13px]">
         <h3 class="text-2xl leading-snug text-[#333]">{{ warrior.display_name }}</h3>
-        {# The faction and the level read as one line with a divider between them, which is what the #}
-        {# subnav drew. A phone keeps them on one line too - they are four words together. #}
+        {# The faction and the level read as one line with a rule between them. They stay on one line #}
+        {# at every width - together they are four words, and a phone has room for them. #}
         <ul class="mt-0 flex list-none flex-wrap items-center gap-x-5 p-0 text-sm text-[#999]">
             <li>{{ warrior.faction }}</li>
             {# The level goes on the card in the fight because this is where a level-up is actually #}
@@ -60,7 +60,7 @@
             {{ warrior.get_armor_or_fallback }}
         </div>
     </div>
-    <div class="border-t border-[#e5e5e5] p-5">
+    <div class="border-t border-[#e5e5e5] px-5 py-[13px]">
         <div>
         {# Two conditions, and the second is about the fight rather than the man: a warrior who is #}
         {# still on his feet when it ends was being offered next round's attack in a skirmish that #}
