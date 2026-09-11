@@ -21,6 +21,6 @@ def test_handle_pay_building_costs_for_town_buildings_charges_the_faction():
     assert result == CreateTransaction(
         faction=town.faction,
         amount=-2000,
-        reason="Building 'hall' level 2 constructed.",
+        reason="Building 'hall' level 2 constructed",
         month=4,
     )

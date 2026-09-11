@@ -8,6 +8,9 @@
             <table class="uk-table">
                 <thead>
                 <tr>
+                    {# The ledger is the whole savegame, newest first, and the month log is wiped every #}
+                    {# advance - so this column is the only place the player can date what he spent #}
+                    <th>Month</th>
                     <th>Reason</th>
                     <th>Amount</th>
                 </tr>
@@ -15,6 +18,7 @@
                 <tbody>
                 {% for transaction in object_list %}
                     <tr>
+                        <td>{{ transaction.month }}</td>
                         <td>{{ transaction.reason }}</td>
                         <td>{{ transaction.amount }}</td>
                     </tr>
