@@ -24,10 +24,13 @@ The test suite loads all three automatically, see [test data](../patterns/testin
 
 ## Frontend assets
 
-The frontend dependencies come from npm and are managed with yarn. `node_modules/` is served directly
-as a static root, so **without this step the app renders with no stylesheets and no htmx** — which
-looks like a broken page but is in fact a broken install, since every control that posts a command goes
-through htmx.
+The frontend dependencies come from the npm registry and are managed with **yarn**, whose `yarn.lock`
+is the lock file CI installs from. Use `yarn add` rather than `npm install`: npm writes a
+`package-lock.json` of its own, which nothing here reads and which goes stale without anybody noticing.
+
+`node_modules/` is served directly as a static root, so **without this step the app renders with no
+stylesheets and no htmx** — which looks like a broken page but is in fact a broken install, since every
+control that posts a command goes through htmx.
 
 ```bash
 yarn install
