@@ -165,12 +165,12 @@
 
 <div class="uk-hidden" id="hidden-box"></div>
 
-{# Django's messages travel as document nodes, not as JavaScript string literals. A "template" #}
-{# element is parsed but not rendered, so autoescaping handles the value on the way in and #}
-{# "textContent" hands it back exactly once - and a name holding a quote can no longer end the #}
-{# script it was written into. The names that reach here are faction, town, warrior and quest names #}
+{# Django's messages travel as document nodes. A "template" element is parsed but not rendered, so #}
+{# autoescaping handles the value on the way in and the "textContent" in #}
+{# "static/js/tettenhall.js" hands it back exactly once: a quote stays a quote and an angle bracket #}
+{# stays an angle bracket. The names that reach here are faction, town, warrior and quest names #}
 {# ("faction/views.py:535" interpolates a town), so this is the position that decides whether a #}
-{# name is read as words or as markup. #}
+{# name is read as words or as markup. "apps/warband/tests/test_base_template.py" holds it. #}
 {% for message in messages %}
     <template data-level="{{ message.level_tag }}" data-toast>{{ message }}</template>
 {% endfor %}

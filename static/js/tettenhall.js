@@ -89,6 +89,16 @@
     const toggle = document.querySelector('[data-nav-toggle]');
     const panel = document.getElementById('nav-panel');
 
+    const panelIsOpen = () => panel && !panel.classList.contains('hidden');
+
+    const closePanel = () => {
+        if (!panelIsOpen()) {
+            return;
+        }
+        panel.classList.add('hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+    };
+
     if (toggle && panel) {
         toggle.addEventListener('click', () => {
             const open = panel.classList.toggle('hidden') === false;
@@ -96,25 +106,30 @@
         });
     }
 
-    const closeMenus = () => {
-        document.querySelectorAll('details[data-menu][open]').forEach((element) => {
-            element.open = false;
-        });
-    };
+    const openMenus = () => document.querySelectorAll('details[data-menu][open]');
 
     // The two things "details" and a plain button do not give: Escape closes, and so does a click
-    // somewhere else on the page.
+    // somewhere else on the page. Both apply to the account menu and to the navbar panel alike -
+    // whichever of them is open is the thing covering the page.
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            closeMenus();
+            openMenus().forEach((element) => {
+                element.open = false;
+            });
+            closePanel();
         }
     });
 
     document.addEventListener('click', (event) => {
-        document.querySelectorAll('details[data-menu][open]').forEach((element) => {
+        openMenus().forEach((element) => {
             if (!element.contains(event.target)) {
                 element.open = false;
             }
         });
+        // The toggle is outside the panel, so without excluding it the click that opens the panel
+        // would travel up to here and close it again.
+        if (panelIsOpen() && !panel.contains(event.target) && !toggle.contains(event.target)) {
+            closePanel();
+        }
     });
 })();
