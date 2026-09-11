@@ -10,6 +10,11 @@ __pycache__/
 
 yarn-error.log
 
+# yarn is the package manager here and "yarn.lock" is the lock file. npm writes its own on any "npm
+# install" - the smoke server falls back to npm when yarn is absent - and a second lock file that
+# nobody reads goes stale silently.
+package-lock.json
+
 # The compiled Tailwind stylesheet. "yarn build:css" writes it from "assets/css/tailwind.css"; see
 # docs/contributing/setup.md. The directory rather than the file, so a source map or a second sheet
 # does not have to be remembered here later.
