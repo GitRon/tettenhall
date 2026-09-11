@@ -156,8 +156,9 @@ STATICFILES_DIRS = (
 
 # Crispy forms
 # django-crispy-forms ships no template pack of its own; the pack is a separate distribution.
-# The site's own styling is UIkit, applied through the "uk-*" classes the FormHelper layouts set
-# on the fields, so the pack only supplies the surrounding markup.
+# The pack supplies the surrounding markup and nothing that is seen: no Bootstrap stylesheet is
+# loaded, so its own classes are inert. What styles a field is the Tailwind utilities the FormHelper
+# layouts set on it, from "apps/common/form_styles.py".
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 

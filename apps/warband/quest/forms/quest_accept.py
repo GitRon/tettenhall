@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout, Submit
 from django import forms
 
+from apps.common import form_styles
 from apps.warband.faction.models import Faction
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.models.quest_contract import QuestContract
@@ -18,12 +19,12 @@ class QuestAcceptForm(forms.ModelForm):
         self.helper.form_method = "post"
         self.helper.layout = Layout(
             Div(Field("faction"), Field("quest")),
-            Div(Field("assigned_warriors", css_class="uk-select")),
+            Div(Field("assigned_warriors", css_class=form_styles.SELECT_MULTIPLE)),
             Div(
                 Submit(
                     "submit",
                     "Accept quest",
-                    css_class="uk-button uk-button-primary uk-button-small",
+                    css_class=form_styles.BUTTON_PRIMARY_SMALL,
                 )
             ),
         )

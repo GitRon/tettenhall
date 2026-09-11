@@ -5,6 +5,8 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
+from apps.common import form_styles
+
 
 class LoginForm(forms.Form):
     user_cache: User = None
@@ -20,11 +22,11 @@ class LoginForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 "",
-                Div(Field("email", css_class="uk-input"), css_class="uk-margin"),
-                Div(Field("password", css_class="uk-input"), css_class="uk-margin"),
-                css_class="uk-fieldset",
+                Div(Field("email", css_class=form_styles.INPUT), css_class=form_styles.FIELD_SPACING),
+                Div(Field("password", css_class=form_styles.INPUT), css_class=form_styles.FIELD_SPACING),
+                css_class=form_styles.FIELDSET,
             ),
-            Submit("submit", "Sign in", css_class="uk-button uk-button-primary"),
+            Submit("submit", "Sign in", css_class=form_styles.BUTTON_PRIMARY),
         )
 
         super().__init__(*args, **kwargs)
