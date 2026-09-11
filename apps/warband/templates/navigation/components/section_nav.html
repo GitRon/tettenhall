@@ -1,0 +1,30 @@
+{# The top level of the game: four sections, always all four, always in the same order. #}
+{#  #}
+{# One element at both widths rather than a row up here and a tab bar down there, because two copies #}
+{# of the same four links drift apart. Below "md:" it is taken out of flow and pinned to the bottom #}
+{# of the screen, which is why its position in the document does not have to be the bottom of the #}
+{# page; from "md:" up it is a static row under the bar. "base.html" pays for the pinned version with #}
+{# bottom padding on the content. #}
+{#  #}
+{# The entries do not disappear when there is nothing behind them this month. The menu is the map, #}
+{# and what is open to the player right now is the Month page's job. #}
+{% if nav_sections %}
+    <nav aria-label="Sections"
+         class="fixed inset-x-0 bottom-0 z-30 border-t border-[#e5e5e5] bg-[#f8f8f8] md:static md:border-b md:border-t-0">
+        <ul class="m-0 flex list-none justify-around p-0 md:justify-start md:gap-x-8 md:px-4 lg:px-8">
+            {% for section in nav_sections %}
+                <li class="flex-1 md:flex-none">
+                    {# "aria-current" is the marker a screen reader reads; the colour and the rule under #}
+                    {# the entry are the same statement for everybody else. Before this, the only #}
+                    {# highlighted thing in the bar was "Finish month" - an action, not a location. #}
+                    <a class="flex flex-col items-center gap-y-1 py-2 text-xs uppercase no-underline md:flex-row md:gap-x-2 md:gap-y-0 md:border-b-2 md:py-3 md:text-sm {% if section.key == current_nav_section %}border-b-2 border-[#1e87f0] text-[#1e87f0] hover:text-[#1e87f0]{% else %}border-b-2 border-transparent text-[#666] hover:text-[#333]{% endif %}"
+                       href="{{ section.url }}"
+                       {% if section.key == current_nav_section %}aria-current="page"{% endif %}>
+                        <i aria-hidden="true" class="fa-solid {{ section.icon }}"></i>
+                        {{ section.label }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+{% endif %}

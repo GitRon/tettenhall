@@ -89,6 +89,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 # Custom
                 "apps.warband.finance.context_processors.get_current_balance",
+                "apps.warband.navigation.context_processors.navigation",
                 "apps.warband.savegame.context_processors.current_savegame.current_savegame",
                 "apps.warband.skirmish.context_processors.get_open_skirmishes",
                 "apps.warband.warrior.context_processors.get_current_amount_warriors",

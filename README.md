@@ -28,6 +28,8 @@ inferring the conventions from nearby code.
   balance number belongs
 - [Month incidents](docs/patterns/month-incidents.md) — the pool the world draws from each month, its
   weights, its levers and its register
+- [Navigation](docs/patterns/navigation.md) — the four sections, what each owns, and how a page says
+  where the player is
 - [Responsive layout](docs/patterns/responsive-layout.md) — the phone is the default, `md:` adds the
   desk, and what to do with a screen that has no portrait form
 
