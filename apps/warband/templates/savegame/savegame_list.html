@@ -4,19 +4,19 @@
     <h1>Savegames</h1>
 
     {% if current_savegame %}
-        <div uk-grid>
-            <div class="uk-width-2-3">
-                <div class="uk-alert-primary" uk-alert>
+        <div>
+            <div class="md:w-2/3">
+                <div class="mb-5 bg-[#d8eafc] py-[15px] pl-[15px] pr-[29px] text-[#1e87f0]">
                     Current savegame: <strong>{{ current_savegame.name }}</strong>
                 </div>
             </div>
         </div>
     {% endif %}
 
-    <div uk-grid>
-        <div class="uk-width-2-3">
+    <div>
+        <div class="md:w-2/3">
             <div>
-                <a class="uk-button uk-button-primary"
+                <a class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white"
                    href="{% url 'warband:savegame-create-view' %}">
                     Create new savegame
                 </a>
@@ -24,9 +24,12 @@
         </div>
     </div>
 
-    <div uk-grid>
-        <div class="uk-width-2-3">
-            <table class="uk-table">
+    <div>
+        <div class="md:w-2/3">
+            {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+            {# decides what a table should actually become at that width. #}
+            <div class="overflow-x-auto">
+            <table>
                 <thead>
                 <tr>
                     <th>Name</th>
@@ -55,18 +58,19 @@
                         <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
                         <td>
                             <button hx-post="{% url "warband:savegame-load-view" savegame.id %}"
-                                    class="uk-button uk-button-primary uk-button-small">
+                                    class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white">
                                 Load
                             </button>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="7" class="uk-text-meta">You have no savegames yet.</td>
+                        <td colspan="7" class="text-sm leading-snug text-[#999]">You have no savegames yet.</td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 {% endblock content %}

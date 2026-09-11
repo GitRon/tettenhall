@@ -3,11 +3,14 @@
 {% block content %}
     <h1>{% if is_player_faction %}My faction{% else %}Rival faction{% endif %} "{{ object }}"</h1>
 
-    <div class="uk-child-width-expand@s uk-text-center uk-grid-medium" uk-grid>
+    <div class="grid grid-cols-1 gap-7 text-center md:grid-cols-4">
         <div>
-            <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+            <div class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)] p-[30px]">
                 <h3>Details</h3>
-                <table class="uk-table">
+                {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+                {# decides what a table should actually become at that width. #}
+                <div class="overflow-x-auto">
+                <table>
                     <tbody>
                     <tr>
                         <td>Name</td>
@@ -30,29 +33,30 @@
                     </tr>
                     </tbody>
                 </table>
+                </div>
                 {% if can_be_attacked %}
                     <a href="{% url 'warband:faction-attack-view' object.id %}"
-                       class="uk-button uk-button-danger uk-button-small">Attack this faction</a>
+                       class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#f0506e] text-white hover:bg-[#ee395b] hover:text-white">Attack this faction</a>
                 {% elif can_be_occupied %}
                     {# Nobody healthy is left to hold the town, so there is nothing to fight and nothing to compose #}
                     <form method="post" action="{% url 'warband:faction-occupy-view' object.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="uk-button uk-button-danger uk-button-small">
+                        <button type="submit" class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#f0506e] text-white hover:bg-[#ee395b] hover:text-white">
                             Ride into {{ object.town_name }}
                         </button>
                     </form>
-                    <p class="uk-text-meta">Nobody is left to hold this town. Take its leader and its silver.</p>
+                    <p class="text-sm leading-snug text-[#999]">Nobody is left to hold this town. Take its leader and its silver.</p>
                 {% elif savegame_is_over %}
                     {# Said ahead of the month, and in the rivals list's words: the game being decided is #}
                     {# why nothing of his marches, and which month it stopped in is beside the point #}
-                    <p class="uk-text-meta">This game is over. Start a new savegame to march again.</p>
+                    <p class="text-sm leading-snug text-[#999]">This game is over. Start a new savegame to march again.</p>
                 {% elif has_marched_this_month %}
                     {# Otherwise the button is simply gone and nothing says why #}
-                    <p class="uk-text-meta">Your warriors have already fought this month.</p>
+                    <p class="text-sm leading-snug text-[#999]">Your warriors have already fought this month.</p>
                 {% elif leader_cannot_march %}
-                    <p class="uk-text-meta">Your leader is in no condition to march.</p>
+                    <p class="text-sm leading-snug text-[#999]">Your leader is in no condition to march.</p>
                 {% elif their_war_band_is_committed %}
-                    <p class="uk-text-meta">Their warriors are already committed to a fight this month.</p>
+                    <p class="text-sm leading-snug text-[#999]">Their warriors are already committed to a fight this month.</p>
                 {% endif %}
             </div>
             {# Only your own fyrd can be drafted from, so on a rival's page the card is a button that could only fail #}
@@ -63,10 +67,10 @@
         <div>
             {% include "faction/warrior/components/warrior_list.html" with faction=object warrior_list=warrior_list %}
         </div>
-        <div class="uk-margin-bottom">
+        <div class="mb-5">
             {% include "faction/item/components/item_list.html" with faction=object %}
         </div>
-        <div class="uk-margin-bottom">
+        <div class="mb-5">
             {% include "faction/warrior/components/captured_warrior_list.html" with faction=object %}
         </div>
     </div>

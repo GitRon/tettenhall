@@ -3,7 +3,10 @@
 {% block content %}
     <h1>Warrior {{ object.display_name }} of {{ object.faction }}</h1>
 
-    <table class="uk-table">
+    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+    {# decides what a table should actually become at that width. #}
+    <div class="overflow-x-auto">
+    <table>
         <tbody>
         <tr>
             <td>Name</td>
@@ -71,7 +74,7 @@
             noise, and the view answers None for a rival's warrior as well as for a paid one.
         {% endcomment %}
         {% if unpaid_wages_note %}
-            <tr class="uk-text-danger">
+            <tr class="text-[#f0506e]">
                 <td>Wages</td>
                 <td>{{ unpaid_wages_note }}</td>
             </tr>
@@ -98,4 +101,5 @@
         {% endif %}
         </tbody>
     </table>
+    </div>
 {% endblock content %}

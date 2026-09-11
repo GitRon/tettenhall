@@ -3,43 +3,48 @@
 {% block content %}
     <h1>Town upgrade</h1>
 
-    <div class="uk-child-width-1-2@m uk-grid-medium" uk-grid>
+    <div class="grid grid-cols-1 gap-7 md:grid-cols-2">
         {% for building in building_list %}
             <div>
-                <div class="uk-card uk-card-default uk-margin-bottom">
-                    <div class="uk-card-header">
-                        <h3 class="uk-card-title uk-margin-remove-bottom">{{ building.label }}</h3>
-                        <p class="uk-text-meta uk-margin-remove-top">
+                <div class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+                    <div class="border-b border-[#e5e5e5] px-[30px] py-[15px]">
+                        <h3 class="mb-0 text-2xl leading-snug text-[#333]">{{ building.label }}</h3>
+                        <p class="mt-0 text-sm leading-snug text-[#999]">
                             {{ building.level_display }} (level {{ building.level }} of {{ building.max_level }})
                         </p>
                     </div>
-                    <div class="uk-card-body">
-                        <table class="uk-table uk-table-small uk-table-divider uk-margin-remove">
+                    <div class="p-[30px]">
+                        {# A small divided table - tighter cells than the page tables, and a rule #}
+                        {# between rows - scrolling inside its own box rather than dragging the page #}
+                        {# sideways on a phone. #64 decides what a table should become at that width. #}
+                        <div class="overflow-x-auto">
+                        <table class="m-0 [&_td]:border-t [&_td]:border-[#e5e5e5] [&_td]:px-3 [&_td]:py-2.5 [&_tr:first-child_td]:border-t-0">
                             <tbody>
                                 {% for effect in building.effect_list %}
                                     <tr>
-                                        <td class="uk-text-meta">{{ effect.label }}</td>
-                                        <td class="uk-text-nowrap">{{ effect.current }}</td>
+                                        <td class="text-sm leading-snug text-[#999]">{{ effect.label }}</td>
+                                        <td class="whitespace-nowrap">{{ effect.current }}</td>
                                         {% if building.level < building.max_level %}
-                                            <td class="uk-text-nowrap uk-text-emphasis">&rarr; {{ effect.next }}</td>
+                                            <td class="whitespace-nowrap text-[#333]">&rarr; {{ effect.next }}</td>
                                         {% endif %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                        </div>
                     </div>
-                    <div class="uk-card-footer">
+                    <div class="border-t border-[#e5e5e5] px-[30px] py-[15px]">
                         {% if building.level >= building.max_level %}
-                            <button class="uk-button uk-button-primary" disabled>Max level reached</button>
+                            <button class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white" disabled>Max level reached</button>
                         {% elif has_already_built %}
-                            <button class="uk-button uk-button-primary" disabled>Already constructing a building this
+                            <button class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white" disabled>Already constructing a building this
                                 month</button>
                         {% elif not building.can_afford %}
-                            <button class="uk-button uk-button-primary" disabled>{{ building.next_level_display }} costs
+                            <button class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white" disabled>{{ building.next_level_display }} costs
                                 {{ building.costs }} silver</button>
                         {% else %}
                             <button hx-post="{% url "warband:upgrade-building-view" building.building_type %}"
-                                    class="uk-button uk-button-primary">Build {{ building.next_level_display }} for
+                                    class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white">Build {{ building.next_level_display }} for
                                 {{ building.costs }} silver
                             </button>
                         {% endif %}

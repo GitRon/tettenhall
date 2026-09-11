@@ -4,8 +4,10 @@
 {% block content %}
     <h1>Attack "{{ object }}"</h1>
 
-    <div class="uk-width-1-2">
-        <table class="uk-table">
+    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+    {# decides what a table should actually become at that width. #}
+    <div class="overflow-x-auto md:w-1/2">
+        <table>
             <tbody>
             <tr>
                 <td>Target faction</td>

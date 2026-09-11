@@ -1,13 +1,13 @@
 {% load l10n obscurify static %}
-<div id="pub-mercenary-card-{{ warrior.id|unlocalize }}" class="uk-card uk-card-default uk-margin-bottom">
-    <div class="uk-card-header">
-        <div class="uk-grid-small uk-flex-middle" uk-grid>
-            <div class="uk-width-auto">
+<div id="pub-mercenary-card-{{ warrior.id|unlocalize }}" class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+    <div class="border-b border-[#e5e5e5] px-[30px] py-[15px]">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div class="w-auto">
                 {% include 'common/components/svg_icon.html' with icon_name='swordman' size='xl' %}
             </div>
-            <div class="uk-width-expand">
-                <h3 class="uk-card-title uk-margin-remove-bottom">{{ warrior.display_name }}</h3>
-                <p class="uk-text-meta uk-margin-remove-top">
+            <div class="flex-1">
+                <h3 class="mb-0 text-2xl leading-snug text-[#333]">{{ warrior.display_name }}</h3>
+                <p class="mt-0 text-sm leading-snug text-[#999]">
                     <i class="fa-solid fa-award"></i> <i>Level {{ warrior.level }}</i>&nbsp;
                     <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
                     <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>&nbsp;
@@ -25,14 +25,17 @@
             </div>
         </div>
     </div>
-    <div class="uk-card-body uk-text-left">
+    <div class="p-[30px] text-left">
         {% comment %}
             One table, the same as the roster card. Two side by side only stack below 640px, and this
             card is narrow because the town square puts it in a three-column grid - so the breakpoint
             never fires for it, the left table's value ran into the right table's label, and the
             weapon name spilled out of the card into the shop column beside it.
         {% endcomment %}
-        <table class="uk-table">
+        {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+        {# decides what a table should actually become at that width. #}
+        <div class="overflow-x-auto">
+        <table>
             <tr>
                 <td>Culture</td>
                 <td>{{ warrior.culture.name }}</td>
@@ -54,8 +57,9 @@
                 <td>{% if warrior.armor %}{{ warrior.armor.display_name }}{% else %}-{% endif %}</td>
             </tr>
         </table>
+        </div>
     </div>
-    <div class="uk-card-footer">
+    <div class="border-t border-[#e5e5e5] px-[30px] py-[15px]">
         {# Swaps nothing: the pub list reloads itself on the trigger the response carries, which is #}
         {# what lets the empty state fire on the path that empties it. A refused hire swaps nothing #}
         {# either and leaves the card standing. #}
@@ -63,7 +67,7 @@
                 hx-post="{% url 'warband:pub-mercenary-recruit-view' warrior.id %}"
                 hx-target="#pub-mercenary-card-{{ warrior.id|unlocalize }}"
                 hx-swap="none"
-                class="uk-button uk-button-text">Recruit for {{ warrior.hiring_price }} silver
+                class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-[#333] hover:underline">Recruit for {{ warrior.hiring_price }} silver
         </button>
     </div>
 </div>

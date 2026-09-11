@@ -8,15 +8,11 @@
     <title>Tettenhall - The Game</title>
     <link rel="icon" href="{% static 'svg/icons/crossed_swords.svg' %}" type="image/svg+xml">
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
-    <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
-    {# After UIkit, which is what settles a tie between a utility and a UIkit class. Ties against #}
-    {# UIkit's bare element rules are settled in "assets/css/tailwind.css" instead, by not putting #}
-    {# the utilities in a cascade layer. The file is compiled by "yarn build:css" and is not in #}
-    {# version control - see docs/contributing/setup.md, and docs/patterns/responsive-layout.md for #}
-    {# what the classes are allowed to say. #}
+    {# The whole of the site's styling. Compiled by "yarn build:css" and not in version control - see #}
+    {# docs/contributing/setup.md, and docs/patterns/responsive-layout.md for what the classes are #}
+    {# allowed to say. #}
     <link rel="stylesheet" href="{% static 'dist/tailwind.css' %}">
     <link rel="stylesheet" href="{% static 'css/icons.css' %}">
-    <link rel="stylesheet" href="{% static 'css/progress-bar.css' %}">
 </head>
 {# The token travels as data rather than as a JavaScript literal, which is what lets the whole script #}
 {# below be a static file with no template rendering in it. #}
@@ -175,7 +171,6 @@
 {% endfor %}
 
 <script src="{% static 'htmx.org/dist/htmx.js' %}"></script>
-<script src="{% static 'uikit/dist/js/uikit.js' %}"></script>
 <script src="{% static 'js/tettenhall.js' %}"></script>
 </body>
 </html>

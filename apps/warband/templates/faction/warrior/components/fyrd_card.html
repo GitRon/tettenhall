@@ -1,6 +1,9 @@
-<div id="fyrd-card" class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+<div id="fyrd-card" class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)] p-[30px]">
     <h3>Fyrd</h3>
-    <table class="uk-table">
+    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+    {# decides what a table should actually become at that width. #}
+    <div class="overflow-x-auto">
+    <table>
         <tbody>
         <tr>
             <td>Reserve</td>
@@ -8,11 +11,12 @@
         </tr>
         </tbody>
     </table>
+    </div>
     {% if faction.fyrd_reserve %}
         <button hx-post="{% url 'warband:faction-draft-warrior-from-fyrd-view' faction.id %}"
                 hx-target="#fyrd-card"
                 hx-swap="outerHTML"
-                class="uk-button uk-button-primary">Draft warrior
+                class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white">Draft warrior
         </button>
     {% endif %}
 </div>

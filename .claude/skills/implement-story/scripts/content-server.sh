@@ -145,10 +145,10 @@ check_prerequisites() {
     return 1
   fi
 
-  # STATICFILES_DIRS points at node_modules: without it htmx, UIkit and the icon font all 404, every
+  # STATICFILES_DIRS points at node_modules: without it htmx and the icon font both 404, every
   # interactive element on every page goes dead, and the whole review is false negatives. Fail here
   # rather than let a reviewer file "the button does nothing" against a working feature.
-  if [ ! -d "$REPO_ROOT/node_modules/htmx.org" ] || [ ! -d "$REPO_ROOT/node_modules/uikit" ]; then
+  if [ ! -d "$REPO_ROOT/node_modules/htmx.org" ]; then
     echo "node_modules is missing or incomplete, installing it" >&2
     if command -v yarn > /dev/null 2>&1; then
       yarn install --frozen-lockfile >> "$SETUP_LOG" 2>&1
@@ -156,9 +156,9 @@ check_prerequisites() {
       npm install >> "$SETUP_LOG" 2>&1
     fi
   fi
-  if [ ! -d "$REPO_ROOT/node_modules/htmx.org" ] || [ ! -d "$REPO_ROOT/node_modules/uikit" ]; then
-    echo "still no node_modules/htmx.org and node_modules/uikit - install the frontend dependencies" >&2
-    echo "('yarn install'). Without them htmx and UIkit 404 and nothing on the page responds." >&2
+  if [ ! -d "$REPO_ROOT/node_modules/htmx.org" ]; then
+    echo "still no node_modules/htmx.org - install the frontend dependencies ('yarn install')." >&2
+    echo "Without htmx every control on every page posts nothing and the review is false negatives." >&2
     return 1
   fi
 

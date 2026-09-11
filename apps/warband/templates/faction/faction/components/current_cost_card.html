@@ -1,6 +1,9 @@
-<div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+<div class="mb-5 box-border bg-white p-[30px] text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
     <h3>Current costs</h3>
-    <table class="uk-table">
+    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+    {# decides what a table should actually become at that width. #}
+    <div class="overflow-x-auto">
+    <table>
         <tbody>
         <tr>
             <td>Salaries</td>
@@ -9,7 +12,7 @@
         <tr>
             <td>
                 Building income
-                <span class="uk-text-meta">arrives after the wages</span>
+                <span class="text-sm leading-snug text-[#999]">arrives after the wages</span>
             </td>
             <td>{{ building_income_amount }}</td>
         </tr>
@@ -32,12 +35,13 @@
             <tr>
                 <td>
                     In the purse next month
-                    <span class="uk-text-meta">wages paid, income in</span>
+                    <span class="text-sm leading-snug text-[#999]">wages paid, income in</span>
                 </td>
                 <td>{{ wage_bill_payroll.remaining_amount|add:building_income_amount }}</td>
             </tr>
         {% endif %}
         </tbody>
     </table>
+    </div>
     {% include 'finance/components/wage_bill_warning.html' %}
 </div>
