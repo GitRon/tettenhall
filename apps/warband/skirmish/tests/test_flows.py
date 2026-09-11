@@ -2,11 +2,14 @@ import pytest
 from queuebie.runner import handle_message
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.warband.finance.models.transaction import Transaction
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
+from apps.warband.skirmish.messages.commands.skirmish import WinSkirmish
 from apps.warband.skirmish.messages.commands.warrior import IncreaseExperience
 from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage
 from apps.warband.skirmish.models.battle_history import BattleHistory
@@ -100,3 +103,28 @@ def test_a_level_up_is_logged_before_the_growth_it_caused(queuebie_registry):
         "Beorn grew stronger: strength +1, dexterity +1, health +2, morale +2 — and now costs 165 silver a month.",
         "Beorn grew stronger: strength +1, dexterity +1, health +2, morale +2 — and now costs 181 silver a month.",
     ]
+
+
+@pytest.mark.django_db
+def test_the_purse_a_skirmish_carries_reaches_the_signatory_s_ledger(queuebie_registry):
+    """
+    What a fight pays is decided on the skirmish and collected in the finance topic, and only a real
+    queue run covers the distance between the two: "quest_reward_for" answers the question, the command
+    handler puts the answer on SkirmishFinished, and a finance event handler three topics away turns it
+    into a ledger line. Nothing in either half sees the other.
+
+    The loser routs rather than falling, so nobody is left on the field to strip - which keeps the
+    randomised silver a casualty drops out of the ledger and leaves the quest's purse as the only line
+    in it.
+    """
+    skirmish = SkirmishFactory()
+    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    skirmish.defending_warriors.add(
+        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
+    )
+
+    handle_message(WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3))
+
+    assert Transaction.objects.current_balance(faction_id=skirmish.attacking_faction.pk) == 250
+    assert Transaction.objects.get().reason == f"Quest {quest_contract.quest.name!r} finished! 250 silver looted"
