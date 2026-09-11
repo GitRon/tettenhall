@@ -33,6 +33,7 @@ class PlayerMonthLog(models.Model):
         KIND_MORALE_LOST_UNPAID = 14, "Morale lost over unpaid wages"
         KIND_SAVEGAME_ENDED = 15, "Savegame ended"
         KIND_RIVAL_DEFEATED = 16, "Rival defeated"
+        KIND_NICKNAME_EARNED = 17, "Nickname earned"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -63,6 +64,9 @@ class PlayerMonthLog(models.Model):
         # rather than anything he set out to do, and naming the man it cost them takes a second
         # sentence
         KindChoices.KIND_RIVAL_DEFEATED: CategoryChoices.CATEGORY_CHRONICLE,
+        # A consequence, filed with the skill upgrade it follows from rather than with the chronicle:
+        # the player put the man through the training or the fight that earned it
+        KindChoices.KIND_NICKNAME_EARNED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

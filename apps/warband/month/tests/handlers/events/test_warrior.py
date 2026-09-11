@@ -1,5 +1,6 @@
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.handlers.events.warrior import (
+    handle_warrior_earned_nickname,
     handle_warrior_health_healed,
     handle_warrior_lost_morale_over_unpaid_salary,
     handle_warrior_morale_replenished,
@@ -10,6 +11,7 @@ from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.messages.events.warrior import (
+    WarriorEarnedNickname,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMoraleReplenished,
@@ -103,6 +105,26 @@ def test_handle_warrior_was_dismissed_logs_what_letting_him_go_cost():
     assert result == CreatePlayerMonthLog(
         title="Cuthbert was sent away for 120 silver.",
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DISMISSED,
+        month=3,
+        faction=faction,
+    )
+
+
+def test_handle_warrior_earned_nickname_logs_what_he_is_called_now():
+    """
+    The epithet comes off the event rather than off the warrior: what the player is told is the name,
+    and resolving it here would be a second place the wording is decided.
+    """
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Beorn", faction=faction)
+
+    result = handle_warrior_earned_nickname(
+        context=WarriorEarnedNickname(warrior=warrior, faction=faction, nickname="the Bold", month=3)
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Beorn is known as the Bold from now on.",
+        kind=PlayerMonthLog.KindChoices.KIND_NICKNAME_EARNED,
         month=3,
         faction=faction,
     )

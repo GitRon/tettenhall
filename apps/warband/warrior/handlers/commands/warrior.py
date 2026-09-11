@@ -8,6 +8,7 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.sanctuary import Sanctuary
 from apps.warband.warrior.messages.commands.warrior import (
+    AwardEarnedNickname,
     ChangeWarriorMaxMorale,
     CreateNewLeaderWarrior,
     CreateWarrior,
@@ -21,6 +22,7 @@ from apps.warband.warrior.messages.commands.warrior import (
 from apps.warband.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
     WarriorCreated,
+    WarriorEarnedNickname,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
@@ -29,6 +31,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWasDismissed,
 )
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
+from apps.warband.warrior.services.nickname import draw_nickname_state
 
 
 @message_registry.register_command(command=PunishUnpaidWarrior)
@@ -150,6 +153,37 @@ def handle_change_warrior_max_morale(*, context: ChangeWarriorMaxMorale) -> Even
         warrior=context.warrior,
         faction=context.faction,
         changed_max_morale=context.warrior.max_morale - previous_max_morale,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=AwardEarnedNickname)
+def handle_award_earned_nickname(*, context: AwardEarnedNickname) -> Event | None:
+    """
+    Name a man the war band has just watched become exceptional, once and for good.
+
+    A ratchet, and the only thing that ever writes the column after generation. It fills an empty slot
+    and never touches a full one: a man already named keeps what he has whichever attribute he later
+    reaches furthest on, and a man who was named for the wrong reasons keeps that too. Renaming is the
+    defect this exists to stop, and a flattering rename is still a rename.
+
+    Nothing guards against naming him downward, because nothing can: this is raised where an attribute
+    went *up*, and every unflattering state is a floor or a bottom that going up only ever leaves.
+    """
+    if context.warrior.nickname_state is not None:
+        return None
+
+    nickname_state = draw_nickname_state(**context.warrior.attribute_draws)
+
+    if nickname_state is None:
+        return None
+
+    Warrior.objects.set_nickname_state(obj=context.warrior, nickname_state=nickname_state)
+
+    return WarriorEarnedNickname(
+        warrior=context.warrior,
+        faction=context.warrior.faction,
+        nickname=context.warrior.nickname,
         month=context.month,
     )
 

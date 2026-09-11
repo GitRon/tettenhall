@@ -9,68 +9,86 @@ from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.warrior.services.nickname import (
-    HEALTH_NICKNAMES,
-    MORALE_NICKNAMES,
-    STATS_FLOOR_NICKNAMES,
-    STRENGTH_NICKNAMES,
-)
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
+from apps.warband.warrior.domain.attribute_draw import AttributeDraw
+from apps.warband.warrior.services.nickname import MORALE_FAR_NICKNAMES, STRENGTH_NICKNAMES
 
 
 def test_str_leaves_the_epithet_off():
     """
     Every generated string the game persists flows through "__str__" - the battle history, the
-    monthly log, the reasons on transactions - and those rows outlive an epithet derived from
-    attributes that move.
+    monthly log, the reasons on transactions - and a man who earns his epithet in month twenty would
+    otherwise be carrying it in rows written in month three.
     """
-    warrior = WarriorFactory.build(name="Collum", strength=20)
+    warrior = WarriorFactory.build(name="Collum", nickname_state=NicknameStateChoices.STRENGTH)
 
     assert str(warrior) == "Collum"
 
 
-def test_nickname_reads_the_attributes_against_the_warriors_own_distribution():
-    warrior = WarriorFactory.build(strength=20)
+def test_attribute_draws_pairs_each_attribute_with_its_own_distribution():
+    """
+    Six baseline and spread columns feed one rule, and a pairing that reaches for the wrong two is
+    invisible from the attributes alone. Every number here is distinct, so any draw built off the
+    wrong column is a different object than the one asserted.
+
+    The arms share the stats trio down to the floor, which is a column only they pass: health and
+    morale take the default of one, their generator refusing a zero rather than flooring them.
+    """
+    warrior = WarriorFactory.build(
+        strength=11,
+        dexterity=12,
+        strength_baseline=13,
+        stats_spread=14,
+        stats_minimum=4,
+        max_health=21,
+        health_baseline=22,
+        health_spread=23,
+        max_morale=31,
+        morale_baseline=32,
+        morale_spread=33,
+    )
+
+    assert warrior.attribute_draws == {
+        "strength": AttributeDraw(value=11, baseline=13, spread=14, minimum=4),
+        "dexterity": AttributeDraw(value=12, baseline=13, spread=14, minimum=4),
+        "health": AttributeDraw(value=21, baseline=22, spread=23),
+        "morale": AttributeDraw(value=31, baseline=32, spread=33),
+    }
+
+
+def test_nickname_reads_the_stored_state():
+    warrior = WarriorFactory.build(nickname_state=NicknameStateChoices.STRENGTH)
 
     assert warrior.nickname == STRENGTH_NICKNAMES[0]
 
 
-def test_nickname_reads_health_off_its_own_baseline_and_spread():
+def test_nickname_holds_after_the_attribute_it_names_has_been_cut():
     """
-    Six baseline and spread columns feed one rule, and a pairing that reaches for the wrong two is
-    invisible from the attributes alone - so each of the three distributions gets a test that only
-    passes while its own pair is the one being read. Forty against a mean of twenty and a spread of
-    ten is two spreads out; read against any other pair on the row it is four, or nothing.
+    A man named for his nerve, whose nerve a prisoner's oath, a beating or a bad night at the ford has
+    since taken a quarter of. The war band does not forget what he did, and the column is what makes
+    that true: nothing here would survive a rule measured off the attribute.
     """
-    warrior = WarriorFactory.build(max_health=40, health_baseline=20, health_spread=10)
+    warrior = WarriorFactory.build(
+        nickname_state=NicknameStateChoices.MORALE_FAR, max_morale=1, morale_baseline=20, morale_spread=5
+    )
 
-    assert warrior.nickname == HEALTH_NICKNAMES[0]
-
-
-def test_nickname_reads_morale_off_its_own_baseline_and_spread():
-    warrior = WarriorFactory.build(max_morale=30, morale_baseline=20, morale_spread=5)
-
-    assert warrior.nickname == MORALE_NICKNAMES[0]
+    assert warrior.nickname == MORALE_FAR_NICKNAMES[0]
 
 
-def test_nickname_hands_the_stats_floor_to_both_arm_draws():
-    """
-    The floor is a column of its own and only strength and dexterity pass it - health and morale take
-    the default of one. Three is the floor here, so a man on it in both arms earns the epithet; were
-    the column not reaching the draws, three would sit above a floor of one and he would earn nothing.
-    """
-    warrior = WarriorFactory.build(strength=3, dexterity=3, stats_minimum=3)
+def test_nickname_for_an_ordinary_man():
+    warrior = WarriorFactory.build()
 
-    assert warrior.nickname == STATS_FLOOR_NICKNAMES[0]
+    assert warrior.nickname is None
 
 
 def test_display_name_carries_the_epithet():
-    warrior = WarriorFactory.build(name="Collum", strength=20)
+    warrior = WarriorFactory.build(name="Collum", nickname_state=NicknameStateChoices.STRENGTH)
 
     assert warrior.display_name == f"Collum {STRENGTH_NICKNAMES[0]}"
 
 
 def test_display_name_phrases_the_epithet_by_the_warriors_own_variant():
-    warrior = WarriorFactory.build(name="Collum", strength=20, nickname_variant=1)
+    warrior = WarriorFactory.build(name="Collum", nickname_state=NicknameStateChoices.STRENGTH, nickname_variant=1)
 
     assert warrior.display_name == f"Collum {STRENGTH_NICKNAMES[1]}"
 

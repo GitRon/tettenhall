@@ -4,6 +4,7 @@ from queuebie.messages import Command
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.warrior.messages.events.warrior import (
+    WarriorEarnedNickname,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMoraleReplenished,
@@ -31,6 +32,23 @@ def handle_warrior_health_healed(*, context: WarriorHealthHealed) -> Command:
     return CreatePlayerMonthLog(
         title=f"Warrior {context.warrior} healed {context.healed_points} HP.",
         kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_HEALED,
+        month=context.month,
+        faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=WarriorEarnedNickname)
+def handle_warrior_earned_nickname(*, context: WarriorEarnedNickname) -> Command:
+    """
+    The one line that tells the player his man has a name now.
+
+    A name nobody is told about is a name nobody uses, and the epithet was silently moving before this
+    existed - so the moment it is settled is the moment to say so. It is said once per man for the
+    whole savegame, which is what keeps it off the upkeep tally.
+    """
+    return CreatePlayerMonthLog(
+        title=f"{context.warrior} is known as {context.nickname} from now on.",
+        kind=PlayerMonthLog.KindChoices.KIND_NICKNAME_EARNED,
         month=context.month,
         faction=context.faction,
     )

@@ -1,3 +1,4 @@
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
 
 # How far past his own kind's mean a warrior has to reach before he is named for it, and how far
@@ -8,10 +9,10 @@ NICKNAME_SPREAD_THRESHOLD = 2.0
 NICKNAME_FAR_SPREAD_THRESHOLD = 2.5
 
 # And how far below it he has to fall. Further out than the flattering threshold is near, because the
-# downward end is compressed: see [get_nickname]. Measured across the three generators, 1.75 is the
-# value that keeps every unflattering state between one and six percent for every archetype - at 1.5 a
-# leader's nerve fails him a tenth of the time, and at 2.0 a mercenary's health reaches the state once
-# in two hundred.
+# downward end is compressed: see [draw_nickname_state]. Measured across the three generators, 1.75 is
+# the value that keeps every unflattering state between one and six percent for every archetype - at
+# 1.5 a leader's nerve fails him a tenth of the time, and at 2.0 a mercenary's health reaches the
+# state once in two hundred.
 NICKNAME_DESCENT_THRESHOLD = 1.75
 
 # Several wordings per state, so a war band does not read as one man repeated. They are synonyms and
@@ -29,6 +30,23 @@ MORALE_FAR_NICKNAMES = ("the Fearless", "the Wolfheart")
 STATS_FLOOR_NICKNAMES = ("the Weak", "the Feeble", "the Reed")
 HEALTH_LOW_NICKNAMES = ("the Frail", "the Sickly", "the Wisp")
 MORALE_LOW_NICKNAMES = ("the Craven", "the Timid", "the Meek")
+
+# The wording a stored state is read back through. The state is what a warrior carries, so editing a
+# list here reaches every man already made - which is the whole reason the column holds the state and
+# not the string.
+NICKNAME_WORDINGS: dict[int, tuple[str, ...]] = {
+    NicknameStateChoices.STRENGTH: STRENGTH_NICKNAMES,
+    NicknameStateChoices.STRENGTH_FAR: STRENGTH_FAR_NICKNAMES,
+    NicknameStateChoices.DEXTERITY: DEXTERITY_NICKNAMES,
+    NicknameStateChoices.DEXTERITY_FAR: DEXTERITY_FAR_NICKNAMES,
+    NicknameStateChoices.HEALTH: HEALTH_NICKNAMES,
+    NicknameStateChoices.HEALTH_FAR: HEALTH_FAR_NICKNAMES,
+    NicknameStateChoices.MORALE: MORALE_NICKNAMES,
+    NicknameStateChoices.MORALE_FAR: MORALE_FAR_NICKNAMES,
+    NicknameStateChoices.STATS_AT_FLOOR: STATS_FLOOR_NICKNAMES,
+    NicknameStateChoices.HEALTH_AT_BOTTOM: HEALTH_LOW_NICKNAMES,
+    NicknameStateChoices.MORALE_AT_BOTTOM: MORALE_LOW_NICKNAMES,
+}
 
 # The stored variant is reduced modulo whichever wording list it lands in, so the bound has to be a
 # common multiple of the list lengths for every wording to be equally likely. Two and three both
@@ -50,17 +68,20 @@ def _has_fallen_to_the_bottom(*, draw: AttributeDraw) -> bool:
     return draw.value <= max(draw.minimum, round(draw.baseline - NICKNAME_DESCENT_THRESHOLD * draw.spread))
 
 
-def get_nickname(
+def draw_nickname_state(
     *,
     strength: AttributeDraw,
     dexterity: AttributeDraw,
     health: AttributeDraw,
     morale: AttributeDraw,
-    variant: int,
-) -> str | None:
+) -> int | None:
     """
-    The epithet a warrior has earned for how his attributes came out, or None if he is an ordinary
-    man.
+    What a warrior has earned an epithet for from how his attributes stand, or None if he is an
+    ordinary man.
+
+    Drawn rather than answered: what comes back is stamped on the warrior and read off him from then
+    on, so this runs when a man is generated and when one first crosses a threshold, and never when a
+    page renders his name.
 
     Measured against the distributions he was drawn from rather than against fixed numbers, because
     the archetypes share neither their means nor their spreads: a fyrd man reaching nine strength is a
@@ -90,25 +111,39 @@ def get_nickname(
     4.4%, and the commonest a mercenary has at 6.7% against health's 1.5%.
     """
     candidates = (
-        (strength, STRENGTH_NICKNAMES, STRENGTH_FAR_NICKNAMES),
-        (dexterity, DEXTERITY_NICKNAMES, DEXTERITY_FAR_NICKNAMES),
-        (health, HEALTH_NICKNAMES, HEALTH_FAR_NICKNAMES),
-        (morale, MORALE_NICKNAMES, MORALE_FAR_NICKNAMES),
+        (strength, NicknameStateChoices.STRENGTH, NicknameStateChoices.STRENGTH_FAR),
+        (dexterity, NicknameStateChoices.DEXTERITY, NicknameStateChoices.DEXTERITY_FAR),
+        (health, NicknameStateChoices.HEALTH, NicknameStateChoices.HEALTH_FAR),
+        (morale, NicknameStateChoices.MORALE, NicknameStateChoices.MORALE_FAR),
     )
     # "max" hands back the first of equal candidates, so declaration order is the tie-break
-    furthest, nicknames, far_nicknames = max(candidates, key=lambda candidate: candidate[0].reach)
+    furthest, near_state, far_state = max(candidates, key=lambda candidate: candidate[0].reach)
 
     if furthest.reach >= NICKNAME_FAR_SPREAD_THRESHOLD:
-        chosen = far_nicknames
-    elif furthest.reach >= NICKNAME_SPREAD_THRESHOLD:
-        chosen = nicknames
-    elif strength.is_at_floor and dexterity.is_at_floor:
-        chosen = STATS_FLOOR_NICKNAMES
-    elif _has_fallen_to_the_bottom(draw=health):
-        chosen = HEALTH_LOW_NICKNAMES
-    elif _has_fallen_to_the_bottom(draw=morale):
-        chosen = MORALE_LOW_NICKNAMES
-    else:
-        return None
+        return far_state
 
-    return chosen[variant % len(chosen)]
+    if furthest.reach >= NICKNAME_SPREAD_THRESHOLD:
+        return near_state
+
+    if strength.is_at_floor and dexterity.is_at_floor:
+        return NicknameStateChoices.STATS_AT_FLOOR
+
+    if _has_fallen_to_the_bottom(draw=health):
+        return NicknameStateChoices.HEALTH_AT_BOTTOM
+
+    if _has_fallen_to_the_bottom(draw=morale):
+        return NicknameStateChoices.MORALE_AT_BOTTOM
+
+    return None
+
+
+def resolve_nickname(*, state: int, variant: int) -> str:
+    """
+    How this warrior's epithet is phrased for him.
+
+    The variant is reduced modulo the list it lands in, so one stored number picks a wording out of a
+    list of two and a list of three alike - see [NICKNAME_VARIANT_BOUND].
+    """
+    wordings = NICKNAME_WORDINGS[state]
+
+    return wordings[variant % len(wordings)]

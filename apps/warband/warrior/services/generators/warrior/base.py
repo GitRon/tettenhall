@@ -5,7 +5,8 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
 from apps.warband.skirmish.models.warrior import Warrior
-from apps.warband.warrior.services.nickname import NICKNAME_VARIANT_BOUND
+from apps.warband.warrior.domain.attribute_draw import AttributeDraw
+from apps.warband.warrior.services.nickname import NICKNAME_VARIANT_BOUND, draw_nickname_state
 from apps.warband.warrior.services.unique_name import draw_warrior_name
 
 
@@ -115,6 +116,21 @@ class BaseWarriorGenerator:
             * base_recruitment_price
         )
 
+        # What he is remembered for, settled here and never again. The draws are built from the rolls
+        # above rather than from a saved row, because the row does not exist yet - and the pairing is
+        # the one the columns below stamp on him: both arms against the stats trio, health and morale
+        # each against their own mean and spread.
+        nickname_state = draw_nickname_state(
+            strength=AttributeDraw(
+                value=strength, baseline=self.STATS_MU, spread=self.STATS_SIGMA, minimum=self.STATS_MIN
+            ),
+            dexterity=AttributeDraw(
+                value=dexterity, baseline=self.STATS_MU, spread=self.STATS_SIGMA, minimum=self.STATS_MIN
+            ),
+            health=AttributeDraw(value=max_health, baseline=self.HEALTH_MU, spread=self.HEALTH_SIGMA),
+            morale=AttributeDraw(value=max_morale, baseline=self.MORALE_MU, spread=self.MORALE_SIGMA),
+        )
+
         if random.uniform(0, 1) <= self.chance_for_weapon:
             weapon_generator = self.item_generator_class(
                 faction=self.faction,
@@ -163,7 +179,9 @@ class BaseWarriorGenerator:
             # drawn as it is from the same sigma and the same minimum.
             stats_spread=self.STATS_SIGMA,
             stats_minimum=self.STATS_MIN,
-            # Drawn once and kept, so whatever he ends up being called he is called it everywhere
+            # Both drawn once and kept, so whatever he ends up being called he is called it
+            # everywhere and for the rest of the savegame
+            nickname_state=nickname_state,
             nickname_variant=random.randrange(NICKNAME_VARIANT_BOUND),
             dexterity=dexterity,
             dexterity_progress=dexterity_progress,

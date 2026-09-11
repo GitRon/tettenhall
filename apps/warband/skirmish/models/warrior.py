@@ -10,8 +10,9 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.managers.warrior import WarriorManager
 from apps.warband.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
-from apps.warband.warrior.services.nickname import get_nickname
+from apps.warband.warrior.services.nickname import resolve_nickname
 
 
 # TODO (#95): move to warrior app?
@@ -75,9 +76,19 @@ class Warrior(models.Model):
     # "STATS_MIN" - see "get_nickname".
     stats_spread = models.PositiveSmallIntegerField("Stats spread")
     stats_minimum = models.PositiveSmallIntegerField("Stats minimum")
-    # Which of the several wordings his epithet is phrased with, drawn once when he is generated. On
-    # the row rather than derived from his id, because the wording has to hold still: a man called
-    # "the Bear" on the roster and "the Ox" in the pub is two men to the player.
+    # What this man is named for, and which of the several wordings phrases it. Both are drawn once
+    # and kept: an epithet is a fact about who he was, so nothing that moves an attribute afterwards -
+    # a level, a training course, a prisoner's oath, a bad night at the ford - may rename him. Null
+    # for an ordinary man, and null is the only state the ratchet may fill: see
+    # [handle_award_earned_nickname].
+    #
+    # The state rather than the resolved string, so the wording lists stay editable and reach men
+    # already made. The variant is on the row rather than derived from his id, because the wording has
+    # to hold still as well: a man called "the Bear" on the roster and "the Ox" in the pub is two men
+    # to the player.
+    nickname_state = models.PositiveSmallIntegerField(
+        "Nickname state", choices=NicknameStateChoices.choices, null=True, blank=True, default=None
+    )
     nickname_variant = models.PositiveSmallIntegerField("Nickname variant", default=0)
 
     dexterity = models.PositiveSmallIntegerField("Dexterity")
@@ -156,28 +167,45 @@ class Warrior(models.Model):
         return self.name
 
     @property
-    def nickname(self) -> str | None:
-        # Strength and dexterity share a baseline, a spread and a floor, all three being drawn from
-        # the one "STATS_MU"/"STATS_SIGMA"/"STATS_MIN" trio. Health and morale each have their own
-        # pair, and take the default floor of one: their generator re-rolls a zero rather than
-        # flooring them, so one is as low as they come.
-        return get_nickname(
-            strength=AttributeDraw(
+    def attribute_draws(self) -> dict[str, AttributeDraw]:
+        """
+        The four attributes beside the distributions they were drawn from, which is the only form
+        anything can ask whether one of them is exceptional in - see [AttributeDraw].
+
+        Strength and dexterity share a baseline, a spread and a floor, all three being drawn from the
+        one "STATS_MU"/"STATS_SIGMA"/"STATS_MIN" trio. Health and morale each have their own pair, and
+        take the default floor of one: their generator re-rolls a zero rather than flooring them, so
+        one is as low as they come.
+        """
+        return {
+            "strength": AttributeDraw(
                 value=self.strength,
                 baseline=self.strength_baseline,
                 spread=self.stats_spread,
                 minimum=self.stats_minimum,
             ),
-            dexterity=AttributeDraw(
+            "dexterity": AttributeDraw(
                 value=self.dexterity,
                 baseline=self.strength_baseline,
                 spread=self.stats_spread,
                 minimum=self.stats_minimum,
             ),
-            health=AttributeDraw(value=self.max_health, baseline=self.health_baseline, spread=self.health_spread),
-            morale=AttributeDraw(value=self.max_morale, baseline=self.morale_baseline, spread=self.morale_spread),
-            variant=self.nickname_variant,
-        )
+            "health": AttributeDraw(value=self.max_health, baseline=self.health_baseline, spread=self.health_spread),
+            "morale": AttributeDraw(value=self.max_morale, baseline=self.morale_baseline, spread=self.morale_spread),
+        }
+
+    @property
+    def nickname(self) -> str | None:
+        """
+        The epithet this man carries, phrased his way.
+
+        Read off the row rather than measured off the attributes, which is what makes it a name: the
+        columns it was drawn from go on moving for the rest of his life and it does not.
+        """
+        if self.nickname_state is None:
+            return None
+
+        return resolve_nickname(state=self.nickname_state, variant=self.nickname_variant)
 
     @property
     def display_name(self) -> str:
@@ -186,10 +214,9 @@ class Warrior(models.Model):
 
         Kept out of "__str__", which every generated user-facing string flows through - the twelve
         battle-history templates, the monthly player log, the reasons on finance transactions. Those
-        are all persisted as frozen strings, so an epithet in "__str__" would both be written into
-        rows that outlive it and, since it is derived from attributes training moves, leave old rows
-        carrying whatever he was called the month they were written. Whether the battle log adopts
-        the epithet is its own call; the pages that present a warrior as a person ask for him by this
+        are all persisted as frozen strings, and a man who earns his epithet in month twenty would
+        otherwise be carrying it in rows written in month three. Whether the battle log adopts the
+        epithet is its own call; the pages that present a warrior as a person ask for him by this
         name.
         """
         nickname = self.nickname

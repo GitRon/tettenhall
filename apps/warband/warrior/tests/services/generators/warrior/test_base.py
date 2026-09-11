@@ -5,6 +5,7 @@ import pytest
 from apps.warband.faction.models import Culture
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
@@ -302,3 +303,39 @@ def test_process_draws_the_warriors_nickname_variant_once():
 
     assert result.nickname_variant == 2
     assert Warrior.objects.get(pk=result.pk).nickname_variant == 2
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_warriors_nickname_state_against_his_own_archetype():
+    """
+    A fyrd man's nerve is drawn at a mean of five against a spread of three, so thirteen is two and
+    two thirds spreads out and a wonder among his own kind. Every attribute is handed that same
+    thirteen and none of the others reaches a threshold on it - his strength is one and three fifths
+    spreads out and his health three tenths - which is what makes this a statement about the pairing
+    rather than about the number.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=13):
+        result = generator.process()
+
+    assert result.nickname_state == NicknameStateChoices.MORALE_FAR
+    assert Warrior.objects.get(pk=result.pk).nickname_state == NicknameStateChoices.MORALE_FAR
+
+
+@pytest.mark.django_db
+def test_process_leaves_an_ordinary_man_unnamed():
+    """
+    Every attribute landing exactly on its own mean is nobody worth a name, and null is what the
+    ratchet later looks for - a man stamped with something here could never earn one.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    with mock.patch(
+        "apps.warband.warrior.services.generators.warrior.base.random.gauss",
+        side_effect=lambda mu, sigma: mu,
+    ):
+        result = generator.process()
+
+    assert result.nickname_state is None
+    assert Warrior.objects.get(pk=result.pk).nickname_state is None

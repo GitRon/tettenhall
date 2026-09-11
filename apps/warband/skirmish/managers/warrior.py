@@ -431,6 +431,19 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def set_nickname_state(self, *, obj, nickname_state) -> int:
+        """
+        Write the epithet a warrior has just earned.
+
+        No "refresh_from_db" first, unlike its neighbours here: the state was drawn from the very
+        attributes on this instance, and re-reading the row would decide it against one set of numbers
+        and store it beside another.
+        """
+        obj.nickname_state = nickname_state
+        obj.save(update_fields=("nickname_state",))
+
+        return obj
+
     def set_faction(self, *, obj, faction) -> int:
         """
         Set a new faction for the given warrior.
