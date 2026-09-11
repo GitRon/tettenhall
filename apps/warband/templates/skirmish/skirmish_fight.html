@@ -1,6 +1,19 @@
 {% extends 'base.html' %}
 
+{# The fight is a mode, not a destination: it carries its own round loop and the month refuses to #}
+{# advance while it is unresolved. So no section nav - the screen has one thing to do and its own way #}
+{# out below. #}
+{% block section_nav %}{% endblock %}
+
 {% block content %}
+    {# The way out, said before the fight rather than only after it: leaving costs nothing, the #}
+    {# skirmish is still open, and the alternative on a phone is a screen with no navigation on it at #}
+    {# all until somebody wins. #}
+    <a class="text-sm uppercase text-[#666] no-underline hover:text-[#333]"
+       href="{% url 'warband:skirmish-list-view' %}">
+        <i aria-hidden="true" class="fa-solid fa-arrow-left"></i> Leave the fight
+    </a>
+
     {% include 'skirmish/skirmish/htmx/_round.html' with skirmish=object %}
 
     {# Attacker, report, defender. Stacked on a phone the report lands between the two war bands, so #}

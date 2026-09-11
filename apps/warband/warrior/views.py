@@ -4,6 +4,7 @@ from http import HTTPStatus
 from django.db.models import QuerySet
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views import generic
 from queuebie.runner import handle_message
 
@@ -28,8 +29,58 @@ from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
 class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
+    """
+    One man, and the way back to the list he was read off.
+
+    The page carried no navigation of its own at all, so equipping a second warrior meant going
+    through the section nav and the roster again for every one of them. The roster link and the two
+    neighbours below are what make a roster walkable - see docs/patterns/navigation.md.
+    """
+
     model = Warrior
     template_name = "warrior/warrior_detail.html"
+
+    def _add_roster_context(self, *, context: dict, player_faction: Faction | None) -> None:
+        """
+        Names the list this man was read off, and who stands either side of him in it.
+
+        Three lists lead here and they are not the same roster: a faction's own men, the prisoners a
+        faction holds, and the mercenaries standing in its pub. Which one he is in also decides which
+        section of the game his page belongs to, because the url carries only his own id.
+        """
+        if self.object.faction_id:
+            context["nav_section"] = "warband" if context["is_player_faction"] else "rivals"
+            context["roster_label"] = f"Back to {self.object.faction}"
+            context["roster_url"] = reverse("warband:faction-detail-view", args=[self.object.faction_id])
+            roster = Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.faction_id)
+        elif context["is_captive_of_player"]:
+            context["nav_section"] = "warband"
+            context["roster_label"] = "Back to your captives"
+            context["roster_url"] = reverse("warband:faction-detail-view", args=[player_faction.id])
+            roster = player_faction.captured_warriors.all()
+        elif context["is_mercenary_of_player"]:
+            context["nav_section"] = "town"
+            context["roster_label"] = "Back to the pub"
+            context["roster_url"] = reverse("warband:town-square-view", args=[player_faction.id])
+            roster = player_faction.available_mercenaries.all()
+        else:
+            # A dead man, or somebody the player reached by typing an id. Nothing to walk and no
+            # section to claim.
+            context["nav_section"] = None
+            context["roster_label"] = None
+            context["roster_url"] = None
+            return
+
+        # By name, because that is the only order a player can predict, and the roster the link above
+        # leads to is read in the same one. The id breaks a tie between two men of the same name.
+        roster_ids = list(roster.order_by("name", "id").values_list("id", flat=True))
+        # He is off his own roster when he is dead: the lists all leave the dead out, and a "next"
+        # that walked into a list he is not on would be a walk he cannot come back from.
+        position = roster_ids.index(self.object.id) if self.object.id in roster_ids else None
+        context["previous_warrior_id"] = roster_ids[position - 1] if position else None
+        context["next_warrior_id"] = (
+            roster_ids[position + 1] if position is not None and position + 1 < len(roster_ids) else None
+        )
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
@@ -53,10 +104,16 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         # both or a rival's numbers leak on whichever screen was updated second.
         context["is_player_faction"] = player_faction is not None and self.object.faction_id == player_faction.id
         context["can_edit_gear"] = context["is_player_faction"]
-        context["can_see_gear"] = player_faction is not None and (
-            context["can_edit_gear"]
-            or player_faction.captured_warriors.filter(id=self.object.id).exists()
-            or player_faction.available_mercenaries.filter(id=self.object.id).exists()
+        # Asked once and kept, because the roster context below needs the same two answers to say
+        # which list this man was read off
+        context["is_captive_of_player"] = (
+            player_faction is not None and player_faction.captured_warriors.filter(id=self.object.id).exists()
+        )
+        context["is_mercenary_of_player"] = (
+            player_faction is not None and player_faction.available_mercenaries.filter(id=self.object.id).exists()
+        )
+        context["can_see_gear"] = (
+            context["can_edit_gear"] or context["is_captive_of_player"] or context["is_mercenary_of_player"]
         )
         # Where the man stands on his wages, behind the same gate for the same reason: it is read off
         # his own morale being stuck, which a rival's card does not give away either. Carried here as
@@ -67,6 +124,7 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             if context["is_player_faction"]
             else None
         )
+        self._add_roster_context(context=context, player_faction=player_faction)
         return context
 
 

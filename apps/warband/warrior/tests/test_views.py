@@ -591,3 +591,123 @@ def test_warrior_dismiss_view_refuses_a_dead_warrior(logged_in_client, current_s
     assert response.status_code == 404
     dead_warrior.refresh_from_db()
     assert dead_warrior.faction == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_leads_back_to_the_roster_he_was_read_off(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["nav_section"] == "warband"
+    assert response.context["roster_url"] == reverse(
+        "warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id}
+    )
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_reads_a_rivals_warrior_as_a_rival(logged_in_client, current_savegame):
+    """
+    The url carries the man's id and not his faction's, so the section cannot be read off the route.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    warrior = WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["nav_section"] == "rivals"
+    assert response.context["roster_url"] == reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id})
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_leads_a_captive_back_to_the_captives(logged_in_client, current_savegame):
+    """
+    A prisoner carries no faction, so his own roster is the list of the men the player holds.
+    """
+    captive = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": captive.id}))
+
+    assert response.context["nav_section"] == "warband"
+    assert response.context["roster_url"] == reverse(
+        "warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id}
+    )
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_leads_a_mercenary_back_to_the_pub(logged_in_client, current_savegame):
+    """
+    He is nobody's man yet, and the only list he stands in is the pub of the town square.
+    """
+    mercenary = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.available_mercenaries.add(mercenary)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": mercenary.id}))
+
+    assert response.context["nav_section"] == "town"
+    assert response.context["roster_url"] == reverse(
+        "warband:town-square-view", kwargs={"pk": current_savegame.player_faction_id}
+    )
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_leads_nowhere_for_a_man_on_no_roster(logged_in_client, current_savegame):
+    """
+    A prisoner of a rival stands in no list the player can open, so there is nothing to go back to
+    and no section to claim.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    captive = WarriorFactory(faction=None, savegame=current_savegame, culture=rival_faction.culture)
+    rival_faction.captured_warriors.add(captive)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": captive.id}))
+
+    assert response.context["nav_section"] is None
+    assert response.context["roster_url"] is None
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_names_the_two_men_either_side_of_him(logged_in_client, current_savegame):
+    """
+    By name, because that is the only order a player can predict and the roster is read in the same
+    one.
+    """
+    WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+    beorn = WarriorFactory(faction=current_savegame.player_faction, name="Beorn")
+    WarriorFactory(faction=current_savegame.player_faction, name="Cenwulf")
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": beorn.id}))
+
+    assert response.context["previous_warrior_id"] is not None
+    assert response.context["next_warrior_id"] is not None
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_names_no_neighbours_at_the_ends_of_the_roster(logged_in_client, current_savegame):
+    """
+    The only man on the roster has nobody either side of him, and a walk off the end would be a walk
+    the player cannot come back from.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["previous_warrior_id"] is None
+    assert response.context["next_warrior_id"] is None
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_names_no_neighbours_for_a_dead_man(logged_in_client, current_savegame):
+    """
+    The rosters all leave the dead out, so he is not on the list his own page links to.
+    """
+    WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+    fallen = WarriorFactory(
+        faction=current_savegame.player_faction, name="Beorn", condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": fallen.id}))
+
+    assert response.context["previous_warrior_id"] is None
+    assert response.context["next_warrior_id"] is None
