@@ -3,7 +3,6 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Command, Event
 
-from apps.warband.quest.models import QuestContract
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands import skirmish
 from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
@@ -238,28 +237,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     if not Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction):
         return None
 
-    try:
-        quest_contract = context.skirmish.quest_contract
-        quest_name = quest_contract.quest.name
-        # A quest only pays the faction that signed the contract, and only if it actually won: the
-        # reward is handed to the victor further down the chain, so carrying it regardless of the
-        # outcome funded the rival who beat you out of your own quest. Decided here rather than in
-        # the finance handler because reading the contract's faction is a query, which strict mode
-        # forbids in an event handler.
-        #
-        # The face value, whatever turned out on the day. The purse was already priced against the
-        # war band the target could field when the quest was pinned to the board - see
-        # "Quest._priced_for_expected_opposition" - so a thin turnout is a thin contract rather than
-        # a fraction of a fat one, and the figure the player accepted is the figure he is paid.
-        if quest_contract.faction_id == context.victorious_faction.pk:
-            quest_loot = quest_contract.quest.loot
-        else:
-            quest_loot = 0
-    except QuestContract.DoesNotExist:
-        # There might be skirmishes with no assigned quest contract
-        # TODO (#102): this shouldn't be handled here that explicitly -> model method?
-        quest_name = None
-        quest_loot = 0
+    quest_name, quest_loot = context.skirmish.quest_reward_for(victorious_faction=context.victorious_faction)
 
     # Everything below is about the winner and the loser, so the two sides get sorted into those
     # roles exactly once - "attacking_warriors" and "defending_warriors" only coincide with them when
