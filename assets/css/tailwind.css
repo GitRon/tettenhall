@@ -1,0 +1,19 @@
+/*
+ * The Tailwind source. "yarn build:css" compiles it to "static/dist/tailwind.css", which is not in
+ * version control - see docs/contributing/setup.md.
+ *
+ * Two of the three layers, not "@import 'tailwindcss'". That shorthand also pulls in preflight, and
+ * preflight and UIkit's base both reset margins, headings, buttons and lists: with both loaded, every
+ * screen in the game is wrong. UIkit is still what styles the app, so the utilities are additive here
+ * and the reset stays switched off. #200 adds the preflight line in the commit that removes UIkit.
+ */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/*
+ * Where the class names are. Tailwind's automatic detection starts at this file's own directory, so
+ * from "assets/css/" it would find nothing at all - every template lives under "apps/". Naming the
+ * directory also keeps "node_modules/" and the compiled output itself out of the scan, rather than
+ * relying on them being ignored.
+ */
+@source "../../apps";

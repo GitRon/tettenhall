@@ -9,6 +9,10 @@
     <link rel="icon" href="{% static 'svg/icons/crossed_swords.svg' %}" type="image/svg+xml">
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
+    {# After UIkit, so a utility wins wherever the two describe the same property. The file is #}
+    {# compiled by "yarn build:css" and is not in version control - see docs/contributing/setup.md, #}
+    {# and docs/patterns/responsive-layout.md for what the classes are allowed to say. #}
+    <link rel="stylesheet" href="{% static 'dist/tailwind.css' %}">
     <link rel="stylesheet" href="{% static 'css/colors.css' %}">
     <link rel="stylesheet" href="{% static 'css/icons.css' %}">
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">

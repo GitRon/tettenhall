@@ -4,9 +4,17 @@
   "description": "Event-based historic browser game",
   "license": "GPL-3.0-or-later",
   "author": "Ronny Vedrilla",
+  "scripts": {
+    "build:css": "tailwindcss --input assets/css/tailwind.css --output static/dist/tailwind.css --minify",
+    "watch:css": "tailwindcss --input assets/css/tailwind.css --output static/dist/tailwind.css --watch"
+  },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
     "htmx.org": "^2.0.10",
     "uikit": "^3.25.21"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "tailwindcss": "4.3.3"
   }
 }
