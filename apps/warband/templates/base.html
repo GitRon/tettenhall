@@ -9,108 +9,153 @@
     <link rel="icon" href="{% static 'svg/icons/crossed_swords.svg' %}" type="image/svg+xml">
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'uikit/dist/css/uikit.css' %}">
-    {# After UIkit, so a utility wins wherever the two describe the same property. The file is #}
-    {# compiled by "yarn build:css" and is not in version control - see docs/contributing/setup.md, #}
-    {# and docs/patterns/responsive-layout.md for what the classes are allowed to say. #}
+    {# After UIkit, which is what settles a tie between a utility and a UIkit class. Ties against #}
+    {# UIkit's bare element rules are settled in "assets/css/tailwind.css" instead, by not putting #}
+    {# the utilities in a cascade layer. The file is compiled by "yarn build:css" and is not in #}
+    {# version control - see docs/contributing/setup.md, and docs/patterns/responsive-layout.md for #}
+    {# what the classes are allowed to say. #}
     <link rel="stylesheet" href="{% static 'dist/tailwind.css' %}">
     <link rel="stylesheet" href="{% static 'css/colors.css' %}">
     <link rel="stylesheet" href="{% static 'css/icons.css' %}">
-    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
     <link rel="stylesheet" href="{% static 'css/progress-bar.css' %}">
 </head>
-<body>
-<nav class="uk-navbar-container uk-margin" uk-navbar>
-    <div class="uk-navbar-left">
-        <a class="uk-navbar-item uk-logo uk-margin-left" href="{% url 'warband:dashboard-view' %}">Tettenhall</a>
+{# The token travels as data rather than as a JavaScript literal, which is what lets the whole script #}
+{# below be a static file with no template rendering in it. #}
+<body data-csrf-token="{{ csrf_token }}">
+{# The counters and "Finish month" stay in the bar at every width: they are the numbers every #}
+{# decision in the game is made against and the one control that advances it. Navigation is what #}
+{# collapses. #}
+{#  #}
+{# "lg:" is where the seven links come back out into the row. Measured rather than chosen: the full #}
+{# row needs about 1160px (logo 103 + links 570 + counters 138 + the right-hand group 288, plus the #}
+{# gutters), so "md:" at 768px is not close. Between 1024px and about 1160px the bar is two lines - #}
+{# which is what it does today at any width, the counters having always wrapped below the links. #}
+{# #64 owns making it one. #}
+<nav class="mb-4 bg-[#f8f8f8]" data-navbar>
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 lg:min-h-20 lg:px-8 lg:py-0">
+        <a class="text-2xl text-[#333] no-underline hover:text-[#333]"
+           href="{% url 'warband:dashboard-view' %}">Tettenhall</a>
 
         {% if request.user.is_authenticated and current_savegame %}
-            <ul class="uk-navbar-nav">
-                {# A savegame can be without a player faction, and reversing these urls with no id raises #}
-                {% if current_savegame.player_faction_id %}
-                    <li>
-                        <a href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}">
-                            {{ current_savegame.player_faction }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">
-                            {{ current_savegame.player_faction.town_name }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'warband:town-upgrade-view' %}">
-                            Town upgrades
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'warband:rival-faction-list-view' %}">
-                            Rivals
-                        </a>
-                    </li>
-                {% endif %}
-                <li>
-                    <a href="{% url 'warband:training-list-view' %}">
-                        Training
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'warband:skirmish-list-view' %}">
-                        Skirmishes
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'warband:transaction-list-view' %}">
-                        Finance
-                    </a>
-                </li>
-                {# TODO (#2): implement estates, then put this entry back. A nav link to "#" reads as a #}
-                {# feature that is merely broken, so it stays out until there is a page behind it. #}
-                {% comment %}
-                    <li>
-                        <a href="#">
-                            Estates
-                        </a>
-                    </li>
-                {% endcomment %}
-            </ul>
             {% include 'faction/components/resource_bar.html' %}
         {% endif %}
-    </div>
-    <div class="uk-navbar-right uk-margin-right">
-        <ul class="uk-navbar-nav">
-            {% if request.user.is_authenticated and current_savegame %}
-                {# A control whose only answer is a refusal is worse than no control. The guard behind #}
-                {# every command view turns a decided savegame away with a toast, so this says which #}
-                {# state the game is in instead of offering the month again. #}
-                {% if current_savegame.is_over %}
+
+        {% if request.user.is_authenticated and current_savegame %}
+            {# A control whose only answer is a refusal is worse than no control. The guard behind #}
+            {# every command view turns a decided savegame away with a toast, so this says which #}
+            {# state the game is in instead of offering the month again. #}
+            {% if current_savegame.is_over %}
+                <span class="text-sm uppercase text-[#999] lg:ml-auto">Game over</span>
+            {% else %}
+                {# A button rather than an anchor, because this posts the month: an "a" with no href #}
+                {# is out of Tab's reach and announced as text. The utilities are what keep it looking #}
+                {# like the nav entry beside it. #}
+                <button class="cursor-pointer border-none bg-transparent p-0 text-sm uppercase text-[#333] hover:text-[#666] lg:ml-auto"
+                        hx-post="{% url 'warband:finish-month-view' %}"
+                        type="button">
+                    Finish month
+                </button>
+            {% endif %}
+        {% endif %}
+
+        {% if request.user.is_authenticated %}
+            {# The account menu stays in the bar on a phone rather than moving into the panel: it is #}
+            {# one element in one place in the document, and a dropdown works at both widths, so #}
+            {# hiding it here and repeating it there would mean two copies of the same two links. #}
+            <details class="relative" data-menu>
+                <summary class="cursor-pointer list-none text-sm uppercase text-[#999] hover:text-[#666]">
+                    {{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}
+                </summary>
+                <ul class="absolute right-0 top-full z-20 m-0 min-w-48 list-none bg-white p-4 shadow-lg">
+                    <li><a class="text-sm text-[#666]" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
+                    <li><a class="text-sm text-[#666]" href="{% url 'warband:logout-view' %}">Logout</a></li>
+                </ul>
+            </details>
+
+            {% if current_savegame %}
+                {# Below "lg:" this is the only way to the seven links, so it is a button: reachable by #}
+                {# Tab, operable by Enter and Space, and announced with its expanded state. #}
+                <button aria-controls="nav-panel"
+                        aria-expanded="false"
+                        class="cursor-pointer border-none bg-transparent p-0 text-lg text-[#666] lg:hidden"
+                        data-nav-toggle
+                        type="button">
+                    <i aria-hidden="true" class="fa-solid fa-bars"></i>
+                    <span class="sr-only">Menu</span>
+                </button>
+            {% endif %}
+        {% endif %}
+
+        {% if request.user.is_authenticated and current_savegame %}
+            {# "order-last" and "w-full" put the panel on its own line under the bar on a phone. At #}
+            {# "lg:" it is an ordinary item in the row again, and "lg:block" beats the "hidden" class #}
+            {# there - so the toggle's state stops mattering at desk width, and a panel left open on a #}
+            {# phone is not still open after a resize. #}
+            {#  #}
+            {# The closed state is the "hidden" class and not the "hidden" attribute, which looks #}
+            {# equivalent and is not: the browser's own rule for that attribute is "!important", so it #}
+            {# beats "lg:block" and the seven links stay unreachable at every width. Tailwind's #}
+            {# preflight ships an "!important" rule of its own to win that fight, and preflight is #}
+            {# switched off here until #200. #}
+            <div class="order-last hidden w-full lg:order-none lg:block lg:w-auto" id="nav-panel">
+                <ul class="m-0 flex list-none flex-col gap-y-2 p-0 lg:flex-row lg:gap-x-6">
+                    {# A savegame can be without a player faction, and reversing these urls with no id raises #}
+                    {% if current_savegame.player_faction_id %}
+                        <li>
+                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
+                               href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}">
+                                {{ current_savegame.player_faction }}
+                            </a>
+                        </li>
+                        <li>
+                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
+                               href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">
+                                {{ current_savegame.player_faction.town_name }}
+                            </a>
+                        </li>
+                        <li>
+                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
+                               href="{% url 'warband:town-upgrade-view' %}">
+                                Town upgrades
+                            </a>
+                        </li>
+                        <li>
+                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
+                               href="{% url 'warband:rival-faction-list-view' %}">
+                                Rivals
+                            </a>
+                        </li>
+                    {% endif %}
                     <li>
-                        <span class="uk-navbar-item uk-text-muted">Game over</span>
+                        <a class="text-sm uppercase text-[#999] hover:text-[#666]"
+                           href="{% url 'warband:training-list-view' %}">
+                            Training
+                        </a>
                     </li>
-                {% else %}
-                    <li class="uk-active">
-                        {# A button rather than an anchor, because this posts the month: an "a" with no #}
-                        {# href is out of Tab's reach and announced as text. "navbar.css" is what keeps #}
-                        {# it looking like the nav entry beside it. #}
-                        <button type="button"
-                                hx-post="{% url 'warband:finish-month-view' %}"
-                                class="uk-navbar-item">
-                            Finish month
-                        </button>
+                    <li>
+                        <a class="text-sm uppercase text-[#999] hover:text-[#666]"
+                           href="{% url 'warband:skirmish-list-view' %}">
+                            Skirmishes
+                        </a>
                     </li>
-                {% endif %}
-            {% endif %}
-            {% if request.user.is_authenticated %}
-                <li>
-                    <a href="#">{{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}</a>
-                    <div class="uk-navbar-dropdown">
-                        <ul class="uk-nav uk-navbar-dropdown-nav">
-                            <li><a href="{% url "warband:savegame-list-view" %}">Savegames</a></li>
-                            <li><a href="{% url "warband:logout-view" %}">Logout</a></li>
-                        </ul>
-                    </div>
-                </li>
-            {% endif %}
-        </ul>
+                    <li>
+                        <a class="text-sm uppercase text-[#999] hover:text-[#666]"
+                           href="{% url 'warband:transaction-list-view' %}">
+                            Finance
+                        </a>
+                    </li>
+                    {# TODO (#2): implement estates, then put this entry back. A nav link to "#" reads as a #}
+                    {# feature that is merely broken, so it stays out until there is a page behind it. #}
+                    {% comment %}
+                        <li>
+                            <a href="#">
+                                Estates
+                            </a>
+                        </li>
+                    {% endcomment %}
+                </ul>
+            </div>
+        {% endif %}
     </div>
 </nav>
 
@@ -118,60 +163,20 @@
     {% block content %}{% endblock %}
 </div>
 
-<div id="hidden-box" class="uk-hidden"></div>
+<div class="uk-hidden" id="hidden-box"></div>
+
+{# Django's messages travel as document nodes, not as JavaScript string literals. A "template" #}
+{# element is parsed but not rendered, so autoescaping handles the value on the way in and #}
+{# "textContent" hands it back exactly once - and a name holding a quote can no longer end the #}
+{# script it was written into. The names that reach here are faction, town, warrior and quest names #}
+{# ("faction/views.py:535" interpolates a town), so this is the position that decides whether a #}
+{# name is read as words or as markup. #}
+{% for message in messages %}
+    <template data-level="{{ message.level_tag }}" data-toast>{{ message }}</template>
+{% endfor %}
 
 <script src="{% static 'htmx.org/dist/htmx.js' %}"></script>
 <script src="{% static 'uikit/dist/js/uikit.js' %}"></script>
-<script type="text/javascript">
-    // Add CSRF token to HTMX plugin for being able to make AJAX calls
-    document.body.addEventListener('htmx:configRequest', (event) => {
-        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
-    });
-    // Notifications
-    // UIkit's own default. A second is not long enough to read a sentence like "This game is over.
-    // Start a new savegame to play on.", and for several actions the toast is the only feedback there
-    // is. Named once so the three call sites below cannot drift apart again.
-    const NOTIFICATION_TIMEOUT = 5000;
-
-    // Every toast sits at the bottom, because the navbar is the first thing in the body and has no
-    // offset under it: a top-centre notification covers the nav links and the resource counters, and
-    // the counters are what several of these toasts are reporting a change to.
-    const NOTIFICATION_POSITION = 'bottom-center';
-
-    document.body.addEventListener("notification", function (e) {
-        UIkit.notification({
-            message: e.detail.value,
-            status: 'success',
-            pos: NOTIFICATION_POSITION,
-            timeout: NOTIFICATION_TIMEOUT,
-        });
-    });
-    document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
-        if (500 <= evt.detail.xhr.status && evt.detail.xhr.status < 600) {
-            UIkit.notification({
-                message: "An error has occurred.",
-                status: 'danger',
-                pos: NOTIFICATION_POSITION,
-                timeout: NOTIFICATION_TIMEOUT,
-            });
-        }
-    });
-
-    {# Two sinks, two filters, and both are load-bearing. "escapejs" is the one for this position: a #}
-    {# message holding a double quote closes the string literal, and a SyntaxError costs the whole #}
-    {# block above - the CSRF header, the notification listener and the 5xx toast all stop being #}
-    {# registered. "escape" is for the sink underneath: UIkit inserts "message" as HTML, so a "<" #}
-    {# would otherwise be parsed as markup rather than shown. "level_tag" is a fixed vocabulary #}
-    {# today, but it sits in the same position, so it is escaped too rather than left to be worked #}
-    {# out again later. #}
-    {% for message in messages %}
-        UIkit.notification({
-            message: "{{ message|escape|escapejs }}",
-            status: "{{ message.level_tag|escapejs }}",
-            pos: NOTIFICATION_POSITION,
-            timeout: NOTIFICATION_TIMEOUT,
-        });
-    {% endfor %}
-</script>
+<script src="{% static 'js/tettenhall.js' %}"></script>
 </body>
 </html>

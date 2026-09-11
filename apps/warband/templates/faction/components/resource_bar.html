@@ -3,7 +3,9 @@
 {# leaves the navbar alone, and a counter showing the silver from before the purchase is worse than #}
 {# no counter, because the same number is the bankruptcy warning below. So the bar re-fetches itself #}
 {# on "updateResourceBar", which every view that moves one of them fires. #}
-<div class="uk-navbar-item"
+{# This element is the swap target, so its own classes travel with every re-fetch - which is why the #}
+{# layout sits here rather than on a wrapper in "base.html" that a swap would leave behind. #}
+<div class="flex items-center gap-x-3 text-sm text-[#333]"
      hx-get="{% url 'warband:resource-bar-htmx' %}"
      hx-trigger="updateResourceBar from:body"
      hx-swap="outerHTML"
