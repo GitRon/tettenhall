@@ -82,6 +82,25 @@ class WarriorMaxMoraleChanged(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorEarnedNickname(Event):
+    """
+    The war band settled on what to call this man, and will not revise it.
+
+    The epithet rides along as the phrasing he was given rather than as the state behind it, because
+    what the player is told is the name: a consumer resolving the state itself would be a second place
+    the wording is decided.
+
+    The faction is on the event for the reason every warrior event carries one - whoever reacts is an
+    event handler and may not go and ask.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    nickname: str
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorHealthHealed(Event):
     warrior: Warrior
     faction: Faction

@@ -63,6 +63,20 @@ class ChangeWarriorMaxMorale(Command):
 
 
 @dataclass(kw_only=True)
+class AwardEarnedNickname(Command):
+    """
+    Ask whether this man has just become somebody worth naming.
+
+    Raised wherever an attribute goes up, and a no-op for the men it does not apply to, so the two
+    places that move one do not have to know the rule. The faction is not on it: the line the player
+    reads needs one, and a command handler may look it up where an event handler may not.
+    """
+
+    warrior: Warrior
+    month: int
+
+
+@dataclass(kw_only=True)
 class HealInjuredWarrior(Command):
     # The faction mending him, which is not always the one he belongs to: a captive is healed by the
     # faction holding him, and capture has cleared his own

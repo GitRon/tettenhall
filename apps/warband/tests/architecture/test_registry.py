@@ -24,12 +24,16 @@ TERMINAL_MESSAGES: frozenset[str] = frozenset(
         "apps.warband.faction.messages.events.warrior.WarriorWasAddedToPub",
         "apps.warband.faction.messages.events.item.ItemWasAddedToShop",
         "apps.warband.faction.messages.events.item.ItemWasRemovedFromShop",
-        # The three levers an incident pulls in somebody else's app. Each announces a change its own
-        # command handler has already made, and the incident wrote the player's line about it before
-        # any of them ran - a consumer here would be a second line for one event
+        # Two of the three levers an incident pulls in somebody else's app. Each announces a change its
+        # own command handler has already made, and the incident wrote the player's line about it before
+        # either of them ran - a consumer here would be a second line for one event.
+        #
+        # The third, "WarriorMaxMoraleChanged", is consumed: the relic is the largest gain in nerve the
+        # game hands out and can be what first makes a man worth naming, so the epithet ratchet listens
+        # to it. That is a line about a different fact than the incident's own, and it appears on a
+        # fifth of relics rather than all of them - see [handle_raised_ceiling_earns_a_nickname].
         "apps.warband.faction.messages.events.faction.FyrdReserveChanged",
         "apps.warband.item.messages.events.item.ItemWasLost",
-        "apps.warband.warrior.messages.events.warrior.WarriorMaxMoraleChanged",
         "apps.warband.finance.messages.events.transaction.TransactionCreated",
         "apps.warband.item.messages.events.item.OwnershipChanged",
         "apps.warband.month.messages.events.month.PlayerMonthLogCleared",

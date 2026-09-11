@@ -13,7 +13,9 @@ from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.handlers.commands.warrior import (
+    handle_award_earned_nickname,
     handle_change_warrior_max_morale,
     handle_dismiss_warrior,
     handle_enslave_captured_warrior,
@@ -23,6 +25,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_replenish_warrior_morale,
 )
 from apps.warband.warrior.messages.commands.warrior import (
+    AwardEarnedNickname,
     ChangeWarriorMaxMorale,
     DismissWarrior,
     EnslaveCapturedWarrior,
@@ -32,6 +35,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     ReplenishWarriorMorale,
 )
 from apps.warband.warrior.messages.events.warrior import (
+    WarriorEarnedNickname,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
@@ -39,6 +43,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
 )
+from apps.warband.warrior.services.nickname import STRENGTH_NICKNAMES
 
 
 @pytest.mark.django_db
@@ -467,3 +472,46 @@ def test_handle_change_warrior_max_morale_lowers_the_ceiling():
     assert result == WarriorMaxMoraleChanged(warrior=warrior, faction=warrior.faction, changed_max_morale=-4, month=3)
     warrior.refresh_from_db()
     assert warrior.max_morale == 16
+
+
+@pytest.mark.django_db
+def test_handle_award_earned_nickname_names_a_man_who_has_just_become_exceptional():
+    """
+    Twenty strength against a mean of ten and a spread of five is two spreads out, and the factory
+    leaves everything else on its own mean, so the arm is the only thing to name him for.
+    """
+    warrior = WarriorFactory(strength=20, nickname_state=None)
+
+    result = handle_award_earned_nickname(context=AwardEarnedNickname(warrior=warrior, month=3))
+
+    assert result == WarriorEarnedNickname(
+        warrior=warrior, faction=warrior.faction, nickname=STRENGTH_NICKNAMES[0], month=3
+    )
+    warrior.refresh_from_db()
+    assert warrior.nickname_state == NicknameStateChoices.STRENGTH
+
+
+@pytest.mark.django_db
+def test_handle_award_earned_nickname_leaves_a_man_who_already_has_one_alone():
+    """
+    He is named for his nerve and has since grown into an arm that reaches further. He keeps the
+    nerve: a rename upward is still a rename, and the epithet is a fact about who he was.
+    """
+    warrior = WarriorFactory(strength=20, nickname_state=NicknameStateChoices.MORALE)
+
+    result = handle_award_earned_nickname(context=AwardEarnedNickname(warrior=warrior, month=3))
+
+    assert result is None
+    warrior.refresh_from_db()
+    assert warrior.nickname_state == NicknameStateChoices.MORALE
+
+
+@pytest.mark.django_db
+def test_handle_award_earned_nickname_leaves_an_ordinary_man_unnamed():
+    warrior = WarriorFactory(nickname_state=None)
+
+    result = handle_award_earned_nickname(context=AwardEarnedNickname(warrior=warrior, month=3))
+
+    assert result is None
+    warrior.refresh_from_db()
+    assert warrior.nickname_state is None
