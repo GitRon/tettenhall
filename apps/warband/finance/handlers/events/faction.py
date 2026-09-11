@@ -46,7 +46,7 @@ def handle_pay_warrior_salaries(*, context: MonthlyWarriorSalariesPaid) -> Comma
     return CreateTransaction(
         faction=context.faction,
         amount=-context.amount,
-        reason=f"Salaries paid in month {context.month}.",
+        reason="Salaries paid",
         month=context.month,
     )
 
@@ -56,7 +56,7 @@ def handle_building_money_earnings(*, context: MonthlyBuildingMoneyEarned) -> Co
     return CreateTransaction(
         faction=context.faction,
         amount=context.amount,
-        reason=f"Building earnings in month {context.month}.",
+        reason="Building earnings",
         month=context.month,
     )
 
@@ -66,7 +66,7 @@ def handle_monthly_faction_income(*, context: MonthlyFactionIncomeEarned) -> Com
     return CreateTransaction(
         faction=context.faction,
         amount=context.amount,
-        reason=f"Faction income in month {context.month}.",
+        reason="Faction income",
         month=context.month,
     )
 

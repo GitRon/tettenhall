@@ -252,7 +252,11 @@ def test_handle_log_round_finished_names_the_round_that_resolved():
 
     result = handle_log_round_finished(context=RoundFinished(skirmish=skirmish, round_number=3, victor=None, month=3))
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Round 3 finished.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Round 3 finished.",
+        kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED,
+    )
 
 
 def test_handle_log_skirmish_finished_logs_the_victor():

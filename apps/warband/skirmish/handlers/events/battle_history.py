@@ -77,6 +77,9 @@ def handle_log_round_finished(*, context: skirmish.RoundFinished) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"Round {context.round_number} finished.",
+        # The only line the panel reads as structure rather than as narration: it is where one round
+        # ends, and no row carries a round number for the panel to group by instead.
+        kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED,
     )
 
 

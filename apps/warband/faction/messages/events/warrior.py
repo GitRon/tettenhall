@@ -44,7 +44,6 @@ class WarriorRecruited(Event):
 
 @dataclass(kw_only=True)
 class WarriorWasSoldIntoSlavery(Event):
-    # TODO (#98): refactor all "sell X" event and pass generic context string for transaction title
     warrior: Warrior
     selling_faction: Faction
     price: int

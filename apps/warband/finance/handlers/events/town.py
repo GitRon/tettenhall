@@ -10,6 +10,6 @@ def handle_pay_building_costs_for_town_buildings(*, context: town.TownBuildingUp
     return CreateTransaction(
         faction=context.faction,
         amount=-context.costs,
-        reason=f"Building {context.building_type!r} level {context.new_level} constructed.",
+        reason=f"Building {context.building_type!r} level {context.new_level} constructed",
         month=context.month,
     )

@@ -11,7 +11,7 @@ def handle_victorious_faction_gets_quest_reward(*, context: skirmish.SkirmishFin
         return CreateTransaction(
             faction=context.skirmish.victorious_faction,
             amount=context.quest_loot,
-            reason=f"Quest {context.quest_name!r} finished! {context.quest_loot} silver looted.",
+            reason=f"Quest {context.quest_name!r} finished! {context.quest_loot} silver looted",
             month=context.month,
         )
     return None

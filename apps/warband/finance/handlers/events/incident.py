@@ -15,6 +15,10 @@ def handle_incident_silver(*, context: IncidentOccurred) -> Command | None:
 
     The chronicle line is the reason, so the ledger reads the way the log does rather than as
     "Incident #7" - both columns hold at most 100 characters, so the one fits the other.
+
+    That makes this the one ledger row ending in a full stop: every reason the finance app composes
+    itself is a label and carries none, but an incident title is a sentence written for the
+    chronicle, and the ledger borrows it rather than the other way round.
     """
     if context.outcome.silver_change == 0:
         return None
