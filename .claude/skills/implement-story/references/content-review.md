@@ -56,9 +56,11 @@ the story turns on them.
 8. **Static files come from `node_modules/`.** The script installs them if they are missing and refuses to
    start otherwise, because without htmx and UIkit every control on every page is dead and the whole
    review is false negatives.
-9. **The Tailwind stylesheet is compiled, not committed.** Every `start` runs `yarn build:css`, because
-   Tailwind only emits the utilities it finds in the templates - a sheet compiled before the story added
-   a class leaves a page that has quietly lost that bit of layout.
+9. **The Tailwind stylesheet is compiled, not committed.** Bringing a server up runs `yarn build:css`,
+   because Tailwind only emits the utilities it finds in the templates - a sheet compiled before the
+   story added a class leaves a page that has quietly lost that bit of layout. A `start` that finds the
+   run's server already answering reuses it and rebuilds nothing, so after a template change it is
+   `restart` that gets you the new stylesheet, exactly as it is `restart` that gets you the new Python.
 
 ## Write the journey before you click
 

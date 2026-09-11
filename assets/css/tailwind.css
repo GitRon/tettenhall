@@ -14,7 +14,10 @@
  * that grows whenever someone writes documentation.
  *
  * "apps" rather than the repository root because that is where every template lives, and it also
- * covers the "css_class" strings the crispy FormHelpers pass from Python.
+ * covers the "css_class" strings the crispy FormHelpers pass from Python. The price of including the
+ * Python is that a handful of one-word utilities compile from ordinary identifiers - ".filter" out of
+ * a queryset call, ".table" and ".static" out of whatever spells them. They are inert: no template
+ * uses any of those names, and a template that starts to needs the rule anyway.
  */
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
