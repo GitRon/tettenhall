@@ -812,6 +812,28 @@ def test_recruit_pub_mercenary_view_debits_his_price(
 
 
 @pytest.mark.django_db
+def test_recruit_pub_mercenary_view_debits_the_wait_of_a_parked_veteran(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    """
+    Ordering, which is why this is a flow test and not a second view test: the view checks the price
+    against the purse, the handler bills it, and the man is taken off the shelf in between - which
+    is what ends the wait his price is partly made of. All three have to name one number, or the
+    player is quoted one figure and charged another. See [Warrior.idle_surcharge].
+    """
+    current_savegame.current_month = 7
+    current_savegame.save()
+    pub_mercenary.pub_arrival_month = 1
+    pub_mercenary.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+
+    response = logged_in_client.post(reverse("warband:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.status_code == 200
+    assert Transaction.objects.filter(faction=current_savegame.player_faction, amount=-450).exists() is True
+
+
+@pytest.mark.django_db
 def test_recruit_pub_mercenary_view_takes_him_off_the_pub_shelf(
     logged_in_client, current_savegame, pub_mercenary, queuebie_registry
 ):
