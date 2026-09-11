@@ -10,8 +10,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
-    "htmx.org": "^2.0.10",
-    "uikit": "^3.25.21"
+    "htmx.org": "^2.0.10"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",

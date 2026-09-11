@@ -3,7 +3,10 @@
 {% block content %}
     <h1>Skirmishes</h1>
 
-    <table class="uk-table">
+    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+    {# decides what a table should actually become at that width. #}
+    <div class="overflow-x-auto">
+    <table>
         <thead>
         <tr>
             <th>Name</th>
@@ -30,12 +33,12 @@
                     {% if skirmish.victorious_faction %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
                            aria-label="Read the report of {{ skirmish.name }}"
-                           class="uk-button uk-button-default uk-button-small uk-button-primary">
+                           class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     {% else %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
                            aria-label="Continue the fight at {{ skirmish.name }}"
-                           class="uk-button uk-button-default uk-button-small uk-button-danger">
+                           class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#f0506e] text-white hover:bg-[#ee395b] hover:text-white">
                         <i class="fa-solid fa-arrow-right"></i>
                     {% endif %}
                     </a>
@@ -43,9 +46,10 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="6" class="uk-text-meta">No skirmishes have been fought yet.</td>
+                <td colspan="6" class="text-sm leading-snug text-[#999]">No skirmishes have been fought yet.</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
+    </div>
 {% endblock content %}

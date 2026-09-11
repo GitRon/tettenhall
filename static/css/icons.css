@@ -1,6 +1,15 @@
+/*
+ * The hand-drawn icon set, sized against the text it sits in.
+ *
+ * "display: inline-block" is what keeps an icon on the same line as the number beside it: an image is
+ * a block by default, so without this the resource counters in the navbar stack their icon above their
+ * value and every inline icon in the game breaks its own line.
+ */
 .svg-icon {
+    display: inline-block;
     width: 1em;
     height: 1em;
+    vertical-align: -0.125em;
 }
 
 .svg-icon.xl {

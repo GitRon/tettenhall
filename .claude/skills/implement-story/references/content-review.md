@@ -45,8 +45,8 @@ the story turns on them.
 4. **The interactive parts are htmx.** `hx-post` sits on `<button>` elements, so they reach the
    accessibility tree as buttons: addressable by role and name, and operable by click, Enter or Space.
    After a mutating click the URL often does not change; snapshot again to see what swapped.
-5. **A failing htmx request does not look like a failure.** `base.html` turns any 5xx into a UIkit toast
-   reading "An error has occurred." that disappears after one second, and htmx does not swap on error, so
+5. **A failing htmx request does not look like a failure.** `static/js/tettenhall.js` turns any 5xx into
+   a toast reading "An error has occurred." that clears itself, and htmx does not swap on error, so
    the page just sits there looking fine. **Check `browser_network_requests` after every mutating
    interaction.** This is the single most missable failure in this codebase.
 6. **Django messages are toasts too**, on the same one-second timeout. If you need to read one, snapshot
@@ -54,8 +54,8 @@ the story turns on them.
 7. **`DEBUG` is on**, so a full-page 500 arrives as the yellow traceback page - the exception is right
    there in the snapshot, and the full traceback is in `content/server.log`.
 8. **Static files come from `node_modules/`.** The script installs them if they are missing and refuses to
-   start otherwise, because without htmx and UIkit every control on every page is dead and the whole
-   review is false negatives.
+   start otherwise, because without htmx every control on every page is dead and the whole review is
+   false negatives.
 9. **The Tailwind stylesheet is compiled, not committed.** Bringing a server up runs `yarn build:css`,
    because Tailwind only emits the utilities it finds in the templates - a sheet compiled before the
    story added a class leaves a page that has quietly lost that bit of layout. A `start` that finds the
