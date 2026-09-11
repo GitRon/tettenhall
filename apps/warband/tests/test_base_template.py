@@ -2,8 +2,9 @@
 Tests for base.html, which every authenticated page extends.
 
 Nothing that breaks here is confined to one view. A template error turns the whole site into a 500
-for the affected user, which is why the status code alone is worth asserting; a broken inline script
-block disarms every htmx control on the page, silently.
+for the affected user, which is why the status code alone is worth asserting; and the toast sink below
+is where names the game generated - factions, towns, warriors, quests - are read either as words or as
+markup.
 """
 
 import pytest
@@ -26,49 +27,47 @@ def test_dashboard_renders_without_a_player_faction(logged_in_client, savegame_w
     assert response.status_code == 200
 
 
-def test_message_with_a_quote_stays_inside_the_javascript_string_literal():
+def test_message_with_a_quote_travels_as_a_document_node():
     """
     Deliberate exception to "never assert on rendered HTML" (testing-strategy.md): this defect lives
     only in the rendered output, so status and context are identical with and without it.
 
-    A message is interpolated into a JavaScript string literal. One holding a double quote used to
-    close that literal early, and a SyntaxError is a parse error - the browser threw away the whole
-    inline block, which is also where the CSRF header, the notification listener and the 5xx toast are
-    registered. Every htmx control on the landing page then posted without a token and got a 403.
+    A message is rendered into a "template" element and read back by "static/js/tettenhall.js" with
+    "textContent". The element is the whole safety argument: autoescaping handles the value on the way
+    in, so a quote is markup-escaped rather than left to end a string literal, and there is no script
+    literal for it to end.
     """
     content = render_to_string(
         "base.html", {"messages": [Message(messages.SUCCESS, 'You accepted the quest "Pillage village".')]}
     )
 
     assert '"Pillage village"' not in content
-    # the JavaScript escaping of &quot;Pillage village&quot; - a quote that never reaches the literal
-    assert "\\u0026quot\\u003BPillage village\\u0026quot\\u003B" in content
+    assert "&quot;Pillage village&quot;" in content
+    # No message reaches JavaScript as source any more. This is what would break first if the sink
+    # moved back into a literal.
+    assert "UIkit.notification" not in content
 
 
 def test_message_with_angle_brackets_reaches_the_toast_as_text():
     """
-    The same exception, for the sink underneath: UIkit inserts "message" as HTML rather than as text,
-    so escaping for the JavaScript literal alone would still let a message be parsed as markup.
+    The same exception, for the markup half: the value sits in a document node, so a "<" that arrived
+    unescaped would open a tag inside the template element and the toast would read whatever survived.
     """
     content = render_to_string("base.html", {"messages": [Message(messages.SUCCESS, "A raid on <the moor>.")]})
 
-    # < would satisfy the JavaScript parser and still hand UIkit a "<" to open a tag with
-    assert "\\u003Cthe moor" not in content
-    # the JavaScript escaping of &lt;the moor&gt;
-    assert "\\u0026lt\\u003Bthe moor\\u0026gt\\u003B" in content
+    assert "<the moor>" not in content
+    assert "&lt;the moor&gt;" in content
 
 
-@override_settings(MESSAGE_TAGS={messages.SUCCESS: 'success"; alert(1); //'})
-def test_message_level_tag_is_escaped_for_the_javascript_string_literal():
+@override_settings(MESSAGE_TAGS={messages.SUCCESS: 'success" onload="alert(1)'})
+def test_message_level_tag_is_escaped_for_the_attribute_it_sits_in():
     """
-    The level tag is interpolated into a second literal on the line below the message, and breaks it
-    the same way. Nothing in this project overrides MESSAGE_TAGS, so the vocabulary is fixed and
-    harmless today - which is exactly why the escaping there would be dropped by someone tidying up
-    without anything failing. It gets "escapejs" and not "escape" because UIkit reads "status" as a
-    CSS class rather than as HTML.
+    The level tag is an attribute value on the same element, which is its own sink: a quote there ends
+    the attribute and everything after it is read as more attributes. Nothing in this project overrides
+    MESSAGE_TAGS, so the vocabulary is fixed and harmless today - which is exactly why the escaping
+    would be dropped by someone tidying up without anything failing.
     """
     content = render_to_string("base.html", {"messages": [Message(messages.SUCCESS, "A quiet month.")]})
 
-    assert 'status: "success";' not in content
-    # the JavaScript escaping of the quote and both semicolons in the hostile tag above
-    assert 'status: "success\\u0022\\u003B alert(1)\\u003B //",' in content
+    assert 'onload="alert(1)"' not in content
+    assert 'data-level="success&quot; onload=&quot;alert(1)"' in content

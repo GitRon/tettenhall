@@ -19,7 +19,19 @@
  * a queryset call, ".table" and ".static" out of whatever spells them. They are inert: no template
  * uses any of those names, and a template that starts to needs the rule anyway.
  */
+/*
+ * The utilities are imported without a "layer()" on purpose, and it is not a detail. A cascade layer
+ * loses to unlayered CSS whatever the specificity, and UIkit ships unlayered - so inside
+ * "layer(utilities)" a "text-[#333]" on an anchor is beaten by UIkit's bare "a { color: #1e87f0 }" and
+ * the link comes out blue. Unlayered, the utility is a class against an element selector and wins,
+ * which is what the ordering of the two stylesheets in "base.html" is there to settle. The theme block
+ * is only custom properties, so it keeps its layer.
+ */
 @import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "tailwindcss/utilities.css" source(none);
 
 @source "../../apps";
+
+/* The toast classes live in "static/js/tettenhall.js", which no "apps" root reaches. Without this the
+ * toasts render as unstyled text in the corner - and nothing fails, which is the worst kind. */
+@source "../../static/js";
