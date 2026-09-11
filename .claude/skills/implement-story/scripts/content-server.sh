@@ -158,6 +158,23 @@ check_prerequisites() {
     echo "('yarn install'). Without them htmx and UIkit 404 and nothing on the page responds." >&2
     return 1
   fi
+
+  # The Tailwind stylesheet is compiled rather than committed, and Tailwind only emits the utilities it
+  # finds in the templates - so this runs on every start, not just when the file is missing. A sheet
+  # built before the story added a class is a page that has silently lost that bit of layout, which is
+  # exactly the kind of thing this phase exists to see.
+  if [ -f "$REPO_ROOT/package.json" ] && grep -q '"build:css"' "$REPO_ROOT/package.json"; then
+    echo "compiling the Tailwind stylesheet" >&2
+    if command -v yarn > /dev/null 2>&1; then
+      yarn build:css >> "$SETUP_LOG" 2>&1
+    elif command -v npm > /dev/null 2>&1; then
+      npm run build:css >> "$SETUP_LOG" 2>&1
+    fi
+    if [ ! -f "$REPO_ROOT/static/dist/tailwind.css" ]; then
+      echo "'build:css' produced no static/dist/tailwind.css - see $SETUP_LOG" >&2
+      return 1
+    fi
+  fi
   return 0
 }
 

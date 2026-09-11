@@ -6,14 +6,17 @@
  * preflight and UIkit's base both reset margins, headings, buttons and lists: with both loaded, every
  * screen in the game is wrong. UIkit is still what styles the app, so the utilities are additive here
  * and the reset stays switched off. #200 adds the preflight line in the commit that removes UIkit.
+ *
+ * "source(none)" switches off automatic source detection, which makes the "@source" below the only
+ * thing deciding what gets scanned. Both halves are load-bearing: left automatic, Tailwind walks the
+ * whole repository and matches class names out of running prose, so every utility named in
+ * docs/patterns/responsive-layout.md compiles into the stylesheet - rules nothing renders, in a sheet
+ * that grows whenever someone writes documentation.
+ *
+ * "apps" rather than the repository root because that is where every template lives, and it also
+ * covers the "css_class" strings the crispy FormHelpers pass from Python.
  */
 @import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
 
-/*
- * Where the class names are. Tailwind's automatic detection starts at this file's own directory, so
- * from "assets/css/" it would find nothing at all - every template lives under "apps/". Naming the
- * directory also keeps "node_modules/" and the compiled output itself out of the scan, rather than
- * relying on them being ignored.
- */
 @source "../../apps";

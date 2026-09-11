@@ -56,14 +56,17 @@ the story turns on them.
 8. **Static files come from `node_modules/`.** The script installs them if they are missing and refuses to
    start otherwise, because without htmx and UIkit every control on every page is dead and the whole
    review is false negatives.
+9. **The Tailwind stylesheet is compiled, not committed.** Every `start` runs `yarn build:css`, because
+   Tailwind only emits the utilities it finds in the templates - a sheet compiled before the story added
+   a class leaves a page that has quietly lost that bit of layout.
 
 ## Write the journey before you click
 
 Put it in `content/journey.md` first, as numbered steps with an expected outcome each. A journey written
 afterwards is just a description of whatever happened.
 
-The baseline journey runs every time, whatever the story was. It is six steps and it catches the damage a
-story does somewhere other than where it was aimed:
+The baseline journey runs every time, whatever the story was. It is seven steps and it catches the damage
+a story does somewhere other than where it was aimed:
 
 1. Log in.
 2. `/savegame/create/` - fill it, submit, land on the dashboard.
@@ -71,6 +74,11 @@ story does somewhere other than where it was aimed:
 4. Every nav entry loads: faction detail, town square, town upgrades, training, skirmishes, finance.
 5. **Finish month** - month logs appear and the silver in the nav moves.
 6. Every page the diff touched, whether or not the story mentions it.
+7. **`browser_resize` to 390x844, then every page the diff touched again.** The phone is the default
+   width in this project, see [responsive layout](../../../../docs/patterns/responsive-layout.md), and
+   nothing in the suite asserts on markup - so this is the only gate the convention has. What counts is
+   the page body scrolling sideways, a control pushed off-screen, or information dropped that the desk
+   gets; spacing judgement is still not a finding. Resize back before step 5 of the next round.
 
 Then the story journey: the steps a player takes to reach and use the new behaviour, straight out of
 `spec.md`, with the expected outcome of each written down before you start. Include the failure paths the

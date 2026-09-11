@@ -71,8 +71,9 @@ scrolling page, or a `hidden` that drops information on a phone that a desk user
 
 Nothing in the suite asserts on markup — see [testing strategy](testing-strategy.md), which rules
 template assertions out because they break on every change and catch nothing. So the only gate on this
-convention is looking at the page at **390px** and at desk width, which the content review phase of
-[`/implement-story`](../../.claude/skills/implement-story/SKILL.md) does.
+convention is looking at the page at **390px** and at desk width. Step 7 of the baseline journey in
+[content review](../../.claude/skills/implement-story/references/content-review.md) is where
+`/implement-story` does that, on every page a story touched.
 
 A screen that was only ever seen at desk width has not been checked, whatever the suite says.
 
