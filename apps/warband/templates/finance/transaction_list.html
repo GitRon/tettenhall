@@ -3,7 +3,9 @@
 {% block content %}
     <h1>Transactions</h1>
 
-    <div>
+    {# The ledger and the status card sit side by side on a desk and stack on a phone, the ledger #}
+    {# first: it is what the page is for and the card summarises it. #}
+    <div class="flex flex-col gap-7 md:flex-row">
         <div class="md:w-2/3">
             {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
             {# decides what a table should actually become at that width. #}
