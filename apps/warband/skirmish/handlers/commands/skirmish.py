@@ -3,6 +3,7 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Command, Event
 
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands import skirmish
 from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
@@ -127,27 +128,22 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
         skirmish_participants_1=participants_1, skirmish_participants_2=participants_2
     )
 
-    # Shuffle both lists to have more interaction going on
+    # Shuffle both lists to have more interaction going on. It is what decides whom each man faces:
+    # the two lists are then walked in step, so the order they are in is the pairing.
     random.shuffle(skirmish_participants_1)
     random.shuffle(skirmish_participants_2)
 
-    # This flag indicates when warriors from list 1 are more numerous, and so they can attack the other side without
-    # to decide who attacks first. Having more guys will result in a free attack.
-    used_warriors_from_list_2 = 0
-    free_attack_due_to_being_more_numerous = False
-
-    # For every warrior in list 1...
+    # For every warrior in the larger group...
+    index: int
     participant_1: SkirmishParticipant
-    for participant_1 in skirmish_participants_1:
-        # If list 2 is shorter, list 1 warriors get matched again
-        if used_warriors_from_list_2 == len(skirmish_participants_2):
-            free_attack_due_to_being_more_numerous = True
+    participant_2: SkirmishParticipant
+    for index, participant_1 in enumerate(skirmish_participants_1):
+        if index < len(skirmish_participants_2):
+            # One opponent each, in the order the shuffle left them in. Matching them off rather than
+            # drawing means three men a side are three fights, and not the same man struck three times
+            # while two of his are never touched.
+            participant_2 = skirmish_participants_2[index]
 
-        # Fetch a random defender
-        participant_2: SkirmishParticipant = random.choice(skirmish_participants_2)
-        used_warriors_from_list_2 += 1  # noqa: SIM113
-
-        if not free_attack_due_to_being_more_numerous:
             message_list.append(
                 FighterPairsMatched(
                     skirmish=context.skirmish,
@@ -159,6 +155,11 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
                 )
             )
         else:
+            # The smaller group has run out, so this man is one the other side cannot field anybody
+            # against and he strikes unopposed. Whom he falls on is the one draw in the round that may
+            # repeat, because he is by definition a man more than there are opponents to go round.
+            participant_2 = random.choice(skirmish_participants_2)
+
             message_list.append(
                 AttackerDefenderDecided(
                     skirmish=context.skirmish,
@@ -167,6 +168,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
                     attacker_action=participant_1.skirmish_action,
                     defender=participant_2.warrior,
                     defender_action=participant_2.skirmish_action,
+                    initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
                 )
             )
 
@@ -209,6 +211,7 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
         attacker_action=attack_action,
         defender=defender,
         defender_action=defend_action,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
 
 

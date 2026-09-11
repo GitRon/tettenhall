@@ -5,6 +5,7 @@ import pytest
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.handlers.commands.skirmish import (
     handle_assign_fighter_pairs,
@@ -307,6 +308,138 @@ def test_handle_assign_fighter_pairs_grants_a_free_attack_to_the_more_numerous_g
             attacker_action=SkirmishActionChoices.FAST_ATTACK,
             defender=enemy_participant.warrior,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
+        ),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_assign_fighter_pairs_gives_each_man_an_opponent_of_his_own():
+    """
+    Two a side are two fights, not two men falling on whoever the draw picked - which could be the
+    same man twice while the other is never touched.
+    """
+    skirmish = SkirmishFactory()
+    first_attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+    second_attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.FAST_ATTACK,
+    )
+    first_enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+    )
+    second_enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.RISKY_ATTACK,
+    )
+
+    # Boundary randomness: both groups get shuffled, so pin the resulting order
+    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"):
+        result = handle_assign_fighter_pairs(
+            context=StartDuel(
+                skirmish=skirmish,
+                skirmish_participants_1=[first_attacking_participant, second_attacking_participant],
+                skirmish_participants_2=[first_enemy_participant, second_enemy_participant],
+            )
+        )
+
+    assert result == [
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=first_attacking_participant.warrior,
+            warrior_2=first_enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack_action_2=SkirmishActionChoices.DEFENSIVE_STANCE,
+        ),
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=second_attacking_participant.warrior,
+            warrior_2=second_enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.FAST_ATTACK,
+            attack_action_2=SkirmishActionChoices.RISKY_ATTACK,
+        ),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_assign_fighter_pairs_sends_only_the_surplus_man_in_free():
+    """
+    Everyone the other side can field somebody against is matched off first, and only the man left
+    over strikes unopposed - so a side one larger buys one free attack and not three.
+    """
+    skirmish = SkirmishFactory()
+    first_attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+    second_attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.FAST_ATTACK,
+    )
+    third_attacking_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.RISKY_ATTACK,
+    )
+    first_enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+    )
+    second_enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+
+    # Boundary randomness: both groups get shuffled, and whom the surplus man falls on is a draw
+    with (
+        mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"),
+        mock.patch(
+            "apps.warband.skirmish.handlers.commands.skirmish.random.choice",
+            return_value=first_enemy_participant,
+        ),
+    ):
+        result = handle_assign_fighter_pairs(
+            context=StartDuel(
+                skirmish=skirmish,
+                skirmish_participants_1=[
+                    first_attacking_participant,
+                    second_attacking_participant,
+                    third_attacking_participant,
+                ],
+                skirmish_participants_2=[first_enemy_participant, second_enemy_participant],
+            )
+        )
+
+    assert result == [
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=first_attacking_participant.warrior,
+            warrior_2=first_enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack_action_2=SkirmishActionChoices.DEFENSIVE_STANCE,
+        ),
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=second_attacking_participant.warrior,
+            warrior_2=second_enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.FAST_ATTACK,
+            attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+        ),
+        AttackerDefenderDecided(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            attacker=third_attacking_participant.warrior,
+            attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+            defender=first_enemy_participant.warrior,
+            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
         ),
     ]
 
@@ -431,6 +564,7 @@ def test_handle_determine_attacker_and_defender_lets_the_first_warrior_attack():
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=enemy_warrior,
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
 
 
@@ -460,6 +594,7 @@ def test_handle_determine_attacker_and_defender_lets_the_second_warrior_attack()
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=attacking_warrior,
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
 
 
@@ -487,6 +622,7 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
         attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
         defender=enemy_warrior,
         defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
 
 

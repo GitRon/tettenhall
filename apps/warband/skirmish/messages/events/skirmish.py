@@ -47,6 +47,11 @@ class AttackerDefenderDecided(Event):
     attacker_action: SkirmishActionTypeHint
     defender: Warrior
     defender_action: SkirmishActionTypeHint
+    # Why this man is the one striking, an "InitiativeChoices" value. Both paths that raise this end
+    # in one warrior attacking another, and the difference between them - a roll won, or an opponent
+    # nobody was left to face - is not recoverable from anything else the event carries. No default:
+    # a third way to become the attacker has to answer this rather than be read as a won roll.
+    initiative: int
 
 
 @dataclass(kw_only=True)

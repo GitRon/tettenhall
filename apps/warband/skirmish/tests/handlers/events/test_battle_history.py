@@ -4,6 +4,7 @@ from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.battle_history import (
@@ -187,7 +188,7 @@ def test_handle_log_warrior_defends_all_damage_refuses_an_outcome_it_has_no_sent
         handle_log_warrior_defends_all_damage(context=context)
 
 
-def test_handle_log_attacker_defender_decided_logs_the_chosen_action():
+def test_handle_log_attacker_defender_decided_names_the_lost_roll():
     skirmish = SkirmishFactory.build()
     attacker = WarriorFactory.build(name="Beorn")
     defender = WarriorFactory.build(name="Cuthred")
@@ -200,13 +201,54 @@ def test_handle_log_attacker_defender_decided_logs_the_chosen_action():
             attacker_action=SkirmishActionChoices.RISKY_ATTACK,
             defender=defender,
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
-        message="Beorn is the attacker and Cuthred the defender and chooses to attack with a Risky attack.",
+        message="Beorn is quicker than Cuthred and comes at him with a Risky attack, so Cuthred's "
+        "Defensive stance serves as his defence.",
     )
+
+
+def test_handle_log_attacker_defender_decided_names_the_missing_opponent():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Beorn")
+    defender = WarriorFactory.build(name="Cuthred")
+
+    result = handle_log_attacker_defender_decided(
+        context=AttackerDefenderDecided(
+            skirmish=skirmish,
+            round_number=1,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+            defender=defender,
+            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Nobody is left to face Beorn, so he strikes free at Cuthred with a Risky attack, and "
+        "Cuthred's Defensive stance serves as his defence.",
+    )
+
+
+def test_handle_log_attacker_defender_decided_raises_on_an_unworded_initiative():
+    context = AttackerDefenderDecided(
+        skirmish=SkirmishFactory.build(),
+        round_number=1,
+        attacker=WarriorFactory.build(name="Beorn"),
+        attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+        defender=WarriorFactory.build(name="Cuthred"),
+        defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+        initiative=0,
+    )
+
+    with pytest.raises(RuntimeError, match="No battle log sentence for initiative"):
+        handle_log_attacker_defender_decided(context=context)
 
 
 def test_handle_log_warrior_incapacitation_logs_the_knockout():

@@ -2,6 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands.battle_history import CreateBattleHistory
 from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
@@ -45,11 +46,32 @@ def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAll
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
 def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided) -> Command:
-    return CreateBattleHistory(
-        skirmish=context.skirmish,
-        message=f"{context.attacker} is the attacker and {context.defender} the defender and chooses "
-        f"to attack with a {SkirmishActionChoices(context.attacker_action).label}.",
-    )
+    """
+    Who strikes, why it is him rather than the other man, and where the other man's order went.
+
+    The order the defender was given is not swallowed: the damage service feeds it through
+    "get_defense_value", so it is spent as his defence. Saying only that he is the defender is what
+    reads as a command the game ignored - he chose an attack, and no line accounted for it.
+
+    A third way to become the attacker raises rather than picking up a sentence nobody wrote for it.
+    """
+    attack = SkirmishActionChoices(context.attacker_action).label
+    defence = SkirmishActionChoices(context.defender_action).label
+
+    if context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL:
+        message = (
+            f"{context.attacker} is quicker than {context.defender} and comes at him with a {attack}, "
+            f"so {context.defender}'s {defence} serves as his defence."
+        )
+    elif context.initiative == InitiativeChoices.INITIATIVE_UNOPPOSED:
+        message = (
+            f"Nobody is left to face {context.attacker}, so he strikes free at {context.defender} with "
+            f"a {attack}, and {context.defender}'s {defence} serves as his defence."
+        )
+    else:
+        raise RuntimeError(f"No battle log sentence for initiative {context.initiative}.")
+
+    return CreateBattleHistory(skirmish=context.skirmish, message=message)
 
 
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
