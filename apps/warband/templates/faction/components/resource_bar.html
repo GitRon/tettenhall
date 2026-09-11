@@ -13,8 +13,21 @@
     {# "open_skirmishes" is only in the context once there is a savegame, so the guard travels with #}
     {# the counters rather than staying behind in base.html - this template is also rendered on its #}
     {# own, by the view the hx-get above reaches. #}
+    {# Each counter leads to the page that answers it. They are the one part of the shell that is on #}
+    {# every screen, so a fight the month is blocked on is one tap away from wherever the player #}
+    {# noticed the number - and the ledger, which is no section of its own, is reached here and #}
+    {# nowhere else. #}
     {% if current_savegame %}
-        <span>{% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}</span>
+        {# A savegame can be without a player faction, and reversing the url with no id raises #}
+        {% if current_savegame.player_faction_id %}
+            <a class="text-[#333] no-underline hover:text-[#666]"
+               href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}"
+               title="Your war band">
+                {% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}
+            </a>
+        {% else %}
+            <span>{% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}</span>
+        {% endif %}
         {# The one element guaranteed to be in front of the player when they click "Finish #}
         {# month", so it is where the wage bill has to speak up. The detail stays on the #}
         {# cost card and on the dashboard; this is a marker and a way to reach them. #}
@@ -27,16 +40,26 @@
                 </a>
             </span>
         {% else %}
-            <span>{% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}</span>
+            <a class="text-[#333] no-underline hover:text-[#666]"
+               href="{% url 'warband:transaction-list-view' %}"
+               title="The ledger">
+                {% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}
+            </a>
         {% endif %}
-        <span>{% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}</span>
+        <a class="text-[#333] no-underline hover:text-[#666]"
+           href="{% url 'warband:skirmish-list-view' %}"
+           title="Skirmishes still open">
+            {% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}
+        </a>
         {# Every cost in the game is denominated in months - healing, training, building, one fight #}
         {# per faction per month - and the month was on no screen the player is looking at while #}
         {# spending them. It sits here rather than in "base.html" so that finishing a month, which #}
         {# redirects, and every htmx swap that leaves the navbar alone both leave it right. Font #}
         {# Awesome rather than an "svg_icon": the icon set carries no month. #}
-        <span title="Month">
+        <a class="text-[#333] no-underline hover:text-[#666]"
+           href="{% url 'warband:dashboard-view' %}"
+           title="Month">
             <i class="fa-solid fa-calendar-days"></i> {{ current_savegame.current_month }}
-        </span>
+        </a>
     {% endif %}
 </div>

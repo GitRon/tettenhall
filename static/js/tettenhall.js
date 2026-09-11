@@ -1,7 +1,7 @@
 /*
- * Everything the pages need from JavaScript: the CSRF header htmx has to send, the toasts, and the two
- * menus in the navbar. A static file rather than a block in "base.html", so nothing here is rendered by
- * Django and no value has to survive being written into a script literal.
+ * Everything the pages need from JavaScript: the CSRF header htmx has to send, the toasts, and the
+ * account menu in the navbar. A static file rather than a block in "base.html", so nothing here is
+ * rendered by Django and no value has to survive being written into a script literal.
  */
 (() => {
     'use strict';
@@ -77,46 +77,15 @@
         toast(element.content.textContent.trim(), element.dataset.level);
     });
 
-    /*
-     * The navbar panel. The "hidden" class is the closed state below "lg:"; at "lg:" the stylesheet
-     * shows the panel whatever this says, so the button is hidden there and never gets to disagree
-     * with it.
-     *
-     * The class and not the "hidden" attribute: the browser's own rule for the attribute carries
-     * "!important", which no "lg:block" can outrank, and the panel would then be unreachable at every
-     * width instead of just closed at some of them.
-     */
-    const toggle = document.querySelector('[data-nav-toggle]');
-    const panel = document.getElementById('nav-panel');
-
-    const panelIsOpen = () => panel && !panel.classList.contains('hidden');
-
-    const closePanel = () => {
-        if (!panelIsOpen()) {
-            return;
-        }
-        panel.classList.add('hidden');
-        toggle.setAttribute('aria-expanded', 'false');
-    };
-
-    if (toggle && panel) {
-        toggle.addEventListener('click', () => {
-            const open = panel.classList.toggle('hidden') === false;
-            toggle.setAttribute('aria-expanded', String(open));
-        });
-    }
-
     const openMenus = () => document.querySelectorAll('details[data-menu][open]');
 
-    // The two things "details" and a plain button do not give: Escape closes, and so does a click
-    // somewhere else on the page. Both apply to the account menu and to the navbar panel alike -
-    // whichever of them is open is the thing covering the page.
+    // The two things "details" does not give: Escape closes it, and so does a click somewhere else on
+    // the page. Whichever menu is open is the thing covering the page.
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             openMenus().forEach((element) => {
                 element.open = false;
             });
-            closePanel();
         }
     });
 
@@ -126,10 +95,5 @@
                 element.open = false;
             }
         });
-        // The toggle is outside the panel, so without excluding it the click that opens the panel
-        // would travel up to here and close it again.
-        if (panelIsOpen() && !panel.contains(event.target) && !toggle.contains(event.target)) {
-            closePanel();
-        }
     });
 })();
