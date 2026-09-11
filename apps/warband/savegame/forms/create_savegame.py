@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Fieldset, Layout, Submit
 from django import forms
 
+from apps.common import form_styles
 from apps.warband.faction.models import Culture
 
 
@@ -22,14 +23,14 @@ class SavegameCreateForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 "",
-                Div(Field("town_name", css_class="uk-input"), css_class="uk-margin"),
-                Div(Field("faction_name", css_class="uk-input"), css_class="uk-margin"),
-                Div(Field("faction_culture", css_class="uk-select"), css_class="uk-margin"),
+                Div(Field("town_name", css_class=form_styles.INPUT), css_class=form_styles.FIELD_SPACING),
+                Div(Field("faction_name", css_class=form_styles.INPUT), css_class=form_styles.FIELD_SPACING),
+                Div(Field("faction_culture", css_class=form_styles.SELECT), css_class=form_styles.FIELD_SPACING),
                 Div(
                     Submit(
                         "submit",
                         "Create savegame",
-                        css_class="uk-button uk-button-primary uk-button-small",
+                        css_class=form_styles.BUTTON_PRIMARY_SMALL,
                     )
                 ),
             )

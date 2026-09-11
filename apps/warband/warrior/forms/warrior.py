@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.template.defaultfilters import floatformat
 from django.urls import reverse
 
+from apps.common import form_styles
 from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.skirmish.models.warrior import Warrior
@@ -64,12 +65,12 @@ class WarriorForm(forms.ModelForm):
         }
         self.helper.form_method = "post"
         self.helper.layout = Layout(
-            Div(Field(htmx_field, css_class="uk-select")),
+            Div(Field(htmx_field, css_class=form_styles.SELECT)),
             Div(
                 Submit(
                     "submit",
                     "Save",
-                    css_class="uk-button uk-button-primary uk-button-small",
+                    css_class=form_styles.BUTTON_PRIMARY_SMALL,
                 )
             ),
         )

@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django import forms
 
+from apps.common import form_styles
 from apps.warband.training.models.training import Training
 
 
@@ -29,18 +30,18 @@ class TrainingForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = "post"
         self.helper.layout = Layout(
-            Div(Field("category", css_class="uk-select")),
+            Div(Field("category", css_class=form_styles.SELECT)),
             Div(
                 Submit(
                     "submit",
                     "Save",
-                    css_class="uk-button uk-button-primary uk-button-small",
+                    css_class=form_styles.BUTTON_PRIMARY_SMALL,
                 ),
                 # The only way off this page otherwise is the navbar, which leaves the player on a
                 # form they have already changed with no way to abandon it.
                 HTML(
                     "<a href=\"{% url 'warband:training-list-view' %}\""
-                    ' class="uk-button uk-button-default uk-button-small">Cancel</a>'
+                    f' class="{form_styles.BUTTON_DEFAULT_SMALL}">Cancel</a>'
                 ),
             ),
         )

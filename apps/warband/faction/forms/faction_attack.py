@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout, Submit
 from django import forms
 
+from apps.common import form_styles
 from apps.warband.skirmish.models.warrior import Warrior
 
 
@@ -39,12 +40,12 @@ class FactionAttackForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = "post"
         self.helper.layout = Layout(
-            Div(Field("assigned_warriors", css_class="uk-select")),
+            Div(Field("assigned_warriors", css_class=form_styles.SELECT_MULTIPLE)),
             Div(
                 Submit(
                     "submit",
                     "Attack",
-                    css_class="uk-button uk-button-danger uk-button-small",
+                    css_class=form_styles.BUTTON_DANGER_SMALL,
                 )
             ),
         )
