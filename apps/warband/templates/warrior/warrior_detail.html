@@ -1,7 +1,33 @@
 {% extends 'base.html' %}
 
+{# The url carries only the man's id, so which section his page belongs to is the view's answer and #}
+{# not the router's - his own men are the war band, a rival's are the rivals, and a mercenary #}
+{# standing in the pub is the town. #}
+{% block navigation %}
+    {% include 'navigation/components/section_nav.html' with current_nav_section=nav_section %}
+{% endblock navigation %}
+
 {% block content %}
     <h1>Warrior {{ object.display_name }} of {{ object.faction }}</h1>
+
+    {# Every anchor on this page used to belong to the navbar, so equipping a second man meant walking #}
+    {# back through the section nav and the roster for each one. The list he was read off, and the two #}
+    {# men standing either side of him in it. #}
+    {% if roster_url %}
+        <div class="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <a class="text-sm uppercase text-[#666] no-underline hover:text-[#333]" href="{{ roster_url }}">
+                <i aria-hidden="true" class="fa-solid fa-arrow-left"></i> {{ roster_label }}
+            </a>
+            {% if previous_warrior_id %}
+                <a class="text-sm uppercase text-[#666] no-underline hover:text-[#333]"
+                   href="{% url 'warband:warrior-detail-view' previous_warrior_id %}">Previous</a>
+            {% endif %}
+            {% if next_warrior_id %}
+                <a class="text-sm uppercase text-[#666] no-underline hover:text-[#333]"
+                   href="{% url 'warband:warrior-detail-view' next_warrior_id %}">Next</a>
+            {% endif %}
+        </div>
+    {% endif %}
 
     {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
     {# decides what a table should actually become at that width. #}

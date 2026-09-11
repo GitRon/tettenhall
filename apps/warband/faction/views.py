@@ -79,9 +79,16 @@ class FactionRosterContextMixin:
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        # The card prints the man's faction, so the join is one query instead of one per card
+        # The card prints the man's faction, so the join is one query instead of one per card.
+        #
+        # By name, and the id only to break a tie between two men of the same one: the progress table
+        # below the cards reads the same list, and a warrior's own page walks it with Previous and
+        # Next - so an unordered roster would be three screens disagreeing about who comes after whom.
         warrior_list = list(
-            Warrior.objects.select_related("faction").exclude_dead().filter_faction(faction_id=self.object.id)
+            Warrior.objects.select_related("faction")
+            .exclude_dead()
+            .filter_faction(faction_id=self.object.id)
+            .order_by("name", "id")
         )
 
         if context["is_player_faction"]:

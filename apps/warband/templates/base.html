@@ -17,17 +17,11 @@
 {# The token travels as data rather than as a JavaScript literal, which is what lets the whole script #}
 {# below be a static file with no template rendering in it. #}
 <body data-csrf-token="{{ csrf_token }}">
-{# The counters and "Finish month" stay in the bar at every width: they are the numbers every #}
-{# decision in the game is made against and the one control that advances it. Navigation is what #}
-{# collapses. #}
-{#  #}
-{# "lg:" is where the seven links come back out into the row. Measured rather than chosen: the full #}
-{# row needs about 1160px (logo 103 + links 570 + counters 138 + the right-hand group 288, plus the #}
-{# gutters), so "md:" at 768px is not close. Between 1024px and about 1160px the bar is two lines - #}
-{# which is what it does today at any width, the counters having always wrapped below the links. #}
-{# #64 owns making it one. #}
-<nav class="mb-4 bg-[#f8f8f8]" data-navbar>
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 lg:min-h-20 lg:px-8 lg:py-0">
+{# The bar carries what is true everywhere: the counters every decision is made against, the one #}
+{# control that advances the game, and the account menu. Where the player can go is the section nav #}
+{# below it - see docs/patterns/navigation.md. #}
+<nav class="bg-[#f8f8f8]" data-navbar>
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 md:min-h-20 md:px-4 md:py-0 lg:px-8">
         <a class="text-2xl text-[#333] no-underline hover:text-[#333]"
            href="{% url 'warband:dashboard-view' %}">Tettenhall</a>
 
@@ -40,12 +34,12 @@
             {# every command view turns a decided savegame away with a toast, so this says which #}
             {# state the game is in instead of offering the month again. #}
             {% if current_savegame.is_over %}
-                <span class="text-sm uppercase text-[#999] lg:ml-auto">Game over</span>
+                <span class="text-sm uppercase text-[#999] md:ml-auto">Game over</span>
             {% else %}
                 {# A button rather than an anchor, because this posts the month: an "a" with no href #}
                 {# is out of Tab's reach and announced as text. The utilities are what keep it looking #}
                 {# like the nav entry beside it. #}
-                <button class="cursor-pointer border-none bg-transparent p-0 text-sm uppercase text-[#333] hover:text-[#666] lg:ml-auto"
+                <button class="cursor-pointer border-none bg-transparent p-0 text-sm uppercase text-[#333] hover:text-[#666] md:ml-auto"
                         hx-post="{% url 'warband:finish-month-view' %}"
                         type="button">
                     Finish month
@@ -66,95 +60,24 @@
                     <li><a class="text-sm text-[#666]" href="{% url 'warband:logout-view' %}">Logout</a></li>
                 </ul>
             </details>
-
-            {% if current_savegame %}
-                {# Below "lg:" this is the only way to the seven links, so it is a button: reachable by #}
-                {# Tab, operable by Enter and Space, and announced with its expanded state. #}
-                <button aria-controls="nav-panel"
-                        aria-expanded="false"
-                        class="cursor-pointer border-none bg-transparent p-0 text-lg text-[#666] lg:hidden"
-                        data-nav-toggle
-                        type="button">
-                    <i aria-hidden="true" class="fa-solid fa-bars"></i>
-                    <span class="sr-only">Menu</span>
-                </button>
-            {% endif %}
-        {% endif %}
-
-        {% if request.user.is_authenticated and current_savegame %}
-            {# "order-last" and "w-full" put the panel on its own line under the bar on a phone. At #}
-            {# "lg:" it is an ordinary item in the row again, and "lg:block" beats the "hidden" class #}
-            {# there - so the toggle's state stops mattering at desk width, and a panel left open on a #}
-            {# phone is not still open after a resize. #}
-            {#  #}
-            {# The closed state is the "hidden" class and not the "hidden" attribute, which looks #}
-            {# equivalent and is not: the browser's own rule for that attribute is "!important", so it #}
-            {# beats "lg:block" and the seven links stay unreachable at every width. Tailwind's #}
-            {# preflight ships an "!important" rule of its own to win that fight, and preflight is #}
-            {# switched off here until #200. #}
-            <div class="order-last hidden w-full lg:order-none lg:block lg:w-auto" id="nav-panel">
-                <ul class="m-0 flex list-none flex-col gap-y-2 p-0 lg:flex-row lg:gap-x-6">
-                    {# A savegame can be without a player faction, and reversing these urls with no id raises #}
-                    {% if current_savegame.player_faction_id %}
-                        <li>
-                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
-                               href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}">
-                                {{ current_savegame.player_faction }}
-                            </a>
-                        </li>
-                        <li>
-                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
-                               href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">
-                                {{ current_savegame.player_faction.town_name }}
-                            </a>
-                        </li>
-                        <li>
-                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
-                               href="{% url 'warband:town-upgrade-view' %}">
-                                Town upgrades
-                            </a>
-                        </li>
-                        <li>
-                            <a class="text-sm uppercase text-[#999] hover:text-[#666]"
-                               href="{% url 'warband:rival-faction-list-view' %}">
-                                Rivals
-                            </a>
-                        </li>
-                    {% endif %}
-                    <li>
-                        <a class="text-sm uppercase text-[#999] hover:text-[#666]"
-                           href="{% url 'warband:training-list-view' %}">
-                            Training
-                        </a>
-                    </li>
-                    <li>
-                        <a class="text-sm uppercase text-[#999] hover:text-[#666]"
-                           href="{% url 'warband:skirmish-list-view' %}">
-                            Skirmishes
-                        </a>
-                    </li>
-                    <li>
-                        <a class="text-sm uppercase text-[#999] hover:text-[#666]"
-                           href="{% url 'warband:transaction-list-view' %}">
-                            Finance
-                        </a>
-                    </li>
-                    {# TODO (#2): implement estates, then put this entry back. A nav link to "#" reads as a #}
-                    {# feature that is merely broken, so it stays out until there is a page behind it. #}
-                    {% comment %}
-                        <li>
-                            <a href="#">
-                                Estates
-                            </a>
-                        </li>
-                    {% endcomment %}
-                </ul>
-            </div>
         {% endif %}
     </div>
 </nav>
 
-<div class="px-4 lg:px-8">
+{# Both levels in one block, for the two pages that have to answer differently: the fight screen is a #}
+{# mode and carries no navigation at all - suppressing only the sections would leave the page nav #}
+{# offering the same accidental way out - and a warrior's page belongs to whichever section his #}
+{# faction does, which the url does not say. #}
+{% block navigation %}
+    {% include 'navigation/components/section_nav.html' %}
+    {% include 'navigation/components/page_nav.html' %}
+{% endblock navigation %}
+
+{# The section nav is pinned to the bottom of the screen below "md:", so it is out of flow and the #}
+{# last control on a page would sit under it. The floor is unconditional: it costs a phone screen #}
+{# some empty space where there is no bar - the login page, the fight - and the alternative is every #}
+{# page having to know whether the bar is there. #}
+<div class="px-4 pb-24 pt-4 md:pb-6 lg:px-8">
     {% block content %}{% endblock %}
 </div>
 

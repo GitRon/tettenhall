@@ -1479,3 +1479,20 @@ def test_resource_bar_htmx_view_renders_without_a_player_faction(logged_in_clien
 
     assert response.status_code == 200
     assert response.context["current_balance"] == 0
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_lists_the_roster_by_name(logged_in_client, current_savegame):
+    """
+    The progress table under the cards reads the same list, and a warrior's own page walks it with
+    Previous and Next - so an unordered roster would be three screens disagreeing about who comes
+    after whom.
+    """
+    cenwulf = WarriorFactory(faction=current_savegame.player_faction, name="Cenwulf")
+    aelfric = WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+
+    response = logged_in_client.get(
+        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id})
+    )
+
+    assert list(response.context["warrior_list"]) == [aelfric, cenwulf]

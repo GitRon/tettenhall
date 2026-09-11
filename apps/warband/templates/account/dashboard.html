@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Dashboard</h1>
+    {# The page says what the entry that leads to it says. Every page of the game used to name #}
+    {# itself differently from its own menu entry, which is one of the things four sections are for. #}
+    <h1>Month{% if current_savegame %} {{ current_savegame.current_month }}{% endif %}</h1>
 
     {# The first screen of the game, and the only one a fresh account reaches without the user #}
     {# dropdown. Without this the page is a heading over nothing: every block below it is silent #}
@@ -31,6 +33,26 @@
     {# The page the player lands on after finishing a month, so it is where next month's shortfall is #}
     {# worth the most: the consequence is three months away and every one of them starts here. #}
     {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
+
+    {# What every man improves at when the month turns. One faction-wide row, pre-set on a new #}
+    {# savegame and often never touched, so it is read here rather than looked up somewhere - and its #}
+    {# empty state is a warning about the month, which is what this page is for. Without a training #}
+    {# there is no id to reverse the edit url with. #}
+    {% if current_savegame %}
+        <div class="mb-5 flex flex-col items-start gap-y-2.5 bg-[#f8f8f8] py-[15px] pl-[15px] pr-[29px] text-[#666] md:flex-row md:items-center md:justify-between md:gap-x-5">
+            {% if current_training %}
+                <div>
+                    <strong>Training:</strong> {{ current_training }} - grows {{ current_training.grown_attributes_display }}.
+                </div>
+                <a class="box-border inline-block shrink-0 cursor-pointer border border-[#e5e5e5] bg-transparent px-[30px] py-0 text-sm uppercase leading-[38px] text-[#333] no-underline hover:border-[#b2b2b2] hover:text-[#333]"
+                   href="{% url 'warband:training-edit-view' current_training.id %}">
+                    Change training
+                </a>
+            {% else %}
+                <div>No training is set. Nobody improves in a month without one.</div>
+            {% endif %}
+        </div>
+    {% endif %}
 
     {% for active_quest in faction.active_quests.all %}
         <div class="mb-5 flex flex-col items-start gap-y-2.5 bg-[#f8f8f8] py-[15px] pl-[15px] pr-[29px] text-[#666] md:flex-row md:items-center md:justify-between md:gap-x-5">

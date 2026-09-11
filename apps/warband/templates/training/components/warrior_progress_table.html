@@ -1,0 +1,65 @@
+{# Where each man stands on the four attributes a month of training moves. #}
+{#  #}
+{# Beside the roster rather than on a page of its own: it is a fact about the war band, and the #}
+{# choice that drives it is one faction-wide row that lives on the month's page. Reads the same #}
+{# "warrior_list" the cards above it do, so the two can never describe different war bands. #}
+<h3>Progress</h3>
+{# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+{# decides what a table should actually become at that width. #}
+<div class="overflow-x-auto">
+    <table>
+        <thead>
+        <tr>
+            <th>Warrior</th>
+            <th>Strength</th>
+            <th>Dexterity</th>
+            <th>Health</th>
+            <th>Morale</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for warrior in warrior_list %}
+            <tr>
+                <td>
+                    {{ warrior.display_name }}
+                    {% comment %}
+                        The month trains the healthy only, so a man who is not says so here rather
+                        than sitting in the table looking like everybody else and never moving.
+                    {% endcomment %}
+                    {% if not warrior.is_healthy %}
+                        <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.get_condition_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.strength }}</span>
+                    {% if warrior.is_healthy %}
+                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.strength_progress }}" max="100"></progress>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.dexterity }}</span>
+                    {% if warrior.is_healthy %}
+                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.dexterity_progress }}" max="100"></progress>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.max_health }}</span>
+                    {% if warrior.is_healthy %}
+                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.health_progress }}" max="100"></progress>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.max_morale }}</span>
+                    {% if warrior.is_healthy %}
+                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.morale_progress }}" max="100"></progress>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5" class="text-sm leading-snug text-[#999]">Nobody is in training this month.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
