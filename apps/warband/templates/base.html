@@ -64,12 +64,14 @@
     </div>
 </nav>
 
-{# A block rather than a bare include, for the two pages that have to answer differently: the fight #}
-{# screen is a mode and carries no section nav at all, and a warrior's page belongs to whichever #}
-{# section his faction does, which the url does not say. #}
-{% block section_nav %}{% include 'navigation/components/section_nav.html' %}{% endblock %}
-
-{% include 'navigation/components/page_nav.html' %}
+{# Both levels in one block, for the two pages that have to answer differently: the fight screen is a #}
+{# mode and carries no navigation at all - suppressing only the sections would leave the page nav #}
+{# offering the same accidental way out - and a warrior's page belongs to whichever section his #}
+{# faction does, which the url does not say. #}
+{% block navigation %}
+    {% include 'navigation/components/section_nav.html' %}
+    {% include 'navigation/components/page_nav.html' %}
+{% endblock navigation %}
 
 {# The section nav is pinned to the bottom of the screen below "md:", so it is out of flow and the #}
 {# last control on a page would sit under it. The floor is unconditional: it costs a phone screen #}

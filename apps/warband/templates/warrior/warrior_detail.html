@@ -3,9 +3,9 @@
 {# The url carries only the man's id, so which section his page belongs to is the view's answer and #}
 {# not the router's - his own men are the war band, a rival's are the rivals, and a mercenary #}
 {# standing in the pub is the town. #}
-{% block section_nav %}
+{% block navigation %}
     {% include 'navigation/components/section_nav.html' with current_nav_section=nav_section %}
-{% endblock section_nav %}
+{% endblock navigation %}
 
 {% block content %}
     <h1>Warrior {{ object.display_name }} of {{ object.faction }}</h1>

@@ -2,6 +2,7 @@ import pytest
 from django.test import RequestFactory
 from django.urls import reverse
 
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.navigation.context_processors import navigation
 
 
@@ -49,6 +50,21 @@ def test_navigation_offers_the_pages_of_the_current_section(logged_in_client, cu
 
     assert [page["label"] for page in response.context["nav_pages"]] == ["Rivals", "Skirmishes"]
     assert [page["is_current"] for page in response.context["nav_pages"]] == [False, True]
+
+
+@pytest.mark.django_db
+def test_navigation_offers_no_pages_for_a_section_that_is_not_on_the_bar(
+    logged_in_client, savegame_without_player_faction
+):
+    """
+    Town is dropped without a player faction, so its page nav must not be offering Buildings under a
+    section nothing names.
+    """
+    rival_faction = FactionFactory(savegame=savegame_without_player_faction)
+
+    response = logged_in_client.get(reverse("warband:town-square-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.context["nav_pages"] == []
 
 
 @pytest.mark.django_db

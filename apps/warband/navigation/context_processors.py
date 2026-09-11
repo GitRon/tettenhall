@@ -50,7 +50,13 @@ def navigation(request) -> dict:  # noqa: PBR001
         if player_faction_id or not section.takes_player_faction
     ]
 
-    current_section = next((section for section in SECTIONS if section.key == current_section_key), None)
+    # Only among the entries that are actually on the bar. A savegame without a player faction has no
+    # Town entry, and its page nav must not be offering Buildings under a section nothing names.
+    rendered_keys = {section["key"] for section in sections}
+    current_section = next(
+        (section for section in SECTIONS if section.key == current_section_key and section.key in rendered_keys),
+        None,
+    )
     pages = (
         [
             {

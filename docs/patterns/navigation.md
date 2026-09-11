@@ -52,7 +52,7 @@ Two pages cannot be answered by the route alone, because one view serves two sec
   compares it against the savegame's player faction.
 - **A warrior's page** carries the man's id and not his faction's, so the section is not in the url at
   all. `WarriorDetailView` names its own (`nav_section`), and `warrior_detail.html` overrides the
-  `section_nav` block to pass it. His own men are Warband, a rival's are Rivals, a prisoner he holds is
+  `navigation` block to pass it. His own men are Warband, a rival's are Rivals, a prisoner he holds is
   Warband and a mercenary in his pub is Town.
 
 A page that belongs to no section marks nothing, and that is a real answer rather than a failure: the
@@ -60,9 +60,11 @@ ledger, the savegame screens and the login page are all reachable without being 
 
 ## The fight is a mode
 
-`skirmish_fight.html` overrides `section_nav` with nothing. The fight carries its own round loop and
-the month refuses to advance while it is unresolved, so it is not a destination to be navigated away
-from by accident — it has one exit of its own, said before the fight and not only after it.
+`skirmish_fight.html` overrides the `navigation` block with nothing — both levels, because suppressing
+only the sections would leave the page nav offering the same accidental way out. The fight carries its
+own round loop and the month refuses to advance while it is unresolved, so it is not a destination to
+be navigated away from by accident: it has one exit of its own, said before the fight and not only
+after it.
 
 ## Rules
 
@@ -75,6 +77,10 @@ from by accident — it has one exit of its own, said before the fight and not o
   Estates (#2) joins Town or Warband when it exists.
 - **A page reachable from nowhere is a defect.** Every screen is either a section's landing page, a page
   on a section's page nav, or linked from a page that is.
+- **A landing page is headed what the entry that leads to it says.** Month, Warband, Town square,
+  Buildings, Rivals, Skirmishes. Every page of the game used to name itself differently from its own
+  menu entry, so one wrong click was told apart from the right one by a heading worded differently
+  from the link that produced it.
 
 The labels are plain nouns. Whether the register becomes Old English — Fyrd, Burh — is #64's question;
 the structure holds either way.

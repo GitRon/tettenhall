@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Dashboard</h1>
+    {# The page says what the entry that leads to it says. Every page of the game used to name #}
+    {# itself differently from its own menu entry, which is one of the things four sections are for. #}
+    <h1>Month{% if current_savegame %} {{ current_savegame.current_month }}{% endif %}</h1>
 
     {# The first screen of the game, and the only one a fresh account reaches without the user #}
     {# dropdown. Without this the page is a heading over nothing: every block below it is silent #}

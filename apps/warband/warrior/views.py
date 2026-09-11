@@ -105,12 +105,19 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         context["is_player_faction"] = player_faction is not None and self.object.faction_id == player_faction.id
         context["can_edit_gear"] = context["is_player_faction"]
         # Asked once and kept, because the roster context below needs the same two answers to say
-        # which list this man was read off
+        # which list this man was read off. Each is guarded by everything that already settles the
+        # question: one of the player's own men is neither, and a prisoner is not also for hire - so
+        # the common page costs no membership query at all, and no page costs two.
         context["is_captive_of_player"] = (
-            player_faction is not None and player_faction.captured_warriors.filter(id=self.object.id).exists()
+            not context["is_player_faction"]
+            and player_faction is not None
+            and player_faction.captured_warriors.filter(id=self.object.id).exists()
         )
         context["is_mercenary_of_player"] = (
-            player_faction is not None and player_faction.available_mercenaries.filter(id=self.object.id).exists()
+            not context["is_player_faction"]
+            and not context["is_captive_of_player"]
+            and player_faction is not None
+            and player_faction.available_mercenaries.filter(id=self.object.id).exists()
         )
         context["can_see_gear"] = (
             context["can_edit_gear"] or context["is_captive_of_player"] or context["is_mercenary_of_player"]

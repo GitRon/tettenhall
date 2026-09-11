@@ -673,14 +673,14 @@ def test_warrior_detail_view_names_the_two_men_either_side_of_him(logged_in_clie
     By name, because that is the only order a player can predict and the roster is read in the same
     one.
     """
-    WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+    cenwulf = WarriorFactory(faction=current_savegame.player_faction, name="Cenwulf")
     beorn = WarriorFactory(faction=current_savegame.player_faction, name="Beorn")
-    WarriorFactory(faction=current_savegame.player_faction, name="Cenwulf")
+    aelfric = WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
 
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": beorn.id}))
 
-    assert response.context["previous_warrior_id"] is not None
-    assert response.context["next_warrior_id"] is not None
+    assert response.context["previous_warrior_id"] == aelfric.id
+    assert response.context["next_warrior_id"] == cenwulf.id
 
 
 @pytest.mark.django_db
