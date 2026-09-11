@@ -10,6 +10,11 @@ __pycache__/
 
 yarn-error.log
 
+# The compiled Tailwind stylesheet. "yarn build:css" writes it from "assets/css/tailwind.css"; see
+# docs/contributing/setup.md. The directory rather than the file, so a source map or a second sheet
+# does not have to be remembered here later.
+static/dist/
+
 __pycache__/
 *.py[cod]
 

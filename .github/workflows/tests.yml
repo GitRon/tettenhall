@@ -40,6 +40,29 @@ jobs:
       - name: Check the import boundaries
         run: uv run lint-imports
 
+  # Its own job rather than a step in front of "pytest": the suite needs no stylesheet, so node there
+  # would cost every run for nothing, and a failed build would be indistinguishable from a failed test.
+  assets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+
+      # "--frozen-lockfile" fails on a lock file that has drifted from package.json instead of
+      # resolving something else, the same guarantee "uv sync --locked" gives above.
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # The compiled stylesheet is not in version control, so this is the only thing that catches a
+      # build that has stopped working. It writes to static/dist/ and the output is thrown away.
+      - name: Build the stylesheet
+        run: yarn build:css
+
   pre-commit:
     runs-on: ubuntu-latest
 

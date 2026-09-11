@@ -31,6 +31,9 @@ CONTENT_DIR="$RUN_DIR/content"
 DB_FILE="$CONTENT_DIR/smoke.sqlite3"
 LOG_FILE="$CONTENT_DIR/server.log"
 SETUP_LOG="$CONTENT_DIR/setup.log"
+# Its own file rather than "setup.log", which "prepare_database" truncates on the line after the build
+# runs - an error message pointing at an emptied log is worse than none.
+BUILD_LOG="$CONTENT_DIR/build-css.log"
 PID_FILE="$CONTENT_DIR/.pid"
 PORT_FILE="$CONTENT_DIR/.port"
 
@@ -157,6 +160,39 @@ check_prerequisites() {
     echo "still no node_modules/htmx.org and node_modules/uikit - install the frontend dependencies" >&2
     echo "('yarn install'). Without them htmx and UIkit 404 and nothing on the page responds." >&2
     return 1
+  fi
+
+  # The Tailwind stylesheet is compiled rather than committed, and Tailwind only emits the utilities it
+  # finds in the templates - so this recompiles whenever a server is started, not just when the file is
+  # missing. A sheet built before the story added a class is a page that has silently lost that bit of
+  # layout, which is exactly the kind of thing this phase exists to see.
+  #
+  # The build's own exit status is what decides, not whether the file is there afterwards: the output is
+  # untracked but it is not deleted between runs, so a stale copy from the last round would let a failed
+  # compile through and hand the browser the sheet this block exists to replace.
+  if [ -f "$REPO_ROOT/package.json" ] && grep -q '"build:css"' "$REPO_ROOT/package.json"; then
+    echo "compiling the Tailwind stylesheet" >&2
+    : > "$BUILD_LOG"
+    if command -v yarn > /dev/null 2>&1; then
+      yarn build:css >> "$BUILD_LOG" 2>&1 || {
+        echo "'yarn build:css' failed, see ${BUILD_LOG#"$REPO_ROOT/"}" >&2
+        return 1
+      }
+    elif command -v npm > /dev/null 2>&1; then
+      npm run build:css >> "$BUILD_LOG" 2>&1 || {
+        echo "'npm run build:css' failed, see ${BUILD_LOG#"$REPO_ROOT/"}" >&2
+        return 1
+      }
+    else
+      echo "package.json declares 'build:css' but neither yarn nor npm is on PATH - the stylesheet" >&2
+      echo "cannot be compiled, and the pages would be styled by whatever the last run left behind." >&2
+      return 1
+    fi
+    if [ ! -f "$REPO_ROOT/static/dist/tailwind.css" ]; then
+      echo "'build:css' reported success but wrote no static/dist/tailwind.css - see" >&2
+      echo "${BUILD_LOG#"$REPO_ROOT/"}" >&2
+      return 1
+    fi
   fi
   return 0
 }

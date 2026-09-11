@@ -1,0 +1,25 @@
+/*
+ * The Tailwind source. "yarn build:css" compiles it to "static/dist/tailwind.css", which is not in
+ * version control - see docs/contributing/setup.md.
+ *
+ * Two of the three layers, not "@import 'tailwindcss'". That shorthand also pulls in preflight, and
+ * preflight and UIkit's base both reset margins, headings, buttons and lists: with both loaded, every
+ * screen in the game is wrong. UIkit is still what styles the app, so the utilities are additive here
+ * and the reset stays switched off. #200 adds the preflight line in the commit that removes UIkit.
+ *
+ * "source(none)" switches off automatic source detection, which makes the "@source" below the only
+ * thing deciding what gets scanned. Both halves are load-bearing: left automatic, Tailwind walks the
+ * whole repository and matches class names out of running prose, so every utility named in
+ * docs/patterns/responsive-layout.md compiles into the stylesheet - rules nothing renders, in a sheet
+ * that grows whenever someone writes documentation.
+ *
+ * "apps" rather than the repository root because that is where every template lives, and it also
+ * covers the "css_class" strings the crispy FormHelpers pass from Python. The price of including the
+ * Python is that a handful of one-word utilities compile from ordinary identifiers - ".filter" out of
+ * a queryset call, ".table" and ".static" out of whatever spells them. They are inert: no template
+ * uses any of those names, and a template that starts to needs the rule anyway.
+ */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@source "../../apps";
