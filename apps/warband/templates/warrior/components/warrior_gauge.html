@@ -1,0 +1,11 @@
+{% load obscurify %}
+{% comment %}
+    A warrior's health or morale: where he stands out of what he can hold, or one word for it - see
+    docs/patterns/warrior-knowledge.md.
+
+    The fuzzed form buckets where he stands now against the ceiling a typical man of his kind carries,
+    so "Low" reads as a man who has been hurt rather than as a man who was never worth much. Against
+    his own maximum it would say nothing at all about him: every unharmed warrior in the game would
+    come out the same.
+{% endcomment %}
+{% if knowledge.numbers_are_exact %}{{ current }}/{{ maximum }}{% else %}{{ current|obscurify:baseline }}{% endif %}

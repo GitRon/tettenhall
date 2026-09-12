@@ -57,30 +57,29 @@
             <td>{{ object.experience }} / {{ object.experience_for_next_level }} XP</td>
         </tr>
         {% comment %}
-            The card that links here carried these and the page did not, so clicking "Detail" showed
-            the player less about a man than the tile he clicked. Strength, dexterity, the salary and
-            the condition are on a rival's card too and stay unguarded; health and morale are the two
-            the rivals list calls knowledge not earned without scouting, so they follow the same gate
-            the card puts them behind.
+            The four numbers, through the same components the roster card that links here renders
+            them with, so clicking "Detail" cannot show the player more or less about a man than the
+            tile he clicked. Figures for the men he commands, a bucket for everybody else - see
+            docs/patterns/warrior-knowledge.md.
         {% endcomment %}
         <tr>
             <td>Strength</td>
-            <td>{{ object.strength }}</td>
+            <td>{% include 'warrior/components/warrior_attribute.html' with value=object.strength baseline=object.strength_baseline knowledge=knowledge %}</td>
         </tr>
         <tr>
             <td>Dexterity</td>
-            <td>{{ object.dexterity }}</td>
+            {# Against the strength baseline, because the two are drawn from one distribution - #}
+            {# see "Warrior.attribute_draws", which pairs them off the same trio. #}
+            <td>{% include 'warrior/components/warrior_attribute.html' with value=object.dexterity baseline=object.strength_baseline knowledge=knowledge %}</td>
         </tr>
-        {% if is_player_faction %}
-            <tr>
-                <td>Health</td>
-                <td>{{ object.current_health }} / {{ object.max_health }}</td>
-            </tr>
-            <tr>
-                <td>Morale</td>
-                <td>{{ object.current_morale }} / {{ object.max_morale }}</td>
-            </tr>
-        {% endif %}
+        <tr>
+            <td>Health</td>
+            <td>{% include 'warrior/components/warrior_gauge.html' with current=object.current_health maximum=object.max_health baseline=object.health_baseline knowledge=knowledge %}</td>
+        </tr>
+        <tr>
+            <td>Morale</td>
+            <td>{% include 'warrior/components/warrior_gauge.html' with current=object.current_morale maximum=object.max_morale baseline=object.morale_baseline knowledge=knowledge %}</td>
+        </tr>
         <tr>
             <td>Condition</td>
             {# The condition is a state, not a scale: it says whether he is still on his feet, and #}
@@ -106,12 +105,12 @@
             </tr>
         {% endif %}
         {% comment %}
-            Gear is knowledge the player has not earned without scouting, the same rule the rivals
-            list and the roster card follow. Shown for everyone he commands, holds or is being
-            offered - his own men, his prisoners, and the mercenaries in his pub, whose weapon the
-            town square is already charging him for.
+            Gear is named or absent, with no bucket in between - the one omission in the rule, and
+            the reason it is an omission is in "WarriorKnowledge.gear_is_visible". Named for everyone
+            he commands or holds: his own men, his prisoners, and the mercenaries in his pub, whose
+            weapon the town square is already charging him for.
         {% endcomment %}
-        {% if can_see_gear %}
+        {% if knowledge.gear_is_visible %}
             <tr>
                 <td>Weapon</td>
                 <td>

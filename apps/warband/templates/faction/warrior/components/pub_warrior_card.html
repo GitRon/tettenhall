@@ -1,4 +1,4 @@
-{% load l10n obscurify static %}
+{% load l10n static %}
 <div id="pub-mercenary-card-{{ warrior.id|unlocalize }}" class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
     <div class="border-b border-[#e5e5e5] px-[30px] py-[15px]">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -11,9 +11,13 @@
                     <i class="fa-solid fa-award"></i> <i>Level {{ warrior.level }}</i>&nbsp;
                     <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
                     <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>&nbsp;
+                    {# Through the same components the roster card uses, against the man's own #}
+                    {# baselines rather than a literal: a fyrd levy and a mercenary are not drawn #}
+                    {# from one distribution. See docs/patterns/warrior-knowledge.md. #}
                     <i class="fa-solid fa-heart"></i>
-                    <i>{{ warrior.max_health|obscurify:20 }}</i>&nbsp;
-                    <i class="fa-solid fa-bolt"></i> <i>{{ warrior.max_morale|obscurify:10 }}</i>&nbsp;
+                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</i>&nbsp;
+                    <i class="fa-solid fa-bolt"></i>
+                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</i>&nbsp;
                     {# The condition is a state, not a scale, and reads the same on every card the #}
                     {# player sees a warrior on. #}
                     {% if warrior.is_healthy %}
@@ -42,20 +46,26 @@
             </tr>
             <tr>
                 <td>Strength</td>
-                <td>{{ warrior.strength|obscurify:10 }}</td>
+                <td>{% include 'warrior/components/warrior_attribute.html' with value=warrior.strength baseline=warrior.strength_baseline knowledge=knowledge %}</td>
             </tr>
             <tr>
                 <td>Dexterity</td>
-                <td>{{ warrior.dexterity|obscurify:10 }}</td>
+                {# Against the strength baseline, because the two are drawn from one distribution - #}
+                {# see "Warrior.attribute_draws", which pairs them off the same trio. #}
+                <td>{% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}</td>
             </tr>
-            <tr>
-                <td>Weapon</td>
-                <td>{% if warrior.weapon %}{{ warrior.weapon.display_name }}{% else %}-{% endif %}</td>
-            </tr>
-            <tr>
-                <td>Armor</td>
-                <td>{% if warrior.armor %}{{ warrior.armor.display_name }}{% else %}-{% endif %}</td>
-            </tr>
+            {# The pub is selling what he carries, so it names it. On a rival's town square there is #}
+            {# nothing on offer and nothing to name - see "WarriorKnowledge.gear_is_visible". #}
+            {% if knowledge.gear_is_visible %}
+                <tr>
+                    <td>Weapon</td>
+                    <td>{% if warrior.weapon %}{{ warrior.weapon.display_name }}{% else %}-{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Armor</td>
+                    <td>{% if warrior.armor %}{{ warrior.armor.display_name }}{% else %}-{% endif %}</td>
+                </tr>
+            {% endif %}
         </table>
         </div>
     </div>

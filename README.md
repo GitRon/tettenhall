@@ -24,6 +24,8 @@ inferring the conventions from nearby code.
 - [Strict mode](docs/patterns/strict-mode.md) — what it enforces, and where it does not
 - [Raising](docs/patterns/exceptions.md) — `RuntimeError` vs a custom exception, and where one lives
 - [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
+- [Warrior knowledge](docs/patterns/warrior-knowledge.md) — what the player may know about a man he does
+  not command, which facts are fuzzed rather than withheld, and the screens the rule does not govern
 - [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a
   balance number belongs
 - [Month incidents](docs/patterns/month-incidents.md) — the pool the world draws from each month, its

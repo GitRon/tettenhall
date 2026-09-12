@@ -8,6 +8,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 
 
 @pytest.mark.django_db
@@ -307,17 +308,21 @@ def test_warrior_weapon_update_view_cannot_rearm_a_rival_warrior(logged_in_clien
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_shows_the_gear_of_the_players_own_warrior(logged_in_client, current_savegame):
+def test_warrior_detail_view_commands_the_players_own_warrior(logged_in_client, current_savegame):
+    """
+    The one answer this page withholds anything on. Everything it gives away follows from it - see
+    docs/patterns/warrior-knowledge.md.
+    """
     warrior = WarriorFactory(faction=current_savegame.player_faction)
 
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
 
     assert response.status_code == 200
-    assert response.context["can_see_gear"] is True
+    assert response.context["knowledge"] is WarriorKnowledge.COMMANDED
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_shows_the_gear_of_a_captive_the_player_holds(logged_in_client, current_savegame):
+def test_warrior_detail_view_holds_a_captive_of_the_player(logged_in_client, current_savegame):
     """
     A prisoner carries no faction at all, so asking whether he is "in the player's faction" would
     withhold the gear of a man the player is holding and about to recruit or sell.
@@ -328,11 +333,11 @@ def test_warrior_detail_view_shows_the_gear_of_a_captive_the_player_holds(logged
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": captive.id}))
 
     assert response.status_code == 200
-    assert response.context["can_see_gear"] is True
+    assert response.context["knowledge"] is WarriorKnowledge.HELD
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_shows_the_gear_of_a_mercenary_in_the_players_pub(logged_in_client, current_savegame):
+def test_warrior_detail_view_holds_a_mercenary_in_the_players_pub(logged_in_client, current_savegame):
     """
     The pub card already names the weapon it is charging for, so hiding it one click later would
     contradict the screen the player just came from.
@@ -343,11 +348,11 @@ def test_warrior_detail_view_shows_the_gear_of_a_mercenary_in_the_players_pub(lo
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": mercenary.id}))
 
     assert response.status_code == 200
-    assert response.context["can_see_gear"] is True
+    assert response.context["knowledge"] is WarriorKnowledge.HELD
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_hides_the_gear_of_a_captive_a_rival_holds(logged_in_client, current_savegame):
+def test_warrior_detail_view_treats_a_captive_a_rival_holds_as_a_rivals_man(logged_in_client, current_savegame):
     """
     A rival's prisoner is faction-less too, so "no faction" cannot be the test either.
     """
@@ -358,7 +363,7 @@ def test_warrior_detail_view_hides_the_gear_of_a_captive_a_rival_holds(logged_in
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": captive.id}))
 
     assert response.status_code == 200
-    assert response.context["can_see_gear"] is False
+    assert response.context["knowledge"] is WarriorKnowledge.RIVAL
 
 
 @pytest.mark.django_db
@@ -383,7 +388,7 @@ def test_warrior_detail_view_does_not_offer_the_gear_edit_for_a_captive(logged_i
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": captive.id}))
 
     assert response.status_code == 200
-    assert response.context["can_see_gear"] is True
+    assert response.context["knowledge"].gear_is_visible is True
     assert response.context["can_edit_gear"] is False
 
 
@@ -406,7 +411,7 @@ def test_warrior_weapon_update_view_refuses_a_captive(logged_in_client, current_
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_hides_the_gear_of_a_rival_warrior(logged_in_client, current_savegame):
+def test_warrior_detail_view_treats_a_rivals_warrior_as_a_rivals_man(logged_in_client, current_savegame):
     """
     This page is where a rival card's "Detail" link leads, so withholding gear on the card alone
     would only have cost the player a click.
@@ -417,15 +422,14 @@ def test_warrior_detail_view_hides_the_gear_of_a_rival_warrior(logged_in_client,
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": rival_warrior.id}))
 
     assert response.status_code == 200
-    assert response.context["can_see_gear"] is False
+    assert response.context["knowledge"] is WarriorKnowledge.RIVAL
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_shows_the_health_of_the_players_own_warrior(logged_in_client, current_savegame):
+def test_warrior_detail_view_claims_the_players_own_warrior_for_the_war_band(logged_in_client, current_savegame):
     """
-    Health and morale are the two the rivals list calls knowledge not earned without scouting, so
-    the page gates them on the same predicate the roster card does - and no more than the card
-    does, or "Detail" would go back to showing less than the tile that links to it.
+    What membership still decides on its own, now that the knowledge rule has the numbers: which
+    section of the game this man's page belongs to, and whether his wages are the player's to read.
     """
     warrior = WarriorFactory(faction=current_savegame.player_faction)
 
@@ -436,10 +440,10 @@ def test_warrior_detail_view_shows_the_health_of_the_players_own_warrior(logged_
 
 
 @pytest.mark.django_db
-def test_warrior_detail_view_hides_the_health_of_a_captive(logged_in_client, current_savegame):
+def test_warrior_detail_view_does_not_claim_a_captive_for_the_war_band(logged_in_client, current_savegame):
     """
-    A prisoner's gear is readable and his health is not: he carries no faction, so the gear gate
-    lets him through on the strength of who holds him and this one does not.
+    A prisoner is held, not commanded: the player may read what he carries, and the man is still not
+    one of his.
     """
     captive = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
     current_savegame.player_faction.captured_warriors.add(captive)

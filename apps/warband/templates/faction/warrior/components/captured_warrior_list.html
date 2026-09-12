@@ -4,7 +4,9 @@
      hx-disinherit="hx-swap">
     <h2>Captured warriors</h2>
     {% for warrior in faction.captured_warriors.all %}
-        {% include 'warrior/components/warrior_card.html' with warrior=warrior faction=faction is_captured=True %}
+        {# A prisoner is held, not commanded: the player can see what he carries and not what he is #}
+        {# worth. On a rival's page these are the rival's prisoners and he is owed neither. #}
+        {% include 'warrior/components/warrior_card.html' with warrior=warrior faction=faction is_captured=True knowledge=held_knowledge %}
     {% empty %}
         {# The same list serves a rival's page, where the captives being described are not the player's #}
         {% if is_player_faction %}

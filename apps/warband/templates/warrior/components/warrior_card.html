@@ -16,17 +16,16 @@
                         <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>
                     </span>&nbsp;
                     {% comment %}
-                        Health, morale and gear are what the rivals list calls knowledge the player has
-                        not earned without scouting, so a rival's card withholds exactly those three and
-                        nothing else. Without this the overview counted a rival's men while his own page
-                        gave away every number about them.
+                        Health and morale are figures for the men the player commands and a bucket for
+                        everybody else - his prisoners, the mercenaries in his pub, a rival's war band.
+                        The card no longer decides that: "knowledge" arrives from whichever list it is
+                        being rendered in, and the rule lives in one place. See
+                        docs/patterns/warrior-knowledge.md.
                     {% endcomment %}
-                    {% if is_player_faction %}
-                        <i class="fa-solid fa-heart"></i>
-                        <i>{{ warrior.current_health }}/{{ warrior.max_health }}</i>&nbsp;
-                        <i class="fa-solid fa-bolt"></i>
-                        <i>{{ warrior.current_morale }}/{{ warrior.max_morale }}</i>&nbsp;
-                    {% endif %}
+                    <i class="fa-solid fa-heart"></i>
+                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</i>&nbsp;
+                    <i class="fa-solid fa-bolt"></i>
+                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</i>&nbsp;
                     {# The condition is a state, not a scale: it says the warrior is still on his #}
                     {# feet, and the health beside it says at what cost. #}
                     {% if warrior.is_healthy %}
@@ -84,13 +83,17 @@
             </tr>
             <tr>
                 <td>Strength</td>
-                <td>{{ warrior.strength }}</td>
+                <td>{% include 'warrior/components/warrior_attribute.html' with value=warrior.strength baseline=warrior.strength_baseline knowledge=knowledge %}</td>
             </tr>
             <tr>
                 <td>Dexterity</td>
-                <td>{{ warrior.dexterity }}</td>
+                {# Against the strength baseline, because the two are drawn from one distribution - #}
+                {# see "Warrior.attribute_draws", which pairs them off the same trio. #}
+                <td>{% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}</td>
             </tr>
-            {% if is_player_faction %}
+            {# Named or absent, with no bucket in between - the one omission in the rule, and the #}
+            {# reason it is an omission is in "WarriorKnowledge.gear_is_visible". #}
+            {% if knowledge.gear_is_visible %}
                 <tr>
                     <td>Weapon</td>
                     <td>{{ warrior.weapon|default_if_none:'-' }}</td>
