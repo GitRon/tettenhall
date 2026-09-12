@@ -1,3 +1,4 @@
+from collections import Counter
 from unittest import mock
 
 import pytest
@@ -15,7 +16,6 @@ from apps.warband.faction.messages.commands.item import (
 from apps.warband.faction.messages.events.item import (
     ItemWasAddedToShop,
     ItemWasRemovedFromShop,
-    RequestNewItemForTownShop,
     TownShopRestocked,
 )
 from apps.warband.faction.tests.factories.faction import FactionFactory
@@ -25,40 +25,65 @@ from apps.warband.item.tests.factories.item import ItemFactory
 
 
 @pytest.mark.django_db
-def test_handle_restock_shop_items_requests_weapons():
+def test_handle_restock_shop_items_requests_a_weapon_even_when_every_flip_says_armor():
+    """
+    A month of nothing but armour is a month the shop offers the player no decision, and three
+    independent flips reach it once in eight.
+    """
     # A Marketplace holds four stalls
-    faction = FactionFactory(town__marketplace=1)
-
-    with mock.patch("apps.warband.faction.handlers.commands.item.random.getrandbits", return_value=1):
-        result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
-
-    *item_requests, _ = result
-    expected_message = RequestNewItemForTownShop(
-        faction=faction,
-        generator_class=MercenaryItemGenerator,
-        item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
-        month=3,
-        quality_bonus=0,
-    )
-    assert item_requests == [expected_message] * 4
-
-
-@pytest.mark.django_db
-def test_handle_restock_shop_items_requests_armor():
     faction = FactionFactory(town__marketplace=1)
 
     with mock.patch("apps.warband.faction.handlers.commands.item.random.getrandbits", return_value=0):
         result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
 
     *item_requests, _ = result
-    expected_message = RequestNewItemForTownShop(
-        faction=faction,
-        generator_class=MercenaryItemGenerator,
-        item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
-        month=3,
-        quality_bonus=0,
+    assert Counter(message.item_function for message in item_requests) == Counter(
+        {ItemType.FunctionChoices.FUNCTION_ARMOR: 3, ItemType.FunctionChoices.FUNCTION_WEAPON: 1}
     )
-    assert item_requests == [expected_message] * 4
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_requests_an_armor_even_when_every_flip_says_weapon():
+    faction = FactionFactory(town__marketplace=1)
+
+    with mock.patch("apps.warband.faction.handlers.commands.item.random.getrandbits", return_value=1):
+        result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    *item_requests, _ = result
+    assert Counter(message.item_function for message in item_requests) == Counter(
+        {ItemType.FunctionChoices.FUNCTION_WEAPON: 3, ItemType.FunctionChoices.FUNCTION_ARMOR: 1}
+    )
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_keeps_both_kinds_in_the_smallest_market():
+    """
+    Level 0 is where a savegame opens and the guarantee has the least room: two of its three stalls
+    are spoken for, and only the third is flipped for.
+    """
+    faction = FactionFactory(town__marketplace=0)
+
+    with mock.patch("apps.warband.faction.handlers.commands.item.random.getrandbits", return_value=1):
+        result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    *item_requests, _ = result
+    assert Counter(message.item_function for message in item_requests) == Counter(
+        {ItemType.FunctionChoices.FUNCTION_WEAPON: 2, ItemType.FunctionChoices.FUNCTION_ARMOR: 1}
+    )
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_asks_the_mercenary_generator_for_every_stall():
+    """
+    The shop stocks what a professional would carry whatever the town is, so the archetype is the
+    one thing about a stall that is not drawn.
+    """
+    faction = FactionFactory(town__marketplace=1)
+
+    result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    *item_requests, _ = result
+    assert {message.generator_class for message in item_requests} == {MercenaryItemGenerator}
 
 
 @pytest.mark.django_db

@@ -36,7 +36,7 @@ class NoSanctuary(Sanctuary):
 class SmallSanctuary(Sanctuary):
     MAX_HEALING_POINTS = 8
 
-    BUILDING_COSTS = 750
+    BUILDING_COSTS = 500
 
 
 class MediumSanctuary(Sanctuary):

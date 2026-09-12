@@ -13,7 +13,7 @@ from apps.warband.town.services.building_upgrade import (
 @pytest.mark.django_db
 def test_get_building_upgrade_refusal_with_an_affordable_next_level(current_savegame):
     town = current_savegame.player_faction.town
-    TransactionFactory(faction=current_savegame.player_faction, amount=900)
+    TransactionFactory(faction=current_savegame.player_faction, amount=600)
 
     result = get_building_upgrade_refusal(town=town, building_type="hall", current_savegame=current_savegame)
 
@@ -46,7 +46,7 @@ def test_get_building_upgrade_refusal_with_a_building_already_commissioned_this_
 @pytest.mark.django_db
 def test_get_building_upgrade_refusal_one_silver_short_of_the_price(current_savegame):
     town = current_savegame.player_faction.town
-    TransactionFactory(faction=current_savegame.player_faction, amount=899)
+    TransactionFactory(faction=current_savegame.player_faction, amount=599)
 
     result = get_building_upgrade_refusal(town=town, building_type="hall", current_savegame=current_savegame)
 

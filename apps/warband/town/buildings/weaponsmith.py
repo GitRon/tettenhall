@@ -35,7 +35,7 @@ class NoWeaponsmith(Weaponsmith):
 class SmallWeaponsmith(Weaponsmith):
     QUALITY_BONUS = 1
 
-    BUILDING_COSTS = 750
+    BUILDING_COSTS = 500
 
 
 class MediumWeaponsmith(Weaponsmith):
