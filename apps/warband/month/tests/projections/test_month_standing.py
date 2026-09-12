@@ -173,12 +173,30 @@ def test_building_income_reads_the_hall_the_town_has_standing():
     savegame = SavegameFactory()
     player_faction = FactionFactory(savegame=savegame, town=None)
     TownFactory(faction=player_faction, hall=1)
+    WarriorFactory(faction=player_faction, monthly_salary=100)
     savegame.player_faction = player_faction
     savegame.save()
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
     assert standing.building_income == 300
+
+
+@pytest.mark.django_db
+def test_building_income_pays_the_share_of_an_under_manned_hall():
+    """
+    The dashboard counts the men the month counts. A hall pays a share while the war band is short
+    of it, and a page promising the full revenue would name a figure the month then does not pay.
+    """
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame, town=None)
+    TownFactory(faction=player_faction, hall=1)
+    savegame.player_faction = player_faction
+    savegame.save()
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.building_income == 50
 
 
 @pytest.mark.django_db

@@ -123,7 +123,18 @@ class MonthStanding:
             pub_mercenary_count=player_faction.available_mercenaries.count(),
             # Read off the town the way the month reads it, rather than assembled from a building
             # here. The cost card promises this figure and the month pays it, and the two must agree.
-            building_income=town.get_monthly_income() if town else 0,
+            #
+            # The men are counted the same way both of those count them - see
+            # "handle_earn_money_from_buildings". A hall pays a share while the war band is short of
+            # it, so a count taken any other way here would put a third figure in front of the
+            # player on the page he starts his month on.
+            building_income=town.get_monthly_income(
+                warriors_on_payroll=Warrior.objects.filter_drawing_a_wage()
+                .filter_faction(faction_id=player_faction.id)
+                .count()
+            )
+            if town
+            else 0,
             warband=_build_warband_standing(player_faction=player_faction, month=month),
         )
 
