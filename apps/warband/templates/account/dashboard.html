@@ -30,9 +30,27 @@
         </div>
     {% endif %}
 
-    {# The page the player lands on after finishing a month, so it is where next month's shortfall is #}
-    {# worth the most: the consequence is three months away and every one of them starts here. #}
-    {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
+    {# The three panels only exist while there is a game to play. A decided savegame keeps every #}
+    {# control it had, which is #107's to settle - but "what is still open to me this month" has one #}
+    {# answer once the game is over, and nine live panels saying otherwise under a banner saying it #}
+    {# is finished is the version of that problem this page must not add. #}
+    {% if month_standing %}
+        {# The same card the ledger shows, off the same payroll the salary run bills from - not a #}
+        {# second assembly of it, which is how a warning comes to name a different man than the #}
+        {# month takes. It carries the wage-bill warning itself, so the dashboard does not include #}
+        {# that separately; "show_finance_link" reaches the nested include through this context. #}
+        {# The page the player lands on after finishing a month is where the shortfall is worth the #}
+        {# most: the consequence is three months away and every one of them starts here. #}
+        {% include 'faction/faction/components/current_cost_card.html' with show_finance_link=True %}
+
+        {% include 'account/components/warband_standing.html' %}
+
+        {% include 'account/components/month_openings.html' %}
+    {% else %}
+        {# Without a player faction there is nothing to project, but the purse warning is put on #}
+        {# every render by the finance context processor and costs nothing to keep. #}
+        {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
+    {% endif %}
 
     {# What every man improves at when the month turns. One faction-wide row, pre-set on a new #}
     {# savegame and often never touched, so it is read here rather than looked up somewhere - and its #}

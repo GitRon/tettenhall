@@ -213,3 +213,43 @@ def test_dashboard_view_names_no_training_without_a_player_faction(logged_in_cli
 
     assert response.status_code == 200
     assert response.context["current_training"] is None
+
+
+@pytest.mark.django_db
+def test_dashboard_view_projects_what_is_still_open_this_month(logged_in_client, current_savegame):
+    """
+    The page the month begins on, so the panels are what it exists to carry. The income key rides
+    along because the cost card the dashboard includes reads it.
+    """
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["month_standing"].warband.fyrd_reserve == current_savegame.player_faction.fyrd_reserve
+    assert response.context["building_income_amount"] == 50
+
+
+@pytest.mark.django_db
+def test_dashboard_view_projects_nothing_once_the_game_is_decided(logged_in_client, current_savegame):
+    """
+    A decided savegame keeps every control it had, which is #107's to settle - and this page is where
+    that would cost the most, since what is still open this month is nothing at all.
+    """
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_WON
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert "month_standing" not in response.context
+
+
+@pytest.mark.django_db
+def test_dashboard_view_projects_nothing_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    Every panel is a question about the player's faction, and the savegame row exists before the
+    faction does - so the whole assembly answers None rather than each panel guarding separately.
+    """
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["month_standing"] is None
