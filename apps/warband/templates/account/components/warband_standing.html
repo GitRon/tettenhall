@@ -6,7 +6,9 @@
     <ul class="m-0 list-none p-0">
         <li class="border-b border-[#e5e5e5] py-2.5">
             <strong>{{ month_standing.warband.warrior_count }}</strong>
-            warrior{{ month_standing.warband.warrior_count|pluralize }} under your banner{% if month_standing.warband.is_intact %}, every one of them fit{% else %}
+            {# "every man fit" rather than "all of them fit": a war band of one is the state a fresh #}
+            {# savegame starts in, and the plural reads as a mistake on it. #}
+            warrior{{ month_standing.warband.warrior_count|pluralize }} under your banner{% if month_standing.warband.is_intact %}, every man fit{% else %}
                 —
                 {% if month_standing.warband.unconscious_count %}
                     {{ month_standing.warband.unconscious_count }} down{% if month_standing.warband.fleeing_count %},{% endif %}
