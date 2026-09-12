@@ -19,7 +19,10 @@ holding that level's numbers:
 - `get_effects()` describes a level for the player, as `BuildingEffect(label, value)` pairs. It is
   implemented once per family and reads the variant's constants through `cls`, so a new level describes
   itself. **Every variant of a family has to answer with the same labels in the same order** — the upgrade
-  page reads a level and the one above it side by side and zips the two `strict=True`.
+  page reads a level and the one above it side by side and zips the two `strict=True`. Where the two
+  answer the same value, the page leaves that pair out rather than pricing a lever that is not moving,
+  so **a level may lever only some of its family's effects**; at the maximum level there is no upgrade to
+  describe and every pair is shown.
 
 ## Rules
 
@@ -45,9 +48,14 @@ holding that level's numbers:
   is its leader alone earns the baseline whatever it has built: the town is held by the men paid to hold
   it, and a hall bought in month one against no war band is not an annuity (#192). Every other building's
   lever is unconditional.
-- **Costs escalate faster than effects** (roughly ×2.3 then ×2), so the top level of a building is
+- **Costs escalate faster than effects** (roughly ×3.5 then ×2), so the top level of a building is
   deliberately a poor investment on its effect alone — the Large Hall is worth it for the third mercenary
   slot, not the revenue.
+- **The first paid level is within the opening purse, and the step above it is the steepest in the game.**
+  400–600 against the 1000 silver a faction starts with, so the first building leaves enough behind to pay
+  a month's wages or hire a man; 1400–2100 for the second. The four families keep their order and their
+  spread at every rung — marketplace cheapest, hall dearest — so the choice between them does not change
+  as the town grows.
 - **Only one building per month**, guarded by `Town.last_constructed_building_at`. Months count from
   1, so **0 means "nothing built yet"** — a town created with the current month in that field cannot
   build for the rest of it, which is why a new town leaves the field at its default.
@@ -96,5 +104,5 @@ holding that level's numbers:
   because he is bought by nobody, cannot be dismissed and cannot walk out, so a price on him would answer
   no decision the player ever makes. A faction opens with 1000 silver
   (`apps/warband/finance/handlers/events/faction.py:76`) and the cheapest upgrade in the game is the marketplace's
-  first paid level at 600, so a band of four mercenaries bills more every month than that building costs
+  first paid level at 400, so a band of four mercenaries bills more every month than that building costs
   once. Buildings are what the player saves for; wages are what stops him.

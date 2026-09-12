@@ -20,6 +20,32 @@ from apps.warband.town.buildings.marketplace import Marketplace
 from apps.warband.town.buildings.weaponsmith import Weaponsmith
 
 
+def _draw_stall_functions(*, stall_count: int) -> list[ItemType.FunctionChoices]:
+    """
+    What each of the month's stalls sells, one entry per stall.
+
+    A shop of one kind is a shop the player has no decision to make in, and an independent coin flip
+    per stall reaches that often: three stalls is the smallest market in the game and comes out all
+    weapons or all armour a quarter of the time. So a market holding two or more stalls always sells
+    at least one of each, and only the stalls beyond the second are flipped for.
+
+    Shuffled afterwards, because the pair would otherwise always be the first two items on the shelf:
+    an item carries no ordering of its own, so the order they are asked for in is the order the
+    player reads them in.
+    """
+    weapon = ItemType.FunctionChoices.FUNCTION_WEAPON
+    armor = ItemType.FunctionChoices.FUNCTION_ARMOR
+
+    # Sliced rather than guarded, so a market too small to hold both simply gets what fits
+    stall_functions = [weapon, armor][:stall_count]
+    stall_functions += [
+        weapon if bool(random.getrandbits(1)) else armor for _ in range(stall_count - len(stall_functions))
+    ]
+    random.shuffle(stall_functions)
+
+    return stall_functions
+
+
 @message_registry.register_command(command=RestockTownShopItems)
 def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] | Event:
     # Clean up previous stock
@@ -31,27 +57,16 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
     marketplace = Marketplace.get_building_by_type(building_type=context.faction.town.marketplace)
     weaponsmith = Weaponsmith.get_building_by_type(building_type=context.faction.town.weaponsmith)
 
-    for _ in range(marketplace.AVAILABLE_ITEMS):
-        if bool(random.getrandbits(1)):
-            message_list.append(
-                RequestNewItemForTownShop(
-                    faction=context.faction,
-                    generator_class=MercenaryItemGenerator,
-                    item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
-                    month=context.month,
-                    quality_bonus=weaponsmith.QUALITY_BONUS,
-                )
+    for item_function in _draw_stall_functions(stall_count=marketplace.AVAILABLE_ITEMS):
+        message_list.append(
+            RequestNewItemForTownShop(
+                faction=context.faction,
+                generator_class=MercenaryItemGenerator,
+                item_function=item_function,
+                month=context.month,
+                quality_bonus=weaponsmith.QUALITY_BONUS,
             )
-        else:
-            message_list.append(
-                RequestNewItemForTownShop(
-                    faction=context.faction,
-                    generator_class=MercenaryItemGenerator,
-                    item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
-                    month=context.month,
-                    quality_bonus=weaponsmith.QUALITY_BONUS,
-                )
-            )
+        )
 
     # After the loop, and counting the whole shop rather than each item: the player wants to know
     # whether it is worth walking over, not that a stall was filled

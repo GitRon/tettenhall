@@ -57,13 +57,45 @@ def test_town_upgrade_view_puts_the_effects_of_both_levels_next_to_each_other(lo
     assert _building(response, "hall")["effect_list"] == [
         {"label": "Monthly income", "current": "50 silver", "next": "300 silver"},
         {"label": "Men needed for full income", "current": "0", "next": "1"},
-        {"label": "Mercenaries in the pub", "current": "1", "next": "1"},
+    ]
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_leaves_out_an_effect_the_next_level_does_not_move(logged_in_client, current_savegame):
+    """
+    The Mead Hall holds the single mercenary a hall-less town already holds, so a row for it would
+    price a lever that is not moving. The two it does move stay.
+    """
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    assert [effect["label"] for effect in _building(response, "hall")["effect_list"]] == [
+        "Monthly income",
+        "Men needed for full income",
+    ]
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_keeps_every_effect_at_the_maximum_level(logged_in_client, current_savegame):
+    """
+    The top level is compared against itself, so every pair matches and filtering the matching ones
+    would leave the one card whose effects are the whole point of it with nothing on it.
+    """
+    town = current_savegame.player_faction.town
+    town.hall = Town.HallChoices.HALL_LARGE
+    town.save()
+
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    assert _building(response, "hall")["effect_list"] == [
+        {"label": "Monthly income", "current": "750 silver", "next": "750 silver"},
+        {"label": "Men needed for full income", "current": "3", "next": "3"},
+        {"label": "Mercenaries in the pub", "current": "3", "next": "3"},
     ]
 
 
 @pytest.mark.django_db
 def test_town_upgrade_view_with_enough_silver_for_the_next_level(logged_in_client, current_savegame):
-    TransactionFactory(faction=current_savegame.player_faction, amount=900)
+    TransactionFactory(faction=current_savegame.player_faction, amount=600)
 
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
@@ -76,7 +108,7 @@ def test_town_upgrade_view_without_enough_silver_for_the_next_level(logged_in_cl
     The page disables the button, so the price is answered before the click rather than by a warning
     notification that fades after a second.
     """
-    TransactionFactory(faction=current_savegame.player_faction, amount=899)
+    TransactionFactory(faction=current_savegame.player_faction, amount=599)
 
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
@@ -170,7 +202,7 @@ def test_upgrade_building_view_upgrades_the_building(logged_in_client, current_s
 
 @pytest.mark.django_db
 def test_upgrade_building_view_charges_the_building_costs(logged_in_client, current_savegame):
-    TransactionFactory(faction=current_savegame.player_faction, amount=900)
+    TransactionFactory(faction=current_savegame.player_faction, amount=600)
 
     logged_in_client.post(reverse("warband:upgrade-building-view", kwargs={"building_type": "hall"}))
 
