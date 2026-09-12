@@ -50,9 +50,11 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
         building_list = []
         for building_type, building_class in BUILDINGS.items():
             current_level = getattr(town, building_type)
+            max_level = building_class.get_max_level()
             # Capped at the maximum so the last level can still name a price instead of asking for a
             # variant above the largest one
-            next_level = min(current_level + 1, building_class.get_max_level())
+            next_level = min(current_level + 1, max_level)
+            is_at_max_level = current_level == max_level
 
             current_building = building_class.get_building_by_type(building_type=current_level)
             next_building = building_class.get_building_by_type(building_type=next_level)
@@ -66,17 +68,25 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
                     "label": building_class.BUILDING_LABEL,
                     "level": current_level,
                     "level_display": level_display,
-                    "max_level": building_class.get_max_level(),
+                    "max_level": max_level,
                     "next_level_display": next_level_display,
                     "costs": next_building.BUILDING_COSTS,
                     # What the money buys, level by level. The player is choosing between four prices
                     # and the levels are deliberately not worth them on the numbers alone, so the
                     # numbers are what the decision needs.
+                    #
+                    # An effect the next level answers with the same value is left out, because a row
+                    # reading "1 -> 1" prices a lever that is not moving and nothing says a level has
+                    # to move every effect its family declares. Only while there is an upgrade to
+                    # describe: at the maximum level "next_building" is "current_building", every pair
+                    # matches, and an unguarded filter would empty the card of the last level - which
+                    # is the one level whose effects are the whole point of the card.
                     "effect_list": [
                         {"label": effect.label, "current": effect.value, "next": upgraded_effect.value}
                         for effect, upgraded_effect in zip(
                             current_building.get_effects(), next_building.get_effects(), strict=True
                         )
+                        if is_at_max_level or effect.value != upgraded_effect.value
                     ],
                     # Answering a click with a warning that fades after a second is no way to price a
                     # building, so an unaffordable one says so on the button instead

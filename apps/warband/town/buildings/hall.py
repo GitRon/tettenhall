@@ -70,7 +70,7 @@ class SmallHall(Hall):
     AVAILABLE_MERCENARIES = 1
     WARRIORS_FOR_FULL_REVENUE = 1
 
-    BUILDING_COSTS = 900
+    BUILDING_COSTS = 600
 
 
 class MediumHall(Hall):

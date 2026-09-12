@@ -47,7 +47,7 @@ class SmallMarketplace(Marketplace):
     SELL_PERCENTAGE = 55
     AVAILABLE_ITEMS = 4
 
-    BUILDING_COSTS = 600
+    BUILDING_COSTS = 400
 
 
 class MediumMarketplace(Marketplace):
