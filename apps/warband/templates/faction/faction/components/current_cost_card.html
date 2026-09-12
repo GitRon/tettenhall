@@ -17,7 +17,7 @@
                 {# the month will do to his purse is where that has to be legible. #192 #}
                 {% if building_income_amount < building_income_full_amount %}
                     <span class="text-sm leading-snug text-[#999]">
-                        {{ warriors_for_full_income }} men on the payroll would earn {{ building_income_full_amount }}
+                        {{ warriors_for_full_income }} warrior{{ warriors_for_full_income|pluralize }} on the payroll would earn {{ building_income_full_amount }}
                     </span>
                 {% endif %}
             </td>
