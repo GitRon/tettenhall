@@ -2,16 +2,24 @@ class RivalIncome:
     """
     What a faction with no player behind it earns when a month turns.
 
-    A rival has an income of its own rather than the player's building revenue. Hall revenue is flat
-    per level while a wage bill scales with the roster, so routing rivals through the town would move
-    the constant and never the slope: a rival is pinned to "NoHall" - its town is created at every
-    default - and a single fyrd levy already costs more than that level pays.
+    A rival has an income of its own rather than the player's building revenue. It is pinned to
+    "NoHall" - its town is created at every default and nothing ever builds one up - so the town
+    would pay it a flat 50 silver however large its war band grew, and a single fyrd levy already
+    costs more than that.
 
-    So it scales with the roster too, and on the *healthy* part of it deliberately, while the wage
-    bill covers everybody who is not dead. A faction that cannot field a warrior should not be
-    earning off him. The two rosters differing is the pressure, not a miscount: the surplus narrows as
-    warriors level up and their salaries grow with them, and it inverts once a faction has been beaten
-    - which is what makes beating one mean something between one battle and the next.
+    So it scales with the roster, and on the *healthy* part of it deliberately, while the wage bill
+    covers everybody who is not dead. A faction that cannot field a warrior should not be earning off
+    him. The two rosters differing is the pressure, not a miscount: the surplus narrows as warriors
+    level up and their salaries grow with them, and it inverts once a faction has been beaten - which
+    is what makes beating one mean something between one battle and the next.
+
+    **The player is counted differently on purpose**, over the men he pays rather than the men he can
+    field (see "Hall.get_revenue_for_war_band"). The two incomes are different things: a rival's
+    income *is* its war band, out in the field earning, so a man who cannot march earns nothing. The
+    player's is a town's trade, held by the men on his payroll, and a wounded man he is still paying
+    still holds it. Counting the player's wounded against him too would put the cost of a lost
+    skirmish on his income as well as on his wages and his sanctuary - a compounding penalty on the
+    player who fights, which is the opposite of what the rule is for (#192).
 
     The levers are here rather than in the handler for the same reason "apps/town/buildings/" owns the
     player's: a game-balance number gets one home.

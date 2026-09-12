@@ -65,13 +65,19 @@ class Town(models.Model):
         """
         return dict(self._meta.get_field(building_type).choices)[level]
 
-    def get_monthly_income(self) -> int:
+    def get_monthly_income(self, *, warriors_on_payroll: int) -> int:
         """
-        What the town pays out when a month turns.
+        What the town pays out when a month turns, to a faction keeping this many men.
 
         The hall is the only building with a recurring payout and it owns the number, so this reads
         it off the level standing rather than holding a copy. One place for it because the month
         bills it and the cost card promises it, and a card naming a different figure than the month
         pays is the kind of thing a player never forgives.
+
+        The roster is handed in rather than counted here: the month and the card each already hold
+        the faction whose men these are, and a model method reaching for a queryset of its own is
+        how the two would come to count different men.
         """
-        return Hall.get_building_by_type(building_type=self.hall).REVENUE_PER_ROUND
+        return Hall.get_building_by_type(building_type=self.hall).get_revenue_for_war_band(
+            warriors_on_payroll=warriors_on_payroll
+        )

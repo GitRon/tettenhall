@@ -11,6 +11,40 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.mark.django_db
+def test_filter_drawing_a_wage_returns_the_men_a_faction_pays():
+    faction = FactionFactory()
+    mercenary = WarriorFactory(faction=faction, monthly_salary=170)
+
+    result = Warrior.objects.filter_drawing_a_wage()
+
+    assert list(result) == [mercenary]
+
+
+@pytest.mark.django_db
+def test_filter_drawing_a_wage_leaves_out_a_man_on_no_salary():
+    """
+    The leader is that man, and he is left out by his salary rather than by his role - nothing here
+    knows what a leader is.
+    """
+    faction = FactionFactory()
+    WarriorFactory(faction=faction, monthly_salary=0)
+
+    result = Warrior.objects.filter_drawing_a_wage()
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_filter_drawing_a_wage_leaves_out_the_dead():
+    faction = FactionFactory()
+    WarriorFactory(faction=faction, monthly_salary=170, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    result = Warrior.objects.filter_drawing_a_wage()
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
 def test_in_pub_of_returns_the_mercenaries_of_that_pub():
     faction = FactionFactory()
     mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)

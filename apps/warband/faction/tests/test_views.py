@@ -1162,6 +1162,8 @@ def test_monthly_cost_overview_names_the_income_of_the_hall(logged_in_client, cu
     town = current_savegame.player_faction.town
     town.hall = Town.HallChoices.HALL_MEDIUM
     town.save()
+    WarriorFactory(faction=current_savegame.player_faction, monthly_salary=170)
+    WarriorFactory(faction=current_savegame.player_faction, monthly_salary=170)
 
     response = logged_in_client.get(
         reverse("warband:faction-monthly-costs-view", kwargs={"pk": current_savegame.player_faction.id})
@@ -1169,6 +1171,25 @@ def test_monthly_cost_overview_names_the_income_of_the_hall(logged_in_client, cu
 
     assert response.status_code == 200
     assert response.context["building_income_amount"] == MediumHall.REVENUE_PER_ROUND
+
+
+@pytest.mark.django_db
+def test_monthly_cost_overview_names_what_a_hall_would_pay_fully_manned(logged_in_client, current_savegame):
+    """
+    A hall paying a share because the war band is short of it has to say so on the page where the
+    player reads what the month will do to his purse (#192).
+    """
+    town = current_savegame.player_faction.town
+    town.hall = Town.HallChoices.HALL_MEDIUM
+    town.save()
+
+    response = logged_in_client.get(
+        reverse("warband:faction-monthly-costs-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.context["building_income_amount"] == 50
+    assert response.context["building_income_full_amount"] == MediumHall.REVENUE_PER_ROUND
+    assert response.context["warriors_for_full_income"] == MediumHall.WARRIORS_FOR_FULL_REVENUE
 
 
 @pytest.mark.django_db

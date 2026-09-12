@@ -654,8 +654,10 @@ def test_handle_create_factions_for_new_savegame_without_the_culture():
 
 @pytest.mark.django_db
 def test_handle_earn_money_from_buildings_pays_the_revenue_of_the_hall():
-    # A Great Hall brings in 550 silver a month
+    # A Great Hall brings in 550 silver a month, to the two men on the payroll it asks for
     faction = FactionFactory(town__hall=2)
+    WarriorFactory(faction=faction, monthly_salary=170)
+    WarriorFactory(faction=faction, monthly_salary=170)
 
     result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
 
@@ -663,8 +665,33 @@ def test_handle_earn_money_from_buildings_pays_the_revenue_of_the_hall():
 
 
 @pytest.mark.django_db
+def test_handle_earn_money_from_buildings_pays_a_share_to_a_war_band_short_of_the_hall():
+    faction = FactionFactory(town__hall=2)
+    WarriorFactory(faction=faction, monthly_salary=170)
+
+    result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
+
+    assert result == MonthlyBuildingMoneyEarned(faction=faction, amount=275, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_earn_money_from_buildings_pays_the_baseline_to_a_faction_of_its_leader_alone():
+    """
+    #192: a hall bought in month one against a war band of nobody earns what a town with no hall
+    earns. The leader draws no wage, so a roster of him alone is a payroll of nobody.
+    """
+    faction = FactionFactory(town__hall=2)
+    WarriorFactory(faction=faction, monthly_salary=0)
+
+    result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
+
+    assert result == MonthlyBuildingMoneyEarned(faction=faction, amount=50, month=3)
+
+
+@pytest.mark.django_db
 def test_handle_earn_money_from_buildings_without_a_hall():
     faction = FactionFactory()
+    WarriorFactory(faction=faction, monthly_salary=170)
 
     result = handle_earn_money_from_buildings(context=EarnMoneyFromBuildings(faction=faction, month=3))
 

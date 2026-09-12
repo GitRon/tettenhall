@@ -22,10 +22,16 @@ def test_get_monthly_income_pays_the_baseline_of_a_town_without_a_hall():
     """
     town = TownFactory.build(hall=Town.HallChoices.HALL_NONE)
 
-    assert town.get_monthly_income() == 50
+    assert town.get_monthly_income(warriors_on_payroll=0) == 50
 
 
 def test_get_monthly_income_pays_the_revenue_of_the_hall_standing():
     town = TownFactory.build(hall=Town.HallChoices.HALL_MEDIUM)
 
-    assert town.get_monthly_income() == 550
+    assert town.get_monthly_income(warriors_on_payroll=2) == 550
+
+
+def test_get_monthly_income_pays_a_share_to_a_war_band_short_of_the_hall():
+    town = TownFactory.build(hall=Town.HallChoices.HALL_MEDIUM)
+
+    assert town.get_monthly_income(warriors_on_payroll=1) == 275

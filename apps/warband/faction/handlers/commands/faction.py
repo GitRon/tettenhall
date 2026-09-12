@@ -315,14 +315,20 @@ def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list
 
     Never asked of a rival rather than refused for one: this hangs off PlayerMonthPrepared, the event
     for the things a rival has no equivalent of. A rival's town is created at every default and would
-    collect NoHall's 50 silver against a leader's salary of around 135 - and hall revenue is flat per
-    level while a wage bill scales with the roster, so letting rivals build their way out of that
-    would move the constant and never the slope. They earn off their war band instead, see
-    [RivalIncome].
+    collect NoHall's 50 silver against a leader's salary of around 135, whatever it fields - so
+    letting rivals build their way out of that would be handing them a second income. They earn off
+    their war band instead, see [RivalIncome].
+
+    The men are counted here rather than inside the town, because the cost card asks the same
+    question of the same faction a page earlier and the two have to get the same answer. Counted
+    every month rather than stored: a player who hires in month twelve is paid the fuller revenue in
+    month twelve, and one whose war band walks out is back to the baseline the month after.
     """
+    warriors_on_payroll = Warrior.objects.filter_drawing_a_wage().filter_faction(faction_id=context.faction.id).count()
+
     return MonthlyBuildingMoneyEarned(
         faction=context.faction,
-        amount=context.faction.town.get_monthly_income(),
+        amount=context.faction.town.get_monthly_income(warriors_on_payroll=warriors_on_payroll),
         month=context.month,
     )
 
