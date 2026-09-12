@@ -1,0 +1,11 @@
+{% load obscurify %}
+{% comment %}
+    One of a warrior's attributes, shown as a figure or as a bucket depending on what the viewer has
+    earned - see docs/patterns/warrior-knowledge.md.
+
+    The bucket is measured against the man's own baseline, the mean of the men he was drawn with,
+    rather than a number written into the template: a fyrd levy and a mercenary are not drawn from
+    the same distribution, and one literal standing for both calls the same strength high on one and
+    mediocre on the other.
+{% endcomment %}
+{% if knowledge.numbers_are_exact %}{{ value }}{% else %}{{ value|obscurify:baseline }}{% endif %}

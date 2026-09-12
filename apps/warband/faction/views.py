@@ -26,19 +26,26 @@ from apps.warband.savegame.services.current_savegame import get_current_savegame
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.hall import Hall
+from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
 class PlayerFactionAwareContextMixin:
     """
-    Tells the template whether the faction it is rendering belongs to the player.
+    Tells the template whether the faction it is rendering belongs to the player, and what that makes
+    the men standing on its pages.
 
-    The faction detail page serves the player's own faction and a rival's alike, and so do the two
-    htmx partials that replace parts of it. All three renderings have to answer this the same way:
-    the partials carry controls only the player's own faction may use and address him about property
+    The faction detail page serves the player's own faction and a rival's alike, and so do the htmx
+    partials that replace parts of it. All of those renderings have to answer this the same way: the
+    partials carry controls only the player's own faction may use and address him about property
     that may not be his, so a page that got the answer right once and lost it on the first
     "loadFactionItemList" swap would put the rival's Sell button back.
+
+    The two knowledge levels ride along for exactly that reason - see
+    docs/patterns/warrior-knowledge.md. A roster is the faction's own war band and a captive list or
+    a pub is men it holds, so the page's answer settles both, and a swap cannot disagree with the
+    page it swapped into.
     """
 
     current_savegame: Savegame = None
@@ -54,6 +61,13 @@ class PlayerFactionAwareContextMixin:
         # A savegame without a player faction gives None here, which no faction id equals - so it
         # renders as a rival's page, which is right: there is no own faction yet.
         context["is_player_faction"] = self.object.id == self.current_savegame.player_faction_id
+        # The men on this page, as the player stands to them. A rival's roster, a rival's cells and a
+        # rival's pub are all one thing to him - somebody else's - so both keys collapse to RIVAL
+        # there rather than each page picking its own word for it.
+        context["roster_knowledge"] = (
+            WarriorKnowledge.COMMANDED if context["is_player_faction"] else WarriorKnowledge.RIVAL
+        )
+        context["held_knowledge"] = WarriorKnowledge.HELD if context["is_player_faction"] else WarriorKnowledge.RIVAL
         return context
 
 
@@ -309,13 +323,18 @@ class FactionItemListView(PlayerFactionAwareContextMixin, SavegameScopedQueryset
     template_name = "faction/item/components/item_list.html"
 
 
-class FactionPubMercenaryListView(SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionPubMercenaryListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     """
     The pub's own htmx partial, so hiring the last mercenary can leave a sentence behind.
 
     Scoped to the savegame rather than to the player faction, the same as the town square that holds
     it: the page is reachable for any faction of the savegame, and the pub is what that page shows.
     Hiring stays the player's own - "RecruitPubMercenaryView" scopes that to his pub.
+
+    Which is why it has to know whose pub it is rendering. Reachable for any faction means a rival's
+    faction id in the url reaches a rival's pub, and men the player cannot hire are men he has not
+    been offered - so the card that fuzzes a mercenary's numbers for him has to withhold the gear it
+    would otherwise be advertising on somebody else's behalf.
     """
 
     model = Faction
@@ -587,7 +606,10 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         return context
 
 
-class TownSquareView(SavegameScopedQuerysetMixin, generic.DetailView):
+class TownSquareView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
+    # Holds the pub, and is reachable for any faction of the savegame - so it answers whose town
+    # square this is for the same reason "FactionPubMercenaryListView" does, and the two have to
+    # agree or the first "loadPubMercenaryList" swap changes what the cards give away
     model = Faction
     template_name = "faction/town_square.html"
 

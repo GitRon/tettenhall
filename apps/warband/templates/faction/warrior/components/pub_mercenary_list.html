@@ -4,8 +4,10 @@
      hx-disinherit="hx-swap">
     <h2>Pub</h2>
     {% for warrior in faction.available_mercenaries.all %}
-        {# TODO (#90): use different cards here which obscurify most values #}
-        {% include 'faction/warrior/components/pub_warrior_card.html' with warrior=warrior %}
+        {# A mercenary for hire is held, not commanded: the pub names the gear it is charging for and #}
+        {# buckets everything else, which is the gamble it is selling. On a rival's town square these #}
+        {# are not the player's to hire and nothing about them is his to read. #}
+        {% include 'faction/warrior/components/pub_warrior_card.html' with warrior=warrior knowledge=held_knowledge %}
     {% empty %}
         <p class="text-sm leading-snug text-[#999]">Nobody is drinking here this month.</p>
     {% endfor %}

@@ -18,6 +18,7 @@ from apps.warband.savegame.mixins import (
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.forms.warrior import WarriorForm
 from apps.warband.warrior.messages.commands.warrior import (
     DismissWarrior,
@@ -84,24 +85,19 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        # This page is where a rival card's "Detail" link leads, so it has to withhold the gear that
-        # card withholds - otherwise hiding it one screen earlier only costs the player a click.
-        #
-        # Asked as "may the player see this man's gear", not "is he in the player's faction": the two
-        # come apart for everybody carrying no faction at all. His own prisoners and the mercenaries
-        # standing in his own pub are faction-less, and the pub card already advertises the weapon it
-        # is charging him for - so a faction test would have hidden, one click later, what the town
-        # square had just shown him.
+        # This page is where a rival card's "Detail" link leads, so it has to show exactly what that
+        # card shows - otherwise withholding anything one screen earlier only costs the player a
+        # click. Both ask "what is this man to the player", not "is he in the player's faction": the
+        # two come apart for everybody carrying no faction at all. His own prisoners and the
+        # mercenaries standing in his own pub are faction-less, and the pub card already advertises
+        # the weapon it is charging him for - so a faction test would have hidden, one click later,
+        # what the town square had just shown him.
         current_savegame = get_current_savegame_for_request(request=self.request)
         player_faction = current_savegame.player_faction if current_savegame else None
         # Seeing and changing are different rights, and a prisoner and a pub mercenary sit between
         # them: the player may read what they carry, but only his own men can be re-equipped - the
         # update view resolves nobody else. Rendering the edit control for them would be exactly the
         # control-that-can-only-fail this batch removed twice already.
-        #
-        # Named the way the roster card names it, because the page now withholds the same three
-        # things the card withholds - health, morale and condition - and one predicate has to decide
-        # both or a rival's numbers leak on whichever screen was updated second.
         context["is_player_faction"] = player_faction is not None and self.object.faction_id == player_faction.id
         context["can_edit_gear"] = context["is_player_faction"]
         # Asked once and kept, because the roster context below needs the same two answers to say
@@ -119,8 +115,12 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             and player_faction is not None
             and player_faction.available_mercenaries.filter(id=self.object.id).exists()
         )
-        context["can_see_gear"] = (
-            context["can_edit_gear"] or context["is_captive_of_player"] or context["is_mercenary_of_player"]
+        # The one answer the page withholds anything on, off the memberships already established
+        # above. What each level gives away is the enum's business and not this view's - see
+        # docs/patterns/warrior-knowledge.md.
+        context["knowledge"] = WarriorKnowledge.for_relation(
+            is_commanded=context["is_player_faction"],
+            is_held=context["is_captive_of_player"] or context["is_mercenary_of_player"],
         )
         # Where the man stands on his wages, behind the same gate for the same reason: it is read off
         # his own morale being stuck, which a rival's card does not give away either. Carried here as

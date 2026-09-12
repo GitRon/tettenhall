@@ -23,6 +23,7 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.buildings.hall import MediumHall
 from apps.warband.town.models import Town
 from apps.warband.training.tests.factories.training import TrainingFactory
+from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import LEADER_REFUSAL
 from apps.warband.warrior.services.unpaid_wages import LEADER_NOTE
 
@@ -104,6 +105,57 @@ def test_faction_detail_view_does_not_mark_a_rival_as_the_players_own(logged_in_
 
     assert response.status_code == 200
     assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_commands_the_players_own_roster(logged_in_client, current_savegame):
+    """
+    What the men on this page are to the player, which is what every number on their cards follows
+    from - see docs/patterns/warrior-knowledge.md.
+    """
+    response = logged_in_client.get(
+        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["roster_knowledge"] is WarriorKnowledge.COMMANDED
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_treats_a_rivals_roster_as_a_rivals(logged_in_client, current_savegame):
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["roster_knowledge"] is WarriorKnowledge.RIVAL
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_holds_the_players_own_captives(logged_in_client, current_savegame):
+    """
+    A prisoner is held rather than commanded: his gear is the player's to read and his numbers are
+    not, which is the level the pub already showed a mercenary at.
+    """
+    response = logged_in_client.get(
+        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_treats_a_rivals_captives_as_a_rivals(logged_in_client, current_savegame):
+    """
+    A man in somebody else's cells is somebody else's business, whoever he used to belong to.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.RIVAL
 
 
 @pytest.mark.django_db
@@ -494,6 +546,35 @@ def test_faction_pub_mercenary_list_view_shows_the_faction(logged_in_client, cur
 
 
 @pytest.mark.django_db
+def test_faction_pub_mercenary_list_view_holds_the_mercenaries_in_the_players_pub(logged_in_client, current_savegame):
+    """
+    A man for hire is held rather than commanded: the pub names the gear it is charging for and
+    buckets everything else, which is the gamble it is selling.
+    """
+    response = logged_in_client.get(
+        reverse("warband:pub-mercenary-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
+
+
+@pytest.mark.django_db
+def test_faction_pub_mercenary_list_view_treats_a_rivals_pub_as_a_rivals(logged_in_client, current_savegame):
+    """
+    The partial is scoped to the savegame, so a rival's faction id in the url reaches a rival's pub.
+    Men the player cannot hire are men he has not been offered, and the card would otherwise be
+    advertising a rival's gear on the rival's behalf.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+
+    response = logged_in_client.get(reverse("warband:pub-mercenary-list-htmx", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.RIVAL
+
+
+@pytest.mark.django_db
 def test_faction_pub_mercenary_list_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
     other_savegame = SavegameFactory()
     foreign_faction = FactionFactory(savegame=other_savegame)
@@ -539,6 +620,20 @@ def test_faction_warrior_list_view_does_not_mark_a_rival_as_the_players_own(logg
 
     assert response.status_code == 200
     assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
+def test_faction_warrior_list_view_commands_the_players_own_roster(logged_in_client, current_savegame):
+    """
+    Carried by the partial as well as the page, because a roster whose numbers were exact once and
+    buckets after the first "loadFactionWarriorList" swap is the defect the mixin exists to prevent.
+    """
+    response = logged_in_client.get(
+        reverse("warband:faction-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["roster_knowledge"] is WarriorKnowledge.COMMANDED
 
 
 @pytest.mark.django_db
@@ -680,6 +775,19 @@ def test_faction_captured_warrior_list_view_does_not_mark_a_rival_as_the_players
 
     assert response.status_code == 200
     assert response.context["is_player_faction"] is False
+
+
+@pytest.mark.django_db
+def test_faction_captured_warrior_list_view_holds_the_players_own_captives(logged_in_client, current_savegame):
+    """
+    The same answer the page gives, for the same reason: the list replaces itself over htmx.
+    """
+    response = logged_in_client.get(
+        reverse("warband:faction-captured-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
 
 
 @pytest.mark.django_db
@@ -1237,8 +1345,8 @@ def test_town_square_view_offers_only_quests_that_can_still_be_taken_on(logged_i
 def test_town_square_view_renders_the_mercenaries_standing_in_the_pub(logged_in_client, current_savegame):
     """
     The pub card only renders once somebody is standing in the pub, so an empty one left the whole
-    template - its "load" tag included - unexercised by the suite. It runs every stat through the
-    "obscurify" filter, which is a template library that has to resolve by name.
+    template - its includes and their "load" tags included - unexercised by the suite. It runs every
+    stat through the two warrior components, which reach the "obscurify" library by name.
     """
     mercenary = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
     current_savegame.player_faction.available_mercenaries.add(mercenary)
@@ -1249,6 +1357,20 @@ def test_town_square_view_renders_the_mercenaries_standing_in_the_pub(logged_in_
 
     assert response.status_code == 200
     assert list(response.context["object"].available_mercenaries.all()) == [mercenary]
+
+
+@pytest.mark.django_db
+def test_town_square_view_holds_the_mercenaries_in_the_players_pub(logged_in_client, current_savegame):
+    """
+    The page holding the pub answers this the same way the pub's own partial does, or the first
+    "loadPubMercenaryList" swap changes what the cards give away.
+    """
+    response = logged_in_client.get(
+        reverse("warband:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
 
 
 @pytest.mark.django_db
