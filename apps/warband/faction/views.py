@@ -25,6 +25,7 @@ from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.town.buildings.hall import Hall
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
@@ -566,7 +567,22 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         # month disagree about who goes unpaid. Only the income is this card's own, because it is
         # the one number on it that nothing else shows - and it is read off the town, the same way
         # the month reads it, rather than assembled from a building here.
-        context["building_income_amount"] = current_savegame.player_faction.town.get_monthly_income()
+        warriors_on_payroll = (
+            Warrior.objects.filter_drawing_a_wage()
+            .filter_faction(faction_id=current_savegame.player_faction_id)
+            .count()
+        )
+        hall = Hall.get_building_by_type(building_type=current_savegame.player_faction.town.hall)
+
+        context["building_income_amount"] = current_savegame.player_faction.town.get_monthly_income(
+            warriors_on_payroll=warriors_on_payroll
+        )
+        # What the hall would pay fully manned, and what fully manned takes. A hall paying a share
+        # because the war band is short of it is a rule the player has to be able to see on the page
+        # where he reads what the month will do to his purse - the alternative is silver going
+        # missing every month for a reason nothing names.
+        context["building_income_full_amount"] = hall.REVENUE_PER_ROUND
+        context["warriors_for_full_income"] = hall.WARRIORS_FOR_FULL_REVENUE
 
         return context
 

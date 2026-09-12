@@ -38,6 +38,13 @@ holding that level's numbers:
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling.
 - **Level 0 is a baseline, not "no effect"**: a town without a hall still earns a little, and one without
   a market still holds three stalls. The `No…` class names describe the building, not the effect.
+- **The hall pays in full only to the war band it asks for.** A level names its
+  `WARRIORS_FOR_FULL_REVENUE` — the men on the payroll it needs, which is the mercenary slots it opens —
+  and `get_revenue_for_war_band()` pays a share below that, floored at level 0's revenue. "On the payroll"
+  is a living warrior drawing a wage, so the leader falls out by construction and a faction whose roster
+  is its leader alone earns the baseline whatever it has built: the town is held by the men paid to hold
+  it, and a hall bought in month one against no war band is not an annuity (#192). Every other building's
+  lever is unconditional.
 - **Costs escalate faster than effects** (roughly ×2.3 then ×2), so the top level of a building is
   deliberately a poor investment on its effect alone — the Large Hall is worth it for the third mercenary
   slot, not the revenue.
@@ -72,9 +79,10 @@ holding that level's numbers:
 - **NPC factions never build.** Nothing upgrades a rival's town, so every building effect is a
   player-only power curve. Construction proper is #68. The hall income is player-only to match: it hangs
   off `PlayerMonthPrepared`, the event for the things a rival has no equivalent of, and a rival earns off
-  its war band instead (`apps/warband/faction/domain/rival_income.py`). Hall revenue is flat per level while a
-  wage bill scales with the roster, so paying rivals through the town would move the constant and never
-  the slope.
+  its war band instead (`apps/warband/faction/domain/rival_income.py`). A rival sits at `NoHall` for good,
+  so the town would pay it a flat 50 silver however large its war band grew, against a leader's salary of
+  around 135. The two incomes also count different rosters on purpose — the player's men on the payroll,
+  a rival's men fit to march — and `RivalIncome` carries why.
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
   bonus is the only thing making better gear — none of them has a second effect yet.
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's

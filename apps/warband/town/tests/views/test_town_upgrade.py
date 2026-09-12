@@ -56,6 +56,7 @@ def test_town_upgrade_view_puts_the_effects_of_both_levels_next_to_each_other(lo
 
     assert _building(response, "hall")["effect_list"] == [
         {"label": "Monthly income", "current": "50 silver", "next": "300 silver"},
+        {"label": "Men needed for full income", "current": "0", "next": "1"},
         {"label": "Mercenaries in the pub", "current": "1", "next": "1"},
     ]
 

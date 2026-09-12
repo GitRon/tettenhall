@@ -14,6 +14,17 @@ class WarriorQuerySet(models.QuerySet):
     def exclude_dead(self):
         return self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
 
+    def filter_drawing_a_wage(self):
+        """
+        The men a faction is paying for, which is the roster the wage bill covers.
+
+        A salary above zero rather than a list of archetypes: "draws_a_wage" on the generator is what
+        writes the number, so a leader - bought by nobody and dismissable by nobody - is left out
+        here without this knowing what a leader is. Wounded men stay in, the same way the wage bill
+        keeps billing for them.
+        """
+        return self.exclude_dead().filter(monthly_salary__gt=0)
+
     def filter_faction(self, *, faction_id: int):
         return self.filter(faction=faction_id)
 
