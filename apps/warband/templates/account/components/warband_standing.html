@@ -1,0 +1,55 @@
+{# A summary and not a roster. The faction page renders a card per man, and this page would pay a #}
+{# query per man for a second copy of it - so the counts come out of one aggregate and the link #}
+{# below is how the player reaches the cards. #}
+<div class="mb-5 box-border bg-white p-[30px] text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+    <h3>The war band</h3>
+    <ul class="m-0 list-none p-0">
+        <li class="border-b border-[#e5e5e5] py-2.5">
+            <strong>{{ month_standing.warband.warrior_count }}</strong>
+            {# "every man fit" rather than "all of them fit": a war band of one is the state a fresh #}
+            {# savegame starts in, and the plural reads as a mistake on it. #}
+            warrior{{ month_standing.warband.warrior_count|pluralize }} under your banner{% if month_standing.warband.is_intact %}, every man fit{% else %}
+                —
+                {% if month_standing.warband.unconscious_count %}
+                    {{ month_standing.warband.unconscious_count }} down{% if month_standing.warband.fleeing_count %},{% endif %}
+                {% endif %}
+                {% if month_standing.warband.fleeing_count %}
+                    {{ month_standing.warband.fleeing_count }} still routed
+                {% endif %}
+            {% endif %}
+        </li>
+        {# The one question the player can only answer today by opening a rival's page and reading #}
+        {# the footnote explaining the missing Attack button. #}
+        <li class="border-b border-[#e5e5e5] py-2.5">
+            {% if not month_standing.warband.leader %}
+                The war band has no leader.
+            {% elif month_standing.warband.leader_can_march %}
+                <strong>{{ month_standing.warband.leader }}</strong> is fit to march.
+            {% else %}
+                <strong>{{ month_standing.warband.leader }}</strong> is in no condition to march this
+                month, so there is no attack to launch.
+            {% endif %}
+        </li>
+        {# Neither of these expires when the month turns, so they are lines here rather than rows on #}
+        {# the panel of things that do. Silent when there is nothing behind them: a nil count is a #}
+        {# line the player learns to skip. #}
+        {% if month_standing.warband.fyrd_reserve %}
+            <li class="border-b border-[#e5e5e5] py-2.5">
+                <strong>{{ month_standing.warband.fyrd_reserve }}</strong>
+                {{ month_standing.warband.fyrd_reserve|pluralize:"man,men" }} in the fyrd reserve, and
+                a draft costs nothing.
+            </li>
+        {% endif %}
+        {% if month_standing.warband.captive_count %}
+            <li class="border-b border-[#e5e5e5] py-2.5">
+                <strong>{{ month_standing.warband.captive_count }}</strong>
+                captive{{ month_standing.warband.captive_count|pluralize }} to recruit or to sell.
+            </li>
+        {% endif %}
+    </ul>
+    <p class="mb-0">
+        <a href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}">
+            Look at the war band
+        </a>
+    </p>
+</div>

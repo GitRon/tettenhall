@@ -1,0 +1,91 @@
+{# Everything that is gone once the month turns, plus the one thing that stops it turning at all. #}
+{# A row is here because it expires or because it blocks - not because it is somewhere in the game: #}
+{# the menu is the map, and a page repeating it with numbers on would be a second one. #}
+<div class="mb-5 box-border bg-white p-[30px] text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+    <h3>Before the month turns</h3>
+    {% if not month_standing.has_anything_open %}
+        <p class="m-0">
+            Nothing is left open. The month is yours to finish.
+        </p>
+    {% else %}
+        <ul class="m-0 list-none p-0">
+            {# First and marked, because it is the only row that is not an offer: the month refuses #}
+            {# to advance while a fight is unresolved, and the refusal arrives as a toast that fades. #}
+            {% if month_standing.open_skirmish_count %}
+                <li class="flex flex-col items-start gap-y-1 border-b border-[#e5e5e5] py-2.5 text-[#f0506e] last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
+                    <span>
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <strong>{{ month_standing.open_skirmish_count }}</strong>
+                        unresolved skirmish{{ month_standing.open_skirmish_count|pluralize:"es" }} —
+                        the month cannot be finished until {{ month_standing.open_skirmish_count|pluralize:"it is,they are" }} fought out.
+                    </span>
+                    <a class="shrink-0 text-[#f0506e]" href="{% url 'warband:skirmish-list-view' %}">To the fights</a>
+                </li>
+            {% endif %}
+            {% if month_standing.quest_count %}
+                <li class="flex flex-col items-start gap-y-1 border-b border-[#e5e5e5] py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
+                    <span>
+                        <strong>{{ month_standing.quest_count }}</strong>
+                        quest{{ month_standing.quest_count|pluralize }} on the board. The board is
+                        redrawn when the month turns.
+                    </span>
+                    <a class="shrink-0"
+                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">To the board</a>
+                </li>
+            {% endif %}
+            {# Named rather than counted. Which rival is a fact about the player's own war band - #}
+            {# nothing here says how weak one of them is, which is knowledge scouting is for. #}
+            {% if month_standing.attackable_rival_list %}
+                <li class="flex flex-col items-start gap-y-1 border-b border-[#e5e5e5] py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
+                    <span>
+                        You may march on
+                        {% for rival in month_standing.attackable_rival_list %}
+                            <strong>{{ rival }}</strong>{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        this month.
+                    </span>
+                    <a class="shrink-0" href="{% url 'warband:rival-faction-list-view' %}">To the rivals</a>
+                </li>
+            {% endif %}
+            {% if month_standing.occupiable_rival_list %}
+                <li class="flex flex-col items-start gap-y-1 border-b border-[#e5e5e5] py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
+                    <span>
+                        {% for rival in month_standing.occupiable_rival_list %}
+                            <strong>{{ rival.town_name }}</strong>{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        {{ month_standing.occupiable_rival_list|length|pluralize:"stands,stand" }} undefended
+                        and can be ridden into.
+                    </span>
+                    <a class="shrink-0" href="{% url 'warband:rival-faction-list-view' %}">To the rivals</a>
+                </li>
+            {% endif %}
+            {% if month_standing.can_build %}
+                <li class="flex flex-col items-start gap-y-1 border-b border-[#e5e5e5] py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
+                    <span>No building has been raised this month, and only one may be.</span>
+                    <a class="shrink-0" href="{% url 'warband:town-upgrade-view' %}">To the buildings</a>
+                </li>
+            {% endif %}
+            {% if month_standing.shop_item_count %}
+                <li class="flex flex-col items-start gap-y-1 border-b border-[#e5e5e5] py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
+                    <span>
+                        <strong>{{ month_standing.shop_item_count }}</strong>
+                        piece{{ month_standing.shop_item_count|pluralize }} of gear in the shop. The
+                        stalls are restocked when the month turns.
+                    </span>
+                    <a class="shrink-0"
+                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">To the shop</a>
+                </li>
+            {% endif %}
+            {% if month_standing.pub_mercenary_count %}
+                <li class="flex flex-col items-start gap-y-1 border-b border-[#e5e5e5] py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
+                    <span>
+                        <strong>{{ month_standing.pub_mercenary_count }}</strong>
+                        {{ month_standing.pub_mercenary_count|pluralize:"man,men" }} standing in the pub.
+                    </span>
+                    <a class="shrink-0"
+                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">To the pub</a>
+                </li>
+            {% endif %}
+        </ul>
+    {% endif %}
+</div>

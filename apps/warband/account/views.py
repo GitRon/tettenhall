@@ -7,6 +7,7 @@ from django.views import generic
 
 from apps.warband.account.forms.login import LoginForm
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+from apps.warband.month.projections.month_standing import MonthStanding
 from apps.warband.month.services.player_month_log import group_player_month_logs
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
@@ -79,5 +80,23 @@ class DashboardView(generic.TemplateView):
             # instead of comparing against the running value itself
             if current_savegame.is_over:
                 context["savegame_outcome"] = current_savegame.get_outcome_display()
+            else:
+                # Behind the same question the banner above asks. A decided savegame keeps every
+                # control it had, which is #107's to settle - and this page is where that would cost
+                # the most, since "what is still open to me this month" has one answer once the game
+                # is over and it is "nothing".
+                #
+                # Assembled here rather than in the template: ten panels each walking a relation of
+                # their own is ten to thirty queries on the page every month starts on, and
+                # RivalFactionListView is this codebase's standing example of answering a page's
+                # questions once for the whole page instead.
+                month_standing = MonthStanding.for_savegame(savegame=current_savegame)
+                context["month_standing"] = month_standing
+
+                if month_standing:
+                    # The key the cost card reads. It is included here rather than reimplemented, so
+                    # the dashboard and the ledger cannot promise different figures - the wage half
+                    # of it rides in on the finance context processor either way.
+                    context["building_income_amount"] = month_standing.building_income
 
         return context
