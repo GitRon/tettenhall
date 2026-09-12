@@ -60,7 +60,7 @@ def freeze_every_warriors_epithet(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warband', '0006_a_month_log_line_says_a_rival_is_out'),
+        ("warband", "0007_a_man_on_the_shelf_knows_when_he_got_there"),
     ]
 
     operations = [
