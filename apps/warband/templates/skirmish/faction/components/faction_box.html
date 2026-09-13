@@ -1,8 +1,10 @@
-<div class="box-border bg-ground p-7 md:p-[70px]">
+<div class="box-border bg-ground p-6">
     {% include 'common/components/box_header.html' with title=faction.name object_list=warrior_list %}
-    {# The swap target keeps its own classes: "innerHTML" replaces what is inside it, so the grid has #}
-    {# to be declared on this element or the cards lose their columns on the first update. #}
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2"
+    {# The swap target keeps its own classes: "innerHTML" replaces what is inside it, so the rule that #}
+    {# opens the list has to be declared on this element or the first update loses it. #}
+    {# One column, and the men are rows rather than cards: two columns inside a panel that is already a #}
+    {# third of the screen leaves a warrior's name about seventy pixels to stand in. #}
+    <div class="mt-4 border-t border-rule"
          hx-get="{% url 'warband:faction-warrior-list-update-htmx' skirmish.id faction.id %}"
          hx-trigger="updateFactionWarriorList from:body"
          hx-target="this"

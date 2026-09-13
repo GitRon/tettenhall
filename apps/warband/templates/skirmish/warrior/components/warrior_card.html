@@ -1,81 +1,66 @@
-{% load crispy_forms_tags l10n utils %}
-<div class="box-border bg-ground text-ink-muted border border-rule"
-     data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}">
-    <div class="border-b border-rule px-5 py-[13px]">
-        <h3 class="text-2xl leading-snug text-ink">{{ warrior.display_name }}</h3>
-        {# The faction and the level read as one line with a rule between them. They stay on one line #}
-        {# at every width - together they are four words, and a phone has room for them. #}
-        <ul class="mt-0 flex list-none flex-wrap items-center gap-x-5 p-0 text-sm text-ink-muted">
-            <li>{{ warrior.faction }}</li>
-            {# The level goes on the card in the fight because this is where a level-up is actually #}
-            {# witnessed: the growth happens mid-skirmish and the log announces it right beside here. #}
-            <li class="border-l border-rule pl-5"><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</li>
-        </ul>
-    </div>
-    <div class="p-5">
-        <div class="flex flex-wrap items-start gap-x-7 gap-y-2">
-            <div>
-                {# "Healthy" is the name of a state and not a reading of the health beside it: nothing #}
-                {# between full health and zero moves the condition, so a man at 1 of 20 is in it as #}
-                {# much as one who has not been touched. What the state says is that he is still on #}
-                {# his feet, and the number says at what cost. #}
-                {# Four states in two outlines, and the axis is brightness because the palette has #}
-                {# no second hue to spend. A man still on his feet wears the brightest value there #}
-                {# is, which is what reads as whole; the three that cost the player something wear #}
-                {# the one colour reserved for wanting him. The word is never the red - only the box #}
-                {# around it - so a tag stays as readable as the number beside it. #}
-                {% if warrior.is_healthy %}
-                    <p class="inline-block border border-ink px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
-                        <i class="fa-solid fa-feather-pointed"></i> Ready
-                    </p>
-                {% elif warrior.is_unconscious %}
-                    <p class="inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
-                        <i class="fa-solid fa-moon"></i> {{ warrior.get_condition_display }}
-                    </p>
-                {% elif warrior.is_fleeing %}
-                    <p class="inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
-                        <i class="fa-solid fa-person-running"></i> {{ warrior.get_condition_display }}
-                    </p>
-                {% else %}
-                    <p class="inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
-                        <i class="fa-solid fa-skull"></i> {{ warrior.get_condition_display }}
-                    </p>
-                {% endif %}
-            </div>
-            {# Health as text beside the morale, the way the faction page's card already prints both. #}
-            {# A progress bar in the divided line above resolves its width against a zero-width flex #}
-            {# item and draws nothing, which would withhold the one number that decides whether to #}
-            {# press "Fight!" again. #}
-            {# Both numbers in the mono face every count in the game is set in, and both in ink: the #}
-            {# palette keeps one colour and spends it on trouble, so what separates health from #}
-            {# morale here is the label and the glyph rather than a hue. #}
-            <div class="font-mono text-label uppercase tracking-label text-ink">
+{# A man in a fight, as one row in his band's list. #}
+{#  #}
+{# The panel he sits in is a third of the screen, and it has to hold as many men as the player owns - #}
+{# "FactionAttackForm" marches the leader plus every healthy, uncommitted warrior, so there is no #}
+{# roster size this has to stop being readable at. That is what the row is for: his name gets the full #}
+{# width of the column instead of half of it, and what he is stays four lines rather than nine blocks. #}
+{#  #}
+{# The faction is deliberately not on it. Every man here is on this panel's roster and the header #}
+{# above already names it - see "faction_box.html". #}
+<div class="border-b border-rule py-4">
+    {% if warrior.is_healthy %}
+        {# "Healthy" is the name of a state and not a reading of the health below it: nothing between #}
+        {# full health and zero moves the condition, so a man at 1 of 20 is in it as much as one who #}
+        {# has not been touched. What the state says is that he is still on his feet, and the bar says #}
+        {# at what cost. #}
+        {# The axis is brightness because the palette has no second hue to spend: a man still on his #}
+        {# feet wears the brightest value there is, which is what reads as whole. The word is never the #}
+        {# red - only the box around it - so a tag stays as readable as the number beside it. #}
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <p class="m-0 min-w-0 flex-1 leading-snug text-ink">{{ warrior.display_name }}</p>
+            <p class="m-0 inline-block border border-ink px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
+                <i class="fa-solid fa-feather-pointed"></i> Ready
+            </p>
+        </div>
+
+        {# Health over morale, on the same track width, because the pair is one reading: how much of #}
+        {# him is left and how long he will keep standing there. #}
+        {# Weight and brightness separate them - health is the heavier bar in "ink", morale the lighter #}
+        {# one in "ink-muted" - since the palette keeps its one colour for trouble. "ink-dim" is not #}
+        {# what morale wears: it carries no meaning by rule, and morale is what decides whether a man #}
+        {# keeps fighting. #}
+        {# "progress" resolves its own proportion from value and max, and needs a box with a width to #}
+        {# draw it in, which is what the grid column gives it. #}
+        <div class="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5">
+            <progress class="h-[10px] w-full border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink"
+                      value="{{ warrior.current_health }}" max="{{ warrior.max_health }}"></progress>
+            <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink">
                 <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
-                {# The morale is what decides whether a man keeps fighting, so it is shown while he #}
-                {# still can. "put_out_of_the_fight" normalises his health to nothing and leaves the #}
-                {# morale where the last round left it, which read "11 / 11" beside a skull. #}
-                {% if warrior.is_healthy %}
-                    <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
-                {% endif %}
-            </div>
+            </span>
+            <progress class="h-[6px] w-full border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink-muted [&::-moz-progress-bar]:bg-ink-muted"
+                      value="{{ warrior.current_morale }}" max="{{ warrior.max_morale }}"></progress>
+            <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink-muted">
+                <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
+            </span>
         </div>
-        <div>
-            {% include 'common/components/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %}
-            {{ warrior.get_weapon_or_fallback }}
+
+        {# The level is here because this is where a level-up is witnessed: the growth happens #}
+        {# mid-skirmish and the log announces it in the panel beside this one. #}
+        {# The gear is here because the fight is the one screen that shows both sides theirs - see #}
+        {# docs/patterns/warrior-knowledge.md. A player standing across from the man can read what he #}
+        {# carries, and what he carries is part of choosing what to do about him. #}
+        <div class="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted">
+            <span class="whitespace-nowrap"><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</span>
+            <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %} {{ warrior.get_weapon_or_fallback }}</span>
+            <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %} {{ warrior.get_armor_or_fallback }}</span>
         </div>
-        <div>
-            {% include 'common/components/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %}
-            {{ warrior.get_armor_or_fallback }}
-        </div>
-    </div>
-    <div class="border-t border-rule px-5 py-[13px]">
-        <div>
-        {# Two conditions, and the second is about the fight rather than the man: a warrior who is #}
-        {# still on his feet when it ends was being offered next round's attack in a skirmish that #}
-        {# has a victor and will never have another round. #}
-        {% if warrior.is_healthy and not skirmish_is_decided %}
+
+        {# The order, and the condition on it is about the fight rather than the man: a warrior still on #}
+        {# his feet when it ends would otherwise be offered next round's attack in a skirmish that has a #}
+        {# victor and will never have another round. #}
+        {% if not skirmish_is_decided %}
             {# TODO (#64): put this in a crispy-form? maybe later, might be hard to create forms in the view #}
-            <form method="post">
+            <form class="mt-3" method="post">
                 {# The warrior id is the participant key: it is unique within a skirmish, so it needs no separator. Concatenating faction id and loop index did - faction 1/index 10 and faction 11/index 0 both produced "110", and one participant silently overwrote the other. No faction is posted: the view reads the sides off the skirmish rosters, since a posted one can lie and "warrior.faction" changes the moment a captive is recruited. #}
                 {% if is_player %}
                     <label>
@@ -90,16 +75,31 @@
                            value="{{ warrior.id }}">
                 {% else %}
                     {% comment %}
-                        Text rather than a control. The enemy's move is the server's to decide, and while
-                        this was a select carrying the player's own field name the Fight! button's
-                        "hx-include" swept it up and the round was fought on whatever it held. Nothing
-                        about this side is posted any more, which is why the hidden warrior id goes with
-                        it: the roster names who fights.
+                        Text rather than a control. The enemy's move is the server's to decide, and a
+                        select here carrying the player's own field name is swept up by the Fight!
+                        button's "hx-include" and fights the round on whatever it holds. Nothing about
+                        this side is posted, which is why the hidden warrior id goes with the player's
+                        half alone: the roster names who fights.
                     {% endcomment %}
                     <p class="m-0 text-sm leading-snug text-ink-muted">{{ warrior.decide_skirmish_action.1 }}</p>
                 {% endif %}
             </form>
         {% endif %}
+    {% else %}
+        {# A man off his feet is one line. He has no order to give and no morale to read: #}
+        {# "put_out_of_the_fight" normalises his health to nothing and leaves the morale where the last #}
+        {# round left it, so a full bar beside a skull would be a lie. #}
+        {# His name stays at "ink-muted" rather than "ink-dim" - the tag beside it is what says he is #}
+        {# out, and a name the player cannot read has not told him who. #}
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <p class="m-0 min-w-0 flex-1 leading-snug text-ink-muted">{{ warrior.display_name }}</p>
+            <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink-muted">
+                <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
+            </span>
+            <p class="m-0 inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
+                {% if warrior.is_unconscious %}<i class="fa-solid fa-moon"></i>{% elif warrior.is_fleeing %}<i class="fa-solid fa-person-running"></i>{% else %}<i class="fa-solid fa-skull"></i>{% endif %}
+                {{ warrior.get_condition_display }}
+            </p>
         </div>
-    </div>
+    {% endif %}
 </div>

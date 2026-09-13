@@ -1,5 +1,4 @@
+{# Each man is his own row and carries his own bottom rule, so the list needs no wrapper around them. #}
 {% for warrior in object_list %}
-    <div>
-        {% include 'skirmish/warrior/components/warrior_card.html' with warrior=warrior is_player=is_player skirmish_is_decided=skirmish_is_decided %}
-    </div>
+    {% include 'skirmish/warrior/components/warrior_card.html' with warrior=warrior is_player=is_player skirmish_is_decided=skirmish_is_decided %}
 {% endfor %}
