@@ -82,6 +82,110 @@ def test_in_pub_of_leaves_out_a_warrior_who_is_merely_factionless():
 
 
 @pytest.mark.django_db
+def test_filter_unfit_returns_the_men_who_cannot_fight():
+    unconscious_warrior = WarriorFactory(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = Warrior.objects.filter_unfit()
+
+    assert list(result) == [unconscious_warrior]
+
+
+@pytest.mark.django_db
+def test_filter_unfit_leaves_out_a_healthy_man():
+    WarriorFactory(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+
+    result = Warrior.objects.filter_unfit()
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_filter_sworn_to_a_quest_returns_the_men_signed_on_this_month():
+    warrior = WarriorFactory()
+    quest_contract = QuestContractFactory(faction=warrior.faction, accepted_in_month=3)
+    quest_contract.assigned_warriors.add(warrior)
+
+    result = Warrior.objects.filter_sworn_to_a_quest(month=3)
+
+    assert list(result) == [warrior]
+
+
+@pytest.mark.django_db
+def test_filter_sworn_to_a_quest_leaves_out_a_man_whose_quest_was_last_month():
+    warrior = WarriorFactory()
+    quest_contract = QuestContractFactory(faction=warrior.faction, accepted_in_month=2)
+    quest_contract.assigned_warriors.add(warrior)
+
+    result = Warrior.objects.filter_sworn_to_a_quest(month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_filter_committed_to_a_fight_returns_the_men_on_either_roster():
+    attacking_warrior = WarriorFactory()
+    defending_warrior = WarriorFactory(savegame=attacking_warrior.savegame)
+    skirmish = SkirmishFactory(attacking_faction=attacking_warrior.faction, month=3)
+    skirmish.attacking_warriors.add(attacking_warrior)
+    skirmish.defending_warriors.add(defending_warrior)
+
+    result = Warrior.objects.filter_committed_to_a_fight(month=3).order_by("id")
+
+    assert list(result) == [attacking_warrior, defending_warrior]
+
+
+@pytest.mark.django_db
+def test_filter_committed_to_a_fight_leaves_out_a_man_whose_fight_was_another_month():
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory(attacking_faction=warrior.faction, month=2, victorious_faction=warrior.faction)
+    skirmish.attacking_warriors.add(warrior)
+
+    result = Warrior.objects.filter_committed_to_a_fight(month=3)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_filter_standing_in_an_open_fight_returns_a_man_from_a_fight_nobody_settled():
+    """
+    The one exclusion a player cannot guess at, and the reason it has its own sentence: an unresolved
+    skirmish carries over, so last month's fight is still holding this month's roster.
+    """
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory(attacking_faction=warrior.faction, month=1, victorious_faction=None)
+    skirmish.attacking_warriors.add(warrior)
+
+    result = Warrior.objects.filter_standing_in_an_open_fight()
+
+    assert list(result) == [warrior]
+
+
+@pytest.mark.django_db
+def test_filter_standing_in_an_open_fight_leaves_out_a_man_who_has_never_fought():
+    """
+    Spelled on the warrior's own relation instead, "victorious_faction__isnull=True" matches every man
+    who has never fought at all - the outer join hands him a row of nulls that reads as an undecided
+    fight.
+    """
+    WarriorFactory()
+
+    result = Warrior.objects.filter_standing_in_an_open_fight()
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_filter_standing_in_an_open_fight_leaves_out_a_man_whose_fight_is_over():
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory(attacking_faction=warrior.faction, month=1, victorious_faction=warrior.faction)
+    skirmish.attacking_warriors.add(warrior)
+
+    result = Warrior.objects.filter_standing_in_an_open_fight()
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
 def test_exclude_currently_busy_keeps_a_warrior_who_has_never_fought():
     warrior = WarriorFactory()
 
