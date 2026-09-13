@@ -1,0 +1,64 @@
+{% load crispy_forms_filters l10n %}
+
+{# The war band drawn in full: a row per man, and beside the ones who cannot go, why. A crispy field #}
+{# template rather than an override of the bootstrap5 pack, so every other form in the project goes #}
+{# on rendering exactly as it did. Paired with RosterCheckboxSelectMultiple, which is what puts the #}
+{# reason on the option in the first place. #}
+
+<fieldset class="m-0 mb-5 border-0 p-0">
+    {% if field.label and form_show_labels %}
+        <legend class="mb-2 p-0 font-mono text-label uppercase tracking-label text-ink-muted">
+            {{ field.label }}
+        </legend>
+    {% endif %}
+
+    {# One "<ul>" around the lot, and asked about before it is opened. "optgroups" hands an ungrouped #}
+    {# field one group per option, so a list opened inside that loop is a ruled box per man rather #}
+    {# than one box of rows - and a war band of nobody draws an empty ruled box. #}
+    {% if field|optgroups %}
+        <ul class="m-0 list-none border border-rule p-0">
+            {% for group, options, index in field|optgroups %}
+                {% for option in options %}
+                    {# The reason is the row's whole state: present means this man cannot go. #}
+                    <li class="border-b border-rule last:border-b-0">
+                        {# The label wraps the row so the whole of it is the hit area on a phone, #}
+                        {# which a bare checkbox is not. #}
+                        <label for="{{ option.attrs.id }}"
+                               class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5 {% if option.reason %}cursor-not-allowed{% else %}cursor-pointer hover:bg-raised{% endif %}">
+                            <input type="checkbox"
+                                   name="{{ field.html_name }}"
+                                   value="{{ option.value|unlocalize }}"
+                                   id="{{ option.attrs.id }}"
+                                   {% if option.selected %}checked{% endif %}
+                                   {% if option.attrs.disabled %}disabled{% endif %}>
+
+                            {# ink-dim on the man himself, which is what the identity reserves for a #}
+                            {# disabled control. #}
+                            <span class="{% if option.reason %}text-ink-dim{% else %}text-ink{% endif %}">
+                                {{ option.label }}
+                            </span>
+
+                            {# The reason is ink-muted and never ink-dim. It is the one thing on this #}
+                            {# row the player is here to read, and ink-dim may not carry meaning. #}
+                            {% if option.reason %}
+                                <span class="w-full font-mono text-label uppercase tracking-label text-ink-muted md:ml-auto md:w-auto">
+                                    {{ option.reason }}
+                                </span>
+                            {% endif %}
+                        </label>
+                    </li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if field.errors %}
+        <div class="invalid-feedback">
+            {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+    {% endif %}
+
+    {% if field.help_text %}
+        <span class="form-text">{{ field.help_text }}</span>
+    {% endif %}
+</fieldset>
