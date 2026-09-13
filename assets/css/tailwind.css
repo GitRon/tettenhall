@@ -25,6 +25,47 @@
 @source "../../static/js";
 
 /*
+ * The game's visual identity, as theme tokens - see docs/patterns/visual-identity.md for the rules
+ * these values serve and what may spend them.
+ *
+ * "--color-*: initial" is the enforcement, and it is the reason this block opens the way it does: it
+ * drops Tailwind's own palette, so "bg-sky-100" and "text-white" stop compiling and there is no
+ * quiet way to introduce a seventh hue. A stray colour utility becomes an element that inherits its
+ * colour and still reads, rather than a hue nobody chose. "transparent" and "current" are put back
+ * because they name a behaviour rather than a colour.
+ *
+ * The radius and shadow scales go the same way. Separation in this game comes from a 1px rule and
+ * space, so "rounded-lg" and "shadow-md" are not utilities that exist here.
+ */
+@theme {
+    --color-*: initial;
+    --color-transparent: transparent;
+    --color-current: currentColor;
+
+    --color-ground: #0c0b0a;
+    --color-raised: #131110;
+    --color-rule: #23201c;
+    --color-ink: #e6dcc9;
+    --color-ink-muted: #8b8373;
+    --color-ink-dim: #6b6459;
+    --color-blood: #c05d46;
+
+    --font-display: "Cinzel", Georgia, serif;
+    --font-body: "Spectral", Georgia, serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+    /* The label: every count, status mark and column head in the game is set in these two, so they
+     * are a token rather than a pair of arbitrary values repeated at a dozen call sites. */
+    --text-label: 0.6875rem;
+    --tracking-label: 0.16em;
+
+    --radius-*: initial;
+    --shadow-*: initial;
+    --inset-shadow-*: initial;
+    --drop-shadow-*: initial;
+}
+
+/*
  * The base layer, and it is not decoration.
  *
  * Preflight strips the browser's own typography: every heading inherits the body size, paragraphs and
@@ -32,17 +73,29 @@
  * bare "h1", 9 "h2", 6 "h3", 10 "p" and a pile of unclassed lists and links, so without the rules below
  * every heading in the game reads as body text.
  *
- * The numbers are the ones the app has always rendered at. #64 owns choosing different ones - it builds
- * a type scale and a palette, and this block is the single place their values land.
+ * "html" stays at 16px on purpose. Tailwind's spacing scale is rem-based, so a root of 17px would
+ * rescale every padding, margin and width in the project by six percent to buy one step of body copy.
+ * The 17px floor prose is written to is set on "body" instead, where it costs nothing else.
  */
 @layer base {
     html {
         font-size: 16px;
         line-height: 1.5;
-        color: #666;
-        background: #fff;
+        color: var(--color-ink-muted);
+        background: var(--color-ground);
     }
 
+    body {
+        font-family: var(--font-body);
+        font-size: 1.0625rem;
+        font-weight: 300;
+    }
+
+    /*
+     * Cinzel, uppercase and tracked, at every level. The face carries no lowercase worth reading at
+     * these sizes and the letter-spacing is what stops the caps closing up, so the two travel
+     * together - a heading that sets one without the other is the thing this block exists to prevent.
+     */
     h1,
     h2,
     h3,
@@ -50,28 +103,42 @@
     h5,
     h6 {
         margin: 0 0 20px;
-        font-weight: normal;
-        color: #333;
+        font-family: var(--font-display);
+        font-weight: 500;
+        color: var(--color-ink);
+        text-transform: uppercase;
     }
 
     h1 {
-        font-size: 2.23125rem;
-        line-height: 1.2;
+        font-size: 2.25rem;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: 0.04em;
     }
 
     h2 {
-        font-size: 1.7rem;
-        line-height: 1.3;
+        font-size: 1.75rem;
+        line-height: 1.2;
+        letter-spacing: 0.06em;
     }
 
     h3 {
-        font-size: 1.5rem;
-        line-height: 1.4;
+        font-size: 1.375rem;
+        line-height: 1.3;
+        letter-spacing: 0.06em;
     }
 
     h4 {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         line-height: 1.4;
+        letter-spacing: 0.08em;
+    }
+
+    h5,
+    h6 {
+        font-size: 0.8125rem;
+        line-height: 1.4;
+        letter-spacing: 0.1em;
     }
 
     p,
@@ -95,20 +162,38 @@
         list-style-type: decimal;
     }
 
+    /*
+     * A link is the text colour with a rule under it, and the rule is what goes red on hover. The
+     * word itself never changes colour: "blood" is reserved for something that wants the player, and
+     * spending it on every link in a sentence is exactly the decorative use the palette forbids.
+     */
     a {
-        color: #1e87f0;
+        color: var(--color-ink);
+        text-decoration: underline;
+        text-decoration-color: var(--color-rule);
+        text-underline-offset: 0.2em;
         cursor: pointer;
     }
 
     a:hover {
-        color: #0f6ecd;
-        text-decoration: underline;
+        color: var(--color-ink);
+        text-decoration-color: var(--color-blood);
     }
 
     hr {
         margin: 0 0 20px;
         border: 0;
-        border-top: 1px solid #e5e5e5;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    /*
+     * Everything the keyboard lands on says so in the one colour reserved for wanting the player.
+     * This is the only place "blood" is spent without something being wrong, and it is spent on
+     * where you are rather than on what is there.
+     */
+    :focus-visible {
+        outline: 2px solid var(--color-blood);
+        outline-offset: 2px;
     }
 
     /*
@@ -125,16 +210,72 @@
 
     th {
         padding: 16px 12px;
-        font-size: 0.875rem;
-        font-weight: normal;
-        color: #999;
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-weight: 400;
+        color: var(--color-ink-muted);
         text-align: left;
         text-transform: uppercase;
+        letter-spacing: 0.16em;
         vertical-align: bottom;
     }
 
     td {
         padding: 16px 12px;
+        border-top: 1px solid var(--color-rule);
         vertical-align: top;
+    }
+
+    /*
+     * The form controls, and they are load-bearing rather than a polish pass. Seven templates render
+     * crispy forms against the bootstrap5 pack and no Bootstrap stylesheet is served anywhere, so
+     * every one of those fields is a browser default - which on this ground is a white box with black
+     * text in it, on the login page among others. These rules are the whole of their styling.
+     *
+     * Checkboxes and radios are left out by hand: they draw themselves from the same box model, and
+     * padding on one is a control that no longer looks like a control.
+     */
+    input:not([type="checkbox"], [type="radio"]),
+    select,
+    textarea {
+        padding: 8px 12px;
+        font: inherit;
+        color: var(--color-ink);
+        background-color: var(--color-ground);
+        border: 1px solid var(--color-rule);
+    }
+
+    input:not([type="checkbox"], [type="radio"]):focus,
+    select:focus,
+    textarea:focus {
+        border-color: var(--color-blood);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--color-ink-dim);
+    }
+
+    /*
+     * A button is outlined by default. The one filled element a screen is allowed says so at its own
+     * call site, which is what keeps "one per screen" a thing somebody has to choose rather than a
+     * thing that happens.
+     */
+    button,
+    input[type="submit"] {
+        padding: 10px 20px;
+        font-family: var(--font-display);
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--color-ink);
+        cursor: pointer;
+        background-color: transparent;
+        border: 1px solid var(--color-rule);
+    }
+
+    button:hover,
+    input[type="submit"]:hover {
+        background-color: var(--color-raised);
     }
 }
