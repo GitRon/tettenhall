@@ -24,8 +24,11 @@ savegame can exist before its faction does.
 
 - **The ledger.** A scoreboard, not a place. It is one click from anywhere: the silver counter in the
   bar is a link to it, on every screen.
-- **Finish month.** The one irreversible action in the game. It sits in the bar with the counters,
-  which is where the numbers it spends are, and it is not navigation.
+- **Finish month.** The one irreversible action in the game, and not navigation. It sits on the Month
+  page itself, in the band that states whether the month can turn at all — the control and the
+  sentence saying whether it may be pressed are one element, and an unresolved skirmish is what makes
+  it refuse. The shell carries no control that ends the month, so there is exactly one place to press
+  it and it is the section that owns the turn.
 - **Savegames and Logout.** The account menu. They are about the session, not about the month.
 - **The resource bar.** Global status. Each counter links to the page that answers it — the roster, the
   ledger, the open fights, the month — and the bar stays its own htmx swap target
@@ -43,8 +46,8 @@ in. There are no breadcrumbs: two levels do not need a third way of saying where
 ## Marking where the player is
 
 `apps/warband/navigation/context_processors.py` resolves the current section from the url name behind
-the request and marks it with `aria-current="page"` plus a colour and a rule. Before this, the only
-marked thing in the shell was *Finish month* — an action, not a location.
+the request and marks it with `aria-current="page"` plus a colour and a rule. The mark says where the
+player is; nothing else in the shell carries it, because nothing else in the shell is a location.
 
 Two pages cannot be answered by the route alone, because one view serves two sections:
 

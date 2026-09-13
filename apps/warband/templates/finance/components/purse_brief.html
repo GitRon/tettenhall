@@ -1,0 +1,42 @@
+{# What the month will do to the purse, in the four figures the decision is made against. #}
+{#  #}
+{# The same numbers the cost card on the ledger shows, off the same payroll the salary run bills from #}
+{# - "wage_bill_payroll" rides in on the finance context processor and the income is read off the #}
+{# town by whichever view renders this, so the two screens cannot promise different figures. What #}
+{# differs here is the shape and only the shape: the month page reads this beside a list of #}
+{# decisions, and a six-row table would be the loudest thing on it. #}
+<section class="mb-5 flex flex-col gap-y-2 border-l border-rule pl-[15px]">
+    <h3 class="m-0 font-mono text-label uppercase tracking-label text-ink-muted">The purse</h3>
+
+    <div class="flex items-baseline justify-between gap-x-2.5">
+        <span>In hand</span>
+        <span class="font-mono tabular-nums text-ink">{{ current_balance }}</span>
+    </div>
+    <div class="flex items-baseline justify-between gap-x-2.5">
+        <span>Wages</span>
+        <span class="font-mono tabular-nums text-ink">−{{ wage_bill_payroll.total_amount }}</span>
+    </div>
+    <div class="flex items-baseline justify-between gap-x-2.5">
+        <span>Hall income</span>
+        <span class="font-mono tabular-nums text-ink">+{{ building_income_amount }}</span>
+    </div>
+
+    {% comment %}
+        Both projections stay behind the same guard the cost card puts them behind: the income
+        arrives after the wages have already failed, so a figure fed by it beside a shortfall would
+        read as reassurance the faction has not earned. The shortfall itself is the alert at the top
+        of the page and is not repeated here - two red things on one screen and at least one of them
+        is wrong.
+    {% endcomment %}
+    {% if not wage_bill_payroll.is_short %}
+        <div class="flex items-baseline justify-between gap-x-2.5 border-t border-rule pt-2">
+            <span class="text-ink">Next month</span>
+            <span class="font-mono tabular-nums text-ink">{{ wage_bill_payroll.remaining_amount|add:building_income_amount }}</span>
+        </div>
+        <p class="m-0 text-sm leading-snug">Wages paid, income in.</p>
+    {% endif %}
+
+    <p class="m-0">
+        <a href="{% url 'warband:transaction-list-view' %}">Look at the books</a>
+    </p>
+</section>

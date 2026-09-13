@@ -1,55 +1,61 @@
 {# A summary and not a roster. The faction page renders a card per man, and this page would pay a #}
-{# query per man for a second copy of it - so the counts come out of one aggregate and the link #}
-{# below is how the player reaches the cards. #}
-<div class="mb-5 box-border bg-ground p-[30px] text-ink-muted border border-rule">
-    <h3>The war band</h3>
-    <ul class="m-0 list-none p-0">
-        <li class="border-b border-rule py-2.5">
-            <strong>{{ month_standing.warband.warrior_count }}</strong>
-            {# "every man fit" rather than "all of them fit": a war band of one is the state a fresh #}
-            {# savegame starts in, and the plural reads as a mistake on it. #}
-            warrior{{ month_standing.warband.warrior_count|pluralize }} under your banner{% if month_standing.warband.is_intact %}, every man fit{% else %}
-                —
-                {% if month_standing.warband.unconscious_count %}
-                    {{ month_standing.warband.unconscious_count }} down{% if month_standing.warband.fleeing_count %},{% endif %}
-                {% endif %}
-                {% if month_standing.warband.fleeing_count %}
-                    {{ month_standing.warband.fleeing_count }} still routed
-                {% endif %}
-            {% endif %}
-        </li>
-        {# The one question the player can only answer today by opening a rival's page and reading #}
-        {# the footnote explaining the missing Attack button. #}
-        <li class="border-b border-rule py-2.5">
-            {% if not month_standing.warband.leader %}
-                The war band has no leader.
-            {% elif month_standing.warband.leader_can_march %}
-                <strong>{{ month_standing.warband.leader }}</strong> is fit to march.
-            {% else %}
-                <strong>{{ month_standing.warband.leader }}</strong> is in no condition to march this
-                month, so there is no attack to launch.
-            {% endif %}
-        </li>
-        {# Neither of these expires when the month turns, so they are lines here rather than rows on #}
-        {# the panel of things that do. Silent when there is nothing behind them: a nil count is a #}
-        {# line the player learns to skip. #}
-        {% if month_standing.warband.fyrd_reserve %}
-            <li class="border-b border-rule py-2.5">
-                <strong>{{ month_standing.warband.fyrd_reserve }}</strong>
-                {{ month_standing.warband.fyrd_reserve|pluralize:"man,men" }} in the fyrd reserve, and
-                a draft costs nothing.
-            </li>
+{# query per man for a second copy of it - so the counts come out of one aggregate and the link at #}
+{# the bottom is how the player reaches the cards. #}
+{#  #}
+{# Part of the brief rather than a panel: these are read, not acted on, so they are label-and-value #}
+{# lines against a single rule instead of a box competing with the things that do want a decision. #}
+<section class="mb-5 flex flex-col gap-y-2 border-l border-rule pl-[15px]">
+    <h3 class="m-0 font-mono text-label uppercase tracking-label text-ink-muted">The war band</h3>
+
+    <div class="flex items-baseline justify-between gap-x-2.5">
+        <span>Warriors</span>
+        <span class="font-mono tabular-nums text-ink">{{ month_standing.warband.warrior_count }}</span>
+    </div>
+    {# Silent while every man is fit: a nil count is a line the player learns to skip, and the two #}
+    {# conditions are the ones that decide whether there is a fight to be had at all. #}
+    {% if month_standing.warband.unconscious_count %}
+        <div class="flex items-baseline justify-between gap-x-2.5">
+            <span>Down</span>
+            <span class="font-mono tabular-nums text-ink">{{ month_standing.warband.unconscious_count }}</span>
+        </div>
+    {% endif %}
+    {% if month_standing.warband.fleeing_count %}
+        <div class="flex items-baseline justify-between gap-x-2.5">
+            <span>Still routed</span>
+            <span class="font-mono tabular-nums text-ink">{{ month_standing.warband.fleeing_count }}</span>
+        </div>
+    {% endif %}
+    {# Neither of these expires when the month turns, so they are lines here rather than rows on the #}
+    {# panel of things that do. #}
+    {% if month_standing.warband.fyrd_reserve %}
+        <div class="flex items-baseline justify-between gap-x-2.5">
+            <span>Fyrd reserve</span>
+            <span class="font-mono tabular-nums text-ink">{{ month_standing.warband.fyrd_reserve }}</span>
+        </div>
+    {% endif %}
+    {% if month_standing.warband.captive_count %}
+        <div class="flex items-baseline justify-between gap-x-2.5">
+            <span>Captives</span>
+            <span class="font-mono tabular-nums text-ink">{{ month_standing.warband.captive_count }}</span>
+        </div>
+    {% endif %}
+
+    {# The one question the player can only answer today by opening a rival's page and reading the #}
+    {# footnote explaining the missing Attack button. #}
+    <p class="m-0 text-sm leading-snug">
+        {% if not month_standing.warband.leader %}
+            The war band has no leader.
+        {% elif month_standing.warband.leader_can_march %}
+            <span class="text-ink">{{ month_standing.warband.leader }}</span> is fit to march.
+        {% else %}
+            <span class="text-ink">{{ month_standing.warband.leader }}</span> is in no condition to
+            march this month, so there is no attack to launch.
         {% endif %}
-        {% if month_standing.warband.captive_count %}
-            <li class="border-b border-rule py-2.5">
-                <strong>{{ month_standing.warband.captive_count }}</strong>
-                captive{{ month_standing.warband.captive_count|pluralize }} to recruit or to sell.
-            </li>
-        {% endif %}
-    </ul>
-    <p class="mb-0">
+    </p>
+
+    <p class="m-0">
         <a href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}">
             Look at the war band
         </a>
     </p>
-</div>
+</section>

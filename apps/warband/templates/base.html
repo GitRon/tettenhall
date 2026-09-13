@@ -26,9 +26,10 @@
 {# The token travels as data rather than as a JavaScript literal, which is what lets the whole script #}
 {# below be a static file with no template rendering in it. #}
 <body data-csrf-token="{{ csrf_token }}">
-{# The bar carries what is true everywhere: the counters every decision is made against, the one #}
-{# control that advances the game, and the account menu. Where the player can go is the section nav #}
-{# below it - see docs/patterns/navigation.md. #}
+{# The bar carries what is true everywhere: the counters every decision is made against and the #}
+{# account menu. Where the player can go is the section nav below it - see #}
+{# docs/patterns/navigation.md, which is also where the month is finished: the control that ends it #}
+{# lives on the Month page, beside the sentence saying whether it can be pressed. #}
 <nav class="bg-raised" data-navbar>
     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 md:min-h-20 md:px-4 md:py-0 lg:px-8">
         <a class="text-2xl text-ink no-underline hover:text-ink"
@@ -38,29 +39,18 @@
             {% include 'faction/components/resource_bar.html' %}
         {% endif %}
 
-        {% if request.user.is_authenticated and current_savegame %}
-            {# A control whose only answer is a refusal is worse than no control. The guard behind #}
-            {# every command view turns a decided savegame away with a toast, so this says which #}
-            {# state the game is in instead of offering the month again. #}
-            {% if current_savegame.is_over %}
-                <span class="text-sm uppercase text-ink-muted md:ml-auto">Game over</span>
-            {% else %}
-                {# A button rather than an anchor, because this posts the month: an "a" with no href #}
-                {# is out of Tab's reach and announced as text. The utilities are what keep it looking #}
-                {# like the nav entry beside it. #}
-                <button class="cursor-pointer border-none bg-transparent p-0 text-sm uppercase text-ink hover:text-ink-muted md:ml-auto"
-                        hx-post="{% url 'warband:finish-month-view' %}"
-                        type="button">
-                    Finish month
-                </button>
-            {% endif %}
+        {% if request.user.is_authenticated and current_savegame and current_savegame.is_over %}
+            {# The guard behind every command view turns a decided savegame away with a toast, so the #}
+            {# bar says which state the game is in on every screen, not only on the one the outcome #}
+            {# banner is on. #}
+            <span class="text-sm uppercase text-ink-muted">Game over</span>
         {% endif %}
 
         {% if request.user.is_authenticated %}
             {# The account menu stays in the bar on a phone rather than moving into the panel: it is #}
             {# one element in one place in the document, and a dropdown works at both widths, so #}
             {# hiding it here and repeating it there would mean two copies of the same two links. #}
-            <details class="relative" data-menu>
+            <details class="relative md:ml-auto" data-menu>
                 <summary class="cursor-pointer list-none text-sm uppercase text-ink-muted hover:text-ink">
                     {{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}
                 </summary>

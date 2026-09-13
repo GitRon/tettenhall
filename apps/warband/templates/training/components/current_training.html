@@ -1,0 +1,19 @@
+{# What every man improves at when the month turns. One faction-wide row, pre-set on a new savegame #}
+{# and often never touched, so it is read on the page the month begins on rather than looked up #}
+{# somewhere - and its empty state is a warning about the month, which is what this page is for. #}
+{#  #}
+{# Without a training there is no id to reverse the edit url with. #}
+<section class="mb-5 flex flex-col gap-y-2 border-l border-rule pl-[15px]">
+    <h3 class="m-0 font-mono text-label uppercase tracking-label text-ink-muted">Training</h3>
+    {% if current_training %}
+        <p class="m-0">
+            <span class="text-ink">{{ current_training }}</span> — grows
+            {{ current_training.grown_attributes_display }}.
+        </p>
+        <p class="m-0">
+            <a href="{% url 'warband:training-edit-view' current_training.id %}">Change the training</a>
+        </p>
+    {% else %}
+        <p class="m-0">No training is set. Nobody improves in a month without one.</p>
+    {% endif %}
+</section>

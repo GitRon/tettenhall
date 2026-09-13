@@ -81,7 +81,6 @@ def test_open_skirmish_count_counts_the_fights_blocking_the_month():
     standing = MonthStanding.for_savegame(savegame=savegame)
 
     assert standing.open_skirmish_count == 1
-    assert standing.has_anything_open is True
 
 
 @pytest.mark.django_db
@@ -234,7 +233,7 @@ def test_shop_item_count_and_pub_mercenary_count_read_the_town_the_player_owns()
 
 
 @pytest.mark.django_db
-def test_has_anything_open_is_false_on_a_month_with_nothing_left_in_it():
+def test_has_offers_open_is_false_on_a_month_with_nothing_left_in_it():
     """
     The one state that earns the page a different sentence rather than an empty panel, and it takes
     an empty shop, an empty pub, a spent building slot and no rival anybody can be marched on.
@@ -246,11 +245,30 @@ def test_has_anything_open_is_false_on_a_month_with_nothing_left_in_it():
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
-    assert standing.has_anything_open is False
+    assert standing.has_offers_open is False
 
 
 @pytest.mark.django_db
-def test_has_anything_open_is_false_once_the_game_has_been_decided():
+def test_has_offers_open_is_false_on_a_month_held_only_by_a_fight():
+    """
+    The fight is not an offer. It blocks the month rather than expiring with it, so it is stated
+    above the list with the way to it beside it - and a month whose only open thing is that fight
+    gets a sentence saying nothing else is left, not a list with one red row in it.
+    """
+    savegame = SavegameFactory(current_month=4)
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
+    savegame.player_faction = player_faction
+    savegame.save()
+    SkirmishFactory(attacking_faction=player_faction)
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.open_skirmish_count == 1
+    assert standing.has_offers_open is False
+
+
+@pytest.mark.django_db
+def test_has_offers_open_is_false_once_the_game_has_been_decided():
     """
     The offers hold that guard themselves, so a decided savegame reaches the same answer as a spent
     month - which is what makes the view's own check about the panels and not about the rules.
@@ -265,7 +283,7 @@ def test_has_anything_open_is_false_once_the_game_has_been_decided():
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
-    assert standing.has_anything_open is False
+    assert standing.has_offers_open is False
 
 
 @pytest.mark.django_db
