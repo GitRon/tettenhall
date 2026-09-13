@@ -43,6 +43,25 @@ def player_faction_ready_to_march(current_savegame) -> Faction:
     return faction
 
 
+@pytest.fixture
+def savegame_whose_rival_is_the_older_faction(current_savegame) -> Savegame:
+    """
+    A savegame holding a rival that was written before the player's own war band.
+
+    The war band's pages carry no id, so they resolve their subject by taking the first row of a
+    scoped queryset. Which scope that is only becomes visible when the player's faction is not the
+    oldest one in the savegame: with a rival written first, narrowing to the savegame instead of to
+    the player's faction lands the whole section on the rival.
+
+    Reachable rather than contrived - the savegame row exists before any faction does, which is what
+    "savegame_without_player_faction" describes, and nothing says the player's own is written first.
+    """
+    current_savegame.player_faction = FactionFactory(savegame=current_savegame)
+    current_savegame.save()
+
+    return current_savegame
+
+
 @pytest.mark.django_db
 def test_faction_detail_view_shows_a_rival(logged_in_client, current_savegame):
     rival_faction = FactionFactory(savegame=current_savegame)
@@ -265,16 +284,18 @@ def test_warband_roster_view_shows_the_players_own_men(logged_in_client, current
 
 
 @pytest.mark.django_db
-def test_warband_roster_view_reads_the_war_band_off_the_savegame(logged_in_client, current_savegame):
+def test_warband_roster_view_reads_the_war_band_off_the_savegame(
+    logged_in_client, savegame_whose_rival_is_the_older_faction
+):
     """
-    The url carries no id, so the faction the page shows is the scoped queryset's answer and not
-    something another savegame's roster can be reached through.
+    The url carries no id, so the page shows whatever the scoped queryset holds - and a rival older
+    than the player's own war band is what makes that answer mean something.
     """
     FactionFactory(savegame=SavegameFactory())
 
     response = logged_in_client.get(reverse("warband:warband-roster-view"))
 
-    assert response.context["object"] == current_savegame.player_faction
+    assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
 
 
 @pytest.mark.django_db
@@ -328,13 +349,15 @@ def test_warband_roster_view_shows_a_war_band_without_a_leader(logged_in_client,
 
 
 @pytest.mark.django_db
-def test_warband_stores_view_shows_the_players_own_war_band(logged_in_client, current_savegame):
+def test_warband_stores_view_shows_the_players_own_war_band(
+    logged_in_client, savegame_whose_rival_is_the_older_faction
+):
     FactionFactory(savegame=SavegameFactory())
 
     response = logged_in_client.get(reverse("warband:warband-stores-view"))
 
     assert response.status_code == 200
-    assert response.context["object"] == current_savegame.player_faction
+    assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
 
 
 @pytest.mark.django_db
@@ -349,23 +372,25 @@ def test_warband_stores_view_marks_the_war_band_as_the_players_own(logged_in_cli
 
 
 @pytest.mark.django_db
-def test_warband_fyrd_view_shows_the_players_own_war_band(logged_in_client, current_savegame):
+def test_warband_fyrd_view_shows_the_players_own_war_band(logged_in_client, savegame_whose_rival_is_the_older_faction):
     FactionFactory(savegame=SavegameFactory())
 
     response = logged_in_client.get(reverse("warband:warband-fyrd-view"))
 
     assert response.status_code == 200
-    assert response.context["object"] == current_savegame.player_faction
+    assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
 
 
 @pytest.mark.django_db
-def test_warband_captives_view_shows_the_players_own_war_band(logged_in_client, current_savegame):
+def test_warband_captives_view_shows_the_players_own_war_band(
+    logged_in_client, savegame_whose_rival_is_the_older_faction
+):
     FactionFactory(savegame=SavegameFactory())
 
     response = logged_in_client.get(reverse("warband:warband-captives-view"))
 
     assert response.status_code == 200
-    assert response.context["object"] == current_savegame.player_faction
+    assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
 
 
 @pytest.mark.django_db
@@ -381,9 +406,8 @@ def test_warband_captives_view_holds_the_players_own_captives(logged_in_client, 
 
 
 @pytest.mark.django_db
-def test_warband_progress_view_lists_the_players_own_men(logged_in_client, current_savegame):
-    FactionFactory(savegame=SavegameFactory())
-    warrior = WarriorFactory(faction=current_savegame.player_faction)
+def test_warband_progress_view_lists_the_players_own_men(logged_in_client, savegame_whose_rival_is_the_older_faction):
+    warrior = WarriorFactory(faction=savegame_whose_rival_is_the_older_faction.player_faction)
 
     response = logged_in_client.get(reverse("warband:warband-progress-view"))
 
