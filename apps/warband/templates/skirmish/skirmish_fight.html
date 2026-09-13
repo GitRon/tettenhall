@@ -85,11 +85,14 @@
     {# suppresses that nav - so the bar lands in space the page was holding open anyway. #}
     {# The player's orders post from here even while his own tab is closed: "hx-include" reads the #}
     {# selects out of the document, and a closed tab is display, not absence. #}
-    {# The control is sized by the bar rather than by itself: docked is a phone arrangement this screen #}
-    {# decides on, and "_fight_button.html" is included on its own terms in three other places that #}
-    {# must not inherit it. Full width because a docked primary action that occupies a third of the bar #}
-    {# reads as something that fell into it, and "min-h-11" because the component's own padding leaves #}
-    {# a 41px target - under what a thumb wants, which matters here in a way it does not on a desk. #}
+    {# The control is sized by the bar rather than by itself, because docked is a phone arrangement this #}
+    {# screen decides on: the component is also rendered bare by the view behind "updateFightButton" #}
+    {# ("SkirmishFightButtonUpdateView") and included again above for the desk, and neither may inherit #}
+    {# it. That swap replaces the component's own root from inside this wrapper, so what arrives after a #}
+    {# round is sized by the bar in the same way. #}
+    {# Full width because a docked primary action occupying a third of the bar reads as something that #}
+    {# fell into it, and "min-h-11" because the component's own padding leaves a 41px target - under #}
+    {# what a thumb wants, which matters here in a way it does not on a desk. #}
     <div class="fixed inset-x-0 bottom-0 z-20 border-t border-rule bg-raised px-4 py-3 md:hidden [&>*]:w-full [&_button]:flex [&_button]:min-h-11 [&_button]:w-full [&_button]:items-center [&_button]:justify-center">
         {% include 'skirmish/skirmish/htmx/_fight_button.html' with skirmish=object %}
     </div>

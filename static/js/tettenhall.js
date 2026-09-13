@@ -23,8 +23,14 @@
      * Every toast sits at the bottom, because the navbar is the first thing in the body and has no
      * offset under it: a top-centre notification covers the nav links and the resource counters, and
      * the counters are what several of these toasts are reporting a change to.
+     *
+     * Below "md:" it clears the furniture that is pinned down there - the section nav on most screens,
+     * the fight's docked Fight! button on one - by the same 24 that "base.html" reserves as bottom
+     * padding for it. A toast outranks all of it on z-index, so without the offset it covers a control
+     * for its full timeout, and on the fight screen the control it covers is the one the screen exists
+     * for, at the moment an error toast is the reason the player wants it.
      */
-    const HOST_CLASS = 'fixed bottom-4 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-y-2 px-4';
+    const HOST_CLASS = 'fixed bottom-24 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-y-2 px-4 md:bottom-4';
     const TOAST_CLASS = 'w-full border bg-raised px-4 py-3 text-sm text-ink';
 
     /*
