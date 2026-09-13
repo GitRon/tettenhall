@@ -17,7 +17,7 @@
             {% for quest in quest_list %}
                 {% include 'quest/components/quest_card.html' with quest=quest %}
             {% empty %}
-                <p class="text-sm leading-snug text-[#999]">Nothing is pinned to the board this month.</p>
+                <p class="text-sm leading-snug text-ink-muted">Nothing is pinned to the board this month.</p>
             {% endfor %}
         </div>
     </div>

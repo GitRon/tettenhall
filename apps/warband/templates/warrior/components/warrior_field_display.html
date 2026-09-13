@@ -9,7 +9,7 @@
                 hx-target="#partial-field-container-{{ attribute }}"
                 hx-swap="outerHTML"
                 aria-label="Edit {{ attribute }}"
-                class="box-border inline-block cursor-pointer border border-[#e5e5e5] bg-transparent px-[15px] py-0 text-sm uppercase leading-[28px] text-[#333] hover:border-[#b2b2b2]">
+                class="box-border inline-block cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink hover:bg-raised">
             <i class="fa-solid fa-feather-pointed"></i>
         </button>
     {% endif %}
@@ -32,8 +32,8 @@
         the honest signal that no strength went into them.
     {% endcomment %}
     {% if attribute == 'weapon' %}
-        <span class="text-sm leading-snug text-[#999]">{{ object.expected_damage|floatformat }} damage a blow on average, with his strength</span>
+        <span class="text-sm leading-snug text-ink-muted">{{ object.expected_damage|floatformat }} damage a blow on average, with his strength</span>
     {% elif attribute == 'armor' %}
-        <span class="text-sm leading-snug text-[#999]">{{ object.expected_protection|floatformat }} protection turned aside on average</span>
+        <span class="text-sm leading-snug text-ink-muted">{{ object.expected_protection|floatformat }} protection turned aside on average</span>
     {% endif %}
 </div>

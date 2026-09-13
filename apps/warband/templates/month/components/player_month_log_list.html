@@ -4,7 +4,7 @@
 {# otherwise be most of the month - are tallied into a single sentence with the rows behind it. #}
 <div class="mb-5">
     {% for message in player_month_logs.attention %}
-        <div class="mb-5 bg-[#fef4f6] py-[15px] pl-[15px] pr-[29px] text-[#f0506e]">
+        <div class="mb-5 bg-raised border border-blood py-[15px] pl-[15px] pr-[29px] text-blood">
             <h4 class="m-0">
                 <i class="fa-solid fa-triangle-exclamation"></i> {{ message.title }}
             </h4>
@@ -12,7 +12,7 @@
     {% endfor %}
 
     {% for message in player_month_logs.chronicle %}
-        <div class="mb-2.5 box-border bg-[#222] p-5 text-white shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+        <div class="mb-2.5 box-border bg-raised p-5 text-ink border border-rule">
             <h4 class="m-0">
                 <i class="fa-solid fa-feather"></i> {{ message.title }}
             </h4>
@@ -27,17 +27,17 @@
         {# sitting over the top of the set. It is carried by the lower row, between that row's margin #}
         {# and its padding, which is what centres it in the gap instead of tucking it under the text #}
         {# above. #}
-        <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-[#e5e5e5] [&>li+li]:pt-2.5">
+        <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
             {% for message in player_month_logs.consequence %}
                 <li>
-                    <i class="fa-solid fa-scroll text-[#999]"></i> {{ message.title }}
+                    <i class="fa-solid fa-scroll text-ink-muted"></i> {{ message.title }}
                 </li>
             {% endfor %}
         </ul>
     {% endif %}
 
     {% if player_month_logs.upkeep %}
-        <details class="text-sm leading-snug text-[#999]">
+        <details class="text-sm leading-snug text-ink-muted">
             <summary class="cursor-pointer">{{ player_month_logs.upkeep_summary|join:" · " }}</summary>
             <ul class="mt-0 list-none space-y-2.5 p-0">
                 {% for message in player_month_logs.upkeep %}
@@ -48,6 +48,6 @@
     {% endif %}
 
     {% if player_month_logs.is_empty %}
-        <p class="text-sm leading-snug text-[#999]">Nothing to report this month.</p>
+        <p class="text-sm leading-snug text-ink-muted">Nothing to report this month.</p>
     {% endif %}
 </div>

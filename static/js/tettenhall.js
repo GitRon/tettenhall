@@ -25,16 +25,25 @@
      * the counters are what several of these toasts are reporting a change to.
      */
     const HOST_CLASS = 'fixed bottom-4 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-y-2 px-4';
-    const TOAST_CLASS = 'w-full rounded px-4 py-3 text-sm shadow-lg';
+    const TOAST_CLASS = 'w-full border bg-raised px-4 py-3 text-sm text-ink';
 
-    // Django's level tags, plus the "success" and "error" this file raises itself.
+    /*
+     * Django's level tags, plus the "success" and "error" this file raises itself.
+     *
+     * The level is carried by the rule around the toast and by the word above the message, not by a
+     * colour behind it: the palette keeps one red and spends it on things that went wrong, so a toast
+     * saying a warrior was hired cannot be a different hue from one saying he could not be. Two
+     * outlines, and the label says which of the five it actually is.
+     */
     const LEVEL_CLASS = {
-        debug: 'bg-neutral-200 text-neutral-800',
-        info: 'bg-sky-100 text-sky-900',
-        success: 'bg-green-100 text-green-900',
-        warning: 'bg-amber-100 text-amber-900',
-        error: 'bg-red-100 text-red-900',
+        debug: 'border-rule',
+        info: 'border-rule',
+        success: 'border-rule',
+        warning: 'border-blood',
+        error: 'border-blood',
     };
+
+    const LABEL_CLASS = 'mb-1 font-mono text-label uppercase tracking-label text-ink-muted';
 
     let host = null;
 
@@ -53,9 +62,17 @@
         }
         const element = document.createElement('div');
         element.className = `${TOAST_CLASS} ${LEVEL_CLASS[level] || LEVEL_CLASS.info}`;
+        // The level, said in words, because the outline only separates trouble from the rest.
+        const label = document.createElement('div');
+        label.className = LABEL_CLASS;
+        label.textContent = LEVEL_CLASS[level] ? level : 'info';
+        element.appendChild(label);
         // "textContent", never "innerHTML": the text arrives from a faction or town name the player
-        // typed, and this is the sink that decides whether that is markup or words.
-        element.textContent = text;
+        // typed, and this is the sink that decides whether that is markup or words. The message goes
+        // in a child of its own so the label above it is not part of the same text node.
+        const body = document.createElement('div');
+        body.textContent = text;
+        element.appendChild(body);
         // A warning or an error interrupts; the rest is progress the player does not have to be
         // pulled away from.
         element.setAttribute('role', level === 'error' || level === 'warning' ? 'alert' : 'status');

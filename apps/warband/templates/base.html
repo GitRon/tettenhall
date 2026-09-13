@@ -8,6 +8,15 @@
     <title>Tettenhall - The Game</title>
     <link rel="icon" href="{% static 'svg/icons/crossed_swords.svg' %}" type="image/svg+xml">
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
+    {# The three faces, self-hosted out of "node_modules", which is a static root - so they cost no #}
+    {# request to anybody else and the game keeps its lettering with the network unplugged. Only the #}
+    {# weights the identity actually names: a face loaded at a weight nothing sets is bytes on every #}
+    {# page load for nothing. Each sheet's "url()" is relative, so the woff2 beside it resolves too. #}
+    <link rel="stylesheet" href="{% static '@fontsource/cinzel/500.css' %}">
+    <link rel="stylesheet" href="{% static '@fontsource/cinzel/700.css' %}">
+    <link rel="stylesheet" href="{% static '@fontsource/spectral/300.css' %}">
+    <link rel="stylesheet" href="{% static '@fontsource/spectral/400.css' %}">
+    <link rel="stylesheet" href="{% static '@fontsource/ibm-plex-mono/400.css' %}">
     {# The whole of the site's styling. Compiled by "yarn build:css" and not in version control - see #}
     {# docs/contributing/setup.md, and docs/patterns/responsive-layout.md for what the classes are #}
     {# allowed to say. #}
@@ -20,9 +29,9 @@
 {# The bar carries what is true everywhere: the counters every decision is made against, the one #}
 {# control that advances the game, and the account menu. Where the player can go is the section nav #}
 {# below it - see docs/patterns/navigation.md. #}
-<nav class="bg-[#f8f8f8]" data-navbar>
+<nav class="bg-raised" data-navbar>
     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 md:min-h-20 md:px-4 md:py-0 lg:px-8">
-        <a class="text-2xl text-[#333] no-underline hover:text-[#333]"
+        <a class="text-2xl text-ink no-underline hover:text-ink"
            href="{% url 'warband:dashboard-view' %}">Tettenhall</a>
 
         {% if request.user.is_authenticated and current_savegame %}
@@ -34,12 +43,12 @@
             {# every command view turns a decided savegame away with a toast, so this says which #}
             {# state the game is in instead of offering the month again. #}
             {% if current_savegame.is_over %}
-                <span class="text-sm uppercase text-[#999] md:ml-auto">Game over</span>
+                <span class="text-sm uppercase text-ink-muted md:ml-auto">Game over</span>
             {% else %}
                 {# A button rather than an anchor, because this posts the month: an "a" with no href #}
                 {# is out of Tab's reach and announced as text. The utilities are what keep it looking #}
                 {# like the nav entry beside it. #}
-                <button class="cursor-pointer border-none bg-transparent p-0 text-sm uppercase text-[#333] hover:text-[#666] md:ml-auto"
+                <button class="cursor-pointer border-none bg-transparent p-0 text-sm uppercase text-ink hover:text-ink-muted md:ml-auto"
                         hx-post="{% url 'warband:finish-month-view' %}"
                         type="button">
                     Finish month
@@ -52,12 +61,12 @@
             {# one element in one place in the document, and a dropdown works at both widths, so #}
             {# hiding it here and repeating it there would mean two copies of the same two links. #}
             <details class="relative" data-menu>
-                <summary class="cursor-pointer list-none text-sm uppercase text-[#999] hover:text-[#666]">
+                <summary class="cursor-pointer list-none text-sm uppercase text-ink-muted hover:text-ink">
                     {{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}
                 </summary>
-                <ul class="absolute right-0 top-full z-20 m-0 min-w-48 list-none bg-white p-4 shadow-lg">
-                    <li><a class="text-sm text-[#666]" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
-                    <li><a class="text-sm text-[#666]" href="{% url 'warband:logout-view' %}">Logout</a></li>
+                <ul class="absolute right-0 top-full z-20 m-0 min-w-48 list-none bg-raised p-4 border border-rule">
+                    <li><a class="text-sm text-ink-muted" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
+                    <li><a class="text-sm text-ink-muted" href="{% url 'warband:logout-view' %}">Logout</a></li>
                 </ul>
             </details>
         {% endif %}

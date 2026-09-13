@@ -3,9 +3,10 @@
 
 {% block content %}
     <h1>Login</h1>
-    {# Full width on a phone, half from "md:" up: a login is two fields, and stretching them across a #}
-    {# desk makes the form read as a text editor. #}
-    <div class="md:w-1/2">
+    {# Capped rather than a fraction of the screen. A login is two fields, and half of a wide desk #}
+    {# is still a text editor: the width a form wants is the width of the longest thing anyone #}
+    {# types in it, which does not grow with the monitor. #}
+    <div class="max-w-md">
         {% crispy form form.helper %}
     </div>
 {% endblock content %}

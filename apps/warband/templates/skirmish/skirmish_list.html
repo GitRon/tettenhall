@@ -33,12 +33,12 @@
                     {% if skirmish.victorious_faction %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
                            aria-label="Read the report of {{ skirmish.name }}"
-                           class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white">
+                           class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     {% else %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
                            aria-label="Continue the fight at {{ skirmish.name }}"
-                           class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#f0506e] text-white hover:bg-[#ee395b] hover:text-white">
+                           class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                         <i class="fa-solid fa-arrow-right"></i>
                     {% endif %}
                     </a>
@@ -46,7 +46,7 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="6" class="text-sm leading-snug text-[#999]">No skirmishes have been fought yet.</td>
+                <td colspan="6" class="text-sm leading-snug text-ink-muted">No skirmishes have been fought yet.</td>
             </tr>
         {% endfor %}
         </tbody>

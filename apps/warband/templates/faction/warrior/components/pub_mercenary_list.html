@@ -9,6 +9,6 @@
         {# are not the player's to hire and nothing about them is his to read. #}
         {% include 'faction/warrior/components/pub_warrior_card.html' with warrior=warrior knowledge=held_knowledge %}
     {% empty %}
-        <p class="text-sm leading-snug text-[#999]">Nobody is drinking here this month.</p>
+        <p class="text-sm leading-snug text-ink-muted">Nobody is drinking here this month.</p>
     {% endfor %}
 </div>

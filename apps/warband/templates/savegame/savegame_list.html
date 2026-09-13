@@ -6,7 +6,7 @@
     {% if current_savegame %}
         <div>
             <div class="md:w-2/3">
-                <div class="mb-5 bg-[#d8eafc] py-[15px] pl-[15px] pr-[29px] text-[#1e87f0]">
+                <div class="mb-5 bg-raised border border-rule py-[15px] pl-[15px] pr-[29px] text-ink-muted">
                     Current savegame: <strong>{{ current_savegame.name }}</strong>
                 </div>
             </div>
@@ -16,7 +16,7 @@
     <div>
         <div class="md:w-2/3">
             <div>
-                <a class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white"
+                <a class="box-border inline-block cursor-pointer border py-[9px] text-sm uppercase px-[30px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink"
                    href="{% url 'warband:savegame-create-view' %}">
                     Create new savegame
                 </a>
@@ -58,14 +58,14 @@
                         <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
                         <td>
                             <button hx-post="{% url "warband:savegame-load-view" savegame.id %}"
-                                    class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5] hover:text-white">
+                                    class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                                 Load
                             </button>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="7" class="text-sm leading-snug text-[#999]">You have no savegames yet.</td>
+                        <td colspan="7" class="text-sm leading-snug text-ink-muted">You have no savegames yet.</td>
                     </tr>
                 {% endfor %}
                 </tbody>

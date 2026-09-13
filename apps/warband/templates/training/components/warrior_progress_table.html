@@ -27,37 +27,37 @@
                         than sitting in the table looking like everybody else and never moving.
                     {% endcomment %}
                     {% if not warrior.is_healthy %}
-                        <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.get_condition_display }}</span>
+                        <span class="inline-flex min-h-[18px] items-center justify-center border border-blood px-[5px] font-mono text-label uppercase tracking-label text-ink">{{ warrior.get_condition_display }}</span>
                     {% endif %}
                 </td>
                 <td>
-                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.strength }}</span>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center border border-rule px-[5px] font-mono text-label leading-none text-ink">{{ warrior.strength }}</span>
                     {% if warrior.is_healthy %}
-                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.strength_progress }}" max="100"></progress>
+                        <progress class="block h-[15px] w-full overflow-hidden border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink" value="{{ warrior.strength_progress }}" max="100"></progress>
                     {% endif %}
                 </td>
                 <td>
-                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.dexterity }}</span>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center border border-rule px-[5px] font-mono text-label leading-none text-ink">{{ warrior.dexterity }}</span>
                     {% if warrior.is_healthy %}
-                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.dexterity_progress }}" max="100"></progress>
+                        <progress class="block h-[15px] w-full overflow-hidden border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink" value="{{ warrior.dexterity_progress }}" max="100"></progress>
                     {% endif %}
                 </td>
                 <td>
-                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.max_health }}</span>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center border border-rule px-[5px] font-mono text-label leading-none text-ink">{{ warrior.max_health }}</span>
                     {% if warrior.is_healthy %}
-                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.health_progress }}" max="100"></progress>
+                        <progress class="block h-[15px] w-full overflow-hidden border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink" value="{{ warrior.health_progress }}" max="100"></progress>
                     {% endif %}
                 </td>
                 <td>
-                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#1e87f0] px-[5px] text-[11px] leading-none text-white">{{ warrior.max_morale }}</span>
+                    <span class="inline-flex h-[18px] min-w-[18px] items-center justify-center border border-rule px-[5px] font-mono text-label leading-none text-ink">{{ warrior.max_morale }}</span>
                     {% if warrior.is_healthy %}
-                        <progress class="block h-[15px] w-full overflow-hidden rounded-full border-0 bg-[#f8f8f8] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#1e87f0] [&::-moz-progress-bar]:bg-[#1e87f0]" value="{{ warrior.morale_progress }}" max="100"></progress>
+                        <progress class="block h-[15px] w-full overflow-hidden border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink" value="{{ warrior.morale_progress }}" max="100"></progress>
                     {% endif %}
                 </td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="5" class="text-sm leading-snug text-[#999]">Nobody is in training this month.</td>
+                <td colspan="5" class="text-sm leading-snug text-ink-muted">Nobody is in training this month.</td>
             </tr>
         {% endfor %}
         </tbody>

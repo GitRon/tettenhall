@@ -10,7 +10,7 @@
 {# and what is open to the player right now is the Month page's job. #}
 {% if nav_sections %}
     <nav aria-label="Sections"
-         class="fixed inset-x-0 bottom-0 z-30 border-t border-[#e5e5e5] bg-[#f8f8f8] md:static md:border-b md:border-t-0">
+         class="fixed inset-x-0 bottom-0 z-30 border-t border-rule bg-raised md:static md:border-b md:border-t-0">
         <ul class="m-0 flex list-none justify-around p-0 md:justify-start md:gap-x-8 md:px-4 lg:px-8">
             {% for section in nav_sections %}
                 <li class="flex-1 md:flex-none">
@@ -21,7 +21,7 @@
                     {# The rule sits above the entry on a phone and below it on a desk, because the bar #}
                     {# itself has swapped ends: pinned to the bottom of the screen, a bottom border is #}
                     {# two pixels on the last row the screen has. #}
-                    <a class="flex flex-col items-center gap-y-1 border-t-2 py-2 text-xs uppercase no-underline md:flex-row md:gap-x-2 md:gap-y-0 md:border-b-2 md:border-t-0 md:py-3 md:text-sm {% if section.key == current_nav_section %}border-[#1e87f0] text-[#1e87f0] hover:text-[#1e87f0] md:border-b-[#1e87f0]{% else %}border-transparent text-[#666] hover:text-[#333] md:border-b-transparent{% endif %}"
+                    <a class="flex flex-col items-center gap-y-1 border-t-2 py-2 text-xs uppercase no-underline md:flex-row md:gap-x-2 md:gap-y-0 md:border-b-2 md:border-t-0 md:py-3 md:text-sm {% if section.key == current_nav_section %}border-blood text-ink hover:text-ink md:border-b-blood{% else %}border-transparent text-ink-muted hover:text-ink md:border-b-transparent{% endif %}"
                        href="{{ section.url }}"
                        {% if section.key == current_nav_section %}aria-current="page"{% endif %}>
                         <i aria-hidden="true" class="fa-solid {{ section.icon }}"></i>

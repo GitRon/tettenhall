@@ -2,8 +2,8 @@
 The CSS classes the crispy FormHelper layouts hang on their fields and buttons.
 
 They sit here rather than at the sixteen call sites because they are one vocabulary with six callers,
-and because #64 replaces the values wholesale once there is a palette: a table is one edit, sixteen
-inline strings are sixteen.
+and because the identity is one table to edit rather than sixteen inline strings. What the values may
+say is docs/patterns/visual-identity.md.
 
 Utilities that set the same property are never stacked. Which of two competing classes wins is decided
 by their order in the compiled stylesheet, not by their order in the attribute, so "h-10 h-[30px]" is a
@@ -13,11 +13,9 @@ coin toss - the small button therefore starts from its own base rather than over
 # The box every text input and dropdown draws. Padding is split out because a select is not padded
 # symmetrically, and "px-*" plus a "pr-*" on top would be exactly the coin toss described above.
 #
-# "box-border" and "py-0" are doing real work rather than tidying. Nothing sets "box-sizing" globally -
-# Tailwind's preflight is the usual source and it stays switched off until #200 - so a control is
-# "content-box" and lays its border and padding outside the width it was given: "w-full" then comes out
-# 22px wider than the column it sits in. "py-0" clears the 1px the browser puts on an input of its own.
-_CONTROL = "box-border w-full border border-[#e5e5e5] bg-white py-0 text-base text-[#666]"
+# "py-0" clears the 1px the browser puts on an input of its own, and "box-border" keeps a bordered
+# control inside the width it was given rather than 22px wider than its column.
+_CONTROL = "box-border w-full border border-rule bg-ground py-0 text-base text-ink"
 
 INPUT = f"{_CONTROL} h-10 px-2.5"
 SELECT = f"{_CONTROL} h-10 pl-2.5 pr-5"
@@ -34,14 +32,21 @@ FIELD_SPACING = "mb-5"
 #: A fieldset carries the browser's own margin, padding and border, and the layouts want none of them.
 FIELDSET = "m-0 border-0 p-0"
 
-_BUTTON = "box-border inline-block cursor-pointer border py-0 text-sm uppercase"
-_BUTTON_MEDIUM = f"{_BUTTON} h-10 px-[30px]"
-_BUTTON_SMALL = f"{_BUTTON} h-[30px] px-[15px]"
+_BUTTON = "box-border inline-block cursor-pointer border py-0 font-display text-sm uppercase tracking-[0.06em]"
+_BUTTON_MEDIUM = f"{_BUTTON} px-[30px] py-[9px]"
+_BUTTON_SMALL = f"{_BUTTON} px-[15px] py-[4px]"
 
-# Each variant carries its hover shade. A button that does not answer the pointer reads as disabled.
-_PRIMARY = "border-transparent bg-[#1e87f0] text-white hover:bg-[#0f7ae5]"
-_DANGER = "border-transparent bg-[#f0506e] text-white hover:bg-[#ee395b]"
-_DEFAULT = "border-[#e5e5e5] bg-transparent text-[#333] hover:border-[#b2b2b2]"
+# Every variant answers the pointer by moving its background. A button that does not answer reads as
+# disabled, and the palette has no second shade of anything to answer with.
+#
+# The filled treatment is the same string twice on purpose. There is one reserved colour, and a form
+# whose only button commits the player to something - signing in, taking a contract, marching on a
+# rival - is exactly what it is reserved for, whether or not the wording sounds dangerous. Both names
+# survive because the call sites read better for saying which they meant.
+_FILLED = "border-blood bg-blood text-ground hover:border-ink"
+_PRIMARY = _FILLED
+_DANGER = _FILLED
+_DEFAULT = "border-rule bg-transparent text-ink hover:bg-raised"
 
 BUTTON_PRIMARY = f"{_BUTTON_MEDIUM} {_PRIMARY}"
 BUTTON_PRIMARY_SMALL = f"{_BUTTON_SMALL} {_PRIMARY}"

@@ -1,13 +1,13 @@
 {% load l10n obscurify %}
 {# The card shell repeats across the eight hand-rolled cards. #64 owns collecting them into one #}
 {# component; this keeps them where they are and only changes what they are built from. #}
-<div class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
-    <div class="border-b border-[#e5e5e5] px-[30px] py-[15px]">
+<div class="mb-5 box-border bg-ground text-ink-muted border border-rule">
+    <div class="border-b border-rule px-[30px] py-[15px]">
         {# The swap target keeps its id on the element that carries it, and its classes with it: this #}
         {# is replaced whole, so styling moved to a wrapper would be dropped on the second render. #}
         <div class="flex flex-wrap items-center gap-x-4" id="quest-card-{{ quest.id|unlocalize }}">
             <div class="flex-1">
-                <h3 class="mb-0 text-2xl leading-snug text-[#333]">
+                <h3 class="mb-0 text-2xl leading-snug text-ink">
                     {{ quest.name }}
                 </h3>
             </div>
@@ -18,8 +18,8 @@
         <p>Difficulty: {{ quest.get_difficulty_display }}</p>
         <p>Loot: {{ quest.loot|obscurify:quest.average_loot }}</p>
     </div>
-    <div class="border-t border-[#e5e5e5] px-[30px] py-[15px]">
-        <a class="cursor-pointer bg-none p-0 uppercase leading-normal text-[#333] no-underline hover:text-[#333] hover:underline"
+    <div class="border-t border-rule px-[30px] py-[15px]">
+        <a class="cursor-pointer bg-none p-0 uppercase leading-normal text-ink no-underline hover:text-ink hover:underline"
            href="{% url 'warband:quest-accept-view' quest.id %}">Accept</a>
     </div>
 </div>

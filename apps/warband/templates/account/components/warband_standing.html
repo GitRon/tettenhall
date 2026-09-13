@@ -1,10 +1,10 @@
 {# A summary and not a roster. The faction page renders a card per man, and this page would pay a #}
 {# query per man for a second copy of it - so the counts come out of one aggregate and the link #}
 {# below is how the player reaches the cards. #}
-<div class="mb-5 box-border bg-white p-[30px] text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
+<div class="mb-5 box-border bg-ground p-[30px] text-ink-muted border border-rule">
     <h3>The war band</h3>
     <ul class="m-0 list-none p-0">
-        <li class="border-b border-[#e5e5e5] py-2.5">
+        <li class="border-b border-rule py-2.5">
             <strong>{{ month_standing.warband.warrior_count }}</strong>
             {# "every man fit" rather than "all of them fit": a war band of one is the state a fresh #}
             {# savegame starts in, and the plural reads as a mistake on it. #}
@@ -20,7 +20,7 @@
         </li>
         {# The one question the player can only answer today by opening a rival's page and reading #}
         {# the footnote explaining the missing Attack button. #}
-        <li class="border-b border-[#e5e5e5] py-2.5">
+        <li class="border-b border-rule py-2.5">
             {% if not month_standing.warband.leader %}
                 The war band has no leader.
             {% elif month_standing.warband.leader_can_march %}
@@ -34,14 +34,14 @@
         {# the panel of things that do. Silent when there is nothing behind them: a nil count is a #}
         {# line the player learns to skip. #}
         {% if month_standing.warband.fyrd_reserve %}
-            <li class="border-b border-[#e5e5e5] py-2.5">
+            <li class="border-b border-rule py-2.5">
                 <strong>{{ month_standing.warband.fyrd_reserve }}</strong>
                 {{ month_standing.warband.fyrd_reserve|pluralize:"man,men" }} in the fyrd reserve, and
                 a draft costs nothing.
             </li>
         {% endif %}
         {% if month_standing.warband.captive_count %}
-            <li class="border-b border-[#e5e5e5] py-2.5">
+            <li class="border-b border-rule py-2.5">
                 <strong>{{ month_standing.warband.captive_count }}</strong>
                 captive{{ month_standing.warband.captive_count|pluralize }} to recruit or to sell.
             </li>

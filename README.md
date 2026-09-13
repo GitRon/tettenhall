@@ -34,6 +34,8 @@ inferring the conventions from nearby code.
   where the player is
 - [Responsive layout](docs/patterns/responsive-layout.md) — the phone is the default, `md:` adds the
   desk, and what to do with a screen that has no portrait form
+- [Visual identity](docs/patterns/visual-identity.md) — the six colours, the three faces, what `blood`
+  is reserved for, and why an icon is a mask
 
 ### Testing
 
