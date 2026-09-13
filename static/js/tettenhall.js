@@ -134,12 +134,18 @@
     const IDLE_TAB_CLASS = ['border-rule', 'text-ink-muted'];
 
     document.querySelectorAll('[data-fight-tabs]').forEach((root) => {
+        const strip = root.querySelector('[role="tablist"]');
         const tabs = [...root.querySelectorAll('[data-fight-tab]')];
         const panels = [...root.querySelectorAll('[data-fight-panel]')];
 
-        if (!tabs.length || !panels.length) {
+        if (!strip || !tabs.length || !panels.length) {
             return;
         }
+
+        // The strip ships hidden and is revealed here, so it exists only where it works. "md:hidden"
+        // is still on it and still wins above the breakpoint.
+        strip.classList.remove('hidden');
+        strip.classList.add('flex');
 
         const show = (name) => {
             panels.forEach((panel) => {
