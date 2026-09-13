@@ -16,7 +16,7 @@
     <div>
         <div class="md:w-2/3">
             <div>
-                <a class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[30px] leading-[38px] border-blood bg-transparent text-ink hover:bg-raised hover:text-ink"
+                <a class="box-border inline-block cursor-pointer border py-[9px] text-sm uppercase px-[30px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink"
                    href="{% url 'warband:savegame-create-view' %}">
                     Create new savegame
                 </a>
@@ -58,7 +58,7 @@
                         <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
                         <td>
                             <button hx-post="{% url "warband:savegame-load-view" savegame.id %}"
-                                    class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
+                                    class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                                 Load
                             </button>
                         </td>

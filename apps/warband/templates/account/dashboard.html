@@ -62,7 +62,7 @@
                 <div>
                     <strong>Training:</strong> {{ current_training }} - grows {{ current_training.grown_attributes_display }}.
                 </div>
-                <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[30px] py-0 text-sm uppercase leading-[38px] text-ink no-underline hover:bg-raised"
+                <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[30px] py-[9px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
                    href="{% url 'warband:training-edit-view' current_training.id %}">
                     Change training
                 </a>
@@ -77,7 +77,7 @@
             <div><strong>Active quest:</strong> {{ active_quest }}</div>
             {# The skirmish is nullable (SET_NULL on delete), and reversing the url with no id raises #}
             {% if active_quest.skirmish_id %}
-                <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-0 text-sm uppercase leading-[38px] text-ground no-underline hover:bg-raised hover:text-ink"
+                <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-sm uppercase leading-normal text-ground no-underline hover:border-ink"
                    href="{% url 'warband:skirmish-fight-view' active_quest.skirmish_id %}">
                     Fight skirmish
                 </a>

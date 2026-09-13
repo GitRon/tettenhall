@@ -36,12 +36,12 @@
                 </div>
                 {% if can_be_attacked %}
                     <a href="{% url 'warband:faction-attack-view' object.id %}"
-                       class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Attack this faction</a>
+                       class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Attack this faction</a>
                 {% elif can_be_occupied %}
                     {# Nobody healthy is left to hold the town, so there is nothing to fight and nothing to compose #}
                     <form method="post" action="{% url 'warband:faction-occupy-view' object.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
+                        <button type="submit" class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                             Ride into {{ object.town_name }}
                         </button>
                     </form>

@@ -33,12 +33,12 @@
                     {% if skirmish.victorious_faction %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
                            aria-label="Read the report of {{ skirmish.name }}"
-                           class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
+                           class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     {% else %}
                         <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
                            aria-label="Continue the fight at {{ skirmish.name }}"
-                           class="box-border inline-block cursor-pointer border py-0 text-sm uppercase px-[15px] leading-[28px] border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
+                           class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                         <i class="fa-solid fa-arrow-right"></i>
                     {% endif %}
                     </a>

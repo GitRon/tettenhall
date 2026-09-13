@@ -19,14 +19,14 @@
                 {# between full health and zero moves the condition, so a man at 1 of 20 is in it as #}
                 {# much as one who has not been touched. What the state says is that he is still on #}
                 {# his feet, and the number says at what cost. #}
-                {# Four states in two outlines. A man still on his feet is the quiet case and wears #}
-                {# the same rule as everything else on the card; the three that cost the player #}
-                {# something wear the one colour the palette reserves for wanting him. The word is #}
-                {# never the red - only the box around it - so a tag stays as readable as the number #}
-                {# beside it. #}
+                {# Four states in two outlines, and the axis is brightness because the palette has #}
+                {# no second hue to spend. A man still on his feet wears the brightest value there #}
+                {# is, which is what reads as whole; the three that cost the player something wear #}
+                {# the one colour reserved for wanting him. The word is never the red - only the box #}
+                {# around it - so a tag stays as readable as the number beside it. #}
                 {% if warrior.is_healthy %}
-                    <p class="inline-block border border-rule px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink-muted">
-                        <i class="fa-solid fa-feather-pointed"></i> Able to fight
+                    <p class="inline-block border border-ink px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
+                        <i class="fa-solid fa-feather-pointed"></i> Ready
                     </p>
                 {% elif warrior.is_unconscious %}
                     <p class="inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">

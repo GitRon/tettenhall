@@ -33,8 +33,8 @@ FIELD_SPACING = "mb-5"
 FIELDSET = "m-0 border-0 p-0"
 
 _BUTTON = "box-border inline-block cursor-pointer border py-0 font-display text-sm uppercase tracking-[0.06em]"
-_BUTTON_MEDIUM = f"{_BUTTON} h-10 px-[30px]"
-_BUTTON_SMALL = f"{_BUTTON} h-[30px] px-[15px]"
+_BUTTON_MEDIUM = f"{_BUTTON} px-[30px] py-[9px]"
+_BUTTON_SMALL = f"{_BUTTON} px-[15px] py-[4px]"
 
 # Every variant answers the pointer by moving its background. A button that does not answer reads as
 # disabled, and the palette has no second shade of anything to answer with.
@@ -43,7 +43,7 @@ _BUTTON_SMALL = f"{_BUTTON} h-[30px] px-[15px]"
 # whose only button commits the player to something - signing in, taking a contract, marching on a
 # rival - is exactly what it is reserved for, whether or not the wording sounds dangerous. Both names
 # survive because the call sites read better for saying which they meant.
-_FILLED = "border-blood bg-blood text-ground hover:bg-raised hover:text-ink"
+_FILLED = "border-blood bg-blood text-ground hover:border-ink"
 _PRIMARY = _FILLED
 _DANGER = _FILLED
 _DEFAULT = "border-rule bg-transparent text-ink hover:bg-raised"

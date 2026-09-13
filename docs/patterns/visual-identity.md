@@ -56,9 +56,14 @@ set on `body`.
 - **No shadows, no gradients, no glows, no texture images.** `--shadow-*` is dropped too.
 - **Separation comes from a 1px rule and space**, not from a box. A card is `bg-ground` with
   `border border-rule`.
-- **Status is a 1px outlined mono tag**, never a filled pill: `border-blood` when it wants the player,
-  `border-rule` otherwise. The word inside stays `ink` or `ink-muted` — the outline carries the alarm.
+- **Status is a 1px outlined mono tag**, never a filled pill. The word inside stays `ink` — the outline
+  carries the meaning: `border-blood` when it wants the player, `border-ink` when the thing it marks is
+  whole and ready, `border-rule` when it is merely a fact. **The axis is brightness, not hue** — there
+  is no green here to say "good" with, so good is said by being the brightest thing on the card.
 - **Hover moves the background to `raised`.** Not the text colour, and never the position.
+- **Except on the one filled control, which answers with its rule instead** — `hover:border-ink`, fill
+  untouched. A filled button that drops to the dark ground on hover reads as the button leaving rather
+  than as the pointer arriving, and it is the one thing on the screen that must not flicker.
 - **A link is `ink` with a `rule` underline that goes `blood` on hover.** The word never changes
   colour; spending the reserved red on every link in a sentence is exactly the decorative use above.
 
