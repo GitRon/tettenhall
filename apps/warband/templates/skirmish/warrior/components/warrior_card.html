@@ -7,6 +7,16 @@
 {#  #}
 {# The faction is deliberately not on it. Every man here is on this panel's roster and the header #}
 {# above already names it - see "faction_box.html". #}
+{#  #}
+{# His name is body copy rather than a heading, and that is a choice rather than a forgotten tag. #}
+{# Cinzel is the wider face and the base layer sets every heading in it uppercase and tracked, which #}
+{# costs about half as much width again: "Aethelbeorht the Wolfheart" - a name this game's own stock #}
+{# and epithet list will hand out - runs past the end of the row in it and fits comfortably in #}
+{# Spectral. A name that wraps is the whole defect this row exists to fix, so the face follows the #}
+{# name rather than the other way round. #}
+{# Nothing is lost from the document outline by it: the panel header above is a span too - see #}
+{# "common/components/box_header.html" - so this screen names its sections without heading elements #}
+{# either way. #}
 <div class="border-b border-rule py-4">
     {% if warrior.is_healthy %}
         {# "Healthy" is the name of a state and not a reading of the health below it: nothing between #}
