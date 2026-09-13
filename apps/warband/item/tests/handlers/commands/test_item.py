@@ -174,8 +174,12 @@ def test_handle_equip_item_swaps_when_both_slots_are_full():
         previous_holder=holder,
         displaced_item=held_item,
     )
+    # Both rows, off the database. The event alone would report a swap that only half happened:
+    # messages compare by primary key, so "warrior=receiver" says who the move was about and nothing
+    # about what he ended up holding.
+    receiver.refresh_from_db()
     holder.refresh_from_db()
-    assert holder.weapon == held_item
+    assert (receiver.weapon, holder.weapon) == (wanted_item, held_item)
 
 
 @pytest.mark.django_db
@@ -189,8 +193,9 @@ def test_handle_equip_item_leaves_the_previous_holder_empty_handed_when_there_is
     result = handle_equip_item(context=EquipItem(warrior=receiver, item=item, slot="weapon"))
 
     assert result.displaced_item is None
+    receiver.refresh_from_db()
     holder.refresh_from_db()
-    assert holder.weapon is None
+    assert (receiver.weapon, holder.weapon) == (item, None)
 
 
 @pytest.mark.django_db
@@ -208,8 +213,9 @@ def test_handle_equip_item_puts_a_displaced_item_back_in_the_stash():
     result = handle_equip_item(context=EquipItem(warrior=warrior, item=new_item, slot="weapon"))
 
     assert result.previous_holder is None
-    # Read back off a fresh row: assigning the slot above cached this warrior as the item's wearer
-    assert Item.objects.get(id=held_item.id).worn_by is None
+    # Read back off fresh rows: assigning the slot above cached this warrior as the item's wearer
+    warrior.refresh_from_db()
+    assert (warrior.weapon, Item.objects.get(id=held_item.id).worn_by) == (new_item, None)
 
 
 @pytest.mark.django_db
