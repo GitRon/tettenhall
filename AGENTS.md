@@ -9,7 +9,7 @@ The docs are normative for the areas they cover, not background reading. Read th
 touching that area, and do not infer the conventions from whatever code happens to be nearby: this project
 deviates from the Django defaults on purpose in several places.
 
-Five where getting it wrong is both expensive and silent:
+Six where getting it wrong is both expensive and silent:
 
 | Before you… | Read |
 |---|---|
@@ -18,6 +18,7 @@ Five where getting it wrong is both expensive and silent:
 | touch a view that resolves a model object | [Savegame scoping](docs/patterns/savegame-scoping.md) |
 | change a game-balance number | [Town buildings](docs/patterns/town-buildings.md) |
 | add a model, template, template tag, fixture, admin or management command | [Where code goes](docs/patterns/app-layout.md) |
+| write a colour, a typeface, a border or an icon into any template | [Visual identity](docs/patterns/visual-identity.md) |
 
 **There are two Django apps, and neither is a topic.** `apps.warband` is the whole game and
 `apps.common` is its one satellite app — `apps.faker_frisian`, `apps.faker_gaelic` and
