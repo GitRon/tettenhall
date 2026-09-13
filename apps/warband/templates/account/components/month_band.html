@@ -1,0 +1,52 @@
+{# The state of the month and the control that ends it, in one element at the top of the page the #}
+{# month begins on. #}
+{#  #}
+{# The control sits here rather than in the navbar because it is not navigation: it is the one #}
+{# irreversible act in the game, and the sentence beside it is what says whether it can be pressed at #}
+{# all. In the bar it was a text button among four nav entries, a screen away from the panel listing #}
+{# what holds it - see docs/patterns/navigation.md. #}
+{#  #}
+{# An unresolved skirmish is lifted out of the list of openings for the same reason: it is not an #}
+{# offer that expires, it is the state of the month, and it was row one of seven marked only by #}
+{# colour. #}
+<div class="mb-5 flex flex-col items-start gap-y-3 border border-rule bg-raised p-[15px] md:flex-row md:items-center md:justify-between md:gap-x-5">
+    <div class="flex flex-col gap-y-1">
+        <h1 class="m-0">Month {{ current_savegame.current_month }}</h1>
+        {% if month_standing.open_skirmish_count %}
+            <span class="text-blood">
+                <i aria-hidden="true" class="fa-solid fa-triangle-exclamation"></i>
+                {{ month_standing.open_skirmish_count }}
+                unresolved skirmish{{ month_standing.open_skirmish_count|pluralize:"es" }} —
+                the month cannot turn until {{ month_standing.open_skirmish_count|pluralize:"it is,they are" }} fought out.
+            </span>
+        {% else %}
+            <span>Nothing holds the month. It is yours to finish when you are done with it.</span>
+        {% endif %}
+    </div>
+
+    <div class="flex flex-col items-stretch gap-y-2.5 self-stretch md:flex-row md:items-center md:gap-x-2.5 md:self-auto">
+        {% if month_standing.open_skirmish_count %}
+            {# The fight is what the screen wants, so it is the one filled control on it. "Finish #}
+            {# month" keeps its place rather than disappearing - the player learns where it lives - #}
+            {# and wears the rule and the dim ink the palette reserves for a control that refuses. #}
+            {# The view refuses it as well, and that guard stays: this is the honest face of it. #}
+            <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ground no-underline hover:border-ink"
+               href="{% url 'warband:skirmish-list-view' %}">
+                To the fight{{ month_standing.open_skirmish_count|pluralize }}
+            </a>
+            <button class="box-border inline-block shrink-0 border border-rule bg-transparent px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ink-dim"
+                    disabled
+                    type="button">
+                Finish month
+            </button>
+        {% else %}
+            {# A button rather than an anchor, because this posts the month: an "a" with no href is #}
+            {# out of Tab's reach and announced as text. #}
+            <button class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ground hover:border-ink"
+                    hx-post="{% url 'warband:finish-month-view' %}"
+                    type="button">
+                Finish month
+            </button>
+        {% endif %}
+    </div>
+</div>

@@ -70,7 +70,8 @@ set on `body`.
 ### One filled element per screen
 
 At most one control on a screen is filled — `bg-blood` with `text-ground` — and it is the thing the
-screen exists for: **Fight!** on the fight screen, the quest's skirmish on the month page. Everything
+screen exists for: **Fight!** on the fight screen, the control in the month band — *Finish month*, or
+the fight holding it up while one is unresolved — on the month page. Everything
 else is outlined.
 
 That makes a list a specific case: four buildings each with a Build button are four row actions, not

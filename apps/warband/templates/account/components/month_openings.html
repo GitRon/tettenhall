@@ -1,89 +1,102 @@
-{# Everything that is gone once the month turns, plus the one thing that stops it turning at all. #}
-{# A row is here because it expires or because it blocks - not because it is somewhere in the game: #}
-{# the menu is the map, and a page repeating it with numbers on would be a second one. #}
-<div class="mb-5 box-border bg-ground p-[30px] text-ink-muted border border-rule">
-    <h3>Before the month turns</h3>
-    {% if not month_standing.has_anything_open %}
+{# Everything that is gone once the month turns. A row is here because it expires - not because it is #}
+{# somewhere in the game: the menu is the map, and a page repeating it with numbers on would be a #}
+{# second one. The one thing that blocks the month rather than expiring is the band at the top of the #}
+{# page, which is the state of the month and not an offer in a list. #}
+{#  #}
+{# Every row reads count first, in the mono the game sets all its numbers in and in one fixed column, #}
+{# so seven rows are scanned in one pass. The sentence stays, it just stops being the thing the eye #}
+{# has to parse; the way out of the row is a control at its end rather than a link trailing the prose, #}
+{# which on a phone wrapped underneath and put every action at the bottom of its own row. #}
+<div class="mb-5 box-border border border-rule bg-ground p-[15px] text-ink-muted md:p-[30px]">
+    <h3>Still open to you</h3>
+    {% if not month_standing.has_offers_open %}
         <p class="m-0">
-            Nothing is left open. The month is yours to finish.
+            {% if month_standing.open_skirmish_count %}
+                Nothing else is left open. Fight it out and the month is yours to finish.
+            {% else %}
+                Nothing is left open. The month is yours to finish.
+            {% endif %}
         </p>
     {% else %}
         <ul class="m-0 list-none p-0">
-            {# First and marked, because it is the only row that is not an offer: the month refuses #}
-            {# to advance while a fight is unresolved, and the refusal arrives as a toast that fades. #}
-            {% if month_standing.open_skirmish_count %}
-                <li class="flex flex-col items-start gap-y-1 border-b border-rule py-2.5 text-blood last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
-                    <span>
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <strong>{{ month_standing.open_skirmish_count }}</strong>
-                        unresolved skirmish{{ month_standing.open_skirmish_count|pluralize:"es" }} —
-                        the month cannot be finished until {{ month_standing.open_skirmish_count|pluralize:"it is,they are" }} fought out.
-                    </span>
-                    <a class="shrink-0 text-blood" href="{% url 'warband:skirmish-list-view' %}">To the fights</a>
-                </li>
-            {% endif %}
             {% if month_standing.quest_count %}
-                <li class="flex flex-col items-start gap-y-1 border-b border-rule py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
-                    <span>
-                        <strong>{{ month_standing.quest_count }}</strong>
-                        quest{{ month_standing.quest_count|pluralize }} on the board. The board is
-                        redrawn when the month turns.
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.quest_count }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">quest{{ month_standing.quest_count|pluralize }} on the board</span>
+                        <span class="block text-sm leading-snug">The board is redrawn when the month turns.</span>
                     </span>
-                    <a class="shrink-0"
-                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">To the board</a>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">Board</a>
                 </li>
             {% endif %}
             {# Named rather than counted. Which rival is a fact about the player's own war band - #}
             {# nothing here says how weak one of them is, which is knowledge scouting is for. #}
             {% if month_standing.attackable_rival_list %}
-                <li class="flex flex-col items-start gap-y-1 border-b border-rule py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
-                    <span>
-                        You may march on
-                        {% for rival in month_standing.attackable_rival_list %}
-                            <strong>{{ rival }}</strong>{% if not forloop.last %}, {% endif %}
-                        {% endfor %}
-                        this month.
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.attackable_rival_list|length }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">rival{{ month_standing.attackable_rival_list|length|pluralize }} you may march on</span>
+                        <span class="block text-sm leading-snug">
+                            {% for rival in month_standing.attackable_rival_list %}
+                                {{ rival }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </span>
                     </span>
-                    <a class="shrink-0" href="{% url 'warband:rival-faction-list-view' %}">To the rivals</a>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:rival-faction-list-view' %}">Rivals</a>
                 </li>
             {% endif %}
             {% if month_standing.occupiable_rival_list %}
-                <li class="flex flex-col items-start gap-y-1 border-b border-rule py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
-                    <span>
-                        {% for rival in month_standing.occupiable_rival_list %}
-                            <strong>{{ rival.town_name }}</strong>{% if not forloop.last %}, {% endif %}
-                        {% endfor %}
-                        {{ month_standing.occupiable_rival_list|length|pluralize:"stands,stand" }} undefended
-                        and can be ridden into.
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.occupiable_rival_list|length }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">
+                            town{{ month_standing.occupiable_rival_list|length|pluralize }}
+                            {{ month_standing.occupiable_rival_list|length|pluralize:"stands,stand" }} undefended
+                        </span>
+                        <span class="block text-sm leading-snug">
+                            {% for rival in month_standing.occupiable_rival_list %}
+                                {{ rival.town_name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                            — ride in and {{ month_standing.occupiable_rival_list|length|pluralize:"it is,they are" }} yours.
+                        </span>
                     </span>
-                    <a class="shrink-0" href="{% url 'warband:rival-faction-list-view' %}">To the rivals</a>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:rival-faction-list-view' %}">Rivals</a>
                 </li>
             {% endif %}
             {% if month_standing.can_build %}
-                <li class="flex flex-col items-start gap-y-1 border-b border-rule py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
-                    <span>No building has been raised this month, and only one may be.</span>
-                    <a class="shrink-0" href="{% url 'warband:town-upgrade-view' %}">To the buildings</a>
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">1</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">building may be raised</span>
+                        <span class="block text-sm leading-snug">Only one a month, and none has been raised in this one.</span>
+                    </span>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:town-upgrade-view' %}">Buildings</a>
                 </li>
             {% endif %}
             {% if month_standing.shop_item_count %}
-                <li class="flex flex-col items-start gap-y-1 border-b border-rule py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
-                    <span>
-                        <strong>{{ month_standing.shop_item_count }}</strong>
-                        piece{{ month_standing.shop_item_count|pluralize }} of gear in the shop. The
-                        stalls are restocked when the month turns.
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.shop_item_count }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">piece{{ month_standing.shop_item_count|pluralize }} of gear in the shop</span>
+                        <span class="block text-sm leading-snug">The stalls are restocked when the month turns.</span>
                     </span>
-                    <a class="shrink-0"
-                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">To the shop</a>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">Shop</a>
                 </li>
             {% endif %}
             {% if month_standing.pub_mercenary_count %}
-                <li class="flex flex-col items-start gap-y-1 border-b border-rule py-2.5 last:border-b-0 md:flex-row md:items-center md:justify-between md:gap-x-5">
-                    <span>
-                        <strong>{{ month_standing.pub_mercenary_count }}</strong>
-                        {{ month_standing.pub_mercenary_count|pluralize:"man,men" }} standing in the pub.
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.pub_mercenary_count }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">{{ month_standing.pub_mercenary_count|pluralize:"man,men" }} standing in the pub</span>
+                        <span class="block text-sm leading-snug">They drink elsewhere when the month turns.</span>
                     </span>
-                    <a class="shrink-0"
-                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">To the pub</a>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">Pub</a>
                 </li>
             {% endif %}
         </ul>

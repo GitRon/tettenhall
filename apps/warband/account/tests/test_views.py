@@ -219,7 +219,7 @@ def test_dashboard_view_names_no_training_without_a_player_faction(logged_in_cli
 def test_dashboard_view_projects_what_is_still_open_this_month(logged_in_client, current_savegame):
     """
     The page the month begins on, so the panels are what it exists to carry. The income key rides
-    along because the cost card the dashboard includes reads it.
+    along because the purse brief reads it.
     """
     response = logged_in_client.get(reverse("warband:dashboard-view"))
 

@@ -29,8 +29,11 @@ well while there is no war band behind them at all.
 
 - **The ledger.** A scoreboard, not a place. It is one click from anywhere: the silver counter in the
   bar is a link to it, on every screen.
-- **Finish month.** The one irreversible action in the game. It sits in the bar with the counters,
-  which is where the numbers it spends are, and it is not navigation.
+- **Finish month.** The one irreversible action in the game, and not navigation. It sits on the Month
+  page itself, in the band that states whether the month can turn at all — the control and the
+  sentence saying whether it may be pressed are one element, and an unresolved skirmish is what makes
+  it refuse. The shell carries no control that ends the month, so there is exactly one place to press
+  it and it is the section that owns the turn.
 - **Savegames and Logout.** The account menu. They are about the session, not about the month.
 - **The resource bar.** Global status. Each counter links to the page that answers it — the roster, the
   ledger, the open fights, the month — and the bar stays its own htmx swap target

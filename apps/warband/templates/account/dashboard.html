@@ -1,15 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    {# The page says what the entry that leads to it says. Every page of the game used to name #}
-    {# itself differently from its own menu entry, which is one of the things four sections are for. #}
-    <h1>Month{% if current_savegame %} {{ current_savegame.current_month }}{% endif %}</h1>
-
     {# The first screen of the game, and the only one a fresh account reaches without the user #}
-    {# dropdown. Without this the page is a heading over nothing: every block below it is silent #}
-    {# when there is no savegame to report on. #}
+    {# dropdown. Without this the page is a heading over nothing: every block below it is silent when #}
+    {# there is no savegame to report on. #}
     {% if not current_savegame %}
-        <div class="mb-5 bg-raised border border-rule py-[15px] pl-[15px] pr-[29px] text-ink-muted">
+        <h1>Month</h1>
+        <div class="mb-5 border border-rule bg-raised py-[15px] pl-[15px] pr-[29px] text-ink-muted">
             <h3>No savegame loaded</h3>
             <p>
                 There is no war band to report on yet.
@@ -17,10 +14,13 @@
                 or <a href="{% url 'warband:savegame-list-view' %}">pick one you have already begun</a>.
             </p>
         </div>
-    {% endif %}
-
-    {% if savegame_outcome %}
-        <div class="mb-5 bg-raised border border-rule py-[15px] pl-[15px] pr-[29px] text-ink-muted">
+    {% elif savegame_outcome %}
+        {# A decided savegame keeps every control it had, which is #107's to settle - but "what is #}
+        {# still open to me this month" has one answer once the game is over, and nine live panels #}
+        {# saying otherwise under a banner saying it is finished is the version of that problem this #}
+        {# page must not add. #}
+        <h1>Month {{ current_savegame.current_month }}</h1>
+        <div class="mb-5 border border-rule bg-raised py-[15px] pl-[15px] pr-[29px] text-ink-muted">
             <h3>{{ savegame_outcome }}</h3>
             <p>
                 This game is over.
@@ -28,62 +28,61 @@
                 to play on.
             </p>
         </div>
-    {% endif %}
 
-    {# The three panels only exist while there is a game to play. A decided savegame keeps every #}
-    {# control it had, which is #107's to settle - but "what is still open to me this month" has one #}
-    {# answer once the game is over, and nine live panels saying otherwise under a banner saying it #}
-    {# is finished is the version of that problem this page must not add. #}
-    {% if month_standing %}
-        {# The same card the ledger shows, off the same payroll the salary run bills from - not a #}
-        {# second assembly of it, which is how a warning comes to name a different man than the #}
-        {# month takes. It carries the wage-bill warning itself, so the dashboard does not include #}
-        {# that separately; "show_finance_link" reaches the nested include through this context. #}
-        {# The page the player lands on after finishing a month is where the shortfall is worth the #}
-        {# most: the consequence is three months away and every one of them starts here. #}
-        {% include 'faction/faction/components/current_cost_card.html' with show_finance_link=True %}
-
-        {% include 'account/components/warband_standing.html' %}
-
-        {% include 'account/components/month_openings.html' %}
+        {# The log says what the banner cannot: not that the game is over, but how it ended. The #}
+        {# month that decides the savegame redirects to this page, and "handle_log_savegame_ending" #}
+        {# writes its line for exactly this screen - the battle history a finished savegame no longer #}
+        {# routes to is not an answer. #}
+        {% include 'month/components/player_month_log_list.html' %}
     {% else %}
-        {# Without a player faction there is nothing to project, but the purse warning is put on #}
-        {# every render by the finance context processor and costs nothing to keep. #}
-        {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
-    {% endif %}
+        {# The state of the month and the control that ends it, above everything the month contains. #}
+        {# It carries the page's heading, so there is no second one over it. #}
+        {% include 'account/components/month_band.html' %}
 
-    {# What every man improves at when the month turns. One faction-wide row, pre-set on a new #}
-    {# savegame and often never touched, so it is read here rather than looked up somewhere - and its #}
-    {# empty state is a warning about the month, which is what this page is for. Without a training #}
-    {# there is no id to reverse the edit url with. #}
-    {% if current_savegame %}
-        <div class="mb-5 flex flex-col items-start gap-y-2.5 bg-raised py-[15px] pl-[15px] pr-[29px] text-ink-muted md:flex-row md:items-center md:justify-between md:gap-x-5">
-            {% if current_training %}
-                <div>
-                    <strong>Training:</strong> {{ current_training }} - grows {{ current_training.grown_attributes_display }}.
-                </div>
-                <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[30px] py-[9px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
-                   href="{% url 'warband:training-edit-view' current_training.id %}">
-                    Change training
-                </a>
-            {% else %}
-                <div>No training is set. Nobody improves in a month without one.</div>
-            {% endif %}
+        {# Two tracks on a desk, one column on a phone, split by what the player does with each half: #}
+        {# the left is decided, the right is read. The order is the same at both widths - the #}
+        {# decisions come first on a phone too, and the brief that used to sit above them in three #}
+        {# full-width boxes is at the bottom, where a thing that is read rather than acted on belongs. #}
+        <div class="grid grid-cols-1 gap-x-8 md:grid-cols-3">
+            <div class="md:col-span-2">
+                {# The shortfall is the loudest thing on the page when there is one. The consequence #}
+                {# is three months away and every one of them starts here, so it goes above the #}
+                {# decisions that spend the silver rather than inside a card of figures below them. #}
+                {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
+
+                {# What the month just did to him, before what he may still do about it: the player #}
+                {# arrives on this page straight from finishing a month, and the news is why. #}
+                {% include 'month/components/player_month_log_list.html' %}
+
+                {% if month_standing %}
+                    {% include 'account/components/month_openings.html' %}
+                {% endif %}
+
+                {% for active_quest in faction.active_quests.all %}
+                    <div class="mb-5 flex flex-col items-start gap-y-2.5 border border-rule bg-raised py-[15px] pl-[15px] pr-[29px] text-ink-muted md:flex-row md:items-center md:justify-between md:gap-x-5">
+                        <div><span class="text-ink">Active quest:</span> {{ active_quest }}</div>
+                        {# The skirmish is nullable (SET_NULL on delete), and reversing the url with #}
+                        {# no id raises. Outlined rather than filled: the fight is offered by the band #}
+                        {# at the top of the page, which is the one filled control this screen has. #}
+                        {% if active_quest.skirmish_id %}
+                            <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-transparent px-[30px] py-[9px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                               href="{% url 'warband:skirmish-fight-view' active_quest.skirmish_id %}">
+                                Fight skirmish
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            {# The brief. Three sections against one rule rather than three boxes, because nothing in #}
+            {# here is a decision - it is what the decisions on the left are made against. #}
+            <div class="md:col-span-1">
+                {% if month_standing %}
+                    {% include 'finance/components/purse_brief.html' %}
+                    {% include 'account/components/warband_standing.html' %}
+                {% endif %}
+                {% include 'training/components/current_training.html' %}
+            </div>
         </div>
     {% endif %}
-
-    {% for active_quest in faction.active_quests.all %}
-        <div class="mb-5 flex flex-col items-start gap-y-2.5 bg-raised py-[15px] pl-[15px] pr-[29px] text-ink-muted md:flex-row md:items-center md:justify-between md:gap-x-5">
-            <div><strong>Active quest:</strong> {{ active_quest }}</div>
-            {# The skirmish is nullable (SET_NULL on delete), and reversing the url with no id raises #}
-            {% if active_quest.skirmish_id %}
-                <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-sm uppercase leading-normal text-ground no-underline hover:border-ink"
-                   href="{% url 'warband:skirmish-fight-view' active_quest.skirmish_id %}">
-                    Fight skirmish
-                </a>
-            {% endif %}
-        </div>
-    {% endfor %}
-
-    {% include 'month/components/player_month_log_list.html' %}
 {% endblock content %}

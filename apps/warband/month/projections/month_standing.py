@@ -76,16 +76,17 @@ class MonthStanding:
     warband: WarbandStanding
 
     @property
-    def has_anything_open(self) -> bool:
+    def has_offers_open(self) -> bool:
         """
-        Whether anything at all is left to do before the month may be pressed.
+        Whether anything that merely expires is still open.
 
-        Read to tell "here is what is still open" from "the month is ready", which is a different
-        sentence and not an empty panel.
+        The unresolved skirmish is left out, because it is not an offer: it is the state of the
+        month itself, stated above the list with the fight beside it. A month held by a fight and
+        nothing else still has an empty list under a sentence saying so, and that sentence is a
+        different one from the sentence a month with nothing at all left in it gets.
         """
         return bool(
-            self.open_skirmish_count
-            or self.quest_count
+            self.quest_count
             or self.attackable_rival_list
             or self.occupiable_rival_list
             or self.can_build
