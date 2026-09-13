@@ -257,6 +257,60 @@
     }
 
     /*
+     * What a form says when it refuses.
+     *
+     * These are Bootstrap's class names rather than this project's, and they are here because the
+     * crispy layouts render against the bootstrap5 pack while no Bootstrap stylesheet is served
+     * anywhere - so "alert-danger" and "invalid-feedback" arrive on the page meaning nothing at all,
+     * and a rejected login reads as a bullet point in body copy. This block is the whole of their
+     * styling.
+     *
+     * A refusal is the textbook use of the reserved colour: the rule around the message carries it,
+     * the words stay ink, and the field that caused it takes the same rule so the eye can get from
+     * one to the other.
+     */
+    .alert-danger {
+        margin: 0 0 20px;
+        padding: 12px 16px;
+        color: var(--color-ink);
+        background-color: var(--color-raised);
+        border: 1px solid var(--color-blood);
+    }
+
+    .alert-danger ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .invalid-feedback {
+        display: block;
+        margin-top: 6px;
+        font-family: var(--font-mono);
+        font-size: var(--text-label);
+        letter-spacing: var(--tracking-label);
+        color: var(--color-blood);
+        text-transform: uppercase;
+    }
+
+    .is-invalid {
+        border-color: var(--color-blood);
+    }
+
+    /* The marker on a required label, and the hint under a field. Neither is a refusal, so neither
+     * gets the reserved colour - the asterisk is a convention and the hint is quiet prose. */
+    .asteriskField {
+        color: var(--color-ink-muted);
+    }
+
+    .form-text {
+        display: block;
+        margin-top: 6px;
+        font-size: 0.9375rem;
+        color: var(--color-ink-muted);
+    }
+
+    /*
      * A button is outlined by default. The one filled element a screen is allowed says so at its own
      * call site, which is what keeps "one per screen" a thing somebody has to choose rather than a
      * thing that happens.
