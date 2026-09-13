@@ -2,7 +2,8 @@
      hx-trigger="loadFactionCapturedWarriorList from:body"
      hx-swap="outerHTML"
      hx-disinherit="hx-swap">
-    <h2>Captured warriors</h2>
+    {# The heading stands outside this element: the swap replaces the list, and a page that already #}
+    {# says what it is showing does not need it said again inside. #}
     {% for warrior in faction.captured_warriors.all %}
         {# A prisoner is held, not commanded: the player can see what he carries and not what he is #}
         {# worth. On a rival's page these are the rival's prisoners and he is owed neither. #}

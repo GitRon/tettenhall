@@ -2,8 +2,9 @@
      hx-trigger="loadFactionItemList from:body"
      hx-swap="outerHTML"
      hx-disinherit="hx-swap">
-    <h2>Unused Items</h2>
-    {# Read once for the whole column rather than per card: every card offers the same roster, and #}
+    {# The heading stands outside this element: the swap replaces the list, and a page that already #}
+    {# says what it is showing does not need it said again inside. #}
+    {# Read once for the whole list rather than per card: every card offers the same roster, and #}
     {# the "with" keeps it to the one queryset a page of unused items would otherwise repeat. #}
     {% with roster=faction.get_all_living_warriors %}
         {% for item in faction.get_all_unoccupied_items %}

@@ -18,10 +18,11 @@
     {# noticed the number - and the ledger, which is no section of its own, is reached here and #}
     {# nowhere else. #}
     {% if current_savegame %}
-        {# A savegame can be without a player faction, and reversing the url with no id raises #}
+        {# A savegame can be without a player faction, and there is no war band to walk into then - #}
+        {# which is the same answer the section nav gives by dropping the entry entirely #}
         {% if current_savegame.player_faction_id %}
             <a class="text-ink no-underline hover:text-ink-muted"
-               href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}"
+               href="{% url 'warband:warband-roster-view' %}"
                title="Your war band">
                 {% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}
             </a>

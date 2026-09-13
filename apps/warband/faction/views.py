@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from django.contrib import messages
 from django.db.models import Count, Q, QuerySet
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import generic
@@ -73,10 +73,35 @@ class PlayerFactionAwareContextMixin:
 
 class FactionRosterContextMixin:
     """
-    Assembles the roster a faction page renders, says of each man whether he may be sent away, and
-    says where he stands on his wages.
+    Assembles the roster a faction page renders.
 
-    Shared by the faction page and the htmx partial that replaces its warrior list, because a roster
+    Read by the pages that show the men as cards and by the progress table that says where each of
+    them stands, so the two can never describe different war bands or disagree about their order.
+    """
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        # The card prints the man's faction, so the join is one query instead of one per card.
+        #
+        # By name, and the id only to break a tie between two men of the same one: the progress table
+        # reads the same list, and a warrior's own page walks it with Previous and Next - so an
+        # unordered roster would be three screens disagreeing about who comes after whom.
+        context["warrior_list"] = list(
+            Warrior.objects.select_related("faction")
+            .exclude_dead()
+            .filter_faction(faction_id=self.object.id)
+            .order_by("name", "id")
+        )
+
+        return context
+
+
+class RosterDismissalContextMixin(FactionRosterContextMixin):
+    """
+    Says of each man on the roster whether he may be sent away, and where he stands on his wages.
+
+    Shared by the roster page and the htmx partial that replaces its warrior list, because a roster
     the player got a Dismiss control on once and lost on the first "loadFactionWarriorList" swap is
     the same defect [PlayerFactionAwareContextMixin] exists to prevent.
 
@@ -89,47 +114,71 @@ class FactionRosterContextMixin:
 
     Both are attached to each warrior rather than handed over as dicts, because the card is rendered
     per warrior and a template cannot index a dict by a variable key.
+
+    Separate from the plain roster above because the progress table renders neither control and the
+    two answers cost a warrior query and a balance query to reach.
     """
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        # The card prints the man's faction, so the join is one query instead of one per card.
-        #
-        # By name, and the id only to break a tie between two men of the same one: the progress table
-        # below the cards reads the same list, and a warrior's own page walks it with Previous and
-        # Next - so an unordered roster would be three screens disagreeing about who comes after whom.
-        warrior_list = list(
-            Warrior.objects.select_related("faction")
-            .exclude_dead()
-            .filter_faction(faction_id=self.object.id)
-            .order_by("name", "id")
-        )
-
         if context["is_player_faction"]:
             player_faction = self.current_savegame.player_faction
             refusals = get_dismissal_refusals(
                 faction=player_faction,
-                warrior_list=warrior_list,
+                warrior_list=context["warrior_list"],
                 month=self.current_savegame.current_month,
                 balance=Transaction.objects.current_balance(faction_id=self.current_savegame.player_faction_id),
             )
-            for warrior in warrior_list:
+            for warrior in context["warrior_list"]:
                 warrior.dismissal_refusal = refusals.get(warrior.id)
                 # The leader is handed over rather than read off the warrior's own faction, which
                 # would be a query per card for a number the page already holds
                 warrior.unpaid_wages_note = get_unpaid_wages_note(warrior=warrior, leader_id=player_faction.leader_id)
 
-        context["warrior_list"] = warrior_list
-
         return context
+
+
+class PlayerWarbandMixin(PlayerFactionScopedQuerysetMixin):
+    """
+    Resolves the one war band the current player commands.
+
+    The url carries no id, so the scoped queryset holds exactly that faction - and nothing at all
+    before the player has an active savegame with a faction, which is a page with no subject rather
+    than a server error. The same shape as "PlayerTownMixin".
+    """
+
+    model = Faction
+
+    def get_object(self, queryset=None) -> Faction:
+        # Going through "self" rather than "super()" is what keeps the scoping applied
+        faction = self.get_queryset().first()
+        if faction is None:
+            raise Http404("The current savegame has no war band.")
+
+        return faction
 
 
 class FactionDetailView(
     FactionRosterContextMixin, PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView
 ):
+    """
+    A rival's page: who he has, what he owns, who he holds, and whether the player may march on him.
+
+    The player's own war band is five pages of its own, and this url is where every link to it used
+    to point - a bookmark, a fight report, the counter in the bar. Rather than answering those with a
+    404 or with a second copy of the roster, the one id that is his own is sent to the page that now
+    holds it.
+    """
+
     model = Faction
     template_name = "faction/faction_detail.html"
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        if self.current_savegame is not None and self.kwargs["pk"] == self.current_savegame.player_faction_id:
+            return HttpResponseRedirect(reverse("warband:warband-roster-view"))
+
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -204,6 +253,49 @@ class FactionDetailView(
         context["savegame_is_over"] = current_savegame.is_over
 
         return context
+
+
+class WarbandRosterView(
+    RosterDismissalContextMixin, PlayerFactionAwareContextMixin, PlayerWarbandMixin, generic.DetailView
+):
+    """
+    The men the player commands, and what the war band itself is.
+
+    Where the Warband entry lands. The faction's name, its culture and its leader sit in the heading
+    rather than on a page of their own: three values and no action is what a page is headed with, not
+    what it is about.
+    """
+
+    template_name = "faction/warband_roster.html"
+
+
+class WarbandStoresView(PlayerFactionAwareContextMixin, PlayerWarbandMixin, generic.DetailView):
+    """What nobody is wearing, which is also what can be sold."""
+
+    template_name = "faction/warband_stores.html"
+
+
+class WarbandFyrdView(PlayerWarbandMixin, generic.DetailView):
+    """The levy the player can draft another man out of this month."""
+
+    template_name = "faction/warband_fyrd.html"
+
+
+class WarbandCaptivesView(PlayerFactionAwareContextMixin, PlayerWarbandMixin, generic.DetailView):
+    """The prisoners the player holds, to recruit or to sell."""
+
+    template_name = "faction/warband_captives.html"
+
+
+class WarbandProgressView(FactionRosterContextMixin, PlayerWarbandMixin, generic.DetailView):
+    """
+    Where each man stands on the four attributes a month of training moves.
+
+    Reads the plain roster: the table renders no control, so the dismissal refusals and the wage
+    notes would be two queries for something nobody looks at.
+    """
+
+    template_name = "faction/warband_progress.html"
 
 
 class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
@@ -342,7 +434,7 @@ class FactionPubMercenaryListView(PlayerFactionAwareContextMixin, SavegameScoped
 
 
 class FactionWarriorListView(
-    FactionRosterContextMixin, PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView
+    RosterDismissalContextMixin, PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView
 ):
     model = Faction
     template_name = "faction/warrior/components/warrior_list.html"

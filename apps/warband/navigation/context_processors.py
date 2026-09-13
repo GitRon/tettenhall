@@ -16,9 +16,9 @@ def navigation(request) -> dict:  # noqa: PBR001
     """
     The four sections, the pages of whichever one the player is standing in, and which of them to mark.
 
-    Computed here rather than written out in "base.html" because two of the four entries are reversed
-    with the player's own faction id, and a savegame can exist before its faction does - reversing
-    either of those with an empty id raises, and the navbar is on every authenticated page.
+    Computed here rather than written out in "base.html" because the town's entries are reversed with
+    the player's own faction id, and a savegame can exist before its faction does - reversing one of
+    those with an empty id raises, and the navbar is on every authenticated page.
     """
     current_savegame = get_current_savegame_for_request(request=request)
     # Before a savegame is loaded there is no month to lay out, and the only screens are the login
@@ -30,15 +30,11 @@ def navigation(request) -> dict:  # noqa: PBR001
     # A page can be rendered with no url resolved behind it - the error handlers and
     # "render_to_string" both do it - and nothing is marked then.
     resolver_match = getattr(request, "resolver_match", None)
-    current_section_key = get_section_key(
-        url_name=resolver_match.url_name if resolver_match else None,
-        url_kwargs=resolver_match.kwargs if resolver_match else None,
-        player_faction_id=player_faction_id,
-    )
+    current_section_key = get_section_key(url_name=resolver_match.url_name if resolver_match else None)
 
     # An entry stays on the map whether or not there is anything behind it this month - the menu is a
     # map and not a to-do list. The one thing that does remove an entry is a savegame whose faction
-    # has not been created yet, because its url cannot be built at all.
+    # has not been created yet, because the war band and the town are that faction's.
     sections = [
         {
             "key": section.key,
@@ -47,7 +43,7 @@ def navigation(request) -> dict:  # noqa: PBR001
             "url": _section_url(section=section, player_faction_id=player_faction_id),
         }
         for section in SECTIONS
-        if player_faction_id or not section.takes_player_faction
+        if player_faction_id or not section.needs_player_faction
     ]
 
     # Only among the entries that are actually on the bar. A savegame without a player faction has no

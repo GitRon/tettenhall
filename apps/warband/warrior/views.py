@@ -54,12 +54,18 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         if self.object.faction_id:
             context["nav_section"] = "warband" if context["is_player_faction"] else "rivals"
             context["roster_label"] = f"Back to {self.object.faction}"
-            context["roster_url"] = reverse("warband:faction-detail-view", args=[self.object.faction_id])
+            # His own men stand on the war band's roster page and a rival's on the rival's own, which
+            # are two pages rather than one url told apart by an id
+            context["roster_url"] = (
+                reverse("warband:warband-roster-view")
+                if context["is_player_faction"]
+                else reverse("warband:faction-detail-view", args=[self.object.faction_id])
+            )
             roster = Warrior.objects.exclude_dead().filter_faction(faction_id=self.object.faction_id)
         elif context["is_captive_of_player"]:
             context["nav_section"] = "warband"
             context["roster_label"] = "Back to your captives"
-            context["roster_url"] = reverse("warband:faction-detail-view", args=[player_faction.id])
+            context["roster_url"] = reverse("warband:warband-captives-view")
             roster = player_faction.captured_warriors.all()
         elif context["is_mercenary_of_player"]:
             context["nav_section"] = "town"
