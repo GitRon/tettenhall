@@ -9,6 +9,9 @@
     "watch:css": "tailwindcss --input assets/css/tailwind.css --output static/dist/tailwind.css --watch"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/spectral": "^5.3.0",
     "@fortawesome/fontawesome-free": "^7.3.1",
     "htmx.org": "^2.0.10"
   },
