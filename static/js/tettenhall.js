@@ -113,4 +113,53 @@
             }
         });
     });
+
+    /*
+     * The fight screen's tabs, which exist below "md:" and nowhere else.
+     *
+     * Three panels in one column put the battle report between the two war bands, so the panel read
+     * every round is the one scrolled past twice. One at a time instead, opening on the report,
+     * because that is the panel the fight is actually played through.
+     *
+     * The hiding lives here rather than in the template so that a browser without this file gets the
+     * three panels stacked - usable, if long - instead of a third of a screen. It is also why the
+     * panels carry "md:block": the desk is then never at the mercy of the script, and no resize
+     * listener has to be got right.
+     *
+     * Not a radio group with sibling selectors, which would have cost no JavaScript at all: the
+     * Fight! button carries "hx-include=\"select, input\"" and would have posted the tab strip's own
+     * state into the round.
+     */
+    const ACTIVE_TAB_CLASS = ['border-ink', 'text-ink'];
+    const IDLE_TAB_CLASS = ['border-rule', 'text-ink-muted'];
+
+    document.querySelectorAll('[data-fight-tabs]').forEach((root) => {
+        const tabs = [...root.querySelectorAll('[data-fight-tab]')];
+        const panels = [...root.querySelectorAll('[data-fight-panel]')];
+
+        if (!tabs.length || !panels.length) {
+            return;
+        }
+
+        const show = (name) => {
+            panels.forEach((panel) => {
+                panel.classList.toggle('hidden', panel.dataset.fightPanel !== name);
+            });
+            tabs.forEach((tab) => {
+                const isActive = tab.dataset.fightTab === name;
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                tab.classList.toggle(ACTIVE_TAB_CLASS[0], isActive);
+                tab.classList.toggle(ACTIVE_TAB_CLASS[1], isActive);
+                tab.classList.toggle(IDLE_TAB_CLASS[0], !isActive);
+                tab.classList.toggle(IDLE_TAB_CLASS[1], !isActive);
+            });
+        };
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => show(tab.dataset.fightTab));
+        });
+
+        // The first tab in the strip is the report, and a fresh load opens on it.
+        show(tabs[0].dataset.fightTab);
+    });
 })();
