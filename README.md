@@ -26,6 +26,8 @@ inferring the conventions from nearby code.
 - [Savegame scoping](docs/patterns/savegame-scoping.md) — the scoping mixins and the leaks they prevent
 - [Warrior knowledge](docs/patterns/warrior-knowledge.md) — what the player may know about a man he does
   not command, which facts are fuzzed rather than withheld, and the screens the rule does not govern
+- [Warrior availability](docs/patterns/warrior-availability.md) — the four rules that keep a man off a
+  quest or an attack, the one place they are worded, and why a picker draws him anyway
 - [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a
   balance number belongs
 - [Month incidents](docs/patterns/month-incidents.md) — the pool the world draws from each month, its

@@ -44,6 +44,13 @@ urlpatterns = [
         faction_views.FactionPubMercenaryListView.as_view(),
         name="pub-mercenary-list-htmx",
     ),
+    # The player's own war band. No id in any of them: which faction is his is the savegame's answer
+    # and not the url's - see docs/patterns/navigation.md.
+    path("faction/warband/roster", faction_views.WarbandRosterView.as_view(), name="warband-roster-view"),
+    path("faction/warband/stores", faction_views.WarbandStoresView.as_view(), name="warband-stores-view"),
+    path("faction/warband/fyrd", faction_views.WarbandFyrdView.as_view(), name="warband-fyrd-view"),
+    path("faction/warband/captives", faction_views.WarbandCaptivesView.as_view(), name="warband-captives-view"),
+    path("faction/warband/progress", faction_views.WarbandProgressView.as_view(), name="warband-progress-view"),
     # Above the detail route for readability only - "rivals" is not an int, so the two cannot collide
     path("faction/faction/rivals", faction_views.RivalFactionListView.as_view(), name="rival-faction-list-view"),
     path("faction/faction/<int:pk>", faction_views.FactionDetailView.as_view(), name="faction-detail-view"),
@@ -78,6 +85,9 @@ urlpatterns = [
     # Item
     path("item/<int:pk>/sell", item_views.ItemSellView.as_view(), name="item-sell-view"),
     path("item/<int:pk>/buy", item_views.ItemBuyView.as_view(), name="item-buy-view"),
+    # The item pk only: which slot it fills is the item's own function, and which men it may be
+    # handed to is read off the faction that owns it
+    path("item/<int:pk>/assign", item_views.ItemAssignView.as_view(), name="item-assign-view"),
     # Month
     path("month/finish/", month_views.FinishMonthView.as_view(), name="finish-month-view"),
     # Quest

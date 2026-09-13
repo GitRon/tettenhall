@@ -68,6 +68,23 @@ def test_navigation_offers_no_pages_for_a_section_that_is_not_on_the_bar(
 
 
 @pytest.mark.django_db
+def test_navigation_offers_the_five_pages_of_the_war_band(logged_in_client, current_savegame):
+    """
+    The landing page first, and the rest by how often a month makes the player open them.
+    """
+    response = logged_in_client.get(reverse("warband:warband-stores-view"))
+
+    assert [page["label"] for page in response.context["nav_pages"]] == [
+        "Warband",
+        "Stores",
+        "Fyrd",
+        "Captives",
+        "Progress",
+    ]
+    assert [page["is_current"] for page in response.context["nav_pages"]] == [False, True, False, False, False]
+
+
+@pytest.mark.django_db
 def test_navigation_offers_no_pages_for_a_section_that_is_one_page(logged_in_client, current_savegame):
     response = logged_in_client.get(reverse("warband:dashboard-view"))
 

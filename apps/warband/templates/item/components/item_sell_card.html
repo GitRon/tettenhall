@@ -19,11 +19,6 @@
     </div>
     <div class="p-[30px] text-left">
         {% comment %}
-            Equipping is the half of the loot economy this column never mentions. "Sell" being the
-            only control here reads as the only thing loot is for, and a war band ends up selling a
-            Superior Long sword while its leader fights in what he marched out in - the route is two
-            clicks away on the warrior's own page and nothing points down it.
-
             Both branches are written even though "get_all_unoccupied_items" feeds the one list that
             includes this card today: the card is a component, and a wearer named without a way to
             reach him would be the same dead end one step along.
@@ -33,15 +28,52 @@
                 <p>Worn by: <a href="{% url 'warband:warrior-detail-view' wearer.id %}">{{ wearer }}</a></p>
             {% else %}
                 <p>Worn by: -</p>
-                <p class="text-sm leading-snug text-ink-muted">Nobody has it. Weapons and armour are handed out on a warrior's own page.</p>
             {% endif %}
         {% endwith %}
     </div>
     {% comment %}
-        Only the player's own items can be sold: "ItemSellView" is scoped to the player faction, so on
-        a rival's page this is a control that could only ever 404.
+        Only the player's own items can be sold or handed out: both views are scoped to the player
+        faction, so on a rival's page these are controls that could only ever 404.
     {% endcomment %}
     {% if is_player_faction %}
+        {% comment %}
+            Giving belongs beside selling, because they are the two things loot is for. With only a
+            Sell button here the column read as though selling were the only one, and the route to
+            the other was the warrior's own page - a page at a time, down the whole roster.
+
+            The roster is handed in by the list rather than read off the item, so a column of unused
+            items costs one query for it instead of one per card. A faction with no living men left
+            gets no picker: a select with nothing in it is a control that can only fail.
+        {% endcomment %}
+        {% if roster %}
+            <div class="border-t border-rule px-[30px] py-[15px]">
+                <form class="flex flex-wrap items-center gap-x-4 gap-y-2"
+                      hx-post="{% url 'warband:item-assign-view' item.id %}"
+                      hx-swap="none">
+                    {# Named after the item rather than "Give to": every unused item renders one of #}
+                    {# these, and a screen reader reading them out has nothing else to tell them apart #}
+                    {# by. Each option carries the man's name and what he already holds in this slot, #}
+                    {# because that is what the player is about to displace. #}
+                    <select aria-label="Give {{ item.display_name }} to"
+                            class="box-border h-10 min-w-0 flex-1 border border-rule bg-ground py-0 pl-2.5 pr-5 text-base text-ink"
+                            name="warrior">
+                        {% for warrior in roster %}
+                            <option value="{{ warrior.id|unlocalize }}">
+                                {{ warrior.display_name }}
+                                {% if item.is_weapon %}
+                                    ({{ warrior.weapon.display_name|default:"empty-handed" }})
+                                {% else %}
+                                    ({{ warrior.armor.display_name|default:"unarmoured" }})
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button class="box-border inline-block cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-display text-sm uppercase leading-normal tracking-[0.06em] text-ink hover:bg-raised"
+                            type="submit">Give to
+                    </button>
+                </form>
+            </div>
+        {% endif %}
         <div class="border-t border-rule px-[30px] py-[15px]">
             <button class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline"
                     hx-post="{% url 'warband:item-sell-view' item.id %}"

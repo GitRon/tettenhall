@@ -54,6 +54,19 @@ class Item(models.Model):
         return self.type.function == ItemType.FunctionChoices.FUNCTION_ARMOR
 
     @property
+    def gear_slot(self) -> str:
+        """
+        The field on Warrior this item fills, which is the name an equip has to be told.
+
+        Off the function rather than off a mapping kept beside it: the two slots exist because the
+        two functions do, and a third function arriving with no slot to go in should be a decision
+        rather than a silently wrong default. Armor is the fallback here because the function is
+        already narrowed to the two - what a slot may be filled from is "SLOT_FUNCTIONS", which reads
+        the same pairing back the other way.
+        """
+        return "weapon" if self.is_weapon else "armor"
+
+    @property
     def worn_by(self) -> Warrior | None:
         # Reverse one-to-one access raises instead of being falsy when nobody wears the item
         if self.is_weapon and hasattr(self, "warrior_weapon"):

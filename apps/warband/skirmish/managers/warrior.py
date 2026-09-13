@@ -46,36 +46,79 @@ class WarriorQuerySet(models.QuerySet):
         """
         return self.filter(available_pub_mercenaries=faction_id)
 
-    def exclude_currently_busy(self, *, month: int):
+    def _filter_standing_in(self, *, skirmishes):
         """
-        Every warrior fights once a month, and never two fights at the same time.
+        The men on either roster of any of "skirmishes".
 
-        Three ways to be busy. Signed on to a quest this month, which is the only one this used to
-        know about. Already committed to a fight this month. And still standing on the roster of a
-        fight nobody has played out - that last one because an unresolved skirmish carries over into
-        the next month, where the month check on its own would hand the same warrior out again while
-        he is still in it.
+        Both sides are asked, attacking and defending alike: a captive who changed banners has fought
+        all the same, and a warrior is no less busy for having been the one marched against.
 
-        The quest half is one "NOT EXISTS" about the warrior. Spelled as a filter over the joined
-        contracts it read per through-row instead: a warrior holding contracts in month 1 and month 3
-        came back as free in month 3, because the month-1 row satisfied "this row is not month 3".
+        Always handed a skirmish queryset rather than given the condition to spell out on the
+        warrior's two relations to it. Written that second way - a
+        "defending_skirmishes__victorious_faction__isnull=True" - it also matches every warrior who
+        has never fought at all, because the outer join hands those a row of nulls that looks exactly
+        like an undecided fight.
+        """
+        return self.filter(Q(attacking_skirmishes__in=skirmishes) | Q(defending_skirmishes__in=skirmishes))
 
-        Both sides of a skirmish are asked, attacking and defending alike: a captive who changed
-        banners has fought all the same, and a warrior is no less busy for having been the one
-        marched against.
+    def filter_unfit(self):
+        """
+        The men in no condition to fight: unconscious, fleeing or dead.
+
+        The complement of "filter_healthy", and spelled positively because what the player is told is
+        built from the men a rule catches rather than the men it spares - see [assess_roster].
+        """
+        return self.exclude(condition=self.model.ConditionChoices.CONDITION_HEALTHY)
+
+    def filter_sworn_to_a_quest(self, *, month: int):
+        """
+        The men who have already signed on to a quest in "month".
+
+        One "EXISTS" about the warrior, which is what the exclusion below inherits. Spelled instead as
+        a filter over the joined contracts it reads per through-row, and a warrior holding contracts in
+        month 1 and month 3 comes back as free in month 3 because the month-1 row satisfies "this row
+        is not month 3".
+        """
+        return self.filter(quest_contracts__accepted_in_month=month)
+
+    def filter_committed_to_a_fight(self, *, month: int):
+        """
+        The men standing on the roster of a fight this month.
         """
         # Imported here because the skirmish model reaches back into this module through the warrior
         # model it points at
         from apps.warband.skirmish.models.skirmish import Skirmish
 
-        # Said once, against the skirmish rather than against the warrior's two relations to it.
-        # Spelling it out as "victorious_faction__isnull=True" on the reverse side would also have
-        # matched every warrior who has never fought at all, because the outer join hands those a row
-        # of nulls that looks exactly like an undecided fight.
-        occupying_skirmishes = Skirmish.objects.filter(Q(month=month) | Q(victorious_faction__isnull=True))
+        return self._filter_standing_in(skirmishes=Skirmish.objects.filter(month=month))
 
-        return self.exclude(quest_contracts__accepted_in_month=month).exclude(
-            Q(attacking_skirmishes__in=occupying_skirmishes) | Q(defending_skirmishes__in=occupying_skirmishes)
+    def filter_standing_in_an_open_fight(self):
+        """
+        The men standing on the roster of a fight nobody has played out.
+
+        No month in it, unlike its two siblings. An unresolved skirmish carries over, so the men in it
+        are still in it however many months have passed - a month check on its own would hand the same
+        warrior out again while he is still standing in last month's fight.
+        """
+        from apps.warband.skirmish.models.skirmish import Skirmish
+
+        return self._filter_standing_in(skirmishes=Skirmish.objects.filter(victorious_faction__isnull=True))
+
+    def exclude_currently_busy(self, *, month: int):
+        """
+        Every warrior fights once a month, and never two fights at the same time.
+
+        Three ways to be busy, and each of them is one of the filters above rather than a condition
+        written out a second time here. That is the whole point of the shape: [assess_roster] tells
+        the player which rule caught a man, and it reads the same three. A rule worded in two places
+        is a page that starts lying the day one of them moves.
+
+        Excluding the three in turn is excluding their union, so a warrior caught by two of them is
+        gone once.
+        """
+        return (
+            self.exclude(id__in=self.model.objects.filter_sworn_to_a_quest(month=month).values("id"))
+            .exclude(id__in=self.model.objects.filter_committed_to_a_fight(month=month).values("id"))
+            .exclude(id__in=self.model.objects.filter_standing_in_an_open_fight().values("id"))
         )
 
 
