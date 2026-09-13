@@ -63,10 +63,26 @@ def test_help_text_stays_away_while_somebody_can_go():
 
 
 @pytest.mark.django_db
-def test_help_text_says_when_every_row_is_greyed():
+def test_assignable_warriors_leave_out_a_dead_man():
+    """
+    He is not unavailable this month, he is gone - and a quest is about who marches next.
+    """
     savegame = SavegameFactory(current_month=2)
     faction = FactionFactory(savegame=savegame)
     WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    living_warrior = WarriorFactory(faction=faction)
+
+    quest = QuestFactory(target_faction__savegame=savegame)
+    form = QuestAcceptForm(quest_id=quest.id, player_faction_id=faction.id)
+
+    assert list(form.fields["assigned_warriors"].queryset) == [living_warrior]
+
+
+@pytest.mark.django_db
+def test_help_text_says_when_every_row_is_greyed():
+    savegame = SavegameFactory(current_month=2)
+    faction = FactionFactory(savegame=savegame)
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
     quest = QuestFactory(target_faction__savegame=savegame)
     form = QuestAcceptForm(quest_id=quest.id, player_faction_id=faction.id)

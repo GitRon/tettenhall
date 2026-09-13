@@ -59,6 +59,22 @@ def test_assignable_warriors_exclude_another_factions_warrior():
 
 
 @pytest.mark.django_db
+def test_assignable_warriors_leave_out_a_dead_man():
+    """
+    The picker is measured against the roster the player reads on his faction page, and that one has
+    no dead men on it either.
+    """
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    living_warrior = WarriorFactory(faction=faction)
+
+    form = FactionAttackForm(leader=leader, month=3)
+
+    assert list(form.fields["assigned_warriors"].queryset) == [living_warrior]
+
+
+@pytest.mark.django_db
 def test_empty_help_text_stays_away_while_there_are_rows_to_draw():
     """
     A roster of men who cannot march is not an empty picker: every one of them carries his own

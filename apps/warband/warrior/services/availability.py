@@ -51,8 +51,8 @@ def _blocking_rules(*, month: int) -> tuple[_BlockingRule, ...]:
     """
     The four rules, in the order a man is measured against them. First match wins.
 
-    Unfit comes first because a dead man on a quest roster is dead before he is spoken for, and
-    because his condition is the only one of the four the player can already see elsewhere.
+    Unfit comes first because a man flat on his back is in no state to be spoken for, and because his
+    condition is the only one of the four the player can already see elsewhere.
 
     The two fight rules are ordered the opposite way from how they read. "This month" is the specific
     case, so putting it first leaves the open-fight sentence to fire only for a fight from some
@@ -134,10 +134,16 @@ class RosterAssessment:
 
 def assess_roster(*, faction_id: int, month: int, excluded_ids: Iterable[int] = ()) -> RosterAssessment:
     """
-    The whole war band, each man carrying either a verdict or nothing.
+    The living war band, each man carrying either a verdict or nothing.
 
     The whole of it, and not the part that can go: a roster the player can count against the one he
     owns is the only version of this screen that cannot be mistaken for a broken page.
+
+    The dead are the one exception, and they are the exception for that same reason. Every other
+    roster in the game leaves them out - the faction page, the wage bill, the hand-out form, the
+    incidents, the month standing - so drawing them here would make the picker longer than the war
+    band it is measured against. And a verdict is a prompt: a wound heals, a fight can be settled, a
+    month passes. "Dead" is nothing the player can act on.
 
     One query per rule rather than one per man. Four queries answer a roster of forty as cheaply as a
     roster of four, where asking each man in turn puts a query on every row of the page.
@@ -151,7 +157,12 @@ def assess_roster(*, faction_id: int, month: int, excluded_ids: Iterable[int] = 
     Deliberately not ordered by availability: sorting the unavailable to the bottom would undo the
     one thing drawing them achieves, which is that the list reads as the war band.
     """
-    roster = Warrior.objects.filter_faction(faction_id=faction_id).exclude(id__in=excluded_ids).order_by("name", "id")
+    roster = (
+        Warrior.objects.filter_faction(faction_id=faction_id)
+        .exclude_dead()
+        .exclude(id__in=excluded_ids)
+        .order_by("name", "id")
+    )
 
     caught = [(rule, set(rule.select(roster).values_list("id", flat=True))) for rule in _blocking_rules(month=month)]
 

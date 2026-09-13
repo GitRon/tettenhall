@@ -80,16 +80,31 @@ def test_assess_roster_names_the_open_fight_of_another_month():
 @pytest.mark.django_db
 def test_assess_roster_names_only_the_first_rule_that_catches_a_man():
     """
-    A dead man on a quest roster is dead before he is spoken for.
+    A man flat on his back is in no state to be spoken for.
     """
     faction = FactionFactory()
-    warrior = WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    warrior = WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     quest_contract = QuestContractFactory(faction=faction, accepted_in_month=3)
     quest_contract.assigned_warriors.add(warrior)
 
     result = assess_roster(faction_id=faction.id, month=3)
 
-    assert result.assessed[0].reason == "Dead"
+    assert result.assessed[0].reason == "Unconscious"
+
+
+@pytest.mark.django_db
+def test_assess_roster_leaves_the_dead_off_the_roster_entirely():
+    """
+    Not greyed with a reason, the way the unconscious and the fleeing are: gone, the way every other
+    roster in the game has him gone.
+    """
+    faction = FactionFactory()
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    living_warrior = WarriorFactory(faction=faction)
+
+    result = assess_roster(faction_id=faction.id, month=3)
+
+    assert [assessment.warrior for assessment in result.assessed] == [living_warrior]
 
 
 @pytest.mark.django_db
@@ -124,7 +139,7 @@ def test_assess_roster_orders_by_name_rather_than_by_availability():
     that the list reads as the war band the player owns.
     """
     faction = FactionFactory()
-    WarriorFactory(faction=faction, name="Beorn", condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    WarriorFactory(faction=faction, name="Beorn", condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     WarriorFactory(faction=faction, name="Cynric")
 
     result = assess_roster(faction_id=faction.id, month=3)
@@ -147,7 +162,7 @@ def test_is_empty_of_a_roster_nobody_on_which_can_go():
     A page full of greyed rows is not an empty page, and the two say different things.
     """
     faction = FactionFactory()
-    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
     result = assess_roster(faction_id=faction.id, month=3)
 
@@ -157,7 +172,7 @@ def test_is_empty_of_a_roster_nobody_on_which_can_go():
 @pytest.mark.django_db
 def test_has_nobody_available_when_every_man_is_spoken_for():
     faction = FactionFactory()
-    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
     result = assess_roster(faction_id=faction.id, month=3)
 
@@ -167,7 +182,7 @@ def test_has_nobody_available_when_every_man_is_spoken_for():
 @pytest.mark.django_db
 def test_has_nobody_available_when_one_man_can_still_go():
     faction = FactionFactory()
-    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     WarriorFactory(faction=faction)
 
     result = assess_roster(faction_id=faction.id, month=3)
@@ -204,7 +219,9 @@ def test_as_queryset_holds_the_unavailable_men_too():
     men who cannot go is the whole point.
     """
     faction = FactionFactory()
-    unfit_warrior = WarriorFactory(faction=faction, name="Beorn", condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    unfit_warrior = WarriorFactory(
+        faction=faction, name="Beorn", condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
     able_warrior = WarriorFactory(faction=faction, name="Cynric")
 
     result = assess_roster(faction_id=faction.id, month=3)
