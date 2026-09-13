@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Captives</h1>
+
+    {% include "faction/warrior/components/captured_warrior_list.html" with faction=object %}
+{% endblock content %}

@@ -604,9 +604,7 @@ def test_warrior_detail_view_leads_back_to_the_roster_he_was_read_off(logged_in_
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
 
     assert response.context["nav_section"] == "warband"
-    assert response.context["roster_url"] == reverse(
-        "warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id}
-    )
+    assert response.context["roster_url"] == reverse("warband:warband-roster-view")
 
 
 @pytest.mark.django_db
@@ -634,9 +632,7 @@ def test_warrior_detail_view_leads_a_captive_back_to_the_captives(logged_in_clie
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": captive.id}))
 
     assert response.context["nav_section"] == "warband"
-    assert response.context["roster_url"] == reverse(
-        "warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id}
-    )
+    assert response.context["roster_url"] == reverse("warband:warband-captives-view")
 
 
 @pytest.mark.django_db

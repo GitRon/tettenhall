@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Warband</h1>
+
+    {# The name, the culture and the leader: what the war band is, rather than what it is doing. A #}
+    {# heading and not a card, because there is nothing here to press and nothing that changes. #}
+    <p class="text-sm leading-snug text-ink-muted">
+        {{ object.name }} &middot; {{ object.culture.name }} &middot;
+        {# A faction can be without a leader, and reversing the url with no id raises #}
+        {% if object.leader %}
+            led by <a href="{% url "warband:warrior-detail-view" object.leader.id %}">{{ object.leader.display_name }}</a>
+        {% else %}
+            leaderless
+        {% endif %}
+    </p>
+
+    {% include "faction/warrior/components/warrior_list.html" with faction=object warrior_list=warrior_list %}
+{% endblock content %}

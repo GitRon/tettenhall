@@ -44,14 +44,28 @@ def player_faction_ready_to_march(current_savegame) -> Faction:
 
 
 @pytest.mark.django_db
-def test_faction_detail_view_shows_the_faction(logged_in_client, current_savegame):
-    faction = current_savegame.player_faction
-    warrior = WarriorFactory(faction=faction)
+def test_faction_detail_view_shows_a_rival(logged_in_client, current_savegame):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    warrior = WarriorFactory(faction=rival_faction)
 
-    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": faction.id}))
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
     assert list(response.context["warrior_list"]) == [warrior]
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_sends_the_players_own_faction_to_the_roster(logged_in_client, current_savegame):
+    """
+    Every link to the player's own war band used to point here - a bookmark, a fight report, the
+    counter in the bar - and the war band is five pages of its own now.
+    """
+    response = logged_in_client.get(
+        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id})
+    )
+
+    assert response.status_code == 302
+    assert response.url == reverse("warband:warband-roster-view")
 
 
 @pytest.mark.django_db
@@ -65,32 +79,20 @@ def test_faction_detail_view_hides_factions_of_other_savegames(logged_in_client,
 
 
 @pytest.mark.django_db
-def test_faction_detail_view_resolves_the_current_savegame_once(logged_in_client, current_savegame):
+def test_warband_roster_view_resolves_the_current_savegame_once(logged_in_client, current_savegame):
     """
     Four context processors, the scoping mixin and the view itself all need the current savegame, and
     they used to ask for it separately - six identical lookups to render one page. They go through the
     request-scoped resolver now, so the page asks once.
     """
     with CaptureQueriesContext(connection) as captured_queries:
-        response = logged_in_client.get(
-            reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
-        )
+        response = logged_in_client.get(reverse("warband:warband-roster-view"))
 
     assert response.status_code == 200
     savegame_lookups = [
         query for query in captured_queries.captured_queries if 'FROM "warband_savegame"' in query["sql"]
     ]
     assert len(savegame_lookups) == 1
-
-
-@pytest.mark.django_db
-def test_faction_detail_view_marks_the_players_own_faction(logged_in_client, current_savegame):
-    response = logged_in_client.get(
-        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
-    )
-
-    assert response.status_code == 200
-    assert response.context["is_player_faction"] is True
 
 
 @pytest.mark.django_db
@@ -108,20 +110,6 @@ def test_faction_detail_view_does_not_mark_a_rival_as_the_players_own(logged_in_
 
 
 @pytest.mark.django_db
-def test_faction_detail_view_commands_the_players_own_roster(logged_in_client, current_savegame):
-    """
-    What the men on this page are to the player, which is what every number on their cards follows
-    from - see docs/patterns/warrior-knowledge.md.
-    """
-    response = logged_in_client.get(
-        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
-    )
-
-    assert response.status_code == 200
-    assert response.context["roster_knowledge"] is WarriorKnowledge.COMMANDED
-
-
-@pytest.mark.django_db
 def test_faction_detail_view_treats_a_rivals_roster_as_a_rivals(logged_in_client, current_savegame):
     rival_faction = FactionFactory(savegame=current_savegame)
 
@@ -129,20 +117,6 @@ def test_faction_detail_view_treats_a_rivals_roster_as_a_rivals(logged_in_client
 
     assert response.status_code == 200
     assert response.context["roster_knowledge"] is WarriorKnowledge.RIVAL
-
-
-@pytest.mark.django_db
-def test_faction_detail_view_holds_the_players_own_captives(logged_in_client, current_savegame):
-    """
-    A prisoner is held rather than commanded: his gear is the player's to read and his numbers are
-    not, which is the level the pub already showed a mercenary at.
-    """
-    response = logged_in_client.get(
-        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction.id})
-    )
-
-    assert response.status_code == 200
-    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
 
 
 @pytest.mark.django_db
@@ -169,18 +143,6 @@ def test_faction_detail_view_offers_an_attack_on_a_rival(
 
     assert response.status_code == 200
     assert response.context["can_be_attacked"] is True
-
-
-@pytest.mark.django_db
-def test_faction_detail_view_offers_no_attack_on_the_players_own_faction(
-    logged_in_client, current_savegame, player_faction_ready_to_march
-):
-    response = logged_in_client.get(
-        reverse("warband:faction-detail-view", kwargs={"pk": player_faction_ready_to_march.id})
-    )
-
-    assert response.status_code == 200
-    assert response.context["can_be_attacked"] is False
 
 
 @pytest.mark.django_db
@@ -270,30 +232,6 @@ def test_faction_detail_view_says_nothing_about_a_committed_war_band_on_a_defeat
 
 
 @pytest.mark.django_db
-def test_faction_detail_view_says_nothing_about_marching_on_the_players_own_faction(
-    logged_in_client, current_savegame, player_faction_ready_to_march
-):
-    """
-    You can never march on yourself, so "your warriors have already fought" is not the reason the
-    button is missing - it was never on offer.
-    """
-    skirmish = SkirmishFactory(
-        attacking_faction=player_faction_ready_to_march,
-        defending_faction=FactionFactory(savegame=current_savegame),
-        victorious_faction=player_faction_ready_to_march,
-        month=current_savegame.current_month,
-    )
-    skirmish.attacking_warriors.add(player_faction_ready_to_march.leader)
-
-    response = logged_in_client.get(
-        reverse("warband:faction-detail-view", kwargs={"pk": player_faction_ready_to_march.id})
-    )
-
-    assert response.context["can_be_attacked"] is False
-    assert response.context["has_marched_this_month"] is False
-
-
-@pytest.mark.django_db
 def test_faction_detail_view_says_nothing_about_marching_on_a_defeated_faction(
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):
@@ -314,6 +252,157 @@ def test_faction_detail_view_says_nothing_about_marching_on_a_defeated_faction(
 
     assert response.context["can_be_attacked"] is False
     assert response.context["has_marched_this_month"] is False
+
+
+@pytest.mark.django_db
+def test_warband_roster_view_shows_the_players_own_men(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:warband-roster-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["warrior_list"]) == [warrior]
+
+
+@pytest.mark.django_db
+def test_warband_roster_view_reads_the_war_band_off_the_savegame(logged_in_client, current_savegame):
+    """
+    The url carries no id, so the faction the page shows is the scoped queryset's answer and not
+    something another savegame's roster can be reached through.
+    """
+    FactionFactory(savegame=SavegameFactory())
+
+    response = logged_in_client.get(reverse("warband:warband-roster-view"))
+
+    assert response.context["object"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warband_roster_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    A savegame can exist before its faction does, and a war band page with no war band behind it is
+    a page with no subject rather than a server error.
+    """
+    response = logged_in_client.get(reverse("warband:warband-roster-view"))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_warband_roster_view_commands_the_players_own_roster(logged_in_client, current_savegame):
+    """
+    What the men on this page are to the player, which is what every number on their cards follows
+    from - see docs/patterns/warrior-knowledge.md.
+    """
+    response = logged_in_client.get(reverse("warband:warband-roster-view"))
+
+    assert response.status_code == 200
+    assert response.context["roster_knowledge"] is WarriorKnowledge.COMMANDED
+
+
+@pytest.mark.django_db
+def test_warband_roster_view_lists_the_roster_by_name(logged_in_client, current_savegame):
+    """
+    The progress page reads the same list, and a warrior's own page walks it with Previous and Next -
+    so an unordered roster would be three screens disagreeing about who comes after whom.
+    """
+    cenwulf = WarriorFactory(faction=current_savegame.player_faction, name="Cenwulf")
+    aelfric = WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+
+    response = logged_in_client.get(reverse("warband:warband-roster-view"))
+
+    assert list(response.context["warrior_list"]) == [aelfric, cenwulf]
+
+
+@pytest.mark.django_db
+def test_warband_roster_view_shows_a_war_band_without_a_leader(logged_in_client, current_savegame):
+    """
+    Faction.leader is nullable, and reversing the warrior url with no id raises NoReverseMatch.
+    """
+    current_savegame.player_faction.leader = None
+    current_savegame.player_faction.save()
+
+    response = logged_in_client.get(reverse("warband:warband-roster-view"))
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_warband_stores_view_shows_the_players_own_war_band(logged_in_client, current_savegame):
+    FactionFactory(savegame=SavegameFactory())
+
+    response = logged_in_client.get(reverse("warband:warband-stores-view"))
+
+    assert response.status_code == 200
+    assert response.context["object"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warband_stores_view_marks_the_war_band_as_the_players_own(logged_in_client, current_savegame):
+    """
+    The item list is the rival's page's as well, and it addresses the player about whose property it
+    is describing.
+    """
+    response = logged_in_client.get(reverse("warband:warband-stores-view"))
+
+    assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_warband_fyrd_view_shows_the_players_own_war_band(logged_in_client, current_savegame):
+    FactionFactory(savegame=SavegameFactory())
+
+    response = logged_in_client.get(reverse("warband:warband-fyrd-view"))
+
+    assert response.status_code == 200
+    assert response.context["object"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warband_captives_view_shows_the_players_own_war_band(logged_in_client, current_savegame):
+    FactionFactory(savegame=SavegameFactory())
+
+    response = logged_in_client.get(reverse("warband:warband-captives-view"))
+
+    assert response.status_code == 200
+    assert response.context["object"] == current_savegame.player_faction
+
+
+@pytest.mark.django_db
+def test_warband_captives_view_holds_the_players_own_captives(logged_in_client, current_savegame):
+    """
+    A prisoner is held rather than commanded: his gear is the player's to read and his numbers are
+    not, which is the level the pub already showed a mercenary at.
+    """
+    response = logged_in_client.get(reverse("warband:warband-captives-view"))
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
+
+
+@pytest.mark.django_db
+def test_warband_progress_view_lists_the_players_own_men(logged_in_client, current_savegame):
+    FactionFactory(savegame=SavegameFactory())
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:warband-progress-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["warrior_list"]) == [warrior]
+
+
+@pytest.mark.django_db
+def test_warband_progress_view_asks_nothing_about_dismissing_a_man(logged_in_client, current_savegame):
+    """
+    The table renders neither the Dismiss control nor the wage note, so the refusals and the balance
+    behind them would be two queries for something nobody looks at.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:warband-progress-view"))
+
+    assert not hasattr(response.context["warrior_list"][0], "dismissal_refusal")
+    assert warrior.id == response.context["warrior_list"][0].id
 
 
 @pytest.mark.django_db
@@ -1423,12 +1512,9 @@ def test_faction_detail_view_shows_a_faction_without_a_leader(logged_in_client, 
     """
     Faction.leader is nullable, and reversing the warrior url with no id raises NoReverseMatch.
     """
-    current_savegame.player_faction.leader = None
-    current_savegame.player_faction.save()
+    rival_faction = FactionFactory(savegame=current_savegame, leader=None)
 
-    response = logged_in_client.get(
-        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction.pk})
-    )
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.pk}))
 
     assert response.status_code == 200
 
@@ -1647,17 +1733,15 @@ def test_resource_bar_htmx_view_renders_without_a_player_faction(logged_in_clien
 
 
 @pytest.mark.django_db
-def test_faction_detail_view_lists_the_roster_by_name(logged_in_client, current_savegame):
+def test_faction_detail_view_lists_a_rivals_roster_by_name(logged_in_client, current_savegame):
     """
-    The progress table under the cards reads the same list, and a warrior's own page walks it with
-    Previous and Next - so an unordered roster would be three screens disagreeing about who comes
-    after whom.
+    A warrior's own page walks the list he was read off with Previous and Next, so an unordered
+    roster would be two screens disagreeing about who comes after whom.
     """
-    cenwulf = WarriorFactory(faction=current_savegame.player_faction, name="Cenwulf")
-    aelfric = WarriorFactory(faction=current_savegame.player_faction, name="Aelfric")
+    rival_faction = FactionFactory(savegame=current_savegame)
+    cenwulf = WarriorFactory(faction=rival_faction, name="Cenwulf")
+    aelfric = WarriorFactory(faction=rival_faction, name="Aelfric")
 
-    response = logged_in_client.get(
-        reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id})
-    )
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
     assert list(response.context["warrior_list"]) == [aelfric, cenwulf]
