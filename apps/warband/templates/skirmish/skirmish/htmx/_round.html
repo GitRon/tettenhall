@@ -6,8 +6,8 @@
     {# progress and a round nobody will ever fight once the thing is decided. The largest text on #}
     {# the screen then names the outcome instead, which is what is left to say. #}
     {% if skirmish.victorious_faction %}
-        <h1>{{ skirmish.name }}: {{ skirmish.victorious_faction }} won</h1>
+        <h1 class="mb-6">{{ skirmish.name }}: {{ skirmish.victorious_faction }} won</h1>
     {% else %}
-        <h1>{{ skirmish.name }}: Round {{ skirmish.current_round }}</h1>
+        <h1 class="mb-6">{{ skirmish.name }}: Round {{ skirmish.current_round }}</h1>
     {% endif %}
 </div>
