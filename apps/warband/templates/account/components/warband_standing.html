@@ -11,8 +11,12 @@
         <span>Warriors</span>
         <span class="font-mono tabular-nums text-ink">{{ month_standing.warband.warrior_count }}</span>
     </div>
-    {# Silent while every man is fit: a nil count is a line the player learns to skip, and the two #}
-    {# conditions are the ones that decide whether there is a fight to be had at all. #}
+    {# A war band in one piece is told so in a sentence rather than in two nil counts - a zero is a #}
+    {# line the player learns to skip, and "every man fit" is the thing he is actually looking for. #}
+    {# It takes a man to be worth saying: a band of nobody is not a band in good condition. #}
+    {% if month_standing.warband.warrior_count and month_standing.warband.is_intact %}
+        <p class="m-0 text-sm leading-snug">Every man fit.</p>
+    {% endif %}
     {% if month_standing.warband.unconscious_count %}
         <div class="flex items-baseline justify-between gap-x-2.5">
             <span>Down</span>

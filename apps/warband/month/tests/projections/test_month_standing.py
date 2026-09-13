@@ -233,6 +233,25 @@ def test_shop_item_count_and_pub_mercenary_count_read_the_town_the_player_owns()
 
 
 @pytest.mark.django_db
+def test_has_offers_open_is_true_while_one_thing_still_expires():
+    """
+    One man in the pub is enough. Every term of the sum is an offer that is gone when the month
+    turns, so any of them alone earns the page its list.
+    """
+    savegame = SavegameFactory(current_month=4)
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
+    savegame.player_faction = player_faction
+    savegame.save()
+    player_faction.available_mercenaries.add(
+        WarriorFactory(faction=None, savegame=savegame, culture=player_faction.culture)
+    )
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.has_offers_open is True
+
+
+@pytest.mark.django_db
 def test_has_offers_open_is_false_on_a_month_with_nothing_left_in_it():
     """
     The one state that earns the page a different sentence rather than an empty panel, and it takes

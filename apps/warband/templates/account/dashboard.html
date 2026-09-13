@@ -28,6 +28,12 @@
                 to play on.
             </p>
         </div>
+
+        {# The log says what the banner cannot: not that the game is over, but how it ended. The #}
+        {# month that decides the savegame redirects to this page, and "handle_log_savegame_ending" #}
+        {# writes its line for exactly this screen - the battle history a finished savegame no longer #}
+        {# routes to is not an answer. #}
+        {% include 'month/components/player_month_log_list.html' %}
     {% else %}
         {# The state of the month and the control that ends it, above everything the month contains. #}
         {# It carries the page's heading, so there is no second one over it. #}

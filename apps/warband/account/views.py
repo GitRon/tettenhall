@@ -94,9 +94,10 @@ class DashboardView(generic.TemplateView):
                 context["month_standing"] = month_standing
 
                 if month_standing:
-                    # The key the cost card reads. It is included here rather than reimplemented, so
-                    # the dashboard and the ledger cannot promise different figures - the wage half
-                    # of it rides in on the finance context processor either way.
+                    # The key the purse brief reads. It is taken off the projection rather than
+                    # reimplemented, so the month page and the cost card on the ledger cannot promise
+                    # different figures - the wage half of it rides in on the finance context
+                    # processor either way.
                     context["building_income_amount"] = month_standing.building_income
 
         return context
