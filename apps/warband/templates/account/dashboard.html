@@ -62,7 +62,7 @@
                 <div>
                     <strong>Training:</strong> {{ current_training }} - grows {{ current_training.grown_attributes_display }}.
                 </div>
-                <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[30px] py-0 text-sm uppercase leading-[38px] text-ink no-underline hover:border-rule hover:text-ink"
+                <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[30px] py-0 text-sm uppercase leading-[38px] text-ink no-underline hover:bg-raised"
                    href="{% url 'warband:training-edit-view' current_training.id %}">
                     Change training
                 </a>

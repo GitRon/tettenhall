@@ -61,7 +61,7 @@
             {# one element in one place in the document, and a dropdown works at both widths, so #}
             {# hiding it here and repeating it there would mean two copies of the same two links. #}
             <details class="relative" data-menu>
-                <summary class="cursor-pointer list-none text-sm uppercase text-ink-muted hover:text-ink-muted">
+                <summary class="cursor-pointer list-none text-sm uppercase text-ink-muted hover:text-ink">
                     {{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}
                 </summary>
                 <ul class="absolute right-0 top-full z-20 m-0 min-w-48 list-none bg-raised p-4 border border-rule">
