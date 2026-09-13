@@ -1,7 +1,6 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout, Submit
 from django import forms
-from django.db.models import Q
 from django.template.defaultfilters import floatformat
 from django.urls import reverse
 
@@ -21,9 +20,13 @@ SLOT_FUNCTIONS = {
 
 
 class ItemChoiceField(forms.ModelChoiceField):
+    #: The man this slot belongs to, so an option can tell "somebody else has it" from "you have it".
+    #: Set by the form, because the field is built before there is an instance to ask.
+    wearer: Warrior | None = None
+
     def label_from_instance(self, obj: Item) -> str:  # noqa: PBR001
         """
-        The item, its dice and what those dice average - the figure the choice actually turns on.
+        The item, its dice, what those dice average - and who has to give it up for this.
 
         "__str__" carries the name and the notation already, and the mean is what tells a rusty
         battle axe from a traditional spear: "1d6+1" and "2d4" are two strings a player has to do
@@ -33,10 +36,20 @@ class ItemChoiceField(forms.ModelChoiceField):
 
         Whether the number is damage or protection is written out rather than left to the heading
         above, because a select option is read out on its own.
+
+        The carrier is named because the list is no longer only what nobody is using: picking an
+        option can take a sword off a man somewhere down the roster, and an option that did not say
+        so would spring that on the player after the save. The slot's own man is left unnamed - he is
+        the current value, and "carried by" against his own name reads as a second person.
         """
         measure = "damage" if obj.is_weapon else "protection"
+        label = f"{obj} - {floatformat(obj.expectancy_value)} {measure} on average"
 
-        return f"{obj} - {floatformat(obj.expectancy_value)} {measure} on average"
+        carrier = obj.worn_by
+        if carrier is not None and carrier != self.wearer:
+            label = f"{label}, carried by {carrier.display_name}"
+
+        return label
 
 
 class WarriorForm(forms.ModelForm):
@@ -84,11 +97,33 @@ class WarriorForm(forms.ModelForm):
         self.fields = {htmx_field: self.fields[htmx_field]}
         self.fields[htmx_field].label = ""
 
-        # What the faction has spare, plus what this warrior is already carrying - the slot's own
-        # item would otherwise be missing from the list that is supposed to contain the current value
-        equipped_relation = f"warrior_{htmx_field}"
+        # Everything of the right kind the faction owns, whether or not somebody is carrying it.
+        #
+        # Offering only the spare ones is what forced a cascade to be walked in one order and never
+        # said so: moving a sword from the best man to the second meant re-equipping the best man
+        # first to release it, and a player who started at the second saw a list without the sword he
+        # was trying to move and no way to learn why. Picking an item somebody holds is a swap, which
+        # "EquipItem" settles - see the handler for why both rows have to be written together.
         self.fields[htmx_field].queryset = Item.objects.filter(
-            Q(**{f"{equipped_relation}__isnull": True}) | Q(**{equipped_relation: self.instance}),
             type__function=SLOT_FUNCTIONS[htmx_field],
             owner_id=self.instance.faction,
-        )
+        ).select_related("type", "warrior_weapon", "warrior_armor")
+
+        # The option labels ask every item who is carrying it, and the reverse one-to-ones above are
+        # what keeps that to the one query the select already costs
+        self.fields[htmx_field].wearer = self.instance
+
+    def _post_clean(self) -> None:
+        """
+        Deliberately builds no instance, because this form no longer writes one.
+
+        A bound ModelForm assigns the cleaned value to "self.instance", and Django's one-to-one
+        descriptor writes the reverse of that assignment onto the item as well, to save a query
+        later. That reverse is a lie until the save happens: the item would name the man who is
+        about to receive it as the man already carrying it, and "handle_equip_item" - which reads
+        exactly that to find out whose hands it is coming out of - would swap the receiver with
+        himself and hand him back what he was holding.
+
+        The choice is validated by the field's own queryset, which is the whole of what this form is
+        for. "EquipItem" does the writing.
+        """

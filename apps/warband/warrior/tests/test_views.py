@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.urls import reverse
 
@@ -59,6 +61,62 @@ def test_warrior_weapon_update_view_equips_the_chosen_weapon(logged_in_client, c
     assert response.status_code == 200
     warrior.refresh_from_db()
     assert warrior.weapon == weapon
+
+
+@pytest.mark.django_db
+def test_warrior_weapon_update_view_swaps_with_the_man_carrying_the_chosen_weapon(logged_in_client, current_savegame):
+    """
+    Flow test: the real queue, so this is what says the cascade no longer has to be walked in one
+    order. Neither man had to be re-equipped first to release anything.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+    holder = WarriorFactory(faction=current_savegame.player_faction)
+    wanted_weapon = ItemFactory(
+        type=ItemType.objects.get(name="Short sword"),
+        owner=current_savegame.player_faction,
+        savegame=current_savegame,
+    )
+    held_weapon = ItemFactory(
+        type=ItemType.objects.get(name="Short sword"),
+        owner=current_savegame.player_faction,
+        savegame=current_savegame,
+    )
+    warrior.weapon = held_weapon
+    warrior.save()
+    holder.weapon = wanted_weapon
+    holder.save()
+
+    response = logged_in_client.post(
+        reverse("warband:warrior-partial-update-view", kwargs={"pk": warrior.id, "htmx_attribute": "weapon"}),
+        data={"weapon": wanted_weapon.id},
+    )
+
+    assert response.status_code == 200
+    warrior.refresh_from_db()
+    holder.refresh_from_db()
+    assert (warrior.weapon, holder.weapon) == (wanted_weapon, held_weapon)
+
+
+@pytest.mark.django_db
+def test_warrior_weapon_update_view_announces_the_far_end_of_a_swap(logged_in_client, current_savegame):
+    """
+    The man the weapon came off is not on this page, so the swapped cell cannot report him.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+    holder = WarriorFactory(faction=current_savegame.player_faction)
+    holder.weapon = ItemFactory(
+        type=ItemType.objects.get(name="Short sword"),
+        owner=current_savegame.player_faction,
+        savegame=current_savegame,
+    )
+    holder.save()
+
+    response = logged_in_client.post(
+        reverse("warband:warrior-partial-update-view", kwargs={"pk": warrior.id, "htmx_attribute": "weapon"}),
+        data={"weapon": holder.weapon.id},
+    )
+
+    assert "notification" in json.loads(response["HX-Trigger"])
 
 
 @pytest.mark.django_db

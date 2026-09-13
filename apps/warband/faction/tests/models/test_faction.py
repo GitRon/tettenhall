@@ -89,3 +89,20 @@ def test_get_available_leader_with_a_leader_on_a_quest():
     result = faction.get_available_leader(month=3)
 
     assert result is None
+
+
+@pytest.mark.django_db
+def test_get_all_living_warriors_is_the_faction_s_own_roster():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction)
+    WarriorFactory(faction=FactionFactory(savegame=faction.savegame))
+
+    assert list(faction.get_all_living_warriors()) == [warrior]
+
+
+@pytest.mark.django_db
+def test_get_all_living_warriors_leaves_the_dead_out():
+    faction = FactionFactory()
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    assert list(faction.get_all_living_warriors()) == []
