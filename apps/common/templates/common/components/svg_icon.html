@@ -1,4 +1,9 @@
 {% load static %}
 {% with url='svg/icons/'|add:icon_name|add:'.svg' %}
-    <img class="svg-icon {{ size }}" src="{% static url %}" alt="{{ icon_name }}" >
+    {# A span rather than an img, because the glyph is painted as a mask in "static/css/icons.css" and #}
+    {# takes its colour from the text around it. The file travels in a custom property because that is #}
+    {# the one thing the stylesheet cannot know: it is the same rule for all fourteen icons and only #}
+    {# the source differs. An empty element needs the role and the label to keep the accessible name #}
+    {# the alt used to carry. #}
+    <span class="svg-icon {{ size }}" style="--svg-icon: url('{% static url %}')" role="img" aria-label="{{ icon_name }}"></span>
 {% endwith %}

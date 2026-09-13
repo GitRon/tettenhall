@@ -1,15 +1,34 @@
 /*
- * The hand-drawn icon set, sized against the text it sits in.
+ * The hand-drawn icon set, sized against the text it sits in and coloured by it.
  *
- * "display: inline-block" is what keeps an icon on the same line as the number beside it: an image is
- * a block by default, so without this the resource counters in the navbar stack their icon above their
- * value and every inline icon in the game breaks its own line.
+ * The glyphs are drawn in flat black, and they are painted here as a mask rather than an image: the
+ * element is a block of "currentColor" with the drawing punched out of it, so an icon takes the
+ * colour of whatever it stands next to and follows it into a hover or a warning without the file
+ * knowing anything about the palette. An "img" cannot do that - "currentColor" does not cross into a
+ * document the browser fetched separately - which is why "svg_icon.html" renders a span.
+ *
+ * The mask reads the source's alpha, so every opaque shape in the file is part of the glyph. That is
+ * the reason none of these files carries a background rectangle any more: a full-bleed opaque shape
+ * masks in as a solid square with the drawing invisible inside it.
+ *
+ * "display: inline-block" is what keeps an icon on the same line as the number beside it: the element
+ * is a block by default, so without this the resource counters in the navbar stack their icon above
+ * their value and every inline icon in the game breaks its own line.
  */
 .svg-icon {
     display: inline-block;
     width: 1em;
     height: 1em;
     vertical-align: -0.125em;
+    background-color: currentColor;
+    -webkit-mask-image: var(--svg-icon);
+    mask-image: var(--svg-icon);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
 }
 
 .svg-icon.xl {
