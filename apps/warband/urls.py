@@ -85,6 +85,9 @@ urlpatterns = [
     # Item
     path("item/<int:pk>/sell", item_views.ItemSellView.as_view(), name="item-sell-view"),
     path("item/<int:pk>/buy", item_views.ItemBuyView.as_view(), name="item-buy-view"),
+    # The item pk only: which slot it fills is the item's own function, and which men it may be
+    # handed to is read off the faction that owns it
+    path("item/<int:pk>/assign", item_views.ItemAssignView.as_view(), name="item-assign-view"),
     # Month
     path("month/finish/", month_views.FinishMonthView.as_view(), name="finish-month-view"),
     # Quest

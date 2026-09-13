@@ -10,6 +10,8 @@ from queuebie.runner import handle_message
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
+from apps.warband.item.messages.commands.item import EquipItem
+from apps.warband.item.services.handout import get_handout_note
 from apps.warband.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -141,7 +143,7 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         return context
 
 
-class WarriorWeaponUpdateView(PlayerFactionScopedQuerysetMixin, generic.UpdateView):
+class WarriorWeaponUpdateView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, generic.UpdateView):
     # Changing what a warrior carries is a write, and being in the player's savegame is not enough:
     # a rival's men are in it too, and the URL was all it took to re-arm them
     model = Warrior
@@ -165,8 +167,28 @@ class WarriorWeaponUpdateView(PlayerFactionScopedQuerysetMixin, generic.UpdateVi
         return kwargs
 
     def form_valid(self, form):
-        self.object = form.save()
-        return render(self.request, "warrior/components/warrior_field_display.html", self.get_context_data())
+        """
+        Dispatches the choice instead of saving it, because the choice can now reach two men.
+
+        The slot offers what other warriors are carrying, so a save is a swap as often as it is a
+        handout, and it writes two rows the "OneToOneField" will only accept together - the point
+        where the golden rule starts to apply, see docs/patterns/message-bus.md.
+
+        Both the man and the item are read as the form left them, which is untouched: the form
+        declines to build its instance for exactly this reason - see "WarriorForm._post_clean".
+        """
+        new_item = form.cleaned_data[self.htmx_field]
+        note = get_handout_note(warrior=self.object, item=new_item, slot=self.htmx_field)
+
+        handle_message(EquipItem(warrior=self.object, item=new_item, slot=self.htmx_field))
+
+        response = render(self.request, "warrior/components/warrior_field_display.html", self.get_context_data())
+        # The far end of a swap is a man this page does not show. The cell answers whether the item
+        # arrived; only a line can say who it came off.
+        if note:
+            response["HX-Trigger"] = json.dumps({"notification": note})
+
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

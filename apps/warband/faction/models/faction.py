@@ -90,3 +90,17 @@ class Faction(models.Model):
         from apps.warband.item.models.item import Item
 
         return Item.objects.filter(owner=self, warrior_weapon__isnull=True, warrior_armor__isnull=True)
+
+    def get_all_living_warriors(self) -> QuerySet:
+        """
+        The men this faction can still be asked to do something with.
+
+        The gear they hold comes along, because the one caller - the "Give to" picker on an unused
+        item - names what each man has in the slot before the player displaces it. Reading that off
+        the card instead would be one query per option.
+        """
+        return (
+            Warrior.objects.exclude_dead()
+            .filter_faction(faction_id=self.id)
+            .select_related("weapon__type", "armor__type")
+        )

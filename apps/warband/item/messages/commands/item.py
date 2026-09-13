@@ -52,3 +52,23 @@ class ChangeOwnership(Command):
     previous_owner: Warrior
     item: Item
     new_owner: Faction
+
+
+@dataclass(kw_only=True)
+class EquipItem(Command):
+    """
+    Put a piece of the faction's gear into one warrior's slot, wherever it currently is.
+
+    The item may be lying in the stash or hanging off another warrior, and the handler settles which.
+    That second case is why this is a command at all: taking a sword off one man and putting it on
+    another is two rows written in one action, and the "OneToOneField" underneath will only accept
+    them together.
+
+    "slot" is carried rather than read off the item, because emptying a slot carries no item to read
+    it off. It is the name of the field on Warrior - see [Item.gear_slot], which is where a slot name
+    comes from when there is an item to ask.
+    """
+
+    warrior: Warrior
+    item: Item | None
+    slot: str

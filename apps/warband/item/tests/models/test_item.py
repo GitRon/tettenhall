@@ -41,3 +41,17 @@ def test_worn_by_returns_nothing_for_an_unused_item():
     item = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON))
 
     assert item.worn_by is None
+
+
+@pytest.mark.django_db
+def test_gear_slot_names_the_hand_a_weapon_goes_in():
+    item = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON))
+
+    assert item.gear_slot == "weapon"
+
+
+@pytest.mark.django_db
+def test_gear_slot_names_the_slot_armour_goes_in():
+    item = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR))
+
+    assert item.gear_slot == "armor"

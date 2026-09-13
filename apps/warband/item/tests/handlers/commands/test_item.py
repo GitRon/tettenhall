@@ -1,11 +1,18 @@
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.item.handlers.commands.item import handle_change_ownership, handle_lose_item, handle_sell_item
-from apps.warband.item.messages.commands.item import ChangeOwnership, LoseItem, SellItem
-from apps.warband.item.messages.events.item import ItemSold, ItemWasLost, OwnershipChanged
+from apps.warband.item.handlers.commands.item import (
+    handle_change_ownership,
+    handle_equip_item,
+    handle_lose_item,
+    handle_sell_item,
+)
+from apps.warband.item.messages.commands.item import ChangeOwnership, EquipItem, LoseItem, SellItem
+from apps.warband.item.messages.events.item import ItemEquipped, ItemSold, ItemWasLost, OwnershipChanged
 from apps.warband.item.models.item import Item
+from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -129,3 +136,133 @@ def test_handle_lose_item_takes_it_off_the_man_carrying_it():
 
     warrior.refresh_from_db()
     assert warrior.weapon is None
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_fills_an_empty_slot_from_the_stash():
+    warrior = WarriorFactory()
+    item = ItemFactory(savegame=warrior.savegame, owner=warrior.faction)
+
+    result = handle_equip_item(context=EquipItem(warrior=warrior, item=item, slot="weapon"))
+
+    assert result == ItemEquipped(warrior=warrior, item=item, slot="weapon", previous_holder=None, displaced_item=None)
+    warrior.refresh_from_db()
+    assert warrior.weapon == item
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_swaps_when_both_slots_are_full():
+    """
+    The move this exists for: a better weapon passed down a line, with the old one going back the
+    other way rather than the second man being left empty-handed.
+    """
+    receiver = WarriorFactory()
+    holder = WarriorFactory(faction=receiver.faction)
+    wanted_item = ItemFactory(savegame=receiver.savegame, owner=receiver.faction)
+    held_item = ItemFactory(savegame=receiver.savegame, owner=receiver.faction)
+    receiver.weapon = held_item
+    receiver.save()
+    holder.weapon = wanted_item
+    holder.save()
+
+    result = handle_equip_item(context=EquipItem(warrior=receiver, item=wanted_item, slot="weapon"))
+
+    assert result == ItemEquipped(
+        warrior=receiver,
+        item=wanted_item,
+        slot="weapon",
+        previous_holder=holder,
+        displaced_item=held_item,
+    )
+    # Both rows, off the database. The event alone would report a swap that only half happened:
+    # messages compare by primary key, so "warrior=receiver" says who the move was about and nothing
+    # about what he ended up holding.
+    receiver.refresh_from_db()
+    holder.refresh_from_db()
+    assert (receiver.weapon, holder.weapon) == (wanted_item, held_item)
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_leaves_the_previous_holder_empty_handed_when_there_is_nothing_to_give_back():
+    receiver = WarriorFactory()
+    holder = WarriorFactory(faction=receiver.faction)
+    item = ItemFactory(savegame=receiver.savegame, owner=receiver.faction)
+    holder.weapon = item
+    holder.save()
+
+    result = handle_equip_item(context=EquipItem(warrior=receiver, item=item, slot="weapon"))
+
+    assert result.displaced_item is None
+    receiver.refresh_from_db()
+    holder.refresh_from_db()
+    assert (receiver.weapon, holder.weapon) == (item, None)
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_puts_a_displaced_item_back_in_the_stash():
+    """
+    Nobody was carrying the new item, so there is no previous holder to hand the old one to and it
+    is simply unworn again - which is what puts it back in the faction's unused items.
+    """
+    warrior = WarriorFactory()
+    held_item = ItemFactory(savegame=warrior.savegame, owner=warrior.faction)
+    new_item = ItemFactory(savegame=warrior.savegame, owner=warrior.faction)
+    warrior.weapon = held_item
+    warrior.save()
+
+    result = handle_equip_item(context=EquipItem(warrior=warrior, item=new_item, slot="weapon"))
+
+    assert result.previous_holder is None
+    # Read back off fresh rows: assigning the slot above cached this warrior as the item's wearer
+    warrior.refresh_from_db()
+    assert (warrior.weapon, Item.objects.get(id=held_item.id).worn_by) == (new_item, None)
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_empties_the_slot():
+    warrior = WarriorFactory()
+    item = ItemFactory(savegame=warrior.savegame, owner=warrior.faction)
+    warrior.weapon = item
+    warrior.save()
+
+    result = handle_equip_item(context=EquipItem(warrior=warrior, item=None, slot="weapon"))
+
+    assert result == ItemEquipped(warrior=warrior, item=None, slot="weapon", previous_holder=None, displaced_item=item)
+    warrior.refresh_from_db()
+    assert warrior.weapon is None
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_keeps_the_item_a_warrior_already_holds():
+    """
+    Saving the slot on the item already in it. The same man on both ends of the move is the one case
+    where the swap would write his own item back onto him after emptying the slot.
+    """
+    warrior = WarriorFactory()
+    item = ItemFactory(savegame=warrior.savegame, owner=warrior.faction)
+    warrior.weapon = item
+    warrior.save()
+
+    result = handle_equip_item(context=EquipItem(warrior=warrior, item=item, slot="weapon"))
+
+    assert result.previous_holder is None
+    warrior.refresh_from_db()
+    assert warrior.weapon == item
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_leaves_the_other_slot_alone():
+    warrior = WarriorFactory()
+    armor = ItemFactory(
+        savegame=warrior.savegame,
+        owner=warrior.faction,
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+    )
+    warrior.armor = armor
+    warrior.save()
+    weapon = ItemFactory(savegame=warrior.savegame, owner=warrior.faction)
+
+    handle_equip_item(context=EquipItem(warrior=warrior, item=weapon, slot="weapon"))
+
+    warrior.refresh_from_db()
+    assert warrior.armor == armor

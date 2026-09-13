@@ -52,3 +52,22 @@ class OwnershipChanged(Event):
     previous_owner: Warrior
     item: Item
     new_owner: Faction
+
+
+@dataclass(kw_only=True)
+class ItemEquipped(Event):
+    """
+    A slot was filled, emptied, or filled out of somebody else's hands.
+
+    Both ends of the move ride along, because they are what separate the shapes this one event
+    covers and no consumer could tell them apart afterwards: the gear has already moved by the time
+    anybody reads this. "previous_holder" is the man the item came off, None when it was lying in
+    the stash; "displaced_item" is what came out of the receiving slot, None when it was empty. Both
+    set is a swap, and the displaced item went to the previous holder.
+    """
+
+    warrior: Warrior
+    item: Item | None
+    slot: str
+    previous_holder: Warrior | None
+    displaced_item: Item | None
