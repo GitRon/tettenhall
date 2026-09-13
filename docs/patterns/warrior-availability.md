@@ -1,7 +1,7 @@
 # Warrior availability
 
-**A screen never drops a man it will not let the player use. It draws him, greys him, and says why —
-and the sentence it says comes out of the same place the exclusion does.**
+**A screen never drops a living man it will not let the player use. It draws him, greys him, and says
+why — and the sentence it says comes out of the same place the exclusion does.**
 
 Four rules decide whether a man can be sent anywhere this month. A picker that quietly filters on them
 shows the player a shorter war band than the one he owns and leaves him to work out the difference,
@@ -27,13 +27,29 @@ the ids it validates can never be two answers to the same question:
 | `available_ids` | what a posted value is checked against |
 | `is_empty` / `has_nobody_available` | a roster with no rows at all, versus one where every row is greyed. Different sentences |
 
+## The dead are not on it
+
+`assess_roster()` starts from `exclude_dead()`, so the rules below are only ever asked about men who
+are still alive. Two reasons, and the first is the same one the whole pattern rests on:
+
+- **Every other roster in the game leaves them out** — the faction page, the wage bill, the hand-out
+  form, the incidents, the month standing. A picker that drew them would be *longer* than the war band
+  it is meant to be counted against, which is the broken-page reading from the other direction.
+- **A verdict is a prompt.** A wound heals, a fight can be settled, a month passes — each greyed row
+  tells the player about something he can change. "Dead" tells him nothing he can act on, and it would
+  tell him so for the rest of the savegame.
+
+`filter_unfit()` on the queryset keeps its full meaning — it is the complement of `filter_healthy()`,
+and narrowing it would move the rule away from the place that performs it. Inside the picker it simply
+never meets a dead man.
+
 ## The rules
 
 Held as one ordered tuple of `(query, reason)` pairs in `_blocking_rules()`. First match wins.
 
 | Rule | The row reads |
 |---|---|
-| `filter_unfit()` | his condition — "Unconscious", "Fleeing", "Dead" |
+| `filter_unfit()` | his condition — "Unconscious", "Fleeing" |
 | `filter_sworn_to_a_quest(month=…)` | "Already sworn to a quest this month" |
 | `filter_committed_to_a_fight(month=…)` | "Committed to a fight this month" |
 | `filter_standing_in_an_open_fight()` | "Still standing in a fight nobody has settled" |
@@ -45,7 +61,7 @@ places — and a page cannot start saying one thing while the database does anot
 
 Two orderings are deliberate:
 
-- **Unfit is asked first**, because a dead man on a quest roster is dead before he is spoken for.
+- **Unfit is asked first**, because a man flat on his back is in no state to be spoken for.
 - **"This month" is asked before "nobody settled it"**, which leaves the open-fight sentence to fire
   only for a fight from some *other* month. That is the one exclusion in this game a player cannot
   guess at — an unresolved skirmish carries over and goes on holding everyone on either roster — so it
