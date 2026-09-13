@@ -23,8 +23,14 @@
      * Every toast sits at the bottom, because the navbar is the first thing in the body and has no
      * offset under it: a top-centre notification covers the nav links and the resource counters, and
      * the counters are what several of these toasts are reporting a change to.
+     *
+     * Below "md:" it clears the furniture that is pinned down there - the section nav on most screens,
+     * the fight's docked Fight! button on one - by the same 24 that "base.html" reserves as bottom
+     * padding for it. A toast outranks all of it on z-index, so without the offset it covers a control
+     * for its full timeout, and on the fight screen the control it covers is the one the screen exists
+     * for, at the moment an error toast is the reason the player wants it.
      */
-    const HOST_CLASS = 'fixed bottom-4 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-y-2 px-4';
+    const HOST_CLASS = 'fixed bottom-24 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-y-2 px-4 md:bottom-4';
     const TOAST_CLASS = 'w-full border bg-raised px-4 py-3 text-sm text-ink';
 
     /*
@@ -112,5 +118,60 @@
                 element.open = false;
             }
         });
+    });
+
+    /*
+     * The fight screen's tabs, which exist below "md:" and nowhere else.
+     *
+     * Three panels in one column put the battle report between the two war bands, so the panel read
+     * every round is the one scrolled past twice. One at a time instead, opening on the report,
+     * because that is the panel the fight is actually played through.
+     *
+     * The hiding lives here rather than in the template so that a browser without this file gets the
+     * three panels stacked - usable, if long - instead of a third of a screen. It is also why the
+     * panels carry "md:block": the desk is then never at the mercy of the script, and no resize
+     * listener has to be got right.
+     *
+     * Not a radio group with sibling selectors, which would have cost no JavaScript at all: the
+     * Fight! button carries "hx-include=\"select, input\"" and would have posted the tab strip's own
+     * state into the round.
+     */
+    const ACTIVE_TAB_CLASS = ['border-ink', 'text-ink'];
+    const IDLE_TAB_CLASS = ['border-rule', 'text-ink-muted'];
+
+    document.querySelectorAll('[data-fight-tabs]').forEach((root) => {
+        const strip = root.querySelector('[role="tablist"]');
+        const tabs = [...root.querySelectorAll('[data-fight-tab]')];
+        const panels = [...root.querySelectorAll('[data-fight-panel]')];
+
+        if (!strip || !tabs.length || !panels.length) {
+            return;
+        }
+
+        // The strip ships hidden and is revealed here, so it exists only where it works. "md:hidden"
+        // is still on it and still wins above the breakpoint.
+        strip.classList.remove('hidden');
+        strip.classList.add('flex');
+
+        const show = (name) => {
+            panels.forEach((panel) => {
+                panel.classList.toggle('hidden', panel.dataset.fightPanel !== name);
+            });
+            tabs.forEach((tab) => {
+                const isActive = tab.dataset.fightTab === name;
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                tab.classList.toggle(ACTIVE_TAB_CLASS[0], isActive);
+                tab.classList.toggle(ACTIVE_TAB_CLASS[1], isActive);
+                tab.classList.toggle(IDLE_TAB_CLASS[0], !isActive);
+                tab.classList.toggle(IDLE_TAB_CLASS[1], !isActive);
+            });
+        };
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => show(tab.dataset.fightTab));
+        });
+
+        // The first tab in the strip is the report, and a fresh load opens on it.
+        show(tabs[0].dataset.fightTab);
     });
 })();
