@@ -31,8 +31,14 @@ class Section:
     icon: str
     url_name: str
     takes_player_faction: bool = False
+    # Whether the entry means anything before the player has a faction. Reversing a url and having
+    # somewhere to go are two questions, and the war band is what separates them: its pages read the
+    # faction off the savegame rather than out of the url, so they reverse perfectly well while there
+    # is nothing whatsoever behind them. Declared rather than derived, because a section taking the
+    # id always needs it and a section needing it does not always take it.
+    needs_player_faction: bool = False
     # Empty where the section is a single page. A second level is the price of a top level that fits
-    # in a player's head, and only Town and Rivals pay it.
+    # in a player's head, and three of the four pay it.
     pages: tuple[Page, ...] = ()
 
 
@@ -47,8 +53,15 @@ SECTIONS: tuple[Section, ...] = (
         key="warband",
         label="Warband",
         icon="fa-users",
-        url_name="warband:faction-detail-view",
-        takes_player_faction=True,
+        url_name="warband:warband-roster-view",
+        needs_player_faction=True,
+        pages=(
+            Page(label="Warband", url_name="warband:warband-roster-view"),
+            Page(label="Stores", url_name="warband:warband-stores-view"),
+            Page(label="Fyrd", url_name="warband:warband-fyrd-view"),
+            Page(label="Captives", url_name="warband:warband-captives-view"),
+            Page(label="Progress", url_name="warband:warband-progress-view"),
+        ),
     ),
     Section(
         key="town",
@@ -56,6 +69,7 @@ SECTIONS: tuple[Section, ...] = (
         icon="fa-city",
         url_name="warband:town-square-view",
         takes_player_faction=True,
+        needs_player_faction=True,
         pages=(
             Page(label="Town square", url_name="warband:town-square-view", takes_player_faction=True),
             Page(label="Buildings", url_name="warband:town-upgrade-view"),
@@ -77,24 +91,28 @@ SECTIONS: tuple[Section, ...] = (
 # and htmx routes are deliberately absent: they answer a redirect or a fragment, so nothing is ever
 # marked while one of them is running.
 #
-# "faction-detail-view" is missing on purpose - it serves the player's own faction and a rival's
-# alike, so the pk decides, and "get_section_key" below is what asks. "warrior-detail-view" has the
-# same shape and cannot be settled here at all: the url carries the man's id and not his faction's,
-# so that page names its own section from its view.
+# "warrior-detail-view" is missing on purpose and cannot be settled here at all: the url carries the
+# man's id and not his faction's, so that page names its own section from its view.
 SECTION_KEY_BY_URL_NAME: dict[str, str] = {
     "dashboard-view": "month",
     "training-edit-view": "month",
+    "warband-roster-view": "warband",
+    "warband-stores-view": "warband",
+    "warband-fyrd-view": "warband",
+    "warband-captives-view": "warband",
+    "warband-progress-view": "warband",
     "town-square-view": "town",
     "town-upgrade-view": "town",
     "quest-accept-view": "town",
     "rival-faction-list-view": "rivals",
+    "faction-detail-view": "rivals",
     "faction-attack-view": "rivals",
     "skirmish-list-view": "rivals",
     "skirmish-fight-view": "rivals",
 }
 
 
-def get_section_key(*, url_name: str | None, url_kwargs: dict | None, player_faction_id: int | None) -> str | None:
+def get_section_key(*, url_name: str | None) -> str | None:
     """
     Names the section the current page stands in, or None where no entry should be marked.
 
@@ -102,11 +120,4 @@ def get_section_key(*, url_name: str | None, url_kwargs: dict | None, player_fac
     reachable without being anywhere on the map, and marking an entry on one of them would tell the
     player he is somewhere he is not.
     """
-    if url_name == "faction-detail-view":
-        # The one page that serves two sections. Whose it is decides, and the pk is the only thing
-        # that says so.
-        if player_faction_id is None:
-            return None
-        return "warband" if (url_kwargs or {}).get("pk") == player_faction_id else "rivals"
-
     return SECTION_KEY_BY_URL_NAME.get(url_name)

@@ -2,7 +2,8 @@
      hx-trigger="loadFactionItemList from:body"
      hx-swap="outerHTML"
      hx-disinherit="hx-swap">
-    <h2>Unused Items</h2>
+    {# The heading stands outside this element: the swap replaces the list, and a page that already #}
+    {# says what it is showing does not need it said again inside. #}
     {% for item in faction.get_all_unoccupied_items %}
         {% include 'item/components/item_sell_card.html' with item=item %}
     {% empty %}

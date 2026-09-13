@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>{% if is_player_faction %}Warband{% else %}Rival faction{% endif %} "{{ object }}"</h1>
+    <h1>Rival faction "{{ object }}"</h1>
 
     <div class="grid grid-cols-1 gap-7 text-center md:grid-cols-4">
         <div>
             <div class="mb-5 box-border bg-ground text-ink-muted border border-rule p-[30px]">
-                <h3>Details</h3>
+                <h2>Details</h2>
                 {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
                 {# decides what a table should actually become at that width. #}
                 <div class="overflow-x-auto">
@@ -59,25 +59,17 @@
                     <p class="text-sm leading-snug text-ink-muted">Their warriors are already committed to a fight this month.</p>
                 {% endif %}
             </div>
-            {# Only your own fyrd can be drafted from, so on a rival's page the card is a button that could only fail #}
-            {% if is_player_faction %}
-                {% include 'faction/warrior/components/fyrd_card.html' with faction=object %}
-            {% endif %}
         </div>
         <div>
             {% include "faction/warrior/components/warrior_list.html" with faction=object warrior_list=warrior_list %}
         </div>
         <div class="mb-5">
+            <h2>Unused items</h2>
             {% include "faction/item/components/item_list.html" with faction=object %}
         </div>
         <div class="mb-5">
+            <h2>Captured warriors</h2>
             {% include "faction/warrior/components/captured_warrior_list.html" with faction=object %}
         </div>
     </div>
-
-    {# Only of his own men: where a rival's warriors stand on their attributes is knowledge the #}
-    {# player has not earned, the same rule the roster card and the rivals list follow. #}
-    {% if is_player_faction %}
-        {% include "training/components/warrior_progress_table.html" %}
-    {% endif %}
 {% endblock content %}
