@@ -5,7 +5,7 @@
 {# on "updateResourceBar", which every view that moves one of them fires. #}
 {# This element is the swap target, so its own classes travel with every re-fetch - which is why the #}
 {# layout sits here rather than on a wrapper in "base.html" that a swap would leave behind. #}
-<div class="flex items-center gap-x-3 text-sm text-[#333]"
+<div class="flex items-center gap-x-3 text-sm text-ink"
      hx-get="{% url 'warband:resource-bar-htmx' %}"
      hx-trigger="updateResourceBar from:body"
      hx-swap="outerHTML"
@@ -20,7 +20,7 @@
     {% if current_savegame %}
         {# A savegame can be without a player faction, and reversing the url with no id raises #}
         {% if current_savegame.player_faction_id %}
-            <a class="text-[#333] no-underline hover:text-[#666]"
+            <a class="text-ink no-underline hover:text-ink-muted"
                href="{% url 'warband:faction-detail-view' current_savegame.player_faction_id %}"
                title="Your war band">
                 {% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}
@@ -32,21 +32,21 @@
         {# month", so it is where the wage bill has to speak up. The detail stays on the #}
         {# cost card and on the dashboard; this is a marker and a way to reach them. #}
         {% if wage_bill_payroll.is_short %}
-            <span class="text-[#f0506e]">
-                <a class="text-[#f0506e]" href="{% url 'warband:transaction-list-view' %}"
+            <span class="text-blood">
+                <a class="text-blood" href="{% url 'warband:transaction-list-view' %}"
                    title="{{ wage_bill_payroll.missing_amount }} silver short of next month's wages">
                     {% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %}
                     {{ current_balance }} <i class="fa-solid fa-triangle-exclamation"></i>
                 </a>
             </span>
         {% else %}
-            <a class="text-[#333] no-underline hover:text-[#666]"
+            <a class="text-ink no-underline hover:text-ink-muted"
                href="{% url 'warband:transaction-list-view' %}"
                title="The ledger">
                 {% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}
             </a>
         {% endif %}
-        <a class="text-[#333] no-underline hover:text-[#666]"
+        <a class="text-ink no-underline hover:text-ink-muted"
            href="{% url 'warband:skirmish-list-view' %}"
            title="Skirmishes still open">
             {% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}
@@ -56,7 +56,7 @@
         {# spending them. It sits here rather than in "base.html" so that finishing a month, which #}
         {# redirects, and every htmx swap that leaves the navbar alone both leave it right. Font #}
         {# Awesome rather than an "svg_icon": the icon set carries no month. #}
-        <a class="text-[#333] no-underline hover:text-[#666]"
+        <a class="text-ink no-underline hover:text-ink-muted"
            href="{% url 'warband:dashboard-view' %}"
            title="Month">
             <i class="fa-solid fa-calendar-days"></i> {{ current_savegame.current_month }}

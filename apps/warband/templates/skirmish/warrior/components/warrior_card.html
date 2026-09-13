@@ -1,15 +1,15 @@
 {% load crispy_forms_tags l10n utils %}
-<div class="box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]"
+<div class="box-border bg-ground text-ink-muted border border-rule"
      data-faction="{{ warrior.faction.id }}" data-obj-id="{{ warrior.id }}">
-    <div class="border-b border-[#e5e5e5] px-5 py-[13px]">
-        <h3 class="text-2xl leading-snug text-[#333]">{{ warrior.display_name }}</h3>
+    <div class="border-b border-rule px-5 py-[13px]">
+        <h3 class="text-2xl leading-snug text-ink">{{ warrior.display_name }}</h3>
         {# The faction and the level read as one line with a rule between them. They stay on one line #}
         {# at every width - together they are four words, and a phone has room for them. #}
-        <ul class="mt-0 flex list-none flex-wrap items-center gap-x-5 p-0 text-sm text-[#999]">
+        <ul class="mt-0 flex list-none flex-wrap items-center gap-x-5 p-0 text-sm text-ink-muted">
             <li>{{ warrior.faction }}</li>
             {# The level goes on the card in the fight because this is where a level-up is actually #}
             {# witnessed: the growth happens mid-skirmish and the log announces it right beside here. #}
-            <li class="border-l border-[#e5e5e5] pl-5"><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</li>
+            <li class="border-l border-rule pl-5"><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</li>
         </ul>
     </div>
     <div class="p-5">
@@ -19,20 +19,25 @@
                 {# between full health and zero moves the condition, so a man at 1 of 20 is in it as #}
                 {# much as one who has not been touched. What the state says is that he is still on #}
                 {# his feet, and the number says at what cost. #}
+                {# Four states in two outlines. A man still on his feet is the quiet case and wears #}
+                {# the same rule as everything else on the card; the three that cost the player #}
+                {# something wear the one colour the palette reserves for wanting him. The word is #}
+                {# never the red - only the box around it - so a tag stays as readable as the number #}
+                {# beside it. #}
                 {% if warrior.is_healthy %}
-                    <p class="text-[#32d296]">
+                    <p class="inline-block border border-rule px-2 py-1 font-mono text-label uppercase tracking-label text-ink-muted">
                         <i class="fa-solid fa-feather-pointed"></i> Able to fight
                     </p>
                 {% elif warrior.is_unconscious %}
-                    <p class="text-[#faa05a]">
+                    <p class="inline-block border border-blood px-2 py-1 font-mono text-label uppercase tracking-label text-ink">
                         <i class="fa-solid fa-moon"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% elif warrior.is_fleeing %}
-                    <p class="text-[#faa05a]">
+                    <p class="inline-block border border-blood px-2 py-1 font-mono text-label uppercase tracking-label text-ink">
                         <i class="fa-solid fa-person-running"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% else %}
-                    <p class="text-[#f0506e]">
+                    <p class="inline-block border border-blood px-2 py-1 font-mono text-label uppercase tracking-label text-ink">
                         <i class="fa-solid fa-skull"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% endif %}
@@ -41,7 +46,10 @@
             {# A progress bar in the divided line above resolves its width against a zero-width flex #}
             {# item and draws nothing, which would withhold the one number that decides whether to #}
             {# press "Fight!" again. #}
-            <div class="text-[Coral]">
+            {# Both numbers in the mono face every count in the game is set in, and both in ink: the #}
+            {# palette keeps one colour and spends it on trouble, so what separates health from #}
+            {# morale here is the label and the glyph rather than a hue. #}
+            <div class="font-mono text-label uppercase tracking-label text-ink">
                 <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
                 {# The morale is what decides whether a man keeps fighting, so it is shown while he #}
                 {# still can. "put_out_of_the_fight" normalises his health to nothing and leaves the #}
@@ -60,7 +68,7 @@
             {{ warrior.get_armor_or_fallback }}
         </div>
     </div>
-    <div class="border-t border-[#e5e5e5] px-5 py-[13px]">
+    <div class="border-t border-rule px-5 py-[13px]">
         <div>
         {# Two conditions, and the second is about the fight rather than the man: a warrior who is #}
         {# still on his feet when it ends was being offered next round's attack in a skirmish that #}
@@ -71,7 +79,7 @@
                 {# The warrior id is the participant key: it is unique within a skirmish, so it needs no separator. Concatenating faction id and loop index did - faction 1/index 10 and faction 11/index 0 both produced "110", and one participant silently overwrote the other. No faction is posted: the view reads the sides off the skirmish rosters, since a posted one can lie and "warrior.faction" changes the moment a captive is recruited. #}
                 {% if is_player %}
                     <label>
-                        <select class="box-border h-10 w-full border border-[#e5e5e5] bg-white py-0 pl-2.5 pr-5 text-base text-[#666]"
+                        <select class="box-border h-10 w-full border border-rule bg-ground py-0 pl-2.5 pr-5 text-base text-ink-muted"
                                 name="skirmish_participant[{{ warrior.id }}][skirmish_action]">
                             {% for action in warrior.get_skirmish_actions %}
                                 <option value="{{ action.0 }}" {% if warrior.last_used_skirmish_action == action.0 %}selected="selected"{% endif %}>{{ action.1 }}</option>
@@ -88,7 +96,7 @@
                         about this side is posted any more, which is why the hidden warrior id goes with
                         it: the roster names who fights.
                     {% endcomment %}
-                    <p class="m-0 text-sm leading-snug text-[#999]">{{ warrior.decide_skirmish_action.1 }}</p>
+                    <p class="m-0 text-sm leading-snug text-ink-muted">{{ warrior.decide_skirmish_action.1 }}</p>
                 {% endif %}
             </form>
         {% endif %}

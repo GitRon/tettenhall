@@ -9,7 +9,7 @@
     {# The way out, said before the fight rather than only after it: leaving costs nothing, the #}
     {# skirmish is still open, and the alternative on a phone is a screen with no navigation on it at #}
     {# all until somebody wins. #}
-    <a class="text-sm uppercase text-[#666] no-underline hover:text-[#333]"
+    <a class="text-sm uppercase text-ink-muted no-underline hover:text-ink"
        href="{% url 'warband:skirmish-list-view' %}">
         <i aria-hidden="true" class="fa-solid fa-arrow-left"></i> Leave the fight
     </a>
@@ -24,7 +24,7 @@
             {% include 'skirmish/faction/components/faction_box.html' with faction=attacking_faction warrior_list=skirmish.attacking_warriors.all is_player=attacker_is_player %}
         </div>
         <div>
-            <div class="box-border bg-[#f8f8f8] p-7 md:p-[70px]">
+            <div class="box-border bg-raised p-7 md:p-[70px]">
                 <div class="flex flex-col gap-y-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         {% include 'common/components/box_header.html' with title='Battle report' %}
@@ -33,7 +33,7 @@
                         {% include 'skirmish/skirmish/htmx/_fight_button.html' with skirmish=object %}
                     </div>
                 </div>
-                <div class="my-5 border-t border-[#e5e5e5]"></div>
+                <div class="my-5 border-t border-rule"></div>
 
                 <div id="battle-report-container"
                      hx-get="{% url 'warband:battle-history-update-htmx' object.id %}"

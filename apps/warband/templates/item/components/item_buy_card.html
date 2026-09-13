@@ -1,6 +1,6 @@
 {% load l10n %}
-<div class="mb-5 box-border bg-white text-[#666] shadow-[0_5px_15px_rgba(0,0,0,0.08)]">
-    <div class="border-b border-[#e5e5e5] px-[30px] py-[15px]">
+<div class="mb-5 box-border bg-ground text-ink-muted border border-rule">
+    <div class="border-b border-rule px-[30px] py-[15px]">
         {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
         {# classes rather than handing either to a wrapper. #}
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2" id="item-card-{{ item.id|unlocalize }}">
@@ -8,17 +8,17 @@
                 {% include 'common/components/svg_icon.html' with icon_name=item.type.svg_image_name size='xl' %}
             </div>
             <div class="flex-1">
-                <h3 class="mb-0 text-2xl leading-snug text-[#333]">
+                <h3 class="mb-0 text-2xl leading-snug text-ink">
                     {{ item.display_name }}
                 </h3>
-                <p class="mt-0 text-sm leading-snug text-[#999]">
+                <p class="mt-0 text-sm leading-snug text-ink-muted">
                     {% include 'item/components/item_stats_meta.html' with item=item %}
                 </p>
             </div>
         </div>
     </div>
-    <div class="border-t border-[#e5e5e5] px-[30px] py-[15px]">
-        <button class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-[#333] hover:underline"
+    <div class="border-t border-rule px-[30px] py-[15px]">
+        <button class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline"
                 hx-post="{% url 'warband:item-buy-view' item.id %}"
                 hx-swap="none"
                 hx-target="#item-card-{{ item.id|unlocalize }}"
