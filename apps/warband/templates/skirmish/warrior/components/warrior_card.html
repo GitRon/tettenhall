@@ -25,19 +25,19 @@
                 {# never the red - only the box around it - so a tag stays as readable as the number #}
                 {# beside it. #}
                 {% if warrior.is_healthy %}
-                    <p class="inline-block border border-rule px-2 py-1 font-mono text-label uppercase tracking-label text-ink-muted">
+                    <p class="inline-block border border-rule px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink-muted">
                         <i class="fa-solid fa-feather-pointed"></i> Able to fight
                     </p>
                 {% elif warrior.is_unconscious %}
-                    <p class="inline-block border border-blood px-2 py-1 font-mono text-label uppercase tracking-label text-ink">
+                    <p class="inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
                         <i class="fa-solid fa-moon"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% elif warrior.is_fleeing %}
-                    <p class="inline-block border border-blood px-2 py-1 font-mono text-label uppercase tracking-label text-ink">
+                    <p class="inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
                         <i class="fa-solid fa-person-running"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% else %}
-                    <p class="inline-block border border-blood px-2 py-1 font-mono text-label uppercase tracking-label text-ink">
+                    <p class="inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
                         <i class="fa-solid fa-skull"></i> {{ warrior.get_condition_display }}
                     </p>
                 {% endif %}
