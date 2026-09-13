@@ -9,91 +9,45 @@
     {# The way out, said before the fight rather than only after it: leaving costs nothing, the #}
     {# skirmish is still open, and the alternative on a phone is a screen with no navigation on it at #}
     {# all until somebody wins. #}
-    <a class="text-sm uppercase text-ink-muted no-underline hover:text-ink"
+    {# Cinzel rather than body copy, because a way off a screen is a control and the display face is #}
+    {# what every other control on this one is set in. #}
+    <a class="mb-5 inline-block font-display text-[13px] uppercase tracking-[0.06em] text-ink-muted no-underline hover:text-ink"
        href="{% url 'warband:skirmish-list-view' %}">
         <i aria-hidden="true" class="fa-solid fa-arrow-left"></i> Leave the fight
     </a>
 
     {% include 'skirmish/skirmish/htmx/_round.html' with skirmish=object %}
 
-    {# Attacker, report, defender on a desk; one of the three at a time on a phone. #}
+    {# Attacker, report, defender on a desk; the same three stacked on a phone. #}
     {#  #}
-    {# Three panels in one column put the report between the two war bands, which makes the panel read #}
-    {# every round the one scrolled past twice. The tabs are the answer to that, and they are a phone #}
-    {# shape only: above "md:" the strip is not rendered and all three panels stand as they always did. #}
-    {#  #}
-    {# Nothing here hides a panel. "static/js/tettenhall.js" does, on load, which is what leaves a #}
-    {# browser with no JavaScript the stacked screen rather than a third of one. #}
-    <div data-fight-tabs>
-        {# Hidden until the script that makes it work has run, so a browser without JavaScript is not #}
-        {# offered three controls that do nothing. What it gets instead is the stacked screen below. #}
-        <div class="mb-5 hidden gap-2 md:hidden" role="tablist" aria-label="The fight">
-            <button class="min-h-11 flex-1 cursor-pointer border border-ink bg-transparent px-2 font-mono text-label uppercase tracking-label text-ink"
-                    type="button" role="tab" aria-selected="true"
-                    aria-controls="fight-panel-report" data-fight-tab="report">
-                Report
-            </button>
-            <button class="min-h-11 flex-1 cursor-pointer overflow-hidden border border-rule bg-transparent px-2 font-mono text-label uppercase tracking-label text-ink-muted"
-                    type="button" role="tab" aria-selected="false"
-                    aria-controls="fight-panel-attacker" data-fight-tab="attacker">
-                {% if attacker_is_player %}Yours{% elif defender_is_player %}Theirs{% else %}{{ attacking_faction.name }}{% endif %}
-            </button>
-            <button class="min-h-11 flex-1 cursor-pointer overflow-hidden border border-rule bg-transparent px-2 font-mono text-label uppercase tracking-label text-ink-muted"
-                    type="button" role="tab" aria-selected="false"
-                    aria-controls="fight-panel-defender" data-fight-tab="defender">
-                {% if defender_is_player %}Yours{% elif attacker_is_player %}Theirs{% else %}{{ defending_faction.name }}{% endif %}
-            </button>
+    {# Stacked puts the report between the two war bands, which is the panel read every round sitting #}
+    {# where it has to be scrolled past twice. That is a known cost and it is carried on purpose: what #}
+    {# the phone should be instead is a shape nobody has drawn yet, and a shape is not something a #}
+    {# media query gets to decide - see docs/patterns/responsive-layout.md. #}
+    <div class="grid grid-cols-1 items-stretch gap-7 md:grid-cols-3">
+        <div>
+            {% include 'skirmish/faction/components/faction_box.html' with faction=attacking_faction warrior_list=skirmish.attacking_warriors.all is_player=attacker_is_player %}
         </div>
-
-        <div class="grid grid-cols-1 items-stretch gap-7 md:grid-cols-3">
-            <div id="fight-panel-attacker" role="tabpanel" data-fight-panel="attacker" class="md:block">
-                {% include 'skirmish/faction/components/faction_box.html' with faction=attacking_faction warrior_list=skirmish.attacking_warriors.all is_player=attacker_is_player %}
-            </div>
-            <div id="fight-panel-report" role="tabpanel" data-fight-panel="report" class="md:block">
-                <div class="box-border bg-raised p-6">
-                    <div class="flex flex-col gap-y-4 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            {% include 'common/components/box_header.html' with title='Battle report' %}
-                        </div>
-                        {# On a desk the control belongs in the panel the screen is played through. On a #}
-                        {# phone it is in the bar below instead, so it is reachable from whichever tab is #}
-                        {# open - the two are mutually exclusive by breakpoint, so only ever one of them #}
-                        {# is in the document's accessibility tree. #}
-                        <div class="hidden md:block">
-                            {% include 'skirmish/skirmish/htmx/_fight_button.html' with skirmish=object %}
-                        </div>
+        <div>
+            <div class="box-border bg-raised p-6">
+                <div class="flex flex-col gap-y-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        {% include 'common/components/box_header.html' with title='Battle report' %}
                     </div>
-                    <div class="my-5 border-t border-rule"></div>
+                    {% include 'skirmish/skirmish/htmx/_fight_button.html' with skirmish=object %}
+                </div>
+                <div class="mb-[18px] mt-4 border-t border-rule"></div>
 
-                    <div id="battle-report-container"
-                         hx-get="{% url 'warband:battle-history-update-htmx' object.id %}"
-                         hx-trigger="load, battleReportUpdate from:body"
-                         hx-target="this"
-                         hx-swap="innerHTML">
-                    </div>
+                <div id="battle-report-container"
+                     hx-get="{% url 'warband:battle-history-update-htmx' object.id %}"
+                     hx-trigger="load, battleReportUpdate from:body"
+                     hx-target="this"
+                     hx-swap="innerHTML">
                 </div>
             </div>
-            <div id="fight-panel-defender" role="tabpanel" data-fight-panel="defender" class="md:block">
-                {% include 'skirmish/faction/components/faction_box.html' with faction=defending_faction warrior_list=skirmish.defending_warriors.all is_player=defender_is_player %}
-            </div>
         </div>
-    </div>
-
-    {# The phone's copy of the one control, docked so a round never costs a scroll. It sits outside the #}
-    {# panels on purpose: a fixed element inside a panel the tabs have hidden is hidden with it. #}
-    {# "base.html" already leaves "pb-24" under the content for the section nav, and this screen #}
-    {# suppresses that nav - so the bar lands in space the page was holding open anyway. #}
-    {# The player's orders post from here even while his own tab is closed: "hx-include" reads the #}
-    {# selects out of the document, and a closed tab is display, not absence. #}
-    {# The control is sized by the bar rather than by itself, because docked is a phone arrangement this #}
-    {# screen decides on: the component is also rendered bare by the view behind "updateFightButton" #}
-    {# ("SkirmishFightButtonUpdateView") and included again above for the desk, and neither may inherit #}
-    {# it. That swap replaces the component's own root from inside this wrapper, so what arrives after a #}
-    {# round is sized by the bar in the same way. #}
-    {# Full width because a docked primary action occupying a third of the bar reads as something that #}
-    {# fell into it, and "min-h-11" because the component's own padding leaves a 41px target - under #}
-    {# what a thumb wants, which matters here in a way it does not on a desk. #}
-    <div class="fixed inset-x-0 bottom-0 z-20 border-t border-rule bg-raised px-4 py-3 md:hidden [&>*]:w-full [&_button]:flex [&_button]:min-h-11 [&_button]:w-full [&_button]:items-center [&_button]:justify-center">
-        {% include 'skirmish/skirmish/htmx/_fight_button.html' with skirmish=object %}
+        <div>
+            {% include 'skirmish/faction/components/faction_box.html' with faction=defending_faction warrior_list=skirmish.defending_warriors.all is_player=defender_is_player %}
+        </div>
     </div>
 {% endblock content %}

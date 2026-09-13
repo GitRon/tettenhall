@@ -1,3 +1,15 @@
+{% load muster %}
+{# What the band is down to, in one line: whether it is the player's, and how many of it are still on #}
+{# their feet. The count is the reading the rows below only give by being counted, and it is the #}
+{# number that decides whether a fight is worth another round. #}
+{# "Yours" is said and "Theirs" is not: a skirmish between two rivals is the player's business without #}
+{# either side being his, and the panel header above already names whose band this is. #}
+<p class="m-0 mt-1 font-mono text-label uppercase tracking-label text-ink-muted">
+    {% if is_player %}Yours &middot; {% endif %}{{ object_list|still_up }} of {{ object_list|length }} up
+</p>
+
+<div class="mt-[18px] border-t border-rule"></div>
+
 {# Each man is his own row and carries his own bottom rule, so the list needs no wrapper around them. #}
 {% for warrior in object_list %}
     {% include 'skirmish/warrior/components/warrior_card.html' with warrior=warrior is_player=is_player skirmish_is_decided=skirmish_is_decided %}

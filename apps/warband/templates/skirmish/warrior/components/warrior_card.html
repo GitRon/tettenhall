@@ -17,7 +17,7 @@
 {# Nothing is lost from the document outline by it: the panel header above is a span too - see #}
 {# "common/components/box_header.html" - so this screen names its sections without heading elements #}
 {# either way. #}
-<div class="border-b border-rule py-4">
+<div class="flex flex-col gap-y-[9px] border-b border-rule py-[14px]">
     {% if warrior.is_healthy %}
         {# "Healthy" is the name of a state and not a reading of the health below it: nothing between #}
         {# full health and zero moves the condition, so a man at 1 of 20 is in it as much as one who #}
@@ -41,13 +41,13 @@
         {# keeps fighting. #}
         {# "progress" resolves its own proportion from value and max, and needs a box with a width to #}
         {# draw it in, which is what the grid column gives it. #}
-        <div class="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5">
-            <progress class="h-[10px] w-full border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink"
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-[5px]">
+            <progress class="h-[3px] w-full bg-rule [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink"
                       value="{{ warrior.current_health }}" max="{{ warrior.max_health }}"></progress>
             <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink">
                 <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
             </span>
-            <progress class="h-[6px] w-full border border-rule bg-ground [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink-muted [&::-moz-progress-bar]:bg-ink-muted"
+            <progress class="h-[2px] w-full bg-rule [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink-muted [&::-moz-progress-bar]:bg-ink-muted"
                       value="{{ warrior.current_morale }}" max="{{ warrior.max_morale }}"></progress>
             <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink-muted">
                 <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
@@ -59,7 +59,7 @@
         {# The gear is here because the fight is the one screen that shows both sides theirs - see #}
         {# docs/patterns/warrior-knowledge.md. A player standing across from the man can read what he #}
         {# carries, and what he carries is part of choosing what to do about him. #}
-        <div class="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted">
             <span class="whitespace-nowrap"><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</span>
             <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %} {{ warrior.get_weapon_or_fallback }}</span>
             <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %} {{ warrior.get_armor_or_fallback }}</span>
@@ -70,11 +70,11 @@
         {# victor and will never have another round. #}
         {% if not skirmish_is_decided %}
             {# TODO (#64): put this in a crispy-form? maybe later, might be hard to create forms in the view #}
-            <form class="mt-3" method="post">
+            <form method="post">
                 {# The warrior id is the participant key: it is unique within a skirmish, so it needs no separator. Concatenating faction id and loop index did - faction 1/index 10 and faction 11/index 0 both produced "110", and one participant silently overwrote the other. No faction is posted: the view reads the sides off the skirmish rosters, since a posted one can lie and "warrior.faction" changes the moment a captive is recruited. #}
                 {% if is_player %}
                     <label>
-                        <select class="box-border h-10 w-full border border-rule bg-ground py-0 pl-2.5 pr-5 text-base text-ink-muted"
+                        <select class="box-border h-10 w-full border border-rule bg-ground py-0 pl-2.5 pr-5 text-base text-ink"
                                 name="skirmish_participant[{{ warrior.id }}][skirmish_action]">
                             {% for action in warrior.get_skirmish_actions %}
                                 <option value="{{ action.0 }}" {% if warrior.last_used_skirmish_action == action.0 %}selected="selected"{% endif %}>{{ action.1 }}</option>
