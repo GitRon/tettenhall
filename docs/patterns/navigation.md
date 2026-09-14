@@ -10,7 +10,7 @@ fifth. This is normative: a link added to the shell without a section is a link 
 |---|---|---|---|
 | **Month** | the dashboard | "What happened, and what do I still have to decide?" | the month log, the wage-bill warning, the active quests, the training choice |
 | **Warband** | the roster | "Who do I have, and what shape are they in?" | the stores, the fyrd, the captives, the progress table, a warrior's page |
-| **Town** | the shop | "What can I turn silver into?" | the pub, the board, the buildings, a quest's page |
+| **Town** | the board | "What can I turn silver into?" | the shop, the pub, the buildings, a quest's page |
 | **Rivals** | the rivals list | "Who do I march on, and the fight itself" | a rival's page, the attack, the skirmish list, the fight |
 
 The order is fixed and the entries never move. Four is the number a player holds in their head, and it
@@ -44,7 +44,7 @@ Three sections hold more than one page, and those three carry a page nav under t
 | Section | Pages |
 |---|---|
 | **Warband** | Warband, Stores, Fyrd, Captives, Progress |
-| **Town** | Shop, Pub, Board, Buildings |
+| **Town** | Board, Shop, Pub, Buildings |
 | **Rivals** | Rivals, Skirmishes |
 
 Month is one page and shows nothing. The landing page comes first because that is what the section
@@ -54,6 +54,11 @@ month, is last under Town.
 
 It comes off the current section's own page list, so a template never has to ask which section it is
 in. There are no breadcrumbs: two levels do not need a third way of saying where the player is.
+
+**The board is what the town lands on.** A quest decides who is spoken for and what the month is worth
+spending on, so it is the offer the other three are weighed against: a sword bought before the board is
+read is a sword bought against nothing. The stalls and the pub come after it because they answer a
+question the board has already asked.
 
 **No page carries a faction id.** Which faction is the player's is the savegame's answer, and
 `PlayerFactionMixin` is what asks it — the same shape as `PlayerTownMixin`, which answers the same
@@ -100,7 +105,7 @@ after it.
 - **A page reachable from nowhere is a defect.** Every screen is either a section's landing page, a page
   on a section's page nav, or linked from a page that is.
 - **A page is headed what the entry that leads to it says.** Month, Warband, Stores, Fyrd, Captives,
-  Progress, Shop, Pub, Board, Buildings, Rivals, Skirmishes. A heading belongs to the page and never
+  Progress, Board, Shop, Pub, Buildings, Rivals, Skirmishes. A heading belongs to the page and never
   to a partial inside it: the shop's list and the pub's are htmx swap targets, so a heading in either
   is a heading the first purchase replaces. Every page of the game used to name itself
   differently from its own menu entry, so one wrong click was told apart from the right one by a
