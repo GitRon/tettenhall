@@ -9,8 +9,10 @@ from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
+from apps.warband.warrior.services.equipping import WEARER_REFUSAL
 
 
 @pytest.mark.django_db
@@ -769,3 +771,86 @@ def test_warrior_detail_view_names_no_neighbours_for_a_dead_man(logged_in_client
 
     assert response.context["previous_warrior_id"] is None
     assert response.context["next_warrior_id"] is None
+
+
+@pytest.mark.django_db
+def test_warrior_weapon_update_view_refuses_a_man_standing_in_an_open_fight(logged_in_client, current_savegame):
+    """
+    The GET is guarded as well as the POST: a slot opened for a man in the line is a control that
+    could only ever be refused.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.attacking_warriors.add(warrior)
+
+    response = logged_in_client.get(
+        reverse("warband:warrior-partial-update-view", kwargs={"pk": warrior.id, "htmx_attribute": "weapon"})
+    )
+
+    assert response.status_code == 204
+    assert json.loads(response["HX-Trigger"]) == {"notification": WEARER_REFUSAL}
+
+
+@pytest.mark.django_db
+def test_warrior_weapon_update_view_keeps_the_gear_of_a_man_standing_in_an_open_fight(
+    logged_in_client, current_savegame
+):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+    weapon = ItemFactory(
+        type=ItemType.objects.get(name="Short sword"),
+        owner=current_savegame.player_faction,
+        savegame=current_savegame,
+    )
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.attacking_warriors.add(warrior)
+
+    response = logged_in_client.post(
+        reverse("warband:warrior-partial-update-view", kwargs={"pk": warrior.id, "htmx_attribute": "weapon"}),
+        data={"weapon": weapon.id},
+    )
+
+    assert response.status_code == 204
+    warrior.refresh_from_db()
+    assert warrior.weapon is None
+
+
+@pytest.mark.django_db
+def test_warrior_weapon_update_view_declines_to_take_a_weapon_off_a_man_in_an_open_fight(
+    logged_in_client, current_savegame
+):
+    """
+    The far end of a swap, which the field's own list no longer offers - so a posted id is not a
+    valid choice and the sword stays where it is.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+    holder = WarriorFactory(faction=current_savegame.player_faction)
+    wanted_weapon = ItemFactory(
+        type=ItemType.objects.get(name="Short sword"),
+        owner=current_savegame.player_faction,
+        savegame=current_savegame,
+    )
+    holder.weapon = wanted_weapon
+    holder.save()
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.attacking_warriors.add(holder)
+
+    logged_in_client.post(
+        reverse("warband:warrior-partial-update-view", kwargs={"pk": warrior.id, "htmx_attribute": "weapon"}),
+        data={"weapon": wanted_weapon.id},
+    )
+
+    warrior.refresh_from_db()
+    holder.refresh_from_db()
+    assert (warrior.weapon, holder.weapon) == (None, wanted_weapon)
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_replaces_the_gear_edit_with_a_reason_during_a_fight(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.defending_warriors.add(warrior)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["can_edit_gear"] is False
+    assert response.context["gear_refusal"] == WEARER_REFUSAL
