@@ -1,10 +1,39 @@
 import pytest
 
 from apps.warband.item.models.item_type import ItemType
-from apps.warband.item.services.handout import get_handout_note
+from apps.warband.item.services.handout import annotate_held_gear_values, get_handout_note
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+
+
+@pytest.mark.django_db
+def test_annotate_held_gear_values_reads_a_filled_slot_off_the_item():
+    warrior = WarriorFactory()
+    warrior.weapon = ItemFactory(
+        savegame=warrior.savegame,
+        owner=warrior.faction,
+        type=ItemTypeFactory(base_value="2d6"),
+    )
+    warrior.save()
+
+    result = annotate_held_gear_values(roster=[warrior])
+
+    assert result[0].held_gear_values["weapon"] == 7
+
+
+@pytest.mark.django_db
+def test_annotate_held_gear_values_reads_an_empty_slot_off_the_fallback():
+    """
+    A bare-handed man still throws the fallback's dice, so an empty slot is worth what the fight says
+    it is worth rather than nothing - which would call every empty slot the same and rank none of
+    them against each other.
+    """
+    warrior = WarriorFactory()
+
+    result = annotate_held_gear_values(roster=[warrior])
+
+    assert result[0].held_gear_values == {"weapon": 2, "armor": 1.5}
 
 
 @pytest.mark.django_db

@@ -1,4 +1,7 @@
+from collections.abc import Iterable
+
 from apps.warband.item.models.item import Item
+from apps.warband.item.models.item_type import ItemType
 from apps.warband.skirmish.models.warrior import Warrior
 
 # What a slot is called in a sentence. The field is spelled the American way and the game is not, so
@@ -7,6 +10,38 @@ SLOT_NAMES = {
     "weapon": "weapon",
     "armor": "armour",
 }
+
+
+def annotate_held_gear_values(*, roster: Iterable[Warrior]) -> list[Warrior]:
+    """
+    What each man on the roster has in each slot, as the figure the picker has to beat.
+
+    Hung on the man rather than worked out per option, because a picker asks the question once per
+    item per man and only the man's half can be shared: there is a card per unused item and they all
+    offer the same roster.
+
+    An empty slot is worth what the fight says it is worth. A bare-handed man still throws the
+    fallback's dice ("Warrior.get_weapon_or_fallback"), so comparing against nothing would call every
+    empty slot the same and rank none of them. That method fetches its type on every call, which is a
+    query per option here - so the two fallbacks are read once for the whole column instead, and the
+    slots they fill are the slots this answers for.
+
+    The filled case costs nothing: "Faction.get_all_living_warriors" already carries "weapon__type"
+    and "armor__type", and "type" is where the dice live.
+    """
+    fallback_values = {
+        fallback.gear_slot: fallback.expectancy_value
+        for fallback in (Item(type=item_type) for item_type in ItemType.objects.filter(is_fallback=True))
+    }
+
+    warriors = list(roster)
+    for warrior in warriors:
+        warrior.held_gear_values = {}
+        for slot, fallback_value in fallback_values.items():
+            held_item = getattr(warrior, slot)
+            warrior.held_gear_values[slot] = held_item.expectancy_value if held_item else fallback_value
+
+    return warriors
 
 
 def get_handout_note(*, warrior: Warrior, item: Item | None, slot: str) -> str | None:
