@@ -10,6 +10,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -338,3 +339,62 @@ def test_item_assign_view_without_a_player_faction(logged_in_client, savegame_wi
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_item_assign_view_refuses_a_receiver_standing_in_an_open_fight(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+    item = ItemFactory(savegame=current_savegame, owner=current_savegame.player_faction)
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.attacking_warriors.add(warrior)
+
+    response = logged_in_client.post(
+        reverse("warband:item-assign-view", kwargs={"pk": item.pk}), data={"warrior": warrior.id}
+    )
+
+    assert response.status_code == 204
+    warrior.refresh_from_db()
+    assert warrior.weapon is None
+
+
+@pytest.mark.django_db
+def test_item_assign_view_refuses_to_take_an_item_off_a_man_in_an_open_fight(logged_in_client, current_savegame):
+    """
+    The far end of a swap. The receiver is safely at home, which is the half a one-sided guard would
+    have let through.
+    """
+    receiver = WarriorFactory(faction=current_savegame.player_faction)
+    holder = WarriorFactory(faction=current_savegame.player_faction)
+    item = ItemFactory(savegame=current_savegame, owner=current_savegame.player_faction)
+    holder.weapon = item
+    holder.save()
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.attacking_warriors.add(holder)
+
+    response = logged_in_client.post(
+        reverse("warband:item-assign-view", kwargs={"pk": item.pk}), data={"warrior": receiver.id}
+    )
+
+    assert response.status_code == 204
+    holder.refresh_from_db()
+    assert holder.weapon == item
+
+
+@pytest.mark.django_db
+def test_item_sell_view_refuses_to_sell_the_gear_off_a_man_in_an_open_fight(logged_in_client, current_savegame):
+    """
+    No page offers this - the column is built from "get_all_unoccupied_items" - so it is the
+    hand-made request the other two guards would otherwise leave open.
+    """
+    holder = WarriorFactory(faction=current_savegame.player_faction)
+    item = ItemFactory(savegame=current_savegame, owner=current_savegame.player_faction, price=120)
+    holder.weapon = item
+    holder.save()
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.defending_warriors.add(holder)
+
+    response = logged_in_client.post(reverse("warband:item-sell-view", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 204
+    item.refresh_from_db()
+    assert item.owner == current_savegame.player_faction

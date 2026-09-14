@@ -139,6 +139,37 @@ class RosterDismissalContextMixin(FactionRosterContextMixin):
         return context
 
 
+class HandoutRosterContextMixin(PlayerFactionAwareContextMixin):
+    """
+    The men an unused item may be handed to, for every page that renders the stores column.
+
+    Read here rather than off the faction in the template, because the list has a rule in it now: a
+    man standing in a fight nobody has settled fights on with what he marched out with, so handing
+    him something would be a control that could only ever be refused - and the refusal lives in
+    "get_equip_refusal", which the assign view asks before it dispatches.
+
+    Once for the whole column rather than once per card, the same reason
+    "RosterDismissalContextMixin" asks its own question a roster at a time: the stores page renders a
+    card per unused item and they all offer the same roster.
+
+    Only for the player's own faction. A rival's stores page carries no controls at all, so the
+    roster behind them is a query for a picker nobody is shown.
+    """
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        context["handout_roster"] = (
+            self.object.get_all_living_warriors().exclude(
+                id__in=Warrior.objects.filter_standing_in_an_open_fight().values("id")
+            )
+            if context["is_player_faction"]
+            else Warrior.objects.none()
+        )
+
+        return context
+
+
 class PlayerWarbandMixin(PlayerFactionScopedQuerysetMixin):
     """
     Resolves the one war band the current player commands.
@@ -160,7 +191,7 @@ class PlayerWarbandMixin(PlayerFactionScopedQuerysetMixin):
 
 
 class FactionDetailView(
-    FactionRosterContextMixin, PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView
+    FactionRosterContextMixin, HandoutRosterContextMixin, SavegameScopedQuerysetMixin, generic.DetailView
 ):
     """
     A rival's page: who he has, what he owns, who he holds, and whether the player may march on him.
@@ -269,7 +300,7 @@ class WarbandRosterView(
     template_name = "faction/warband_roster.html"
 
 
-class WarbandStoresView(PlayerFactionAwareContextMixin, PlayerWarbandMixin, generic.DetailView):
+class WarbandStoresView(HandoutRosterContextMixin, PlayerWarbandMixin, generic.DetailView):
     """What nobody is wearing, which is also what can be sold."""
 
     template_name = "faction/warband_stores.html"
@@ -410,7 +441,7 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
         return context
 
 
-class FactionItemListView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionItemListView(HandoutRosterContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/item/components/item_list.html"
 

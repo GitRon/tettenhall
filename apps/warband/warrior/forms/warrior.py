@@ -104,10 +104,22 @@ class WarriorForm(forms.ModelForm):
         # first to release it, and a player who started at the second saw a list without the sword he
         # was trying to move and no way to learn why. Picking an item somebody holds is a swap, which
         # "EquipItem" settles - see the handler for why both rows have to be written together.
-        self.fields[htmx_field].queryset = Item.objects.filter(
-            type__function=SLOT_FUNCTIONS[htmx_field],
-            owner_id=self.instance.faction,
-        ).select_related("type", "warrior_weapon", "warrior_armor")
+        #
+        # What it does leave out is the gear on a man standing in a fight nobody has settled. A blow
+        # is rolled off his slot while that fight is open, so the far end of a swap is the one item
+        # this list must not offer - and an option that could only ever be refused is the control
+        # this batch keeps removing rather than explaining. Both relations are narrowed, not just the
+        # one the slot fills: an item answers "who is wearing me" off whichever of the two it sits in.
+        fighting_warrior_ids = Warrior.objects.filter_standing_in_an_open_fight().values("id")
+        self.fields[htmx_field].queryset = (
+            Item.objects.filter(
+                type__function=SLOT_FUNCTIONS[htmx_field],
+                owner_id=self.instance.faction,
+            )
+            .exclude(warrior_weapon__in=fighting_warrior_ids)
+            .exclude(warrior_armor__in=fighting_warrior_ids)
+            .select_related("type", "warrior_weapon", "warrior_armor")
+        )
 
         # The option labels ask every item who is carrying it, and the reverse one-to-ones above are
         # what keeps that to the one query the select already costs

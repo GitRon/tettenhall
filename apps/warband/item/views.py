@@ -19,6 +19,7 @@ from apps.warband.savegame.mixins import (
 )
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
+from apps.warband.warrior.services.equipping import get_equip_refusal, get_unequip_refusal
 
 
 class ItemSellView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.View):
@@ -30,6 +31,15 @@ class ItemSellView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixi
     def post(self, *args, **kwargs):
         obj = self.get_object()
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+
+        # Selling empties a slot without naming a warrior: "update_ownership" clears whoever is
+        # wearing the item. The column this button sits in holds only unworn gear, so a refusal here
+        # means a request nobody's page offered.
+        refusal = get_unequip_refusal(item=obj)
+        if refusal is not None:
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps({"notification": refusal})
+            return response
 
         handle_message(SellItem(selling_faction=obj.owner, item=obj, month=current_savegame.current_month))
 
@@ -71,6 +81,16 @@ class ItemAssignView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMi
             return response
 
         warrior = form.cleaned_data["warrior"]
+
+        # Both ends, the same way the warrior's own slot asks it: the picker leaves out the men in an
+        # open fight, and an unused item has no holder to displace - so either half firing here is a
+        # posted id rather than a rendered option.
+        refusal = get_equip_refusal(warrior=warrior, item=obj)
+        if refusal is not None:
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps({"notification": refusal})
+            return response
+
         slot = obj.gear_slot
         # Read before the handler moves anything: the sentence is about the state the move changes,
         # and afterwards there is nothing left to read it off. The event carries the facts and this
