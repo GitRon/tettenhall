@@ -7,7 +7,8 @@
       "function": 1,
       "base_value": "2d3",
       "svg_image_name": "gladius",
-      "is_fallback": false
+      "is_fallback": false,
+      "tier": 1
     }
   },
   {
@@ -18,7 +19,8 @@
       "function": 2,
       "base_value": "2d3",
       "svg_image_name": "leather-vest",
-      "is_fallback": false
+      "is_fallback": false,
+      "tier": 1
     }
   },
   {
@@ -29,7 +31,8 @@
       "function": 2,
       "base_value": "3d4",
       "svg_image_name": "chain-mail",
-      "is_fallback": false
+      "is_fallback": false,
+      "tier": 2
     }
   },
   {
@@ -40,7 +43,8 @@
       "function": 1,
       "base_value": "1d3",
       "svg_image_name": "fist",
-      "is_fallback": true
+      "is_fallback": true,
+      "tier": null
     }
   },
   {
@@ -51,7 +55,8 @@
       "function": 2,
       "base_value": "1d2",
       "svg_image_name": "broken-shield",
-      "is_fallback": true
+      "is_fallback": true,
+      "tier": null
     }
   },
   {
@@ -62,7 +67,8 @@
       "function": 1,
       "base_value": "1d4",
       "svg_image_name": "pitchfork",
-      "is_fallback": false
+      "is_fallback": false,
+      "tier": 1
     }
   },
   {
@@ -73,7 +79,8 @@
       "function": 1,
       "base_value": "3d5",
       "svg_image_name": "battle-axe",
-      "is_fallback": false
+      "is_fallback": false,
+      "tier": 2
     }
   },
   {
@@ -84,7 +91,8 @@
       "function": 1,
       "base_value": "3d2",
       "svg_image_name": "spear-feather",
-      "is_fallback": false
+      "is_fallback": false,
+      "tier": 1
     }
   },
   {
@@ -95,7 +103,8 @@
       "function": 1,
       "base_value": "4d4",
       "svg_image_name": "gladius",
-      "is_fallback": false
+      "is_fallback": false,
+      "tier": 2
     }
   }
 ]

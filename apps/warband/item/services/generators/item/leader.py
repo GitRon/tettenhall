@@ -1,5 +1,3 @@
-from django.db.models import QuerySet
-
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
 
@@ -10,13 +8,5 @@ class LeaderItemGenerator(BaseItemGenerator):
     ARMOR_MODIFIER_ROLLS_MU = 2
     ARMOR_MODIFIER_ROLLS_SIGMA = 1
 
-    def _get_queryset_for_type(self) -> QuerySet:
-        # TODO (#94): this is ugly
-        if self.function == ItemType.FunctionChoices.FUNCTION_WEAPON:
-            return (
-                ItemType.objects.filter(function=self.function)
-                .filter(name__in=["Battle axe", "Long sword"])
-                .exclude(is_fallback=True)
-                .order_by("?")
-            )
-        return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")
+    # A man with a war band behind him marches out in the best the game has
+    item_tiers = frozenset({ItemType.TierChoices.TIER_FINE})

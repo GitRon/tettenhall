@@ -75,6 +75,31 @@ def test_determine_condition_reads_the_armor_pool(armor_generator):
 
 
 @pytest.mark.django_db
+def test_get_queryset_for_type_without_a_pool_reaches_the_whole_table(item_generator):
+    """
+    A generator declaring no band of its own is unrestricted, which is what the shop's wares rest on.
+    """
+    result = item_generator._get_queryset_for_type()
+
+    assert sorted(result.values_list("name", flat=True)) == [
+        "Battle axe",
+        "Long sword",
+        "Pitchfork",
+        "Short sword",
+        "Spear",
+    ]
+
+
+@pytest.mark.django_db
+def test_get_queryset_for_type_narrows_to_the_declared_pool(item_generator):
+    item_generator.item_tiers = frozenset({ItemType.TierChoices.TIER_FINE})
+
+    result = item_generator._get_queryset_for_type()
+
+    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Long sword"]
+
+
+@pytest.mark.django_db
 def test_process_without_a_matching_item_type():
     generator = BaseItemGenerator(faction=None, item_function=99, savegame_id=SavegameFactory().id)
 
