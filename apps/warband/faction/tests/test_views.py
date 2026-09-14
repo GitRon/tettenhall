@@ -1552,6 +1552,19 @@ def test_faction_shop_item_list_view_hides_factions_of_other_savegames(logged_in
 
 
 @pytest.mark.django_db
+def test_faction_shop_item_list_view_without_an_active_savegame(logged_in_client):
+    """
+    Answering 404 rather than a server error: the savegame-scoped mixin narrows to nothing when there
+    is no savegame at all, and this partial still takes a faction id and is still reachable by one.
+    """
+    faction = FactionFactory()
+
+    response = logged_in_client.get(reverse("warband:shop-item-list-htmx", kwargs={"pk": faction.pk}))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_town_shop_view_without_an_active_savegame(logged_in_client):
     """
     Answering 404 rather than a server error: the mixin narrows to nothing when there is no savegame.
