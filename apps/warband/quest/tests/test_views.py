@@ -32,6 +32,9 @@ def test_quest_accept_view_signs_a_contract_and_sets_up_the_skirmish(logged_in_c
     )
 
     assert response.status_code == 302
+    # Back to the board he took it off, which is a page of its own rather than a town square holding
+    # three lists - so the name it redirects to is a choice between four and worth pinning
+    assert response.url == reverse("warband:town-board-view")
     assert [str(message) for message in get_messages(response.wsgi_request)] == [f'You accepted the quest "{quest}".']
     quest_contract = QuestContract.objects.get(quest=quest, faction=current_savegame.player_faction)
     assert list(quest_contract.assigned_warriors.all()) == [warrior]

@@ -698,7 +698,7 @@ def test_warrior_detail_view_leads_a_captive_back_to_the_captives(logged_in_clie
 @pytest.mark.django_db
 def test_warrior_detail_view_leads_a_mercenary_back_to_the_pub(logged_in_client, current_savegame):
     """
-    He is nobody's man yet, and the only list he stands in is the pub of the town square.
+    He is nobody's man yet, and the only list he stands in is the town's pub.
     """
     mercenary = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
     current_savegame.player_faction.available_mercenaries.add(mercenary)
@@ -706,9 +706,7 @@ def test_warrior_detail_view_leads_a_mercenary_back_to_the_pub(logged_in_client,
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": mercenary.id}))
 
     assert response.context["nav_section"] == "town"
-    assert response.context["roster_url"] == reverse(
-        "warband:town-square-view", kwargs={"pk": current_savegame.player_faction_id}
-    )
+    assert response.context["roster_url"] == reverse("warband:town-pub-view")
 
 
 @pytest.mark.django_db

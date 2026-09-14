@@ -71,7 +71,7 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         elif context["is_mercenary_of_player"]:
             context["nav_section"] = "town"
             context["roster_label"] = "Back to the pub"
-            context["roster_url"] = reverse("warband:town-square-view", args=[player_faction.id])
+            context["roster_url"] = reverse("warband:town-pub-view")
             roster = player_faction.available_mercenaries.all()
         else:
             # A dead man, or somebody the player reached by typing an id. Nothing to walk and no

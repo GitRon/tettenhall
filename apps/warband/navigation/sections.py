@@ -15,9 +15,6 @@ class Page:
 
     label: str
     url_name: str
-    # The faction-scoped urls take the player's own faction id. Reversing them without one raises,
-    # which is what the guard in the context processor is for.
-    takes_player_faction: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -30,12 +27,9 @@ class Section:
     # the two sets reads as two bars.
     icon: str
     url_name: str
-    takes_player_faction: bool = False
-    # Whether the entry means anything before the player has a faction. Reversing a url and having
-    # somewhere to go are two questions, and the war band is what separates them: its pages read the
-    # faction off the savegame rather than out of the url, so they reverse perfectly well while there
-    # is nothing whatsoever behind them. Declared rather than derived, because a section taking the
-    # id always needs it and a section needing it does not always take it.
+    # Whether the entry means anything before the player has a faction. Every url on the map reverses
+    # without one - the war band's pages and the town's alike read the faction off the savegame
+    # rather than out of the url - so this is about having somewhere to go, not about reversing.
     needs_player_faction: bool = False
     # Empty where the section is a single page. A second level is the price of a top level that fits
     # in a player's head, and three of the four pay it.
@@ -67,11 +61,12 @@ SECTIONS: tuple[Section, ...] = (
         key="town",
         label="Town",
         icon="fa-city",
-        url_name="warband:town-square-view",
-        takes_player_faction=True,
+        url_name="warband:town-shop-view",
         needs_player_faction=True,
         pages=(
-            Page(label="Town square", url_name="warband:town-square-view", takes_player_faction=True),
+            Page(label="Shop", url_name="warband:town-shop-view"),
+            Page(label="Pub", url_name="warband:town-pub-view"),
+            Page(label="Board", url_name="warband:town-board-view"),
             Page(label="Buildings", url_name="warband:town-upgrade-view"),
         ),
     ),
@@ -101,7 +96,9 @@ SECTION_KEY_BY_URL_NAME: dict[str, str] = {
     "warband-fyrd-view": "warband",
     "warband-captives-view": "warband",
     "warband-progress-view": "warband",
-    "town-square-view": "town",
+    "town-shop-view": "town",
+    "town-pub-view": "town",
+    "town-board-view": "town",
     "town-upgrade-view": "town",
     "quest-accept-view": "town",
     "rival-faction-list-view": "rivals",

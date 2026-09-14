@@ -1456,17 +1456,81 @@ def test_monthly_cost_overview_hides_factions_of_other_savegames(logged_in_clien
 
 
 @pytest.mark.django_db
-def test_town_square_view_shows_the_faction(logged_in_client, current_savegame):
-    response = logged_in_client.get(
-        reverse("warband:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
-    )
+def test_town_shop_view_shows_the_gear_on_the_stalls(logged_in_client, current_savegame):
+    shop_item = ItemFactory(savegame=current_savegame)
+    current_savegame.player_faction.available_items.add(shop_item)
+
+    response = logged_in_client.get(reverse("warband:town-shop-view"))
 
     assert response.status_code == 200
-    assert response.context["object"] == current_savegame.player_faction
+    assert list(response.context["object"].available_items.all()) == [shop_item]
 
 
 @pytest.mark.django_db
-def test_town_square_view_offers_only_quests_that_can_still_be_taken_on(logged_in_client, current_savegame):
+def test_town_shop_view_reads_the_faction_off_the_savegame(logged_in_client, savegame_whose_rival_is_the_older_faction):
+    """
+    The url carries no id, so the page shows whatever the scoped queryset holds - and a rival older
+    than the player's own faction is what makes that answer mean something.
+    """
+    FactionFactory(savegame=SavegameFactory())
+
+    response = logged_in_client.get(reverse("warband:town-shop-view"))
+
+    assert response.status_code == 200
+    assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
+
+
+@pytest.mark.django_db
+def test_town_shop_view_without_a_player_faction(logged_in_client, savegame_without_player_faction):
+    """
+    A savegame can exist before its faction does, and a town with no faction behind it is a page with
+    no subject rather than a server error.
+    """
+    response = logged_in_client.get(reverse("warband:town-shop-view"))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_town_pub_view_renders_the_mercenaries_standing_in_the_pub(logged_in_client, current_savegame):
+    """
+    The pub card only renders once somebody is standing in the pub, so an empty one left the whole
+    template - its includes and their "load" tags included - unexercised by the suite. It runs every
+    stat through the two warrior components, which reach the "obscurify" library by name.
+    """
+    mercenary = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    current_savegame.player_faction.available_mercenaries.add(mercenary)
+
+    response = logged_in_client.get(reverse("warband:town-pub-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["object"].available_mercenaries.all()) == [mercenary]
+
+
+@pytest.mark.django_db
+def test_town_pub_view_holds_the_mercenaries_in_the_players_pub(logged_in_client, current_savegame):
+    """
+    The page holding the pub answers this the same way the pub's own partial does, or the first
+    "loadPubMercenaryList" swap changes what the cards give away.
+    """
+    response = logged_in_client.get(reverse("warband:town-pub-view"))
+
+    assert response.status_code == 200
+    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
+
+
+@pytest.mark.django_db
+def test_town_pub_view_reads_the_faction_off_the_savegame(logged_in_client, savegame_whose_rival_is_the_older_faction):
+    FactionFactory(savegame=SavegameFactory())
+
+    response = logged_in_client.get(reverse("warband:town-pub-view"))
+
+    assert response.status_code == 200
+    assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
+
+
+@pytest.mark.django_db
+def test_town_board_view_offers_only_quests_that_can_still_be_taken_on(logged_in_client, current_savegame):
     """
     Scoped the same way QuestAcceptView resolves its quest, so the card and the page it leads to
     cannot disagree - the opposition is the target's own war band, and one the player has beaten inside
@@ -1478,54 +1542,22 @@ def test_town_square_view_offers_only_quests_that_can_still_be_taken_on(logged_i
     WarriorFactory(faction=flattened_quest.target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     current_savegame.player_faction.available_quests.add(fightable_quest, flattened_quest)
 
-    response = logged_in_client.get(
-        reverse("warband:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
-    )
+    response = logged_in_client.get(reverse("warband:town-board-view"))
 
     assert response.status_code == 200
     assert list(response.context["quest_list"]) == [fightable_quest]
 
 
 @pytest.mark.django_db
-def test_town_square_view_renders_the_mercenaries_standing_in_the_pub(logged_in_client, current_savegame):
-    """
-    The pub card only renders once somebody is standing in the pub, so an empty one left the whole
-    template - its includes and their "load" tags included - unexercised by the suite. It runs every
-    stat through the two warrior components, which reach the "obscurify" library by name.
-    """
-    mercenary = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
-    current_savegame.player_faction.available_mercenaries.add(mercenary)
+def test_town_board_view_reads_the_faction_off_the_savegame(
+    logged_in_client, savegame_whose_rival_is_the_older_faction
+):
+    FactionFactory(savegame=SavegameFactory())
 
-    response = logged_in_client.get(
-        reverse("warband:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
-    )
+    response = logged_in_client.get(reverse("warband:town-board-view"))
 
     assert response.status_code == 200
-    assert list(response.context["object"].available_mercenaries.all()) == [mercenary]
-
-
-@pytest.mark.django_db
-def test_town_square_view_holds_the_mercenaries_in_the_players_pub(logged_in_client, current_savegame):
-    """
-    The page holding the pub answers this the same way the pub's own partial does, or the first
-    "loadPubMercenaryList" swap changes what the cards give away.
-    """
-    response = logged_in_client.get(
-        reverse("warband:town-square-view", kwargs={"pk": current_savegame.player_faction.id})
-    )
-
-    assert response.status_code == 200
-    assert response.context["held_knowledge"] is WarriorKnowledge.HELD
-
-
-@pytest.mark.django_db
-def test_town_square_view_hides_factions_of_other_savegames(logged_in_client, current_savegame):
-    other_savegame = SavegameFactory()
-    foreign_faction = FactionFactory(savegame=other_savegame)
-
-    response = logged_in_client.get(reverse("warband:town-square-view", kwargs={"pk": foreign_faction.id}))
-
-    assert response.status_code == 404
+    assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
 
 
 @pytest.mark.django_db
@@ -1552,13 +1584,26 @@ def test_faction_shop_item_list_view_hides_factions_of_other_savegames(logged_in
 
 
 @pytest.mark.django_db
-def test_town_square_view_without_an_active_savegame(logged_in_client):
+def test_faction_shop_item_list_view_without_an_active_savegame(logged_in_client):
     """
-    Answering 404 rather than a server error: the mixin narrows to nothing when there is no savegame.
+    Answering 404 rather than a server error: the savegame-scoped mixin narrows to nothing when there
+    is no savegame at all, and this partial still takes a faction id and is still reachable by one.
     """
     faction = FactionFactory()
 
-    response = logged_in_client.get(reverse("warband:town-square-view", kwargs={"pk": faction.pk}))
+    response = logged_in_client.get(reverse("warband:shop-item-list-htmx", kwargs={"pk": faction.pk}))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_town_shop_view_without_an_active_savegame(logged_in_client):
+    """
+    Answering 404 rather than a server error: the mixin narrows to nothing when there is no savegame.
+    """
+    FactionFactory()
+
+    response = logged_in_client.get(reverse("warband:town-shop-view"))
 
     assert response.status_code == 404
 

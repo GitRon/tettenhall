@@ -1,8 +1,7 @@
 import pytest
 from django.test import RequestFactory
-from django.urls import reverse
+from django.urls import resolve, reverse
 
-from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.navigation.context_processors import navigation
 
 
@@ -53,18 +52,24 @@ def test_navigation_offers_the_pages_of_the_current_section(logged_in_client, cu
 
 
 @pytest.mark.django_db
-def test_navigation_offers_no_pages_for_a_section_that_is_not_on_the_bar(
-    logged_in_client, savegame_without_player_faction
-):
+def test_navigation_offers_no_pages_for_a_section_that_is_not_on_the_bar(user, savegame_without_player_faction):
     """
     Town is dropped without a player faction, so its page nav must not be offering Buildings under a
     section nothing names.
+
+    Driven through the context processor rather than through a page, because there is no longer a
+    town page that renders in this state - every one of them reads the faction off the savegame and
+    answers 404 when there is none, and "404.html" does not extend "base.html". The guard is what
+    stands between that and the day one of them does render.
     """
-    rival_faction = FactionFactory(savegame=savegame_without_player_faction)
+    request = RequestFactory().get("/town/shop")
+    request.user = user
+    request.resolver_match = resolve("/town/shop")
 
-    response = logged_in_client.get(reverse("warband:town-square-view", kwargs={"pk": rival_faction.id}))
+    result = navigation(request)
 
-    assert response.context["nav_pages"] == []
+    assert result["current_nav_section"] == "town"
+    assert result["nav_pages"] == []
 
 
 @pytest.mark.django_db
@@ -82,6 +87,18 @@ def test_navigation_offers_the_five_pages_of_the_war_band(logged_in_client, curr
         "Progress",
     ]
     assert [page["is_current"] for page in response.context["nav_pages"]] == [False, True, False, False, False]
+
+
+@pytest.mark.django_db
+def test_navigation_offers_the_four_pages_of_the_town(logged_in_client, current_savegame):
+    """
+    The landing page first, then by how often a month makes the player open them - and Buildings last,
+    because only one may be raised in a month.
+    """
+    response = logged_in_client.get(reverse("warband:town-board-view"))
+
+    assert [page["label"] for page in response.context["nav_pages"]] == ["Shop", "Pub", "Board", "Buildings"]
+    assert [page["is_current"] for page in response.context["nav_pages"]] == [False, False, True, False]
 
 
 @pytest.mark.django_db
