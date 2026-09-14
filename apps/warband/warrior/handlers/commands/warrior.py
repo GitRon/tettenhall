@@ -227,11 +227,27 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
     taken in has nothing between his release and his first fight to fill him back up, and would march
     out at whatever the beating left him - routing on the first blow for no reason a player can see.
     Holding a prisoner longer must not make him worse.
+
+    Taking him on is free and the keeping of him is not. The entry fee stays at nothing because the
+    fight is what was paid for him, and the wage below is the balance: a prisoner is worth taking
+    for what he costs to feed rather than for what he cost to catch.
     """
     # Set new faction
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
     # Remove from captured warriors
     Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior)
+
+    # The capture is the one route by which a man who draws no wage reaches an ordinary roster, where
+    # every price read off that wage is live - he would be free to keep, free to send away and free
+    # to hire back off the shelf, for ever. A man on a roster is on the payroll, so he is put on it
+    # here, where he stops being a prisoner and becomes a member of the war band.
+    #
+    # Asked of the wage rather than of the archetype, and only of a man who has none: an ordinary
+    # captive draws one already, grown with every level he earned, and re-deriving it would hand him
+    # back the price of the levy he started as.
+    if context.warrior.monthly_salary == 0:
+        Warrior.objects.put_on_payroll(obj=context.warrior)
+
     # Reduce morale
     Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=0.25)
 

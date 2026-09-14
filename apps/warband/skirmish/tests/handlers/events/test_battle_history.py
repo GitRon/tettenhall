@@ -458,6 +458,33 @@ def test_handle_warrior_improved_stats_logs_the_growth_and_the_new_wage():
     )
 
 
+def test_handle_warrior_improved_stats_says_nothing_about_the_wage_of_a_man_who_draws_none():
+    """
+    The leader is off the payroll and his levels leave him there, so pricing him at nothing would be
+    the only line in the log offering a number the player can neither spend nor be billed for.
+    """
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Eadric")
+
+    result = handle_warrior_improved_stats(
+        context=WarriorImprovedStats(
+            skirmish=skirmish,
+            warrior=warrior,
+            gained_strength=1,
+            gained_dexterity=1,
+            gained_max_health=2,
+            gained_max_morale=1,
+            gained_salary=0,
+            new_monthly_salary=0,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Eadric grew stronger: strength +1, dexterity +1, health +2, morale +1.",
+    )
+
+
 def test_handle_warrior_dropped_silver_logs_the_loot():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Cuthred")

@@ -315,11 +315,19 @@ class WarriorManager(manager.Manager):
         cheapest way to survive. The warrior reads as wounded against his new ceiling instead, which
         is what handle_progress_warrior_training already does with max_morale.
 
-        Every gain is floored at one point. A tenth of a small attribute rounds to nothing: round(v *
-        0.1) is 0 for every v from 1 to 5, five included, because Python rounds halves to even. The
-        fyrd generator sits at STATS_MU = 5 and MORALE_MU = 5, so a levy would otherwise level up,
-        gain a single hit point off his health, and charge more for it. Same reasoning and same shape
-        as max(1, morale_at_stake) in handle_morale_change_on_resolved_blow.
+        Every gain on a value there is something of is floored at one point. A tenth of a small
+        attribute rounds to nothing: round(v * 0.1) is 0 for every v from 1 to 5, five included,
+        because Python rounds halves to even. The fyrd generator sits at STATS_MU = 5 and
+        MORALE_MU = 5, so a levy would otherwise level up, gain a single hit point off his health,
+        and charge more for it. Same reasoning and same shape as max(1, morale_at_stake) in
+        handle_morale_change_on_resolved_blow.
+
+        A value of zero is left at zero, because the floor answers "this gain is too small to see"
+        and a zero is not a small value but the absence of one. Only the salary can be zero here -
+        every attribute is rolled until it is above zero - and it is zero on exactly the man who
+        draws no wage. A leader put on the payroll for a single silver is on the wage bill from that
+        moment, since [filter_drawing_a_wage] is what a payroll is, and he then collects unpaid
+        months towards a walk-out the one man who can never walk is supposed to be exempt from.
 
         The *_progress columns are deliberately not involved. They belong to training, which fills and
         resets them, so keeping a fractional remainder there would mean a level-up eats a month of
@@ -330,7 +338,11 @@ class WarriorManager(manager.Manager):
         obj.refresh_from_db()
 
         grown_fields = ("strength", "dexterity", "max_health", "max_morale", "monthly_salary")
-        gains = {field: max(1, round(getattr(obj, field) * self.model.LEVEL_UP_GROWTH)) for field in grown_fields}
+        gains = {}
+
+        for field in grown_fields:
+            current = getattr(obj, field)
+            gains[field] = max(1, round(current * self.model.LEVEL_UP_GROWTH)) if current else 0
 
         for field, gain in gains.items():
             setattr(obj, field, getattr(obj, field) + gain)
@@ -520,6 +532,25 @@ class WarriorManager(manager.Manager):
         obj.save(update_fields=("faction",))
 
         return obj
+
+    def put_on_payroll(self, *, obj) -> int:
+        """
+        Give a man a wage off the price he was rolled at, and hand back what he now draws.
+
+        The same expression the generators price a wage with, and the same share [hiring_price]
+        inverts to price a hire - so a man who arrives on a roster by a route the generators do not
+        cover costs to keep what a man of his worth costs to keep, rather than what the route he
+        took happened to leave on his row.
+
+        "recruitment_price" is the figure to read because it survives every warrior untouched: it is
+        what he was rolled at and nothing since has written to it. His salary is the field that can
+        be missing, which is what this is for.
+        """
+        obj.refresh_from_db()
+        obj.monthly_salary = round(obj.recruitment_price * self.model.SALARY_SHARE_OF_PRICE)
+        obj.save(update_fields=("monthly_salary",))
+
+        return obj.monthly_salary
 
 
 WarriorManager = WarriorManager.from_queryset(WarriorQuerySet)

@@ -51,10 +51,12 @@ class BaseWarriorGenerator:
     # losing him defeats the faction. Billing for him would be billing for the one man the player
     # never chose and can never be rid of.
     #
-    # It zeroes the wage and nothing else. "recruitment_price" stays as rolled, so
-    # "slavery_selling_price" still says what a captured leader fetches - the one of the three
-    # derived prices a leader can actually reach. The other two read off the wage and so read zero,
-    # which is right for a man who is never hired and never sent away.
+    # It zeroes the wage and nothing else. "recruitment_price" stays as rolled, which is what
+    # "slavery_selling_price" reads to say what a captured leader fetches, and what
+    # "Warrior.objects.put_on_payroll" reads to give a man a wage when he arrives on a roster
+    # without one. "hiring_price" and "severance_pay" read off the wage and so read zero, which is
+    # right for a man who is never hired and never sent away - and the capture flow is what keeps
+    # that true, since the one route onto an ordinary roster puts him on the payroll on the way.
     draws_a_wage = True
 
     culture: Culture
