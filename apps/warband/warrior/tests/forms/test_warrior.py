@@ -5,6 +5,7 @@ from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.forms.warrior import WarriorForm
 
@@ -169,3 +170,62 @@ def test_label_from_instance_does_not_name_the_slot_s_own_man():
     form = WarriorForm(instance=warrior, htmx_field="weapon")
 
     assert "carried by" not in form.fields["weapon"].label_from_instance(warrior.weapon)
+
+
+@pytest.mark.django_db
+def test_the_slot_offers_what_the_faction_owns():
+    warrior = WarriorFactory()
+    spare_weapon = ItemFactory(
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        owner=warrior.faction,
+        savegame=warrior.savegame,
+    )
+
+    form = WarriorForm(instance=warrior, htmx_field="weapon")
+
+    assert list(form.fields["weapon"].queryset) == [spare_weapon]
+
+
+@pytest.mark.django_db
+def test_the_slot_does_not_offer_the_gear_of_a_man_in_an_open_fight():
+    """
+    The far end of a swap is the one item the list must not hold: picking it takes the sword off a
+    man a blow is still being rolled for. An option that could only be refused is a control this
+    batch removes rather than explains.
+    """
+    warrior = WarriorFactory()
+    holder = WarriorFactory(faction=warrior.faction)
+    holder.weapon = ItemFactory(
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        owner=warrior.faction,
+        savegame=warrior.savegame,
+    )
+    holder.save()
+    skirmish = SkirmishFactory(attacking_faction=warrior.faction, victorious_faction=None)
+    skirmish.attacking_warriors.add(holder)
+
+    form = WarriorForm(instance=warrior, htmx_field="weapon")
+
+    assert list(form.fields["weapon"].queryset) == []
+
+
+@pytest.mark.django_db
+def test_the_slot_does_not_offer_the_armour_of_a_man_in_an_open_fight():
+    """
+    The armour slot is narrowed on its own relation, so an item is left out whichever of the two a
+    warrior is holding it in.
+    """
+    warrior = WarriorFactory()
+    holder = WarriorFactory(faction=warrior.faction)
+    holder.armor = ItemFactory(
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+        owner=warrior.faction,
+        savegame=warrior.savegame,
+    )
+    holder.save()
+    skirmish = SkirmishFactory(defending_faction=warrior.faction, victorious_faction=None)
+    skirmish.defending_warriors.add(holder)
+
+    form = WarriorForm(instance=warrior, htmx_field="armor")
+
+    assert list(form.fields["armor"].queryset) == []

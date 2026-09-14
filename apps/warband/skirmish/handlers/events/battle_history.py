@@ -192,13 +192,19 @@ def handle_warrior_improved_stats(*, context: warrior.WarriorImprovedStats) -> C
     """
     The wage rise is told to the player at the moment it happens. A bill that grows silently is one he
     discovers as an unexplained shortfall a month later.
+
+    A man who draws no wage is told about without one. The leader is off the payroll and his levels
+    leave him off it, so a clause pricing him at nothing would be the only line in the log offering a
+    number the player can neither spend nor be billed for. The report box says it the same way.
     """
-    return CreateBattleHistory(
-        skirmish=context.skirmish,
-        message=f"{context.warrior} grew stronger: strength +{context.gained_strength}, "
+    growth = (
+        f"{context.warrior} grew stronger: strength +{context.gained_strength}, "
         f"dexterity +{context.gained_dexterity}, health +{context.gained_max_health}, "
-        f"morale +{context.gained_max_morale} — and now costs {context.new_monthly_salary} silver a month.",
+        f"morale +{context.gained_max_morale}"
     )
+    wage = f" — and now costs {context.new_monthly_salary} silver a month" if context.new_monthly_salary else ""
+
+    return CreateBattleHistory(skirmish=context.skirmish, message=f"{growth}{wage}.")
 
 
 @message_registry.register_event(event=transaction.WarriorDroppedSilver)

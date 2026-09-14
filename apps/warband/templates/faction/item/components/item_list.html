@@ -4,18 +4,18 @@
      hx-disinherit="hx-swap">
     {# The heading stands outside this element: the swap replaces the list, and a page that already #}
     {# says what it is showing does not need it said again inside. #}
-    {# Read once for the whole list rather than per card: every card offers the same roster, and #}
-    {# the "with" keeps it to the one queryset a page of unused items would otherwise repeat. #}
-    {% with roster=faction.get_all_living_warriors %}
-        {% for item in faction.get_all_unoccupied_items %}
-            {% include 'item/components/item_sell_card.html' with item=item roster=roster %}
-        {% empty %}
-            {# The same list serves a rival's page, where the property being described is not the player's #}
-            {% if is_player_faction %}
-                <p class="text-sm leading-snug text-ink-muted">Every item you own is being worn.</p>
-            {% else %}
-                <p class="text-sm leading-snug text-ink-muted">Every item they own is being worn.</p>
-            {% endif %}
-        {% endfor %}
-    {% endwith %}
+    {# Read once for the whole list rather than per card - every card offers the same roster - and #}
+    {# read by the view rather than off the faction here, because the list has a rule in it: a man #}
+    {# standing in a fight nobody has settled is not a man gear may be handed to. See #}
+    {# "HandoutRosterContextMixin". #}
+    {% for item in faction.get_all_unoccupied_items %}
+        {% include 'item/components/item_sell_card.html' with item=item roster=handout_roster %}
+    {% empty %}
+        {# The same list serves a rival's page, where the property being described is not the player's #}
+        {% if is_player_faction %}
+            <p class="text-sm leading-snug text-ink-muted">Every item you own is being worn.</p>
+        {% else %}
+            <p class="text-sm leading-snug text-ink-muted">Every item they own is being worn.</p>
+        {% endif %}
+    {% endfor %}
 </div>

@@ -1,8 +1,13 @@
 <div id="partial-field-container-{{ attribute }}">
     <span>{{ field_value|default_if_none:"No item selected" }}</span>
     {# Shown for the player's own men only: the update view resolves nobody else, so on a prisoner or #}
-    {# a pub mercenary - whose gear he may read - this button could only ever answer 404 #}
-    {% if can_edit_gear %}
+    {# a pub mercenary - whose gear he may read - this button could only ever answer 404. And only #}
+    {# while the man is in no fight anybody is still playing out: a blow is rolled off this slot #}
+    {# while that fight is open, so the sentence stands in the button's place rather than the button #}
+    {# standing there to be refused - the way the dismissal card reads its own refusal. #}
+    {% if gear_refusal %}
+        <span class="text-sm leading-snug text-ink-muted">{{ gear_refusal }}</span>
+    {% elif can_edit_gear %}
         {# Named after the field it edits rather than a bare "Edit": both buttons sit on one page, #}
         {# and a screen reader reading them out has nothing else to tell them apart by #}
         <button hx-get="{% url 'warband:warrior-partial-update-view' object.id attribute %}"

@@ -645,6 +645,38 @@ def test_faction_item_list_view_does_not_mark_a_rival_as_the_players_own(logged_
 
 
 @pytest.mark.django_db
+def test_faction_item_list_view_offers_the_men_an_item_may_be_handed_to(logged_in_client, current_savegame):
+    """
+    A man standing in a fight nobody has settled fights on with what he marched out with, so the
+    "Give to" picker leaves him out rather than offering an option the assign view would refuse.
+    """
+    free_warrior = WarriorFactory(faction=current_savegame.player_faction)
+    fighting_warrior = WarriorFactory(faction=current_savegame.player_faction)
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
+    skirmish.attacking_warriors.add(fighting_warrior)
+
+    response = logged_in_client.get(
+        reverse("warband:faction-item-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert list(response.context["handout_roster"]) == [free_warrior]
+
+
+@pytest.mark.django_db
+def test_faction_item_list_view_offers_no_picker_on_a_rivals_stores(logged_in_client, current_savegame):
+    """
+    A rival's page carries no controls at all, so the roster behind them is a query for a picker
+    nobody is shown.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("warband:faction-item-list-htmx", kwargs={"pk": rival_faction.id}))
+
+    assert list(response.context["handout_roster"]) == []
+
+
+@pytest.mark.django_db
 def test_faction_pub_mercenary_list_view_shows_the_faction(logged_in_client, current_savegame):
     """
     The pub's own partial, so that hiring the last mercenary re-renders the list rather than only the

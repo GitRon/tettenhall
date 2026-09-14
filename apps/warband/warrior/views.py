@@ -28,6 +28,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     RecruitCapturedWarrior,
 )
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
+from apps.warband.warrior.services.equipping import get_equip_refusal
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
@@ -107,7 +108,14 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         # update view resolves nobody else. Rendering the edit control for them would be exactly the
         # control-that-can-only-fail this batch removed twice already.
         context["is_player_faction"] = player_faction is not None and self.object.faction_id == player_faction.id
-        context["can_edit_gear"] = context["is_player_faction"]
+        # The same function the update view asks before it dispatches, so a control this page offers
+        # and a save that view accepts cannot come apart - the shape the dismissal card already uses.
+        # Asked with no item, which is the wearer's own verdict: the far end of a swap belongs to the
+        # option the player has not picked yet, and the slot's own list leaves those out.
+        context["gear_refusal"] = (
+            get_equip_refusal(warrior=self.object, item=None) if context["is_player_faction"] else None
+        )
+        context["can_edit_gear"] = context["is_player_faction"] and context["gear_refusal"] is None
         # Asked once and kept, because the roster context below needs the same two answers to say
         # which list this man was read off. Each is guarded by everything that already settles the
         # question: one of the player's own men is neither, and a prisoner is not also for hire - so
@@ -159,7 +167,34 @@ class WarriorWeaponUpdateView(RunningSavegameRequiredMixin, PlayerFactionScopedQ
         if self.htmx_field not in WarriorForm.Meta.fields:
             raise Http404("Unknown warrior attribute.")
 
+        # Before the method split rather than in "form_valid", because the GET that opens the slot is
+        # as much of a way in as the POST that saves it: a form handed to a man in an open fight is a
+        # control that could only ever be refused, which is the thing the page above already declines
+        # to render.
+        #
+        # Only the man being edited. The far end of a swap is guarded by the field's own queryset,
+        # which no longer offers the gear of anybody standing in a fight - see "WarriorForm", where
+        # an item the list does not hold is not a valid choice either. A second check here would be a
+        # branch nothing can reach.
+        refusal = get_equip_refusal(warrior=self.get_object(), item=None)
+        if refusal is not None:
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps({"notification": refusal})
+            return response
+
         return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None) -> Warrior:
+        """
+        The man this slot belongs to, resolved once for the whole request.
+
+        Django's own "get" and "post" each resolve him again, and the guard above is a third caller -
+        so without this an edit costs three reads of one row.
+        """
+        if self.object is None:
+            self.object = super().get_object(queryset)
+
+        return self.object
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -195,8 +230,9 @@ class WarriorWeaponUpdateView(RunningSavegameRequiredMixin, PlayerFactionScopedQ
         context["object"] = self.object
         context["attribute"] = self.htmx_field
         context["field_value"] = getattr(self.object, self.htmx_field)
-        # This view resolves the player's own men and nobody else, so anything it re-renders is
-        # editable by construction - without this the control removes itself after one use
+        # This view resolves the player's own men and nobody else, and "dispatch" has already turned
+        # away anybody standing in an open fight - so anything it re-renders is editable by
+        # construction. Without this the control removes itself after one use.
         context["can_edit_gear"] = True
         return context
 
