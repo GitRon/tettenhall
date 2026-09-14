@@ -97,8 +97,8 @@ def test_navigation_offers_the_four_pages_of_the_town(logged_in_client, current_
     """
     response = logged_in_client.get(reverse("warband:town-board-view"))
 
-    assert [page["label"] for page in response.context["nav_pages"]] == ["Shop", "Pub", "Board", "Buildings"]
-    assert [page["is_current"] for page in response.context["nav_pages"]] == [False, False, True, False]
+    assert [page["label"] for page in response.context["nav_pages"]] == ["Board", "Shop", "Pub", "Buildings"]
+    assert [page["is_current"] for page in response.context["nav_pages"]] == [True, False, False, False]
 
 
 @pytest.mark.django_db
