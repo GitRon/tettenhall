@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Runs the two gates from .github/workflows/tests.yml locally and records the outcome.
+# Runs the two gates from .github/workflows/tests.yml locally, plus the one gate no CI run can have,
+# and records the outcome.
 #
 # Usage: bash .claude/skills/implement-story/scripts/ci.sh .claude/runs/<slug>
-# Exit code: 0 when both gates pass, 1 otherwise.
+# Exit code: 0 when every gate passes, 1 otherwise.
 
 set -uo pipefail
 
@@ -38,7 +39,25 @@ fi
 uv run pytest --cov > "$LOG_DIR/pytest.log" 2>&1
 test_status=$?
 
+# The suite above already refuses a migration graph with two leaves - "migrate" raises before a single
+# database test runs. What it cannot see is the neighbouring worktree holding the other 0009, because
+# that number only becomes a conflict once both branches are in the same tree. By then the run that
+# would have caught it is a green tick on a merged pull request.
+BASE_REF="$(sed -n 's/.*"base"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$RUN_DIR/state.json" 2>/dev/null | head -n 1)"
+bash "$REPO_ROOT/.claude/skills/implement-story/scripts/migration-numbers.sh" "${BASE_REF:-github/main}" \
+  > "$LOG_DIR/migration-numbers.log" 2>&1
+migration_status=$?
+
 verdict() { [ "$1" -eq 0 ] && echo "PASS" || echo "FAIL"; }
+
+# A number shared with a neighbour exits 0 and still has something to say: that branch may never land,
+# so it is worth a line in the report and not worth blocking on.
+migration_verdict="PASS"
+if [ $migration_status -ne 0 ]; then
+  migration_verdict="FAIL"
+elif [ -s "$LOG_DIR/migration-numbers.log" ]; then
+  migration_verdict="WARN"
+fi
 
 {
   echo "# CI gates"
@@ -49,6 +68,7 @@ verdict() { [ "$1" -eq 0 ] && echo "PASS" || echo "FAIL"; }
   echo "|---|---|---|"
   echo "| Lint | \`pre-commit run --all-files\` ($lint_passes pass(es)) | $(verdict $lint_status) |"
   echo "| Tests + coverage | \`uv run pytest --cov\` | $(verdict $test_status) |"
+  echo "| Migration numbers | \`migration-numbers.sh ${BASE_REF:-github/main}\` | $migration_verdict |"
   echo
   if [ $lint_status -ne 0 ]; then
     echo "## pre-commit (last 60 lines)"
@@ -66,12 +86,20 @@ verdict() { [ "$1" -eq 0 ] && echo "PASS" || echo "FAIL"; }
     echo '```'
     echo
   fi
+  if [ "$migration_verdict" != "PASS" ]; then
+    echo "## Migration numbers"
+    echo
+    echo '```'
+    cat "$LOG_DIR/migration-numbers.log"
+    echo '```'
+    echo
+  fi
   echo "Full output: \`${LOG_DIR#"$REPO_ROOT/"}/\`"
 } > "$OUT"
 
 cat "$OUT"
 
-if [ $lint_status -eq 0 ] && [ $test_status -eq 0 ]; then
+if [ $lint_status -eq 0 ] && [ $test_status -eq 0 ] && [ $migration_status -eq 0 ]; then
   exit 0
 fi
 exit 1

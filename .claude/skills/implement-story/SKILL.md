@@ -258,11 +258,19 @@ its story next reads that list, and a plan's guess is worth less to it than the 
 bash .claude/skills/implement-story/scripts/ci.sh .claude/runs/<slug>
 ```
 
-Runs the same two gates as `.github/workflows/tests.yml`: `pre-commit run --all-files` (twice, because the
-formatting hooks fail the run they rewrote) and `uv run pytest --cov` behind the 100% branch gate. Results
-land in `ci.md`, full output in `ci-logs/`.
+Runs the two gates from `.github/workflows/tests.yml` - `pre-commit run --all-files` (twice, because the
+formatting hooks fail the run they rewrote) and `uv run pytest --cov` behind the 100% branch gate - plus
+`migration-numbers.sh`, which no CI run can stand in for. Results land in `ci.md`, full output in `ci-logs/`.
 
-Fix and re-run until both are green, counting rounds in `ci_attempts`. **The review does not start on a
+The suite already refuses a migration graph with two leaves: `migrate` raises before a single database test
+gets a connection. What it cannot see is the neighbouring worktree holding the other `0009`. That number is
+only a conflict once both branches are in one tree, and by then the run that would have caught it is a green
+tick on a pull request that has already merged. The third gate reads `base` out of `state.json` and compares
+the numbers there and in every sibling worktree against this one: a number the base already uses is a
+failure, a number a neighbour is using is a warning, since that branch may never land and renumbering costs
+nothing. The fix either way is to rename the file and repoint its `dependencies`.
+
+Fix and re-run until all three are green, counting rounds in `ci_attempts`. **The review does not start on a
 red run** - reviewers must not spend wall-clock on findings a linter would have caught for free. If
 coverage is short, read [coverage](../../../docs/patterns/coverage.md): the fix is a test, never
 `# pragma: no cover` and never a lower `fail_under`.
