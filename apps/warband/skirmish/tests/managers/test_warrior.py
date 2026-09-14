@@ -597,6 +597,22 @@ def test_apply_level_up_growth_floors_every_gain_at_one_point():
 
 
 @pytest.mark.django_db
+def test_apply_level_up_growth_leaves_a_wage_of_nothing_at_nothing():
+    """
+    The leader draws no wage, and the floor would hand him one silver for his first level. That puts
+    the one man who can never be dismissed onto the wage bill, which is "monthly_salary" above zero,
+    and from there onto the unpaid months that end in a walk-out he is meant to be exempt from.
+    """
+    warrior = WarriorFactory(strength=10, dexterity=10, max_health=20, max_morale=20, monthly_salary=0)
+
+    result = Warrior.objects.apply_level_up_growth(obj=warrior)
+
+    assert result == {"strength": 1, "dexterity": 1, "max_health": 2, "max_morale": 2, "monthly_salary": 0}
+    warrior.refresh_from_db()
+    assert warrior.monthly_salary == 0
+
+
+@pytest.mark.django_db
 def test_apply_level_up_growth_leaves_the_current_values_alone():
     """
     Experience arrives during a skirmish, so raising current_health along with the maximum would top a
@@ -873,3 +889,19 @@ def test_release_from_roster_of_a_faction_without_a_leader():
     result = Warrior.objects.release_from_roster(obj=warrior, faction=faction)
 
     assert result == 1
+
+
+@pytest.mark.django_db
+def test_put_on_payroll_prices_the_wage_off_the_recruitment_price():
+    """
+    The share the generators price a wage with, so a man who reaches a roster by a route they do not
+    cover costs what a man of his worth costs to keep. Half of an odd price lands on a half, and it
+    rounds the way the generator's own expression rounds it - to even, so 188 rather than 189.
+    """
+    warrior = WarriorFactory(recruitment_price=377, monthly_salary=0)
+
+    result = Warrior.objects.put_on_payroll(obj=warrior)
+
+    assert result == 188
+    warrior.refresh_from_db()
+    assert warrior.monthly_salary == 188

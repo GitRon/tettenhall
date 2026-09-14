@@ -445,6 +445,43 @@ def test_handle_recruit_captured_warrior_reports_no_recovery_from_a_captive_at_f
 
 
 @pytest.mark.django_db
+def test_handle_recruit_captured_warrior_puts_a_captured_leader_on_the_payroll():
+    """
+    A leader is generated drawing nothing, and the capture is the one route by which such a man
+    reaches an ordinary roster - where the wage bill, the severance and the pub price all read that
+    zero. Without a wage he is free to keep, free to send away and free to hire back for ever.
+    """
+    faction = FactionFactory()
+    captured_leader = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, recruitment_price=377, monthly_salary=0
+    )
+    faction.captured_warriors.add(captured_leader)
+
+    handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captured_leader, faction=faction, month=3))
+
+    captured_leader.refresh_from_db()
+    assert captured_leader.monthly_salary == 188
+
+
+@pytest.mark.django_db
+def test_handle_recruit_captured_warrior_leaves_an_ordinary_captives_wage_alone():
+    """
+    His salary grew with every level he earned, and re-deriving it from the price he was rolled at
+    would hand him back the wage of the levy he started as.
+    """
+    faction = FactionFactory()
+    captive = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, recruitment_price=344, monthly_salary=250
+    )
+    faction.captured_warriors.add(captive)
+
+    handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    captive.refresh_from_db()
+    assert captive.monthly_salary == 250
+
+
+@pytest.mark.django_db
 def test_handle_change_warrior_max_morale_raises_the_ceiling():
     warrior = WarriorFactory(current_morale=10, max_morale=20)
 
