@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from django.db import IntegrityError
 
 from apps.warband.training.models import Training
 from apps.warband.training.tests.factories.training import TrainingFactory
@@ -117,3 +118,15 @@ def test_grown_attributes_display_reads_the_category_of_the_row():
     training = TrainingFactory.build(category=Training.TrainingCategory.SHIELD_WALL)
 
     assert training.grown_attributes_display == "Health or Morale"
+
+
+@pytest.mark.django_db
+def test_a_faction_trains_by_a_single_regimen():
+    """
+    The standing order is one row. A second one for the same faction would leave every reader of a
+    faction's training picking one of two answers, and nothing downstream could tell which.
+    """
+    training = TrainingFactory(category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    with pytest.raises(IntegrityError):
+        TrainingFactory(faction=training.faction, category=Training.TrainingCategory.SWIFTNESS)

@@ -1,5 +1,10 @@
+import typing
+
 from django.db import models
 from django.db.models import manager
+
+if typing.TYPE_CHECKING:
+    from apps.warband.training.models import Training
 
 
 class TrainingQuerySet(models.QuerySet):
@@ -16,7 +21,14 @@ class TrainingQuerySet(models.QuerySet):
 
 
 class TrainingManager(manager.Manager):
-    pass
+    def regimen_for_faction(self, *, faction_id: int) -> Training | None:
+        """
+        The regimen this faction trains by, or None for a savegame that predates the row.
+
+        A lookup rather than a pick out of a set: the one-to-one to Faction is what guarantees
+        there is at most one, so every caller reading a faction's training gets the same answer.
+        """
+        return self.filter_faction(faction_id=faction_id).first()
 
 
 TrainingManager = TrainingManager.from_queryset(TrainingQuerySet)
