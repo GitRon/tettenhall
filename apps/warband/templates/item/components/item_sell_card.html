@@ -1,4 +1,4 @@
-{% load l10n %}
+{% load handout l10n %}
 <div class="mb-5 box-border bg-ground text-ink-muted border border-rule">
     <div class="border-b border-rule px-[30px] py-[15px]">
         {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
@@ -52,14 +52,18 @@
                       hx-swap="none">
                     {# Named after the item rather than "Give to": every unused item renders one of #}
                     {# these, and a screen reader reading them out has nothing else to tell them apart #}
-                    {# by. Each option carries the man's name and what he already holds in this slot, #}
-                    {# because that is what the player is about to displace. #}
+                    {# by. Each option carries the man's name, what the swap is worth - two item names #}
+                    {# settle nothing and neither one's dice are on the option - and then what he #}
+                    {# already holds in this slot, which is what the player is about to displace. #}
+                    {# The figure stands ahead of the bracket because a select on a phone is narrower #}
+                    {# than the label: the item name is the context and the number is the answer, so #}
+                    {# the clipping has to eat the context. #}
                     <select aria-label="Give {{ item.display_name }} to"
                             class="box-border h-10 min-w-0 flex-1 border border-rule bg-ground py-0 pl-2.5 pr-5 text-base text-ink"
                             name="warrior">
                         {% for warrior in roster %}
                             <option value="{{ warrior.id|unlocalize }}">
-                                {{ warrior.display_name }}
+                                {{ warrior.display_name }} {{ warrior|gear_gain:item }}
                                 {% if item.is_weapon %}
                                     ({{ warrior.weapon.display_name|default:"empty-handed" }})
                                 {% else %}

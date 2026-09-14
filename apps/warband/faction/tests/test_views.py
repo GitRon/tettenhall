@@ -663,6 +663,21 @@ def test_faction_item_list_view_offers_the_men_an_item_may_be_handed_to(logged_i
 
 
 @pytest.mark.django_db
+def test_faction_item_list_view_hands_each_man_what_the_offered_item_has_to_beat(logged_in_client, current_savegame):
+    """
+    An option says whether the item on offer beats what it would displace, and the man's half of that
+    comparison is read here rather than per option - the empty slot's figure is a query.
+    """
+    WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(
+        reverse("warband:faction-item-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
+    )
+
+    assert response.context["handout_roster"][0].held_gear_values == {"weapon": 2, "armor": 1.5}
+
+
+@pytest.mark.django_db
 def test_faction_item_list_view_offers_no_picker_on_a_rivals_stores(logged_in_client, current_savegame):
     """
     A rival's page carries no controls at all, so the roster behind them is a query for a picker

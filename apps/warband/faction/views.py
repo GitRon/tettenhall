@@ -15,6 +15,7 @@ from apps.warband.faction.messages.commands.faction import OccupyFaction
 from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
+from apps.warband.item.services.handout import annotate_held_gear_values
 from apps.warband.quest.models.quest import Quest
 from apps.warband.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
@@ -150,7 +151,9 @@ class HandoutRosterContextMixin(PlayerFactionAwareContextMixin):
 
     Once for the whole column rather than once per card, the same reason
     "RosterDismissalContextMixin" asks its own question a roster at a time: the stores page renders a
-    card per unused item and they all offer the same roster.
+    card per unused item and they all offer the same roster. Each man arrives carrying what his slots
+    are worth, so an option can say whether the item on offer beats what it would displace without
+    the empty case costing a query - see "annotate_held_gear_values".
 
     Only for the player's own faction. A rival's stores page carries no controls at all, so the
     roster behind them is a query for a picker nobody is shown.
@@ -160,11 +163,13 @@ class HandoutRosterContextMixin(PlayerFactionAwareContextMixin):
         context = super().get_context_data(**kwargs)
 
         context["handout_roster"] = (
-            self.object.get_all_living_warriors().exclude(
-                id__in=Warrior.objects.filter_standing_in_an_open_fight().values("id")
+            annotate_held_gear_values(
+                roster=self.object.get_all_living_warriors().exclude(
+                    id__in=Warrior.objects.filter_standing_in_an_open_fight().values("id")
+                )
             )
             if context["is_player_faction"]
-            else Warrior.objects.none()
+            else []
         )
 
         return context
