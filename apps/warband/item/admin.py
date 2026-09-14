@@ -7,7 +7,7 @@ from apps.warband.item.models.item_type import ItemType
 
 @admin.register(ItemType)
 class ItemTypeAdmin(ReadOnlyAdmin):
-    list_display = ("name", "base_value", "function", "svg_image_name", "is_fallback")
+    list_display = ("name", "base_value", "function", "tier", "svg_image_name", "is_fallback")
 
 
 @admin.register(Item)

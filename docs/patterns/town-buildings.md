@@ -34,6 +34,12 @@ holding that level's numbers:
   on that service or generator — `SkirmishDamageService.MINIMUM_DAMAGE_SHARE`, an item generator's
   `MODIFIER_ROLLS_MU`, a warrior generator's `STATS_MU`. `apps/warband/town/buildings/` is the home for levers, not
   a registry of every number in the game.
+- **Which item types exist for whom is tuned in the `itemtype` fixture, through `tier`.** An item
+  generator declares the bands it draws from (`BaseItemGenerator.item_tiers`) and the fixture decides which
+  types sit in each, so moving a weapon between a levy's reach and a leader's is a data edit. That is a
+  separate axis from the weaponsmith's `quality_bonus`, which sets an item's *quality* rather than which
+  types a warrior can draw at all. No building levers the pool, so it does not live under
+  `apps/warband/town/buildings/` despite the rule above.
 - **A number that differs per warrior or per item is a column, not a constant.** `Warrior.strength_baseline`
   is the archetype mean a man's strength is measured against, written by the generator that drew him: one
   constant on the attack service cannot sit on three archetype means at once.

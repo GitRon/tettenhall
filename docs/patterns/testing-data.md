@@ -32,8 +32,8 @@ WarriorFactory(faction__town__sanctuary=3)
 (`apps/warband/fixtures/culture.json`, `apps/warband/fixtures/itemtype.json`,
 `apps/warband/fixtures/questname.json` — Django discovers fixtures at `<app>/fixtures/` only, so they sit
 at the app root rather than in the topic package that owns the model) and every environment has them. The generators query them —
-`FyrdItemGenerator` even filters weapons by name — so without them item, warrior and quest generation
-raises `RuntimeError`.
+`FyrdItemGenerator` narrows further, to the rustic tier — so without them item, warrior and quest
+generation raises `RuntimeError`.
 
 The root `conftest.py` loads all three fixtures once per session via `django_db_setup`. **Don't hand-seed
 cultures, item types or quest names**, and don't build look-alikes: a test that creates its own

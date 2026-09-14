@@ -1,5 +1,3 @@
-from django.db.models import QuerySet
-
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
 
@@ -12,13 +10,5 @@ class FyrdItemGenerator(BaseItemGenerator):
     ARMOR_MODIFIER_ROLLS_MU = 0
     ARMOR_MODIFIER_ROLLS_SIGMA = 2
 
-    def _get_queryset_for_type(self) -> QuerySet:
-        # TODO (#94): this is ugly
-        if self.function == ItemType.FunctionChoices.FUNCTION_WEAPON:
-            return (
-                ItemType.objects.filter(function=self.function)
-                .filter(name__in=["Pitchfork", "Spear"])
-                .exclude(is_fallback=True)
-                .order_by("?")
-            )
-        return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")
+    # A man called off the fields, in what the fields could give him
+    item_tiers = frozenset({ItemType.TierChoices.TIER_RUSTIC})

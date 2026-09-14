@@ -13,3 +13,4 @@ class ItemTypeFactory(DjangoModelFactory):
     base_value = "1d6"
     svg_image_name = "sword"
     is_fallback = False
+    tier = ItemType.TierChoices.TIER_RUSTIC

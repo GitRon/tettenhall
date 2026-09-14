@@ -25,6 +25,11 @@ class BaseItemGenerator:
     PRICE_PER_EXPECTED_DAMAGE = 10
     MINIMUM_EXPECTED_DAMAGE = 1
 
+    # The bands of standing this generator draws from, across both functions: a warrior's weapon and his
+    # armour say the same thing about where he came from. Left unset, the whole non-fallback table is in
+    # reach, which is what the shop wants and what a subclass declaring no pool of its own inherits.
+    item_tiers: frozenset[int] | None = None
+
     faction: Faction
     function: int
     savegame_id: int
@@ -69,7 +74,12 @@ class BaseItemGenerator:
         return Item.ConditionChoices.CONDITION_SUPERIOR
 
     def _get_queryset_for_type(self) -> QuerySet:
-        return ItemType.objects.filter(function=self.function).exclude(is_fallback=True).order_by("?")
+        queryset = ItemType.objects.filter(function=self.function).exclude(is_fallback=True)
+
+        if self.item_tiers is not None:
+            queryset = queryset.filter(tier__in=self.item_tiers)
+
+        return queryset.order_by("?")
 
     def process(self) -> Item:
         item_type = self._get_queryset_for_type().first()
