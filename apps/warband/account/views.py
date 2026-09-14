@@ -72,7 +72,7 @@ class DashboardView(generic.TemplateView):
             # on rather than a place of its own. Every faction of the savegame owns such a row, so
             # this has to name the player's own.
             context["current_training"] = (
-                Training.objects.for_player_faction(faction_id=current_savegame.player_faction_id).first()
+                Training.objects.regimen_for_faction(faction_id=current_savegame.player_faction_id)
                 if current_savegame.player_faction_id
                 else None
             )

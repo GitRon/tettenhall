@@ -19,8 +19,7 @@ def handle_create_training_for_new_faction(*, context: CreateNewTraining) -> lis
 
 @message_registry.register_command(command=TrainWarriors)
 def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] | Event:
-    # TODO (#101): store this months training somewhere -> in savegame?
-    training = Training.objects.filter_faction(faction_id=context.faction.id).first()
+    training = Training.objects.regimen_for_faction(faction_id=context.faction.id)
 
     # A faction without a training row has no regimen to train by. Every faction gets one from
     # NewFactionCreated on, so this is the savegame that predates the row rather than an ordinary month

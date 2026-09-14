@@ -2,7 +2,6 @@ import random
 import typing
 
 from django.db import models
-from django.db.models import UniqueConstraint
 
 from apps.warband.faction.models import Faction
 from apps.warband.training.managers.training import TrainingManager
@@ -10,7 +9,10 @@ from apps.warband.training.managers.training import TrainingManager
 
 class Training(models.Model):
     """
-    This model stores what will be trained in the current month.
+    The regimen a faction trains by: one standing order that holds until the player changes it.
+
+    One row per faction rather than one per month - the category is a choice that stands, and the
+    only question asked of it is what this faction is drilling right now.
     """
 
     TRAINING_IMPROVEMENT_MU = 15
@@ -31,15 +33,14 @@ class Training(models.Model):
     }
 
     category = models.PositiveSmallIntegerField("Category", choices=TrainingCategory.choices)
-    faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
+    faction = models.OneToOneField(Faction, verbose_name="Faction", on_delete=models.CASCADE)
 
     objects = TrainingManager()
 
     class Meta:
         verbose_name = "Training"
         verbose_name_plural = "Trainings"
-        default_related_name = "trainings"
-        constraints = (UniqueConstraint(fields=("faction", "category"), name="unique_faction_category"),)
+        default_related_name = "training"
 
     def __str__(self) -> str:
         return f"{self.get_category_display()}"
