@@ -139,13 +139,17 @@ class RosterDismissalContextMixin(FactionRosterContextMixin):
         return context
 
 
-class PlayerWarbandMixin(PlayerFactionScopedQuerysetMixin):
+class PlayerFactionMixin(PlayerFactionScopedQuerysetMixin):
     """
-    Resolves the one war band the current player commands.
+    Resolves the one faction the current player commands.
 
     The url carries no id, so the scoped queryset holds exactly that faction - and nothing at all
     before the player has an active savegame with a faction, which is a page with no subject rather
     than a server error. The same shape as "PlayerTownMixin".
+
+    Both of the sections that are the player's own stand on this: the war band's five pages, which
+    read his men and his gear, and the town's three, which read what his town is offering him this
+    month. Whose faction it is, is one question however many pages ask it.
     """
 
     model = Faction
@@ -256,7 +260,7 @@ class FactionDetailView(
 
 
 class WarbandRosterView(
-    RosterDismissalContextMixin, PlayerFactionAwareContextMixin, PlayerWarbandMixin, generic.DetailView
+    RosterDismissalContextMixin, PlayerFactionAwareContextMixin, PlayerFactionMixin, generic.DetailView
 ):
     """
     The men the player commands, and what the war band itself is.
@@ -269,25 +273,25 @@ class WarbandRosterView(
     template_name = "faction/warband_roster.html"
 
 
-class WarbandStoresView(PlayerFactionAwareContextMixin, PlayerWarbandMixin, generic.DetailView):
+class WarbandStoresView(PlayerFactionAwareContextMixin, PlayerFactionMixin, generic.DetailView):
     """What nobody is wearing, which is also what can be sold."""
 
     template_name = "faction/warband_stores.html"
 
 
-class WarbandFyrdView(PlayerWarbandMixin, generic.DetailView):
+class WarbandFyrdView(PlayerFactionMixin, generic.DetailView):
     """The levy the player can draft another man out of this month."""
 
     template_name = "faction/warband_fyrd.html"
 
 
-class WarbandCaptivesView(PlayerFactionAwareContextMixin, PlayerWarbandMixin, generic.DetailView):
+class WarbandCaptivesView(PlayerFactionAwareContextMixin, PlayerFactionMixin, generic.DetailView):
     """The prisoners the player holds, to recruit or to sell."""
 
     template_name = "faction/warband_captives.html"
 
 
-class WarbandProgressView(FactionRosterContextMixin, PlayerWarbandMixin, generic.DetailView):
+class WarbandProgressView(FactionRosterContextMixin, PlayerFactionMixin, generic.DetailView):
     """
     Where each man stands on the four attributes a month of training moves.
 
@@ -698,12 +702,38 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         return context
 
 
-class TownSquareView(PlayerFactionAwareContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
-    # Holds the pub, and is reachable for any faction of the savegame - so it answers whose town
-    # square this is for the same reason "FactionPubMercenaryListView" does, and the two have to
-    # agree or the first "loadPubMercenaryList" swap changes what the cards give away
+class TownShopView(PlayerFactionMixin, generic.DetailView):
+    """
+    The gear on the stalls this month, which is where the Town entry lands.
+
+    Carries no "PlayerFactionAwareContextMixin": the shop's list reads the items and the faction's id
+    and asks nothing about whose they are. Every man it could arm is the player's, because the page
+    has no id to be pointed anywhere else.
+    """
+
     model = Faction
-    template_name = "faction/town_square.html"
+    template_name = "faction/town_shop.html"
+
+
+class TownPubView(PlayerFactionAwareContextMixin, PlayerFactionMixin, generic.DetailView):
+    """
+    The men drinking in the player's own pub, to hire or to leave standing.
+
+    It answers whose pub this is for the same reason "FactionPubMercenaryListView" does, and the two
+    have to agree or the first "loadPubMercenaryList" swap changes what the cards give away. The
+    partial is still reachable for any faction of the savegame; this page is not, so its answer here
+    is always the player's own.
+    """
+
+    model = Faction
+    template_name = "faction/town_pub.html"
+
+
+class TownBoardView(PlayerFactionMixin, generic.DetailView):
+    """What is pinned to the board this month, and still open to be taken on."""
+
+    model = Faction
+    template_name = "faction/town_board.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

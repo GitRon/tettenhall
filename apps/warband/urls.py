@@ -72,7 +72,6 @@ urlpatterns = [
         faction_views.MonthlyCostOverview.as_view(),
         name="faction-monthly-costs-view",
     ),
-    path("faction/faction/<int:pk>/town-square", faction_views.TownSquareView.as_view(), name="town-square-view"),
     path(
         "faction/faction/<int:pk>/shop/item/htmx",
         faction_views.FactionShopItemListView.as_view(),
@@ -124,8 +123,12 @@ urlpatterns = [
         skirmish_views.SkirmishFightButtonUpdateHtmxView.as_view(),
         name="skirmish-fight-button-update-htmx",
     ),
-    # Town
-    path("town/", TownUpgradeView.as_view(), name="town-upgrade-view"),
+    # Town. No id in any of them: which town square the player stands on is the savegame's answer and
+    # not the url's, the same as the war band's five pages - see docs/patterns/navigation.md.
+    path("town/shop", faction_views.TownShopView.as_view(), name="town-shop-view"),
+    path("town/pub", faction_views.TownPubView.as_view(), name="town-pub-view"),
+    path("town/board", faction_views.TownBoardView.as_view(), name="town-board-view"),
+    path("town/buildings", TownUpgradeView.as_view(), name="town-upgrade-view"),
     path(
         "town/building/upgrade/<str:building_type>",
         UpgradeBuildingView.as_view(),

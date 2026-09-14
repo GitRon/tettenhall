@@ -2,7 +2,8 @@
      hx-trigger="loadShopItemList from:body"
      hx-swap="outerHTML"
      hx-disinherit="hx-swap">
-    <h2>Shop</h2>
+    {# Headed by the page, not here: this element is what the swap replaces, so a heading inside it #}
+    {# is a heading that disappears the first time something is bought off the stalls. #}
     {% for item in item_list %}
         {% include 'item/components/item_buy_card.html' with item=item %}
     {% endfor %}

@@ -71,4 +71,4 @@ class QuestAcceptView(
         return response
 
     def get_success_url(self):
-        return reverse("warband:town-square-view", args=(self.current_savegame.player_faction_id,))
+        return reverse("warband:town-board-view")

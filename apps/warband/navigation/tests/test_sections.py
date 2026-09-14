@@ -39,3 +39,12 @@ def test_get_section_key_reads_a_faction_page_as_a_rival():
 def test_get_section_key_reads_the_war_band_pages_as_the_war_band():
     assert get_section_key(url_name="warband-roster-view") == "warband"
     assert get_section_key(url_name="warband-progress-view") == "warband"
+
+
+def test_get_section_key_reads_the_town_pages_as_the_town():
+    """
+    The town's three offers are three pages of their own, and each has to mark the same entry.
+    """
+    assert get_section_key(url_name="town-shop-view") == "town"
+    assert get_section_key(url_name="town-pub-view") == "town"
+    assert get_section_key(url_name="town-board-view") == "town"

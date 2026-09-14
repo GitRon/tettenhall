@@ -27,7 +27,7 @@
                         <span class="block text-sm leading-snug">The board is redrawn when the month turns.</span>
                     </span>
                     <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
-                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">Board</a>
+                       href="{% url 'warband:town-board-view' %}">Board</a>
                 </li>
             {% endif %}
             {# Named rather than counted. Which rival is a fact about the player's own war band - #}
@@ -85,7 +85,7 @@
                         <span class="block text-sm leading-snug">The stalls are restocked when the month turns.</span>
                     </span>
                     <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
-                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">Shop</a>
+                       href="{% url 'warband:town-shop-view' %}">Shop</a>
                 </li>
             {% endif %}
             {% if month_standing.pub_mercenary_count %}
@@ -96,7 +96,7 @@
                         <span class="block text-sm leading-snug">They drink elsewhere when the month turns.</span>
                     </span>
                     <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
-                       href="{% url 'warband:town-square-view' current_savegame.player_faction_id %}">Pub</a>
+                       href="{% url 'warband:town-pub-view' %}">Pub</a>
                 </li>
             {% endif %}
         </ul>

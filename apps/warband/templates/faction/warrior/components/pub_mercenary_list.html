@@ -2,7 +2,8 @@
      hx-trigger="loadPubMercenaryList from:body"
      hx-swap="outerHTML"
      hx-disinherit="hx-swap">
-    <h2>Pub</h2>
+    {# Headed by the page, not here: this element is what the swap replaces, so a heading inside it #}
+    {# is a heading that disappears the first time somebody is hired out of the list. #}
     {% for warrior in faction.available_mercenaries.all %}
         {# A mercenary for hire is held, not commanded: the pub names the gear it is charging for and #}
         {# buckets everything else, which is the gamble it is selling. On a rival's town square these #}
