@@ -15,6 +15,8 @@ from pathlib import Path
 from queuebie.messages import Command, Event
 
 from apps.warband.faction.messages.events.warrior import WarriorMonthPrepared
+from apps.warband.skirmish.handlers.commands.skirmish import _withdrawing_and_remaining
+from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
 from apps.warband.tests.architecture.discovery import handler_files, module_path_for, view_module_files
 from apps.warband.warrior.messages.commands.warrior import HealInjuredWarrior
 
@@ -288,34 +290,64 @@ def test_a_command_is_handled_in_the_module_named_after_the_one_defining_it(queu
     assert mismatches == []
 
 
-def _emitted_message_types(*, node: ast.FunctionDef, module, local_nodes: dict[str, ast.FunctionDef]) -> set[type]:
+def _emitted_message_types(
+    *,
+    node: ast.FunctionDef,
+    module,
+    local_nodes: dict[str, ast.FunctionDef],
+    handler_nodes: dict[tuple[str, str], ast.FunctionDef] | None = None,
+) -> set[type]:
     """
-    Every message class a handler puts into the queue, its module-local helpers included.
+    Every message class a handler puts into the queue, the helpers it delegates to included.
 
     Following those calls is what makes this see "handle_assign_fighter_pairs": it instantiates no
     command itself, "_withdrawing_and_remaining" does. A walk of the decorated function alone misses
     the one handler the golden rule is bent for.
+
+    Two kinds of delegation are followed. A bare name defined in the handler's own module is taken
+    from "local_nodes". Anything else is resolved against the module's namespace, and followed when it
+    turns out to be a function living in one of the other handler modules - which covers a handler
+    calling a helper it imported from a sibling handler module, spelled either way round.
+
+    **What it cannot see: a message constructed in a module that holds no handlers**, a "services/"
+    helper being the obvious candidate. That blind spot is the whole file's rather than this
+    function's - "_emitted_message_paths" reads the same set of files, so test 2 cannot see such a
+    command either - and closing it means resolving imports across the tree. Nothing in the project
+    builds a message outside a handler or a view today.
     """
     emitted = set()
-    visited: set[str] = set()
+    visited: set[tuple[str, str]] = set()
 
-    def collect(*, current: ast.FunctionDef) -> None:
+    def collect(*, current: ast.FunctionDef, current_module) -> None:
         for child in ast.walk(current):
             if not isinstance(child, ast.Call):
                 continue
 
-            message_class = _resolve(node=child.func, module=module)
-            if isinstance(message_class, type) and issubclass(message_class, (Command, Event)):
-                emitted.add(message_class)
+            resolved = _resolve(node=child.func, module=current_module)
+
+            if isinstance(resolved, type) and issubclass(resolved, (Command, Event)):
+                emitted.add(resolved)
                 continue
 
-            # A plain name that is a function of this same module - recursion guarded, so a helper
-            # calling itself does not walk for ever
-            if isinstance(child.func, ast.Name) and child.func.id in local_nodes and child.func.id not in visited:
-                visited.add(child.func.id)
-                collect(current=local_nodes[child.func.id])
+            # A bare name defined beside the handler. Recursion guarded, so a helper calling itself
+            # does not walk for ever.
+            if isinstance(child.func, ast.Name) and child.func.id in local_nodes:
+                key = (getattr(current_module, "__name__", ""), child.func.id)
+                if key not in visited:
+                    visited.add(key)
+                    collect(current=local_nodes[child.func.id], current_module=current_module)
+                continue
 
-    collect(current=node)
+            # A function reached through an import, followed only as far as the handler modules go
+            if handler_nodes is None or not isinstance(resolved, types.FunctionType):
+                continue
+
+            key = (resolved.__module__, resolved.__name__)
+            if key in handler_nodes and key not in visited:
+                visited.add(key)
+                collect(current=handler_nodes[key], current_module=importlib.import_module(resolved.__module__))
+
+    collect(current=node, current_module=module)
 
     return emitted
 
@@ -348,6 +380,7 @@ def _wrong_direction_emissions(*, registry, allowlist: frozenset[str] = DIRECTIO
                         for (module_path, name), node in handler_nodes.items()
                         if module_path == definition["module"]
                     },
+                    handler_nodes=handler_nodes,
                 )
 
                 for message_class in emitted:
@@ -406,6 +439,29 @@ def test_emitted_message_types_follows_a_module_local_helper():
     result = _emitted_types_in(source=source, namespace={"HealInjuredWarrior": HealInjuredWarrior})
 
     assert result == {HealInjuredWarrior}
+
+
+def test_emitted_message_types_follows_a_helper_imported_from_another_handler_module():
+    """
+    The near miss a module-local walk alone would wave through: a handler emitting through a helper it
+    imported rather than one defined beside it.
+
+    "_withdrawing_and_remaining" stands in for that helper, and is the honest choice for it - a real
+    undecorated function in a real handler module which really does build a command, reached here by
+    an imported name. Finding the WithdrawFromSkirmish inside it is proof the walk crossed the module
+    boundary, because nothing in the snippet mentions that command.
+    """
+    source = "def handler(*, context):\n    return _withdrawing_and_remaining()\n"
+    tree = ast.parse(source)
+
+    result = _emitted_message_types(
+        node={node.name: node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}["handler"],
+        module=types.SimpleNamespace(__name__="stand_in", _withdrawing_and_remaining=_withdrawing_and_remaining),
+        local_nodes={},
+        handler_nodes=_handler_nodes(),
+    )
+
+    assert result == {WithdrawFromSkirmish}
 
 
 def test_emitted_message_types_survives_a_helper_calling_itself():
