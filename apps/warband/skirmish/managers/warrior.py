@@ -164,10 +164,10 @@ class WarriorManager(manager.Manager):
 
         The point of the current morale going to nothing is that it leaves him in exactly the state a
         rout leaves him in. That is what a man walking off the field is, and it is what keeps him
-        reachable: the monthly sweep selects on "current_morale__lt=F('max_morale')", so a warrior
-        pulled out at full morale and merely charged a point off his ceiling would come back clamped
-        to his new maximum, match neither side of that comparison, and never reach the one method that
-        clears FLEEING. Nothing anywhere else has to learn that a retreat can be deliberate.
+        reachable: the monthly refill only takes a warrior whose morale is below his ceiling, so a
+        warrior pulled out at full morale and merely charged a point off that ceiling would come back
+        clamped to his new maximum, be turned away, and never reach the one method that clears
+        FLEEING. Nothing anywhere else has to learn that a retreat can be deliberate.
 
         It is not a second price either. The sweep refills every warrior to his maximum, and nobody
         fights twice in a month, so the only man who can ever see the zero is one his faction failed to

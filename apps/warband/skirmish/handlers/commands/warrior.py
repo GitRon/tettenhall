@@ -1,9 +1,9 @@
 from queuebie import message_registry
-from queuebie.messages import Command, Event
+from queuebie.messages import Event
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.skirmish.messages.commands import warrior
-from apps.warband.skirmish.messages.commands.warrior import ReduceHealth, ReduceMorale
+from apps.warband.skirmish.messages.commands.warrior import ReduceHealth
 from apps.warband.skirmish.messages.events.warrior import (
     LastUsedSkirmishActionStored,
     WarriorGainedExperience,
@@ -12,6 +12,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorHasFled,
     WarriorImprovedStats,
     WarriorLostMorale,
+    WarriorSawComradeFall,
     WarriorWasCaptured,
     WarriorWasIncapacitated,
     WarriorWasKilled,
@@ -25,25 +26,28 @@ MAX_MORALE_COST_OF_WITHDRAWAL = 1
 
 
 @message_registry.register_command(command=warrior.ReduceMoraleOfRemainingWarriors)
-def handle_reduce_morale_of_remaining_warriors(*, context: warrior.ReduceMoraleOfRemainingWarriors) -> list[Command]:
+def handle_reduce_morale_of_remaining_warriors(*, context: warrior.ReduceMoraleOfRemainingWarriors) -> list[Event]:
+    """
+    Who on the fallen man's own side was there to see him go.
+
+    The read an event handler could not make: which warriors this skirmish fields is a query, and
+    strict mode blocks one there. What watching costs is the reaction's business rather than this
+    handler's, so what leaves here is one fact per witness.
+
+    The fallen man is dropped from his own side's list because a man cannot witness his own fall -
+    part of the fact rather than a filter on the reaction, and a list comparison rather than a
+    queryset one either way.
+    """
     if context.warrior.faction_id == context.skirmish.attacking_faction_id:
-        affected_warrior_list = context.skirmish.attacking_warriors.all()
+        comrade_list = context.skirmish.attacking_warriors.all()
     else:
-        affected_warrior_list = context.skirmish.defending_warriors.all()
+        comrade_list = context.skirmish.defending_warriors.all()
 
-    # Every other warrior from the faction participating in this battle will lose 10% morale
-    message_list = []
-    for affected_warrior in affected_warrior_list:
-        if affected_warrior != context.warrior:
-            message_list.append(
-                ReduceMorale(
-                    skirmish=context.skirmish,
-                    warrior=affected_warrior,
-                    lost_morale=round(context.warrior.max_morale * 0.1),
-                )
-            )
-
-    return message_list
+    return [
+        WarriorSawComradeFall(skirmish=context.skirmish, warrior=comrade, fallen_warrior=context.warrior)
+        for comrade in comrade_list
+        if comrade != context.warrior
+    ]
 
 
 @message_registry.register_command(command=warrior.StoreLastUsedSkirmishAction)

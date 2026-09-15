@@ -35,6 +35,27 @@ class FyrdDraftApproved(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorMonthPrepared(Event):
+    """
+    One man a faction is responsible for has entered a new month.
+
+    The third level of the family [PlayerMonthPrepared] and [FactionMonthPrepared] open: the tick
+    reaches a savegame, then each faction in it, then each man on each faction's books. Whatever
+    recovery, decay or upkeep a month brings a warrior hangs off this, and what applies to him is
+    decided by which handlers subscribe rather than by the read that raised it.
+
+    The faction is the one holding him rather than the one he belongs to. A captive has none - capture
+    clears "warrior.faction" - and he is mended at his captor's sanctuary and logged in his captor's
+    month, neither of which a handler could read off him. A reaction that must not reach a prisoner
+    compares his own "faction_id" against this one.
+    """
+
+    faction: Faction
+    warrior: Warrior
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorRecruited(Event):
     warrior: Warrior
     faction: Faction

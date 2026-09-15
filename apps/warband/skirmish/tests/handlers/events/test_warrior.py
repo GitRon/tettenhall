@@ -10,6 +10,7 @@ from apps.warband.skirmish.handlers.events.warrior import (
     handle_experience_gain_on_warrior_incapacitation,
     handle_morale_change_on_resolved_blow,
     handle_morale_drop_on_faction_on_warrior_is_out_of_fight,
+    handle_morale_drop_on_watching_a_comrade_fall,
     handle_reduce_health_and_update_condition,
     handle_stat_growth_on_warrior_level_up,
 )
@@ -27,6 +28,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
     WarriorGainedLevel,
     WarriorHasFled,
+    WarriorSawComradeFall,
     WarriorTookDamage,
     WarriorWasIncapacitated,
     WarriorWasKilled,
@@ -95,6 +97,22 @@ def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_a_killed_w
     )
 
     assert result == ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=killed_warrior)
+
+
+def test_handle_morale_drop_on_watching_a_comrade_fall_prices_the_drop_off_the_fallen_man():
+    """
+    A tenth of the *fallen* man's ceiling rather than the witness's, which is why he rides along:
+    losing the best man in the war band shakes the line harder than losing a levy does.
+    """
+    skirmish = SkirmishFactory.build()
+    witness = WarriorFactory.build(faction=skirmish.attacking_faction, max_morale=8)
+    fallen_warrior = WarriorFactory.build(faction=skirmish.attacking_faction, max_morale=20)
+
+    result = handle_morale_drop_on_watching_a_comrade_fall(
+        context=WarriorSawComradeFall(skirmish=skirmish, warrior=witness, fallen_warrior=fallen_warrior)
+    )
+
+    assert result == ReduceMorale(skirmish=skirmish, warrior=witness, lost_morale=2)
 
 
 def test_handle_experience_gain_on_warrior_incapacitation_for_an_incapacitated_warrior():

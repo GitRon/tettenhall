@@ -1,27 +1,24 @@
 import random
 
-from django.db.models import F, Q
+from django.db.models import Q
 from queuebie import message_registry
-from queuebie.messages import Command, Event
+from queuebie.messages import Event
 
 from apps.warband.faction.domain.occupation_spoils import OccupationSpoils
 from apps.warband.faction.domain.rival_income import RivalIncome
 from apps.warband.faction.messages.commands.faction import (
     ChangeFyrdReserve,
     CreateFactionsForNewSavegame,
-    CreateNewFaction,
     DefeatFactionOfLostLeader,
-    DetermineInjuredWarriors,
-    DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
     OccupyFaction,
+    PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
     SetNewLeaderWarrior,
 )
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
-    FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
     FactionWasOccupied,
     FyrdReserveChanged,
@@ -30,23 +27,61 @@ from apps.warband.faction.messages.events.faction import (
     NewFactionCreated,
     NewLeaderWarriorSet,
 )
+from apps.warband.faction.messages.events.warrior import WarriorMonthPrepared
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.faker import faker_for_locale
 from apps.warband.finance.models import Transaction
+from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
 from apps.warband.town.models import Town
-from apps.warband.warrior.messages.commands.warrior import HealInjuredWarrior
+
+
+def _create_faction(*, name: str, town_name: str, culture_id: int, savegame: Savegame, is_player: bool) -> Faction:
+    """
+    One faction and the one town it holds.
+
+    A faction always has exactly one town, so it is part of creating one rather than a reaction to it:
+    several handlers of NewFactionCreated already read faction.town, and an event handler emitting a
+    CreateTown command would land in the same batch as those, with no guaranteed order.
+    """
+    faction = Faction.objects.create(
+        name=name,
+        town_name=town_name,
+        culture_id=culture_id,
+        savegame=savegame,
+        fyrd_reserve=random.randint(2, 5),
+    )
+
+    if is_player:
+        # Every building at its 0 default, "last_constructed_building_at" included, so the player can
+        # build in month 1.
+        Town.objects.create(faction=faction)
+        savegame.player_faction = faction
+        savegame.save()
+    else:
+        # A rival is handed the one building level that decides something for it. Nothing upgrades a
+        # rival's town, so the sanctuary it is created with is the pace its wounded mend at for the
+        # rest of the savegame, and it wants choosing rather than inheriting the level of a town that
+        # has built nothing. The other three stay at 0: their levers price or stock something only
+        # the player reaches.
+        Town.objects.create(faction=faction, sanctuary=NPC_STARTING_SANCTUARY_LEVEL)
+
+    return faction
 
 
 @message_registry.register_command(command=CreateFactionsForNewSavegame)
-def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSavegame) -> list[Command]:
+def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSavegame) -> list[Event]:
     """
     Turns a fresh savegame into a populated one: the player's faction plus a few rivals.
 
     This reads cultures from the database, which is why it is a command handler - the event handler
     emitting it runs under strict mode's database blocker.
+
+    It does the creating itself rather than raising a command per faction. The one fact this topic has
+    to announce is that a faction now exists, and nothing that only plans a creation can announce it -
+    so the read and the write sit together and what leaves here is NewFactionCreated per faction.
     """
     player_culture = Culture.objects.get_or_none(id=context.faction_culture_id)
     # Cultures are reference data, so an id with no row behind it is a half-seeded database rather than
@@ -68,65 +103,36 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
     # with no rivals in it at all.
     rival_cultures = list(Culture.objects.exclude(id=player_culture.id)) or [player_culture]
 
-    rival_factions = []
+    # The player's own faction first, because it is the one the savegame is pointed at and every
+    # rival is drawn against a world he is already in
+    faction_list = [
+        _create_faction(
+            name=context.faction_name,
+            town_name=context.town_name,
+            culture_id=context.faction_culture_id,
+            savegame=context.savegame,
+            is_player=True,
+        )
+    ]
+
     for _ in range(random.randint(3, 5)):
         rival_culture = random.choice(rival_cultures)
         # A rival is named in the culture on its own row, because that is the culture its warriors are
         # generated from - naming it from anything else puts a Norse town in front of a Frisian war band.
         faker = faker_for_locale(locale=rival_culture.locale)
-        rival_factions.append(
-            CreateNewFaction(
+        faction_list.append(
+            _create_faction(
                 name=faker.city(),
                 town_name=faker.city(),
                 culture_id=rival_culture.id,
                 savegame=context.savegame,
-                is_player_faction=False,
+                is_player=False,
             )
         )
 
     return [
-        CreateNewFaction(
-            name=context.faction_name,
-            town_name=context.town_name,
-            savegame=context.savegame,
-            culture_id=context.faction_culture_id,
-            is_player_faction=True,
-        ),
-        *rival_factions,
+        NewFactionCreated(faction=faction, current_month=context.savegame.current_month) for faction in faction_list
     ]
-
-
-@message_registry.register_command(command=CreateNewFaction)
-def handle_create_new_faction(*, context: CreateNewFaction) -> list[Event] | Event:
-    faction = Faction.objects.create(
-        name=context.name,
-        town_name=context.town_name,
-        culture_id=context.culture_id,
-        savegame=context.savegame,
-        fyrd_reserve=random.randint(2, 5),
-    )
-
-    # A faction always has exactly one town, so it is part of creating one rather than a reaction to
-    # it: several handlers of NewFactionCreated already read faction.town, and an event handler
-    # emitting a CreateTown command would land in the same batch as those, with no guaranteed order.
-    if context.is_player_faction:
-        # Every building at its 0 default, "last_constructed_building_at" included, so the player can
-        # build in month 1.
-        Town.objects.create(faction=faction)
-        context.savegame.player_faction = faction
-        context.savegame.save()
-    else:
-        # A rival is handed the one building level that decides something for it. Nothing upgrades a
-        # rival's town, so the sanctuary it is created with is the pace its wounded mend at for the
-        # rest of the savegame, and it wants choosing rather than inheriting the level of a town that
-        # has built nothing. The other three stay at 0: their levers price or stock something only
-        # the player reaches.
-        Town.objects.create(faction=faction, sanctuary=NPC_STARTING_SANCTUARY_LEVEL)
-
-    return NewFactionCreated(
-        faction=faction,
-        current_month=context.savegame.current_month,
-    )
 
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
@@ -163,79 +169,37 @@ def handle_change_fyrd_reserve(*, context: ChangeFyrdReserve) -> Event:
     return FyrdReserveChanged(faction=context.faction, change=context.change, month=context.month)
 
 
-@message_registry.register_command(command=DetermineWarriorsWithReducedMorale)
-def handle_determine_warriors_with_reduced_morale(*, context: DetermineWarriorsWithReducedMorale) -> Event:
-    # The roster only, captives deliberately excluded - unlike the healing sweep below, which does
-    # reach them. Health is what a captor can mend; spirit is not, and
-    # "handle_replenish_warrior_morale" refills to the maximum unconditionally, so a month in an
-    # enemy cell would restore a man completely.
-    #
-    # Settled, not an oversight left next to a healing sweep that was taught the opposite lesson: a
-    # captive keeps whatever morale the fight left him for as long as he is held, and gets it back
-    # the moment "handle_recruit_captured_warrior" puts him under a banner - that handler fills him
-    # up itself rather than leaving him to this sweep, which would not reach him until the following
-    # month and would send him into a fight with nothing in him first. Nobody is stranded routed here
-    # either - prisoners are taken from the unconscious alone ("handle_finish_skirmish"), and a man
-    # who fled the field walked off it.
-    #
-    # A man who was not paid does not cheer up either, and this is what makes that stick:
-    # "handle_replenish_warrior_morale" refills to the maximum, so without the "unpaid_months"
-    # filter the sweep would hand back every point insolvency had just taken, in the same month it
-    # took them. The salary run writes that counter before this reads it - both hang off
-    # FactionMonthPrepared with the salary run declared first, and queuebie drains the commands one
-    # event raised in the order its handlers returned them - which is why there is a flow test on
-    # FinishMonthView pinning the ordering.
-    #
-    # Only warriors below their maximum have anything to recover - replenishing the rest would be
-    # a no-op further down the chain
-    warrior_qs = (
-        context.faction.warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
-        .filter(unpaid_months=0)
-        .filter(current_morale__lt=F("max_morale"))
-    )
-
-    return FactionWarriorsWithReducedMoraleDetermined(
-        faction=context.faction,
-        warrior_list=list(warrior_qs),
-        month=context.month,
-    )
-
-
-@message_registry.register_command(command=DetermineInjuredWarriors)
-def handle_determine_injured_warriors(*, context: DetermineInjuredWarriors) -> list[Command]:
+@message_registry.register_command(command=PrepareFactionWarriorsForMonth)
+def handle_prepare_faction_warriors_for_month(*, context: PrepareFactionWarriorsForMonth) -> list[Event]:
     """
-    Every injured man this faction is responsible for: its own roster, plus the captives it holds.
+    Every living man this faction is responsible for: its own roster, plus the captives it holds.
 
     A captive is on nobody's roster - capture clears "warrior.faction" - so without the second half
-    he heals nothing for as long as he is held, and a prisoner taken unconscious stays at the health
-    the blow that felled him left him at for ever.
-
-    Healing him from his captor's sweep reaches him exactly once: a warrior belongs to exactly one
-    captor, and this runs once per faction per month. The captor rides along on the command because
-    it is his sanctuary that does the mending and his month log the line belongs in - the healing
-    handler cannot read either off a warrior whose own faction is None.
+    he is reached by nothing for as long as he is held, and a prisoner taken unconscious stays at the
+    health the blow that felled him left him at for ever. His captor's month reaches him exactly once:
+    a warrior belongs to exactly one captor, and this runs once per faction per month.
 
     Matched by id rather than through the reverse accessor of "captured_warriors", which would join
     per captor row and hand the same man out twice were he ever held by two of them.
+
+    Only the dead are filtered out, and that is the point rather than an oversight. The event this
+    raises is a fact - this man entered a month - and it can only be one while the read is unfiltered;
+    a sweep that selected the wounded would announce a state somebody looked up instead. What applies
+    to a man is decided by the handlers subscribing, each with its own guard on the columns the event
+    carries.
+
+    "unpaid_months" is read here and travels on the event, so the morale reaction sees the counter the
+    salary run wrote this same month. That write is synchronous inside the salary command handler and
+    this command is declared after it, which is why the warriors are loaded here rather than earlier -
+    and why there is a flow test on FinishMonthView pinning the outcome.
     """
-    warrior_qs = (
-        Warrior.objects.filter(Q(faction=context.faction) | Q(id__in=context.faction.captured_warriors.all()))
-        .exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
-        .filter(current_health__lt=F("max_health"))
-    )
+    warrior_list = Warrior.objects.filter(
+        Q(faction=context.faction) | Q(id__in=context.faction.captured_warriors.all())
+    ).exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
 
-    event_list = []
-    for warrior in warrior_qs:
-        event_list.append(
-            # TODO (#96): this should be an event, not a command
-            HealInjuredWarrior(
-                faction=context.faction,
-                warrior=warrior,
-                month=context.month,
-            )
-        )
-
-    return event_list
+    return [
+        WarriorMonthPrepared(faction=context.faction, warrior=warrior, month=context.month) for warrior in warrior_list
+    ]
 
 
 @message_registry.register_command(command=DefeatFactionOfLostLeader)

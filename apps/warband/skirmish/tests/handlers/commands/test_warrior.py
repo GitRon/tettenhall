@@ -28,6 +28,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorHasFled,
     WarriorImprovedStats,
     WarriorLostMorale,
+    WarriorSawComradeFall,
     WarriorWasCaptured,
     WarriorWasIncapacitated,
     WarriorWasKilled,
@@ -241,41 +242,60 @@ def test_handle_warrior_withdraws_from_skirmish_ignores_a_warrior_already_out_of
 
 
 @pytest.mark.django_db
-def test_handle_reduce_morale_of_remaining_warriors_hits_the_comrades_of_an_attacking_warrior():
+def test_handle_reduce_morale_of_remaining_warriors_names_the_comrades_of_an_attacking_warrior():
     skirmish = SkirmishFactory()
-    fleeing_warrior = WarriorFactory(faction=skirmish.attacking_faction, max_morale=20)
+    fallen_warrior = WarriorFactory(faction=skirmish.attacking_faction, max_morale=20)
     comrade = WarriorFactory(faction=skirmish.attacking_faction)
-    skirmish.attacking_warriors.add(fleeing_warrior, comrade)
+    skirmish.attacking_warriors.add(fallen_warrior, comrade)
 
     result = handle_reduce_morale_of_remaining_warriors(
-        context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=fleeing_warrior)
+        context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=fallen_warrior)
     )
 
-    assert result == [ReduceMorale(skirmish=skirmish, warrior=comrade, lost_morale=2)]
+    assert result == [WarriorSawComradeFall(skirmish=skirmish, warrior=comrade, fallen_warrior=fallen_warrior)]
 
 
 @pytest.mark.django_db
-def test_handle_reduce_morale_of_remaining_warriors_hits_the_comrades_of_an_enemy_warrior():
+def test_handle_reduce_morale_of_remaining_warriors_names_the_comrades_of_a_defending_warrior():
     skirmish = SkirmishFactory()
-    incapacitated_warrior = WarriorFactory(faction=skirmish.defending_faction, max_morale=20)
+    fallen_warrior = WarriorFactory(faction=skirmish.defending_faction, max_morale=20)
     comrade = WarriorFactory(faction=skirmish.defending_faction)
-    skirmish.defending_warriors.add(incapacitated_warrior, comrade)
+    skirmish.defending_warriors.add(fallen_warrior, comrade)
 
     result = handle_reduce_morale_of_remaining_warriors(
-        context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=incapacitated_warrior)
+        context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=fallen_warrior)
     )
 
-    assert result == [ReduceMorale(skirmish=skirmish, warrior=comrade, lost_morale=2)]
+    assert result == [WarriorSawComradeFall(skirmish=skirmish, warrior=comrade, fallen_warrior=fallen_warrior)]
 
 
 @pytest.mark.django_db
-def test_handle_reduce_morale_of_remaining_warriors_skips_the_warrior_himself():
+def test_handle_reduce_morale_of_remaining_warriors_leaves_out_the_fallen_man_himself():
+    """
+    A man cannot witness his own fall, which is part of the fact rather than something the reaction
+    has to filter out.
+    """
     skirmish = SkirmishFactory()
-    killed_warrior = WarriorFactory(faction=skirmish.attacking_faction, max_morale=20)
-    skirmish.attacking_warriors.add(killed_warrior)
+    fallen_warrior = WarriorFactory(faction=skirmish.attacking_faction, max_morale=20)
+    skirmish.attacking_warriors.add(fallen_warrior)
 
     result = handle_reduce_morale_of_remaining_warriors(
-        context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=killed_warrior)
+        context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=fallen_warrior)
+    )
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_reduce_morale_of_remaining_warriors_leaves_the_other_side_alone():
+    skirmish = SkirmishFactory()
+    fallen_warrior = WarriorFactory(faction=skirmish.attacking_faction, max_morale=20)
+    skirmish.attacking_warriors.add(fallen_warrior)
+    enemy = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(enemy)
+
+    result = handle_reduce_morale_of_remaining_warriors(
+        context=ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=fallen_warrior)
     )
 
     assert result == []

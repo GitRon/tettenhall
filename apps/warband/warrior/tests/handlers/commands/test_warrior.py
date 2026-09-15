@@ -2,8 +2,7 @@ from unittest import mock
 
 import pytest
 
-from apps.warband.faction.handlers.commands.faction import handle_create_new_faction
-from apps.warband.faction.messages.commands.faction import CreateNewFaction
+from apps.warband.faction.handlers.commands.faction import _create_faction
 from apps.warband.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
@@ -169,15 +168,13 @@ def test_handle_heal_injured_warrior_mends_a_rival_at_the_level_he_was_created_w
     to be checked together.
     """
     savegame = SavegameFactory()
-    rival = handle_create_new_faction(
-        context=CreateNewFaction(
-            name="Mercia",
-            town_name="Tamworth",
-            culture_id=CultureFactory().id,
-            savegame=savegame,
-            is_player_faction=False,
-        )
-    ).faction
+    rival = _create_faction(
+        name="Mercia",
+        town_name="Tamworth",
+        culture_id=CultureFactory().id,
+        savegame=savegame,
+        is_player=False,
+    )
     warrior = WarriorFactory(faction=rival, savegame=savegame, current_health=1, max_health=20)
 
     with mock.patch(
