@@ -26,15 +26,15 @@ def handle_beating_may_leave_a_mark(*, context: WarriorWasIncapacitated) -> Comm
     Read at the end of the blow rather than off the blow record, because the fight has already decided
     what going down means and a second threshold would be a competing definition of it.
 
-    The faction comes off the warrior, which is free here: he is knocked out during the fight and
-    taken prisoner only once it is decided, so his own FK still stands. The month comes off the fight
-    the way the nickname handler above takes it - an attribute access on an instance the event
-    carries, not a query.
+    A plain relay, carrying nothing it has to look up. The month comes off the fight the way the
+    nickname handler above takes it - an attribute access on an instance the event carries. His
+    faction pointedly does not: "reduce_current_health" refreshes the warrior from the database one
+    handler earlier, which drops every cached relation on him, so "warrior.faction" here is a query
+    in the one place strict mode forbids one. The command's handler reads it instead.
     """
     return InflictInjury(
         skirmish=context.skirmish,
         warrior=context.warrior,
-        faction=context.warrior.faction,
         overkill_health=context.overkill_health,
         month=context.skirmish.month,
     )

@@ -5,6 +5,7 @@ from apps.warband.quest.tests.factories.quest_contract import QuestContractFacto
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.tests.factories.injury import InjuryFactory
 
 
 @pytest.mark.django_db
@@ -106,3 +107,41 @@ def test_get_all_living_warriors_leaves_the_dead_out():
     WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
 
     assert list(faction.get_all_living_warriors()) == []
+
+
+@pytest.mark.django_db
+def test_get_held_captives_is_the_men_in_the_cells():
+    faction = FactionFactory()
+    captive = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.captured_warriors.add(captive)
+    WarriorFactory(faction=faction)
+
+    assert list(faction.get_held_captives()) == [captive]
+
+
+@pytest.mark.django_db
+def test_get_held_captives_brings_the_injuries_along(django_assert_num_queries):
+    """
+    The card names every mark a prisoner carries, so a bare related manager would cost a query per
+    man plus one per injury - see [get_all_living_warriors], which exists for the same reason.
+    """
+    faction = FactionFactory()
+    captive = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.captured_warriors.add(captive)
+    InjuryFactory(warrior=captive)
+
+    held_captive = faction.get_held_captives().get()
+
+    # The prefetch already has them, so reading the row and its catalogue entry costs nothing more
+    with django_assert_num_queries(0):
+        assert held_captive.injuries.all()[0].type.name
+
+
+@pytest.mark.django_db
+def test_get_pub_stock_is_the_men_on_the_shelf():
+    faction = FactionFactory()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, is_pub_stock=True)
+    faction.available_mercenaries.add(mercenary)
+    WarriorFactory(faction=faction)
+
+    assert list(faction.get_pub_stock()) == [mercenary]

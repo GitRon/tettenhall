@@ -203,6 +203,10 @@ def handle_inflict_injury(*, context: InflictInjury) -> Event | None:
 
     The injury is described here rather than downstream, because the row is what knows the thing and
     its price, and both logs have to say the same sentence about it.
+
+    His faction is looked up here rather than carried, because the event handler that raised this may
+    not look anything up. He is still his own faction's at this point: a beaten man is taken prisoner
+    once the fight is decided, which is strictly after the blow that felled him.
     """
     injury_type = InjuryRollService(warrior=context.warrior, overkill_health=context.overkill_health).process()
 
@@ -214,7 +218,7 @@ def handle_inflict_injury(*, context: InflictInjury) -> Event | None:
     return WarriorWasInjured(
         skirmish=context.skirmish,
         warrior=context.warrior,
-        faction=context.faction,
+        faction=context.warrior.faction,
         injury=injury_type.description,
         month=context.month,
     )

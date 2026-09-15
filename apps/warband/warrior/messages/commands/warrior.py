@@ -95,9 +95,11 @@ class InflictInjury(Command):
     lives in one handler and its producer stays a plain relay - the roll is work, and work belongs on
     this side of the bus.
 
-    The faction is on it for the reason every warrior command carries one: the handler has a line for
-    the player to file, and the man's own FK is not what a captive is filed under. He is still his own
-    faction's here - capture is decided once the fight is over, strictly after this.
+    The faction is deliberately not on it, the way it is not on [AwardEarnedNickname]: the month-log
+    line the handler ends in needs one, and the producer is an event handler that may not go and ask.
+    Reaching for "warrior.faction" there is a query, not an attribute access - the manager that took
+    the man's last points calls "refresh_from_db", which drops every cached relation on him - so it
+    is read in this command's handler, where a query is allowed.
 
     The skirmish rides along so the battle log has a fight to write the line into, and it is not
     nullable: a beating is the only thing in the game that inflicts one today. A second producer -
@@ -106,7 +108,6 @@ class InflictInjury(Command):
 
     skirmish: Skirmish
     warrior: Warrior
-    faction: Faction
     # How far past nothing the blow carried him, which is what scales the chance - see
     # [InjuryRollService]
     overkill_health: int

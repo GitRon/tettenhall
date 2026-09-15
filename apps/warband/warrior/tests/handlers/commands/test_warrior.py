@@ -573,7 +573,6 @@ def test_handle_inflict_injury_writes_the_row_and_names_it():
             context=InflictInjury(
                 skirmish=skirmish,
                 warrior=warrior,
-                faction=warrior.faction,
                 overkill_health=3,
                 month=7,
             )
@@ -599,7 +598,6 @@ def test_handle_inflict_injury_leaves_most_men_unmarked():
             context=InflictInjury(
                 skirmish=skirmish,
                 warrior=warrior,
-                faction=warrior.faction,
                 overkill_health=3,
                 month=7,
             )
