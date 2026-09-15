@@ -44,8 +44,35 @@ def handle_pay_building_costs(*, context: TownBuildingUpgraded) -> Command | Non
 
 Command handlers may query freely. Event handlers may not: strict mode wraps them in a database blocker
 when they run through `handle_message()`. If a reaction needs to read something, emit a command and read
-it in that command's handler — `handle_create_factions_for_new_savegame` exists for exactly this reason.
-See [strict mode](strict-mode.md).
+it in that command's handler — `handle_prepare_month` exists for exactly this reason. See
+[strict mode](strict-mode.md).
+
+**Then emit facts, one per subject.** That command handler still emits events, like every other one:
+fanning out into per-subject commands is the *event* handler's job. A command handler that raises commands
+of its own is the golden rule broken, and the
+[registry tests](registry-tests.md) fail on it.
+
+| The fact you can name | The shape |
+|---|---|
+| The subject exists and something reached it | A read-only command → one event per subject → the reactions fan out. `handle_prepare_month`, `handle_prepare_faction_warriors_for_month` |
+| The subject does not exist yet | The handler creates it and announces *it now exists*. A command that only plans the creation announces a plan, not a fact — `handle_create_factions_for_new_savegame` does the creating |
+| The handler decomposes one order into several and writes nothing | It may emit commands — the one allowlisted case, and the allowlist wants a reason |
+
+**The read belongs in the topic that owns what is read.** A dispatcher needs to know whom to notify, not
+what each recipient contains: `handle_prepare_month` queries which factions are still in play, because it
+is deciding who gets a month, and stops there. *"A faction is responsible for its own roster plus the
+prisoners it holds"* is a rule about factions and is read in `faction`.
+
+Where the read stays unfiltered, that is deliberate rather than sloppy. `WarriorMonthPrepared` is a fact
+because every living man raises one and the reactions do the filtering; a sweep that selected the wounded
+could only announce a state somebody looked up.
+
+Two smells that say the shape is wrong:
+
+- **An event named `…Determined` or `…Found`.** It announces that a query returned, which is the handler's
+  own bookkeeping rather than anything that happened.
+- **A command with one emitter and one handler that exists only so another handler had somewhere to send
+  work.** Fix the shape and it has no reason left to be a message.
 
 ## See also
 

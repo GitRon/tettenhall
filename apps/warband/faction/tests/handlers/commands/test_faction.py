@@ -4,32 +4,28 @@ import pytest
 
 from apps.faker_frisian import FRISIAN_BASE_LOCALE, FRISIAN_LOCALE
 from apps.warband.faction.handlers.commands.faction import (
+    _create_faction,
     handle_change_fyrd_reserve,
     handle_create_factions_for_new_savegame,
-    handle_create_new_faction,
     handle_defeat_faction_of_lost_leader,
-    handle_determine_injured_warriors,
-    handle_determine_warriors_with_reduced_morale,
     handle_earn_money_from_buildings,
     handle_earn_monthly_faction_income,
     handle_occupy_faction,
+    handle_prepare_faction_warriors_for_month,
     handle_replenish_fyrd_reserve,
 )
 from apps.warband.faction.messages.commands.faction import (
     ChangeFyrdReserve,
     CreateFactionsForNewSavegame,
-    CreateNewFaction,
     DefeatFactionOfLostLeader,
-    DetermineInjuredWarriors,
-    DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
     OccupyFaction,
+    PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
 )
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
-    FactionWarriorsWithReducedMoraleDetermined,
     FactionWasDefeated,
     FactionWasOccupied,
     FyrdReserveChanged,
@@ -37,6 +33,7 @@ from apps.warband.faction.messages.events.faction import (
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
 )
+from apps.warband.faction.messages.events.warrior import WarriorMonthPrepared
 from apps.warband.faction.models.culture import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.culture import CultureFactory
@@ -46,93 +43,83 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
-from apps.warband.warrior.messages.commands.warrior import HealInjuredWarrior
 
 
 @pytest.mark.django_db
-def test_handle_create_new_faction_for_player_faction():
+def test_create_faction_for_player_faction():
     savegame = SavegameFactory(current_month=5)
     culture = CultureFactory()
 
     with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=4):
-        result = handle_create_new_faction(
-            context=CreateNewFaction(
-                name="Wessex",
-                town_name="Winchester",
-                culture_id=culture.id,
-                savegame=savegame,
-                is_player_faction=True,
-            )
+        result = _create_faction(
+            name="Wessex",
+            town_name="Winchester",
+            culture_id=culture.id,
+            savegame=savegame,
+            is_player=True,
         )
 
-    assert result == NewFactionCreated(faction=Faction.objects.get(name="Wessex"), current_month=5)
+    assert result == Faction.objects.get(name="Wessex")
     savegame.refresh_from_db()
-    assert savegame.player_faction == result.faction
-    assert result.faction.town_name == "Winchester"
+    assert (savegame.player_faction, result.town_name) == (result, "Winchester")
 
 
 @pytest.mark.django_db
-def test_handle_create_new_faction_for_defending_faction():
+def test_create_faction_for_a_rival():
     savegame = SavegameFactory(current_month=5)
     culture = CultureFactory()
 
     with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=4):
-        result = handle_create_new_faction(
-            context=CreateNewFaction(
-                name="Mercia",
-                town_name="Tamworth",
-                culture_id=culture.id,
-                savegame=savegame,
-                is_player_faction=False,
-            )
+        result = _create_faction(
+            name="Mercia",
+            town_name="Tamworth",
+            culture_id=culture.id,
+            savegame=savegame,
+            is_player=False,
         )
 
-    assert result.faction.fyrd_reserve == 4
+    assert result.fyrd_reserve == 4
     savegame.refresh_from_db()
     assert savegame.player_faction is None
 
 
 @pytest.mark.django_db
-def test_handle_create_new_faction_gives_the_player_a_town_at_every_default():
+def test_create_faction_gives_the_player_a_town_at_every_default():
     """
     Months count from 1, so "last_constructed_building_at" at 0 is what leaves month 1 buildable.
     """
     savegame = SavegameFactory(current_month=5)
 
-    result = handle_create_new_faction(
-        context=CreateNewFaction(
-            name="Wessex",
-            town_name="Winchester",
-            culture_id=CultureFactory().id,
-            savegame=savegame,
-            is_player_faction=True,
-        )
+    result = _create_faction(
+        name="Wessex",
+        town_name="Winchester",
+        culture_id=CultureFactory().id,
+        savegame=savegame,
+        is_player=True,
     )
 
-    town = result.faction.town
+    town = result.town
     assert (town.hall, town.weaponsmith, town.marketplace, town.sanctuary) == (0, 0, 0, 0)
     assert town.last_constructed_building_at == 0
 
 
 @pytest.mark.django_db
-def test_handle_create_new_faction_gives_a_rival_a_chosen_sanctuary():
+def test_create_faction_gives_a_rival_a_chosen_sanctuary():
     """
     Nothing upgrades a rival's town, so the level it is created with is the pace its wounded mend at
     for the rest of the savegame. The other three buildings stay at 0 on purpose.
     """
     savegame = SavegameFactory(current_month=5)
 
-    result = handle_create_new_faction(
-        context=CreateNewFaction(
-            name="Mercia",
-            town_name="Tamworth",
-            culture_id=CultureFactory().id,
-            savegame=savegame,
-            is_player_faction=False,
-        )
+    result = _create_faction(
+        name="Mercia",
+        town_name="Tamworth",
+        culture_id=CultureFactory().id,
+        savegame=savegame,
+        is_player=False,
     )
 
-    town = result.faction.town
+    town = result.town
     assert town.sanctuary == Town.SanctuaryChoices.SANCTUARY_SMALL
     assert (town.hall, town.weaponsmith, town.marketplace) == (0, 0, 0)
 
@@ -269,225 +256,93 @@ def test_handle_change_fyrd_reserve_downwards():
 
 
 @pytest.mark.django_db
-def test_handle_determine_injured_warriors_with_injured_warrior():
-    injured_warrior = WarriorFactory(current_health=5, max_health=20)
+def test_handle_prepare_faction_warriors_for_month_hands_the_month_to_the_roster():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction)
 
-    result = handle_determine_injured_warriors(
-        context=DetermineInjuredWarriors(faction=injured_warrior.faction, month=3)
-    )
+    result = handle_prepare_faction_warriors_for_month(context=PrepareFactionWarriorsForMonth(faction=faction, month=3))
 
-    assert result == [HealInjuredWarrior(faction=injured_warrior.faction, warrior=injured_warrior, month=3)]
-
-
-@pytest.mark.django_db
-def test_handle_determine_injured_warriors_without_injured_warriors():
-    healthy_warrior = WarriorFactory(current_health=20, max_health=20)
-
-    result = handle_determine_injured_warriors(
-        context=DetermineInjuredWarriors(faction=healthy_warrior.faction, month=3)
-    )
-
-    assert result == []
+    assert result == [WarriorMonthPrepared(faction=faction, warrior=warrior, month=3)]
 
 
 @pytest.mark.django_db
-def test_handle_determine_injured_warriors_ignores_dead_warriors():
-    dead_warrior = WarriorFactory(current_health=0, max_health=20, condition=Warrior.ConditionChoices.CONDITION_DEAD)
-
-    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=dead_warrior.faction, month=3))
-
-    assert result == []
-
-
-@pytest.mark.django_db
-def test_handle_determine_injured_warriors_selects_a_captive_of_this_faction():
+def test_handle_prepare_faction_warriors_for_month_keeps_a_man_at_full_strength():
     """
-    A captive is on nobody's roster, so his captor's sweep is the only one that can reach him.
+    The read is unfiltered on purpose, which is what makes the event a fact rather than an
+    announcement that a query returned. Whether anything applies to this man is the reactions' call.
+    """
+    faction = FactionFactory()
+    untouched_warrior = WarriorFactory(
+        faction=faction, current_health=20, max_health=20, current_morale=20, max_morale=20
+    )
+
+    result = handle_prepare_faction_warriors_for_month(context=PrepareFactionWarriorsForMonth(faction=faction, month=3))
+
+    assert result == [WarriorMonthPrepared(faction=faction, warrior=untouched_warrior, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_prepare_faction_warriors_for_month_skips_dead_warriors():
+    """
+    The one filter the read keeps. A month does nothing to a corpse, and every reaction would
+    otherwise have to say so for itself.
+    """
+    faction = FactionFactory()
+    WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    result = handle_prepare_faction_warriors_for_month(context=PrepareFactionWarriorsForMonth(faction=faction, month=3))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_prepare_faction_warriors_for_month_reaches_a_captive_of_this_faction():
+    """
+    A captive is on nobody's roster, so his captor's month is the only one that can reach him.
+
+    The captor rides along rather than the man's own faction, which capture cleared: it is his
+    sanctuary that mends him and his month log the line belongs in.
     """
     captor = FactionFactory()
     captive = WarriorFactory(
         faction=None,
         savegame=captor.savegame,
         culture=captor.culture,
-        current_health=0,
-        max_health=20,
         condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
     )
     captor.captured_warriors.add(captive)
 
-    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=captor, month=3))
+    result = handle_prepare_faction_warriors_for_month(context=PrepareFactionWarriorsForMonth(faction=captor, month=3))
 
-    # The captor rides along, because the mending is done at his sanctuary and logged in his month
-    assert result == [HealInjuredWarrior(faction=captor, warrior=captive, month=3)]
+    assert result == [WarriorMonthPrepared(faction=captor, warrior=captive, month=3)]
 
 
 @pytest.mark.django_db
-def test_handle_determine_injured_warriors_leaves_another_factions_captive_alone():
+def test_handle_prepare_faction_warriors_for_month_leaves_another_factions_captive_alone():
     captor = FactionFactory()
     captive = WarriorFactory(
         faction=None,
         savegame=captor.savegame,
         culture=captor.culture,
-        current_health=0,
-        max_health=20,
         condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
     )
     captor.captured_warriors.add(captive)
     bystander_faction = FactionFactory(savegame=captor.savegame)
 
-    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=bystander_faction, month=3))
+    result = handle_prepare_faction_warriors_for_month(
+        context=PrepareFactionWarriorsForMonth(faction=bystander_faction, month=3)
+    )
 
     assert result == []
 
 
 @pytest.mark.django_db
-def test_handle_determine_injured_warriors_skips_a_captive_at_full_health():
-    captor = FactionFactory()
-    healed_captive = WarriorFactory(
-        faction=None, savegame=captor.savegame, culture=captor.culture, current_health=20, max_health=20
-    )
-    captor.captured_warriors.add(healed_captive)
+def test_handle_prepare_faction_warriors_for_month_with_an_empty_roster():
+    faction = FactionFactory()
 
-    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=captor, month=3))
+    result = handle_prepare_faction_warriors_for_month(context=PrepareFactionWarriorsForMonth(faction=faction, month=3))
 
     assert result == []
-
-
-@pytest.mark.django_db
-def test_handle_determine_injured_warriors_skips_a_dead_captive():
-    """
-    Only the unconscious are ever taken prisoner, but a captive can be killed off the field by
-    anything that reaches him, and no sanctuary mends a corpse.
-    """
-    captor = FactionFactory()
-    dead_captive = WarriorFactory(
-        faction=None,
-        savegame=captor.savegame,
-        culture=captor.culture,
-        current_health=0,
-        max_health=20,
-        condition=Warrior.ConditionChoices.CONDITION_DEAD,
-    )
-    captor.captured_warriors.add(dead_captive)
-
-    result = handle_determine_injured_warriors(context=DetermineInjuredWarriors(faction=captor, month=3))
-
-    assert result == []
-
-
-@pytest.mark.django_db
-def test_handle_determine_warriors_with_reduced_morale_skips_warriors_at_full_morale():
-    faction = FactionFactory()
-    warrior_with_reduced_morale = WarriorFactory(faction=faction, current_morale=5, max_morale=20)
-    WarriorFactory(faction=faction, current_morale=20, max_morale=20)
-
-    result = handle_determine_warriors_with_reduced_morale(
-        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
-    )
-
-    assert result == FactionWarriorsWithReducedMoraleDetermined(
-        faction=faction, warrior_list=[warrior_with_reduced_morale], month=3
-    )
-
-
-@pytest.mark.django_db
-def test_handle_determine_warriors_with_reduced_morale_reaches_a_warrior_ordered_to_flee():
-    """
-    The freeze #43 closed, reachable again through a deliberate retreat unless the withdrawal leaves a
-    man the way a rout does.
-
-    This sweep is the only road to "replenish_current_morale", which is the only thing that clears
-    FLEEING. It selects on "current_morale__lt=F('max_morale')", so a warrior merely charged a point
-    off his ceiling - and therefore clamped to it - would never appear here again.
-    """
-    faction = FactionFactory()
-    warrior = WarriorFactory(faction=faction, current_morale=20, max_morale=20)
-    Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
-
-    result = handle_determine_warriors_with_reduced_morale(
-        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
-    )
-
-    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[warrior], month=3)
-
-
-@pytest.mark.django_db
-def test_handle_determine_warriors_with_reduced_morale_skips_an_unpaid_warrior():
-    """
-    A man who was not paid does not cheer up either. Without this the sweep would hand back every
-    point insolvency had just taken, in the same month it took them, because the replenish handler
-    at the end of the chain refills to the maximum.
-    """
-    faction = FactionFactory()
-    paid_warrior = WarriorFactory(faction=faction, current_morale=5, max_morale=20)
-    WarriorFactory(faction=faction, current_morale=5, max_morale=20, unpaid_months=1)
-
-    result = handle_determine_warriors_with_reduced_morale(
-        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
-    )
-
-    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[paid_warrior], month=3)
-
-
-@pytest.mark.django_db
-def test_handle_determine_warriors_with_reduced_morale_skips_dead_warriors():
-    faction = FactionFactory()
-    WarriorFactory(
-        faction=faction,
-        current_morale=5,
-        max_morale=20,
-        condition=Warrior.ConditionChoices.CONDITION_DEAD,
-    )
-
-    result = handle_determine_warriors_with_reduced_morale(
-        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
-    )
-
-    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=faction, warrior_list=[], month=3)
-
-
-@pytest.mark.django_db
-def test_handle_determine_warriors_with_reduced_morale_passes_over_captives():
-    """
-    Health is what a captor mends, spirit is not - unlike the healing sweep, this one stays on the
-    roster on purpose. Morale is refilled to the maximum further down the chain, and a month in an
-    enemy cell restoring a man completely reads wrong.
-    """
-    captor = FactionFactory()
-    captive = WarriorFactory(
-        faction=None, savegame=captor.savegame, culture=captor.culture, current_morale=5, max_morale=20
-    )
-    captor.captured_warriors.add(captive)
-
-    result = handle_determine_warriors_with_reduced_morale(
-        context=DetermineWarriorsWithReducedMorale(faction=captor, month=3)
-    )
-
-    assert result == FactionWarriorsWithReducedMoraleDetermined(faction=captor, warrior_list=[], month=3)
-
-
-@pytest.mark.django_db
-def test_handle_determine_warriors_with_reduced_morale_picks_up_a_fleeing_warrior():
-    """
-    The half of the rally this sweep owns. Restoring the condition further down the chain only ever
-    helps if the man who routed is in this list at all, and a warrior who fled without a scratch is
-    in no other one - the healing sweep wants the wounded, and he is not.
-    """
-    faction = FactionFactory()
-    fleeing_warrior = WarriorFactory(
-        faction=faction,
-        current_morale=0,
-        max_morale=20,
-        condition=Warrior.ConditionChoices.CONDITION_FLEEING,
-    )
-
-    result = handle_determine_warriors_with_reduced_morale(
-        context=DetermineWarriorsWithReducedMorale(faction=faction, month=3)
-    )
-
-    assert result == FactionWarriorsWithReducedMoraleDetermined(
-        faction=faction, warrior_list=[fleeing_warrior], month=3
-    )
 
 
 @pytest.mark.django_db
@@ -502,9 +357,11 @@ def test_handle_create_factions_for_new_savegame_starts_with_the_player_faction(
             )
         )
 
-    assert result[0] == CreateNewFaction(
-        name="Wessex", town_name="Winchester", savegame=savegame, culture_id=culture.id, is_player_faction=True
+    assert result[0] == NewFactionCreated(
+        faction=Faction.objects.get(name="Wessex"), current_month=savegame.current_month
     )
+    savegame.refresh_from_db()
+    assert savegame.player_faction == result[0].faction
 
 
 @pytest.mark.django_db
@@ -520,10 +377,8 @@ def test_handle_create_factions_for_new_savegame_adds_the_drawn_number_of_rival_
         )
 
     assert len(result) == 4
-    assert result[3].is_player_faction is False
     # Rival factions get a generated town of their own instead of the player's
-    assert result[3].town_name != ""
-    assert result[3].town_name != "Winchester"
+    assert result[3].faction.town_name not in ("", "Winchester")
 
 
 @pytest.mark.django_db
@@ -561,19 +416,15 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
             )
         )
 
-    assert result[1] == CreateNewFaction(
-        name="Town of no_NO",
-        town_name="Town of no_NO",
-        culture_id=norse_rival.id,
-        savegame=savegame,
-        is_player_faction=False,
+    assert (result[1].faction.name, result[1].faction.town_name, result[1].faction.culture_id) == (
+        "Town of no_NO",
+        "Town of no_NO",
+        norse_rival.id,
     )
-    assert result[2] == CreateNewFaction(
-        name=f"Town of {FRISIAN_BASE_LOCALE}",
-        town_name=f"Town of {FRISIAN_BASE_LOCALE}",
-        culture_id=frisian_rival.id,
-        savegame=savegame,
-        is_player_faction=False,
+    assert (result[2].faction.name, result[2].faction.town_name, result[2].faction.culture_id) == (
+        f"Town of {FRISIAN_BASE_LOCALE}",
+        f"Town of {FRISIAN_BASE_LOCALE}",
+        frisian_rival.id,
     )
 
 
@@ -598,8 +449,8 @@ def test_handle_create_factions_for_new_savegame_never_deals_a_rival_the_players
             )
         )
 
-    rival_culture_ids = {command.culture_id for command in result if not command.is_player_faction}
-    assert rival_culture_ids
+    rival_culture_ids = {event.faction.culture_id for event in result[1:]}
+    assert len(rival_culture_ids) > 0
     assert player_culture.id not in rival_culture_ids
 
 
@@ -625,7 +476,7 @@ def test_handle_create_factions_for_new_savegame_falls_back_to_the_only_culture_
             )
         )
 
-    assert {command.culture_id for command in result if not command.is_player_faction} == {only_culture.id}
+    assert {event.faction.culture_id for event in result[1:]} == {only_culture.id}
 
 
 @pytest.mark.django_db

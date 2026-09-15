@@ -1,6 +1,6 @@
 # Town buildings
 
-Every faction owns exactly one `Town`, created together with the faction in `handle_create_new_faction`.
+Every faction owns exactly one `Town`, created together with the faction in `_create_faction`.
 A town is created there rather than in reaction to `NewFactionCreated`, because several handlers of that
 event already read `faction.town` and an event handler emitting a `CreateTown` command would land in the
 same batch as those, with no guaranteed order.
@@ -85,7 +85,7 @@ holding that level's numbers:
   nothing on the healing path knows what a rival is.
 - **A faction without a town breaks four separate flows** (month advance, item sale, shop restock,
   warrior healing), all with `Town.DoesNotExist`. Anything that creates factions outside
-  `handle_create_new_faction` — a data migration, a fixture, a management command — has to create the
+  `_create_faction` — a data migration, a fixture, a management command — has to create the
   town too.
 
 ## Known gaps

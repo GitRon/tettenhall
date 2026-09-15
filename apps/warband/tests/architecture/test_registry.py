@@ -3,17 +3,22 @@ Wiring tests for the queuebie message registry.
 
 Unit tests can only ever verify a single handler. Whether the handlers actually form a chain is
 decided at runtime by the registry, so neither the IDE nor a type checker will notice when a
-message is emitted that nobody consumes. These five tests cover all of those edges at once.
+message is emitted that nobody consumes. These tests cover all of those edges at once.
 """
 
 import ast
 import dataclasses
 import importlib
+import types
 from pathlib import Path
 
 from queuebie.messages import Command, Event
 
+from apps.warband.faction.messages.events.warrior import WarriorMonthPrepared
+from apps.warband.skirmish.handlers.commands.skirmish import _withdrawing_and_remaining
+from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
 from apps.warband.tests.architecture.discovery import handler_files, module_path_for, view_module_files
+from apps.warband.warrior.messages.commands.warrior import HealInjuredWarrior
 
 # Events which are deliberately emitted without a consumer. All of them announce a state change
 # their emitting command handler has already carried out, so nobody has to react - they exist so
@@ -52,6 +57,21 @@ TERMINAL_MESSAGES: frozenset[str] = frozenset(
         "apps.warband.skirmish.messages.events.skirmish_report.WarriorGrowthRecorded",
         "apps.warband.skirmish.messages.events.warrior.LastUsedSkirmishActionStored",
         "apps.warband.training.messages.events.training.NewTrainingCreated",
+    }
+)
+
+
+# Command handlers allowed to emit commands, against the golden rule in
+# "docs/patterns/message-bus.md". One entry, and an addition wants the reason written next to it the way
+# TERMINAL_MESSAGES does.
+#
+# "handle_assign_fighter_pairs" decomposes one order into several and writes nothing itself. The orders it
+# issues are late-bound by design - "handle_warrior_withdraws_from_skirmish" re-checks the man when the
+# command drains, because a warrior ordered to flee can be routed by a comrade falling first - so an event
+# at this point would announce a departure that may never happen.
+DIRECTION_ALLOWLIST: frozenset[str] = frozenset(
+    {
+        "apps.warband.skirmish.handlers.commands.skirmish.handle_assign_fighter_pairs",
     }
 )
 
@@ -268,3 +288,227 @@ def test_a_command_is_handled_in_the_module_named_after_the_one_defining_it(queu
     mismatches = _command_module_mismatches(registry=queuebie_registry)
 
     assert mismatches == []
+
+
+def _emitted_message_types(
+    *,
+    node: ast.FunctionDef,
+    module,
+    local_nodes: dict[str, ast.FunctionDef],
+    handler_nodes: dict[tuple[str, str], ast.FunctionDef] | None = None,
+) -> set[type]:
+    """
+    Every message class a handler puts into the queue, the helpers it delegates to included.
+
+    Following those calls is what makes this see "handle_assign_fighter_pairs": it instantiates no
+    command itself, "_withdrawing_and_remaining" does. A walk of the decorated function alone misses
+    the one handler the golden rule is bent for.
+
+    Two kinds of delegation are followed. A bare name defined in the handler's own module is taken
+    from "local_nodes". Anything else is resolved against the module's namespace, and followed when it
+    turns out to be a function living in one of the other handler modules - which covers a handler
+    calling a helper it imported from a sibling handler module, spelled either way round.
+
+    **What it cannot see: a message constructed in a module that holds no handlers**, a "services/"
+    helper being the obvious candidate. That blind spot is the whole file's rather than this
+    function's - "_emitted_message_paths" reads the same set of files, so test 2 cannot see such a
+    command either - and closing it means resolving imports across the tree. Nothing in the project
+    builds a message outside a handler or a view today.
+    """
+    emitted = set()
+    visited: set[tuple[str, str]] = set()
+
+    def collect(*, current: ast.FunctionDef, current_module) -> None:
+        for child in ast.walk(current):
+            if not isinstance(child, ast.Call):
+                continue
+
+            resolved = _resolve(node=child.func, module=current_module)
+
+            if isinstance(resolved, type) and issubclass(resolved, (Command, Event)):
+                emitted.add(resolved)
+                continue
+
+            # A bare name defined beside the handler. Recursion guarded, so a helper calling itself
+            # does not walk for ever.
+            if isinstance(child.func, ast.Name) and child.func.id in local_nodes:
+                key = (getattr(current_module, "__name__", ""), child.func.id)
+                if key not in visited:
+                    visited.add(key)
+                    collect(current=local_nodes[child.func.id], current_module=current_module)
+                continue
+
+            # A function reached through an import, followed only as far as the handler modules go
+            if handler_nodes is None or not isinstance(resolved, types.FunctionType):
+                continue
+
+            key = (resolved.__module__, resolved.__name__)
+            if key in handler_nodes and key not in visited:
+                visited.add(key)
+                collect(current=handler_nodes[key], current_module=importlib.import_module(resolved.__module__))
+
+    collect(current=node, current_module=module)
+
+    return emitted
+
+
+def _wrong_direction_emissions(*, registry, allowlist: frozenset[str] = DIRECTION_ALLOWLIST) -> list[str]:
+    """
+    Every handler emitting the message type its own kind is not allowed to emit.
+
+    The allowlist is an argument so the test below it can ask the same question with the exemptions
+    lifted, which is the only way a stale entry becomes visible.
+    """
+    handler_nodes = _handler_nodes()
+    violations = set()
+
+    for message_dict, forbidden_type, expected in (
+        (registry.command_dict, Command, "events"),
+        (registry.event_dict, Event, "commands"),
+    ):
+        for handler_list in message_dict.values():
+            for definition in handler_list:
+                handler_path = f"{definition['module']}.{definition['name']}"
+                if handler_path in allowlist:
+                    continue
+
+                emitted = _emitted_message_types(
+                    node=handler_nodes[(definition["module"], definition["name"])],
+                    module=importlib.import_module(definition["module"]),
+                    local_nodes={
+                        name: node
+                        for (module_path, name), node in handler_nodes.items()
+                        if module_path == definition["module"]
+                    },
+                    handler_nodes=handler_nodes,
+                )
+
+                for message_class in emitted:
+                    if issubclass(message_class, forbidden_type):
+                        violations.add(
+                            f"{handler_path} emits {message_class.module_path()}, "
+                            f"but a handler of this kind emits {expected}"
+                        )
+
+    return sorted(violations)
+
+
+def _emitted_types_in(*, source: str, namespace: dict) -> set[type]:
+    """
+    Runs the collector over a source snippet, for the tests of the collector itself.
+    """
+    tree = ast.parse(source)
+    local_nodes = {node.name: node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
+
+    return _emitted_message_types(
+        node=local_nodes["handler"],
+        module=types.SimpleNamespace(**namespace),
+        local_nodes=local_nodes,
+    )
+
+
+def test_emitted_message_types_names_the_event_a_conforming_command_handler_emits():
+    source = "def handler(*, context):\n    return WarriorMonthPrepared(faction=1, warrior=2, month=3)\n"
+
+    result = _emitted_types_in(source=source, namespace={"WarriorMonthPrepared": WarriorMonthPrepared})
+
+    assert result == {WarriorMonthPrepared}
+
+
+def test_emitted_message_types_names_the_command_a_command_handler_emits():
+    source = "def handler(*, context):\n    return HealInjuredWarrior(faction=1, warrior=2, month=3)\n"
+
+    result = _emitted_types_in(source=source, namespace={"HealInjuredWarrior": HealInjuredWarrior})
+
+    assert result == {HealInjuredWarrior}
+
+
+def test_emitted_message_types_follows_a_module_local_helper():
+    """
+    The "handle_assign_fighter_pairs" shape: the handler instantiates nothing itself, a helper beside
+    it does. Without this the one handler the allowlist exists for is the one the test cannot see.
+    """
+    source = (
+        "def build():\n"
+        "    return HealInjuredWarrior(faction=1, warrior=2, month=3)\n"
+        "\n"
+        "def handler(*, context):\n"
+        "    return build()\n"
+    )
+
+    result = _emitted_types_in(source=source, namespace={"HealInjuredWarrior": HealInjuredWarrior})
+
+    assert result == {HealInjuredWarrior}
+
+
+def test_emitted_message_types_follows_a_helper_imported_from_another_handler_module():
+    """
+    The near miss a module-local walk alone would wave through: a handler emitting through a helper it
+    imported rather than one defined beside it.
+
+    "_withdrawing_and_remaining" stands in for that helper, and is the honest choice for it - a real
+    undecorated function in a real handler module which really does build a command, reached here by
+    an imported name. Finding the WithdrawFromSkirmish inside it is proof the walk crossed the module
+    boundary, because nothing in the snippet mentions that command.
+    """
+    source = "def handler(*, context):\n    return _withdrawing_and_remaining()\n"
+    tree = ast.parse(source)
+
+    result = _emitted_message_types(
+        node={node.name: node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}["handler"],
+        module=types.SimpleNamespace(__name__="stand_in", _withdrawing_and_remaining=_withdrawing_and_remaining),
+        local_nodes={},
+        handler_nodes=_handler_nodes(),
+    )
+
+    assert result == {WithdrawFromSkirmish}
+
+
+def test_emitted_message_types_survives_a_helper_calling_itself():
+    source = (
+        "def build(depth):\n"
+        "    if depth:\n"
+        "        return build(depth - 1)\n"
+        "    return HealInjuredWarrior(faction=1, warrior=2, month=3)\n"
+        "\n"
+        "def handler(*, context):\n"
+        "    return build(2)\n"
+    )
+
+    result = _emitted_types_in(source=source, namespace={"HealInjuredWarrior": HealInjuredWarrior})
+
+    assert result == {HealInjuredWarrior}
+
+
+def test_a_command_handler_emits_events_and_an_event_handler_emits_commands(queuebie_registry):
+    """
+    The golden rule of "docs/patterns/message-bus.md", which nothing else in the project enforces.
+
+    Strict mode checks a command handler's scope at registration and wraps event handlers in a
+    database blocker at dispatch; neither looks at the direction of a hop. So a command handler
+    emitting commands wires up, runs, and reads exactly like the handler above it - which is how four
+    of them came to do it, one of them written up in the docs as the intended shape.
+
+    Parsed out of the syntax tree rather than off the return annotations: every handler in this project
+    annotates abstractly, and an annotation can lie while the code cannot. The failure this guards
+    against is somebody copying the handler above them, annotation included.
+    """
+    violations = _wrong_direction_emissions(registry=queuebie_registry)
+
+    assert violations == []
+
+
+def test_every_allowlisted_handler_still_emits_the_message_type_it_was_allowed(queuebie_registry):
+    """
+    A stale allowlist entry is invisible otherwise: the handler it names keeps being skipped after the
+    reason for skipping it is gone, and the next handler in that module inherits the exemption by
+    sitting next to it.
+    """
+    violations_without_exemptions = " ".join(
+        _wrong_direction_emissions(registry=queuebie_registry, allowlist=frozenset())
+    )
+    entries_no_longer_needed = sorted(
+        handler_path for handler_path in DIRECTION_ALLOWLIST if handler_path not in violations_without_exemptions
+    )
+
+    assert entries_no_longer_needed == []

@@ -46,7 +46,7 @@ inferring the conventions from nearby code.
 - [Test data](docs/patterns/testing-data.md) — factories and reference data
 - [Mocking](docs/patterns/mocking.md) — first-party mocks are a review finding
 - [Coverage](docs/patterns/coverage.md) — the 100% branch gate
-- [Registry tests](docs/patterns/registry-tests.md) — the six tests covering the message wiring
+- [Registry tests](docs/patterns/registry-tests.md) — the seven tests covering the message wiring
 
 ### Planning
 

@@ -75,6 +75,26 @@ def handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
     return ReduceMoraleOfRemainingWarriors(skirmish=context.skirmish, warrior=context.warrior)
 
 
+@message_registry.register_event(event=warrior.WarriorSawComradeFall)
+def handle_morale_drop_on_watching_a_comrade_fall(*, context: warrior.WarriorSawComradeFall) -> Command:
+    """
+    What seeing a man on your own side go down costs your nerve.
+
+    A tenth of the *fallen* man's ceiling rather than the witness's, which is why he rides along on
+    the event: losing the best man in the war band shakes the line harder than losing a levy does.
+
+    No guard on the witness's own condition. "handle_warrior_losing_morale" already refuses anybody
+    who is not healthy, so a man who went down in the same round as his comrade is turned away there
+    rather than counted twice here.
+    """
+    # Ten percent of what the fallen man could hold, the lever every morale move in a fight uses
+    return ReduceMorale(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        lost_morale=round(context.fallen_warrior.max_morale * 0.1),
+    )
+
+
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
 @message_registry.register_event(event=warrior.WarriorWasKilled)
 def handle_experience_gain_on_warrior_incapacitation(

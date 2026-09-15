@@ -91,6 +91,25 @@ class WarriorWasCaptured(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorSawComradeFall(Event):
+    """
+    A man still in the fight watched somebody on his own side go out of it.
+
+    One event per witness rather than one for the side, because the nerve it costs is a fact about the
+    man who saw it. Which of the three ways the comrade left - routed, felled or killed - is
+    deliberately absent: an empty place in the line is worth the same to the men beside it whichever
+    emptied it, the same reason [WarriorHasFled] covers both its own routes.
+
+    The fallen man rides along because the drop is priced off *his* ceiling, and a witness cannot read
+    it off anybody but himself.
+    """
+
+    skirmish: Skirmish
+    warrior: Warrior
+    fallen_warrior: Warrior
+
+
+@dataclass(kw_only=True)
 class WarriorLostMorale(Event):
     skirmish: Skirmish
     warrior: Warrior

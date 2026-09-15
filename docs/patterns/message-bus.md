@@ -53,6 +53,26 @@ UpgradeTownBuilding (cmd)
 The bus keeps draining the resulting messages until nothing new is produced, all inside **one**
 transaction.
 
+**Nothing in the framework enforces this, so a test does.** Strict mode checks a command handler's scope
+at registration and blocks database access in event handlers at dispatch; neither looks at the direction
+of a hop, so a command handler emitting commands wires up and runs exactly like a conforming one. The
+seventh [registry test](registry-tests.md) parses the actual instantiations out of the syntax tree and
+fails on one, following module-local helpers so a handler that emits through one is still seen.
+
+It carries an allowlist, `DIRECTION_ALLOWLIST`, holding the one case the rule genuinely bends for:
+
+> A command handler may emit commands when its whole job is to decompose one order into several and it
+> writes nothing itself. The orders it issues are late-bound by design — each is re-checked when it drains.
+
+`handle_assign_fighter_pairs` is the entry. It splits a round's orders to flee off from the pairings, and
+`handle_warrior_withdraws_from_skirmish` re-checks each man when his command drains, because a warrior
+ordered away can be routed by a comrade falling first — so an event at that point would announce a
+departure that may never happen. An addition wants the reason written beside it, the way `TERMINAL_MESSAGES`
+does; a second test fails if an entry stops being needed.
+
+Where a reaction has to read something before it can act, see *Reading from the database* in
+[writing a handler](handlers.md) — the command that does the reading still emits events.
+
 **A message carries facts, never display text.** Each consumer words its own output. `MonthlyWarriorSalariesPaid`
 reaches both the ledger and the month log, and they say different things about it — *"Salaries paid"* on a
 receipt, *"Monthly salaries of 120 silver paid."* in a chronicle. A wording string on the event would force

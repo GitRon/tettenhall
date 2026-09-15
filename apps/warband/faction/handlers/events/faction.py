@@ -3,17 +3,14 @@ from queuebie.messages import Command
 
 from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
-    DetermineInjuredWarriors,
-    DetermineWarriorsWithReducedMorale,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
+    PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
 )
 from apps.warband.faction.messages.commands.warrior import ConsiderFyrdDraft, PayMonthlyWarriorSalaries
-from apps.warband.faction.messages.events.faction import FactionWarriorsWithReducedMoraleDetermined
 from apps.warband.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
 from apps.warband.savegame.messages.events.savegame import NewSavegameCreated
-from apps.warband.warrior.messages.commands.warrior import ReplenishWarriorMorale
 
 
 @message_registry.register_event(event=NewSavegameCreated)
@@ -28,28 +25,13 @@ def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated
     )
 
 
-@message_registry.register_event(event=FactionWarriorsWithReducedMoraleDetermined)
-def handle_warriors_with_reduced_morale_determined(
-    *, context: FactionWarriorsWithReducedMoraleDetermined
-) -> list[Command]:
-    event_list = []
-    for warrior in context.warrior_list:
-        event_list.append(
-            ReplenishWarriorMorale(
-                warrior=warrior,
-                month=context.month,
-            )
-        )
-    return event_list
-
-
 # Everything a faction does when a month turns hangs off FactionMonthPrepared, so it applies to the
 # player and to his rivals alike, and the declaration order below is the order it happens in: queuebie
 # drains the commands one event raises in the order its handlers returned them.
 #
-# That order is load-bearing for exactly one thing: the recovery sweeps come after the wages, so the
-# morale one sees the "unpaid_months" the salary run wrote. That write is synchronous, inside the
-# salary command handler, which is why the order decides it - and there is a flow test on
+# That order is load-bearing for exactly one thing: the warriors' own month comes after the wages, so
+# the morale reaction sees the "unpaid_months" the salary run wrote. That write is synchronous, inside
+# the salary command handler, which is why the order decides it - and there is a flow test on
 # FinishMonthView pinning it.
 #
 # It decides nothing about the money. A salary run and an income each return an event, and the
@@ -75,16 +57,11 @@ def handle_earn_monthly_faction_income_for_new_month(*, context: FactionMonthPre
     return EarnMonthlyFactionIncome(faction=context.faction, month=context.current_month)
 
 
-# Every faction recovers, not just the player's: otherwise one that survived a battle stays crippled
-# for the rest of the game and can never be knocked out again
+# Every faction's men get their month, not just the player's: otherwise a faction that survived a
+# battle stays crippled for the rest of the game and can never be knocked out again
 @message_registry.register_event(event=FactionMonthPrepared)
-def handle_determine_warriors_with_reduced_morale_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
-    return [DetermineWarriorsWithReducedMorale(faction=context.faction, month=context.current_month)]
-
-
-@message_registry.register_event(event=FactionMonthPrepared)
-def handle_determine_injured_warriors_for_new_month(*, context: FactionMonthPrepared) -> list[Command]:
-    return [DetermineInjuredWarriors(faction=context.faction, month=context.current_month)]
+def handle_prepare_faction_warriors_for_new_month(*, context: FactionMonthPrepared) -> Command:
+    return PrepareFactionWarriorsForMonth(faction=context.faction, month=context.current_month)
 
 
 @message_registry.register_event(event=FactionMonthPrepared)

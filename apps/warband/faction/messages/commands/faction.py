@@ -8,15 +8,6 @@ from apps.warband.skirmish.models import Warrior
 
 
 @dataclass(kw_only=True)
-class CreateNewFaction(Command):
-    name: str
-    town_name: str
-    culture_id: int
-    savegame: Savegame
-    is_player_faction: bool
-
-
-@dataclass(kw_only=True)
 class CreateFactionsForNewSavegame(Command):
     savegame: Savegame
     faction_name: str
@@ -58,13 +49,19 @@ class EarnMonthlyFactionIncome(Command):
 
 
 @dataclass(kw_only=True)
-class DetermineWarriorsWithReducedMorale(Command):
-    faction: Faction
-    month: int
+class PrepareFactionWarriorsForMonth(Command):
+    """
+    Hand every man this faction is responsible for the month that has just turned.
 
+    A read rather than a sweep, and deliberately unfiltered: what applies to a man is decided by the
+    handlers subscribing to the event this raises, not here. That is what makes the event a fact - a
+    filtered read could only announce a state somebody looked up.
 
-@dataclass(kw_only=True)
-class DetermineInjuredWarriors(Command):
+    The faction's own roster plus the captives it holds, which is what "responsible for" means: a
+    captive is on nobody's roster, capture having cleared "warrior.faction", so his captor's is the
+    only month that can reach him.
+    """
+
     faction: Faction
     month: int
 

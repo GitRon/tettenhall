@@ -17,7 +17,7 @@ class FactionFactory(DjangoModelFactory):
     culture = factory.SubFactory(CultureFactory)
     savegame = factory.SubFactory(SavegameFactory)
     fyrd_reserve = 3
-    # Every faction owns exactly one town, created together with it in handle_create_new_faction, and
+    # Every faction owns exactly one town, created together with it in _create_faction, and
     # several handlers read faction.town. Referenced by path because the town factory points back here.
     # Pass town=None to skip it, or town__hall=... to set a building level.
     town = factory.RelatedFactory("apps.warband.town.tests.factories.town.TownFactory", factory_related_name="faction")
