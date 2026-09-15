@@ -1,8 +1,40 @@
 {# A card is "ground" with a 1px rule around it - see docs/patterns/visual-identity.md. The report #}
 {# beside this one is the panel that separates by surface instead, because it is the one the screen is #}
 {# played through. #}
-<div class="box-border border border-rule bg-ground p-6">
-    {% include 'common/components/box_header.html' with title=faction.name %}
+{# "group" is what the rows below read the kit control with. Each panel is its own group, so the two #}
+{# war bands on the screen carry a control each and neither reaches the other's men. #}
+<div class="group box-border border border-rule bg-ground p-6">
+    {# The name of the band and the one thing the panel can be asked for, on a row: the same shape the #}
+    {# battle report beside this one gives its own header and the Fight! button. It wraps, so a long #}
+    {# faction name on a phone pushes the control onto its own line rather than squeezing the name. #}
+    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        {% include 'common/components/box_header.html' with title=faction.name %}
+
+        {# What each man carries is fixed for the length of the fight, so it is worth one reading at the #}
+        {# start and is furniture after that. This opens it on every row at once. #}
+        {#  #}
+        {# It has to be here rather than in the row: the list below is replaced with "innerHTML" every #}
+        {# round, which closes anything stateful inside it again. #}
+        {#  #}
+        {# The control is a way of looking at the panel rather than a thing that commits the player, so #}
+        {# it is set like "Leave the fight" at the top of the screen and not like a button. The one #}
+        {# filled control on this screen is Fight! - see docs/patterns/visual-identity.md. #}
+        {#  #}
+        {# Three spans rather than one: the "sr-only" name is what is announced beside the checked #}
+        {# state and it does not move, while the two "aria-hidden" ones are the imperative the player #}
+        {# reads. A single label swapping its own words has a screen reader say "Hide kit, checked". #}
+        {# The checkbox is the control and it is only visually hidden, so it still takes the keyboard. #}
+        {# "has-[:focus-visible]" is what draws the ring the sighted keyboard user needs: the label is #}
+        {# the input's parent rather than its sibling, so "peer-focus-visible" would reach nothing. #}
+        <label class="cursor-pointer font-display text-[13px] uppercase tracking-[0.06em] text-ink-muted hover:text-ink has-[:focus-visible]:text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-offset-4">
+            <input type="checkbox"
+                   class="kit-toggle peer sr-only">
+            <span class="sr-only">Show kit</span>
+            <span aria-hidden="true" class="peer-checked:hidden">Show kit</span>
+            <span aria-hidden="true" class="hidden peer-checked:inline">Hide kit</span>
+        </label>
+    </div>
+
     {# The swap target keeps its own classes: "innerHTML" replaces what is inside it, so the rule that #}
     {# opens the list has to be declared inside it or the first update loses it. #}
     {# The muster line and the rule under it are inside the target too, and that is the whole reason #}

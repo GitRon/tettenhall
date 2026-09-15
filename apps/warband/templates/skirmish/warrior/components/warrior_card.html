@@ -26,8 +26,15 @@
         {# The axis is brightness because the palette has no second hue to spend: a man still on his #}
         {# feet wears the brightest value there is, which is what reads as whole. The word is never the #}
         {# red - only the box around it - so a tag stays as readable as the number beside it. #}
+        {# The level rides with the name because this is where a level-up is witnessed: the growth #}
+        {# happens mid-skirmish and the log announces it in the panel beside this one. It is the one #}
+        {# figure the fight can change on a man who is otherwise what he walked in as, and a line #}
+        {# holding nothing but a level is not worth a row of its own. #}
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p class="m-0 min-w-0 flex-1 leading-snug text-ink">{{ warrior.display_name }}</p>
+            <span class="font-mono whitespace-nowrap text-label uppercase tracking-label text-ink-muted">
+                <i class="fa-solid fa-award"></i> Level {{ warrior.level }}
+            </span>
             <p class="m-0 inline-block border border-ink px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
                 <i class="fa-solid fa-feather-pointed"></i> Ready
             </p>
@@ -54,13 +61,16 @@
             </span>
         </div>
 
-        {# The level is here because this is where a level-up is witnessed: the growth happens #}
-        {# mid-skirmish and the log announces it in the panel beside this one. #}
-        {# The gear is here because the fight is the one screen that shows both sides theirs - see #}
-        {# docs/patterns/warrior-knowledge.md. A player standing across from the man can read what he #}
-        {# carries, and what he carries is part of choosing what to do about him. #}
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted">
-            <span class="whitespace-nowrap"><i class="fa-solid fa-award"></i> Level {{ warrior.level }}</span>
+        {# What he carries. The fight is the one screen that shows both sides theirs - see #}
+        {# docs/patterns/warrior-knowledge.md - and nothing here is withheld or fuzzed: a player #}
+        {# standing across from the man reads it in full, one click away. #}
+        {# Asked for rather than always open, because his gear cannot change while the fight is open, so #}
+        {# it is one reading when the sides are sized up and twelve static lines every round after that. #}
+        {# The control is one per war band and lives in "faction_box.html", above the swap target this #}
+        {# row sits inside. #}
+        {# It is read by class rather than by ":checked" alone: a selected "<option>" answers ":checked" #}
+        {# too, and the order below carries one on every player-side row. #}
+        <div class="hidden flex-wrap items-center gap-x-4 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted group-has-[.kit-toggle:checked]:flex">
             <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %} {{ warrior.get_weapon_or_fallback }}</span>
             <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %} {{ warrior.get_armor_or_fallback }}</span>
         </div>
