@@ -205,9 +205,20 @@ prepare_database() {
     return 1
   }
 
-  # The item, warrior and quest generators query this reference data and raise without it.
-  "$PY" manage.py loaddata culture itemtype questname >> "$SETUP_LOG" 2>&1 || {
-    echo "loaddata culture itemtype questname failed, see ${SETUP_LOG#"$REPO_ROOT/"}" >&2
+  # Every fixture in the app is reference data the game ships with, and something raises without each of
+  # them - the item, warrior and quest generators and the injury roll all query one. Taken off disk
+  # rather than named here: a list written down in a second place is a list that goes stale silently,
+  # and the failure surfaces rounds later as a 500 that looks like whatever story is being reviewed.
+  fixtures=$(find "$REPO_ROOT/apps" -path '*/fixtures/*.json' -exec basename {} .json \; | sort)
+  if [ -z "$fixtures" ]; then
+    echo "no fixtures found under apps/*/fixtures/ - the generators raise without the reference data." >&2
+    return 1
+  fi
+
+  # Unquoted on purpose: the names are one argument each.
+  # shellcheck disable=SC2086
+  "$PY" manage.py loaddata $fixtures >> "$SETUP_LOG" 2>&1 || {
+    echo "loaddata $(echo $fixtures) failed, see ${SETUP_LOG#"$REPO_ROOT/"}" >&2
     return 1
   }
 
