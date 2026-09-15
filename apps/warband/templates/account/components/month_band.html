@@ -30,9 +30,19 @@
             {# month" keeps its place rather than disappearing - the player learns where it lives - #}
             {# and wears the rule and the dim ink the palette reserves for a control that refuses. #}
             {# The view refuses it as well, and that guard stays: this is the honest face of it. #}
+            {#  #}
+            {# Straight into the fight wherever there is only one it could mean - one open, or one #}
+            {# already under way, which is the only one the fight view would let him open anyway. #}
+            {# The list is for the case it is actually for: several fights standing unstarted, where #}
+            {# which of them to walk into is a decision and nobody but the player can make it. #}
+            {#  #}
+            {# The plural follows where the control goes, not how many fights hold the month - those #}
+            {# are two different numbers once a fight is under way, and the sentence above already #}
+            {# counts them. A button reading "to the fights" that opens one fight is the very thing #}
+            {# this control was wrong about before. #}
             <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ground no-underline hover:border-ink"
-               href="{% url 'warband:skirmish-list-view' %}">
-                To the fight{{ month_standing.open_skirmish_count|pluralize }}
+               href="{% if month_standing.skirmish_to_enter %}{% url 'warband:skirmish-fight-view' month_standing.skirmish_to_enter.id %}{% else %}{% url 'warband:skirmish-list-view' %}{% endif %}">
+                {% if month_standing.skirmish_to_enter %}To the fight{% else %}To the fights{% endif %}
             </a>
             <button class="box-border inline-block shrink-0 border border-rule bg-transparent px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ink-dim"
                     disabled

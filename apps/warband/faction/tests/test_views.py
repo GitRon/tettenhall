@@ -1294,6 +1294,27 @@ def test_faction_attack_view_fights_the_rivals_own_war_band(
 
 
 @pytest.mark.django_db
+def test_faction_attack_view_lands_on_the_fight_it_started(
+    logged_in_client, current_savegame, player_faction_ready_to_march, queuebie_registry
+):
+    """
+    A war band that has just marched wants the fight, not a table of every battle ever fought. The
+    skirmish is read back out of the database because the queue hands the view nothing.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_faction.leader = WarriorFactory(faction=rival_faction)
+    rival_faction.save()
+
+    response = logged_in_client.post(
+        reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}),
+        data={"assigned_warriors": []},
+    )
+
+    skirmish = Skirmish.objects.get(defending_faction=rival_faction)
+    assert response.url == reverse("warband:skirmish-fight-view", kwargs={"pk": skirmish.id})
+
+
+@pytest.mark.django_db
 def test_faction_attack_view_hides_factions_of_other_savegames(
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):
