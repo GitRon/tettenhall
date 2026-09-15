@@ -53,7 +53,7 @@ class QuestGenerator:
         if not quest_name_list:
             raise RuntimeError(
                 "There are no quest names to draw from. "
-                "Load the reference data with 'loaddata culture itemtype questname'."
+                "Load the reference data with 'loaddata culture itemtype questname injurytype'."
             )
 
         name = random.choice(quest_name_list).name

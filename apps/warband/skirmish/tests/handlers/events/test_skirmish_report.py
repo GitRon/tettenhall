@@ -274,7 +274,9 @@ def test_handle_record_incapacitated_warrior_records_him_as_merely_down():
     warrior = WarriorFactory.build()
 
     result = handle_record_incapacitated_warrior(
-        context=WarriorWasIncapacitated(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build())
+        context=WarriorWasIncapacitated(
+            skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(), overkill_health=1
+        )
     )
 
     assert result == RecordSkirmishCasualty(

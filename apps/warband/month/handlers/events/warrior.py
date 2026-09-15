@@ -10,6 +10,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorMoraleReplenished,
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
+    WarriorWasInjured,
 )
 
 
@@ -89,6 +90,26 @@ def handle_warrior_was_dismissed(*, context: WarriorWasDismissed) -> Command:
     return CreatePlayerMonthLog(
         title=f"{context.warrior} was sent away for {context.severance_pay} silver.",
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_DISMISSED,
+        month=context.month,
+        faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=WarriorWasInjured)
+def handle_warrior_was_injured(*, context: WarriorWasInjured) -> Command:
+    """
+    The one line that outlives the fight it was written in.
+
+    The battle log says it too, but a battle log is read once and then belongs to a skirmish the
+    player has moved on from. What he carries into next month is the man, so the month log is where
+    the cost of the fight is finally counted.
+
+    Worded without an article, because the injury describes itself and "a Cracked ribs" is what
+    putting one in front of it reads like.
+    """
+    return CreatePlayerMonthLog(
+        title=f"{context.warrior} is marked for good: {context.injury}.",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_INJURED,
         month=context.month,
         faction=context.faction,
     )

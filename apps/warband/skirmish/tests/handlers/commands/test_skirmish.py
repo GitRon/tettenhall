@@ -36,6 +36,9 @@ from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.tests.factories.injury import InjuryFactory
+from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
 @pytest.mark.django_db
@@ -909,3 +912,35 @@ def test_handle_finish_round_declares_the_attacking_faction_the_victor_on_a_mutu
     result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
 
     assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.attacking_faction, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_determine_attacker_and_defender_costs_a_lame_man_the_initiative():
+    """
+    Dexterity decides who strikes, so an injury is felt twice: a weaker swing, and fewer of them.
+
+    The lame man carries six points off ten against an unharmed ten, and the draw sits at the share
+    his four points buy - so he loses here and would have won it at his stored dexterity.
+    """
+    skirmish = SkirmishFactory()
+    lame_warrior = WarriorFactory(faction=skirmish.attacking_faction, dexterity=10)
+    InjuryFactory(
+        warrior=lame_warrior,
+        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=6),
+    )
+    enemy_warrior = WarriorFactory(faction=skirmish.defending_faction, dexterity=10)
+
+    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.random", return_value=0.4):
+        result = handle_determine_attacker_and_defender(
+            context=DetermineAttacker(
+                skirmish=skirmish,
+                round_number=2,
+                warrior_1=lame_warrior,
+                action_1=SkirmishActionChoices.SIMPLE_ATTACK,
+                warrior_2=enemy_warrior,
+                action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+            )
+        )
+
+    assert result.attacker == enemy_warrior
+    assert result.defender == lame_warrior

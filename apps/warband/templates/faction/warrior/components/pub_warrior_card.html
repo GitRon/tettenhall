@@ -54,6 +54,20 @@
                 {# see "Warrior.attribute_draws", which pairs them off the same trio. #}
                 <td>{% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}</td>
             </tr>
+            {# Shown whoever is looking, unlike the numbers above and the gear below: the pub cannot #}
+            {# hide a limp, and this is the one thing about a man on the shelf the player gets for #}
+            {# nothing. It reads through to the price the way it should - a crippled veteran still #}
+            {# costs what his wage says he costs. #}
+            {% if warrior.injuries.all %}
+                <tr>
+                    <td>Injuries</td>
+                    <td>
+                        {% for injury in warrior.injuries.all %}
+                            <span class="border border-rule px-[5px] font-mono text-label leading-none tracking-label text-ink uppercase">{{ injury.type.description }}</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endif %}
             {# The pub is selling what he carries, so it names it. On a rival's town square there is #}
             {# nothing on offer and nothing to name - see "WarriorKnowledge.gear_is_visible". #}
             {% if knowledge.gear_is_visible %}

@@ -12,6 +12,7 @@ from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.handlers.commands.warrior import (
@@ -20,6 +21,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_dismiss_warrior,
     handle_enslave_captured_warrior,
     handle_heal_injured_warrior,
+    handle_inflict_injury,
     handle_punish_unpaid_warrior,
     handle_recruit_captured_warrior,
     handle_replenish_warrior_morale,
@@ -30,6 +32,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     DismissWarrior,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
+    InflictInjury,
     PunishUnpaidWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
@@ -42,8 +45,12 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorMoraleReplenished,
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
+    WarriorWasInjured,
 )
+from apps.warband.warrior.models.injury import Injury
+from apps.warband.warrior.models.injury_type import InjuryType
 from apps.warband.warrior.services.nickname import STRENGTH_NICKNAMES
+from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
 @pytest.mark.django_db
@@ -552,3 +559,51 @@ def test_handle_award_earned_nickname_leaves_an_ordinary_man_unnamed():
     assert result is None
     warrior.refresh_from_db()
     assert warrior.nickname_state is None
+
+
+@pytest.mark.django_db
+def test_handle_inflict_injury_writes_the_row_and_names_it():
+    skirmish = SkirmishFactory(month=7)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, max_health=20)
+    InjuryType.objects.all().delete()
+    InjuryTypeFactory(name="Ruined shoulder", attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2)
+
+    with mock.patch("apps.warband.warrior.services.injury.random.random", return_value=0.0):
+        result = handle_inflict_injury(
+            context=InflictInjury(
+                skirmish=skirmish,
+                warrior=warrior,
+                faction=warrior.faction,
+                overkill_health=3,
+                month=7,
+            )
+        )
+
+    assert result == WarriorWasInjured(
+        skirmish=skirmish,
+        warrior=warrior,
+        faction=warrior.faction,
+        injury="Ruined shoulder (-2 Strength)",
+        month=7,
+    )
+    assert Injury.objects.for_warrior(warrior_id=warrior.id).count() == 1
+
+
+@pytest.mark.django_db
+def test_handle_inflict_injury_leaves_most_men_unmarked():
+    skirmish = SkirmishFactory(month=7)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, max_health=20)
+
+    with mock.patch("apps.warband.warrior.services.injury.random.random", return_value=0.99):
+        result = handle_inflict_injury(
+            context=InflictInjury(
+                skirmish=skirmish,
+                warrior=warrior,
+                faction=warrior.faction,
+                overkill_health=3,
+                month=7,
+            )
+        )
+
+    assert result is None
+    assert Injury.objects.for_warrior(warrior_id=warrior.id).exists() is False

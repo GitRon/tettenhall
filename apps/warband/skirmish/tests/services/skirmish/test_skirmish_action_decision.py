@@ -3,6 +3,9 @@ import pytest
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.tests.factories.injury import InjuryFactory
+from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
 @pytest.mark.django_db
@@ -48,3 +51,20 @@ def test_process_returns_value_and_label():
     result = SkirmishActionDecisionService(warrior=warrior).process()
 
     assert result == (SkirmishActionChoices.SIMPLE_ATTACK.value, SkirmishActionChoices.SIMPLE_ATTACK.label)
+
+
+@pytest.mark.django_db
+def test_determine_decision_stops_reaching_for_a_swing_an_injury_took_away():
+    """
+    A man quick enough for the fast attack loses it with his hand, rather than going on picking a
+    swing he can no longer make.
+    """
+    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=15, strength=10)
+    InjuryFactory(
+        warrior=warrior,
+        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=6),
+    )
+
+    result = SkirmishActionDecisionService(warrior=warrior)._determine_decision()
+
+    assert result == SkirmishActionChoices.SIMPLE_ATTACK

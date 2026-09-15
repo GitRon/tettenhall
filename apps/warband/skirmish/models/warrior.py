@@ -1,3 +1,4 @@
+from functools import cached_property
 from math import isqrt
 
 from django.db import models
@@ -16,11 +17,21 @@ from apps.warband.warrior.services.nickname import resolve_nickname
 
 
 # TODO (#95): move to warrior app?
-# TODO (#53): permanent injuries would be nice -> each has a modificator and reduces a value like HP or dex
-#  -> ankle -> reduce dex, missing finger -> strength etc.
 class Warrior(models.Model):
     NO_WEAPON_ATTACK = "1d3"
     NO_ARMOR_DEFENSE = "1d3"
+
+    # How far past zero a blow may carry a man and still leave him alive, as a share of what he can
+    # hold. Named rather than written at the one comparison that decides dead from unconscious,
+    # because the injury roll has to measure its own depth against the very same threshold - see
+    # [InjuryRollService].
+    DEATH_OVERKILL_SHARE = 0.15
+
+    # No injury may take an attribute to nothing. Strength scales a blow by
+    # "strength / strength_baseline", so a zero is a man who can never hurt anybody again - a worse
+    # outcome than the death he was one point away from, and reachable by no other route. The morale
+    # ceiling is floored for the same kind of reason, see "WarriorManager.MINIMUM_MAX_MORALE".
+    MINIMUM_EFFECTIVE_ATTRIBUTE = 1
 
     # Reaching level N costs (N - 1) squared times XP_LEVEL_BASE - 100, 400, 900, 1600 - so every level takes
     # longer than the one before it and a veteran does not run away with it. Quadratic rather than
@@ -196,6 +207,11 @@ class Warrior(models.Model):
         one "STATS_MU"/"STATS_SIGMA"/"STATS_MIN" trio. Health and morale each have their own pair, and
         take the default floor of one: their generator re-rolls a zero rather than flooring them, so
         one is as low as they come.
+
+        The stored columns, never [effective_strength] and [effective_dexterity]. This feeds the
+        epithet, which is drawn once and kept - a man called "the Strong" who loses a shoulder is
+        still called "the Strong", the way a level that raises his strength does not rename him
+        either.
         """
         return {
             "strength": AttributeDraw(
@@ -213,6 +229,57 @@ class Warrior(models.Model):
             "health": AttributeDraw(value=self.max_health, baseline=self.health_baseline, spread=self.health_spread),
             "morale": AttributeDraw(value=self.max_morale, baseline=self.morale_baseline, spread=self.morale_spread),
         }
+
+    @cached_property
+    def injury_maluses(self) -> dict[str, int]:
+        """
+        What this man's lasting injuries take off each attribute, summed per attribute.
+
+        One query for both, and cached on the instance: the fight asks for a warrior's strength once
+        per blow he throws, and a roster page asks every man on it. An injury is inflicted on a man
+        who is already out of the fight and is never healed away, so there is nothing that can change
+        under a cached value while anything is still reading it.
+
+        Zero is absent from the result rather than present as a zero, so a man with no injuries
+        aggregates to an empty dict and the two readers below fall back through "get".
+        """
+        return {
+            row["type__attribute"]: row["total"]
+            for row in self.injuries.values("type__attribute").annotate(total=models.Sum("type__magnitude"))
+        }
+
+    @property
+    def effective_strength(self) -> int:
+        """
+        The strength he actually swings with, his injuries taken off.
+
+        The stored column is left alone on purpose: level-up growth and training both write it, so a
+        crippled man who levels would silently un-cripple, and nothing could tell an injury from a bad
+        roll at generation. Everything that turns strength into an outcome reads this instead -
+        "AttackService._scaled_by_strength", [expected_damage] and the action decision. The epithet
+        deliberately does not: see [attribute_draws].
+        """
+        # Imported here rather than at module scope: the injury row points back at this model, so the
+        # warrior topic's model package cannot be reached while this module is still being imported
+        from apps.warband.warrior.models.injury_type import InjuryType
+
+        malus = self.injury_maluses.get(InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, 0)
+
+        return max(self.strength - malus, self.MINIMUM_EFFECTIVE_ATTRIBUTE)
+
+    @property
+    def effective_dexterity(self) -> int:
+        """
+        The dexterity he actually moves with, his injuries taken off.
+
+        A bigger swing than it looks: dexterity decides who attacks whom and which action the AI
+        picks, so a lame man is attacked more often as well as hitting less.
+        """
+        from apps.warband.warrior.models.injury_type import InjuryType
+
+        malus = self.injury_maluses.get(InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, 0)
+
+        return max(self.dexterity - malus, self.MINIMUM_EFFECTIVE_ATTRIBUTE)
 
     @property
     def nickname(self) -> str | None:
@@ -392,8 +459,11 @@ class Warrior(models.Model):
 
         Read off the fallback when the slot is empty, the way the fight reads it: a bare-handed
         warrior still throws 1d3, and a blank here would say he cannot hurt anybody.
+
+        The effective strength, because this is what the gear picker quotes a man's swing at and the
+        fight would otherwise disagree with it about a man with a ruined shoulder.
         """
-        return self.get_weapon_or_fallback().expectancy_value * self.strength / self.strength_baseline
+        return self.get_weapon_or_fallback().expectancy_value * self.effective_strength / self.strength_baseline
 
     @property
     def expected_protection(self) -> float:

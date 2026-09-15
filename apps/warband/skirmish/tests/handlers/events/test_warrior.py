@@ -79,7 +79,9 @@ def test_handle_morale_drop_on_faction_on_warrior_is_out_of_fight_for_an_incapac
     attacker = WarriorFactory.build(faction=skirmish.attacking_faction)
 
     result = handle_morale_drop_on_faction_on_warrior_is_out_of_fight(
-        context=WarriorWasIncapacitated(skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker)
+        context=WarriorWasIncapacitated(
+            skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker, overkill_health=1
+        )
     )
 
     assert result == ReduceMoraleOfRemainingWarriors(skirmish=skirmish, warrior=incapacitated_warrior)
@@ -106,7 +108,9 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_an_incapacitated_w
     attacker = WarriorFactory.build(faction=skirmish.attacking_faction)
 
     result = handle_experience_gain_on_warrior_incapacitation(
-        context=WarriorWasIncapacitated(skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker)
+        context=WarriorWasIncapacitated(
+            skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker, overkill_health=1
+        )
     )
 
     assert result == IncreaseExperience(skirmish=skirmish, warrior=attacker, increased_experience=25)

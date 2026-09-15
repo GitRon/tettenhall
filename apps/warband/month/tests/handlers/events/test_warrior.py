@@ -6,9 +6,11 @@ from apps.warband.month.handlers.events.warrior import (
     handle_warrior_morale_replenished,
     handle_warrior_walked_out_over_unpaid_salary,
     handle_warrior_was_dismissed,
+    handle_warrior_was_injured,
 )
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
@@ -17,6 +19,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorMoraleReplenished,
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
+    WarriorWasInjured,
 )
 
 
@@ -126,5 +129,27 @@ def test_handle_warrior_earned_nickname_logs_what_he_is_called_now():
         title="Beorn is known as the Bold from now on.",
         kind=PlayerMonthLog.KindChoices.KIND_NICKNAME_EARNED,
         month=3,
+        faction=faction,
+    )
+
+
+def test_handle_warrior_was_injured_records_what_the_fight_cost_him():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Cuthred", faction=faction)
+
+    result = handle_warrior_was_injured(
+        context=WarriorWasInjured(
+            skirmish=SkirmishFactory.build(),
+            warrior=warrior,
+            faction=faction,
+            injury="Cracked ribs (-1 Strength)",
+            month=7,
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Cuthred is marked for good: Cracked ribs (-1 Strength).",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_INJURED,
+        month=7,
         faction=faction,
     )

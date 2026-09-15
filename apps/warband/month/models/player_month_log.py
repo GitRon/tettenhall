@@ -34,6 +34,7 @@ class PlayerMonthLog(models.Model):
         KIND_SAVEGAME_ENDED = 15, "Savegame ended"
         KIND_RIVAL_DEFEATED = 16, "Rival defeated"
         KIND_NICKNAME_EARNED = 17, "Nickname earned"
+        KIND_WARRIOR_INJURED = 18, "Warrior injured"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -67,6 +68,11 @@ class PlayerMonthLog(models.Model):
         # A consequence, filed with the skill upgrade it follows from rather than with the chronicle:
         # the player put the man through the training or the fight that earned it
         KindChoices.KIND_NICKNAME_EARNED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        # A consequence rather than something demanding attention: the player chose the fight, and
+        # there is nothing he can do about the injury afterwards - it never mends. Not upkeep
+        # either, which is the tallied kind, because a man crippled for good is a line the player
+        # should read as a man rather than as a count
+        KindChoices.KIND_WARRIOR_INJURED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

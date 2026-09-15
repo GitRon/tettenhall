@@ -15,6 +15,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     DismissWarrior,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
+    InflictInjury,
     PunishUnpaidWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
@@ -29,8 +30,11 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorMoraleReplenished,
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
+    WarriorWasInjured,
 )
+from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
+from apps.warband.warrior.services.injury import InjuryRollService
 from apps.warband.warrior.services.nickname import draw_nickname_state
 
 
@@ -184,6 +188,34 @@ def handle_award_earned_nickname(*, context: AwardEarnedNickname) -> Event | Non
         warrior=context.warrior,
         faction=context.warrior.faction,
         nickname=context.warrior.nickname,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=InflictInjury)
+def handle_inflict_injury(*, context: InflictInjury) -> Event | None:
+    """
+    Settles whether the beating left a mark, and writes it if it did.
+
+    Most men walk away with nothing, which is why this returns "None" more often than not - the same
+    shape "handle_heal_injured_warrior" below has, and for the same reason: the caller asks the
+    question and the rule answers it.
+
+    The injury is described here rather than downstream, because the row is what knows the thing and
+    its price, and both logs have to say the same sentence about it.
+    """
+    injury_type = InjuryRollService(warrior=context.warrior, overkill_health=context.overkill_health).process()
+
+    if injury_type is None:
+        return None
+
+    Injury.objects.create_record(warrior=context.warrior, injury_type=injury_type, month=context.month)
+
+    return WarriorWasInjured(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        faction=context.faction,
+        injury=injury_type.description,
         month=context.month,
     )
 

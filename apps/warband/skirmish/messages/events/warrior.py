@@ -55,6 +55,12 @@ class WarriorWasIncapacitated(Event):
     skirmish: Skirmish
     warrior: Warrior
     by_warrior: Warrior
+    # How far past nothing the blow carried him, in points, and never negative. The number exists for
+    # the length of one handler and is then gone - "put_out_of_the_fight" floors the health to zero in
+    # the write that follows the decision - so it travels here or it cannot be read at all. What reads
+    # it is the injury roll, which is scaled by it: a man carried to the edge of death should not walk
+    # away as clean as one who was tapped over.
+    overkill_health: int
 
 
 @dataclass(kw_only=True)

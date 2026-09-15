@@ -9,4 +9,5 @@ import apps.warband.quest.admin
 import apps.warband.savegame.admin
 import apps.warband.skirmish.admin
 import apps.warband.town.admin
-import apps.warband.training.admin  # noqa: F401
+import apps.warband.training.admin
+import apps.warband.warrior.admin  # noqa: F401

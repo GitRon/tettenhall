@@ -94,7 +94,7 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
 
     # Update condition
     if context.warrior.current_health <= 0:
-        if context.warrior.current_health < context.warrior.max_health * -0.15:
+        if context.warrior.current_health < context.warrior.max_health * -Warrior.DEATH_OVERKILL_SHARE:
             condition = Warrior.ConditionChoices.CONDITION_DEAD
             message_list.append(
                 WarriorWasKilled(
@@ -110,6 +110,9 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
                     skirmish=context.skirmish,
                     warrior=context.warrior,
                     by_warrior=context.attacker,
+                    # Read here, where the negative health still stands, because the write below is
+                    # what takes it away
+                    overkill_health=-context.warrior.current_health,
                 )
             )
 

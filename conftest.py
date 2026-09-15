@@ -26,13 +26,13 @@ def django_db_setup(django_db_setup, django_db_blocker):
     """
     Loads the reference data every environment ships with.
 
-    Cultures, item types and quest names are lookup tables living in fixtures, not something a test
-    creates: the item, warrior and quest generators query them, so without them generation raises.
+    Cultures, item types, quest names and injury types are lookup tables living in fixtures, not something a test
+    creates: the item, warrior and quest generators query them, so without them generation and the injury roll raise.
     Loading them once per session keeps tests working against the same reference data as production
     instead of hand-seeding look-alikes.
     """
     with django_db_blocker.unblock():
-        call_command("loaddata", "culture", "itemtype", "questname")
+        call_command("loaddata", "culture", "itemtype", "questname", "injurytype")
 
 
 @pytest.fixture

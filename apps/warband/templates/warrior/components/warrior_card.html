@@ -91,6 +91,26 @@
                 {# see "Warrior.attribute_draws", which pairs them off the same trio. #}
                 <td>{% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}</td>
             </tr>
+            {% comment %}
+                Ungated by "knowledge", unlike everything around it. A limp is the one thing about a
+                stranger you can read across a market square, so it is shown on a rival's man and on
+                a captive alike - see docs/patterns/warrior-knowledge.md, where the rule is that a
+                thing the player has not *seen* is the kind that goes absent.
+
+                The row is left out entirely for a man carrying nothing, rather than printed with a
+                dash: an empty Injuries line on every card in the game says a great deal less than
+                its absence does.
+            {% endcomment %}
+            {% if warrior.injuries.all %}
+                <tr>
+                    <td>Injuries</td>
+                    <td>
+                        {% for injury in warrior.injuries.all %}
+                            <span class="border border-rule px-[5px] font-mono text-label leading-none tracking-label text-ink uppercase">{{ injury.type.description }}</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endif %}
             {# Named or absent, with no bucket in between - the one omission in the rule, and the #}
             {# reason it is an omission is in "WarriorKnowledge.gear_is_visible". #}
             {% if knowledge.gear_is_visible %}

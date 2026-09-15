@@ -18,11 +18,14 @@ from apps.warband.skirmish.models import (
 )
 from apps.warband.town.models import Town
 from apps.warband.training.models import Training
+from apps.warband.warrior.models import Injury, InjuryType
 
 __all__ = [
     "BattleHistory",
     "Culture",
     "Faction",
+    "Injury",
+    "InjuryType",
     "Item",
     "ItemType",
     "PlayerMonthLog",
