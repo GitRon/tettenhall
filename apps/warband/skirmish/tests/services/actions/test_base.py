@@ -8,6 +8,9 @@ from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.services.actions.base import AttackService
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.tests.factories.injury import InjuryFactory
+from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
 def test_get_pair_matching_points_is_the_dexterity():
@@ -75,3 +78,23 @@ def test_get_defense_value_announces_the_roll():
         item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
         value=2,
     )
+
+
+@pytest.mark.django_db
+def test_get_attack_value_is_weakened_by_a_lasting_injury():
+    """
+    The one method the three attack services all reach, so a ruined shoulder is felt in every swing
+    the fight has - see docs/patterns/attribute-modifiers.md.
+    """
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=10, strength_baseline=10)
+    InjuryFactory(
+        warrior=warrior,
+        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=5),
+    )
+    service = AttackService(skirmish=skirmish, warrior=warrior)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        result = service.get_attack_value()
+
+    assert result.value == 2

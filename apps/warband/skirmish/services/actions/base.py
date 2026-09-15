@@ -31,11 +31,18 @@ class AttackService:
         What the fight compares, put in place of the bare roll and leaving the die and the gear alone.
 
         Full weapon damage for a warrior at his own kind's mean strength, otherwise less or greater.
+
+        The effective strength rather than the stored column, so a lasting injury is felt in every
+        swing the fight has - the three attack services all reach this one method with a multiplier
+        rather than a formula of their own, which is what makes it the single seam.
         """
         return dataclasses.replace(
             attack,
             value=round(
-                attack.roll.result * action_multiplier * self.warrior.strength / self.warrior.strength_baseline
+                attack.roll.result
+                * action_multiplier
+                * self.warrior.effective_strength
+                / self.warrior.strength_baseline
             ),
         )
 

@@ -7,6 +7,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands.battle_history import CreateBattleHistory
 from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.warband.skirmish.models import BattleHistory
+from apps.warband.warrior.messages.events import warrior as warrior_injury
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
@@ -81,6 +82,24 @@ def handle_log_warrior_incapacitation(*, context: warrior.WarriorWasIncapacitate
         message=f"{context.warrior} is out of the fight being unconscious.",
         kind=BattleHistory.KindChoices.KIND_WARRIOR_INCAPACITATED,
         warrior=context.warrior,
+    )
+
+
+@message_registry.register_event(event=warrior_injury.WarriorWasInjured)
+def handle_log_warrior_injury(*, context: warrior_injury.WarriorWasInjured) -> Command:
+    """
+    The line that says a man is not getting all of himself back.
+
+    It follows the incapacitation line rather than replacing it: going down is what happened to him in
+    the fight, and this is what he takes out of it. Most men who go down get no line here, because
+    most of them keep nothing - which is what makes the ones who do worth reading.
+
+    The one handler in this module subscribing to an event out of the warrior topic rather than this
+    one's own, which is why it names its module differently from the "warrior" import above it.
+    """
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=f"{context.warrior} will carry it out of this fight: {context.injury}.",
     )
 
 

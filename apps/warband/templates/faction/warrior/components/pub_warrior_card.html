@@ -54,6 +54,7 @@
                 {# see "Warrior.attribute_draws", which pairs them off the same trio. #}
                 <td>{% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}</td>
             </tr>
+            {% include 'warrior/components/warrior_injuries.html' %}
             {# The pub is selling what he carries, so it names it. On a rival's town square there is #}
             {# nothing on offer and nothing to name - see "WarriorKnowledge.gear_is_visible". #}
             {% if knowledge.gear_is_visible %}

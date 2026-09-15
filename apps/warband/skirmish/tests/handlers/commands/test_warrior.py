@@ -135,7 +135,9 @@ def test_handle_reduce_warrior_health_incapacitates_the_warrior():
         context=ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=23)
     )
 
-    assert result == [WarriorWasIncapacitated(skirmish=skirmish, warrior=defender, by_warrior=attacker)]
+    assert result == [
+        WarriorWasIncapacitated(skirmish=skirmish, warrior=defender, by_warrior=attacker, overkill_health=3)
+    ]
     defender.refresh_from_db()
     assert defender.condition == Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
 

@@ -1,0 +1,74 @@
+[
+  {
+    "model": "warband.injurytype",
+    "pk": 1,
+    "fields": {
+      "name": "Stiff ankle",
+      "attribute": "dexterity",
+      "magnitude": 1
+    }
+  },
+  {
+    "model": "warband.injurytype",
+    "pk": 2,
+    "fields": {
+      "name": "Missing finger",
+      "attribute": "strength",
+      "magnitude": 1
+    }
+  },
+  {
+    "model": "warband.injurytype",
+    "pk": 3,
+    "fields": {
+      "name": "Cracked ribs",
+      "attribute": "strength",
+      "magnitude": 1
+    }
+  },
+  {
+    "model": "warband.injurytype",
+    "pk": 4,
+    "fields": {
+      "name": "Shortened leg",
+      "attribute": "dexterity",
+      "magnitude": 1
+    }
+  },
+  {
+    "model": "warband.injurytype",
+    "pk": 5,
+    "fields": {
+      "name": "Scarred sword arm",
+      "attribute": "strength",
+      "magnitude": 1
+    }
+  },
+  {
+    "model": "warband.injurytype",
+    "pk": 6,
+    "fields": {
+      "name": "Half-blind eye",
+      "attribute": "dexterity",
+      "magnitude": 2
+    }
+  },
+  {
+    "model": "warband.injurytype",
+    "pk": 7,
+    "fields": {
+      "name": "Ruined shoulder",
+      "attribute": "strength",
+      "magnitude": 2
+    }
+  },
+  {
+    "model": "warband.injurytype",
+    "pk": 8,
+    "fields": {
+      "name": "Crushed hand",
+      "attribute": "dexterity",
+      "magnitude": 2
+    }
+  }
+]

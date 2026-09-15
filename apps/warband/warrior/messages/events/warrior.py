@@ -4,6 +4,7 @@ from queuebie.messages import Event
 
 from apps.warband.faction.models import Faction
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 
 
@@ -97,6 +98,26 @@ class WarriorEarnedNickname(Event):
     warrior: Warrior
     faction: Faction
     nickname: str
+    month: int
+
+
+@dataclass(kw_only=True)
+class WarriorWasInjured(Event):
+    """
+    A beating left this man something he keeps.
+
+    The injury rides along as the sentence describing it rather than as the row, for the reason
+    [WarriorEarnedNickname] carries its phrasing: what the two logs say is the thing and its price,
+    and each resolving that off the row would be two places deciding one wording.
+
+    Note which "injured" this is. The monthly sweep and "HealInjuredWarrior" mean *wounded* - health
+    below the maximum, which mends every month. Nothing mends this.
+    """
+
+    skirmish: Skirmish
+    warrior: Warrior
+    faction: Faction
+    injury: str
     month: int
 
 

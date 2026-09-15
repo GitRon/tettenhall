@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from queuebie.runner import handle_message
 
@@ -10,12 +12,13 @@ from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.commands.skirmish import WinSkirmish
-from apps.warband.skirmish.messages.commands.warrior import IncreaseExperience
+from apps.warband.skirmish.messages.commands.warrior import IncreaseExperience, ReduceHealth
 from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.models.injury import Injury
 
 
 @pytest.mark.django_db
@@ -128,3 +131,35 @@ def test_the_purse_a_skirmish_carries_reaches_the_signatory_s_ledger(queuebie_re
 
     assert Transaction.objects.current_balance(faction_id=skirmish.attacking_faction.pk) == 250
     assert Transaction.objects.get().reason == f"Quest {quest_contract.quest.name!r} finished! 250 silver looted"
+
+
+@pytest.mark.django_db
+def test_a_knockout_marks_the_man_without_the_bus_reading_the_database(queuebie_registry):
+    """
+    A beating carried all the way through the queue, which is the only level that proves it works.
+
+    The chain crosses the bus twice - the command that takes his last points raises
+    WarriorWasIncapacitated, an event handler relays it as InflictInjury, and that command's handler
+    rolls and writes the row - and the middle hop runs behind strict mode's database blocker. Every
+    unit test in the suite calls its handler directly, where the blocker is not applied at all
+    (docs/patterns/strict-mode.md says so in as many words), so a relay that reaches for anything it
+    was not handed passes every one of them and raises the first time a real man goes down.
+
+    It did. "reduce_current_health" refreshes the warrior from the database one handler earlier,
+    which drops his cached faction, so building the command with "warrior.faction" was a query in the
+    one place that may not make one - and the whole fight rolled back with "Database access is
+    disabled in this context." His faction is read in the command handler now, and this is the test
+    that says so.
+
+    Twenty-two points against twenty health leaves him two past nothing, inside the 15% band that
+    tells a corpse from a captive. The roll is patched to land, because whether he keeps something is
+    not what this is about.
+    """
+    skirmish = SkirmishFactory(month=3)
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_health=20, max_health=20)
+
+    with mock.patch("apps.warband.warrior.services.injury.random.random", return_value=0.0):
+        handle_message(ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=22))
+
+    assert Injury.objects.for_warrior(warrior_id=defender.id).count() == 1

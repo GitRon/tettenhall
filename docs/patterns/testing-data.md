@@ -28,15 +28,15 @@ WarriorFactory(faction__town__sanctuary=3)
 
 ## Reference data is the one exception
 
-`Culture`, `ItemType` and `QuestName` are lookup tables, not test data. They ship as fixtures
-(`apps/warband/fixtures/culture.json`, `apps/warband/fixtures/itemtype.json`,
-`apps/warband/fixtures/questname.json` — Django discovers fixtures at `<app>/fixtures/` only, so they sit
+`Culture`, `ItemType`, `QuestName` and `InjuryType` are lookup tables, not test data. They ship as
+fixtures (`apps/warband/fixtures/culture.json`, `apps/warband/fixtures/itemtype.json`,
+`apps/warband/fixtures/questname.json`, `apps/warband/fixtures/injurytype.json` — Django discovers fixtures at `<app>/fixtures/` only, so they sit
 at the app root rather than in the topic package that owns the model) and every environment has them. The generators query them —
 `FyrdItemGenerator` narrows further, to the rustic tier — so without them item, warrior and quest
 generation raises `RuntimeError`.
 
-The root `conftest.py` loads all three fixtures once per session via `django_db_setup`. **Don't hand-seed
-cultures, item types or quest names**, and don't build look-alikes: a test that creates its own
+The root `conftest.py` loads all four fixtures once per session via `django_db_setup`. **Don't hand-seed
+cultures, item types, quest names or injury types**, and don't build look-alikes: a test that creates its own
 `ItemType(name="Spear")` passes while asserting nothing about the data the game actually ships.
 
 Use a factory for these only when a test needs a *specific* variant the fixtures don't contain (a

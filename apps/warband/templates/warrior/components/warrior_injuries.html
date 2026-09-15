@@ -1,0 +1,28 @@
+{% comment %}
+    What a man carries out of the fights he has lost, as a row on whichever card is showing him.
+
+    Ungated by "knowledge", unlike the numbers and the gear around it. A limp is the one thing about
+    a stranger you can read across a market square, so it is shown on a rival's man and on a captive
+    alike - see docs/patterns/warrior-knowledge.md, where the rule is that a thing the player has not
+    *seen* is the kind that goes absent.
+
+    The whole row is left out for a man carrying nothing, rather than printed with a dash: an empty
+    Injuries line on every card in the game says a great deal less than its absence does.
+
+    One include for both cards, the way "warrior_attribute.html" and "warrior_gauge.html" already
+    serve the two of them. The queryset is bound once with "with", so a card costs one query for this
+    rather than two - and none at all where the view prefetched "injuries__type", which is what the
+    lists of men do.
+{% endcomment %}
+{% with injury_list=warrior.injuries.all %}
+    {% if injury_list %}
+        <tr>
+            <td>Injuries</td>
+            <td>
+                {% for injury in injury_list %}
+                    <span class="border border-rule px-[5px] font-mono text-label leading-none tracking-label text-ink uppercase">{{ injury.type.description }}</span>
+                {% endfor %}
+            </td>
+        </tr>
+    {% endif %}
+{% endwith %}

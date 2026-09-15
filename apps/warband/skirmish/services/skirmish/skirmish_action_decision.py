@@ -18,11 +18,13 @@ class SkirmishActionDecisionService:
         # Warriors will try to save themselves
         if self.warrior.current_health < self.warrior.max_health * 0.25:
             return SkirmishActionChoices.DEFENSIVE_STANCE
+        # The effective values in both checks below, so a man stops reaching for the swing his
+        # injuries have taken away from him - see docs/patterns/attribute-modifiers.md
         # Warriors with high dexterity will try to hit fast
-        if self.warrior.dexterity > MercenaryWarriorGenerator.STATS_MU:
+        if self.warrior.effective_dexterity > MercenaryWarriorGenerator.STATS_MU:
             return SkirmishActionChoices.FAST_ATTACK
         # Warriors with high strength will try to hit hard
-        if self.warrior.strength > MercenaryWarriorGenerator.STATS_MU:
+        if self.warrior.effective_strength > MercenaryWarriorGenerator.STATS_MU:
             return SkirmishActionChoices.RISKY_ATTACK
 
         # All others will use the default attack

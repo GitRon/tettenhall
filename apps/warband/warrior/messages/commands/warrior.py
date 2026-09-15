@@ -5,6 +5,7 @@ from queuebie.messages import Command
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGenerator
 
@@ -82,6 +83,34 @@ class HealInjuredWarrior(Command):
     # faction holding him, and capture has cleared his own
     faction: Faction
     warrior: Warrior
+    month: int
+
+
+@dataclass(kw_only=True)
+class InflictInjury(Command):
+    """
+    Ask whether this beating left a lasting mark, and write it if it did.
+
+    Raised for every man knocked out rather than only for the ones who keep something, so the rule
+    lives in one handler and its producer stays a plain relay - the roll is work, and work belongs on
+    this side of the bus.
+
+    The faction is deliberately not on it, the way it is not on [AwardEarnedNickname]: the month-log
+    line the handler ends in needs one, and the producer is an event handler that may not go and ask.
+    Reaching for "warrior.faction" there is a query, not an attribute access - the manager that took
+    the man's last points calls "refresh_from_db", which drops every cached relation on him - so it
+    is read in this command's handler, where a query is allowed.
+
+    The skirmish rides along so the battle log has a fight to write the line into, and it is not
+    nullable: a beating is the only thing in the game that inflicts one today. A second producer -
+    an incident that maims a man, say - widens it then rather than leaving a hole nobody fills now.
+    """
+
+    skirmish: Skirmish
+    warrior: Warrior
+    # How far past nothing the blow carried him, which is what scales the chance - see
+    # [InjuryRollService]
+    overkill_health: int
     month: int
 
 

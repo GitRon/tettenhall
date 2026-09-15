@@ -180,11 +180,13 @@ def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacke
     warrior_1_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_1)
     warrior_2_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_2)
 
+    # The effective dexterity, so a lame man loses the initiative he no longer has - the other half
+    # of what an injury costs him, beside the weaker swing
     warrior_1_matching_points = warrior_1_attack_action_service_class.get_pair_matching_points(
-        warrior_dexterity=context.warrior_1.dexterity
+        warrior_dexterity=context.warrior_1.effective_dexterity
     )
     warrior_2_matching_points = warrior_2_attack_action_service_class.get_pair_matching_points(
-        warrior_dexterity=context.warrior_2.dexterity
+        warrior_dexterity=context.warrior_2.effective_dexterity
     )
 
     random_value = random.random()

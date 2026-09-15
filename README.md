@@ -28,6 +28,8 @@ inferring the conventions from nearby code.
   not command, which facts are fuzzed rather than withheld, and the screens the rule does not govern
 - [Warrior availability](docs/patterns/warrior-availability.md) — the four rules that keep a man off a
   quest or an attack, the one place they are worded, and why a picker draws him anyway
+- [Attribute modifiers](docs/patterns/attribute-modifiers.md) — how an injury, a trait or a piece of
+  gear makes a man weaker, which readers see it, and what deliberately does not
 - [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a
   balance number belongs
 - [Month incidents](docs/patterns/month-incidents.md) — the pool the world draws from each month, its

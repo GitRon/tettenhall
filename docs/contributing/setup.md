@@ -17,7 +17,7 @@ Cultures, item types and quest names are reference data shipped as fixtures, and
 quest generators query them — a database without them raises `RuntimeError` during generation:
 
 ```bash
-uv run python manage.py loaddata culture itemtype questname
+uv run python manage.py loaddata culture itemtype questname injurytype
 ```
 
 The test suite loads all three automatically, see [test data](../patterns/testing-data.md).

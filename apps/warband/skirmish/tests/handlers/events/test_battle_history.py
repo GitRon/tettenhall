@@ -15,6 +15,7 @@ from apps.warband.skirmish.handlers.events.battle_history import (
     handle_log_warrior_death,
     handle_log_warrior_defends_all_damage,
     handle_log_warrior_incapacitation,
+    handle_log_warrior_injury,
     handle_log_warrior_takes_damage,
     handle_warrior_dropped_silver,
     handle_warrior_gained_experience,
@@ -45,6 +46,7 @@ from apps.warband.skirmish.messages.events.warrior import (
 from apps.warband.skirmish.models import BattleHistory
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.messages.events.warrior import WarriorWasInjured
 
 
 def test_handle_log_warrior_takes_damage_logs_both_rolls():
@@ -257,7 +259,7 @@ def test_handle_log_warrior_incapacitation_logs_the_knockout():
 
     result = handle_log_warrior_incapacitation(
         context=WarriorWasIncapacitated(
-            skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn")
+            skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn"), overkill_health=1
         )
     )
 
@@ -500,3 +502,23 @@ def test_handle_warrior_dropped_silver_logs_the_loot():
     )
 
     assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred dropped 50 silver.")
+
+
+def test_handle_log_warrior_injury_names_the_mark_and_its_price():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Cuthred")
+
+    result = handle_log_warrior_injury(
+        context=WarriorWasInjured(
+            skirmish=skirmish,
+            warrior=warrior,
+            faction=warrior.faction,
+            injury="Stiff ankle (-1 Dexterity)",
+            month=7,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Cuthred will carry it out of this fight: Stiff ankle (-1 Dexterity).",
+    )

@@ -104,3 +104,22 @@ class Faction(models.Model):
             .filter_faction(faction_id=self.id)
             .select_related("weapon__type", "armor__type")
         )
+
+    def get_held_captives(self) -> QuerySet:
+        """
+        The prisoners in this faction's cells, as the captive list renders them.
+
+        Read through here rather than as "captured_warriors.all" in the template, for the reason
+        [get_all_living_warriors] exists: the card names every lasting injury a man carries, and a
+        bare related manager makes that one query per prisoner plus one per injury.
+        """
+        return self.captured_warriors.prefetch_related("injuries__type")
+
+    def get_pub_stock(self) -> QuerySet:
+        """
+        The men standing in this faction's pub, with their injuries along for the card.
+
+        The twin of [get_held_captives], and separate because they are two different relations - the
+        pub is what a faction is offering and the cells are what it is holding.
+        """
+        return self.available_mercenaries.prefetch_related("injuries__type")
