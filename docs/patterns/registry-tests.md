@@ -1,6 +1,6 @@
 # Registry tests
 
-Six tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
+Seven tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
 [message bus](message-bus.md) at once. Unit tests can only ever verify a single handler; whether the
 handlers form a chain is decided at runtime by the registry, so neither the IDE nor a type checker notices
 when a message is emitted that nobody consumes.
@@ -28,9 +28,24 @@ for savegame scoping and skipped by the finished-savegame guard.
    belongs in is a judgement call about its subject, see [where code goes](app-layout.md); that the
    command and its handler agree on the answer is not. Autodiscovery walks directories, so a command
    handled two modules away wires up and runs identically — this is the only thing that notices.
+7. **A command handler emits events and an event handler emits commands** — the golden rule of
+   [the message bus](message-bus.md), which nothing in the framework enforces. Strict mode looks at a
+   command handler's scope and at an event handler's database access, never at the direction of a hop, so
+   a handler emitting the wrong kind wires up, runs, and reads exactly like the one above it.
 
-`TERMINAL_MESSAGES` is a deliberately maintained allowlist of events nobody is meant to consume. A new
-dead edge turns the test red without a single extra flow test.
+   It **follows module-local calls**, and that is not a refinement. `handle_assign_fighter_pairs`
+   instantiates no command itself — `_withdrawing_and_remaining` beside it does — so a walk of the
+   decorated function alone would miss the one handler the rule is bent for.
+
+Two allowlists, both deliberately maintained, both wanting the reason written next to the entry.
+
+`TERMINAL_MESSAGES` holds events nobody is meant to consume. A new dead edge turns test 4 red without a
+single extra flow test.
+
+`DIRECTION_ALLOWLIST` holds the command handlers allowed to emit commands, and has exactly one entry — see
+[the message bus](message-bus.md) for the rule it encodes. A further test fails when an entry stops being
+needed, because a stale exemption is invisible otherwise: the handler it names keeps being skipped after
+the reason is gone, and the next handler in that module inherits the exemption by sitting next to it.
 
 ## Collect emitted messages from the code, not from annotations
 
