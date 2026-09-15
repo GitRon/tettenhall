@@ -62,7 +62,9 @@ class MonthStanding:
     card reads it from there - a copy assembled here could name a different man than the month takes.
     """
 
-    open_skirmish_count: int
+    # The fights themselves rather than how many there are, because the band above the openings does
+    # not only warn about them - it offers the way in, and a way in needs the row it leads to.
+    open_skirmish_list: list
     quest_count: int
     # Named rather than counted, because "which rival" is a fact about the player's own war band and
     # a player who has to click to find out has learned nothing. Nothing about their strength: that
@@ -74,6 +76,33 @@ class MonthStanding:
     pub_mercenary_count: int
     building_income: int
     warband: WarbandStanding
+
+    @property
+    def open_skirmish_count(self) -> int:
+        """How many fights are holding the month, which is what the band's sentence and its plural read."""
+        return len(self.open_skirmish_list)
+
+    @property
+    def skirmish_to_enter(self) -> Skirmish | None:
+        """
+        The one fight the band can send the player straight into, or None where he has to choose.
+
+        A fight already under way answers first, and it answers even when others are open beside it:
+        "SkirmishFightView" turns away every other skirmish while one has rounds behind it, so any
+        other answer here would be a link to a redirect. At most one fight can be in that state, for
+        the same reason.
+
+        Failing that, a single open fight is not a choice either. Only several unstarted ones are,
+        and that is the case the list exists for.
+        """
+        started = [skirmish for skirmish in self.open_skirmish_list if skirmish.current_round > 1]
+        if started:
+            return started[0]
+
+        if len(self.open_skirmish_list) == 1:
+            return self.open_skirmish_list[0]
+
+        return None
 
     @property
     def has_offers_open(self) -> bool:
@@ -115,7 +144,7 @@ class MonthStanding:
         town = Town.objects.filter(faction_id=player_faction.id).first()
 
         return cls(
-            open_skirmish_count=Skirmish.objects.for_savegame(savegame_id=savegame.id).unresolved().count(),
+            open_skirmish_list=list(Skirmish.objects.for_savegame(savegame_id=savegame.id).unresolved()),
             quest_count=Quest.objects.for_player_faction(faction_id=player_faction.id).resolvable(month=month).count(),
             attackable_rival_list=list(Faction.objects.attackable_by(savegame=savegame).order_by("name")),
             occupiable_rival_list=list(Faction.objects.occupiable_by(savegame=savegame).order_by("name")),

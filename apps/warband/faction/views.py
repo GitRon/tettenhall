@@ -25,6 +25,7 @@ from apps.warband.savegame.mixins import (
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction
+from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
@@ -633,8 +634,10 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         return context
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-
+        # The march before the response, because the response is the fight it creates:
+        # "super().form_valid" is what asks "get_success_url", and that reads the skirmish back out
+        # of the database. Dispatching afterwards would send the player to a row that did not exist
+        # when the redirect was built.
         handle_message(
             AttackFaction(
                 attacking_faction=self.current_savegame.player_faction,
@@ -651,10 +654,30 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         # toast comes out the other end, because base.html renders "messages" on every page.
         messages.add_message(self.request, messages.SUCCESS, f"Your war band marches on {self.object}.")
 
-        return response
+        return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse("warband:skirmish-list-view")
+        """
+        The fight the march just started, not the list of every fight there has ever been.
+
+        Read back out of the database rather than handed over: "handle_message" drains the queue and
+        returns nothing, so the skirmish the chain created is not a value this view ever holds. The
+        three columns below name exactly one row - a faction's leader marches once a month and joins
+        every attack, so there cannot be a second march on the same rival in the same month for this
+        to pick the wrong one of.
+
+        Unguarded against finding nothing, on purpose. "handle_create_skirmish_for_attack" stages the
+        fight unconditionally, and the whole chain runs inside one transaction, so a march that
+        reached this line created a skirmish - and one that did not rolled back and never got here.
+        A fallback to the list would be a branch no test could reach.
+        """
+        skirmish = Skirmish.objects.filter(
+            attacking_faction=self.current_savegame.player_faction,
+            defending_faction=self.object,
+            month=self.current_savegame.current_month,
+        ).latest("id")
+
+        return reverse("warband:skirmish-fight-view", kwargs={"pk": skirmish.id})
 
 
 class FactionOccupyView(RunningSavegameRequiredMixin, SingleObjectMixin, generic.View):

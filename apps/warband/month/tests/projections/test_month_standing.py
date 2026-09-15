@@ -84,6 +84,72 @@ def test_open_skirmish_count_counts_the_fights_blocking_the_month():
 
 
 @pytest.mark.django_db
+def test_open_skirmish_list_holds_the_fights_themselves():
+    """
+    The band does not only warn about the fights, it offers the way into one, so the rows have to
+    come back rather than a number that cannot be linked to.
+    """
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame)
+    savegame.player_faction = player_faction
+    savegame.save()
+    open_skirmish = SkirmishFactory(attacking_faction=player_faction)
+    SkirmishFactory(attacking_faction=player_faction, victorious_faction=player_faction)
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.open_skirmish_list == [open_skirmish]
+
+
+@pytest.mark.django_db
+def test_skirmish_to_enter_names_the_only_fight_there_is():
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame)
+    savegame.player_faction = player_faction
+    savegame.save()
+    open_skirmish = SkirmishFactory(attacking_faction=player_faction)
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.skirmish_to_enter == open_skirmish
+
+
+@pytest.mark.django_db
+def test_skirmish_to_enter_prefers_the_fight_already_under_way():
+    """
+    "SkirmishFightView" turns away every other skirmish while one has rounds behind it, so naming
+    an unstarted one here would send the player to a redirect.
+    """
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame)
+    savegame.player_faction = player_faction
+    savegame.save()
+    SkirmishFactory(attacking_faction=player_faction)
+    started_skirmish = SkirmishFactory(attacking_faction=player_faction, current_round=3)
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.skirmish_to_enter == started_skirmish
+
+
+@pytest.mark.django_db
+def test_skirmish_to_enter_is_none_while_several_fights_stand_unstarted():
+    """
+    Which of them to walk into is a decision, and the list is the screen that asks it.
+    """
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame)
+    savegame.player_faction = player_faction
+    savegame.save()
+    SkirmishFactory(attacking_faction=player_faction)
+    SkirmishFactory(attacking_faction=player_faction)
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.skirmish_to_enter is None
+
+
+@pytest.mark.django_db
 def test_quest_count_counts_only_the_quests_that_can_still_be_taken_on():
     """
     Through the same queryset the town square offers cards from, so the dashboard cannot promise a
