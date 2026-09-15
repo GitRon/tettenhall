@@ -95,7 +95,9 @@ Named here, because an unnamed exception is how the next seam opens.
 - **The fight screen** (`skirmish/warrior/components/warrior_card.html`) shows both sides' exact health,
   morale and gear, and that is deliberate: **a fight is scouting.** The player is standing across from
   the man, and a battle whose state he cannot read is not a battle he can make decisions in. Left
-  ungated on purpose, which is the only thing separating it from an oversight.
+  ungated on purpose, which is the only thing separating it from an oversight. The gear sits behind one
+  disclosure per war band (`skirmish/faction/components/faction_box.html`), which is a matter of how
+  often it is worth reading and not of what may be known: it is exact, unfuzzed and one click away.
 
 ## If a scouting action is ever added
 
