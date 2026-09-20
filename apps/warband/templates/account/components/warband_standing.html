@@ -31,10 +31,18 @@
     {% endif %}
     {# Neither of these expires when the month turns, so they are lines here rather than rows on the #}
     {# panel of things that do. #}
+    {# The count is also the way to the men behind it: "Draft warrior" sits on the Fyrd page, and a #}
+    {# levy nothing on this page points at is an opening the month only ever reports. A bare anchor, #}
+    {# like the link at the foot of the section - the brief speaks one language. The guard below is #}
+    {# the one the draft button carries too, so the link is never offered with nobody to draft. #}
     {% if month_standing.warband.fyrd_reserve %}
         <div class="flex items-baseline justify-between gap-x-2.5">
             <span>Fyrd reserve</span>
-            <span class="font-mono tabular-nums text-ink">{{ month_standing.warband.fyrd_reserve }}</span>
+            <span class="font-mono tabular-nums text-ink">
+                {# A bare numeral says nothing about where it leads, so the destination is named. #}
+                <a href="{% url 'warband:warband-fyrd-view' %}"
+                   title="Draft from the fyrd">{{ month_standing.warband.fyrd_reserve }}</a>
+            </span>
         </div>
     {% endif %}
     {% if month_standing.warband.captive_count %}
