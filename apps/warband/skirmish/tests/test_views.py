@@ -13,6 +13,14 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 @pytest.mark.django_db
 def test_skirmish_list_view_lists_the_open_fights_oldest_first(logged_in_client, current_savegame):
+    """
+    The row order alone cannot pin this one, so the promise is asserted as well.
+
+    SQLite hands back a plain scan in rowid order, and "id" is the rowid - so the open list comes out
+    oldest first whether the model declares an ordering or not, and a test reading only the rows stays
+    green after "Meta.ordering" is deleted. "ordered" is what goes False the moment it is, and the row
+    order below is what catches a declaration pointing the wrong way.
+    """
     first_fight = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     second_fight = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     SkirmishFactory(
@@ -22,6 +30,7 @@ def test_skirmish_list_view_lists_the_open_fights_oldest_first(logged_in_client,
     response = logged_in_client.get(reverse("warband:skirmish-list-view"))
 
     assert response.status_code == 200
+    assert response.context["open_skirmish_list"].ordered is True
     assert list(response.context["open_skirmish_list"]) == [first_fight, second_fight]
 
 

@@ -3,95 +3,15 @@
 {% block content %}
     <h1>Skirmishes</h1>
 
-    {# Two tables rather than one, because the only distinction that matters here used to be drawn by #}
-    {# a dash in the Victor column and the choice of icon at the end of the row. The heading says it #}
-    {# in words, and it gives each half an empty state that is true of that half. #}
+    {# Two tables rather than one. The distinction between a fight that still wants the player and #}
+    {# one that is over used to be drawn by a dash in the Victor column and by the choice of icon at #}
+    {# the end of the row; a heading says it in words, and it gives each half an empty state that is #}
+    {# true of that half. #}
     <h2>Holding the month</h2>
 
-    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
-    {# decides what a table should actually become at that width. #}
-    <div class="overflow-x-auto">
-    <table>
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Month</th>
-            <th>Attacker</th>
-            <th>Defender</th>
-            <th>Rounds</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for skirmish in open_skirmish_list %}
-            <tr>
-                <td>{{ skirmish.name }}</td>
-                <td>{{ skirmish.month }}</td>
-                <td>{{ skirmish.attacking_faction }}</td>
-                <td>{{ skirmish.defending_faction }}</td>
-                {# What the fight has cost so far, not which round is next - the header over the fight #}
-                {# itself is the one that wants "current_round" #}
-                <td>{{ skirmish.rounds_fought }}</td>
-                <td>
-                    {# The icon is the whole control, so the label is the only thing a screen reader has #}
-                    <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
-                       aria-label="Continue the fight at {{ skirmish.name }}"
-                       class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="6" class="text-sm leading-snug text-ink-muted">No fight is holding the month.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
+    {% include 'skirmish/skirmish/components/skirmish_table.html' with skirmish_list=open_skirmish_list show_victor=False action_icon="fa-arrow-right" action_label="Continue the fight at" empty_text="No fight is holding the month." %}
 
     <h2>Already fought</h2>
 
-    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
-    {# decides what a table should actually become at that width. #}
-    <div class="overflow-x-auto">
-    <table>
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Month</th>
-            <th>Attacker</th>
-            <th>Defender</th>
-            <th>Rounds</th>
-            <th>Victor</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for skirmish in decided_skirmish_list %}
-            <tr>
-                <td>{{ skirmish.name }}</td>
-                {# The month is what turns a pile of decided fights into a campaign's history #}
-                <td>{{ skirmish.month }}</td>
-                <td>{{ skirmish.attacking_faction }}</td>
-                <td>{{ skirmish.defending_faction }}</td>
-                <td>{{ skirmish.rounds_fought }}</td>
-                <td>{{ skirmish.victorious_faction }}</td>
-                <td>
-                    {# The icon is the whole control, so the label is the only thing a screen reader has #}
-                    <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
-                       aria-label="Read the report of {{ skirmish.name }}"
-                       class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </a>
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="7" class="text-sm leading-snug text-ink-muted">No skirmishes have been fought yet.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
+    {% include 'skirmish/skirmish/components/skirmish_table.html' with skirmish_list=decided_skirmish_list show_victor=True action_icon="fa-magnifying-glass" action_label="Read the report of" empty_text="No skirmishes have been fought yet." %}
 {% endblock content %}
