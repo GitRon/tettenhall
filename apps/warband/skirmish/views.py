@@ -61,6 +61,21 @@ class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
     model = Skirmish
     template_name = "skirmish/skirmish_list.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # The two tables the page is made of. A player only lands here when he has a choice to make
+        # between open fights, so those come first and oldest first - the one that has been waiting
+        # longest is the one at the top. The history reads the other way round, newest first, which
+        # is what the model's own "(id,)" ordering is re-sorted for.
+        # Both are filtered off the list the scoping mixin already produced, so which savegame's
+        # fights these are is decided once rather than once per table. Whether a fight is open is
+        # the queryset's answer and not this view's: the same two methods draw the line everywhere.
+        context["open_skirmish_list"] = self.object_list.unresolved()
+        context["decided_skirmish_list"] = self.object_list.resolved().order_by("-id")
+
+        return context
+
 
 class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
