@@ -57,6 +57,10 @@ class Skirmish(models.Model):
         verbose_name = "Skirmish"
         verbose_name_plural = "Skirmishes"
         default_related_name = "skirmishes"
+        # Oldest first, like every other record in this package. A relation traversal wants the
+        # order a fight happened in; the one screen that wants the newest at the top - the history
+        # on the skirmish list - re-sorts for itself, the way TransactionListView does
+        ordering = ("id",)
 
     def __str__(self) -> str:
         return self.name

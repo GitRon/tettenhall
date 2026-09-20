@@ -1,0 +1,54 @@
+{# One table of fights. The list page shows two of them - the ones holding the month and the ones #}
+{# already fought - and they differ only in whether a victor is known: that decides the Victor #}
+{# column, the control at the end of the row and what the table says when it is empty. The five #}
+{# columns before it are the same fight either way, so they are written once here rather than #}
+{# copied into a second table that would drift. #}
+
+{# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
+{# decides what a table should actually become at that width. #}
+<div class="overflow-x-auto">
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            {# The month is on the row already, and it is what turns a pile of fights into a history #}
+            <th>Month</th>
+            <th>Attacker</th>
+            <th>Defender</th>
+            <th>Rounds</th>
+            {% if show_victor %}<th>Victor</th>{% endif %}
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for skirmish in skirmish_list %}
+            <tr>
+                <td>{{ skirmish.name }}</td>
+                <td>{{ skirmish.month }}</td>
+                <td>{{ skirmish.attacking_faction }}</td>
+                <td>{{ skirmish.defending_faction }}</td>
+                {# What the fight has cost so far, not which round is next - the header over the fight #}
+                {# itself is the one that wants "current_round" #}
+                <td>{{ skirmish.rounds_fought }}</td>
+                {% if show_victor %}<td>{{ skirmish.victorious_faction }}</td>{% endif %}
+                <td>
+                    {# The icon is the whole control, so the label is the only thing a screen reader #}
+                    {# has - and which table the row is in is what it has to carry #}
+                    <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
+                       aria-label="{{ action_label }} {{ skirmish.name }}"
+                       class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
+                        <i class="fa-solid {{ action_icon }}"></i>
+                    </a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                {# The span follows the Victor column, so the empty row cannot fall out of step with #}
+                {# the header above it #}
+                <td colspan="{% if show_victor %}7{% else %}6{% endif %}"
+                    class="text-sm leading-snug text-ink-muted">{{ empty_text }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

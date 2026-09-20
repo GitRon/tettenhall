@@ -9,6 +9,9 @@ class SkirmishQuerySet(models.QuerySet):
     def unresolved(self):
         return self.filter(victorious_faction__isnull=True)
 
+    def resolved(self):
+        return self.filter(victorious_faction__isnull=False)
+
     def has_started(self):
         return self.filter(current_round__gt=1)
 
