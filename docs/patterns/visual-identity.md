@@ -74,7 +74,7 @@ screen exists for: **Fight!** on the fight screen, the control in the month band
 the fight holding it up while one is unresolved — on the month page. Everything
 else is outlined.
 
-That makes a list a specific case: four buildings each with a Build button are four row actions, not
+That makes a list a specific case: five buildings each with a Build button are five row actions, not
 four primary ones, so they are outlined (`border-blood bg-transparent text-ink`). **A disabled control
 is never `blood` in any form** — it wears `border-rule` and `ink-dim`, because a control that refuses
 must not wear the colour reserved for one that wants you.
