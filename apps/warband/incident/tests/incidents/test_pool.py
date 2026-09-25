@@ -9,6 +9,7 @@ without thinking about the drift it causes turns them red.
 import pytest
 
 from apps.warband.incident.incidents import INCIDENTS, QUIET_MONTH_WEIGHT
+from apps.warband.month.models.player_month_log import PlayerMonthLog
 
 
 def test_every_entry_carries_a_weight():
@@ -16,6 +17,21 @@ def test_every_entry_carries_a_weight():
     A weight of zero is an entry nobody can ever draw, which is a class kept in the pool by mistake.
     """
     assert [incident for incident in INCIDENTS if incident.WEIGHT <= 0] == []
+
+
+def test_every_title_fits_the_log_line():
+    """
+    The title lands in "PlayerMonthLog.title", which is capped, and most titles only reach their full
+    length once a name is filled in. Twenty letters is a long name for any culture the game rolls.
+    """
+    title_length = PlayerMonthLog._meta.get_field("title").max_length
+    long_name = "W" * 20
+
+    assert [
+        incident
+        for incident in INCIDENTS
+        if len(incident.TITLE.format(warrior=long_name, rival=long_name, item=long_name)) > title_length
+    ] == []
 
 
 def test_a_quiet_month_is_the_likeliest_outcome():
