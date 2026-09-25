@@ -35,3 +35,15 @@ def test_get_monthly_income_pays_a_share_to_a_war_band_short_of_the_hall():
     town = TownFactory.build(hall=Town.HallChoices.HALL_MEDIUM)
 
     assert town.get_monthly_income(warriors_on_payroll=1) == 275
+
+
+def test_get_fortification_strength_is_nothing_for_a_town_without_a_wall():
+    town = TownFactory.build(fortification=Town.FortificationChoices.FORTIFICATION_NONE)
+
+    assert town.get_fortification_strength() == 0
+
+
+def test_get_fortification_strength_is_the_wall_standing():
+    town = TownFactory.build(fortification=Town.FortificationChoices.FORTIFICATION_LARGE)
+
+    assert town.get_fortification_strength() == 50

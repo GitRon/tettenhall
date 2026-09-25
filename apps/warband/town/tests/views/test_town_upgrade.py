@@ -124,6 +124,28 @@ def test_town_upgrade_view_offers_every_building(logged_in_client, current_saveg
         "weaponsmith",
         "marketplace",
         "sanctuary",
+        "fortification",
+    ]
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_prices_the_first_wall(logged_in_client, current_savegame):
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    fortification = _building(response, "fortification")
+    assert (fortification["next_level_display"], fortification["costs"]) == ("Palisade", 500)
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_keeps_the_wall_strength_at_the_maximum_level(logged_in_client, current_savegame):
+    town = current_savegame.player_faction.town
+    town.fortification = Town.FortificationChoices.FORTIFICATION_LARGE
+    town.save()
+
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    assert _building(response, "fortification")["effect_list"] == [
+        {"label": "Wall strength when marched on", "current": "50 points", "next": "50 points"},
     ]
 
 
@@ -237,6 +259,17 @@ def test_upgrade_building_view_upgrades_a_building_other_than_the_hall(logged_in
 
     town.refresh_from_db()
     assert town.sanctuary == Town.SanctuaryChoices.SANCTUARY_SMALL
+
+
+@pytest.mark.django_db
+def test_upgrade_building_view_raises_a_palisade(logged_in_client, current_savegame):
+    town = current_savegame.player_faction.town
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+
+    logged_in_client.post(reverse("warband:upgrade-building-view", kwargs={"building_type": "fortification"}))
+
+    town.refresh_from_db()
+    assert town.fortification == Town.FortificationChoices.FORTIFICATION_SMALL
 
 
 @pytest.mark.django_db

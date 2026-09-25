@@ -55,11 +55,6 @@ class Skirmish(models.Model):
         related_name="defending_skirmishes",
     )
 
-    # What a faction's wall is worth when it is marched on. The same for every faction until a town
-    # building levers it (#270), which is why it is read through "fortification_defended_by" rather
-    # than directly
-    STAND_IN_FORTIFICATION_STRENGTH = 20
-
     objects = SkirmishManager()
 
     class Meta:
@@ -84,17 +79,6 @@ class Skirmish(models.Model):
         counting what a finished fight cost.
         """
         return self.current_round - 1
-
-    @classmethod
-    def fortification_defended_by(cls, *, faction: Faction) -> int:
-        """
-        The wall a march on this faction runs into.
-
-        One answer for the handler that stages the attack and the page that shows it before the march,
-        so the number a player is warned about is the number he meets. The faction goes unread while
-        every faction's wall is the stand-in; it is the argument the town building's level is read off.
-        """
-        return cls.STAND_IN_FORTIFICATION_STRENGTH
 
     @property
     def is_fortified(self) -> bool:

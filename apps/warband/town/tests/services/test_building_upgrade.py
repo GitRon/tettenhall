@@ -67,3 +67,29 @@ def test_get_building_upgrade_refusal_reports_the_month_before_the_price(current
     result = get_building_upgrade_refusal(town=town, building_type="hall", current_savegame=current_savegame)
 
     assert result == ALREADY_BUILT_THIS_MONTH_REFUSAL
+
+
+@pytest.mark.django_db
+def test_get_building_upgrade_refusal_holds_the_wall_to_the_month_every_building_shares(current_savegame):
+    """
+    The fortification has no guard of its own: the one commission a month is the same brake for it as
+    for the other four.
+    """
+    town = current_savegame.player_faction.town
+    town.last_constructed_building_at = current_savegame.current_month
+    town.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=900)
+
+    result = get_building_upgrade_refusal(town=town, building_type="fortification", current_savegame=current_savegame)
+
+    assert result == ALREADY_BUILT_THIS_MONTH_REFUSAL
+
+
+@pytest.mark.django_db
+def test_get_building_upgrade_refusal_one_silver_short_of_the_palisade(current_savegame):
+    town = current_savegame.player_faction.town
+    TransactionFactory(faction=current_savegame.player_faction, amount=499)
+
+    result = get_building_upgrade_refusal(town=town, building_type="fortification", current_savegame=current_savegame)
+
+    assert result == UNAFFORDABLE_REFUSAL

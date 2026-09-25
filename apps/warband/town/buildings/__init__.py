@@ -1,4 +1,5 @@
 from apps.warband.town.buildings.base import Building, BuildingEffect
+from apps.warband.town.buildings.fortification import Fortification
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.town.buildings.marketplace import Marketplace
 from apps.warband.town.buildings.sanctuary import Sanctuary
@@ -11,4 +12,5 @@ BUILDINGS: dict[str, type[Building]] = {
     Weaponsmith.BUILDING_NAME: Weaponsmith,
     Marketplace.BUILDING_NAME: Marketplace,
     Sanctuary.BUILDING_NAME: Sanctuary,
+    Fortification.BUILDING_NAME: Fortification,
 }

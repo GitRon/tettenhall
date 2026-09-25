@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.warband.town.buildings.fortification import Fortification
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.town.managers.town import TownManager
 
@@ -29,6 +30,12 @@ class Town(models.Model):
         SANCTUARY_MEDIUM = 2, "Sanctuary"
         SANCTUARY_LARGE = 3, "Great Sanctuary"
 
+    class FortificationChoices(models.IntegerChoices):
+        FORTIFICATION_NONE = 0, "No fortification"
+        FORTIFICATION_SMALL = 1, "Palisade"
+        FORTIFICATION_MEDIUM = 2, "Earthwork"
+        FORTIFICATION_LARGE = 3, "Burh Wall"
+
     faction = models.OneToOneField("warband.Faction", related_name="town", on_delete=models.CASCADE)
     hall = models.PositiveSmallIntegerField(choices=HallChoices.choices, default=HallChoices.HALL_NONE)
     weaponsmith = models.PositiveSmallIntegerField(
@@ -37,6 +44,9 @@ class Town(models.Model):
     marketplace = models.PositiveSmallIntegerField(choices=MarketChoices.choices, default=MarketChoices.MARKET_NONE)
     sanctuary = models.PositiveSmallIntegerField(
         choices=SanctuaryChoices.choices, default=SanctuaryChoices.SANCTUARY_NONE
+    )
+    fortification = models.PositiveSmallIntegerField(
+        choices=FortificationChoices.choices, default=FortificationChoices.FORTIFICATION_NONE
     )
     last_constructed_building_at = models.PositiveSmallIntegerField(
         # Months count from 1, so 0 is "nothing built yet". Defaulting to 1 made the once-per-month
@@ -81,3 +91,13 @@ class Town(models.Model):
         return Hall.get_building_by_type(building_type=self.hall).get_revenue_for_war_band(
             warriors_on_payroll=warriors_on_payroll
         )
+
+    def get_fortification_strength(self) -> int:
+        """
+        The wall a march on this town runs into.
+
+        One answer for the handler that stages the attack and the page that shows it before the march,
+        so the number a player is warned about is the number he meets. The fortification owns the
+        number, so this reads it off the level standing rather than holding a copy.
+        """
+        return Fortification.get_building_by_type(building_type=self.fortification).FORTIFICATION_STRENGTH

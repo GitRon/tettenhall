@@ -51,7 +51,7 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
         defending_faction=context.target_faction,
         attacking_warriors=list(context.assigned_warriors),
         defending_warriors=defending_warriors,
-        fortification_strength=Skirmish.fortification_defended_by(faction=context.target_faction),
+        fortification_strength=context.target_faction.town.get_fortification_strength(),
         month=context.month,
     )
 
