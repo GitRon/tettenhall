@@ -16,4 +16,7 @@ def handle_create_skirmish_for_quest_contract(*, context: quest.QuestAccepted) -
         warrior_list_2=context.target_warriors,
         month=context.month,
         quest_contract=context.quest_contract,
+        # The wall the quest type put in front of the target, copied onto the quest when it was
+        # pinned to the board. Never the target's town: that only ever stands in front of an attack.
+        fortification_strength=context.quest.fortification_strength,
     )

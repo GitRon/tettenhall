@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warband', '0012_a_fight_says_how_it_sorts'),
+        ('warband', '0013_a_wall_stands_between_the_attackers_and_the_town'),
     ]
 
     operations = [
