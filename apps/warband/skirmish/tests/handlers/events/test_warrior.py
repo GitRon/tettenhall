@@ -11,6 +11,7 @@ from apps.warband.skirmish.handlers.events.warrior import (
     handle_morale_change_on_resolved_blow,
     handle_morale_drop_on_faction_on_warrior_is_out_of_fight,
     handle_morale_drop_on_watching_a_comrade_fall,
+    handle_morale_gain_on_being_rallied,
     handle_reduce_health_and_update_condition,
     handle_stat_growth_on_warrior_level_up,
 )
@@ -32,6 +33,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorTookDamage,
     WarriorWasIncapacitated,
     WarriorWasKilled,
+    WarriorWasRallied,
 )
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -426,3 +428,25 @@ def test_handle_experience_gain_after_battle_for_victor_rewards_nobody_without_s
     )
 
     assert result == []
+
+
+def test_handle_morale_gain_on_being_rallied_pays_a_tenth_of_his_own_ceiling():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(max_morale=30)
+
+    result = handle_morale_gain_on_being_rallied(context=WarriorWasRallied(skirmish=skirmish, warrior=warrior))
+
+    assert result == IncreaseMorale(skirmish=skirmish, warrior=warrior, increased_morale=3, was_rallied=True)
+
+
+def test_handle_morale_gain_on_being_rallied_gives_nothing_when_the_tenth_rounds_away():
+    """
+    Unfloored, like the reward for a block: inventing a point for a man too brittle to have earned one
+    would be a balance change with nothing behind it.
+    """
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(max_morale=4)
+
+    result = handle_morale_gain_on_being_rallied(context=WarriorWasRallied(skirmish=skirmish, warrior=warrior))
+
+    assert result is None

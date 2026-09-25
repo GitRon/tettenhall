@@ -126,3 +126,22 @@ def test_determine_decision_strong_level_one_man_attacks_simply_rather_than_risk
     result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
 
     assert result == SkirmishActionChoices.SIMPLE_ATTACK
+
+
+@pytest.mark.django_db
+def test_determine_decision_rival_leader_never_rallies():
+    """
+    Offered the rally like any leader, and never reaching for it: rivals do not steady their men, the
+    same exemption #177 holds for their morale between months.
+    """
+    skirmish = SkirmishFactory()
+    leader = WarriorFactory(
+        faction=skirmish.defending_faction, current_health=20, max_health=20, dexterity=10, strength=10
+    )
+    skirmish.defending_faction.leader = leader
+    skirmish.defending_faction.save()
+    skirmish.defending_warriors.add(leader)
+
+    result = SkirmishActionDecisionService(warrior=leader, skirmish=skirmish)._determine_decision()
+
+    assert result == SkirmishActionChoices.SIMPLE_ATTACK

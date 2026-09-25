@@ -6,6 +6,7 @@ from apps.warband.skirmish.messages.commands import warrior
 from apps.warband.skirmish.messages.commands.warrior import ReduceHealth
 from apps.warband.skirmish.messages.events.warrior import (
     LastUsedSkirmishActionStored,
+    LeaderRallied,
     WarriorGainedExperience,
     WarriorGainedLevel,
     WarriorGainedMorale,
@@ -16,6 +17,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorWasCaptured,
     WarriorWasIncapacitated,
     WarriorWasKilled,
+    WarriorWasRallied,
 )
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -50,10 +52,49 @@ def handle_reduce_morale_of_remaining_warriors(*, context: warrior.ReduceMoraleO
     ]
 
 
+@message_registry.register_command(command=warrior.RallyRemainingWarriors)
+def handle_leader_rallies_remaining_warriors(*, context: warrior.RallyRemainingWarriors) -> list[Event]:
+    """
+    Who on the leader's side is still in the fight to hear him.
+
+    The read an event handler could not make, as in "handle_reduce_morale_of_remaining_warriors" - and
+    unlike that one, the condition is filtered here: the receiving handler refuses a man who is not
+    healthy, but "LeaderRallied" names the men who heard the order, and the fled, the felled and the
+    dead did not.
+
+    The leader leaves himself out. A man shouting at other men is not steadied by it, and counting him
+    would make the rally a way to keep the one man whose fall ends the faction on his feet.
+
+    The order is late-bound the way a withdrawal is, so a leader who is no longer on his feet when it
+    drains gives none.
+
+    Conditions are asked of the database rather than of the instances the round was posted with: a man
+    ordered to withdraw this round has already left by the time this drains, and the instance that
+    carried his order is not necessarily the one on the roster.
+    """
+    if context.skirmish.is_defended_by(warrior=context.leader):
+        side = context.skirmish.defending_warriors
+    else:
+        side = context.skirmish.attacking_warriors
+
+    healthy = list(side.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY))
+    if context.leader not in healthy:
+        return []
+
+    rallied_warriors = [comrade for comrade in healthy if comrade != context.leader]
+
+    return [
+        LeaderRallied(skirmish=context.skirmish, leader=context.leader, rallied_warriors=rallied_warriors),
+        *(WarriorWasRallied(skirmish=context.skirmish, warrior=comrade) for comrade in rallied_warriors),
+    ]
+
+
 @message_registry.register_command(command=warrior.StoreLastUsedSkirmishAction)
 def handle_store_last_used_skirmish_action(*, context: warrior.StoreLastUsedSkirmishAction) -> list[Event] | Event:
     context.warrior.last_used_skirmish_action = context.skirmish_action
-    context.warrior.save()
+    # This one column only: the instance was put on the message when the round was posted, and a full
+    # save would write back the morale it held then over whatever the round has done to it since
+    context.warrior.save(update_fields=("last_used_skirmish_action",))
 
     return LastUsedSkirmishActionStored(
         skirmish=context.skirmish,
@@ -193,12 +234,36 @@ def handle_warrior_withdraws_from_skirmish(*, context: warrior.WithdrawFromSkirm
 
 @message_registry.register_command(command=warrior.IncreaseMorale)
 def handle_warrior_increasing_morale(*, context: warrior.IncreaseMorale) -> list[Event] | Event:
+    """
+    Gives a warrior back some nerve, up to his ceiling, and says how much he actually got.
+
+    The same guard "handle_warrior_losing_morale" opens with: a man who is down, dead or gone is not
+    steadied by anything. A comrade can fall between the order that reaches him and this command
+    draining, so the guard is reachable rather than defensive.
+
+    The gain is read off the manager's result rather than off the command, because the clamp can take
+    all or part of it - a man at his ceiling is offered points he never receives, and nothing may
+    credit him with them. A gain the clamp took entirely is no event at all.
+
+    Refreshed first: the instance on the message was put there before whatever happened to him since,
+    and both the guard and the "before" of the gain have to see the row as it stands.
+    """
+    context.warrior.refresh_from_db()
+    if not context.warrior.is_healthy:
+        return []
+
+    morale_before = context.warrior.current_morale
     context.warrior = Warrior.objects.increase_morale(obj=context.warrior, increased_morale=context.increased_morale)
+    gained_morale = context.warrior.current_morale - morale_before
+
+    if gained_morale <= 0:
+        return []
 
     return WarriorGainedMorale(
         skirmish=context.skirmish,
         warrior=context.warrior,
-        gained_morale=context.increased_morale,
+        gained_morale=gained_morale,
+        was_rallied=context.was_rallied,
     )
 
 

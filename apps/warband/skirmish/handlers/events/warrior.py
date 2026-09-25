@@ -15,6 +15,9 @@ from apps.warband.skirmish.messages.commands.warrior import (
 )
 from apps.warband.skirmish.messages.events import skirmish, warrior
 
+# The share of his own morale ceiling a man gets back when his leader rallies the side
+RALLY_MORALE_SHARE = 0.1
+
 
 @message_registry.register_event(event=skirmish.FighterPairsMatched)
 def handle_determine_attacker(*, context: skirmish.FighterPairsMatched) -> Command:
@@ -92,6 +95,31 @@ def handle_morale_drop_on_watching_a_comrade_fall(*, context: warrior.WarriorSaw
         skirmish=context.skirmish,
         warrior=context.warrior,
         lost_morale=round(context.fallen_warrior.max_morale * 0.1),
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorWasRallied)
+def handle_morale_gain_on_being_rallied(*, context: warrior.WarriorWasRallied) -> Command | None:
+    """
+    What hearing his leader rally the side gives a man back.
+
+    A tenth of his own ceiling, the peg every drain in a fight uses, so one rally buys back exactly one
+    failed block or one fallen comrade. Not floored the way the stance's drain is: that floor exists so a
+    fight can end, and inventing a point of nerve for a man too brittle to have earned one is a balance
+    change with nothing behind it - the same reason the reward for a block keeps the bare tenth.
+
+    A rally never clears a rout. "increase_morale" moves the number and never the condition, and the
+    receiving handler refuses a man who is no longer healthy.
+    """
+    increased_morale = round(context.warrior.max_morale * RALLY_MORALE_SHARE)
+    if increased_morale == 0:
+        return None
+
+    return IncreaseMorale(
+        skirmish=context.skirmish,
+        warrior=context.warrior,
+        increased_morale=increased_morale,
+        was_rallied=True,
     )
 
 

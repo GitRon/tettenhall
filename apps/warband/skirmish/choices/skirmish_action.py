@@ -15,6 +15,9 @@ class SkirmishActionChoices(models.IntegerChoices):
     # A swing at the defenders' wall rather than at a man. Offered only to the side that marched, and
     # only while there is a wall standing - see "Skirmish.can_be_assaulted_by"
     ASSAULT_FORTIFICATION = 6, "Assault the fortification"
+    # The leader spends his round steadying his side instead of striking. Offered only to the man who
+    # leads the faction he fights for here - see "Skirmish.can_be_rallied_by"
+    RALLY = 7, "Rally the men"
 
 
 # Type hints

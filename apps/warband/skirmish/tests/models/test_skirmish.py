@@ -1,5 +1,6 @@
 import pytest
 
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -80,6 +81,63 @@ def test_can_be_assaulted_by_is_refused_to_a_defender():
     skirmish.defending_warriors.add(warrior)
 
     assert skirmish.can_be_assaulted_by(warrior=warrior) is False
+
+
+@pytest.mark.django_db
+def test_can_be_rallied_by_the_leader_of_the_attacking_side():
+    skirmish = SkirmishFactory()
+    leader = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+    skirmish.attacking_warriors.add(leader)
+
+    assert skirmish.can_be_rallied_by(warrior=leader) is True
+
+
+@pytest.mark.django_db
+def test_can_be_rallied_by_the_leader_of_the_defending_side():
+    skirmish = SkirmishFactory()
+    leader = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_faction.leader = leader
+    skirmish.defending_faction.save()
+    skirmish.defending_warriors.add(leader)
+
+    assert skirmish.can_be_rallied_by(warrior=leader) is True
+
+
+@pytest.mark.django_db
+def test_can_be_rallied_by_is_refused_to_a_man_who_leads_nobody_here():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(warrior)
+
+    assert skirmish.can_be_rallied_by(warrior=warrior) is False
+
+
+@pytest.mark.django_db
+def test_can_be_rallied_by_is_refused_to_a_recruited_rival_leader():
+    """
+    A captured leader recruited into the war band that took him still stands as "leader" of the faction
+    he came from, and leads nobody on the side he fights for now.
+    """
+    skirmish = SkirmishFactory()
+    rival = FactionFactory(savegame=skirmish.attacking_faction.savegame)
+    former_leader = WarriorFactory(faction=skirmish.attacking_faction)
+    rival.leader = former_leader
+    rival.save()
+    skirmish.attacking_warriors.add(former_leader)
+
+    assert skirmish.can_be_rallied_by(warrior=former_leader) is False
+
+
+@pytest.mark.django_db
+def test_can_be_rallied_by_is_refused_to_a_man_not_in_the_fight():
+    skirmish = SkirmishFactory()
+    leader = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+
+    assert skirmish.can_be_rallied_by(warrior=leader) is False
 
 
 @pytest.mark.django_db

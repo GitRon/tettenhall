@@ -126,7 +126,38 @@ class WarriorLostMorale(Event):
 class WarriorGainedMorale(Event):
     skirmish: Skirmish
     warrior: Warrior
+    # What he actually gained, after the clamp to his ceiling - never what he was offered
     gained_morale: int
+    # See "IncreaseMorale.was_rallied"
+    was_rallied: bool = False
+
+
+@dataclass(kw_only=True)
+class LeaderRallied(Event):
+    """
+    A leader spent his round steadying his side - the order, as one fact.
+
+    "rallied_warriors" is who was still in the fight to hear it, and may be empty when he is the last
+    man standing. What each of them gained is not on here: that is decided per man, further down, and
+    can be nothing for a man already at his ceiling.
+    """
+
+    skirmish: Skirmish
+    leader: Warrior
+    rallied_warriors: list[Warrior]
+
+
+@dataclass(kw_only=True)
+class WarriorWasRallied(Event):
+    """
+    One man still in the fight heard his leader rally the side.
+
+    One event per man rather than one for the side, for the reason "WarriorSawComradeFall" is: the nerve
+    it gives back is a fact about him, priced off his own ceiling.
+    """
+
+    skirmish: Skirmish
+    warrior: Warrior
 
 
 @dataclass(kw_only=True)

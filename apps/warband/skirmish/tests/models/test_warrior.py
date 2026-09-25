@@ -469,7 +469,20 @@ def test_get_skirmish_actions_offers_the_wall_to_an_attacker_in_front_of_one():
 
     result = warrior.get_skirmish_actions(skirmish=skirmish)
 
-    assert result == SkirmishActionChoices.choices
+    assert result == [choice for choice in SkirmishActionChoices.choices if choice[0] != SkirmishActionChoices.RALLY]
+
+
+@pytest.mark.django_db
+def test_get_skirmish_actions_offers_the_rally_to_the_leader_of_his_side():
+    skirmish = SkirmishFactory()
+    leader = WarriorFactory(faction=skirmish.attacking_faction, experience=0)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+    skirmish.attacking_warriors.add(leader)
+
+    result = leader.get_skirmish_actions(skirmish=skirmish)
+
+    assert (SkirmishActionChoices.RALLY, "Rally the men") in result
 
 
 @pytest.mark.django_db

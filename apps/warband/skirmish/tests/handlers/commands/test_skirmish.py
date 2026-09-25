@@ -25,7 +25,11 @@ from apps.warband.skirmish.messages.commands.skirmish import (
     WarriorAssaultsFortification,
     WinSkirmish,
 )
-from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
+from apps.warband.skirmish.messages.commands.warrior import (
+    RallyRemainingWarriors,
+    StoreLastUsedSkirmishAction,
+    WithdrawFromSkirmish,
+)
 from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
@@ -1034,10 +1038,86 @@ def test_handle_assign_fighter_pairs_sends_a_man_at_the_wall_and_keeps_him_in_th
 
 
 @pytest.mark.django_db
+def test_handle_assign_fighter_pairs_sends_a_rallying_leader_and_keeps_him_in_the_pairing():
+    skirmish = SkirmishFactory()
+    rallying_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.RALLY,
+    )
+    enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+
+    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"):
+        result = handle_assign_fighter_pairs(
+            context=StartDuel(
+                skirmish=skirmish,
+                skirmish_participants_1=[rallying_participant],
+                skirmish_participants_2=[enemy_participant],
+            )
+        )
+
+    assert result == [
+        RallyRemainingWarriors(skirmish=skirmish, leader=rallying_participant.warrior),
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=rallying_participant.warrior,
+            warrior_2=enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.RALLY,
+            attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+        ),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_assign_fighter_pairs_lets_an_unopposed_rallying_leader_strike_nobody():
+    skirmish = SkirmishFactory()
+    fighting_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+    rallying_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.RALLY,
+    )
+    enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+
+    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"):
+        result = handle_assign_fighter_pairs(
+            context=StartDuel(
+                skirmish=skirmish,
+                skirmish_participants_1=[fighting_participant, rallying_participant],
+                skirmish_participants_2=[enemy_participant],
+            )
+        )
+
+    assert result == [
+        RallyRemainingWarriors(skirmish=skirmish, leader=rallying_participant.warrior),
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=fighting_participant.warrior,
+            warrior_2=enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+        ),
+        StoreLastUsedSkirmishAction(
+            skirmish=skirmish, warrior=rallying_participant.warrior, skirmish_action=SkirmishActionChoices.RALLY
+        ),
+    ]
+
+
+@pytest.mark.django_db
 def test_handle_assign_fighter_pairs_lets_an_unopposed_man_at_the_wall_strike_nobody():
     """
     A man nobody is left to face would strike free at a random defender - unless his round is the wall,
-    in which case the wall is all of it.
+    in which case the wall is all of it. With no exchange to record it, his order is stored here, so
+    his card opens the next round on it.
     """
     skirmish = SkirmishFactory(fortification_strength=20)
     fighting_participant = SkirmishParticipant(
@@ -1073,6 +1153,11 @@ def test_handle_assign_fighter_pairs_lets_an_unopposed_man_at_the_wall_strike_no
             warrior_2=enemy_participant.warrior,
             attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
             attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+        ),
+        StoreLastUsedSkirmishAction(
+            skirmish=skirmish,
+            warrior=storming_participant.warrior,
+            skirmish_action=SkirmishActionChoices.ASSAULT_FORTIFICATION,
         ),
     ]
 

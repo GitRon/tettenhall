@@ -94,6 +94,28 @@ class Skirmish(models.Model):
         """
         return self.is_fortified and warrior in self.attacking_warriors.all()
 
+    def can_be_rallied_by(self, *, warrior: Warrior) -> bool:
+        """
+        Whether this man may spend his round steadying his side.
+
+        Only the leader of the faction he fights for in this skirmish. Faction-relative, like the
+        walk-out and the dismissal guards, rather than a flag on the man: a rival leader taken prisoner
+        and recruited is nobody's leader in the war band that took him, and this answers that without
+        recruitment having to clear anything. The side comes off the rosters, as in
+        "can_be_assaulted_by".
+
+        The leader ids are asked first, because this runs for every card on the fight page: the two
+        factions are cached on this instance after the first card, so a man who leads neither side costs
+        no roster query at all.
+        """
+        if warrior.id not in (self.attacking_faction.leader_id, self.defending_faction.leader_id):
+            return False
+        if warrior in self.attacking_warriors.all():
+            return self.attacking_faction.leader_id == warrior.id
+        if warrior in self.defending_warriors.all():
+            return self.defending_faction.leader_id == warrior.id
+        return False
+
     def is_defended_by(self, *, warrior: Warrior) -> bool:
         # Membership in ".all()" rather than an "exists()" per call: the round view prefetches both
         # rosters onto the one instance every message of the round carries, so this is asked of every
