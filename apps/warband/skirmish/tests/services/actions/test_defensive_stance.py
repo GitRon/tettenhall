@@ -48,3 +48,17 @@ def test_get_defense_value_doubles_the_defense():
         item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
         value=4,
     )
+
+
+@pytest.mark.django_db
+def test_get_defense_value_stacks_the_stance_on_the_wall():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(warrior)
+    service = DefensiveStanceService(skirmish=skirmish, warrior=warrior)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
+        result = service.get_defense_value()
+
+    # 2, half again for the wall, then doubled for the stance
+    assert result.value == 6

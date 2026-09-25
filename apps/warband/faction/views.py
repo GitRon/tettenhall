@@ -634,6 +634,8 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
+        # Said before the march, from the same answer the march itself is staged with
+        context["fortification_strength"] = Skirmish.fortification_defended_by(faction=self.object)
         return context
 
     def form_valid(self, form):

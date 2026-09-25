@@ -5,6 +5,7 @@ from queuebie.messages import Event
 from apps.warband.faction.models import Faction
 from apps.warband.quest.models import QuestContract
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
+from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -17,6 +18,9 @@ class FactionWasAttacked(Event):
     # handler reacting to this is not allowed to run one
     attacking_warriors: list[Warrior]
     defending_warriors: list[Warrior]
+    # The wall the defenders stand behind, read off the defending faction by the command handler that
+    # raised this - for the same reason the rosters are
+    fortification_strength: int
     month: int
 
 
@@ -52,6 +56,27 @@ class AttackerDefenderDecided(Event):
     # nobody was left to face - is not recoverable from anything else the event carries. No default:
     # a third way to become the attacker has to answer this rather than be read as a won roll.
     initiative: int
+
+
+@dataclass(kw_only=True)
+class FortificationAssaulted(Event):
+    skirmish: Skirmish
+    round_number: int
+    warrior: Warrior
+    # The swing as thrown, strength included - the die travels with it for the same reason it does on
+    # a blow at a man
+    assault: ActionRoll
+    # What the wall actually lost, which is less than the swing when there was less wall than that
+    damage: int
+    remaining_strength: int
+
+
+@dataclass(kw_only=True)
+class FortificationFell(Event):
+    skirmish: Skirmish
+    round_number: int
+    # The man whose swing brought it down
+    warrior: Warrior
 
 
 @dataclass(kw_only=True)

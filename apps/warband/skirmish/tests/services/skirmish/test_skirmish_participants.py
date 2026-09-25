@@ -1,7 +1,7 @@
 import pytest
 
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
-from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError
+from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError, UnofferedSkirmishActionError
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -181,4 +181,25 @@ def test_process_refuses_a_warrior_fighting_neither_side():
     )
 
     with pytest.raises(UnknownSkirmishParticipantError, match=f"Warrior {outsider.id} is not fighting this skirmish"):
+        service.process()
+
+
+@pytest.mark.django_db
+def test_process_refuses_an_action_the_warrior_is_not_offered():
+    """
+    The player's select lists the wall only while there is one in front of him, so a defender ordered
+    to storm it was typed into the post.
+    """
+    skirmish = SkirmishFactory(fortification_strength=20)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    player_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(player_warrior)
+
+    service = SkirmishParticipantBuilderService(
+        skirmish=skirmish,
+        participants=[(player_warrior.id, SkirmishActionChoices.ASSAULT_FORTIFICATION)],
+        player_faction_id=skirmish.defending_faction_id,
+    )
+
+    with pytest.raises(UnofferedSkirmishActionError, match=f"Warrior {player_warrior.id} is not offered action 6"):
         service.process()

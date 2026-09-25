@@ -9,6 +9,8 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.battle_history import (
     handle_log_attacker_defender_decided,
+    handle_log_fortification_assaulted,
+    handle_log_fortification_fell,
     handle_log_item_dropped,
     handle_log_round_finished,
     handle_log_skirmish_finished,
@@ -28,7 +30,13 @@ from apps.warband.skirmish.handlers.events.battle_history import (
 )
 from apps.warband.skirmish.messages.commands.battle_history import CreateBattleHistory
 from apps.warband.skirmish.messages.events.item import ItemDroppedAsLoot
-from apps.warband.skirmish.messages.events.skirmish import AttackerDefenderDecided, RoundFinished, SkirmishFinished
+from apps.warband.skirmish.messages.events.skirmish import (
+    AttackerDefenderDecided,
+    FortificationAssaulted,
+    FortificationFell,
+    RoundFinished,
+    SkirmishFinished,
+)
 from apps.warband.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.warband.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
@@ -522,3 +530,74 @@ def test_handle_log_warrior_injury_names_the_mark_and_its_price():
         skirmish=skirmish,
         message="Cuthred will carry it out of this fight: Stiff ankle (-1 Dexterity).",
     )
+
+
+def test_handle_log_fortification_assaulted_says_what_is_left_standing():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Offa")
+
+    result = handle_log_fortification_assaulted(
+        context=FortificationAssaulted(
+            skirmish=skirmish,
+            round_number=1,
+            warrior=warrior,
+            assault=ActionRoll(roll=None, value=7),
+            damage=7,
+            remaining_strength=13,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="Offa storms the fortification at 7, and 13 of it still stands."
+    )
+
+
+def test_handle_log_fortification_assaulted_on_a_wall_already_down():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Offa")
+
+    result = handle_log_fortification_assaulted(
+        context=FortificationAssaulted(
+            skirmish=skirmish,
+            round_number=1,
+            warrior=warrior,
+            assault=ActionRoll(roll=None, value=7),
+            damage=0,
+            remaining_strength=0,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="Offa storms the fortification, but it has already fallen."
+    )
+
+
+def test_handle_log_fortification_fell():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Offa")
+
+    result = handle_log_fortification_fell(
+        context=FortificationFell(skirmish=skirmish, round_number=1, warrior=warrior)
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="The fortification falls to Offa, and the defenders fight on without it."
+    )
+
+
+def test_handle_log_fortification_assaulted_by_the_swing_that_brings_it_down():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Offa")
+
+    result = handle_log_fortification_assaulted(
+        context=FortificationAssaulted(
+            skirmish=skirmish,
+            round_number=1,
+            warrior=warrior,
+            assault=ActionRoll(roll=None, value=20),
+            damage=5,
+            remaining_strength=0,
+        )
+    )
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Offa storms the fortification at 20.")

@@ -28,6 +28,9 @@ class CreateSkirmish(Command):
     warrior_list_2: QuerySet[Warrior] | list[Warrior]
     month: int
     quest_contract: QuestContract = None
+    # The wall the second faction fights behind. Zero unless whoever stages the fight says otherwise,
+    # which is an open field
+    fortification_strength: int = 0
 
 
 @dataclass(kw_only=True)
@@ -55,6 +58,13 @@ class WarriorAttacksWarrior(Command):
     attacker_action: SkirmishActionTypeHint
     defender: Warrior
     defender_action: SkirmishActionTypeHint
+
+
+@dataclass(kw_only=True)
+class WarriorAssaultsFortification(Command):
+    skirmish: Skirmish
+    round_number: int
+    warrior: Warrior
 
 
 @dataclass(kw_only=True)

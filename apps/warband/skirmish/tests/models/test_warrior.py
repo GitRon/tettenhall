@@ -6,8 +6,10 @@ from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
@@ -456,3 +458,37 @@ def test_attribute_draws_keep_reading_the_stored_columns():
 
     assert warrior.attribute_draws["strength"].value == 12
     assert warrior.attribute_draws["dexterity"].value == 10
+
+
+@pytest.mark.django_db
+def test_get_skirmish_actions_offers_the_wall_to_an_attacker_in_front_of_one():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(warrior)
+
+    result = warrior.get_skirmish_actions(skirmish=skirmish)
+
+    assert result == SkirmishActionChoices.choices
+
+
+@pytest.mark.django_db
+def test_get_skirmish_actions_leaves_the_wall_out_for_a_defender():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(warrior)
+
+    result = warrior.get_skirmish_actions(skirmish=skirmish)
+
+    assert (SkirmishActionChoices.ASSAULT_FORTIFICATION, "Assault the fortification") not in result
+
+
+@pytest.mark.django_db
+def test_decide_skirmish_action_answers_for_this_fight():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, current_health=20, max_health=20, dexterity=10, strength=10
+    )
+
+    result = warrior.decide_skirmish_action(skirmish=skirmish)
+
+    assert result == (SkirmishActionChoices.SIMPLE_ATTACK.value, SkirmishActionChoices.SIMPLE_ATTACK.label)

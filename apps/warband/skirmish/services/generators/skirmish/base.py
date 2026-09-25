@@ -6,14 +6,24 @@ class BaseSkirmishGenerator:
     warriors_faction_1: list
     warriors_faction_2: list
     month: int
+    fortification_strength: int
 
-    def __init__(self, *, name: str, warriors_faction_1: list, warriors_faction_2: list, month: int) -> None:
+    def __init__(
+        self,
+        *,
+        name: str,
+        warriors_faction_1: list,
+        warriors_faction_2: list,
+        month: int,
+        fortification_strength: int = 0,
+    ) -> None:
         super().__init__()
 
         self.name = name
         self.warriors_faction_1 = warriors_faction_1
         self.warriors_faction_2 = warriors_faction_2
         self.month = month
+        self.fortification_strength = fortification_strength
 
     def process(self) -> Skirmish:
         # Both sides are indexed for their faction below, so an empty one dies on an IndexError that
@@ -29,6 +39,7 @@ class BaseSkirmishGenerator:
             attacking_faction_id=self.warriors_faction_1[0].faction.id,
             defending_faction_id=self.warriors_faction_2[0].faction.id,
             month=self.month,
+            fortification_strength=self.fortification_strength,
         )
 
         skirmish.attacking_warriors.add(*self.warriors_faction_1)

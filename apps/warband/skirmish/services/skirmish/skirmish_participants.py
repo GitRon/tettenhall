@@ -1,4 +1,4 @@
-from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError
+from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError, UnofferedSkirmishActionError
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
@@ -32,19 +32,31 @@ class SkirmishParticipantBuilderService:
     def _decided_by_the_ai(self, *, roster: list[Warrior]) -> list[SkirmishParticipant]:
         # Only the healthy fight, which is also the only side of the card that ever rendered a control
         return [
-            SkirmishParticipant(warrior=warrior, skirmish_action=warrior.decide_skirmish_action()[0])
+            SkirmishParticipant(
+                warrior=warrior, skirmish_action=warrior.decide_skirmish_action(skirmish=self.skirmish)[0]
+            )
             for warrior in roster
             if warrior.is_healthy
         ]
 
     def _posted_by_the_player(self, *, roster: list[Warrior]) -> list[SkirmishParticipant]:
         by_id = {warrior.id: warrior for warrior in roster}
+        participants = []
 
-        return [
-            SkirmishParticipant(warrior=by_id[warrior_id], skirmish_action=skirmish_action)
-            for warrior_id, skirmish_action in self.participants
-            if warrior_id in by_id
-        ]
+        for warrior_id, skirmish_action in self.participants:
+            if warrior_id not in by_id:
+                continue
+            warrior = by_id[warrior_id]
+            # The select only lists what this man is offered, so anything else was typed into the post
+            if skirmish_action not in {
+                action for action, _label in warrior.get_skirmish_actions(skirmish=self.skirmish)
+            }:
+                raise UnofferedSkirmishActionError(
+                    f"Warrior {warrior_id} is not offered action {skirmish_action} in this skirmish."
+                )
+            participants.append(SkirmishParticipant(warrior=warrior, skirmish_action=skirmish_action))
+
+        return participants
 
     def process(self) -> tuple[list[SkirmishParticipant], list[SkirmishParticipant]]:
         attacking_roster = list(self.skirmish.attacking_warriors.all())

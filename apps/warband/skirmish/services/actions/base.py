@@ -7,6 +7,10 @@ from apps.warband.skirmish.models import Skirmish, Warrior
 
 # TODO (#95): attack service is misleading, maybe skirmish action again?
 class AttackService:
+    # How much harder a man is to hurt while he stands behind his own faction's wall. A constant of the
+    # mechanic rather than of any wall: a town building levers how much wall there is, never this
+    FORTIFICATION_DEFENSE_MULTIPLIER = 1.5
+
     command: WarriorAttacksWarrior
 
     skirmish: Skirmish
@@ -50,5 +54,15 @@ class AttackService:
         return self._scaled_by_strength(attack=self.warrior.roll_attack())
 
     def get_defense_value(self) -> ActionRoll:
-        # Defence is the armour's own roll and nothing else - no strength, and so no baseline either
-        return self.warrior.roll_defense()
+        # Defence is the armour's own roll - no strength, and so no baseline either - and the wall
+        defense = self.warrior.roll_defense()
+
+        # Every defence in the game comes through here, which is what makes the wall stack with a
+        # stance without either knowing about the other: the stance doubles what this returns.
+        # Scoped to the defending *side* rather than to the defender of the exchange, who is only
+        # whoever lost the initiative roll - an attacker is that in half his exchanges and has no wall
+        # at his back in any of them.
+        if self.skirmish.is_fortified and self.skirmish.is_defended_by(warrior=self.warrior):
+            return dataclasses.replace(defense, value=round(defense.value * self.FORTIFICATION_DEFENSE_MULTIPLIER))
+
+        return defense

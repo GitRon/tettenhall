@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from django.urls import reverse
 
@@ -458,6 +460,54 @@ def test_skirmish_finish_round_view_refuses_an_action_that_is_not_one(logged_in_
     assert response.status_code == 400
     skirmish.refresh_from_db()
     assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_an_action_the_warrior_is_not_offered(logged_in_client, current_savegame):
+    """
+    A real action, but not one this man has: there is no wall in front of him to storm.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, fortification_strength=0)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.ASSAULT_FORTIFICATION,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_brings_the_wall_down(logged_in_client, current_savegame):
+    """
+    Flow test: the real queue, from the posted order to the wall. Every die is pinned to 3, so the
+    fallback weapon at the warrior's own baseline takes exactly the three points the wall has.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, fortification_strength=3)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=10, strength_baseline=10)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        response = logged_in_client.post(
+            reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+            data={
+                "skirmish_participant[0][warrior_id]": player_warrior.pk,
+                "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.ASSAULT_FORTIFICATION,
+            },
+        )
+
+    assert response.status_code == 200
+    skirmish.refresh_from_db()
+    assert skirmish.fortification_strength == 0
 
 
 @pytest.mark.django_db

@@ -1,7 +1,10 @@
 import pytest
 
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
 def test_str_returns_the_name():
@@ -61,3 +64,36 @@ def test_quest_reward_for_pays_the_signatory_the_face_value():
         quest_contract.quest.name,
         250,
     )
+
+
+def test_fortification_defended_by_is_the_stand_in_for_every_faction():
+    result = Skirmish.fortification_defended_by(faction=FactionFactory.build())
+
+    assert result == Skirmish.STAND_IN_FORTIFICATION_STRENGTH
+
+
+@pytest.mark.django_db
+def test_can_be_assaulted_by_an_attacker_while_the_wall_stands():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(warrior)
+
+    assert skirmish.can_be_assaulted_by(warrior=warrior) is True
+
+
+@pytest.mark.django_db
+def test_can_be_assaulted_by_is_refused_to_a_defender():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(warrior)
+
+    assert skirmish.can_be_assaulted_by(warrior=warrior) is False
+
+
+@pytest.mark.django_db
+def test_can_be_assaulted_by_is_refused_once_the_wall_has_fallen():
+    skirmish = SkirmishFactory(fortification_strength=0)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(warrior)
+
+    assert skirmish.can_be_assaulted_by(warrior=warrior) is False

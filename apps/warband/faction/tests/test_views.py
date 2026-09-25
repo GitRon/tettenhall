@@ -1264,6 +1264,19 @@ def test_faction_attack_view_shows_the_form(logged_in_client, current_savegame, 
 
 
 @pytest.mark.django_db
+def test_faction_attack_view_warns_of_the_wall_before_the_march(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+
+    response = logged_in_client.get(reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["fortification_strength"] == Skirmish.STAND_IN_FORTIFICATION_STRENGTH
+
+
+@pytest.mark.django_db
 def test_faction_attack_view_fights_the_rivals_own_war_band(
     logged_in_client, current_savegame, player_faction_ready_to_march, queuebie_registry
 ):
