@@ -544,7 +544,13 @@ def test_skirmish_finish_round_view_ignores_the_action_posted_for_the_enemy(logg
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
     enemy_warrior = WarriorFactory(
-        faction=skirmish.defending_faction, current_health=20, max_health=20, dexterity=20, strength=1
+        faction=skirmish.defending_faction,
+        current_health=20,
+        max_health=20,
+        dexterity=20,
+        strength=1,
+        # Level 3, the level the fast attack he reaches for is learned at
+        experience=400,
     )
     skirmish.attacking_warriors.add(player_warrior)
     skirmish.defending_warriors.add(enemy_warrior)

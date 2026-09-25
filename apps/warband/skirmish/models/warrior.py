@@ -11,6 +11,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.managers.warrior import WarriorManager
+from apps.warband.skirmish.services.actions.requirements import get_offered_actions
 from apps.warband.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
@@ -423,15 +424,7 @@ class Warrior(models.Model):
         return self.level**2 * self.XP_LEVEL_BASE
 
     def get_skirmish_actions(self, *, skirmish: Skirmish) -> list[tuple]:
-        # TODO (#52): show only the ones the warrior has depending on his level
-        # TODO (#52): use XP to add more skirmish actions -> every level gets a fixed action to keep it simple
-        # The wall is the one action that depends on the fight rather than the man: there has to be one
-        # standing, and it has to be in front of him rather than at his back
-        return [
-            choice
-            for choice in SkirmishActionChoices.choices
-            if choice[0] != SkirmishActionChoices.ASSAULT_FORTIFICATION or skirmish.can_be_assaulted_by(warrior=self)
-        ]
+        return get_offered_actions(warrior=self, skirmish=skirmish)
 
     def decide_skirmish_action(self, *, skirmish: Skirmish) -> [int, str]:
         service = SkirmishActionDecisionService(warrior=self, skirmish=skirmish)
