@@ -7,7 +7,11 @@ from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands import skirmish
 from apps.warband.skirmish.messages.commands.skirmish import WarriorAssaultsFortification
-from apps.warband.skirmish.messages.commands.warrior import RallyRemainingWarriors, WithdrawFromSkirmish
+from apps.warband.skirmish.messages.commands.warrior import (
+    RallyRemainingWarriors,
+    StoreLastUsedSkirmishAction,
+    WithdrawFromSkirmish,
+)
 from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
@@ -207,8 +211,16 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
             SkirmishActionChoices.RALLY,
         ):
             # Nobody is left to face a man at the wall or a leader rallying, and neither is looking for
-            # anybody: his round is the order above, and there is no man for him to strike free at
-            continue
+            # anybody: his round is the order above, and there is no man for him to strike free at.
+            # No exchange means nothing else records what he did, so his card would open the next
+            # round on the default instead of on the order he keeps giving
+            message_list.append(
+                StoreLastUsedSkirmishAction(
+                    skirmish=context.skirmish,
+                    warrior=participant_1.warrior,
+                    skirmish_action=participant_1.skirmish_action,
+                )
+            )
         else:
             # The smaller group has run out, so this man is one the other side cannot field anybody
             # against and he strikes unopposed. Whom he falls on is the one draw in the round that may

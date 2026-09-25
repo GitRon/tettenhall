@@ -25,7 +25,11 @@ from apps.warband.skirmish.messages.commands.skirmish import (
     WarriorAssaultsFortification,
     WinSkirmish,
 )
-from apps.warband.skirmish.messages.commands.warrior import RallyRemainingWarriors, WithdrawFromSkirmish
+from apps.warband.skirmish.messages.commands.warrior import (
+    RallyRemainingWarriors,
+    StoreLastUsedSkirmishAction,
+    WithdrawFromSkirmish,
+)
 from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
@@ -1102,6 +1106,9 @@ def test_handle_assign_fighter_pairs_lets_an_unopposed_rallying_leader_strike_no
             attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
             attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
         ),
+        StoreLastUsedSkirmishAction(
+            skirmish=skirmish, warrior=rallying_participant.warrior, skirmish_action=SkirmishActionChoices.RALLY
+        ),
     ]
 
 
@@ -1109,7 +1116,8 @@ def test_handle_assign_fighter_pairs_lets_an_unopposed_rallying_leader_strike_no
 def test_handle_assign_fighter_pairs_lets_an_unopposed_man_at_the_wall_strike_nobody():
     """
     A man nobody is left to face would strike free at a random defender - unless his round is the wall,
-    in which case the wall is all of it.
+    in which case the wall is all of it. With no exchange to record it, his order is stored here, so
+    his card opens the next round on it.
     """
     skirmish = SkirmishFactory(fortification_strength=20)
     fighting_participant = SkirmishParticipant(
@@ -1145,6 +1153,11 @@ def test_handle_assign_fighter_pairs_lets_an_unopposed_man_at_the_wall_strike_no
             warrior_2=enemy_participant.warrior,
             attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
             attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+        ),
+        StoreLastUsedSkirmishAction(
+            skirmish=skirmish,
+            warrior=storming_participant.warrior,
+            skirmish_action=SkirmishActionChoices.ASSAULT_FORTIFICATION,
         ),
     ]
 
