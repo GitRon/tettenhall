@@ -346,6 +346,7 @@ def handle_create_new_warrior(*, context: CreateWarrior) -> list[Event] | Event:
     return WarriorCreated(
         savegame=context.savegame,
         faction=context.faction,
+        pub_owner=context.pub_owner,
         warrior=warrior,
         month=context.month,
     )

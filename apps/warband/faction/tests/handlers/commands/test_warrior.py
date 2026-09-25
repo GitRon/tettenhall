@@ -3,6 +3,7 @@ import pytest
 from apps.warband.faction.handlers.commands.warrior import (
     handle_add_warrior_to_pub,
     handle_consider_fyrd_draft,
+    handle_consider_pub_hire,
     handle_draft_warrior_from_fyrd,
     handle_recruit_pub_mercenary,
     handle_restock_pub_mercenaries,
@@ -11,6 +12,7 @@ from apps.warband.faction.handlers.commands.warrior import (
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
     ConsiderFyrdDraft,
+    ConsiderPubHire,
     DraftWarriorFromFyrd,
     PayMonthlyWarriorSalaries,
     RecruitPubMercenary,
@@ -22,6 +24,8 @@ from apps.warband.faction.messages.events.faction import (
 )
 from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
+    PubHiringConsidered,
+    PubMercenaryHireApproved,
     PubMercenarySlotOpened,
     TownMercenariesRestocked,
     WarriorRecruited,
@@ -43,8 +47,7 @@ def _player_faction(*, hall: int = Town.HallChoices.HALL_NONE, current_month: in
     """
     A faction its own savegame points to as the player's.
 
-    FactionFactory leaves "savegame.player_faction" unset, and only the player's town has a pub to
-    restock, so a plain factory faction is skipped by the handler.
+    FactionFactory leaves "savegame.player_faction" unset, so a plain factory faction is a rival.
 
     The month is the savegame's own, which is what a man standing in the pub measures his wait
     against - see [Warrior.months_in_pub].
@@ -68,6 +71,7 @@ def test_handle_restock_pub_mercenaries_requests_one_warrior_per_hall_slot():
     assert result[0] == PubMercenarySlotOpened(
         savegame=faction.savegame,
         faction=None,
+        pub_owner=faction,
         # Drawn per slot with order_by("?"), so everything but the culture is deterministic
         culture=result[0].culture,
         generator_class=MercenaryWarriorGenerator,
@@ -110,21 +114,20 @@ def test_handle_restock_pub_mercenaries_leaves_a_dismissed_warrior_standing():
 
 
 @pytest.mark.django_db
-def test_handle_restock_pub_mercenaries_skips_a_rival_faction():
+def test_handle_restock_pub_mercenaries_stocks_a_rivals_own_pub():
     """
-    The requested mercenaries are generated without a faction of their own, so handle_add_warrior_to_pub
-    can only ever stock the player's pub. Restocking a rival - which NewFactionCreated does for each
-    of them - would therefore fill the player's pub a second time.
+    Every town has a pub, and the man rolled for a rival's stands in that rival's - named as the pub's
+    owner, not as his faction, since he belongs to nobody while he waits.
     """
     rival_faction = FactionFactory()
-    previous_stock = WarriorFactory(faction=rival_faction)
-    rival_faction.available_mercenaries.add(previous_stock)
+    rival_faction.available_mercenaries.add(
+        WarriorFactory(faction=None, savegame=rival_faction.savegame, culture=rival_faction.culture, is_pub_stock=True)
+    )
 
     result = handle_restock_pub_mercenaries(context=RestockTownMercenaries(faction=rival_faction, month=3))
 
-    assert result == []
-    # Bailing out before the clean-up, so the rival keeps whatever it had
-    assert list(rival_faction.available_mercenaries.all()) == [previous_stock]
+    assert (result[0].faction, result[0].pub_owner) == (None, rival_faction)
+    assert rival_faction.available_mercenaries.count() == 0
 
 
 @pytest.mark.django_db
@@ -134,13 +137,35 @@ def test_handle_add_warrior_to_pub_marks_generated_stock():
 
     result = handle_add_warrior_to_pub(
         context=AddWarriorToPub(
-            savegame=faction.savegame, faction=faction, warrior=mercenary, is_pub_stock=True, month=3
+            savegame=faction.savegame, pub_owner=faction, warrior=mercenary, is_pub_stock=True, month=3
         )
     )
 
-    assert result == WarriorWasAddedToPub(faction=faction, warrior=mercenary, month=3)
+    assert result == WarriorWasAddedToPub(pub_owner=faction, warrior=mercenary, month=3)
     mercenary.refresh_from_db()
     assert mercenary.is_pub_stock is True
+
+
+@pytest.mark.django_db
+def test_handle_add_warrior_to_pub_stands_him_in_the_pub_named_on_the_message():
+    """
+    A rival's pub rather than the player's: the target is the pub owner the message carries, never the
+    savegame's player faction.
+    """
+    player_faction = _player_faction()
+    rival_faction = FactionFactory(savegame=player_faction.savegame)
+    mercenary = WarriorFactory(faction=None, savegame=player_faction.savegame, culture=rival_faction.culture)
+
+    handle_add_warrior_to_pub(
+        context=AddWarriorToPub(
+            savegame=player_faction.savegame, pub_owner=rival_faction, warrior=mercenary, is_pub_stock=True, month=3
+        )
+    )
+
+    assert (list(rival_faction.available_mercenaries.all()), player_faction.available_mercenaries.count()) == (
+        [mercenary],
+        0,
+    )
 
 
 @pytest.mark.django_db
@@ -156,7 +181,7 @@ def test_handle_add_warrior_to_pub_marks_a_dismissed_warrior_as_no_stock():
 
     handle_add_warrior_to_pub(
         context=AddWarriorToPub(
-            savegame=faction.savegame, faction=faction, warrior=dismissed_warrior, is_pub_stock=False, month=3
+            savegame=faction.savegame, pub_owner=faction, warrior=dismissed_warrior, is_pub_stock=False, month=3
         )
     )
 
@@ -178,7 +203,7 @@ def test_handle_add_warrior_to_pub_stamps_the_month_he_got_there():
 
     handle_add_warrior_to_pub(
         context=AddWarriorToPub(
-            savegame=faction.savegame, faction=faction, warrior=returning_veteran, is_pub_stock=False, month=9
+            savegame=faction.savegame, pub_owner=faction, warrior=returning_veteran, is_pub_stock=False, month=9
         )
     )
 
@@ -236,6 +261,96 @@ def test_handle_consider_fyrd_draft_refuses_the_player():
     result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=player_faction, month=3))
 
     assert result is None
+
+
+def _rival_with_pub(*, purse: int, salary_list: list[int]) -> tuple[Faction, list[Warrior]]:
+    """
+    A rival with an empty roster, this much silver, and one mercenary on its shelf per salary.
+
+    A man who just arrived costs twice his wage - see [Warrior.hiring_price].
+    """
+    rival_faction = FactionFactory()
+    TransactionFactory(faction=rival_faction, amount=purse)
+    mercenary_list = [
+        WarriorFactory(
+            faction=None,
+            savegame=rival_faction.savegame,
+            culture=rival_faction.culture,
+            monthly_salary=salary,
+            is_pub_stock=True,
+        )
+        for salary in salary_list
+    ]
+    rival_faction.available_mercenaries.add(*mercenary_list)
+
+    return rival_faction, mercenary_list
+
+
+@pytest.mark.django_db
+def test_handle_consider_pub_hire_approves_a_man_a_rival_can_afford():
+    # 1000 less his price of 200 still covers his wage of 100
+    rival_faction, [mercenary] = _rival_with_pub(purse=1000, salary_list=[100])
+
+    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
+
+    assert result == [
+        PubMercenaryHireApproved(faction=rival_faction, warrior=mercenary, month=3),
+        PubHiringConsidered(faction=rival_faction, month=3),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_consider_pub_hire_passes_over_a_man_a_rival_cannot_afford():
+    """
+    250 pays his price of 200, but leaves 50 against the wage of 100 he would draw - so the purse would
+    not cover the wage bill once over, and the rival leaves him standing.
+    """
+    rival_faction, _ = _rival_with_pub(purse=250, salary_list=[100])
+
+    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
+
+    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_consider_pub_hire_buys_cheapest_first_out_of_a_purse_it_keeps_count_of():
+    """
+    The cheap man first: 500 less 200 leaves 300 against his wage of 100. What is left is then 300 with
+    a wage bill of 100, and the dearer man's 300 would leave nothing against 250 of wages. Re-reading
+    the ledger instead would still see 500 and take him too; taking the dearer man first would leave
+    the cheap one out.
+    """
+    rival_faction, [cheap_mercenary, _] = _rival_with_pub(purse=500, salary_list=[100, 150])
+
+    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
+
+    assert result == [
+        PubMercenaryHireApproved(faction=rival_faction, warrior=cheap_mercenary, month=3),
+        PubHiringConsidered(faction=rival_faction, month=3),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_consider_pub_hire_refuses_the_player():
+    """
+    Hiring is a button in the player's pub - but his restock hangs off this too, so the closing event
+    still comes out.
+    """
+    player_faction = _player_faction()
+    TransactionFactory(faction=player_faction, amount=1000)
+    player_faction.available_mercenaries.add(
+        WarriorFactory(
+            faction=None,
+            savegame=player_faction.savegame,
+            culture=player_faction.culture,
+            monthly_salary=100,
+            is_pub_stock=True,
+        )
+    )
+
+    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=player_faction, month=3))
+
+    assert result == [PubHiringConsidered(faction=player_faction, month=3)]
 
 
 @pytest.mark.django_db

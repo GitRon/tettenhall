@@ -16,7 +16,10 @@ class RestockTownMercenaries(Command):
 @dataclass(kw_only=True)
 class AddWarriorToPub(Command):
     """
-    Stand a warrior in the player's pub, and say whether the next restock may sweep him out again.
+    Stand a warrior in a faction's pub, and say whether the next restock may sweep him out again.
+
+    "pub_owner" is whose pub that is. It is not the warrior's faction: a generated mercenary has none,
+    and a man sent away or walking out has just lost his - it is the pub of the faction he left.
 
     "is_pub_stock" is the whole difference between a mercenary the pub generated, whose row exists
     only until somebody hires him, and a man who left a roster and is waiting to be taken back. The
@@ -25,7 +28,7 @@ class AddWarriorToPub(Command):
     """
 
     savegame: Savegame
-    faction: Faction
+    pub_owner: Faction
     warrior: Warrior
     is_pub_stock: bool
     month: int
@@ -43,6 +46,19 @@ class ConsiderFyrdDraft(Command):
     Asks whether this faction should call somebody up this month.
 
     A command because the answer is a query - who it is, what is in the reserve and what is in the
+    purse - and the event handler on the monthly event may read none of those.
+    """
+
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
+class ConsiderPubHire(Command):
+    """
+    Asks which of the men standing in this faction's pub it takes on this month.
+
+    A command because the answer is a query - who it is, what is on the shelf and what is in the
     purse - and the event handler on the monthly event may read none of those.
     """
 

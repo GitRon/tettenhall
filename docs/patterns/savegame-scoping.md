@@ -1,8 +1,9 @@
 # Savegame scoping
 
 **A savegame has exactly one player.** Rival factions are NPCs, so a rival reading "another faction's"
-data is not a leak. The pub belongs to the player, which is why `handle_add_warrior_to_pub` targets
-`savegame.player_faction` deliberately. Money is the other case: every faction of a savegame keeps its
+data is not a leak. Every faction has a pub of its own, so `handle_add_warrior_to_pub` writes to the
+`pub_owner` the message names rather than to `savegame.player_faction`, and the player hires only out of
+his own - `RecruitPubMercenaryView` scopes to it. Money is the other case: every faction of a savegame keeps its
 own purse, so `Transaction.for_faction()` and `Transaction.objects.current_balance()` take a faction id
 rather than a savegame id, and the player-facing callers pass `savegame.player_faction_id`. They used to
 join `faction__player_savegame` instead, which landed on the player faction too — that is the reverse

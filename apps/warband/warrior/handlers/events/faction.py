@@ -87,6 +87,7 @@ def handle_pub_mercenary_slot_opened(*, context: PubMercenarySlotOpened) -> Comm
     return CreateWarrior(
         savegame=context.savegame,
         faction=context.faction,
+        pub_owner=context.pub_owner,
         culture=context.culture,
         generator_class=context.generator_class,
         month=context.month,

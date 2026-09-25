@@ -1,20 +1,55 @@
 import pytest
 
 from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid
-from apps.warband.faction.messages.events.warrior import WarriorMonthPrepared
+from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened, WarriorMonthPrepared
+from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.handlers.events.faction import (
     handle_heal_a_wounded_warrior_for_new_month,
+    handle_pub_mercenary_slot_opened,
     handle_replenish_a_warriors_morale_for_new_month,
     handle_unpaid_warriors,
 )
 from apps.warband.warrior.messages.commands.warrior import (
+    CreateWarrior,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
     ReplenishWarriorMorale,
 )
+from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
+
+
+def test_handle_pub_mercenary_slot_opened_carries_the_pub_owner_along():
+    """
+    The man belongs to nobody, and the pub he is made for is a different faction entirely - dropping
+    it here would leave the end of the chain guessing whose shelf he goes on.
+    """
+    savegame = SavegameFactory.build()
+    pub_owner = FactionFactory.build()
+    culture = CultureFactory.build()
+
+    result = handle_pub_mercenary_slot_opened(
+        context=PubMercenarySlotOpened(
+            savegame=savegame,
+            faction=None,
+            pub_owner=pub_owner,
+            culture=culture,
+            generator_class=MercenaryWarriorGenerator,
+            month=7,
+        )
+    )
+
+    assert result == CreateWarrior(
+        savegame=savegame,
+        faction=None,
+        pub_owner=pub_owner,
+        culture=culture,
+        generator_class=MercenaryWarriorGenerator,
+        month=7,
+    )
 
 
 @pytest.mark.django_db

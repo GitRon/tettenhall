@@ -139,5 +139,6 @@ class NewLeaderWarriorCreated(Event):
 class WarriorCreated(Event):
     warrior: Warrior
     savegame: Savegame
-    faction: Faction
+    faction: Faction | None
+    pub_owner: Faction
     month: int

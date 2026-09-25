@@ -12,8 +12,11 @@ from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGen
 
 @dataclass(kw_only=True)
 class CreateWarrior(Command):
+    # "faction" is who the new man belongs to, "pub_owner" whose shelf he is made for - see
+    # [PubMercenarySlotOpened], the only thing asking for one
     savegame: Savegame
-    faction: Faction
+    faction: Faction | None
+    pub_owner: Faction
     culture: Culture
     generator_class: type[BaseWarriorGenerator]
     month: int
