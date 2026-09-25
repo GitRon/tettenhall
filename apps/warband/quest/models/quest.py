@@ -15,6 +15,9 @@ class Quest(models.Model):
     target_faction = models.ForeignKey("warband.Faction", verbose_name="Target faction", on_delete=models.CASCADE)
     difficulty = models.PositiveSmallIntegerField("Difficulty", choices=DifficultyChoices.choices)
     expected_opposition = models.PositiveSmallIntegerField("Expected opposition")
+    # Copied off the quest type when the quest is pinned to the board, like the name, so reloading
+    # the reference data cannot change the terms of a contract the player has already agreed to
+    fortification_strength = models.PositiveSmallIntegerField("Fortification strength", default=0)
 
     objects = QuestManager()
 
@@ -59,23 +62,34 @@ class Quest(models.Model):
             return 250, 750
         raise RuntimeError("Invalid difficulty choice.")
 
-    def _priced_for_expected_opposition(self, *, full_band_loot: int) -> int:
+    def get_fortification_factor(self) -> float:
         """
-        Brings a full-band figure down to the war band this quest was actually written against.
+        What the wall in front of the target adds to the purse, as a factor on it.
 
-        A contract is priced when it is pinned to the board, not settled when it is resolved: the
-        target's roster is what decides the size of the job, and a rival who can field one man is
-        offering a one-man job at a one-man price. So the money follows the opposition here, once,
-        and what the player accepted is then paid in full whatever turns out on the day.
+        A walled errand is a harder fight for the same men, so without this it would be strictly
+        worse than an open one and nobody would pick it twice. Each point of fortification adds
+        a hundredth: a settlement errand at 20 pays a fifth more than the same job in open country.
+        """
+        return 1 + self.fortification_strength / 100
+
+    def _priced(self, *, full_band_loot: int) -> int:
+        """
+        Turns a full-band figure into what this quest pays.
+
+        Two things decide it beside the difficulty's range, and both are settled when the quest is
+        pinned to the board. The target's roster decides the size of the job: a rival who can field
+        one man is offering a one-man job at a one-man price. The quest type's wall decides how hard
+        that job is. The money follows both here, once, and what the player accepted is then paid in
+        full whatever turns out on the day.
         """
         _, band_maximum = self.get_min_max_number_of_opponents()
 
-        return round(full_band_loot * self.expected_opposition / band_maximum)
+        return round(full_band_loot * self.expected_opposition / band_maximum * self.get_fortification_factor())
 
     def calculate_loot(self) -> int:
         minimum_loot, maximum_loot = self.get_min_max_loot()
 
-        return self._priced_for_expected_opposition(full_band_loot=random.randint(minimum_loot, maximum_loot))
+        return self._priced(full_band_loot=random.randint(minimum_loot, maximum_loot))
 
     @property
     def average_loot(self) -> int:
@@ -83,10 +97,11 @@ class Quest(models.Model):
         What a quest like this one pays on average, for "obscurify" to describe the purse against.
 
         Derived from the same range and the same scaling the purse itself came out of, so the word on
-        the card stays informative at every roster size instead of reading "Low" for every easy
-        quest: a cap of five puts an easy quest's thresholds at 200 and 300, a cap of one puts them
-        at 40 and 60, and the purse spans all three answers either way.
+        the card stays informative at every roster size and behind every wall instead of reading
+        "Low" for every easy quest or "High" for every walled one: a cap of five puts an easy
+        quest's thresholds at 200 and 300, a cap of one puts them at 40 and 60, and the purse spans
+        all three answers either way.
         """
         minimum_loot, maximum_loot = self.get_min_max_loot()
 
-        return self._priced_for_expected_opposition(full_band_loot=round((minimum_loot + maximum_loot) / 2))
+        return self._priced(full_band_loot=round((minimum_loot + maximum_loot) / 2))

@@ -112,3 +112,41 @@ def test_average_loot_for_a_target_that_cannot_field_a_full_band():
     quest = QuestFactory.build(difficulty=Quest.DifficultyChoices.DIFFICULTY_HARD, expected_opposition=2)
 
     assert quest.average_loot == 125
+
+
+def test_get_fortification_factor_in_open_country():
+    quest = QuestFactory.build(fortification_strength=0)
+
+    assert quest.get_fortification_factor() == 1
+
+
+def test_get_fortification_factor_behind_a_wall():
+    quest = QuestFactory.build(fortification_strength=20)
+
+    assert quest.get_fortification_factor() == 1.2
+
+
+def test_calculate_loot_for_a_walled_quest():
+    """
+    The wall is a factor on the purse, inside the same arithmetic as the roster scaling, so a
+    settlement errand at 20 pays a fifth more than the same job in open country.
+    """
+    quest = QuestFactory.build(
+        difficulty=Quest.DifficultyChoices.DIFFICULTY_EASY, expected_opposition=5, fortification_strength=20
+    )
+
+    with mock.patch("apps.warband.quest.models.quest.random.randint", return_value=200):
+        result = quest.calculate_loot()
+
+    assert result == 240
+
+
+def test_average_loot_for_a_walled_quest():
+    """
+    Moves with the purse, so "obscurify" does not read every walled quest as "High".
+    """
+    quest = QuestFactory.build(
+        difficulty=Quest.DifficultyChoices.DIFFICULTY_EASY, expected_opposition=5, fortification_strength=20
+    )
+
+    assert quest.average_loot == 300

@@ -1,0 +1,50 @@
+[
+  {
+    "model": "warband.questtype",
+    "pk": 1,
+    "fields": {
+      "name": "Hunt down raiders",
+      "fortification_strength": 0
+    }
+  },
+  {
+    "model": "warband.questtype",
+    "pk": 2,
+    "fields": {
+      "name": "Pillage village",
+      "fortification_strength": 20
+    }
+  },
+  {
+    "model": "warband.questtype",
+    "pk": 3,
+    "fields": {
+      "name": "Avenge lost villager lives",
+      "fortification_strength": 0
+    }
+  },
+  {
+    "model": "warband.questtype",
+    "pk": 4,
+    "fields": {
+      "name": "Raid cattle",
+      "fortification_strength": 0
+    }
+  },
+  {
+    "model": "warband.questtype",
+    "pk": 5,
+    "fields": {
+      "name": "Sack a burh",
+      "fortification_strength": 20
+    }
+  },
+  {
+    "model": "warband.questtype",
+    "pk": 6,
+    "fields": {
+      "name": "Storm the stockade",
+      "fortification_strength": 20
+    }
+  }
+]

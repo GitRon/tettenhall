@@ -2,7 +2,7 @@ import random
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.quest.models.quest import Quest
-from apps.warband.quest.models.quest_name import QuestName
+from apps.warband.quest.models.quest_type import QuestType
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -48,19 +48,26 @@ class QuestGenerator:
         if not target_faction_list:
             return None
 
-        quest_name_list = list(QuestName.objects.all())
+        quest_type_list = list(QuestType.objects.all())
 
-        if not quest_name_list:
+        if not quest_type_list:
             raise RuntimeError(
-                "There are no quest names to draw from. "
-                "Load the reference data with 'loaddata culture itemtype questname injurytype'."
+                "There are no quest types to draw from. "
+                "Load the reference data with 'loaddata culture itemtype questtype injurytype'."
             )
 
-        name = random.choice(quest_name_list).name
+        quest_type = random.choice(quest_type_list)
         target_faction = random.choice(target_faction_list)
         difficulty = random.choice(Quest.DifficultyChoices.choices)
 
-        quest = Quest(name=name, target_faction=target_faction, difficulty=difficulty[0])
+        # Copies rather than a foreign key: an accepted quest is a contract, and reloading the
+        # reference data must not change terms the player has already agreed to
+        quest = Quest(
+            name=quest_type.name,
+            fortification_strength=quest_type.fortification_strength,
+            target_faction=target_faction,
+            difficulty=difficulty[0],
+        )
         quest.expected_opposition = self._expected_opposition(quest=quest)
         quest.loot = quest.calculate_loot()
         quest.save()
