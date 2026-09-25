@@ -81,6 +81,10 @@ def handle_log_fortification_assaulted(*, context: skirmish.FortificationAssault
     # saying he took nothing off a wall of nothing would read as a swing that failed
     if context.damage == 0 and context.remaining_strength == 0:
         message = f"{context.warrior} storms the fortification, but it has already fallen."
+    elif context.remaining_strength == 0:
+        # The swing that brought it down. What is left of it is nothing, and the line after this one says
+        # the wall fell, so this one only says how hard he hit it
+        message = f"{context.warrior} storms the fortification at {context.assault.value}."
     else:
         message = (
             f"{context.warrior} storms the fortification at {context.assault.value}, and "

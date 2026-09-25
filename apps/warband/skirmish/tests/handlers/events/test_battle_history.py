@@ -583,3 +583,21 @@ def test_handle_log_fortification_fell():
     assert result == CreateBattleHistory(
         skirmish=skirmish, message="The fortification falls to Offa, and the defenders fight on without it."
     )
+
+
+def test_handle_log_fortification_assaulted_by_the_swing_that_brings_it_down():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Offa")
+
+    result = handle_log_fortification_assaulted(
+        context=FortificationAssaulted(
+            skirmish=skirmish,
+            round_number=1,
+            warrior=warrior,
+            assault=ActionRoll(roll=None, value=20),
+            damage=5,
+            remaining_strength=0,
+        )
+    )
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Offa storms the fortification at 20.")
