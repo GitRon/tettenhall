@@ -108,10 +108,13 @@ class Skirmish(models.Model):
         the roster rather than of "warrior.faction", which is how every other side question in this
         package is answered: the roster is who fights, whatever the man's faction column says.
         """
-        return self.is_fortified and self.attacking_warriors.filter(pk=warrior.pk).exists()
+        return self.is_fortified and warrior in self.attacking_warriors.all()
 
     def is_defended_by(self, *, warrior: Warrior) -> bool:
-        return self.defending_warriors.filter(pk=warrior.pk).exists()
+        # Membership in ".all()" rather than an "exists()" per call: the round view prefetches both
+        # rosters onto the one instance every message of the round carries, so this is asked of every
+        # blow without a query
+        return warrior in self.defending_warriors.all()
 
     def quest_reward_for(self, *, victorious_faction: Faction) -> tuple[str | None, int]:
         """
