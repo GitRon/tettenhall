@@ -10,9 +10,10 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 def _fast_attacker(faction) -> Warrior:
     """
-    A warrior the decision service answers "Fast attack" for: healthy, and dexterous above the mean.
+    A warrior the decision service answers "Fast attack" for: healthy, dexterous above the mean, and
+    at the level the fast attack is learned at.
     """
-    return WarriorFactory(faction=faction, current_health=20, max_health=20, dexterity=20, strength=1)
+    return WarriorFactory(faction=faction, current_health=20, max_health=20, dexterity=20, strength=1, experience=400)
 
 
 @pytest.mark.django_db
@@ -86,7 +87,8 @@ def test_process_when_the_player_is_the_defending_side():
     """
     skirmish = SkirmishFactory()
     enemy = _fast_attacker(skirmish.attacking_faction)
-    player_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    # Level 4, so the risky attack posted for him below is one he is offered
+    player_warrior = WarriorFactory(faction=skirmish.defending_faction, experience=900)
     skirmish.attacking_warriors.add(enemy)
     skirmish.defending_warriors.add(player_warrior)
 
@@ -203,3 +205,22 @@ def test_process_refuses_an_action_the_warrior_is_not_offered():
 
     with pytest.raises(UnofferedSkirmishActionError, match=f"Warrior {player_warrior.id} is not offered action 6"):
         service.process()
+
+
+@pytest.mark.django_db
+def test_process_refuses_an_action_above_the_warriors_level():
+    """
+    A real choice, just not his yet: the select never offered it, so it can only have been typed
+    into the post.
+    """
+    skirmish = SkirmishFactory()
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=0)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    with pytest.raises(UnofferedSkirmishActionError, match=f"Warrior {player_warrior.id} is not offered action 2"):
+        SkirmishParticipantBuilderService(
+            skirmish=skirmish,
+            participants=[(player_warrior.id, SkirmishActionChoices.RISKY_ATTACK)],
+            player_faction_id=skirmish.attacking_faction_id,
+        ).process()

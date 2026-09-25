@@ -11,7 +11,7 @@ from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 @pytest.mark.django_db
 def test_determine_decision_badly_wounded_warrior_defends():
-    warrior = WarriorFactory(current_health=4, max_health=20, dexterity=20, strength=20)
+    warrior = WarriorFactory(current_health=4, max_health=20, dexterity=20, strength=20, experience=100)
 
     result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
 
@@ -20,7 +20,7 @@ def test_determine_decision_badly_wounded_warrior_defends():
 
 @pytest.mark.django_db
 def test_determine_decision_dextrous_warrior_attacks_fast():
-    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=15, strength=15)
+    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=15, strength=15, experience=400)
 
     result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
 
@@ -29,7 +29,7 @@ def test_determine_decision_dextrous_warrior_attacks_fast():
 
 @pytest.mark.django_db
 def test_determine_decision_strong_warrior_attacks_riskily():
-    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=10, strength=15)
+    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=10, strength=15, experience=900)
 
     result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
 
@@ -84,10 +84,45 @@ def test_determine_decision_strong_attacker_storms_a_standing_wall():
 
 @pytest.mark.django_db
 def test_determine_decision_strong_defender_does_not_storm_his_own_wall():
-    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=10, strength=15)
+    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=10, strength=15, experience=900)
     skirmish = SkirmishFactory(fortification_strength=20)
     skirmish.defending_warriors.add(warrior)
 
     result = SkirmishActionDecisionService(warrior=warrior, skirmish=skirmish)._determine_decision()
 
     assert result == SkirmishActionChoices.RISKY_ATTACK
+
+
+@pytest.mark.django_db
+def test_determine_decision_badly_wounded_warrior_without_the_stance_attacks_simply():
+    """
+    His first wish is one his level has not bought him, so it falls through rather than being fought
+    with - the enemy card and the round he fights both come from this decision.
+    """
+    warrior = WarriorFactory(current_health=4, max_health=20, dexterity=10, strength=10, experience=0)
+
+    result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
+
+    assert result == SkirmishActionChoices.SIMPLE_ATTACK
+
+
+@pytest.mark.django_db
+def test_determine_decision_falls_through_to_the_next_wish_he_is_offered():
+    """
+    Strong and quick at level 3, in a fight with no wall: the assault he wants first is not on offer,
+    the fast attack is.
+    """
+    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=15, strength=15, experience=400)
+
+    result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
+
+    assert result == SkirmishActionChoices.FAST_ATTACK
+
+
+@pytest.mark.django_db
+def test_determine_decision_strong_level_one_man_attacks_simply_rather_than_riskily():
+    warrior = WarriorFactory(current_health=20, max_health=20, dexterity=10, strength=15, experience=0)
+
+    result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
+
+    assert result == SkirmishActionChoices.SIMPLE_ATTACK

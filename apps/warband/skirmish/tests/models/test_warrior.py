@@ -463,12 +463,24 @@ def test_attribute_draws_keep_reading_the_stored_columns():
 @pytest.mark.django_db
 def test_get_skirmish_actions_offers_the_wall_to_an_attacker_in_front_of_one():
     skirmish = SkirmishFactory(fortification_strength=20)
-    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    # Level 4, so every action the man himself earns is his and the wall is the only open question
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=900)
     skirmish.attacking_warriors.add(warrior)
 
     result = warrior.get_skirmish_actions(skirmish=skirmish)
 
     assert result == SkirmishActionChoices.choices
+
+
+@pytest.mark.django_db
+def test_get_skirmish_actions_for_a_man_at_level_one():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=0)
+    skirmish.attacking_warriors.add(warrior)
+
+    result = warrior.get_skirmish_actions(skirmish=skirmish)
+
+    assert [action for action, _label in result] == [SkirmishActionChoices.SIMPLE_ATTACK, SkirmishActionChoices.FLEE]
 
 
 @pytest.mark.django_db
