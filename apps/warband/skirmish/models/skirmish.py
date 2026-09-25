@@ -103,7 +103,13 @@ class Skirmish(models.Model):
         and recruited is nobody's leader in the war band that took him, and this answers that without
         recruitment having to clear anything. The side comes off the rosters, as in
         "can_be_assaulted_by".
+
+        The leader ids are asked first, because this runs for every card on the fight page: the two
+        factions are cached on this instance after the first card, so a man who leads neither side costs
+        no roster query at all.
         """
+        if warrior.id not in (self.attacking_faction.leader_id, self.defending_faction.leader_id):
+            return False
         if warrior in self.attacking_warriors.all():
             return self.attacking_faction.leader_id == warrior.id
         if warrior in self.defending_warriors.all():
