@@ -64,10 +64,26 @@ class ReduceMoraleOfRemainingWarriors(Command):
 
 
 @dataclass(kw_only=True)
+class RallyRemainingWarriors(Command):
+    """
+    The leader spends his round steadying the men of his side who are still in the fight.
+
+    The mirror of "ReduceMoraleOfRemainingWarriors": whom it reaches is a query on the skirmish's
+    rosters, so a command handler answers it rather than the round that ordered it.
+    """
+
+    skirmish: Skirmish
+    leader: Warrior
+
+
+@dataclass(kw_only=True)
 class IncreaseMorale(Command):
     skirmish: Skirmish
     warrior: Warrior
     increased_morale: int
+    # True when the gain is one man's share of his leader's rally. The rally is one order and reads
+    # as one line in the battle log, so the gain it pays each man is not announced a second time
+    was_rallied: bool = False
 
 
 @dataclass(kw_only=True)

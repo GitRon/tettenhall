@@ -486,6 +486,64 @@ def test_skirmish_finish_round_view_refuses_an_action_the_warrior_is_not_offered
 
 
 @pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_rally_from_a_man_who_does_not_lead(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.RALLY,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_rallies_the_leaders_men(logged_in_client, current_savegame):
+    """
+    Flow test: the real queue, from the posted order to the morale of the man beside the leader. The
+    enemy is hurt badly enough to stand in a defensive stance, so nobody on the player's side is struck
+    and the rally is the only thing that moves the comrade's nerve. One line in the log for the order,
+    none for the share it paid him.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    leader = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+    comrade = WarriorFactory(faction=skirmish.attacking_faction, current_morale=10, max_morale=20)
+    skirmish.attacking_warriors.add(leader, comrade)
+    skirmish.defending_warriors.add(
+        WarriorFactory(faction=skirmish.defending_faction, current_health=4, max_health=20, experience=900)
+    )
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": leader.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.RALLY,
+            "skirmish_participant[1][warrior_id]": comrade.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 200
+    comrade.refresh_from_db()
+    assert comrade.current_morale == 12
+    assert [
+        line.message
+        for line in BattleHistory.objects.filter(skirmish=skirmish)
+        if "rall" in line.message or "gained" in line.message
+    ] == [f"{leader} rallies his men, and the line steadies."]
+
+
+@pytest.mark.django_db
 def test_skirmish_finish_round_view_brings_the_wall_down(logged_in_client, current_savegame):
     """
     Flow test: the real queue, from the posted order to the wall. Every die is pinned to 3, so the

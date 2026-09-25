@@ -181,11 +181,26 @@ def handle_warrior_is_captured(*, context: warrior.WarriorWasCaptured) -> Comman
 
 
 @message_registry.register_event(event=warrior.WarriorGainedMorale)
-def handle_warrior_gains_morale(*, context: warrior.WarriorGainedMorale) -> Command:
+def handle_warrior_gains_morale(*, context: warrior.WarriorGainedMorale) -> Command | None:
+    # A rally is one order and has its own line - see "handle_log_leader_rallied" - so the share it
+    # pays each man is not told again, man by man
+    if context.was_rallied:
+        return None
+
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} gained {int(context.gained_morale)} morale.",
     )
+
+
+@message_registry.register_event(event=warrior.LeaderRallied)
+def handle_log_leader_rallied(*, context: warrior.LeaderRallied) -> Command:
+    if context.rallied_warriors:
+        message = f"{context.leader} rallies his men, and the line steadies."
+    else:
+        message = f"{context.leader} calls to rally his men, but nobody is left beside him to hear."
+
+    return CreateBattleHistory(skirmish=context.skirmish, message=message)
 
 
 @message_registry.register_event(event=warrior.WarriorLostMorale)

@@ -12,6 +12,7 @@ from apps.warband.skirmish.handlers.events.battle_history import (
     handle_log_fortification_assaulted,
     handle_log_fortification_fell,
     handle_log_item_dropped,
+    handle_log_leader_rallied,
     handle_log_round_finished,
     handle_log_skirmish_finished,
     handle_log_warrior_death,
@@ -39,6 +40,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
 )
 from apps.warband.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.warband.skirmish.messages.events.warrior import (
+    LeaderRallied,
     WarriorDefendedAllDamage,
     WarriorGainedExperience,
     WarriorGainedLevel,
@@ -380,6 +382,41 @@ def test_handle_warrior_gains_morale_logs_the_gained_points():
     )
 
     assert result == CreateBattleHistory(skirmish=skirmish, message="Beorn gained 2 morale.")
+
+
+def test_handle_warrior_gains_morale_leaves_a_rallied_gain_to_the_rally_line():
+    skirmish = SkirmishFactory.build()
+    warrior = WarriorFactory.build(name="Beorn")
+
+    result = handle_warrior_gains_morale(
+        context=WarriorGainedMorale(skirmish=skirmish, warrior=warrior, gained_morale=2, was_rallied=True)
+    )
+
+    assert result is None
+
+
+def test_handle_log_leader_rallied_writes_one_line_for_the_order():
+    skirmish = SkirmishFactory.build()
+    leader = WarriorFactory.build(name="Offa")
+
+    result = handle_log_leader_rallied(
+        context=LeaderRallied(
+            skirmish=skirmish, leader=leader, rallied_warriors=[WarriorFactory.build(), WarriorFactory.build()]
+        )
+    )
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Offa rallies his men, and the line steadies.")
+
+
+def test_handle_log_leader_rallied_by_the_last_man_standing():
+    skirmish = SkirmishFactory.build()
+    leader = WarriorFactory.build(name="Offa")
+
+    result = handle_log_leader_rallied(context=LeaderRallied(skirmish=skirmish, leader=leader, rallied_warriors=[]))
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="Offa calls to rally his men, but nobody is left beside him to hear."
+    )
 
 
 def test_handle_warrior_lost_morale_logs_the_lost_points():

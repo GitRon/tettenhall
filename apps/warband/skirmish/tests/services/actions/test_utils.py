@@ -5,6 +5,7 @@ from apps.warband.skirmish.exceptions import UnknownSkirmishActionError
 from apps.warband.skirmish.services.actions.assault_fortification import AssaultFortificationService
 from apps.warband.skirmish.services.actions.defensive_stance import DefensiveStanceService
 from apps.warband.skirmish.services.actions.fast_attack import FastAttackService
+from apps.warband.skirmish.services.actions.rally import RallyService
 from apps.warband.skirmish.services.actions.risky_attack import RiskyAttackService
 from apps.warband.skirmish.services.actions.simple_attack import SimpleAttackService
 from apps.warband.skirmish.services.actions.utils import get_service_by_attack_action
@@ -38,6 +39,12 @@ def test_get_service_by_attack_action_assault_fortification():
     result = get_service_by_attack_action(attack_action=SkirmishActionChoices.ASSAULT_FORTIFICATION)
 
     assert result == AssaultFortificationService
+
+
+def test_get_service_by_attack_action_rally():
+    result = get_service_by_attack_action(attack_action=SkirmishActionChoices.RALLY)
+
+    assert result == RallyService
 
 
 def test_get_service_by_attack_action_unknown_action():

@@ -4,6 +4,7 @@ from apps.warband.skirmish.services.actions.assault_fortification import Assault
 from apps.warband.skirmish.services.actions.base import AttackService
 from apps.warband.skirmish.services.actions.defensive_stance import DefensiveStanceService
 from apps.warband.skirmish.services.actions.fast_attack import FastAttackService
+from apps.warband.skirmish.services.actions.rally import RallyService
 from apps.warband.skirmish.services.actions.risky_attack import RiskyAttackService
 from apps.warband.skirmish.services.actions.simple_attack import SimpleAttackService
 
@@ -19,6 +20,8 @@ def get_service_by_attack_action(*, attack_action: int) -> type[AttackService]:
         return DefensiveStanceService
     if attack_action == SkirmishActionChoices.ASSAULT_FORTIFICATION:
         return AssaultFortificationService
+    if attack_action == SkirmishActionChoices.RALLY:
+        return RallyService
     # The action arrives in a request, so this is bad input and not an unreachable state - a caller
     # without a boundary of its own has to be able to catch it and answer 400 rather than 500.
     raise UnknownSkirmishActionError(f"Attack action {attack_action} is not a skirmish action.")

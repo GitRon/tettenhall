@@ -1,4 +1,5 @@
 import typing
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
@@ -40,13 +41,23 @@ class ActionRequirement:
 ALWAYS_OFFERED = frozenset({SkirmishActionChoices.SIMPLE_ATTACK, SkirmishActionChoices.FLEE})
 
 # One action per level threshold, so a level-up adds something to the repertoire rather than only
-# to the numbers. The wall is not the man's to earn: whether it may be stormed is the fight's
-# question - see "Skirmish.can_be_assaulted_by".
+# to the numbers. The wall and the rally are not the man's to earn: whether they are open to him is
+# the fight's question - see "FIGHT_GATES".
 ACTION_REQUIREMENTS: dict[int, ActionRequirement] = {
     SkirmishActionChoices.DEFENSIVE_STANCE: ActionRequirement(minimum_level=2),
     SkirmishActionChoices.FAST_ATTACK: ActionRequirement(minimum_level=3),
     SkirmishActionChoices.RISKY_ATTACK: ActionRequirement(minimum_level=4),
     SkirmishActionChoices.ASSAULT_FORTIFICATION: ActionRequirement(minimum_level=1),
+    SkirmishActionChoices.RALLY: ActionRequirement(minimum_level=1),
+}
+
+# Actions that depend on this fight and the man's place in it rather than on his level or gear: a
+# wall has to be standing in front of him, or he has to lead the side he is on.
+FIGHT_GATES: dict[int, Callable[[Skirmish, Warrior], bool]] = {
+    SkirmishActionChoices.ASSAULT_FORTIFICATION: lambda skirmish, warrior: skirmish.can_be_assaulted_by(
+        warrior=warrior
+    ),
+    SkirmishActionChoices.RALLY: lambda skirmish, warrior: skirmish.can_be_rallied_by(warrior=warrior),
 }
 
 
@@ -64,6 +75,6 @@ def get_offered_actions(*, warrior: Warrior, skirmish: Skirmish) -> list[tuple[i
         if action in ALWAYS_OFFERED
         or (
             ACTION_REQUIREMENTS[action].is_met_by(warrior=warrior)
-            and (action != SkirmishActionChoices.ASSAULT_FORTIFICATION or skirmish.can_be_assaulted_by(warrior=warrior))
+            and (action not in FIGHT_GATES or FIGHT_GATES[action](skirmish, warrior))
         )
     ]

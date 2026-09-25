@@ -7,7 +7,7 @@ from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands import skirmish
 from apps.warband.skirmish.messages.commands.skirmish import WarriorAssaultsFortification
-from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
+from apps.warband.skirmish.messages.commands.warrior import RallyRemainingWarriors, WithdrawFromSkirmish
 from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
@@ -116,6 +116,21 @@ def _assaults(*, skirmish: Skirmish, round_number: int, participants: list[Skirm
     ]
 
 
+def _rallies(*, skirmish: Skirmish, participants: list[SkirmishParticipant]) -> list[Command]:
+    """
+    The order to steady the side, for a leader who spends this round on it.
+
+    Like the wall-stormer he stays in the pairing and still takes his opponent's blow - what he gives
+    up is his swing, which "RallyService" answers. The steadying is raised here because an action
+    service returns a roll and cannot emit.
+    """
+    return [
+        RallyRemainingWarriors(skirmish=skirmish, leader=participant.warrior)
+        for participant in participants
+        if participant.skirmish_action == SkirmishActionChoices.RALLY
+    ]
+
+
 @message_registry.register_command(command=skirmish.StartDuel)
 def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command | Event]:
     # Everyone ordered off the field leaves before anybody is matched, and the orders are returned
@@ -150,6 +165,11 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
     message_list.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_1))
     message_list.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_2))
 
+    # The rallies go out ahead of the pairings for the same reason, and behind the withdrawals, so the
+    # men who walked off this round are already gone when the leader looks round for whom to steady
+    message_list.extend(_rallies(skirmish=context.skirmish, participants=participants_1))
+    message_list.extend(_rallies(skirmish=context.skirmish, participants=participants_2))
+
     # Determine larger group
     assign_fighter_pairs_service = AssignFighterPairsService()
     skirmish_participants_1, skirmish_participants_2 = assign_fighter_pairs_service.determine_larger_group(
@@ -182,9 +202,12 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
                     attack_action_2=participant_2.skirmish_action,
                 )
             )
-        elif participant_1.skirmish_action == SkirmishActionChoices.ASSAULT_FORTIFICATION:
-            # Nobody is left to face a man at the wall, and he is not looking for anybody: his round is
-            # the assault above, and there is no man for him to strike free at
+        elif participant_1.skirmish_action in (
+            SkirmishActionChoices.ASSAULT_FORTIFICATION,
+            SkirmishActionChoices.RALLY,
+        ):
+            # Nobody is left to face a man at the wall or a leader rallying, and neither is looking for
+            # anybody: his round is the order above, and there is no man for him to strike free at
             continue
         else:
             # The smaller group has run out, so this man is one the other side cannot field anybody
