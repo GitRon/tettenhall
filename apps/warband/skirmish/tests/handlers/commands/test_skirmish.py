@@ -40,6 +40,7 @@ from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL, Palisade
 from apps.warband.warrior.models.injury_type import InjuryType
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
@@ -72,9 +73,33 @@ def test_handle_attack_faction_fields_the_targets_own_warriors():
         defending_faction=target_faction,
         attacking_warriors=[attacking_leader],
         defending_warriors=[target_leader],
-        fortification_strength=Skirmish.STAND_IN_FORTIFICATION_STRENGTH,
+        fortification_strength=0,
         month=3,
     )
+
+
+@pytest.mark.django_db
+def test_handle_attack_faction_stages_the_wall_of_the_targets_town():
+    """
+    The wall the attackers run into is the one the target's town has built, at the level a rival is
+    handed when it is created.
+    """
+    attacking_faction = FactionFactory()
+    target_faction = FactionFactory(
+        savegame=attacking_faction.savegame, town__fortification=NPC_STARTING_FORTIFICATION_LEVEL
+    )
+    WarriorFactory(faction=target_faction)
+
+    result = handle_attack_faction(
+        context=AttackFaction(
+            attacking_faction=attacking_faction,
+            target_faction=target_faction,
+            assigned_warriors=[WarriorFactory(faction=attacking_faction)],
+            month=3,
+        )
+    )
+
+    assert result.fortification_strength == Palisade.FORTIFICATION_STRENGTH
 
 
 @pytest.mark.django_db

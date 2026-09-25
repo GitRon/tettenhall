@@ -1,8 +1,6 @@
 import pytest
 
-from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
-from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -64,12 +62,6 @@ def test_quest_reward_for_pays_the_signatory_the_face_value():
         quest_contract.quest.name,
         250,
     )
-
-
-def test_fortification_defended_by_is_the_stand_in_for_every_faction():
-    result = Skirmish.fortification_defended_by(faction=FactionFactory.build())
-
-    assert result == Skirmish.STAND_IN_FORTIFICATION_STRENGTH
 
 
 @pytest.mark.django_db

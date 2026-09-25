@@ -99,15 +99,16 @@ def test_create_faction_gives_the_player_a_town_at_every_default():
     )
 
     town = result.town
-    assert (town.hall, town.weaponsmith, town.marketplace, town.sanctuary) == (0, 0, 0, 0)
+    assert (town.hall, town.weaponsmith, town.marketplace, town.sanctuary, town.fortification) == (0, 0, 0, 0, 0)
     assert town.last_constructed_building_at == 0
 
 
 @pytest.mark.django_db
-def test_create_faction_gives_a_rival_a_chosen_sanctuary():
+def test_create_faction_gives_a_rival_a_chosen_sanctuary_and_wall():
     """
-    Nothing upgrades a rival's town, so the level it is created with is the pace its wounded mend at
-    for the rest of the savegame. The other three buildings stay at 0 on purpose.
+    Nothing upgrades a rival's town, so the levels it is created with are the pace its wounded mend at
+    and the wall the player meets for the rest of the savegame. The other three buildings stay at 0 on
+    purpose.
     """
     savegame = SavegameFactory(current_month=5)
 
@@ -120,7 +121,10 @@ def test_create_faction_gives_a_rival_a_chosen_sanctuary():
     )
 
     town = result.town
-    assert town.sanctuary == Town.SanctuaryChoices.SANCTUARY_SMALL
+    assert (town.sanctuary, town.fortification) == (
+        Town.SanctuaryChoices.SANCTUARY_SMALL,
+        Town.FortificationChoices.FORTIFICATION_SMALL,
+    )
     assert (town.hall, town.weaponsmith, town.marketplace) == (0, 0, 0)
 
 

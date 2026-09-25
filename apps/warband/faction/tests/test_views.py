@@ -20,6 +20,7 @@ from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL, Palisade
 from apps.warband.town.buildings.hall import MediumHall
 from apps.warband.town.models import Town
 from apps.warband.training.tests.factories.training import TrainingFactory
@@ -1267,13 +1268,13 @@ def test_faction_attack_view_shows_the_form(logged_in_client, current_savegame, 
 def test_faction_attack_view_warns_of_the_wall_before_the_march(
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):
-    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_faction = FactionFactory(savegame=current_savegame, town__fortification=NPC_STARTING_FORTIFICATION_LEVEL)
     WarriorFactory(faction=rival_faction)
 
     response = logged_in_client.get(reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
-    assert response.context["fortification_strength"] == Skirmish.STAND_IN_FORTIFICATION_STRENGTH
+    assert response.context["fortification_strength"] == Palisade.FORTIFICATION_STRENGTH
 
 
 @pytest.mark.django_db

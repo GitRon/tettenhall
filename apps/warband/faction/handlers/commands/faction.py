@@ -34,6 +34,7 @@ from apps.warband.faction.services.faker import faker_for_locale
 from apps.warband.finance.models import Transaction
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL
 from apps.warband.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
 from apps.warband.town.models import Town
 
@@ -61,12 +62,16 @@ def _create_faction(*, name: str, town_name: str, culture_id: int, savegame: Sav
         savegame.player_faction = faction
         savegame.save()
     else:
-        # A rival is handed the one building level that decides something for it. Nothing upgrades a
+        # A rival is handed the two building levels that decide something for it. Nothing upgrades a
         # rival's town, so the sanctuary it is created with is the pace its wounded mend at for the
-        # rest of the savegame, and it wants choosing rather than inheriting the level of a town that
-        # has built nothing. The other three stay at 0: their levers price or stock something only
-        # the player reaches.
-        Town.objects.create(faction=faction, sanctuary=NPC_STARTING_SANCTUARY_LEVEL)
+        # rest of the savegame, and the fortification is the wall the player meets at its gate - both
+        # want choosing rather than inheriting the level of a town that has built nothing. The other
+        # three stay at 0: their levers price or stock something only the player reaches.
+        Town.objects.create(
+            faction=faction,
+            sanctuary=NPC_STARTING_SANCTUARY_LEVEL,
+            fortification=NPC_STARTING_FORTIFICATION_LEVEL,
+        )
 
     return faction
 
