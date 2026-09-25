@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.quest.models.quest_name import QuestName
+from apps.warband.quest.models.quest_type import QuestType
 from apps.warband.quest.services.generators.quest import QuestGenerator
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
@@ -105,6 +105,8 @@ def test_process_prices_a_quest_at_full_price_for_a_roster_past_the_band():
     rival_faction = FactionFactory(savegame=savegame)
     # Past the top of either band, so the difficulty the generator rolls cannot change the answer
     WarriorFactory.create_batch(9, faction=rival_faction)
+    # Open country only, so the quest type the generator draws cannot put a wall on the price
+    QuestType.objects.exclude(fortification_strength=0).delete()
 
     # Patched at the boundary: the loot roll
     with mock.patch("apps.warband.quest.models.quest.random.randint", return_value=300):
@@ -160,11 +162,11 @@ def test_process_names_a_quest_from_the_reference_data():
 
     quest = QuestGenerator(savegame=savegame).process()
 
-    assert quest.name in QuestName.objects.values_list("name", flat=True)
+    assert quest.name in QuestType.objects.values_list("name", flat=True)
 
 
 @pytest.mark.django_db
-def test_process_without_quest_names():
+def test_process_without_quest_types():
     """
     A half-seeded database rather than a savegame that ran out of errands, so it is named as one.
     """
@@ -172,7 +174,52 @@ def test_process_without_quest_names():
     savegame.player_faction = FactionFactory(savegame=savegame)
     savegame.save()
     WarriorFactory(faction=FactionFactory(savegame=savegame))
-    QuestName.objects.all().delete()
+    QuestType.objects.all().delete()
 
-    with pytest.raises(RuntimeError, match="no quest names to draw from"):
+    with pytest.raises(RuntimeError, match="no quest types to draw from"):
         QuestGenerator(savegame=savegame).process()
+
+
+@pytest.mark.django_db
+def test_process_copies_the_fortification_of_a_walled_quest_type():
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    WarriorFactory(faction=FactionFactory(savegame=savegame))
+    QuestType.objects.exclude(name="Pillage village").delete()
+
+    quest = QuestGenerator(savegame=savegame).process()
+
+    assert (quest.name, quest.fortification_strength) == ("Pillage village", 20)
+
+
+@pytest.mark.django_db
+def test_process_copies_the_fortification_of_an_open_quest_type():
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    WarriorFactory(faction=FactionFactory(savegame=savegame))
+    QuestType.objects.exclude(name="Raid cattle").delete()
+
+    quest = QuestGenerator(savegame=savegame).process()
+
+    assert (quest.name, quest.fortification_strength) == ("Raid cattle", 0)
+
+
+@pytest.mark.django_db
+def test_process_prices_a_walled_quest_above_the_same_job_in_open_country():
+    """
+    A settlement errand is a harder fight for the same men, so it pays for its wall - a fifth more
+    at 20 - or nobody would pick one twice.
+    """
+    savegame = SavegameFactory()
+    savegame.player_faction = FactionFactory(savegame=savegame)
+    savegame.save()
+    WarriorFactory.create_batch(9, faction=FactionFactory(savegame=savegame))
+    QuestType.objects.exclude(name="Pillage village").delete()
+
+    # Patched at the boundary: the loot roll
+    with mock.patch("apps.warband.quest.models.quest.random.randint", return_value=300):
+        quest = QuestGenerator(savegame=savegame).process()
+
+    assert quest.loot == 360

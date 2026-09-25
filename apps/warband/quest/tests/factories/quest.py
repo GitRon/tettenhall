@@ -16,3 +16,5 @@ class QuestFactory(DjangoModelFactory):
     # The top of the easy band the difficulty above carries, so a quest out of this factory is one
     # written against a target that can field a full war band
     expected_opposition = 5
+    # Open country, so the purse of a quest out of this factory is the difficulty's alone
+    fortification_strength = 0

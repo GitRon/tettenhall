@@ -3,7 +3,7 @@ from django.contrib import admin
 
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.models.quest_contract import QuestContract
-from apps.warband.quest.models.quest_name import QuestName
+from apps.warband.quest.models.quest_type import QuestType
 
 
 @admin.register(Quest)
@@ -17,6 +17,6 @@ class QuestContractAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(QuestName)
-class QuestNameAdmin(ReadOnlyAdmin):
-    list_display = ("name",)
+@admin.register(QuestType)
+class QuestTypeAdmin(ReadOnlyAdmin):
+    list_display = ("name", "fortification_strength")

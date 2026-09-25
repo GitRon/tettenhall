@@ -56,7 +56,7 @@ class InjuryRollService:
 
         if injury_type is None:
             raise RuntimeError(
-                "No injury types exist. Load the reference data with 'loaddata culture itemtype questname injurytype'."
+                "No injury types exist. Load the reference data with 'loaddata culture itemtype questtype injurytype'."
             )
 
         return injury_type
