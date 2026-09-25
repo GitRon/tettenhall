@@ -6,6 +6,7 @@ from django.urls import reverse
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
@@ -321,3 +322,79 @@ def test_finish_month_view_still_offers_a_rival_the_player_fought_last_month(log
     assert set(current_savegame.player_faction.available_quests.values_list("target_faction", flat=True)) == {
         rival_faction.id
     }
+
+
+def _pub_mercenary(*, faction, monthly_salary: int = 100) -> Warrior:
+    """
+    Generated stock standing in this faction's pub since the month began, carrying gear nobody owns.
+
+    Arrived this month, so he costs twice his wage and no surcharge - see [Warrior.hiring_price].
+    """
+    mercenary = WarriorFactory(
+        faction=None,
+        savegame=faction.savegame,
+        culture=faction.culture,
+        monthly_salary=monthly_salary,
+        weapon=ItemFactory(owner=None),
+        is_pub_stock=True,
+        pub_arrival_month=faction.savegame.current_month,
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    return mercenary
+
+
+@pytest.mark.django_db
+def test_finish_month_view_lets_a_rival_hire_the_man_in_its_pub(logged_in_client, current_savegame):
+    """
+    Flow test, because the ordering is the story: the restock clears the shelf with a row delete, and
+    the man a rival chose must be off it by then. Only a real queue run shows that the hire the rival
+    decided on lands before its pub is swept, through the same command the player's pub dispatches -
+    faction, gear, shelf and ledger all moving together.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame)
+    TransactionFactory(faction=rival_faction, amount=1000, month=1)
+    mercenary = _pub_mercenary(faction=rival_faction)
+
+    response = logged_in_client.post(reverse("warband:finish-month-view"))
+
+    assert response.status_code == 200
+    mercenary.refresh_from_db()
+    assert (
+        mercenary.faction,
+        mercenary.weapon.owner,
+        rival_faction.available_mercenaries.filter(id=mercenary.id).exists(),
+        Transaction.objects.filter(faction=rival_faction, amount=-200).exists(),
+    ) == (rival_faction, rival_faction, False, True)
+
+
+@pytest.mark.django_db
+def test_finish_month_view_restocks_every_pub_on_its_own(logged_in_client, current_savegame):
+    """
+    Flow test across a month boundary with several factions: every pub restocks off its own hall, and
+    the player's is exactly what it would have been without rivals - his own stock, his own count, no
+    man rolled for somebody else. A rival that cannot afford its man leaves him to the sweep, and the
+    rival restocks are no lines in the player's log.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    player_faction = current_savegame.player_faction
+    rich_rival = FactionFactory(savegame=current_savegame)
+    TransactionFactory(faction=rich_rival, amount=1000, month=1)
+    poor_rival = FactionFactory(savegame=current_savegame)
+    unaffordable_mercenary = _pub_mercenary(faction=poor_rival)
+    _pub_mercenary(faction=player_faction)
+
+    response = logged_in_client.post(reverse("warband:finish-month-view"))
+
+    assert response.status_code == 200
+    # No hall anywhere, so one fresh mercenary in each pub, and the poor rival's man swept with the stock
+    assert (
+        [
+            pub.available_mercenaries.filter(is_pub_stock=True, pub_arrival_month=2).count()
+            for pub in (player_faction, rich_rival, poor_rival)
+        ],
+        player_faction.available_mercenaries.count(),
+        Warrior.objects.filter(id=unaffordable_mercenary.id).exists(),
+        PlayerMonthLog.objects.filter(faction__in=(rich_rival, poor_rival)).exists(),
+    ) == ([1, 1, 1], 1, False, False)

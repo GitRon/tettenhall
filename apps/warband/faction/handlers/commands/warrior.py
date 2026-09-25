@@ -4,6 +4,7 @@ from queuebie.messages import Event
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
     ConsiderFyrdDraft,
+    ConsiderPubHire,
     DraftWarriorFromFyrd,
     PayMonthlyWarriorSalaries,
     RecruitPubMercenary,
@@ -15,6 +16,8 @@ from apps.warband.faction.messages.events.faction import (
 )
 from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
+    PubHiringConsidered,
+    PubMercenaryHireApproved,
     PubMercenarySlotOpened,
     TownMercenariesRestocked,
     WarriorRecruited,
@@ -32,16 +35,10 @@ from apps.warband.warrior.services.generators.warrior.mercenary import Mercenary
 
 @message_registry.register_command(command=RestockTownMercenaries)
 def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[Event] | Event:
-    # Only the player's town has a pub that can be visited, and the mercenaries this requests are
-    # generated without a faction of their own, so handle_add_warrior_to_pub can only ever stock
-    # that one. Restocking a rival - which NewFactionCreated does for each of them - would add its
-    # mercenaries to the player's pub on top of the player's own restock.
-    if context.faction.savegame.player_faction_id != context.faction.id:
-        return []
-
-    # Clean up previous stock, and only the stock. This is a warrior queryset, so it deletes the rows
-    # themselves - right for a mercenary nobody hired, and fatal for a man the player sent away, who
-    # waits on the same shelf and would be destroyed at the start of the next month.
+    # Every faction's town has a pub, sized by its own hall. Clean up previous stock, and only the
+    # stock. This is a warrior queryset, so it deletes the rows themselves - right for a mercenary
+    # nobody hired, and fatal for a man sent away, who waits on the same shelf and would be destroyed
+    # at the start of the next month.
     context.faction.available_mercenaries.filter(is_pub_stock=True).delete()
 
     events = []
@@ -54,7 +51,9 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
         events.append(
             PubMercenarySlotOpened(
                 savegame=context.faction.savegame,
+                # He belongs to nobody while he stands for hire, but he stands in this town
                 faction=None,
+                pub_owner=context.faction,
                 culture=Culture.objects.all().order_by("?").first(),
                 generator_class=MercenaryWarriorGenerator,
                 month=context.month,
@@ -76,10 +75,9 @@ def handle_restock_pub_mercenaries(*, context: RestockTownMercenaries) -> list[E
 
 @message_registry.register_command(command=AddWarriorToPub)
 def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Event:
-    # The pub belongs to the player, and there is only one player per savegame, so this is the right
-    # target - the warrior arrives here without a faction of its own. handle_restock_pub_mercenaries
-    # only requests these for the player faction, so nothing else ends up in this pub.
-    context.savegame.player_faction.available_mercenaries.add(context.warrior)
+    # The pub named on the message, never one read off the warrior: a generated mercenary arrives
+    # without a faction of his own, and a man who left a roster has just lost his.
+    context.pub_owner.available_mercenaries.add(context.warrior)
     # Written here rather than by whoever generated or released the man, because this is the one
     # place a warrior ever ends up on the shelf: a mercenary hired out of the pub and later sent away
     # comes back through this same command and is marked afresh, so the flag cannot go stale on him.
@@ -90,7 +88,7 @@ def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Even
     # wait again rather than inheriting the date of the first.
     Warrior.objects.set_pub_arrival(obj=context.warrior, month=context.month)
 
-    return WarriorWasAddedToPub(faction=context.faction, warrior=context.warrior, month=context.month)
+    return WarriorWasAddedToPub(pub_owner=context.pub_owner, warrior=context.warrior, month=context.month)
 
 
 @message_registry.register_command(command=ConsiderFyrdDraft)
@@ -135,6 +133,56 @@ def handle_consider_fyrd_draft(*, context: ConsiderFyrdDraft) -> list[Event] | E
         return None
 
     return FyrdDraftApproved(faction=context.faction, month=context.month)
+
+
+@message_registry.register_command(command=ConsiderPubHire)
+def handle_consider_pub_hire(*, context: ConsiderPubHire) -> list[Event]:
+    """
+    Which of the men standing in this faction's pub it takes on this month.
+
+    Shaped like [handle_consider_fyrd_draft], and for the same reasons. The player is refused -
+    hiring is a button in his pub. A rival buys greedily, because anything cleverer is faction AI:
+    cheapest first, which fits the most men into the purse, for as long as the purse still covers the
+    wage bill once over after paying for him. Unlike a draft a hire has a price, so the price comes
+    out of the purse before the wages are weighed against it.
+
+    The purse is tracked here across the men it takes rather than re-read per man. The price of a
+    hire rides on "WarriorRecruited" and reaches the ledger only after the whole batch, so a second
+    read would still see the silver the first man was bought with.
+
+    The shelf is the one that stood in the pub all month, and "PubHiringConsidered" comes last on
+    purpose: the restock hangs off it and clears the shelf with a row delete, and a man approved here
+    is only taken off it once his "RecruitPubMercenary" drains. The approvals are queued first, so
+    their commands drain first, whatever order anything else runs in.
+    """
+    considered = PubHiringConsidered(faction=context.faction, month=context.month)
+
+    if context.faction.savegame.player_faction_id == context.faction.id:
+        return [considered]
+
+    purse = Transaction.objects.current_balance(faction_id=context.faction.id)
+    # budget=0 for the same reason handle_consider_fyrd_draft gives: "total_amount" is the whole
+    # roster's wages either way
+    wage_bill = Payroll.for_faction(faction=context.faction, budget=0).total_amount
+
+    # Priced once per man, and before anything moves him - the price is partly made of his wait
+    priced_mercenary_list = sorted(
+        ((mercenary.hiring_price, mercenary) for mercenary in context.faction.available_mercenaries.all()),
+        key=lambda priced: (priced[0], priced[1].id),
+    )
+
+    events = []
+    for hiring_price, mercenary in priced_mercenary_list:
+        if purse - hiring_price < wage_bill + mercenary.monthly_salary:
+            continue
+
+        purse -= hiring_price
+        wage_bill += mercenary.monthly_salary
+        events.append(PubMercenaryHireApproved(faction=context.faction, warrior=mercenary, month=context.month))
+
+    events.append(considered)
+
+    return events
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)

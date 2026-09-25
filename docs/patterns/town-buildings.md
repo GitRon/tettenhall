@@ -98,7 +98,8 @@ holding that level's numbers:
 ## Known gaps
 
 - **NPC factions never build.** Nothing upgrades a rival's town, so every building effect is a
-  player-only power curve. Construction proper is #68. The hall income is player-only to match: it hangs
+  player-only power curve - apart from the pub, which every faction restocks off its own hall, so a rival
+  at `NoHall` gets its one mercenary a month. Construction proper is #68. The hall income is player-only to match: it hangs
   off `PlayerMonthPrepared`, the event for the things a rival has no equivalent of, and a rival earns off
   its war band instead (`apps/warband/faction/domain/rival_income.py`). A rival sits at `NoHall` for good,
   so the town would pay it a flat 50 silver however large its war band grew, against a leader's salary of

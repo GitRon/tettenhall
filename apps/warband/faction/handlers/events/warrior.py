@@ -4,12 +4,18 @@ from queuebie.messages import Command
 from apps.warband.faction.messages.commands.faction import SetNewLeaderWarrior
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
+    ConsiderPubHire,
     DraftWarriorFromFyrd,
+    RecruitPubMercenary,
     RestockTownMercenaries,
 )
 from apps.warband.faction.messages.events.faction import NewFactionCreated
-from apps.warband.faction.messages.events.warrior import FyrdDraftApproved
-from apps.warband.month.messages.events.month import PlayerMonthPrepared
+from apps.warband.faction.messages.events.warrior import (
+    FyrdDraftApproved,
+    PubHiringConsidered,
+    PubMercenaryHireApproved,
+)
+from apps.warband.month.messages.events.month import FactionMonthPrepared
 from apps.warband.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
     WarriorCreated,
@@ -29,7 +35,7 @@ def handle_add_new_warrior_to_faction_pub(*, context: WarriorCreated) -> Command
     # fill a stool: his row exists to be hired or swept away with the next one
     return AddWarriorToPub(
         savegame=context.savegame,
-        faction=context.faction,
+        pub_owner=context.pub_owner,
         warrior=context.warrior,
         is_pub_stock=True,
         month=context.month,
@@ -47,7 +53,7 @@ def handle_add_dismissed_warrior_to_pub(*, context: WarriorWasDismissed) -> Comm
     """
     return AddWarriorToPub(
         savegame=context.savegame,
-        faction=context.faction,
+        pub_owner=context.faction,
         warrior=context.warrior,
         is_pub_stock=False,
         month=context.month,
@@ -68,18 +74,19 @@ def handle_add_warrior_who_walked_out_to_pub(*, context: WarriorWalkedOutOverUnp
     the shelf is mended by the monthly sweep - a man who left wounded is still wounded when the
     silver returns.
 
-    Rivals go unpaid on the same rule, and their men must not turn up here: there is one pub in a
-    savegame and it is the player's, so every rival that missed its payroll would be stocking his
-    shelf with trained veterans. A rival's man stays where he has always been - no faction, no pub,
-    out of reach - until #157 gives him a market. The comparison reads two loaded rows and touches no
-    database, which is what keeps it legal in an event handler.
+    Rivals go unpaid on the same rule, and their men do not go on a shelf yet. Every faction has a pub
+    of its own, but whose shelf a veteran who left a rival stands on - that rival's, or a market every
+    faction can reach - is #157's decision, and parking him in his old faction's pub would take it.
+    A rival's man stays where he has always been - no faction, no pub, out of reach - until then. The
+    comparison reads two loaded rows and touches no database, which is what keeps it legal in an
+    event handler.
     """
     if context.savegame.player_faction_id != context.faction.id:
         return None
 
     return AddWarriorToPub(
         savegame=context.savegame,
-        faction=context.faction,
+        pub_owner=context.faction,
         warrior=context.warrior,
         is_pub_stock=False,
         month=context.month,
@@ -87,9 +94,26 @@ def handle_add_warrior_who_walked_out_to_pub(*, context: WarriorWalkedOutOverUnp
 
 
 @message_registry.register_event(event=NewFactionCreated)
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_restock_mercenaries_in_pub_for_new_month(*, context: PlayerMonthPrepared | NewFactionCreated) -> Command:
+def handle_restock_mercenaries_in_pub_for_new_faction(*, context: NewFactionCreated) -> Command:
     return RestockTownMercenaries(faction=context.faction, month=context.current_month)
+
+
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_consider_pub_hire_for_new_month(*, context: FactionMonthPrepared) -> Command:
+    # Every faction, because every faction's pub restocks behind this - see [handle_consider_pub_hire]
+    return ConsiderPubHire(faction=context.faction, month=context.current_month)
+
+
+@message_registry.register_event(event=PubMercenaryHireApproved)
+def handle_recruit_mercenary_for_approved_pub_hire(*, context: PubMercenaryHireApproved) -> Command:
+    # Pure mapping, because handle_consider_pub_hire already weighed the whole decision. That is what
+    # lets a rival hire through the same command the player's pub dispatches.
+    return RecruitPubMercenary(warrior=context.warrior, faction=context.faction, month=context.month)
+
+
+@message_registry.register_event(event=PubHiringConsidered)
+def handle_restock_mercenaries_in_pub_once_hiring_is_considered(*, context: PubHiringConsidered) -> Command:
+    return RestockTownMercenaries(faction=context.faction, month=context.month)
 
 
 @message_registry.register_event(event=FyrdDraftApproved)

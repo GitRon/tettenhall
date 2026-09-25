@@ -4,12 +4,28 @@ from apps.warband.faction.handlers.events.warrior import (
     handle_add_dismissed_warrior_to_pub,
     handle_add_new_warrior_to_faction_pub,
     handle_add_warrior_who_walked_out_to_pub,
+    handle_consider_pub_hire_for_new_month,
     handle_draft_warrior_for_approved_fyrd_draft,
+    handle_recruit_mercenary_for_approved_pub_hire,
+    handle_restock_mercenaries_in_pub_for_new_faction,
+    handle_restock_mercenaries_in_pub_once_hiring_is_considered,
 )
-from apps.warband.faction.messages.commands.warrior import AddWarriorToPub, DraftWarriorFromFyrd
-from apps.warband.faction.messages.events.warrior import FyrdDraftApproved
+from apps.warband.faction.messages.commands.warrior import (
+    AddWarriorToPub,
+    ConsiderPubHire,
+    DraftWarriorFromFyrd,
+    RecruitPubMercenary,
+    RestockTownMercenaries,
+)
+from apps.warband.faction.messages.events.faction import NewFactionCreated
+from apps.warband.faction.messages.events.warrior import (
+    FyrdDraftApproved,
+    PubHiringConsidered,
+    PubMercenaryHireApproved,
+)
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.month.messages.events.month import FactionMonthPrepared
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.messages.events.warrior import (
@@ -39,15 +55,17 @@ def test_handle_add_new_warrior_to_faction_pub_stocks_the_shelf():
     Stock, because the only thing raising WarriorCreated is the restock asking for a man to fill a
     stool: his row exists to be hired or swept away with the next one.
     """
-    faction = FactionFactory.build()
+    pub_owner = FactionFactory.build()
     savegame = SavegameFactory.build()
     warrior = WarriorFactory.build()
 
     result = handle_add_new_warrior_to_faction_pub(
-        context=WarriorCreated(warrior=warrior, savegame=savegame, faction=faction, month=7)
+        context=WarriorCreated(warrior=warrior, savegame=savegame, faction=None, pub_owner=pub_owner, month=7)
     )
 
-    assert result == AddWarriorToPub(savegame=savegame, faction=faction, warrior=warrior, is_pub_stock=True, month=7)
+    assert result == AddWarriorToPub(
+        savegame=savegame, pub_owner=pub_owner, warrior=warrior, is_pub_stock=True, month=7
+    )
 
 
 def test_handle_add_dismissed_warrior_to_pub_is_not_stock():
@@ -63,7 +81,7 @@ def test_handle_add_dismissed_warrior_to_pub_is_not_stock():
         context=WarriorWasDismissed(warrior=warrior, faction=faction, savegame=savegame, severance_pay=120, month=7)
     )
 
-    assert result == AddWarriorToPub(savegame=savegame, faction=faction, warrior=warrior, is_pub_stock=False, month=7)
+    assert result == AddWarriorToPub(savegame=savegame, pub_owner=faction, warrior=warrior, is_pub_stock=False, month=7)
 
 
 @pytest.mark.django_db
@@ -80,15 +98,15 @@ def test_handle_add_warrior_who_walked_out_to_pub_is_not_stock():
     )
 
     assert result == AddWarriorToPub(
-        savegame=faction.savegame, faction=faction, warrior=warrior, is_pub_stock=False, month=7
+        savegame=faction.savegame, pub_owner=faction, warrior=warrior, is_pub_stock=False, month=7
     )
 
 
 @pytest.mark.django_db
 def test_handle_add_warrior_who_walked_out_to_pub_ignores_a_rival():
     """
-    Rivals go unpaid on the same rule, and there is one pub in a savegame. Without this, every rival
-    that missed its payroll would be stocking the player's shelf with the veterans it could not pay.
+    Rivals go unpaid on the same rule, but whose shelf a rival's veteran stands on is #157's decision,
+    and parking him in his old faction's pub would take it.
     """
     player_faction = _player_faction()
     rival = FactionFactory(savegame=player_faction.savegame)
@@ -111,3 +129,46 @@ def test_handle_draft_warrior_for_approved_fyrd_draft_maps_to_command():
     result = handle_draft_warrior_for_approved_fyrd_draft(context=FyrdDraftApproved(faction=faction, month=7))
 
     assert result == DraftWarriorFromFyrd(faction=faction, month=7)
+
+
+def test_handle_restock_mercenaries_in_pub_for_new_faction_maps_to_command():
+    faction = FactionFactory.build()
+
+    result = handle_restock_mercenaries_in_pub_for_new_faction(
+        context=NewFactionCreated(faction=faction, current_month=1)
+    )
+
+    assert result == RestockTownMercenaries(faction=faction, month=1)
+
+
+def test_handle_consider_pub_hire_for_new_month_maps_to_command():
+    faction = FactionFactory.build()
+
+    result = handle_consider_pub_hire_for_new_month(context=FactionMonthPrepared(faction=faction, current_month=7))
+
+    assert result == ConsiderPubHire(faction=faction, month=7)
+
+
+def test_handle_recruit_mercenary_for_approved_pub_hire_maps_to_command():
+    """
+    Pure mapping: handle_consider_pub_hire weighed the whole decision, which is what lets a rival hire
+    through the same command the player's pub dispatches.
+    """
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build()
+
+    result = handle_recruit_mercenary_for_approved_pub_hire(
+        context=PubMercenaryHireApproved(faction=faction, warrior=warrior, month=7)
+    )
+
+    assert result == RecruitPubMercenary(warrior=warrior, faction=faction, month=7)
+
+
+def test_handle_restock_mercenaries_in_pub_once_hiring_is_considered_maps_to_command():
+    faction = FactionFactory.build()
+
+    result = handle_restock_mercenaries_in_pub_once_hiring_is_considered(
+        context=PubHiringConsidered(faction=faction, month=7)
+    )
+
+    assert result == RestockTownMercenaries(faction=faction, month=7)
