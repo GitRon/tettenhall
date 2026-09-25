@@ -17,6 +17,7 @@
 {# Nothing is lost from the document outline by it: the panel header above is a span too - see #}
 {# "common/components/box_header.html" - so this screen names its sections without heading elements #}
 {# either way. #}
+{% load skirmish_actions %}
 <div class="flex flex-col gap-y-[9px] border-b border-rule py-[14px]">
     {% if warrior.is_healthy %}
         {# "Healthy" is the name of a state and not a reading of the health below it: nothing between #}
@@ -86,7 +87,8 @@
                     <label>
                         <select class="box-border h-10 w-full border border-rule bg-ground py-0 pl-2.5 pr-5 text-base text-ink"
                                 name="skirmish_participant[{{ warrior.id }}][skirmish_action]">
-                            {% for action in warrior.get_skirmish_actions %}
+                            {% offered_actions warrior skirmish as action_list %}
+                            {% for action in action_list %}
                                 <option value="{{ action.0 }}" {% if warrior.last_used_skirmish_action == action.0 %}selected="selected"{% endif %}>{{ action.1 }}</option>
                             {% endfor %}
                         </select>
@@ -101,7 +103,7 @@
                         this side is posted, which is why the hidden warrior id goes with the player's
                         half alone: the roster names who fights.
                     {% endcomment %}
-                    <p class="m-0 text-sm leading-snug text-ink-muted">{{ warrior.decide_skirmish_action.1 }}</p>
+                    <p class="m-0 text-sm leading-snug text-ink-muted">{% decided_action warrior skirmish %}</p>
                 {% endif %}
             </form>
         {% endif %}

@@ -9,5 +9,12 @@
         <h1 class="mb-6">{{ skirmish.name }}: {{ skirmish.victorious_faction }} won</h1>
     {% else %}
         <h1 class="mb-6">{{ skirmish.name }}: Round {{ skirmish.current_round }}</h1>
+        {# The wall is read every round, since the attackers are what wears it down. It says nothing #}
+        {# once it has fallen: the battle log records the fall, and an open field is no reading. #}
+        {% if skirmish.is_fortified %}
+            <p class="mb-6 font-mono text-label uppercase tracking-label text-ink-muted">
+                <i aria-hidden="true" class="fa-solid fa-chess-rook"></i> Fortification {{ skirmish.fortification_strength }}
+            </p>
+        {% endif %}
     {% endif %}
 </div>

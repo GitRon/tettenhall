@@ -6,11 +6,14 @@ from queuebie.messages import Command, Event
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands import skirmish
+from apps.warband.skirmish.messages.commands.skirmish import WarriorAssaultsFortification
 from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
 from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
     FighterPairsMatched,
+    FortificationAssaulted,
+    FortificationFell,
     RoundFinished,
     SkirmishCreated,
     SkirmishFinished,
@@ -18,6 +21,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.warband.skirmish.services.actions.assault_fortification import AssaultFortificationService
 from apps.warband.skirmish.services.actions.utils import get_service_by_attack_action
 from apps.warband.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
 from apps.warband.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
@@ -47,6 +51,7 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
         defending_faction=context.target_faction,
         attacking_warriors=list(context.assigned_warriors),
         defending_warriors=defending_warriors,
+        fortification_strength=Skirmish.fortification_defended_by(faction=context.target_faction),
         month=context.month,
     )
 
@@ -62,6 +67,7 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
         warriors_faction_1=context.warrior_list_1,
         warriors_faction_2=context.warrior_list_2,
         month=context.month,
+        fortification_strength=context.fortification_strength,
     )
     new_skirmish = skirmish_generator.process()
 
@@ -95,6 +101,21 @@ def _withdrawing_and_remaining(
     return withdrawals, remaining
 
 
+def _assaults(*, skirmish: Skirmish, round_number: int, participants: list[SkirmishParticipant]) -> list[Command]:
+    """
+    One order per man who spends this round on the wall.
+
+    He stays in the pairing all the same: storming a gate does not take him out of reach of the man
+    in front of it, so he is still paired and still takes his opponent's blow. What he does not do is
+    swing at that opponent - his action yields no matching points, so he is never his pair's attacker.
+    """
+    return [
+        WarriorAssaultsFortification(skirmish=skirmish, round_number=round_number, warrior=participant.warrior)
+        for participant in participants
+        if participant.skirmish_action == SkirmishActionChoices.ASSAULT_FORTIFICATION
+    ]
+
+
 @message_registry.register_command(command=skirmish.StartDuel)
 def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command | Event]:
     # Everyone ordered off the field leaves before anybody is matched, and the orders are returned
@@ -121,6 +142,13 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
     # ordering luck - and it is the last point at which that is true, because "FinishRound"
     # increments and saves before any of the events below are handled
     round_number = context.skirmish.current_round
+
+    # The assaults go out ahead of the pairings, and they land ahead of every blow of the round too:
+    # each is resolved by its own command, one hop, where a blow at a man is three hops down from its
+    # pairing. So a wall that falls this round no longer shields anybody from this round's blows, and
+    # the log says the wall came down before it says who struck whom.
+    message_list.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_1))
+    message_list.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_2))
 
     # Determine larger group
     assign_fighter_pairs_service = AssignFighterPairsService()
@@ -154,6 +182,10 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
                     attack_action_2=participant_2.skirmish_action,
                 )
             )
+        elif participant_1.skirmish_action == SkirmishActionChoices.ASSAULT_FORTIFICATION:
+            # Nobody is left to face a man at the wall, and he is not looking for anybody: his round is
+            # the assault above, and there is no man for him to strike free at
+            continue
         else:
             # The smaller group has run out, so this man is one the other side cannot field anybody
             # against and he strikes unopposed. Whom he falls on is the one draw in the round that may
@@ -231,6 +263,33 @@ def handle_warrior_attacks_warrior(
         defender_action=context.defender_action,
     )
     return service.process()
+
+
+@message_registry.register_command(command=skirmish.WarriorAssaultsFortification)
+def handle_warrior_assaults_fortification(*, context: skirmish.WarriorAssaultsFortification) -> list[Event]:
+    assault = AssaultFortificationService(skirmish=context.skirmish, warrior=context.warrior).get_assault_value()
+    had_a_wall = context.skirmish.is_fortified
+
+    damage = Skirmish.objects.batter_fortification(skirmish=context.skirmish, damage=assault.value)
+
+    message_list: list[Event] = [
+        FortificationAssaulted(
+            skirmish=context.skirmish,
+            round_number=context.round_number,
+            warrior=context.warrior,
+            assault=assault,
+            damage=damage,
+            remaining_strength=context.skirmish.fortification_strength,
+        )
+    ]
+    # The fall is its own fact, and it happens once: to the swing that took the last of it, not to a
+    # second man storming the same round what the first one already brought down
+    if had_a_wall and not context.skirmish.is_fortified:
+        message_list.append(
+            FortificationFell(skirmish=context.skirmish, round_number=context.round_number, warrior=context.warrior)
+        )
+
+    return message_list
 
 
 @message_registry.register_command(command=skirmish.WinSkirmish)

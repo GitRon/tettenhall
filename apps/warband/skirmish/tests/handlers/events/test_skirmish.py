@@ -20,6 +20,7 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
             defending_faction=defending_faction,
             attacking_warriors=[attacker],
             defending_warriors=[defender],
+            fortification_strength=20,
             month=3,
         )
     )
@@ -31,6 +32,7 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
         warrior_list_1=[attacker],
         warrior_list_2=[defender],
         month=3,
+        fortification_strength=20,
         quest_contract=None,
     )
 

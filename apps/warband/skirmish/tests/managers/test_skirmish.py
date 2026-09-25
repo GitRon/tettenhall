@@ -29,3 +29,24 @@ def test_set_victor_refuses_a_fight_that_already_has_one():
     assert result is False
     skirmish.refresh_from_db()
     assert skirmish.victorious_faction == skirmish.attacking_faction
+
+
+@pytest.mark.django_db
+def test_batter_fortification_takes_the_blow_off_the_wall():
+    skirmish = SkirmishFactory(fortification_strength=20)
+
+    result = Skirmish.objects.batter_fortification(skirmish=skirmish, damage=7)
+
+    assert result == 7
+    skirmish.refresh_from_db()
+    assert skirmish.fortification_strength == 13
+
+
+@pytest.mark.django_db
+def test_batter_fortification_never_takes_more_than_is_left():
+    skirmish = SkirmishFactory(fortification_strength=5)
+
+    result = Skirmish.objects.batter_fortification(skirmish=skirmish, damage=7)
+
+    assert result == 5
+    assert skirmish.fortification_strength == 0

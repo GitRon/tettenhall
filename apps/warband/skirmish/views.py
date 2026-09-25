@@ -15,7 +15,7 @@ from apps.warband.savegame.mixins import RunningSavegameRequiredMixin, SavegameS
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
-from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError
+from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError, UnofferedSkirmishActionError
 from apps.warband.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -203,8 +203,9 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
                 participants=participants,
                 player_faction_id=current_savegame.player_faction_id if current_savegame else None,
             ).process()
-        except UnknownSkirmishParticipantError:
-            # A warrior id naming someone who is not fighting this skirmish
+        except UnknownSkirmishParticipantError, UnofferedSkirmishActionError:
+            # A warrior id naming someone who is not fighting this skirmish, or an action he is not
+            # offered in it
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # A side with nobody in it is not a fight, and the pairing handler picks a random opponent from
@@ -370,6 +371,8 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         # Which roster to show is the skirmish's business, but whether the human commands it is the
         # savegame's: being the attacker no longer means being the player
         context["is_player"] = faction.pk == current_savegame.player_faction_id
+        # The cards ask the fight which actions a man has, since the wall is one of them
+        context["skirmish"] = skirmish
         context["skirmish_is_decided"] = skirmish.victorious_faction_id is not None
 
         return context

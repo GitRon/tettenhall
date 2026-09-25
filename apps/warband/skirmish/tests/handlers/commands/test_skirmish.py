@@ -14,6 +14,7 @@ from apps.warband.skirmish.handlers.commands.skirmish import (
     handle_determine_attacker_and_defender,
     handle_faction_wins_skirmish,
     handle_finish_round,
+    handle_warrior_assaults_fortification,
 )
 from apps.warband.skirmish.messages.commands.skirmish import (
     AttackFaction,
@@ -21,6 +22,7 @@ from apps.warband.skirmish.messages.commands.skirmish import (
     DetermineAttacker,
     FinishRound,
     StartDuel,
+    WarriorAssaultsFortification,
     WinSkirmish,
 )
 from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
@@ -28,6 +30,8 @@ from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FactionWasAttacked,
     FighterPairsMatched,
+    FortificationAssaulted,
+    FortificationFell,
     RoundFinished,
     SkirmishFinished,
 )
@@ -68,6 +72,7 @@ def test_handle_attack_faction_fields_the_targets_own_warriors():
         defending_faction=target_faction,
         attacking_warriors=[attacking_leader],
         defending_warriors=[target_leader],
+        fortification_strength=Skirmish.STAND_IN_FORTIFICATION_STRENGTH,
         month=3,
     )
 
@@ -944,3 +949,154 @@ def test_handle_determine_attacker_and_defender_costs_a_lame_man_the_initiative(
 
     assert result.attacker == enemy_warrior
     assert result.defender == lame_warrior
+
+
+@pytest.mark.django_db
+def test_handle_create_skirmish_raises_the_wall_it_is_given():
+    attacking_faction = FactionFactory()
+    defending_faction = FactionFactory(savegame=attacking_faction.savegame)
+
+    result = handle_create_skirmish(
+        context=CreateSkirmish(
+            name="Attack on Wessex",
+            faction_1=attacking_faction,
+            faction_2=defending_faction,
+            warrior_list_1=[WarriorFactory(faction=attacking_faction)],
+            warrior_list_2=[WarriorFactory(faction=defending_faction)],
+            month=3,
+            fortification_strength=20,
+        )
+    )
+
+    assert result.skirmish.fortification_strength == 20
+
+
+@pytest.mark.django_db
+def test_handle_assign_fighter_pairs_sends_a_man_at_the_wall_and_keeps_him_in_the_pairing():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    storming_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.ASSAULT_FORTIFICATION,
+    )
+    enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+
+    # Boundary randomness: both groups get shuffled, so pin the resulting order
+    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"):
+        result = handle_assign_fighter_pairs(
+            context=StartDuel(
+                skirmish=skirmish,
+                skirmish_participants_1=[storming_participant],
+                skirmish_participants_2=[enemy_participant],
+            )
+        )
+
+    assert result == [
+        WarriorAssaultsFortification(
+            skirmish=skirmish, round_number=skirmish.current_round, warrior=storming_participant.warrior
+        ),
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=storming_participant.warrior,
+            warrior_2=enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.ASSAULT_FORTIFICATION,
+            attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+        ),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_assign_fighter_pairs_lets_an_unopposed_man_at_the_wall_strike_nobody():
+    """
+    A man nobody is left to face would strike free at a random defender - unless his round is the wall,
+    in which case the wall is all of it.
+    """
+    skirmish = SkirmishFactory(fortification_strength=20)
+    fighting_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+    storming_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.attacking_faction),
+        skirmish_action=SkirmishActionChoices.ASSAULT_FORTIFICATION,
+    )
+    enemy_participant = SkirmishParticipant(
+        warrior=WarriorFactory(faction=skirmish.defending_faction),
+        skirmish_action=SkirmishActionChoices.SIMPLE_ATTACK,
+    )
+
+    with mock.patch("apps.warband.skirmish.handlers.commands.skirmish.random.shuffle"):
+        result = handle_assign_fighter_pairs(
+            context=StartDuel(
+                skirmish=skirmish,
+                skirmish_participants_1=[fighting_participant, storming_participant],
+                skirmish_participants_2=[enemy_participant],
+            )
+        )
+
+    assert result == [
+        WarriorAssaultsFortification(
+            skirmish=skirmish, round_number=skirmish.current_round, warrior=storming_participant.warrior
+        ),
+        FighterPairsMatched(
+            skirmish=skirmish,
+            round_number=skirmish.current_round,
+            warrior_1=fighting_participant.warrior,
+            warrior_2=enemy_participant.warrior,
+            attack_action_1=SkirmishActionChoices.SIMPLE_ATTACK,
+            attack_action_2=SkirmishActionChoices.SIMPLE_ATTACK,
+        ),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_warrior_assaults_fortification_wears_the_wall_down():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=10, strength_baseline=10)
+
+    # Patched at the boundary: the die behind the swing
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        result = handle_warrior_assaults_fortification(
+            context=WarriorAssaultsFortification(skirmish=skirmish, round_number=1, warrior=warrior)
+        )
+
+    assert [(type(message), message.damage, message.remaining_strength) for message in result] == [
+        (FortificationAssaulted, 3, 17)
+    ]
+    skirmish.refresh_from_db()
+    assert skirmish.fortification_strength == 17
+
+
+@pytest.mark.django_db
+def test_handle_warrior_assaults_fortification_brings_the_wall_down():
+    skirmish = SkirmishFactory(fortification_strength=2)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=10, strength_baseline=10)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        result = handle_warrior_assaults_fortification(
+            context=WarriorAssaultsFortification(skirmish=skirmish, round_number=1, warrior=warrior)
+        )
+
+    assert result[1:] == [FortificationFell(skirmish=skirmish, round_number=1, warrior=warrior)]
+    assert result[0].remaining_strength == 0
+
+
+@pytest.mark.django_db
+def test_handle_warrior_assaults_fortification_on_a_wall_already_down():
+    """
+    Two men storming in the same round: the second finds rubble, and the wall does not fall twice.
+    """
+    skirmish = SkirmishFactory(fortification_strength=0)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=10, strength_baseline=10)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        result = handle_warrior_assaults_fortification(
+            context=WarriorAssaultsFortification(skirmish=skirmish, round_number=1, warrior=warrior)
+        )
+
+    assert [(type(message), message.damage, message.remaining_strength) for message in result] == [
+        (FortificationAssaulted, 0, 0)
+    ]

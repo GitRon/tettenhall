@@ -12,6 +12,9 @@ class SkirmishActionChoices(models.IntegerChoices):
     # answered at the start of the round, before anybody is paired, so it never reaches
     # "get_service_by_attack_action" and has no service of its own
     FLEE = 5, "Flee"
+    # A swing at the defenders' wall rather than at a man. Offered only to the side that marched, and
+    # only while there is a wall standing - see "Skirmish.can_be_assaulted_by"
+    ASSAULT_FORTIFICATION = 6, "Assault the fortification"
 
 
 # Type hints

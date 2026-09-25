@@ -8,6 +8,15 @@ class UnknownSkirmishParticipantError(Exception):
     """
 
 
+class UnofferedSkirmishActionError(Exception):
+    """
+    Raised when a posted action is a real one, but not one this warrior is offered in this fight - a
+    defender told to storm his own wall, or an attacker told to storm one that has fallen.
+
+    Bad input like the two beside it, and answered with the same 400.
+    """
+
+
 class UnknownSkirmishActionError(Exception):
     """
     Raised when a number that is not a skirmish action is asked for its attack service.

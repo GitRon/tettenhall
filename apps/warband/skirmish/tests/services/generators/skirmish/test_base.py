@@ -24,6 +24,22 @@ def test_process_sets_up_both_sides():
 
 
 @pytest.mark.django_db
+def test_process_raises_the_wall_it_is_given():
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+
+    result = BaseSkirmishGenerator(
+        name="Attack on Wessex",
+        warriors_faction_1=[WarriorFactory(faction=attacking_faction)],
+        warriors_faction_2=[WarriorFactory(faction=enemy_faction)],
+        month=7,
+        fortification_strength=20,
+    ).process()
+
+    assert result.fortification_strength == 20
+
+
+@pytest.mark.django_db
 def test_process_without_an_attacking_side():
     enemy_faction = FactionFactory()
 

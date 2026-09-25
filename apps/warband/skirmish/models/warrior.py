@@ -1,3 +1,4 @@
+import typing
 from functools import cached_property
 from math import isqrt
 
@@ -14,6 +15,9 @@ from apps.warband.skirmish.services.skirmish.skirmish_action_decision import Ski
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
 from apps.warband.warrior.services.nickname import resolve_nickname
+
+if typing.TYPE_CHECKING:
+    from apps.warband.skirmish.models.skirmish import Skirmish
 
 
 # TODO (#95): move to warrior app?
@@ -418,13 +422,19 @@ class Warrior(models.Model):
         """
         return self.level**2 * self.XP_LEVEL_BASE
 
-    def get_skirmish_actions(self) -> list[tuple]:
+    def get_skirmish_actions(self, *, skirmish: Skirmish) -> list[tuple]:
         # TODO (#52): show only the ones the warrior has depending on his level
         # TODO (#52): use XP to add more skirmish actions -> every level gets a fixed action to keep it simple
-        return SkirmishActionChoices.choices
+        # The wall is the one action that depends on the fight rather than the man: there has to be one
+        # standing, and it has to be in front of him rather than at his back
+        return [
+            choice
+            for choice in SkirmishActionChoices.choices
+            if choice[0] != SkirmishActionChoices.ASSAULT_FORTIFICATION or skirmish.can_be_assaulted_by(warrior=self)
+        ]
 
-    def decide_skirmish_action(self) -> [int, str]:
-        service = SkirmishActionDecisionService(warrior=self)
+    def decide_skirmish_action(self, *, skirmish: Skirmish) -> [int, str]:
+        service = SkirmishActionDecisionService(warrior=self, skirmish=skirmish)
         return service.process()
 
     def get_weapon_or_fallback(self) -> Item:

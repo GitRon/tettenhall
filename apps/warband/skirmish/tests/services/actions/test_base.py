@@ -98,3 +98,37 @@ def test_get_attack_value_is_weakened_by_a_lasting_injury():
         result = service.get_attack_value()
 
     assert result.value == 2
+
+
+@pytest.mark.django_db
+def test_get_defense_value_behind_the_wall():
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(warrior)
+    service = AttackService(skirmish=skirmish, warrior=warrior)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
+        result = service.get_defense_value()
+
+    assert result == ActionRoll(
+        roll=DiceRoll(notation=DiceNotation(dice_string="1d2"), result=2),
+        item_type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+        value=3,
+    )
+
+
+@pytest.mark.django_db
+def test_get_defense_value_of_an_attacker_has_no_wall_at_his_back():
+    """
+    The defender of an exchange is only whoever lost the initiative roll. An attacker is that in half
+    his exchanges, and the wall still belongs to the other side.
+    """
+    skirmish = SkirmishFactory(fortification_strength=20)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(warrior)
+    service = AttackService(skirmish=skirmish, warrior=warrior)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
+        result = service.get_defense_value()
+
+    assert result.value == 2

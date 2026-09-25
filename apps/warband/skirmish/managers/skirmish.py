@@ -22,6 +22,20 @@ class SkirmishManager(manager.Manager):
         skirmish.current_round += 1
         return skirmish.save()
 
+    def batter_fortification(self, *, skirmish, damage: int) -> int:
+        """
+        Takes a blow off the wall and answers how much of it the wall actually lost.
+
+        Never below zero: a wall that has fallen has nothing more to give, so a second man storming it
+        in the same round takes nothing off it. Written to the instance the round is carrying as well as
+        to the row, because every blow still to be struck this round reads the wall off that instance.
+        """
+        skirmish.refresh_from_db(fields=("fortification_strength",))
+        lost = min(damage, skirmish.fortification_strength)
+        skirmish.fortification_strength -= lost
+        skirmish.save(update_fields=("fortification_strength",))
+        return lost
+
     def set_victor(self, *, skirmish, victorious_faction) -> bool:
         """
         Writes the victor onto a skirmish that has none, and answers whether it was this call.

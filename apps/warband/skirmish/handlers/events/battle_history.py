@@ -75,6 +75,29 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
     return CreateBattleHistory(skirmish=context.skirmish, message=message)
 
 
+@message_registry.register_event(event=skirmish.FortificationAssaulted)
+def handle_log_fortification_assaulted(*, context: skirmish.FortificationAssaulted) -> Command:
+    # A second man storming a wall the first already brought down this round swung at rubble, and
+    # saying he took nothing off a wall of nothing would read as a swing that failed
+    if context.damage == 0 and context.remaining_strength == 0:
+        message = f"{context.warrior} storms the fortification, but it has already fallen."
+    else:
+        message = (
+            f"{context.warrior} storms the fortification at {context.assault.value}, and "
+            f"{context.remaining_strength} of it still stands."
+        )
+
+    return CreateBattleHistory(skirmish=context.skirmish, message=message)
+
+
+@message_registry.register_event(event=skirmish.FortificationFell)
+def handle_log_fortification_fell(*, context: skirmish.FortificationFell) -> Command:
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=f"The fortification falls to {context.warrior}, and the defenders fight on without it.",
+    )
+
+
 @message_registry.register_event(event=warrior.WarriorWasIncapacitated)
 def handle_log_warrior_incapacitation(*, context: warrior.WarriorWasIncapacitated) -> Command:
     return CreateBattleHistory(

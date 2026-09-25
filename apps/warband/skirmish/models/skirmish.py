@@ -17,6 +17,10 @@ class Skirmish(models.Model):
     # may march against the same rival has nowhere else to look: a quest contract knows its month,
     # but an attack carries no contract
     month = models.PositiveSmallIntegerField("Month", default=1)
+    # How much wall is still standing between the attackers and the defending faction. Set when the
+    # fight is staged and worn down by every assault on it; nothing carries over, so the next march on
+    # the same faction meets it whole. Zero is an open field.
+    fortification_strength = models.PositiveSmallIntegerField("Fortification strength", default=0)
 
     # Named for the role each side plays in the fight. Which of them the player holds - if either - is
     # a question for the savegame, so nothing here has to be true of every skirmish ever created
@@ -51,6 +55,11 @@ class Skirmish(models.Model):
         related_name="defending_skirmishes",
     )
 
+    # What a faction's wall is worth when it is marched on. The same for every faction until a town
+    # building levers it (#270), which is why it is read through "fortification_defended_by" rather
+    # than directly
+    STAND_IN_FORTIFICATION_STRENGTH = 20
+
     objects = SkirmishManager()
 
     class Meta:
@@ -75,6 +84,34 @@ class Skirmish(models.Model):
         counting what a finished fight cost.
         """
         return self.current_round - 1
+
+    @classmethod
+    def fortification_defended_by(cls, *, faction: Faction) -> int:
+        """
+        The wall a march on this faction runs into.
+
+        One answer for the handler that stages the attack and the page that shows it before the march,
+        so the number a player is warned about is the number he meets. The faction goes unread while
+        every faction's wall is the stand-in; it is the argument the town building's level is read off.
+        """
+        return cls.STAND_IN_FORTIFICATION_STRENGTH
+
+    @property
+    def is_fortified(self) -> bool:
+        return self.fortification_strength > 0
+
+    def can_be_assaulted_by(self, *, warrior: Warrior) -> bool:
+        """
+        Whether this man may spend his round on the wall.
+
+        Only the side that marched has a wall in front of it, and only while any of it stands. Asked of
+        the roster rather than of "warrior.faction", which is how every other side question in this
+        package is answered: the roster is who fights, whatever the man's faction column says.
+        """
+        return self.is_fortified and self.attacking_warriors.filter(pk=warrior.pk).exists()
+
+    def is_defended_by(self, *, warrior: Warrior) -> bool:
+        return self.defending_warriors.filter(pk=warrior.pk).exists()
 
     def quest_reward_for(self, *, victorious_faction: Faction) -> tuple[str | None, int]:
         """
