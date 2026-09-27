@@ -1,0 +1,46 @@
+{# The year ahead, so the player can plan past the month he is in: take a town before Winterfylleth, #}
+{# save silver for the winter. Every line is read off the month classes the rules take their numbers #}
+{# from. #}
+{#  #}
+{# A phone gets the month in hand and the next one spelled out, and the whole year one tap away in a #}
+{# collapsed list; a desk gets the twelve months as one strip, each opening its effects on a click. #}
+{# The two halves hide each other, and both carry the whole year - neither width loses a month the #}
+{# other can see. #}
+<section class="mb-5 border border-rule p-[15px]">
+    <h3>The year</h3>
+
+    <div class="flex flex-col gap-y-4 md:hidden">
+        {% include 'calendar/components/calendar_month_effects.html' with heading="Now" calendar_month=year_at_a_glance.current.calendar_month %}
+        {% include 'calendar/components/calendar_month_effects.html' with heading="Next" calendar_month=year_at_a_glance.next.calendar_month %}
+
+        <details>
+            <summary class="cursor-pointer font-mono text-label uppercase tracking-label text-ink">The whole year</summary>
+            <ol class="mt-3 flex list-none flex-col gap-y-3 p-0">
+                {% for calendar_month in year_at_a_glance.months %}
+                    <li>
+                        {% include 'calendar/components/calendar_month_effects.html' with heading=None %}
+                    </li>
+                {% endfor %}
+            </ol>
+        </details>
+    </div>
+
+    {# A strip that wraps rather than a fixed twelve columns: the longest names do not fit a twelfth #}
+    {# of a narrow desk, and a wrapped strip still reads left to right through the year. #}
+    <ol class="m-0 hidden list-none flex-wrap gap-2 p-0 md:flex">
+        {% for calendar_month in year_at_a_glance.months %}
+            <li>
+                <button class="cursor-pointer border bg-transparent px-2.5 py-1.5 font-mono text-label uppercase tracking-label hover:bg-raised {% if calendar_month == year_at_a_glance.current.calendar_month %}border-ink text-ink{% else %}border-rule text-ink-muted{% endif %}"
+                        popovertarget="calendar-month-{{ forloop.counter }}"
+                        type="button">
+                    {{ calendar_month.NAME }}{% if calendar_month == year_at_a_glance.current.calendar_month %}<span class="sr-only"> (now)</span>{% endif %}
+                </button>
+                <div class="m-auto max-w-sm border border-rule bg-ground p-[15px] text-ink-muted"
+                     id="calendar-month-{{ forloop.counter }}"
+                     popover>
+                    {% include 'calendar/components/calendar_month_effects.html' with heading=None %}
+                </div>
+            </li>
+        {% endfor %}
+    </ol>
+</section>

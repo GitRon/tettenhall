@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from apps.warband.account.forms.login import LoginForm
+from apps.warband.calendar.projections.year import YearAtAGlance
 from apps.warband.incident.services.pending_incident import get_open_questions
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.month.projections.month_standing import MonthStanding
@@ -101,6 +102,10 @@ class DashboardView(generic.TemplateView):
                 )
                 month_standing = MonthStanding.for_savegame(savegame=current_savegame)
                 context["month_standing"] = month_standing
+                # What the months ahead will do, so the player can plan past the one he is in
+                context["year_at_a_glance"] = YearAtAGlance.for_month(
+                    month=current_savegame.current_month, start_year=current_savegame.start_year
+                )
 
                 if month_standing:
                     # The key the purse brief reads. It is taken off the projection rather than

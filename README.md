@@ -32,6 +32,8 @@ inferring the conventions from nearby code.
   gear makes a man weaker, which readers see it, and what deliberately does not
 - [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a
   balance number belongs
+- [The calendar](docs/patterns/calendar.md) — Bede's twelve months and two seasons, where a month's
+  numbers live, and how month, season and year are derived
 - [Month incidents](docs/patterns/month-incidents.md) — the pool the world draws from each month, its
   weights, its levers and its register
 - [Navigation](docs/patterns/navigation.md) — the four sections, what each owns, and how a page says

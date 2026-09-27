@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from apps.warband.account.tests.factories.user import UserFactory
+from apps.warband.calendar.projections.year import YearAtAGlance
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
@@ -281,3 +282,13 @@ def test_dashboard_view_projects_nothing_without_a_player_faction(logged_in_clie
 
     assert response.status_code == 200
     assert response.context["month_standing"] is None
+
+
+@pytest.mark.django_db
+def test_dashboard_view_lays_out_the_year_ahead(logged_in_client, current_savegame):
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["year_at_a_glance"] == YearAtAGlance.for_month(
+        month=current_savegame.current_month, start_year=current_savegame.start_year
+    )

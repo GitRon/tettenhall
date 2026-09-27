@@ -1,0 +1,14 @@
+{# What marching costs this month, on both pages that send men against a rival - a direct attack and #}
+{# an accepted quest are the same march. Said in summer too: a free month is worth knowing before a #}
+{# march as much as a dear one. Read off the month the form prices the march with. #}
+<tr>
+    <td>March this month</td>
+    <td class="font-mono">
+        {% if calendar_month.MARCH_COST_PER_WARRIOR %}
+            {{ calendar_month.MARCH_COST_PER_WARRIOR }} silver per man
+        {% else %}
+            Free
+        {% endif %}
+        · {{ calendar_month.NAME }} · {{ calendar_month.SEASON }}
+    </td>
+</tr>

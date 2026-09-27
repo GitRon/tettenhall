@@ -19,7 +19,7 @@
         {# still open to me this month" has one answer once the game is over, and nine live panels #}
         {# saying otherwise under a banner saying it is finished is the version of that problem this #}
         {# page must not add. #}
-        <h1>Month {{ current_savegame.current_month }}</h1>
+        <h1>{{ current_savegame.current_date.label }}</h1>
         <div class="mb-5 border border-rule bg-raised py-[15px] pl-[15px] pr-[29px] text-ink-muted">
             <h3>{{ savegame_outcome }}</h3>
             <p>
@@ -38,6 +38,7 @@
         {# The state of the month and the control that ends it, above everything the month contains. #}
         {# It carries the page's heading, so there is no second one over it. #}
         {% include 'account/components/month_band.html' %}
+        {% include 'calendar/components/year_at_a_glance.html' %}
 
         {# Two tracks on a desk, one column on a phone, split by what the player does with each half: #}
         {# the left is decided, the right is read. The order is the same at both widths - the #}
