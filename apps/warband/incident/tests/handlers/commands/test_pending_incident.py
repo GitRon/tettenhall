@@ -36,6 +36,28 @@ def test_handle_answer_pending_incident_lands_the_answer_and_closes_the_question
 
 
 @pytest.mark.django_db
+def test_handle_answer_pending_incident_answers_nothing_the_second_time():
+    """
+    Two overlapping posts both find the question open - a double click, or two options clicked in
+    quick succession. Only the first answer lands.
+    """
+    pending_incident = PendingIncidentFactory(month=4)
+    handle_answer_pending_incident(
+        context=AnswerPendingIncident(
+            pending_incident=pending_incident, option=BurntVillageRefugees.get_option(key="take_in"), month=4
+        )
+    )
+
+    result = handle_answer_pending_incident(
+        context=AnswerPendingIncident(
+            pending_incident=pending_incident, option=BurntVillageRefugees.get_default_option(), month=4
+        )
+    )
+
+    assert result is None
+
+
+@pytest.mark.django_db
 def test_handle_answer_open_pending_incidents_lands_the_default_in_the_new_month():
     """
     Dated to the month now beginning, so the line survives the log clearing and the player reads what

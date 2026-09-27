@@ -10,5 +10,17 @@ class PendingIncidentQuerySet(models.QuerySet):
     def asked_before(self, *, month: int):
         return self.filter(month__lt=month)
 
+    def close(self, *, pending_incident) -> bool:
+        """
+        Take a question off the table, and say whether it was still on it.
+
+        A filtered delete rather than "pending_incident.delete()", which raises nothing when the row is
+        already gone: two overlapping answers both find the question open, and the one whose delete
+        comes back empty is the one that must not land a second time.
+        """
+        deleted_rows, _ = self.filter(id=pending_incident.id).delete()
+
+        return deleted_rows > 0
+
 
 PendingIncidentManager = models.Manager.from_queryset(PendingIncidentQuerySet)

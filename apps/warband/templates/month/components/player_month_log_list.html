@@ -15,11 +15,14 @@
             {% if question.pending_incident.body %}
                 <p class="mt-2.5 mb-0">{{ question.pending_incident.body }}</p>
             {% endif %}
-            <div class="mt-[15px] flex flex-wrap gap-2.5">
+            {# A fieldset, so that disabling it on the first click disables every option of the question: #}
+            {# a second option clicked while the first answer is on its way would otherwise be sent too #}
+            <fieldset class="mt-[15px] flex flex-wrap gap-2.5">
                 {% for option in question.options %}
                     <button class="box-border cursor-pointer border border-rule bg-transparent px-[15px] py-[9px] text-sm uppercase leading-normal text-ink hover:bg-raised"
                             hx-post="{% url 'warband:pending-incident-answer-view' question.pending_incident.id %}"
                             hx-vals='{"option": "{{ option.key }}"}'
+                            hx-disabled-elt="closest fieldset"
                             type="button">
                         {{ option.label }}
                         {# A true minus sign, as the purse sets its figures, rather than the hyphen "+d" gives #}
@@ -31,7 +34,7 @@
                         {% endif %}
                     </button>
                 {% endfor %}
-            </div>
+            </fieldset>
         </div>
     {% endfor %}
 

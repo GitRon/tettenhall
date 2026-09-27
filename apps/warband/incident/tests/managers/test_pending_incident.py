@@ -23,3 +23,15 @@ def test_asked_before_excludes_the_month_itself():
     result = PendingIncident.objects.asked_before(month=5)
 
     assert list(result) == [earlier_incident]
+
+
+@pytest.mark.django_db
+def test_close_says_whether_the_question_was_still_open():
+    pending_incident = PendingIncidentFactory()
+
+    first_result = PendingIncident.objects.close(pending_incident=pending_incident)
+    second_result = PendingIncident.objects.close(pending_incident=pending_incident)
+
+    assert first_result is True
+    assert second_result is False
+    assert PendingIncident.objects.exists() is False
