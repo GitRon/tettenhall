@@ -1,5 +1,5 @@
 {% load handout l10n %}
-<div class="mb-5 box-border bg-ground text-ink-muted border border-rule">
+<div class="box-border bg-ground text-ink-muted border border-rule">
     <div class="border-b border-rule px-[30px] py-[15px]">
         {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
         {# classes rather than handing either to a wrapper. #}
@@ -11,6 +11,9 @@
                 <h3 class="mb-0 text-2xl leading-snug text-ink">
                     {{ item.display_name }}
                 </h3>
+                {% if item|improves_nobody:roster %}
+                    {% include 'item/components/improves_nobody_tag.html' %}
+                {% endif %}
                 <p class="mt-0 text-sm leading-snug text-ink-muted">
                     {% include 'item/components/item_stats_meta.html' with item=item show_price=is_player_faction %}
                 </p>

@@ -133,5 +133,12 @@
         group.querySelectorAll('[data-log-tab-button]').forEach((element) => {
             element.setAttribute('aria-selected', String(element === button));
         });
+        // Once the fight is decided the log sits folded behind "Blow by blow", under the report. A tab
+        // that only switched the account inside a closed fold would be a control with no visible effect,
+        // so choosing one opens it.
+        const fold = group.querySelector('details');
+        if (fold) {
+            fold.open = true;
+        }
     });
 })();

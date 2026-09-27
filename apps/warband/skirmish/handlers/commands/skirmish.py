@@ -22,6 +22,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
     SkirmishCreated,
     SkirmishFinished,
 )
+from apps.warband.skirmish.messages.events.warrior import BlowWasNotStruck
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
@@ -289,6 +290,25 @@ def handle_warrior_attacks_warrior(
     *,
     context: skirmish.WarriorAttacksWarrior,
 ) -> list[Event] | Event:
+    # Every pairing of the round is drawn before its first blow lands, and a man striking unopposed
+    # picks his target out of the whole other side - so he can fall on somebody his own pair has
+    # already put down, or be put down himself before his turn comes. Read from the database rather
+    # than off the message, whose instances are the ones the round was drawn with. A blow at a man
+    # who is no longer standing is not thrown: struck again, the dead would die a second time in the
+    # log, and a lighter blow would even wake him as merely unconscious.
+    standing_ids = set(
+        Warrior.objects.filter(id__in=(context.attacker.id, context.defender.id))
+        .filter_healthy()
+        .values_list("id", flat=True)
+    )
+    if len(standing_ids) < 2:
+        return BlowWasNotStruck(
+            skirmish=context.skirmish,
+            attacker=context.attacker,
+            defender=context.defender,
+            attacker_is_down=context.attacker.id not in standing_ids,
+        )
+
     service = SkirmishDamageService(
         skirmish=context.skirmish,
         round_number=context.round_number,

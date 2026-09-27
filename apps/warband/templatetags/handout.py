@@ -2,6 +2,7 @@ from django import template
 from django.template.defaultfilters import floatformat
 
 from apps.warband.item.models.item import Item
+from apps.warband.item.services.handout import improves_anybody
 from apps.warband.skirmish.models.warrior import Warrior
 
 register = template.Library()
@@ -33,3 +34,17 @@ def gear_gain(warrior: Warrior, item: Item) -> str:  # noqa: PBR001 - a filter i
         return "±0"
 
     return f"+{floatformat(gain)}" if gain > 0 else floatformat(gain)
+
+
+@register.filter
+def improves_nobody(item: Item, roster: list[Warrior]) -> bool:  # noqa: PBR001 - a filter is called positionally
+    """
+    Whether every man on the roster already holds something at least as good in this item's slot.
+
+    What lets a card say "skip me" before the player has read its dice: on a long shelf or a full
+    stores the question is rarely whether an item is good, only whether it is good for anybody here.
+
+    False for an empty roster rather than True: with nobody to compare against there is nothing the
+    item has been found worse than, and a rival's stores page hands in no roster at all.
+    """
+    return bool(roster) and not improves_anybody(item=item, roster=roster)

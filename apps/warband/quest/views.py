@@ -72,4 +72,7 @@ class QuestAcceptView(
         return response
 
     def get_success_url(self):
-        return reverse("warband:town-board-view")
+        # Home rather than back to the board: the quest just taken is no longer pinned there, so the
+        # board is at best what is left over and at worst an empty page. The fight the contract set up
+        # is what waits on the player now, and the dashboard is where the month's open business is.
+        return reverse("warband:dashboard-view")

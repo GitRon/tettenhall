@@ -8,14 +8,17 @@
     {# read by the view rather than off the faction here, because the list has a rule in it: a man #}
     {# standing in a fight nobody has settled is not a man gear may be handed to. See #}
     {# "HandoutRosterContextMixin". #}
+    {# One column on the phone; on a desk a card is mostly empty width, so they sit side by side #}
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
     {% for item in faction.get_all_unoccupied_items %}
         {% include 'item/components/item_sell_card.html' with item=item roster=handout_roster %}
     {% empty %}
         {# The same list serves a rival's page, where the property being described is not the player's #}
         {% if is_player_faction %}
-            <p class="text-sm leading-snug text-ink-muted">Every item you own is being worn.</p>
+            <p class="col-span-full text-sm leading-snug text-ink-muted">Every item you own is being worn.</p>
         {% else %}
-            <p class="text-sm leading-snug text-ink-muted">Every item they own is being worn.</p>
+            <p class="col-span-full text-sm leading-snug text-ink-muted">Every item they own is being worn.</p>
         {% endif %}
     {% endfor %}
+    </div>
 </div>

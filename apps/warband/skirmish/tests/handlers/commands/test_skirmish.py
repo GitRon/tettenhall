@@ -15,6 +15,7 @@ from apps.warband.skirmish.handlers.commands.skirmish import (
     handle_faction_wins_skirmish,
     handle_finish_round,
     handle_warrior_assaults_fortification,
+    handle_warrior_attacks_warrior,
 )
 from apps.warband.skirmish.messages.commands.skirmish import (
     AttackFaction,
@@ -23,6 +24,7 @@ from apps.warband.skirmish.messages.commands.skirmish import (
     FinishRound,
     StartDuel,
     WarriorAssaultsFortification,
+    WarriorAttacksWarrior,
     WinSkirmish,
 )
 from apps.warband.skirmish.messages.commands.warrior import (
@@ -39,6 +41,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
     RoundFinished,
     SkirmishFinished,
 )
+from apps.warband.skirmish.messages.events.warrior import BlowWasNotStruck
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
@@ -669,6 +672,81 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
         defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
         initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
+
+
+def _warrior_attacks_warrior(*, skirmish, attacker, defender) -> WarriorAttacksWarrior:
+    return WarriorAttacksWarrior(
+        skirmish=skirmish,
+        round_number=1,
+        attacker=attacker,
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defender=defender,
+        defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_warrior_attacks_warrior_strikes_between_two_men_standing():
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+
+    result = handle_warrior_attacks_warrior(
+        context=_warrior_attacks_warrior(skirmish=skirmish, attacker=attacker, defender=defender)
+    )
+
+    assert len(result) == 1
+
+
+@pytest.mark.django_db
+def test_handle_warrior_attacks_warrior_throws_nothing_at_a_man_already_down():
+    """
+    The defender on the message is the instance the round was drawn with, and still reads healthy: he
+    went down to an earlier blow of the same round. Struck again, he would die twice in the log.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    Warrior.objects.filter(id=defender.id).update(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    result = handle_warrior_attacks_warrior(
+        context=_warrior_attacks_warrior(skirmish=skirmish, attacker=attacker, defender=defender)
+    )
+
+    assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=False)
+
+
+@pytest.mark.django_db
+def test_handle_warrior_attacks_warrior_throws_nothing_at_a_man_already_unconscious():
+    """
+    Struck again, a man lying senseless would be carried past the death threshold by a blow meant for
+    somebody standing, or go down unconscious a second time in the log.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    Warrior.objects.filter(id=defender.id).update(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = handle_warrior_attacks_warrior(
+        context=_warrior_attacks_warrior(skirmish=skirmish, attacker=attacker, defender=defender)
+    )
+
+    assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=False)
+
+
+@pytest.mark.django_db
+def test_handle_warrior_attacks_warrior_throws_nothing_from_a_man_already_down():
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    Warrior.objects.filter(id=attacker.id).update(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = handle_warrior_attacks_warrior(
+        context=_warrior_attacks_warrior(skirmish=skirmish, attacker=attacker, defender=defender)
+    )
+
+    assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=True)
 
 
 @pytest.mark.django_db
