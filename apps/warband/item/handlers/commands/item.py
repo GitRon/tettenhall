@@ -1,6 +1,7 @@
 from queuebie import message_registry
 from queuebie.messages import Event
 
+from apps.warband.finance.models import Transaction
 from apps.warband.item.messages.commands import item
 from apps.warband.item.messages.events.item import (
     ItemBought,
@@ -61,6 +62,11 @@ def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event | None:
 
 @message_registry.register_command(command=item.BuyItem)
 def handle_buy_item(*, context: item.BuyItem) -> list[Event] | Event | None:
+    # Only while the purse still covers it: two different purchases can each pass the view's check on
+    # the same balance, and only the one that gets the write lock first may spend it
+    if Transaction.objects.current_balance(faction_id=context.buying_faction.id) < context.price:
+        return None
+
     # Only while it is still unowned stock: the second of two overlapping requests finds it bought
     # already, and would otherwise be charged for it again
     if not Item.objects.hand_over(item=context.item, previous_owner=None, new_owner=context.buying_faction):

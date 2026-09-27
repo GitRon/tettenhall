@@ -19,7 +19,8 @@ def get_building_upgrade_refusal(*, town: Town, building_type: str, current_save
 
     This is the first of two enforcement points for the month, and the one the player hears from.
     "handle_upgrade_town_building" re-checks it as a conditional UPDATE, which is what keeps two
-    overlapping requests from both being charged - see docs/patterns/town-buildings.md.
+    overlapping requests from both being charged - see docs/patterns/town-buildings.md. It re-reads
+    the purse as well, so a building and a purchase elsewhere cannot both spend the same silver.
     """
     building_class = BUILDINGS[building_type]
     current_building_level = getattr(town, building_type)

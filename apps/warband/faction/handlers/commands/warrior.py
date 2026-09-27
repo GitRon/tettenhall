@@ -231,6 +231,11 @@ def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event]
     # the price of a man who had never been parked, which is the loophole the surcharge closes.
     hiring_price = context.warrior.hiring_price
 
+    # Only while the purse still covers him: a hire and a purchase elsewhere can each pass their view's
+    # check on the same balance, and only the one that gets the write lock first may spend it
+    if Transaction.objects.current_balance(faction_id=context.faction.id) < hiring_price:
+        return None
+
     # Off the shelf first, and only if he is still on it: the second of two overlapping hires finds
     # him gone, and would otherwise be charged for a man already in the war band
     if not Faction.objects.remove_mercenary_from_pub(faction=context.faction, warrior=context.warrior):

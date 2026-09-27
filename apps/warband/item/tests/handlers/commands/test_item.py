@@ -1,6 +1,7 @@
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.item.handlers.commands.item import (
     handle_buy_item,
     handle_change_ownership,
@@ -92,6 +93,7 @@ def test_handle_sell_item_pays_nothing_for_an_item_already_sold():
 @pytest.mark.django_db
 def test_handle_buy_item_hands_the_shop_stock_to_the_buyer():
     faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=200)
     item = ItemFactory(savegame=faction.savegame, owner=None, price=200)
 
     result = handle_buy_item(context=BuyItem(buying_faction=faction, item=item, price=200, month=3))
@@ -102,12 +104,31 @@ def test_handle_buy_item_hands_the_shop_stock_to_the_buyer():
 
 
 @pytest.mark.django_db
+def test_handle_buy_item_leaves_it_on_the_shelf_when_the_purse_no_longer_covers_it():
+    """
+    Two different purchases, both passed by their views on the same 200 silver. The other one has been
+    paid for, so this one has to find a purse that no longer reaches the price.
+    """
+    faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=200)
+    TransactionFactory(faction=faction, amount=-150)
+    item = ItemFactory(savegame=faction.savegame, owner=None, price=200)
+
+    result = handle_buy_item(context=BuyItem(buying_faction=faction, item=item, price=200, month=3))
+
+    assert result is None
+    item.refresh_from_db()
+    assert item.owner is None
+
+
+@pytest.mark.django_db
 def test_handle_buy_item_charges_nothing_for_an_item_already_bought():
     """
     The second of two overlapping requests: both found the item on the shelf, and the first has
     already bought it. Charging again would take the price twice for one item.
     """
     faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=200)
     item = ItemFactory(savegame=faction.savegame, owner=None, price=200)
     stale_item = Item.objects.get(pk=item.pk)
     handle_buy_item(context=BuyItem(buying_faction=faction, item=item, price=200, month=3))

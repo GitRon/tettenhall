@@ -117,6 +117,24 @@ shape. A read of the instance the
 view passed in is not a re-check - it is the same stale read. The button carries `hx-disabled-elt` as
 well, which stops most second clicks before they are sent, and none that arrive from a second tab.
 
+**The purse is the one guard with no row to write against, so it is re-read under a serialised
+transaction.** The balance is a sum over the ledger (`Transaction.objects.current_balance`), and two
+*different* purchases - an item and a mercenary, each affordable on its own and not together - touch
+different rows, so neither conditional write above stops the pair. Every handler that spends silver the
+player chose to spend therefore re-reads the balance before its first write and returns `None` when it no
+longer covers the price: `handle_buy_item`, `handle_recruit_pub_mercenary`, `handle_upgrade_town_building`
+and `handle_throw_feast`. A read is only a re-check while nobody can write between it and the charge, and
+that is what `"transaction_mode": "IMMEDIATE"` on the database gives: `handle_message()` drains a whole
+chain - the ledger row included - inside one `atomic()`, and `BEGIN IMMEDIATE` takes SQLite's write lock
+when that block opens, so an overlapping request waits and then reads the ledger the first one wrote. The
+deferred default lets both read first and fails the loser at commit with `database is locked`. The row
+guards need none of this - a conditional write is atomic under any mode - but they keep their own shape,
+because the purse check says nothing about whether the item is still on the shelf.
+
+Inside one drain the re-read cannot see a charge still queued behind it: the ledger row rides on an event
+and lands after the batch. That only matters where one drain spends twice, which is the month run's rival
+hires, and `handle_consider_pub_hire` keeps those inside the purse with a running total of its own.
+
 What stays in the view is input validation the game has no opinion about — the `BUILDINGS` whitelist on
 the building type from the URL, which answers `Http404` rather than a message.
 
