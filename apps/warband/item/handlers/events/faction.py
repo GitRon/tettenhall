@@ -8,9 +8,11 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.fyrd import FyrdItemGenerator
 
 # Added to the fyrd's modifier roll for the gear a new war band finds in its stores. The fyrd's condition
-# thresholds stay on its own mean, so this pushes most of it down to Rusty or Cheap: worse on average than
-# what a levy brings from the fields, and well below a mercenary's kit or the leader's.
-STARTING_GEAR_QUALITY_BONUS = -2
+# thresholds stay on its own mean, so this tips it towards Rusty or Cheap: worse on average than what a
+# levy brings from the fields, and well below a mercenary's kit or the leader's. One point and no more,
+# because the rustic dice are small - two points leave around two items in five able to do next to
+# nothing, and a piece nobody would carry is a sale, not a decision.
+STARTING_GEAR_QUALITY_BONUS = -1
 
 
 @message_registry.register_event(event=RequestNewItemForTownShop)
