@@ -29,5 +29,29 @@ class ItemManager(manager.Manager):
 
         return item
 
+    def hand_over(self, *, item, previous_owner, new_owner) -> bool:
+        """
+        Move the item to "new_owner" only if "previous_owner" still holds it, and say whether it moved.
+
+        One conditional UPDATE rather than update_ownership's read-modify-save, because buying and
+        selling are paid for: two overlapping requests both find the item where the page showed it,
+        and only the one that actually moves it may be charged or paid. "previous_owner" None is the
+        shop's own stock, which is generated unowned.
+        """
+        from apps.warband.skirmish.models.warrior import Warrior
+
+        moved_rows = self.filter(pk=item.pk, owner=previous_owner).update(owner=new_owner)
+        if not moved_rows:
+            return False
+
+        # The UPDATE went around the instance, so bring it in line for the handlers downstream
+        item.owner = new_owner
+
+        # Remove from current usages
+        Warrior.objects.filter(weapon=item).update(weapon=None)
+        Warrior.objects.filter(armor=item).update(armor=None)
+
+        return True
+
 
 ItemManager = ItemManager.from_queryset(ItemQuerySet)
