@@ -31,10 +31,9 @@ class _BlockingRule:
     """
     One reason a man is out, paired with the query that finds everyone it catches.
 
-    The pairing is the design. The rules used to be performed by a queryset and explained by three
-    sentences on a form, and two of the four were explained nowhere at all - so a screen could say
-    one thing while the database did another. Here the sentence and the query are one row, and a
-    fifth rule is one more row rather than an edit in two places.
+    The pairing is the design. A rule performed by a queryset and explained somewhere else is a
+    screen that can say one thing while the database does another. Here the sentence and the query are
+    one row, and a new rule is one more row rather than an edit in two places.
     """
 
     select: Callable[[WarriorQuerySet], WarriorQuerySet]
@@ -44,20 +43,14 @@ class _BlockingRule:
 
 REASON_SWORN_TO_A_QUEST = "Already sworn to a quest this month"
 REASON_COMMITTED_TO_A_FIGHT = "Committed to a fight this month"
-REASON_STANDING_IN_AN_OPEN_FIGHT = "Still standing in a fight nobody has settled"
 
 
 def _blocking_rules(*, month: int) -> tuple[_BlockingRule, ...]:
     """
-    The four rules, in the order a man is measured against them. First match wins.
+    The three rules, in the order a man is measured against them. First match wins.
 
     Unfit comes first because a man flat on his back is in no state to be spoken for, and because his
-    condition is the only one of the four the player can already see elsewhere.
-
-    The two fight rules are ordered the opposite way from how they read. "This month" is the specific
-    case, so putting it first leaves the open-fight sentence to fire only for a fight from some
-    *other* month - which is the one exclusion in this game a player cannot guess at, and the reason
-    the issue behind this was written.
+    condition is the only one of the three the player can already see elsewhere.
     """
     return (
         _BlockingRule(
@@ -72,10 +65,6 @@ def _blocking_rules(*, month: int) -> tuple[_BlockingRule, ...]:
         _BlockingRule(
             select=lambda roster: roster.filter_committed_to_a_fight(month=month),
             reason=lambda warrior: REASON_COMMITTED_TO_A_FIGHT,
-        ),
-        _BlockingRule(
-            select=lambda roster: roster.filter_standing_in_an_open_fight(),
-            reason=lambda warrior: REASON_STANDING_IN_AN_OPEN_FIGHT,
         ),
     )
 
@@ -145,7 +134,7 @@ def assess_roster(*, faction_id: int, month: int, excluded_ids: Iterable[int] = 
     band it is measured against. And a verdict is a prompt: a wound heals, a fight can be settled, a
     month passes. "Dead" is nothing the player can act on.
 
-    One query per rule rather than one per man. Four queries answer a roster of forty as cheaply as a
+    One query per rule rather than one per man. Three queries answer a roster of forty as cheaply as a
     roster of four, where asking each man in turn puts a query on every row of the page.
 
     "excluded_ids" is for a man who is not a choice at all, rather than one who is unavailable - the

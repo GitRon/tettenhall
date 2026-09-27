@@ -147,10 +147,6 @@ def test_filter_committed_to_a_fight_leaves_out_a_man_whose_fight_was_another_mo
 
 @pytest.mark.django_db
 def test_filter_standing_in_an_open_fight_returns_a_man_from_a_fight_nobody_settled():
-    """
-    The one exclusion a player cannot guess at, and the reason it has its own sentence: an unresolved
-    skirmish carries over, so last month's fight is still holding this month's roster.
-    """
     warrior = WarriorFactory()
     skirmish = SkirmishFactory(attacking_faction=warrior.faction, month=1, victorious_faction=None)
     skirmish.attacking_warriors.add(warrior)
@@ -239,21 +235,6 @@ def test_exclude_currently_busy_drops_a_warrior_who_fought_this_month():
     """
     warrior = WarriorFactory()
     skirmish = SkirmishFactory(attacking_faction=warrior.faction, victorious_faction=warrior.faction, month=3)
-    skirmish.attacking_warriors.add(warrior)
-
-    result = Warrior.objects.exclude_currently_busy(month=3)
-
-    assert list(result) == []
-
-
-@pytest.mark.django_db
-def test_exclude_currently_busy_drops_a_warrior_still_in_an_undecided_fight():
-    """
-    An unresolved fight carries over, and the month check alone would hand the same warrior out
-    again next month while he is still standing on that roster.
-    """
-    warrior = WarriorFactory()
-    skirmish = SkirmishFactory(attacking_faction=warrior.faction, month=2)
     skirmish.attacking_warriors.add(warrior)
 
     result = Warrior.objects.exclude_currently_busy(month=3)

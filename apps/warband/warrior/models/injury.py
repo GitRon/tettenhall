@@ -25,8 +25,8 @@ class Injury(models.Model):
 
     warrior = models.ForeignKey(Warrior, verbose_name="Warrior", on_delete=models.CASCADE)
     type = models.ForeignKey(InjuryType, verbose_name="Injury type", on_delete=models.CASCADE)
-    # The month he took it, so a card can say when without the fight having to survive to be asked.
-    # A skirmish carries over into the next month, and a savegame's fights are deleted with it.
+    # The month he took it, so a card can say when without the fight having to survive to be asked:
+    # a savegame's fights are deleted with it.
     inflicted_in_month = models.PositiveSmallIntegerField("Inflicted in month")
 
     objects = InjuryManager()

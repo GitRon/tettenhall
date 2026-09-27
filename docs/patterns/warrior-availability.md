@@ -3,7 +3,7 @@
 **A screen never drops a living man it will not let the player use. It draws him, greys him, and says
 why — and the sentence it says comes out of the same place the exclusion does.**
 
-Four rules decide whether a man can be sent anywhere this month. A picker that quietly filters on them
+Three rules decide whether a man can be sent anywhere this month. A picker that quietly filters on them
 shows the player a shorter war band than the one he owns and leaves him to work out the difference,
 which is the most expensive way for a rule to be communicated: it reads as a broken page.
 
@@ -52,20 +52,18 @@ Held as one ordered tuple of `(query, reason)` pairs in `_blocking_rules()`. Fir
 | `filter_unfit()` | his condition — "Unconscious", "Fleeing" |
 | `filter_sworn_to_a_quest(month=…)` | "Already sworn to a quest this month" |
 | `filter_committed_to_a_fight(month=…)` | "Committed to a fight this month" |
-| `filter_standing_in_an_open_fight()` | "Still standing in a fight nobody has settled" |
 
 The queries are `WarriorQuerySet` methods, and `exclude_currently_busy()` is the exclusion of the last
-three rather than a second spelling of them. **That is the whole point of the shape.** The sentence and
-the query that performs it are one row, so a fifth rule is one more row instead of an edit in two
+two rather than a second spelling of them. **That is the whole point of the shape.** The sentence and
+the query that performs it are one row, so a new rule is one more row instead of an edit in two
 places — and a page cannot start saying one thing while the database does another.
 
-Two orderings are deliberate:
+**Unfit is asked first**, because a man flat on his back is in no state to be spoken for.
 
-- **Unfit is asked first**, because a man flat on his back is in no state to be spoken for.
-- **"This month" is asked before "nobody settled it"**, which leaves the open-fight sentence to fire
-  only for a fight from some *other* month. That is the one exclusion in this game a player cannot
-  guess at — an unresolved skirmish carries over and goes on holding everyone on either roster — so it
-  is worth a sentence of its own rather than being absorbed by the commoner case.
+A fight nobody has settled is not a rule of its own. The month cannot end while a skirmish is open
+(`FinishMonthView`), so every unsettled fight is this month's and "Committed to a fight this month"
+already holds everyone on either roster. `filter_standing_in_an_open_fight()` still exists, for the
+narrower question of whether a man's gear is locked to him — see `apps/warband/warrior/services/equipping.py`.
 
 ## What a picker has to do about it
 

@@ -23,7 +23,9 @@ class FinishMonthView(RunningSavegameRequiredMixin, generic.View):
         if current_savegame is None:
             return HttpResponse(status=HTTPStatus.NOT_FOUND)
 
-        # If we have unresolved skirmishes, we can't finish the round
+        # Every fight is settled in the month it was started. This refusal is what makes that true -
+        # nothing the month advance raises starts a fight - so the availability rules and the training
+        # run may take every open skirmish to be this month's
         if Skirmish.objects.unresolved().for_savegame(savegame_id=current_savegame.id).exists():
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
             response["HX-Trigger"] = json.dumps(
