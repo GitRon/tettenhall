@@ -1,6 +1,6 @@
 # Registry tests
 
-Seven tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
+Eight tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
 [message bus](message-bus.md) at once. Unit tests can only ever verify a single handler; whether the
 handlers form a chain is decided at runtime by the registry, so neither the IDE nor a type checker notices
 when a message is emitted that nobody consumes.
@@ -36,6 +36,11 @@ for savegame scoping and skipped by the finished-savegame guard.
    It **follows module-local calls**, and that is not a refinement. `handle_assign_fighter_pairs`
    instantiates no command itself — `_withdrawing_and_remaining` beside it does — so a walk of the
    decorated function alone would miss the one handler the rule is bent for.
+8. **No message field is annotated `QuerySet`.** Messages carry lists, see
+   [the message bus](message-bus.md#the-two-message-types). A queryset on a message is a query waiting for
+   whoever touches it first, and when that is an event handler strict mode fails the flow — or does not,
+   because a command handler upstream happened to evaluate it. It walks every `messages/` module rather
+   than the registry, so a message nobody handles yet is checked too.
 
 Two allowlists, both deliberately maintained, both wanting the reason written next to the entry.
 

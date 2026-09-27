@@ -580,6 +580,7 @@ def test_handle_inflict_injury_writes_the_row_and_names_it():
         warrior=warrior,
         faction=warrior.faction,
         injury="Ruined shoulder (-2 Strength)",
+        injury_name="Ruined shoulder",
         month=7,
     )
     assert Injury.objects.for_warrior(warrior_id=warrior.id).count() == 1

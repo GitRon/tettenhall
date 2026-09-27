@@ -5,7 +5,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage, WarriorTookDamage
 from apps.warband.skirmish.models import Skirmish, Warrior
-from apps.warband.skirmish.services.actions.utils import get_service_by_attack_action
+from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
 
 
 class SkirmishDamageService:
@@ -32,6 +32,8 @@ class SkirmishDamageService:
     defender: Warrior
     defender_action: SkirmishActionTypeHint
 
+    initiative: int
+
     def __init__(
         self,
         *,
@@ -41,6 +43,7 @@ class SkirmishDamageService:
         attacker_action: SkirmishActionTypeHint,
         defender: Warrior,
         defender_action: SkirmishActionTypeHint,
+        initiative: int,
     ):
         self.skirmish = skirmish
         self.round_number = round_number
@@ -51,6 +54,8 @@ class SkirmishDamageService:
 
         self.defender = defender
         self.defender_action = defender_action
+
+        self.initiative = initiative
 
     def _deal_damage(self, *, attack: ActionRoll, defense: ActionRoll) -> int:
         damage = max(attack.value - defense.value, round(attack.value * self.MINIMUM_DAMAGE_SHARE))
@@ -67,6 +72,7 @@ class SkirmishDamageService:
                     defender_action=self.defender_action,
                     defense=defense,
                     damage=damage,
+                    initiative=self.initiative,
                 )
             )
         else:
@@ -84,16 +90,17 @@ class SkirmishDamageService:
                     # through was stopped by the armour, which is a different thing entirely and used
                     # to be recorded as the same zero
                     outcome=attack.outcome if attack.outcome is not None else BlowOutcomeChoices.OUTCOME_ABSORBED,
+                    initiative=self.initiative,
                 )
             )
 
         return damage
 
     def process(self) -> list[Event]:
-        attack_service = get_service_by_attack_action(attack_action=self.attack_action)(
+        attack_service = get_service_by_skirmish_action(skirmish_action=self.attack_action)(
             skirmish=self.skirmish, warrior=self.attacker
         )
-        defend_service = get_service_by_attack_action(attack_action=self.defender_action)(
+        defend_service = get_service_by_skirmish_action(skirmish_action=self.defender_action)(
             skirmish=self.skirmish, warrior=self.defender
         )
 

@@ -15,6 +15,15 @@ class SkirmishQuerySet(models.QuerySet):
     def has_started(self):
         return self.filter(current_round__gt=1)
 
+    def under_way_besides(self, *, skirmish):
+        """
+        The fights that stop this one from being fought: started, undecided, and not this one.
+
+        A player finishes one fight before the next. Both the fight page and the round post ask this,
+        so the page and the post cannot disagree about which fight is his to fight.
+        """
+        return self.has_started().unresolved().exclude(id=skirmish.id)
+
 
 class SkirmishManager(manager.Manager):
     def increment_round(self, *, skirmish):

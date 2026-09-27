@@ -143,6 +143,7 @@ def test_handle_warrior_was_injured_records_what_the_fight_cost_him():
             warrior=warrior,
             faction=faction,
             injury="Cracked ribs (-1 Strength)",
+            injury_name="Cracked ribs",
             month=7,
         )
     )

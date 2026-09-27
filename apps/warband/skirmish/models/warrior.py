@@ -262,7 +262,7 @@ class Warrior(models.Model):
         The stored column is left alone on purpose: level-up growth and training both write it, so a
         crippled man who levels would silently un-cripple, and nothing could tell an injury from a bad
         roll at generation. Everything that turns strength into an outcome reads this instead -
-        "AttackService._scaled_by_strength", [expected_damage] and the action decision. The epithet
+        "SkirmishActionService._scaled_by_strength", [expected_damage] and the action decision. The epithet
         deliberately does not: see [attribute_draws].
         """
         # Imported here rather than at module scope: the injury row points back at this model, so the
@@ -457,7 +457,7 @@ class Warrior(models.Model):
         What this man averages with what he is holding, on a plain attack.
 
         His, not his weapon's: a blow is scaled by "strength / strength_baseline" before it lands
-        (`AttackService._scaled_by_strength`), so the same axe is worth a quarter more in the hands of
+        (`SkirmishActionService._scaled_by_strength`), so the same axe is worth a quarter more in the hands of
         a man a quarter above his kind's mean. The plain attack is the baseline the two other swings
         are quoted against - the fast one halves this and the risky one doubles it, half the time.
 
@@ -475,7 +475,7 @@ class Warrior(models.Model):
         What his armour turns aside on average - the item's own figure and nothing else.
 
         No strength in it, and so no baseline either: defence is the armour's own roll
-        (`AttackService.get_defense_value`), which is why this and [expected_damage] are not the same
+        (`SkirmishActionService.get_defense_value`), which is why this and [expected_damage] are not the same
         calculation with a different item in it.
         """
         return self.get_armor_or_fallback().expectancy_value

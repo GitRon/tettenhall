@@ -9,6 +9,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.commands.skirmish import WinSkirmish
@@ -60,6 +61,7 @@ def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
                 value=8,
             ),
             outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 

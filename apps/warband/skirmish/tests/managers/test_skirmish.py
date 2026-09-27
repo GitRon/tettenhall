@@ -50,3 +50,36 @@ def test_batter_fortification_never_takes_more_than_is_left():
 
     assert result == 5
     assert skirmish.fortification_strength == 0
+
+
+@pytest.mark.django_db
+def test_under_way_besides_finds_another_started_fight():
+    skirmish = SkirmishFactory()
+    other_skirmish = SkirmishFactory(current_round=2)
+
+    assert list(Skirmish.objects.under_way_besides(skirmish=skirmish)) == [other_skirmish]
+
+
+@pytest.mark.django_db
+def test_under_way_besides_leaves_out_the_fight_itself():
+    skirmish = SkirmishFactory(current_round=2)
+
+    assert not Skirmish.objects.under_way_besides(skirmish=skirmish).exists()
+
+
+@pytest.mark.django_db
+def test_under_way_besides_leaves_out_a_fight_not_yet_started():
+    skirmish = SkirmishFactory()
+    SkirmishFactory(current_round=1)
+
+    assert not Skirmish.objects.under_way_besides(skirmish=skirmish).exists()
+
+
+@pytest.mark.django_db
+def test_under_way_besides_leaves_out_a_decided_fight():
+    skirmish = SkirmishFactory()
+    decided_skirmish = SkirmishFactory(current_round=2)
+    decided_skirmish.victorious_faction = decided_skirmish.attacking_faction
+    decided_skirmish.save()
+
+    assert not Skirmish.objects.under_way_besides(skirmish=skirmish).exists()

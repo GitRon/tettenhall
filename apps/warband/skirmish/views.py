@@ -117,9 +117,7 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
 
         if (
             self.model.objects.for_savegame(savegame_id=self.current_savegame.id)
-            .has_started()
-            .unresolved()
-            .exclude(id=self.object.id)
+            .under_way_besides(skirmish=self.object)
             .exists()
         ):
             messages.add_message(request, messages.WARNING, "Please finish your other skirmishes first.")
@@ -178,11 +176,21 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         if self.object.victorious_faction_id:
             return HttpResponse(status=HTTPStatus.CONFLICT)
 
+        # The fight page sends the player back while another fight of his is under way, and a round
+        # posted straight here has to meet the same refusal, or two fights could be fought in turns.
+        # A conflict for the same reason as above: the post is well formed, the other fight is in the way
+        if (
+            Skirmish.objects.for_savegame(savegame_id=current_savegame.id)
+            .under_way_besides(skirmish=self.object)
+            .exists()
+        ):
+            return HttpResponse(status=HTTPStatus.CONFLICT)
+
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
 
         # Every value here arrives in the request body, so anything missing, non-numeric or naming an
         # action that does not exist is bad input rather than a server error. Without the membership
-        # test an unknown number reached "get_service_by_attack_action" and raised there, answering 500
+        # test an unknown number reached "get_service_by_skirmish_action" and raised there, answering 500
         # to input this very block means to refuse. The posted "faction_id" is deliberately not read:
         # which side a warrior fights on comes from the skirmish's own rosters, since a posted one can
         # lie and "warrior.faction" changes the moment a captive is recruited.

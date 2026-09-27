@@ -15,7 +15,7 @@ Two properties on `Warrior`, and every reader points at one of them:
 
 | Property | Read by |
 |---|---|
-| `effective_strength` | `AttackService._scaled_by_strength`, `Warrior.expected_damage`, `SkirmishActionDecisionService` |
+| `effective_strength` | `SkirmishActionService._scaled_by_strength`, `Warrior.expected_damage`, `SkirmishActionDecisionService` |
 | `effective_dexterity` | both `get_pair_matching_points` call sites in `handle_determine_attacker_and_defender`, `SkirmishActionDecisionService` |
 
 **Per attribute, not per call site.** A seam built only into the attack service would miss dexterity

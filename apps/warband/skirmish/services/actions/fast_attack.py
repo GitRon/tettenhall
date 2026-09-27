@@ -4,16 +4,16 @@ from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.commands.skirmish import (
     WarriorAttacksWarrior,
 )
-from apps.warband.skirmish.services.actions.base import AttackService
+from apps.warband.skirmish.services.actions.base import SkirmishActionService
 
 
-class FastAttackService(AttackService):
+class FastAttackService(SkirmishActionService):
     command: Command = WarriorAttacksWarrior
 
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
         # Fast attack will double the base points for being the attacker instead of the defender
-        return AttackService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 2
+        return SkirmishActionService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 2
 
     def get_attack_value(self) -> ActionRoll:
         # Attack will cause only 50% damage since it's a fast one

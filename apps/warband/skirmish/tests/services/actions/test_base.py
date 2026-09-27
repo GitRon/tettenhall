@@ -5,7 +5,7 @@ import pytest
 from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.skirmish.domain.action_roll import ActionRoll
-from apps.warband.skirmish.services.actions.base import AttackService
+from apps.warband.skirmish.services.actions.base import SkirmishActionService
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.models.injury_type import InjuryType
@@ -14,7 +14,7 @@ from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
 def test_get_pair_matching_points_is_the_dexterity():
-    result = AttackService.get_pair_matching_points(warrior_dexterity=7)
+    result = SkirmishActionService.get_pair_matching_points(warrior_dexterity=7)
 
     assert result == 7
 
@@ -27,7 +27,7 @@ def test_get_attack_value_for_a_warrior_at_his_own_baseline():
     """
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=5, strength_baseline=5)
-    service = AttackService(skirmish=skirmish, warrior=warrior)
+    service = SkirmishActionService(skirmish=skirmish, warrior=warrior)
 
     # Patched at the boundary: the die behind "roll_attack()"
     with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
@@ -49,7 +49,7 @@ def test_get_attack_value_for_a_warrior_below_his_baseline():
     """
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=5, strength_baseline=10)
-    service = AttackService(skirmish=skirmish, warrior=warrior)
+    service = SkirmishActionService(skirmish=skirmish, warrior=warrior)
 
     with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
         result = service.get_attack_value()
@@ -68,7 +68,7 @@ def test_get_defense_value_announces_the_roll():
     """
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction, strength=5, strength_baseline=10)
-    service = AttackService(skirmish=skirmish, warrior=warrior)
+    service = SkirmishActionService(skirmish=skirmish, warrior=warrior)
 
     with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
         result = service.get_defense_value()
@@ -92,7 +92,7 @@ def test_get_attack_value_is_weakened_by_a_lasting_injury():
         warrior=warrior,
         type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=5),
     )
-    service = AttackService(skirmish=skirmish, warrior=warrior)
+    service = SkirmishActionService(skirmish=skirmish, warrior=warrior)
 
     with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
         result = service.get_attack_value()
@@ -105,7 +105,7 @@ def test_get_defense_value_behind_the_wall():
     skirmish = SkirmishFactory(fortification_strength=20)
     warrior = WarriorFactory(faction=skirmish.defending_faction)
     skirmish.defending_warriors.add(warrior)
-    service = AttackService(skirmish=skirmish, warrior=warrior)
+    service = SkirmishActionService(skirmish=skirmish, warrior=warrior)
 
     with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
         result = service.get_defense_value()
@@ -126,7 +126,7 @@ def test_get_defense_value_of_an_attacker_has_no_wall_at_his_back():
     skirmish = SkirmishFactory(fortification_strength=20)
     warrior = WarriorFactory(faction=skirmish.attacking_faction)
     skirmish.attacking_warriors.add(warrior)
-    service = AttackService(skirmish=skirmish, warrior=warrior)
+    service = SkirmishActionService(skirmish=skirmish, warrior=warrior)
 
     with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
         result = service.get_defense_value()

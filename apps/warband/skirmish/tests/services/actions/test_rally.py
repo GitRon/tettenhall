@@ -4,7 +4,7 @@ import pytest
 
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
-from apps.warband.skirmish.services.actions.base import AttackService
+from apps.warband.skirmish.services.actions.base import SkirmishActionService
 from apps.warband.skirmish.services.actions.rally import RallyService
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -37,6 +37,6 @@ def test_get_defense_value_is_his_plain_guard():
     with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
         result = RallyService(skirmish=skirmish, warrior=warrior).get_defense_value()
     with mock.patch("apps.common.domain.dice.random.randint", return_value=2):
-        plain = AttackService(skirmish=skirmish, warrior=warrior).get_defense_value()
+        plain = SkirmishActionService(skirmish=skirmish, warrior=warrior).get_defense_value()
 
     assert result == plain

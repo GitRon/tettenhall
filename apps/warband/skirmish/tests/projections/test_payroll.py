@@ -47,6 +47,24 @@ def test_paid_warrior_list_covers_a_man_who_draws_no_wage_and_still_leaves_the_n
     assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [2]
 
 
+def test_paid_warrior_list_covers_a_man_who_draws_no_wage_out_of_a_purse_in_the_red():
+    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=0)], budget=-10, leader_id=1)
+
+    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1]
+    assert payroll.unpaid_warrior_list == []
+
+
+def test_paid_warrior_list_leaves_every_waged_man_short_out_of_a_purse_in_the_red():
+    payroll = Payroll(
+        warrior_list=[WarriorFactory.build(id=1, monthly_salary=0), WarriorFactory.build(id=2, monthly_salary=40)],
+        budget=-10,
+        leader_id=1,
+    )
+
+    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1]
+    assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [2]
+
+
 def test_paid_warrior_list_is_empty_on_an_empty_purse():
     payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=0, leader_id=1)
 

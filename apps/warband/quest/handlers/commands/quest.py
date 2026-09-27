@@ -40,6 +40,7 @@ def handle_accept_quest(*, context: AcceptQuest) -> list[Event] | Event:
         target_faction=context.quest.target_faction,
         quest=context.quest,
         quest_contract=quest_contract,
+        assigned_warriors=list(context.assigned_warriors),
         target_warriors=_muster_defenders(quest=context.quest, month=context.month),
         month=context.month,
     )

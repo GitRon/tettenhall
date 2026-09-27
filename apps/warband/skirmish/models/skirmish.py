@@ -8,6 +8,7 @@ from apps.warband.skirmish.models.warrior import Warrior
 
 if typing.TYPE_CHECKING:
     from apps.warband.faction.models.faction import Faction
+    from apps.warband.quest.models.quest_contract import QuestContract
 
 
 class Skirmish(models.Model):
@@ -122,6 +123,23 @@ class Skirmish(models.Model):
         # blow without a query
         return warrior in self.defending_warriors.all()
 
+    def quest_contract_or_none(self) -> QuestContract | None:
+        """
+        The contract this fight was fought for, or None when it is nobody's errand.
+
+        A reverse one-to-one, so asking is a query the first time. Ask it in a command handler and put
+        the answer on the message: an event handler that reads "skirmish.quest_contract" only works when
+        somebody upstream happened to fill Django's cache on that very instance.
+
+        The absence is caught as "ObjectDoesNotExist" rather than as "QuestContract.DoesNotExist",
+        which is what it is: naming the contract at runtime means importing it, and "QuestContract"
+        reaches back through "Warrior" into this very module.
+        """
+        try:
+            return self.quest_contract
+        except ObjectDoesNotExist:
+            return None
+
     def quest_reward_for(self, *, victorious_faction: Faction) -> tuple[str | None, int]:
         """
         What this fight pays the side that won it out of the quest it was fought for: the name, and the purse.
@@ -139,14 +157,9 @@ class Skirmish(models.Model):
         band the target could field when the quest was pinned to the board - see
         "Quest._priced_for_expected_opposition" - so a thin turnout is a thin contract rather than a
         fraction of a fat one, and the figure the player accepted is the figure he is paid.
-
-        The absence is caught as "ObjectDoesNotExist" rather than as "QuestContract.DoesNotExist",
-        which is what it is: naming the contract means importing it, and "QuestContract" reaches back
-        through "Warrior" into this very module.
         """
-        try:
-            quest_contract = self.quest_contract
-        except ObjectDoesNotExist:
+        quest_contract = self.quest_contract_or_none()
+        if quest_contract is None:
             return None, 0
 
         if quest_contract.faction_id != victorious_faction.pk:

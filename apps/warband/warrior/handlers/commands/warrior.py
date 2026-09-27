@@ -220,6 +220,7 @@ def handle_inflict_injury(*, context: InflictInjury) -> Event | None:
         warrior=context.warrior,
         faction=context.warrior.faction,
         injury=injury_type.description,
+        injury_name=injury_type.name,
         month=context.month,
     )
 
