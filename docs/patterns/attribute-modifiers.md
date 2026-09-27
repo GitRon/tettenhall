@@ -35,7 +35,8 @@ than the death he was one point short of, and reachable by no other route.
 - **The cards**, which print the stored figure and list what a man carries beside it. The fuzz in
   `warrior/components/warrior_attribute.html` buckets a value against the distribution it was drawn
   from ([warrior knowledge](warrior-knowledge.md)), and feeding it a modified value would change what
-  "High" means rather than telling the player anything.
+  "High" means rather than telling the player anything. What they list beside it is the injuries only: no
+  screen renders a trait, which the player finds out through the fights it changes.
 
 ## The sources
 
@@ -44,7 +45,7 @@ Each source owns its own reference table; they share only the layer above.
 | Source | Table | Status |
 |---|---|---|
 | Permanent injuries | `InjuryType`, fixture-backed | shipped |
-| Innate and earned traits | its own catalogue | #119 |
+| Innate and earned traits | `TraitType`, fixture-backed | shipped |
 | Item bonuses and drawbacks | `ItemType` | #23 |
 
 **Do not merge the catalogues.** An injury entry is a name, an attribute and a magnitude; a trait needs
@@ -53,12 +54,15 @@ one table would carry a kind discriminator and a column set that is dead for hal
 is the clearest case: an injury is shown on every card and a trait is hidden until the man shows you
 one, which is one column with opposite constant values per kind.
 
-A new source adds rows to `injury_maluses`-shaped aggregation and nothing else. If two sources ever
-touch one attribute at once they simply sum, which is why the floor above sits on the result rather than
-on any one source.
+A source is one aggregation on `Warrior` — `injury_maluses`, `trait_modifiers` — summed per attribute in
+one query and cached on the instance, and `_effective_attribute` adds them up. A new source is a third
+such property and a term in that sum, and nothing else. Two sources on one attribute simply sum, which is
+why the floor above sits on the result rather than on any one source: a slight man with a ruined
+shoulder is floored once. The attribute keys are `ModifiedAttributeChoices`, one set every source's
+catalogue uses, so the sum has one vocabulary.
 
 ## See also
 
 - [Town buildings](town-buildings.md) — where a balance number lives when no building levers it
 - [Warrior knowledge](warrior-knowledge.md) — why the cards print the stored figure
-- [Where code goes](app-layout.md) — the `warrior` topic package, which owns both injury models
+- [Where code goes](app-layout.md) — the `warrior` topic package, which owns the injury and trait models

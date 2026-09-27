@@ -6,7 +6,9 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
+from apps.warband.warrior.models.trait import Trait
 from apps.warband.warrior.services.nickname import NICKNAME_VARIANT_BOUND, draw_nickname_state
+from apps.warband.warrior.services.trait import InnateTraitDrawService
 from apps.warband.warrior.services.unique_name import draw_warrior_name
 
 
@@ -153,7 +155,7 @@ class BaseWarriorGenerator:
         else:
             armor = None
 
-        return Warrior.objects.create(
+        warrior = Warrior.objects.create(
             name=draw_warrior_name(culture=self.culture, savegame_id=self.savegame_id),
             culture=self.culture,
             faction=self.faction,
@@ -194,3 +196,10 @@ class BaseWarriorGenerator:
             weapon=weapon,
             armor=armor,
         )
+
+        # What kind of man he is, drawn with the rolls that say how good he is and kept for good. Written
+        # after him because a trait is a row on him - and never shown, so nothing above prices it in
+        for trait_type in InnateTraitDrawService().process():
+            Trait.objects.create_record(warrior=warrior, trait_type=trait_type)
+
+        return warrior

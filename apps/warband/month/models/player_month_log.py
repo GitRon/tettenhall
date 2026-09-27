@@ -35,6 +35,7 @@ class PlayerMonthLog(models.Model):
         KIND_RIVAL_DEFEATED = 16, "Rival defeated"
         KIND_NICKNAME_EARNED = 17, "Nickname earned"
         KIND_WARRIOR_INJURED = 18, "Warrior injured"
+        KIND_WARRIOR_CHANGED = 19, "Warrior changed"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -73,6 +74,9 @@ class PlayerMonthLog(models.Model):
         # either, which is the tallied kind, because a man crippled for good is a line the player
         # should read as a man rather than as a count
         KindChoices.KIND_WARRIOR_INJURED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        # A consequence, filed beside the injury it mirrors: the player chose the fight that changed
+        # the man, and the line is about one man rather than a count
+        KindChoices.KIND_WARRIOR_CHANGED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

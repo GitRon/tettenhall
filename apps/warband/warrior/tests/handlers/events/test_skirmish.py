@@ -1,11 +1,13 @@
+from apps.warband.skirmish.messages.events.skirmish import SkirmishFinished
 from apps.warband.skirmish.messages.events.warrior import WarriorImprovedStats, WarriorWasIncapacitated
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.handlers.events.skirmish import (
     handle_beating_may_leave_a_mark,
+    handle_fight_may_change_a_man,
     handle_level_up_earns_a_nickname,
 )
-from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, InflictInjury
+from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, EarnTraitsInSkirmish, InflictInjury
 
 
 def test_handle_level_up_earns_a_nickname_takes_the_month_off_the_fight():
@@ -54,3 +56,22 @@ def test_handle_beating_may_leave_a_mark_carries_the_depth_and_the_month():
     )
 
     assert result == InflictInjury(skirmish=skirmish, warrior=warrior, overkill_health=2, month=7)
+
+
+def test_handle_fight_may_change_a_man_relays_the_fight_and_its_month():
+    skirmish = SkirmishFactory.build(month=4)
+
+    result = handle_fight_may_change_a_man(
+        context=SkirmishFinished(
+            skirmish=skirmish,
+            incapacitated_warriors=[],
+            defeated_unconscious_warriors=[],
+            victorious_healthy_warriors=[],
+            quest_name="",
+            quest_loot=0,
+            quest_contract=None,
+            month=4,
+        )
+    )
+
+    assert result == EarnTraitsInSkirmish(skirmish=skirmish, month=4)

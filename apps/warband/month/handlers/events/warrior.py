@@ -5,6 +5,7 @@ from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
+    WarriorGainedTrait,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMoraleReplenished,
@@ -110,6 +111,23 @@ def handle_warrior_was_injured(*, context: WarriorWasInjured) -> Command:
     return CreatePlayerMonthLog(
         title=f"{context.warrior} is marked for good: {context.injury}.",
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_INJURED,
+        month=context.month,
+        faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=WarriorGainedTrait)
+def handle_warrior_gained_trait(*, context: WarriorGainedTrait) -> Command:
+    """
+    Tells the player that something happened to the man, and not what.
+
+    A trait nobody is told about is a hidden dice modifier; one the player is told he *has* is the pub
+    card again. The line is the prompt to watch him in the next fight, which is where the player finds
+    out what the fight made of him.
+    """
+    return CreatePlayerMonthLog(
+        title=f"{context.warrior} came back from the fight a different man.",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_CHANGED,
         month=context.month,
         faction=context.faction,
     )

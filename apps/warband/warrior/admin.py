@@ -3,6 +3,8 @@ from django.contrib import admin
 
 from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.models.trait import Trait
+from apps.warband.warrior.models.trait_type import TraitType
 
 
 @admin.register(InjuryType)
@@ -16,4 +18,17 @@ class InjuryAdmin(ReadOnlyAdmin):
     # Read-only because an injury is a record: it is written once by the fight that inflicted it and
     # never mends
     list_display = ("warrior", "type", "inflicted_in_month")
+    list_filter = ("type", "warrior__faction")
+
+
+@admin.register(TraitType)
+class TraitTypeAdmin(ReadOnlyAdmin):
+    list_display = ("name", "hook", "group", "attribute", "magnitude", "source")
+    list_filter = ("group", "attribute", "source")
+
+
+@admin.register(Trait)
+class TraitAdmin(ReadOnlyAdmin):
+    # Read-only because a trait is a record: drawn with the man or earned by a fight, and never lost
+    list_display = ("warrior", "type")
     list_filter = ("type", "warrior__faction")

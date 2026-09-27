@@ -11,12 +11,14 @@ from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
-from apps.warband.warrior.models.injury_type import InjuryType
 from apps.warband.warrior.services.nickname import MORALE_FAR_NICKNAMES, STRENGTH_NICKNAMES
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
+from apps.warband.warrior.tests.factories.trait import TraitFactory
+from apps.warband.warrior.tests.factories.trait_type import TraitTypeFactory
 
 
 def test_str_leaves_the_epithet_off():
@@ -345,11 +347,11 @@ def test_injury_maluses_sums_two_of_a_kind():
     A man can lose two fingers, which is the whole reason an injury is a row rather than a flag.
     """
     warrior = WarriorFactory()
-    injury_type = InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=1)
+    injury_type = InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=1)
     InjuryFactory(warrior=warrior, type=injury_type)
     InjuryFactory(warrior=warrior, type=injury_type)
 
-    assert warrior.injury_maluses == {InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH: 2}
+    assert warrior.injury_maluses == {ModifiedAttributeChoices.ATTRIBUTE_STRENGTH: 2}
 
 
 @pytest.mark.django_db
@@ -357,16 +359,16 @@ def test_injury_maluses_keeps_the_two_attributes_apart():
     warrior = WarriorFactory()
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
     )
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=1),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=1),
     )
 
     assert warrior.injury_maluses == {
-        InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH: 2,
-        InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY: 1,
+        ModifiedAttributeChoices.ATTRIBUTE_STRENGTH: 2,
+        ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY: 1,
     }
 
 
@@ -382,7 +384,7 @@ def test_effective_strength_takes_the_injury_off():
     warrior = WarriorFactory(strength=12)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
     )
 
     assert warrior.effective_strength == 10
@@ -397,7 +399,7 @@ def test_effective_strength_never_reaches_nothing():
     warrior = WarriorFactory(strength=2)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
     )
 
     assert warrior.effective_strength == Warrior.MINIMUM_EFFECTIVE_ATTRIBUTE
@@ -408,11 +410,11 @@ def test_effective_dexterity_takes_only_its_own_injuries_off():
     warrior = WarriorFactory(dexterity=10)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
     )
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=1),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=1),
     )
 
     assert warrior.effective_dexterity == 9
@@ -423,10 +425,67 @@ def test_effective_dexterity_never_reaches_nothing():
     warrior = WarriorFactory(dexterity=1)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=2),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=2),
     )
 
     assert warrior.effective_dexterity == Warrior.MINIMUM_EFFECTIVE_ATTRIBUTE
+
+
+@pytest.mark.django_db
+def test_trait_modifiers_sums_signed_per_attribute():
+    warrior = WarriorFactory()
+    TraitFactory(
+        warrior=warrior, type=TraitTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=1)
+    )
+    TraitFactory(
+        warrior=warrior, type=TraitTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=-1)
+    )
+
+    assert warrior.trait_modifiers == {
+        ModifiedAttributeChoices.ATTRIBUTE_STRENGTH: 1,
+        ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY: -1,
+    }
+
+
+@pytest.mark.django_db
+def test_effective_strength_adds_a_virtue():
+    warrior = WarriorFactory(strength=12)
+    TraitFactory(
+        warrior=warrior, type=TraitTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=1)
+    )
+
+    assert warrior.effective_strength == 13
+
+
+@pytest.mark.django_db
+def test_effective_dexterity_sums_a_trait_and_an_injury():
+    """
+    Two sources on one attribute simply sum - see docs/patterns/attribute-modifiers.md.
+    """
+    warrior = WarriorFactory(dexterity=10)
+    TraitFactory(
+        warrior=warrior, type=TraitTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=1)
+    )
+    InjuryFactory(
+        warrior=warrior,
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=2),
+    )
+
+    assert warrior.effective_dexterity == 9
+
+
+@pytest.mark.django_db
+def test_effective_strength_floors_a_vice_and_an_injury_once():
+    warrior = WarriorFactory(strength=2)
+    TraitFactory(
+        warrior=warrior, type=TraitTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=-1)
+    )
+    InjuryFactory(
+        warrior=warrior,
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2),
+    )
+
+    assert warrior.effective_strength == Warrior.MINIMUM_EFFECTIVE_ATTRIBUTE
 
 
 @pytest.mark.django_db
@@ -438,7 +497,7 @@ def test_expected_damage_is_quoted_at_the_strength_he_has_left():
     warrior = WarriorFactory(weapon=ItemFactory(type=weapon_type), strength=15, strength_baseline=10)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=5),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=5),
     )
 
     assert warrior.expected_damage == 7.0
@@ -453,7 +512,7 @@ def test_attribute_draws_keep_reading_the_stored_columns():
     warrior = WarriorFactory(strength=12, dexterity=10)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=4),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=4),
     )
 
     assert warrior.attribute_draws["strength"].value == 12

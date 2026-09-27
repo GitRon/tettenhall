@@ -13,6 +13,7 @@ from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.managers.warrior import WarriorManager
 from apps.warband.skirmish.services.actions.requirements import get_offered_actions
 from apps.warband.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
 from apps.warband.warrior.services.nickname import resolve_nickname
@@ -32,7 +33,7 @@ class Warrior(models.Model):
     # [InjuryRollService].
     DEATH_OVERKILL_SHARE = 0.15
 
-    # No injury may take an attribute to nothing. Strength scales a blow by
+    # No injury or trait may take an attribute to nothing. Strength scales a blow by
     # "strength / strength_baseline", so a zero is a man who can never hurt anybody again - a worse
     # outcome than the death he was one point away from, and reachable by no other route. The morale
     # ceiling is floored for the same kind of reason, see "WarriorManager.MINIMUM_MAX_MORALE".
@@ -253,38 +254,56 @@ class Warrior(models.Model):
             for row in self.injuries.values("type__attribute").annotate(total=models.Sum("type__magnitude"))
         }
 
+    @cached_property
+    def trait_modifiers(self) -> dict[str, int]:
+        """
+        What this man's traits add to or take off each attribute, summed per attribute and signed.
+
+        The same shape and the same caching as [injury_maluses], and for the same reason: a trait is
+        granted after the fight that earned it is over, so nothing changes under a cached value while
+        anything is still reading it. Signed where an injury is not, because a trait can be a virtue.
+
+        A man whose traits cancel out on an attribute aggregates to a zero rather than an absent key,
+        which reads the same through "get".
+        """
+        return {
+            row["type__attribute"]: row["total"]
+            for row in self.traits.values("type__attribute").annotate(total=models.Sum("type__magnitude"))
+        }
+
+    def _effective_attribute(self, *, stored: int, attribute: str) -> int:
+        """
+        A stored attribute as it reaches the field: the injuries taken off, the traits applied.
+
+        The sources simply sum, and the floor sits on the result rather than on any one of them - a
+        slight man with a ruined shoulder is floored once, not twice.
+        """
+        modifier = self.trait_modifiers.get(attribute, 0) - self.injury_maluses.get(attribute, 0)
+
+        return max(stored + modifier, self.MINIMUM_EFFECTIVE_ATTRIBUTE)
+
     @property
     def effective_strength(self) -> int:
         """
-        The strength he actually swings with, his injuries taken off.
+        The strength he actually swings with, his injuries and his traits applied.
 
         The stored column is left alone on purpose: level-up growth and training both write it, so a
-        crippled man who levels would silently un-cripple, and nothing could tell an injury from a bad
-        roll at generation. Everything that turns strength into an outcome reads this instead -
-        "SkirmishActionService._scaled_by_strength", [expected_damage] and the action decision. The epithet
+        crippled man who levels would silently un-cripple, and nothing could tell an injury or a trait
+        from a roll at generation. Everything that turns strength into an outcome reads this instead -
+        "AttackService._scaled_by_strength", [expected_damage] and the action decision. The epithet
         deliberately does not: see [attribute_draws].
         """
-        # Imported here rather than at module scope: the injury row points back at this model, so the
-        # warrior topic's model package cannot be reached while this module is still being imported
-        from apps.warband.warrior.models.injury_type import InjuryType
-
-        malus = self.injury_maluses.get(InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, 0)
-
-        return max(self.strength - malus, self.MINIMUM_EFFECTIVE_ATTRIBUTE)
+        return self._effective_attribute(stored=self.strength, attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH)
 
     @property
     def effective_dexterity(self) -> int:
         """
-        The dexterity he actually moves with, his injuries taken off.
+        The dexterity he actually moves with, his injuries and his traits applied.
 
         A bigger swing than it looks: dexterity decides who attacks whom and which action the AI
         picks, so a lame man is attacked more often as well as hitting less.
         """
-        from apps.warband.warrior.models.injury_type import InjuryType
-
-        malus = self.injury_maluses.get(InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, 0)
-
-        return max(self.dexterity - malus, self.MINIMUM_EFFECTIVE_ATTRIBUTE)
+        return self._effective_attribute(stored=self.dexterity, attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY)
 
     @property
     def nickname(self) -> str | None:

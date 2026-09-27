@@ -13,6 +13,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
     CreateWarrior,
     DismissWarrior,
+    EarnTraitsInSkirmish,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     InflictInjury,
@@ -24,6 +25,7 @@ from apps.warband.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
     WarriorCreated,
     WarriorEarnedNickname,
+    WarriorGainedTrait,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
@@ -33,9 +35,11 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWasInjured,
 )
 from apps.warband.warrior.models.injury import Injury
+from apps.warband.warrior.models.trait import Trait
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 from apps.warband.warrior.services.injury import InjuryRollService
 from apps.warband.warrior.services.nickname import draw_nickname_state
+from apps.warband.warrior.services.trait import TraitEarningService
 
 
 @message_registry.register_command(command=PunishUnpaidWarrior)
@@ -223,6 +227,46 @@ def handle_inflict_injury(*, context: InflictInjury) -> Event | None:
         injury_name=injury_type.name,
         month=context.month,
     )
+
+
+@message_registry.register_command(command=EarnTraitsInSkirmish)
+def handle_earn_traits_in_skirmish(*, context: EarnTraitsInSkirmish) -> list[Event]:
+    """
+    Grants each of the player's men the trait this fight earned him, if it earned him one.
+
+    The player's men only: whether a rival's war band develops is its own balance question, and a fight
+    between two rivals asks nobody. Of his men, the ones who came out of it - not the dead, who are
+    past changing, and not the ones lying on the field of a lost fight, who are being led away as
+    prisoners and are no longer his to be told about.
+    """
+    player_faction_id = context.skirmish.attacking_faction.savegame.player_faction_id
+
+    if player_faction_id == context.skirmish.attacking_faction_id:
+        faction = context.skirmish.attacking_faction
+        warriors = context.skirmish.attacking_warriors.all()
+    elif player_faction_id == context.skirmish.defending_faction_id:
+        faction = context.skirmish.defending_faction
+        warriors = context.skirmish.defending_warriors.all()
+    else:
+        return []
+
+    warriors = warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    if context.skirmish.victorious_faction_id != faction.id:
+        warriors = warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    message_list: list[Event] = []
+    for warrior in warriors:
+        trait_type = TraitEarningService(warrior=warrior, skirmish=context.skirmish).process()
+
+        if trait_type is None:
+            continue
+
+        Trait.objects.create_record(warrior=warrior, trait_type=trait_type)
+        message_list.append(
+            WarriorGainedTrait(skirmish=context.skirmish, warrior=warrior, faction=faction, month=context.month)
+        )
+
+    return message_list
 
 
 @message_registry.register_command(command=HealInjuredWarrior)

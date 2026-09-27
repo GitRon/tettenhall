@@ -1,6 +1,7 @@
 import factory
 from factory.django import DjangoModelFactory
 
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.models.injury_type import InjuryType
 
 
@@ -17,5 +18,5 @@ class InjuryTypeFactory(DjangoModelFactory):
         model = InjuryType
 
     name = factory.Sequence(lambda n: f"Injury type {n}")
-    attribute = InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH
+    attribute = ModifiedAttributeChoices.ATTRIBUTE_STRENGTH
     magnitude = 1

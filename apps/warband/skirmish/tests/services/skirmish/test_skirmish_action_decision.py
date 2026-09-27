@@ -4,7 +4,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
@@ -63,7 +63,7 @@ def test_determine_decision_stops_reaching_for_a_swing_an_injury_took_away():
     warrior = WarriorFactory(current_health=20, max_health=20, dexterity=15, strength=10)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=6),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=6),
     )
 
     result = SkirmishActionDecisionService(warrior=warrior, skirmish=SkirmishFactory())._determine_decision()
