@@ -123,8 +123,9 @@ class SkirmishReport:
         ]
 
     def _is_upgrade(self, *, item: Item | None) -> bool:
-        # Gear that no longer exists is nothing anybody can pick up
-        if item is None:
+        # Only gear still in the faction's stash is anything its men can pick up: not gear that no longer
+        # exists, and not gear it has sold on, which sits on a shop shelf and would have to be bought back
+        if item is None or item.owner_id != self.faction.id:
             return False
 
         if item.is_weapon:

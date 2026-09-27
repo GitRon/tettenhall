@@ -93,6 +93,7 @@ def test_items_won_flags_a_weapon_nobody_in_the_warband_can_match():
     loser = WarriorFactory(faction=skirmish.defending_faction)
     item = ItemFactory(
         savegame=skirmish.attacking_faction.savegame,
+        owner=skirmish.attacking_faction,
         type=ItemTypeFactory(base_value="4d4", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
         modifier=5,
     )
@@ -111,6 +112,28 @@ def test_items_won_flags_a_weapon_nobody_in_the_warband_can_match():
 
 
 @pytest.mark.django_db
+def test_items_won_leaves_a_weapon_the_faction_has_sold_on_unflagged():
+    skirmish = SkirmishFactory()
+    # Sold: back on a shelf with no owner, however good it is
+    item = ItemFactory(
+        savegame=skirmish.attacking_faction.savegame,
+        owner=None,
+        type=ItemTypeFactory(base_value="4d4", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        modifier=5,
+    )
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN,
+        item=item,
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert report.items_won[0].is_upgrade is False
+
+
+@pytest.mark.django_db
 def test_items_won_leaves_armor_unflagged_when_the_warband_wears_better():
     skirmish = SkirmishFactory()
     armor_type = ItemTypeFactory(base_value="1d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR)
@@ -125,7 +148,9 @@ def test_items_won_leaves_armor_unflagged_when_the_warband_wears_better():
         skirmish=skirmish,
         faction=skirmish.attacking_faction,
         kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN,
-        item=ItemFactory(savegame=skirmish.attacking_faction.savegame, type=armor_type, modifier=0),
+        item=ItemFactory(
+            savegame=skirmish.attacking_faction.savegame, owner=skirmish.attacking_faction, type=armor_type, modifier=0
+        ),
     )
 
     report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
