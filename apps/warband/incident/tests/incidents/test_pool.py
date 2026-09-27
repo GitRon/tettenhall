@@ -3,13 +3,23 @@ The pool in "apps/incident/incidents/__init__.py", held to the balance it was we
 
 These are not arithmetic tests. Each one states an intention about the catalogue as a whole that no
 single entry can carry, and reads the constants off the classes - so an entry added or reweighted
-without thinking about the drift it causes turns them red.
+without thinking about the drift it causes turns them red. The balance is struck over a year, so an
+entry is counted at its yearly weight: one drawn in two months counts a sixth of its weight.
 """
 
 import pytest
 
+from apps.warband.calendar.months import YEAR
 from apps.warband.incident.incidents import INCIDENTS, QUIET_MONTH_WEIGHT
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+
+
+def test_every_entry_is_drawn_in_some_month():
+    """
+    An entry tied to months of the year has to name at least one real month, or it is a class kept in
+    the pool that nothing can ever draw.
+    """
+    assert [incident for incident in INCIDENTS if incident.get_yearly_weight() <= 0] == []
 
 
 def test_every_entry_carries_a_weight():
@@ -83,9 +93,15 @@ def test_no_default_sells_gear():
 def test_a_quiet_month_is_the_likeliest_outcome():
     """
     The register works because most months are silent. An incident every month is a chronicle
-    nobody reads.
+    nobody reads. Held in the busiest month of the year, since an entry tied to a few months carries
+    its whole year's weight in them.
     """
-    assert sum(incident.WEIGHT for incident in INCIDENTS) < QUIET_MONTH_WEIGHT
+    busiest_month_weight = max(
+        sum(incident.WEIGHT for incident in INCIDENTS if incident.is_drawn_in(calendar_month=calendar_month))
+        for calendar_month in YEAR
+    )
+
+    assert busiest_month_weight < QUIET_MONTH_WEIGHT
 
 
 def test_silver_nets_out_negative():
@@ -96,7 +112,7 @@ def test_silver_nets_out_negative():
     # A question counts at the answer that is not its default - the one it was written to offer.
     # Counting the default instead would price every question as if it were always ignored
     weighted_silver = sum(
-        incident.WEIGHT
+        incident.get_yearly_weight()
         * (
             incident.SILVER_CHANGE
             + sum(option.silver_change for option in incident.OPTIONS if option.key != incident.DEFAULT_OPTION)
@@ -114,7 +130,7 @@ def test_the_fyrd_nets_out_flat():
     """
     # A question counts at the answer that is not its default, as the silver does above
     weighted_recruits = sum(
-        incident.WEIGHT
+        incident.get_yearly_weight()
         * (
             incident.FYRD_CHANGE
             + sum(option.fyrd_change for option in incident.OPTIONS if option.key != incident.DEFAULT_OPTION)
@@ -130,7 +146,7 @@ def test_the_morale_ceiling_nets_out_flat():
     "max_morale" is close to a one-way ratchet - it otherwise only moves on a level-up - so a drift
     either way accumulates over fifty months with nothing to correct it.
     """
-    weighted_share = sum(incident.WEIGHT * incident.MAX_MORALE_SHARE for incident in INCIDENTS)
+    weighted_share = sum(incident.get_yearly_weight() * incident.MAX_MORALE_SHARE for incident in INCIDENTS)
 
     # Approximated because the shares are floats: 0.2 three times over is not 0.6
     assert weighted_share == pytest.approx(0)

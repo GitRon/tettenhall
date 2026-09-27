@@ -8,12 +8,14 @@ than through one written to make the assert pass.
 
 import pytest
 
+from apps.warband.calendar.months import AerraGeola, Haligmonath
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.incident.incidents.abbot_asks_for_lead import AbbotAsksForLead
 from apps.warband.incident.incidents.base import IncidentOutcome, IncidentQuestion, losable_items, roster
 from apps.warband.incident.incidents.burnt_village_refugees import BurntVillageRefugees
 from apps.warband.incident.incidents.hall_roof_falls_in import HallRoofFallsIn
+from apps.warband.incident.incidents.oath_feast import OathFeast
 from apps.warband.incident.incidents.plough_hoard import PloughHoard
 from apps.warband.incident.incidents.toll_on_the_old_road import TollOnTheOldRoad
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
@@ -22,6 +24,27 @@ from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+
+
+def test_is_drawn_in_any_month_for_an_entry_tied_to_none():
+    assert PloughHoard.is_drawn_in(calendar_month=Haligmonath) is True
+
+
+def test_is_drawn_in_one_of_its_months():
+    assert OathFeast.is_drawn_in(calendar_month=AerraGeola) is True
+
+
+def test_is_drawn_in_outside_its_months():
+    assert OathFeast.is_drawn_in(calendar_month=Haligmonath) is False
+
+
+def test_get_yearly_weight_of_an_entry_tied_to_none():
+    assert PloughHoard.get_yearly_weight() == PloughHoard.WEIGHT
+
+
+def test_get_yearly_weight_of_an_entry_tied_to_two_months():
+    """Weight 18 in two months of twelve is drawn as often as weight 3 in all of them."""
+    assert OathFeast.get_yearly_weight() == 3
 
 
 @pytest.mark.django_db

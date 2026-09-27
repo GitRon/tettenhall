@@ -3,6 +3,7 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Event
 
+from apps.warband.calendar.months import get_calendar_month
 from apps.warband.incident.incidents import INCIDENTS, QUIET_MONTH_WEIGHT
 from apps.warband.incident.messages.commands.incident import ChooseIncident
 from apps.warband.incident.messages.events.incident import IncidentAsked, IncidentOccurred
@@ -23,10 +24,18 @@ def handle_choose_incident(*, context: ChooseIncident) -> Event | None:
     of a quiet month are one number somebody chose rather than a side effect of how many entries
     exist, and a month with no possible candidate is quiet for the same reason as any other.
 
+    An entry tied to certain months of the year is not a candidate in any other month, which is asked
+    before [is_possible] so that an out-of-season entry never runs its queries.
+
     A question-shaped entry is not applied here but put to the player: it waits on a pending row
     until he answers it, or until his month ends and its default answers for him.
     """
-    candidates = [incident for incident in INCIDENTS if incident.is_possible(faction=context.faction)]
+    calendar_month = get_calendar_month(month=context.month)
+    candidates = [
+        incident
+        for incident in INCIDENTS
+        if incident.is_drawn_in(calendar_month=calendar_month) and incident.is_possible(faction=context.faction)
+    ]
 
     # "None" stands in the pool for the quiet month, so it is drawn the same way the incidents are
     chosen_incident = random.choices(

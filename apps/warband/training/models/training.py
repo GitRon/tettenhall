@@ -63,9 +63,15 @@ class Training(models.Model):
         """
         return self.attributes_display_for_category(category=self.category)
 
-    def get_random_attribute_and_improvement_for_category(self, *, category: int) -> tuple[str, int]:
+    def get_random_attribute_and_improvement_for_category(
+        self, *, category: int, improvement_factor: float = 1.0
+    ) -> tuple[str, int]:
         """
         Determine which attribute gets improved and by how much.
+
+        "improvement_factor" is the month's pace - winter's is above 1 - and it scales the roll
+        before the rounding and the floor below, so a quick month cannot push a roll under the floor
+        or a slow one round away to nothing.
         """
         attribute_options = self.CATEGORY_ATTRIBUTES.get(category)
         if attribute_options is None:
@@ -79,6 +85,8 @@ class Training(models.Model):
         # Floored at 1 rather than 0: a roll below 0.5 rounds to nothing, which at these parameters is
         # about one month in six, and a month of training that moves no bar at all is indistinguishable
         # from a bug to the player watching it.
-        improvement = max(round(random.gauss(self.TRAINING_IMPROVEMENT_MU, self.TRAINING_IMPROVEMENT_SIGMA)), 1)
+        improvement = max(
+            round(random.gauss(self.TRAINING_IMPROVEMENT_MU, self.TRAINING_IMPROVEMENT_SIGMA) * improvement_factor), 1
+        )
 
         return attribute, improvement
