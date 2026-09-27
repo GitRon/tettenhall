@@ -1,0 +1,21 @@
+{% comment %}
+    An item in a warrior's slot, drawn from the same pieces as the shop's card: its icon, its name and
+    the stats line the buy and sell cards carry. The mean is what tells one sword from another, and a
+    card that printed only "1d6+1" left the player doing arithmetic the shop does for him.
+
+    No price: the man is wearing it, and gear is only sold out of the stores.
+
+    "empty_label" is what the slot reads when nothing is in it - the caller knows whether that is a
+    dash in a card's table or an invitation to pick something.
+{% endcomment %}
+{% if item %}
+    <span class="whitespace-nowrap">
+        {% include 'common/components/svg_icon.html' with icon_name=item.type.svg_image_name %}
+        {{ item.display_name }}
+    </span>
+    <span class="block text-sm leading-snug text-ink-muted">
+        {% include 'item/components/item_stats_meta.html' with item=item %}
+    </span>
+{% else %}
+    <span>{{ empty_label|default:"-" }}</span>
+{% endif %}
