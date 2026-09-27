@@ -16,7 +16,7 @@ from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd,
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.hiring import get_pub_hire_refusal
 from apps.warband.finance.models import Transaction
-from apps.warband.item.services.handout import get_handout_roster
+from apps.warband.item.services.handout import annotate_held_gear_values, get_handout_roster
 from apps.warband.item.services.shop import annotate_stored_copy_counts
 from apps.warband.quest.models.quest import Quest
 from apps.warband.savegame.mixins import (
@@ -766,9 +766,9 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
 
 class ShopShelfContextMixin:
     """
-    The shelf, each item carrying how many of its kind already lie unused in the stores, for both the
-    shop page and the list that replaces itself after every purchase - the two have to agree or the
-    first purchase changes what the cards say.
+    The shelf, each item carrying how many of its kind already lie unused in the stores, and the men
+    it is weighed against, for both the shop page and the list that replaces itself after every
+    purchase - the two have to agree or the first purchase changes what the cards say.
 
     The stores are the faction's own whose shop this is. The page only ever renders the player's; the
     partial is reachable for any faction of the savegame, and a rival's shelf then reads a rival's
@@ -780,6 +780,10 @@ class ShopShelfContextMixin:
         context["item_list"], context["stored_item_count"] = annotate_stored_copy_counts(
             item_list=self.object.available_items.select_related("type"), faction=self.object
         )
+        # Every living man rather than the handout roster: a man standing in an open fight cannot be
+        # handed gear today, but he is back next month and the sword is bought for the band, not for
+        # this afternoon. Read once for the shelf, so a card saying it improves nobody costs no query.
+        context["gear_roster"] = annotate_held_gear_values(roster=self.object.get_all_living_warriors())
         return context
 
 

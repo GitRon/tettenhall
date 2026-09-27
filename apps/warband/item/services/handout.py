@@ -75,8 +75,18 @@ def count_stored_upgrades(*, faction) -> int:
     return sum(
         1
         for item in faction.get_all_unoccupied_items().select_related("type")
-        if any(item.expectancy_value > warrior.held_gear_values[item.gear_slot] for warrior in roster)
+        if improves_anybody(item=item, roster=roster)
     )
+
+
+def improves_anybody(*, item: Item, roster: Iterable[Warrior]) -> bool:
+    """
+    Whether the item beats what at least one man on the roster holds in its slot.
+
+    Equal is not better: a swap that gains nothing is not an upgrade. The roster has to arrive through
+    "annotate_held_gear_values", which is where the figures being compared are hung on each man.
+    """
+    return any(item.expectancy_value > warrior.held_gear_values[item.gear_slot] for warrior in roster)
 
 
 def get_handout_note(*, warrior: Warrior, item: Item | None, slot: str) -> str | None:

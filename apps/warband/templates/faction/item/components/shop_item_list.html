@@ -18,7 +18,10 @@
         </p>
     {% endif %}
 
-    {% for item in item_list %}
-        {% include 'item/components/item_buy_card.html' with item=item %}
-    {% endfor %}
+    {# One column on the phone; on a desk a card is mostly empty width, so they sit side by side #}
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {% for item in item_list %}
+            {% include 'item/components/item_buy_card.html' with item=item %}
+        {% endfor %}
+    </div>
 </div>
