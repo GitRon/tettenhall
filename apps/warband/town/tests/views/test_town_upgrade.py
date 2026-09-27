@@ -468,6 +468,32 @@ def test_throw_feast_view_neither_feeds_nor_charges_for_a_captive_or_the_dead(lo
 
 
 @pytest.mark.django_db
+def test_throw_feast_view_feeds_and_charges_for_an_unpaid_man_without_lifting_him(logged_in_client, current_savegame):
+    """
+    He sits at the table, so he is on the bill - it is only the mending that passes him over.
+    """
+    _feast_ready_town(current_savegame)
+    faction = current_savegame.player_faction
+    head_count_without_him = faction.warriors.exclude_dead().count()
+    unpaid = WarriorFactory(
+        faction=faction,
+        savegame=current_savegame,
+        culture=faction.culture,
+        max_morale=10,
+        peak_max_morale=20,
+        unpaid_months=1,
+    )
+
+    logged_in_client.post(reverse("warband:throw-feast-view"))
+
+    unpaid.refresh_from_db()
+    assert (unpaid.max_morale, Transaction.objects.current_balance(faction_id=faction.id)) == (
+        10,
+        900 - (head_count_without_him + 1) * 15,
+    )
+
+
+@pytest.mark.django_db
 def test_throw_feast_view_refuses_a_town_without_a_hall(logged_in_client, current_savegame):
     """
     The button is disabled on the page, and a post that reaches the view anyway is refused there too.

@@ -41,3 +41,19 @@ def test_handle_pay_for_feast_charges_the_whole_table_once():
     result = handle_pay_for_feast(context=context)
 
     assert result == CreateTransaction(faction=town.faction, amount=-45, reason="Feast for 3 men", month=4)
+
+
+def test_handle_pay_for_feast_words_a_table_of_one():
+    town = TownFactory.build()
+    context = FeastThrown(
+        town=town,
+        faction=town.faction,
+        warrior_list=[WarriorFactory.build()],
+        restored_share=0.1,
+        costs=15,
+        month=4,
+    )
+
+    result = handle_pay_for_feast(context=context)
+
+    assert result.reason == "Feast for 1 man"
