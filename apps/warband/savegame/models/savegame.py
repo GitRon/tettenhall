@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from apps.warband.calendar.date import CalendarDate, draw_start_year
 from apps.warband.faction.models import Faction
 from apps.warband.savegame.managers.savegame import SavegameManager
 
@@ -19,6 +20,9 @@ class Savegame(models.Model):
     current_month = models.PositiveSmallIntegerField(
         "Current month", default=1, help_text="Month will be incremented after creation via Command"
     )
+    # The year Anno Domini month 1 falls in. Drawn by the default rather than by the handler that
+    # creates a savegame, so every path that creates one - a factory included - opens in a real year
+    start_year = models.PositiveSmallIntegerField("Start year", default=draw_start_year)
     # Whether the game is still being played. Distinct from "is_active", which only says whether this
     # is the savegame the user currently has loaded
     outcome = models.PositiveSmallIntegerField(
@@ -49,6 +53,11 @@ class Savegame(models.Model):
         # Set all other savegames of this savegames user to inactive
         if self.is_active:
             Savegame.objects.set_all_others_from_user_to_inactive(savegame_id=self.id, user_id=self.created_by.id)
+
+    @property
+    def current_date(self) -> CalendarDate:
+        """The month of the year and the year the savegame's current month falls in."""
+        return CalendarDate.for_month(month=self.current_month, start_year=self.start_year)
 
     @property
     def is_over(self) -> bool:
