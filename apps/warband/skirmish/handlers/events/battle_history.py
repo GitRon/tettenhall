@@ -7,6 +7,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands.battle_history import CreateBattleHistory
 from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.warband.skirmish.models import BattleHistory
+from apps.warband.skirmish.services import battle_saga
 from apps.warband.warrior.messages.events import warrior as warrior_injury
 
 
@@ -16,6 +17,15 @@ def handle_log_warrior_takes_damage(*, context: warrior.WarriorTookDamage) -> Co
         skirmish=context.skirmish,
         message=f"{context.attacker} strikes at {context.attack.value} against {context.defender}'s "
         f"{context.defense.value} defense, and {context.damage} damage gets through.",
+        saga=battle_saga.saga_for_blow(
+            attacker=context.attacker,
+            attacker_action=context.attacker_action,
+            defender=context.defender,
+            defender_action=context.defender_action,
+            initiative=context.initiative,
+            outcome=BlowOutcomeChoices.OUTCOME_HIT,
+            damage=context.damage,
+        ),
     )
 
 
@@ -42,7 +52,19 @@ def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAll
     else:
         raise RuntimeError(f"No battle log sentence for blow outcome {context.outcome}.")
 
-    return CreateBattleHistory(skirmish=context.skirmish, message=message)
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=message,
+        saga=battle_saga.saga_for_blow(
+            attacker=context.attacker,
+            attacker_action=context.attacker_action,
+            defender=context.defender,
+            defender_action=context.defender_action,
+            initiative=context.initiative,
+            outcome=context.outcome,
+            damage=0,
+        ),
+    )
 
 
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
@@ -79,6 +101,10 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
 def handle_log_fortification_assaulted(*, context: skirmish.FortificationAssaulted) -> Command:
     # A second man storming a wall the first already brought down this round swung at rubble, and
     # saying he took nothing off a wall of nothing would read as a swing that failed
+    #
+    # The saga tells only a swing at a wall that is still standing after it. The one that brought it
+    # down is told by the fall line, which names him, and a swing at rubble has nothing to tell
+    saga = ""
     if context.damage == 0 and context.remaining_strength == 0:
         message = f"{context.warrior} storms the fortification, but it has already fallen."
     elif context.remaining_strength == 0:
@@ -90,8 +116,9 @@ def handle_log_fortification_assaulted(*, context: skirmish.FortificationAssault
             f"{context.warrior} storms the fortification at {context.assault.value}, and "
             f"{context.remaining_strength} of it still stands."
         )
+        saga = battle_saga.saga_for_assault(warrior=context.warrior)
 
-    return CreateBattleHistory(skirmish=context.skirmish, message=message)
+    return CreateBattleHistory(skirmish=context.skirmish, message=message, saga=saga)
 
 
 @message_registry.register_event(event=skirmish.FortificationFell)
@@ -99,6 +126,7 @@ def handle_log_fortification_fell(*, context: skirmish.FortificationFell) -> Com
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"The fortification falls to {context.warrior}, and the defenders fight on without it.",
+        saga=battle_saga.saga_for_fortification_fell(warrior=context.warrior),
     )
 
 
@@ -107,6 +135,7 @@ def handle_log_warrior_incapacitation(*, context: warrior.WarriorWasIncapacitate
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of the fight being unconscious.",
+        saga=battle_saga.saga_for_incapacitated(warrior=context.warrior),
         kind=BattleHistory.KindChoices.KIND_WARRIOR_INCAPACITATED,
         warrior=context.warrior,
     )
@@ -127,6 +156,7 @@ def handle_log_warrior_injury(*, context: warrior_injury.WarriorWasInjured) -> C
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} will carry it out of this fight: {context.injury}.",
+        saga=battle_saga.saga_for_injury(warrior=context.warrior, injury=context.injury_name),
     )
 
 
@@ -135,6 +165,7 @@ def handle_log_warrior_death(*, context: warrior.WarriorWasKilled) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} is out of the fight being killed.",
+        saga=battle_saga.saga_for_killed(warrior=context.warrior),
         kind=BattleHistory.KindChoices.KIND_WARRIOR_KILLED,
         warrior=context.warrior,
     )
@@ -156,6 +187,7 @@ def handle_log_skirmish_finished(*, context: skirmish.SkirmishFinished) -> Comma
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"Skirmish finished. {context.skirmish.victorious_faction} won.",
+        saga=battle_saga.saga_for_skirmish_finished(victorious_faction=context.skirmish.victorious_faction),
     )
 
 
@@ -177,6 +209,7 @@ def handle_warrior_is_captured(*, context: warrior.WarriorWasCaptured) -> Comman
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=f"{context.warrior} was captured and arrested.",
+        saga=battle_saga.saga_for_capture(warrior=context.warrior),
     )
 
 
@@ -200,7 +233,11 @@ def handle_log_leader_rallied(*, context: warrior.LeaderRallied) -> Command:
     else:
         message = f"{context.leader} calls to rally his men, but nobody is left beside him to hear."
 
-    return CreateBattleHistory(skirmish=context.skirmish, message=message)
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=message,
+        saga=battle_saga.saga_for_rally(leader=context.leader, rallied_anybody=bool(context.rallied_warriors)),
+    )
 
 
 @message_registry.register_event(event=warrior.WarriorLostMorale)
@@ -225,6 +262,7 @@ def handle_warrior_has_fled(*, context: warrior.WarriorHasFled) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
         message=message,
+        saga=battle_saga.saga_for_left_the_field(warrior=context.warrior, was_ordered=context.was_ordered),
         # One kind for both, although the sentences differ: the panel marks the line because the man
         # is gone, and how he came to be gone is what the sentence above is for
         kind=BattleHistory.KindChoices.KIND_WARRIOR_LEFT_THE_FIELD,

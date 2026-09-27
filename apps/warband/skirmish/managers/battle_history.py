@@ -8,7 +8,7 @@ class BattleHistoryQuerySet(models.QuerySet):
 
 
 class BattleHistoryManager(manager.Manager):
-    def create_record(self, *, skirmish, message, kind, warrior=None):
+    def create_record(self, *, skirmish, message, kind, warrior=None, saga=""):
         """
         Writes one line of a fight.
 
@@ -19,6 +19,7 @@ class BattleHistoryManager(manager.Manager):
         return self.create(
             skirmish=skirmish,
             message=message,
+            saga=saga,
             kind=kind,
             faction_id=warrior.faction_id if warrior else None,
         )

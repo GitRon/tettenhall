@@ -1,6 +1,7 @@
 from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.skirmish_report import (
@@ -201,6 +202,7 @@ def test_handle_record_landed_blow_states_the_outcome_it_is_raised_for():
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=defense,
             damage=7,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -240,6 +242,7 @@ def test_handle_record_stopped_blow_carries_which_kind_of_nothing_it_was():
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=defense,
             outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 

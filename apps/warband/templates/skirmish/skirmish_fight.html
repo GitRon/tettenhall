@@ -38,11 +38,29 @@
                 </div>
                 <div class="mb-[18px] mt-4 border-t border-rule"></div>
 
-                <div id="battle-report-container"
-                     hx-get="{% url 'warband:battle-history-update-htmx' object.id %}"
-                     hx-trigger="load, battleReportUpdate from:body"
-                     hx-target="this"
-                     hx-swap="innerHTML">
+                {# The chosen account lives here, outside the container: every finished round replaces #}
+                {# the container's whole content, and a tab kept inside it would snap back to the Saga #}
+                {# each time. The fragment renders both accounts and this attribute picks one. #}
+                <div class="group" data-log-tab="saga">
+                    {# Outlined like a status tag and brightest when chosen: the Fight! button is the one #}
+                    {# filled control on this screen, and a tab is a view of the log, not an action. #}
+                    <div class="mb-4 flex gap-x-2" role="tablist" aria-label="Battle log">
+                        <button class="cursor-pointer border border-rule bg-transparent px-3 py-1 font-mono text-label uppercase tracking-label text-ink-muted hover:text-ink aria-selected:border-ink aria-selected:text-ink"
+                                type="button" role="tab" aria-selected="true" data-log-tab-button="saga">
+                            Saga
+                        </button>
+                        <button class="cursor-pointer border border-rule bg-transparent px-3 py-1 font-mono text-label uppercase tracking-label text-ink-muted hover:text-ink aria-selected:border-ink aria-selected:text-ink"
+                                type="button" role="tab" aria-selected="false" data-log-tab-button="tally">
+                            Tally
+                        </button>
+                    </div>
+
+                    <div id="battle-report-container"
+                         hx-get="{% url 'warband:battle-history-update-htmx' object.id %}"
+                         hx-trigger="load, battleReportUpdate from:body"
+                         hx-target="this"
+                         hx-swap="innerHTML">
+                    </div>
                 </div>
             </div>
         </div>

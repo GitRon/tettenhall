@@ -7,6 +7,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage, WarriorTookDamage
@@ -34,6 +35,7 @@ def damage_service(db) -> SkirmishDamageService:
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=WarriorFactory(faction=skirmish.defending_faction),
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
 
 
@@ -55,6 +57,7 @@ def test_deal_damage_announces_the_damage_getting_through(damage_service):
             defender_action=damage_service.defender_action,
             defense=defense,
             damage=5,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     ]
 
@@ -79,6 +82,7 @@ def test_deal_damage_floors_a_blow_the_defence_outmatches(damage_service):
             # A quarter of the blow, because armour outmatching a weapon blunts it rather than
             # stopping it dead
             damage=3,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     ]
 
@@ -108,6 +112,7 @@ def test_deal_damage_announces_a_fully_defended_attack(damage_service):
             defender_action=damage_service.defender_action,
             defense=defense,
             outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     ]
 
@@ -134,6 +139,7 @@ def test_deal_damage_announces_an_attack_that_was_never_thrown(damage_service):
             defender_action=damage_service.defender_action,
             defense=defense,
             outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     ]
 
@@ -168,6 +174,7 @@ def test_process_sets_each_mans_own_gear_and_action_against_the_others():
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=defender,
         defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
 
     # Patched at the boundary: the die behind both rolls
@@ -190,5 +197,6 @@ def test_process_sets_each_mans_own_gear_and_action_against_the_others():
                 roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), item_type=armor_type, value=6
             ),
             damage=2,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     ]

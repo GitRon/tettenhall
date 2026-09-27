@@ -37,6 +37,21 @@ def test_create_record_leaves_a_line_about_nobody_without_a_side():
 
 
 @pytest.mark.django_db
+def test_create_record_keeps_the_saga_beside_the_message():
+    skirmish = SkirmishFactory()
+
+    record = BattleHistory.objects.create_record(
+        skirmish=skirmish,
+        message="Skirmish finished. Mercia won.",
+        kind=BattleHistory.KindChoices.KIND_NARRATION,
+        saga="The fighting is over. Mercia holds the field.",
+    )
+
+    record.refresh_from_db()
+    assert record.saga == "The fighting is over. Mercia holds the field."
+
+
+@pytest.mark.django_db
 def test_for_savegame_keeps_another_savegames_log_out():
     battle_history = BattleHistoryFactory()
     BattleHistoryFactory()

@@ -34,6 +34,11 @@ class BattleHistory(models.Model):
     }
 
     message = models.TextField("Message")
+    # The same moment told as a story rather than as arithmetic, for the Saga tab. Empty on every line
+    # the saga leaves out - the rolls, the morale, the growth the report box already lists - which is
+    # most of them. Written beside "message" rather than derived from it later, because what picks
+    # the wording is on the event and not in the finished sentence.
+    saga = models.TextField("Saga", blank=True, default="")
     skirmish = models.ForeignKey(Skirmish, verbose_name="Skirmish", on_delete=models.CASCADE)
     kind = models.PositiveSmallIntegerField("Kind", choices=KindChoices.choices, default=KindChoices.KIND_NARRATION)
     # The side the man this line is about fought for, and empty on every line that is about nobody.

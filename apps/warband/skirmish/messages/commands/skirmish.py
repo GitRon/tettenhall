@@ -57,6 +57,8 @@ class WarriorAttacksWarrior(Command):
     attacker_action: SkirmishActionTypeHint
     defender: Warrior
     defender_action: SkirmishActionTypeHint
+    # An "InitiativeChoices" value, passed through to the blow it becomes - see "WarriorTookDamage"
+    initiative: int
 
 
 @dataclass(kw_only=True)

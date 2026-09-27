@@ -32,6 +32,8 @@ class SkirmishDamageService:
     defender: Warrior
     defender_action: SkirmishActionTypeHint
 
+    initiative: int
+
     def __init__(
         self,
         *,
@@ -41,6 +43,7 @@ class SkirmishDamageService:
         attacker_action: SkirmishActionTypeHint,
         defender: Warrior,
         defender_action: SkirmishActionTypeHint,
+        initiative: int,
     ):
         self.skirmish = skirmish
         self.round_number = round_number
@@ -51,6 +54,8 @@ class SkirmishDamageService:
 
         self.defender = defender
         self.defender_action = defender_action
+
+        self.initiative = initiative
 
     def _deal_damage(self, *, attack: ActionRoll, defense: ActionRoll) -> int:
         damage = max(attack.value - defense.value, round(attack.value * self.MINIMUM_DAMAGE_SHARE))
@@ -67,6 +72,7 @@ class SkirmishDamageService:
                     defender_action=self.defender_action,
                     defense=defense,
                     damage=damage,
+                    initiative=self.initiative,
                 )
             )
         else:
@@ -84,6 +90,7 @@ class SkirmishDamageService:
                     # through was stopped by the armour, which is a different thing entirely and used
                     # to be recorded as the same zero
                     outcome=attack.outcome if attack.outcome is not None else BlowOutcomeChoices.OUTCOME_ABSORBED,
+                    initiative=self.initiative,
                 )
             )
 

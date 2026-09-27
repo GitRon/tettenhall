@@ -1,23 +1,36 @@
+{# Both accounts of the fight, rendered every time: which one shows is the tab bar's choice, kept on #}
+{# the "group" around the container this fragment is swapped into - see "skirmish_fight.html" - so a #}
+{# finished round never throws the player back to the tab he left. #}
+
 {# The newest round on top, so a fight that has run for twenty rounds opens on the one just fought #}
 {# instead of on the one the player has long stopped caring about. Inside a round the lines stay in #}
 {# the order they were struck - see "BattleLog". #}
 {# The heading is the round's boundary line, which the grouping consumes rather than renders. #}
-{% for log_round in battle_log.round_list %}
-    <div class="mb-2.5">
-        <div class="text-sm uppercase leading-snug text-ink-muted">Round {{ log_round.number }}</div>
-        {# The lines where a man was taken out of the fight are the only ones marked. The swings and #}
-        {# the misses stay plain - twenty marked lines mark nothing. #}
-        {# Three weights, because losing a man and felling one are both worth reading and are not the #}
-        {# same news: his own in danger, theirs in success, and neither on a fight between two rivals #}
-        {# he is only watching, where colouring a stranger's death as a gain would be a lie. #}
-        {% for log in log_round.line_list %}
-            {% if log.is_casualty %}
-                <div class="{% if not player_faction_id %}text-ink-muted{% elif log.faction_id == player_faction_id %}text-blood{% else %}text-ink{% endif %}">
-                    <i class="fa-solid {{ log.icon }}"></i> <strong>{{ log.message }}</strong>
+<div class="group-data-[log-tab=tally]:hidden">
+    {% if battle_log.round_list and not battle_log.has_saga %}
+        <p class="text-ink-muted">This fight was fought before its saga was kept. Its account is in the Tally.</p>
+    {% else %}
+        {# A round the saga has nothing to tell of gets no heading of its own #}
+        {% for log_round in battle_log.round_list %}
+            {% if log_round.saga_line_list %}
+                <div class="mb-2.5">
+                    <div class="text-sm uppercase leading-snug text-ink-muted">Round {{ log_round.number }}</div>
+                    {% for log in log_round.saga_line_list %}
+                        {% include 'skirmish/battle_history/components/log_line.html' with text=log.saga %}
+                    {% endfor %}
                 </div>
-            {% else %}
-                <div>{{ log.message }}</div>
             {% endif %}
         {% endfor %}
-    </div>
-{% endfor %}
+    {% endif %}
+</div>
+
+<div class="hidden group-data-[log-tab=tally]:block">
+    {% for log_round in battle_log.round_list %}
+        <div class="mb-2.5">
+            <div class="text-sm uppercase leading-snug text-ink-muted">Round {{ log_round.number }}</div>
+            {% for log in log_round.line_list %}
+                {% include 'skirmish/battle_history/components/log_line.html' with text=log.message %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
