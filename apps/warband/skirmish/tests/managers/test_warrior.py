@@ -344,6 +344,15 @@ def test_withdraw_from_the_fight_takes_his_nerve_his_ceiling_and_his_condition()
 
 
 @pytest.mark.django_db
+def test_withdraw_from_the_fight_is_a_cut_that_leaves_the_mark_standing():
+    warrior = WarriorFactory(max_morale=20)
+
+    result = Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
+
+    assert result.peak_max_morale == 20
+
+
+@pytest.mark.django_db
 def test_withdraw_from_the_fight_leaves_a_warrior_the_monthly_sweep_can_reach():
     """
     The state a retreat ends in has to be the state a rout ends in, or the man never comes back.
@@ -539,6 +548,73 @@ def test_increase_max_morale_floors_the_gain_at_one_point():
 
 
 @pytest.mark.django_db
+def test_increase_max_morale_carries_the_mark_along_past_it():
+    warrior = WarriorFactory(max_morale=20)
+
+    result = Warrior.objects.increase_max_morale(obj=warrior, gained_max_morale_in_percent=0.2)
+
+    assert result.peak_max_morale == 24
+
+
+@pytest.mark.django_db
+def test_increase_max_morale_leaves_the_mark_above_a_ceiling_that_stays_under_it():
+    warrior = WarriorFactory(max_morale=10, peak_max_morale=20)
+
+    result = Warrior.objects.increase_max_morale(obj=warrior, gained_max_morale_in_percent=0.2)
+
+    assert result.peak_max_morale == 20
+
+
+@pytest.mark.django_db
+def test_reduce_max_morale_leaves_the_mark_where_it_was():
+    warrior = WarriorFactory(max_morale=20)
+
+    result = Warrior.objects.reduce_max_morale(obj=warrior, lost_max_morale_in_percent=0.25)
+
+    assert (result.max_morale, result.peak_max_morale) == (15, 20)
+
+
+@pytest.mark.django_db
+def test_restore_max_morale_mends_a_share_of_the_ceiling():
+    warrior = WarriorFactory(max_morale=10, peak_max_morale=20)
+
+    result = Warrior.objects.restore_max_morale(obj=warrior, restored_max_morale_in_percent=0.3)
+
+    assert result.max_morale == 13
+
+
+@pytest.mark.django_db
+def test_restore_max_morale_never_carries_him_past_the_mark():
+    warrior = WarriorFactory(max_morale=18, peak_max_morale=20)
+
+    result = Warrior.objects.restore_max_morale(obj=warrior, restored_max_morale_in_percent=0.3)
+
+    assert (result.max_morale, result.peak_max_morale) == (20, 20)
+
+
+@pytest.mark.django_db
+def test_restore_max_morale_floors_at_a_point_that_stops_at_the_mark():
+    """
+    A tenth of four rounds to nothing, so the floor gives the point - and the point is exactly what
+    he is missing, so it lands him on the mark rather than one past it.
+    """
+    warrior = WarriorFactory(max_morale=4, peak_max_morale=5)
+
+    result = Warrior.objects.restore_max_morale(obj=warrior, restored_max_morale_in_percent=0.1)
+
+    assert result.max_morale == 5
+
+
+@pytest.mark.django_db
+def test_restore_max_morale_gives_a_whole_man_nothing():
+    warrior = WarriorFactory(max_morale=20)
+
+    result = Warrior.objects.restore_max_morale(obj=warrior, restored_max_morale_in_percent=0.3)
+
+    assert result.max_morale == 20
+
+
+@pytest.mark.django_db
 def test_increase_morale_adds_the_gained_points():
     warrior = WarriorFactory(current_morale=10, max_morale=20)
 
@@ -594,6 +670,26 @@ def test_apply_level_up_growth_floors_every_gain_at_one_point():
     result = Warrior.objects.apply_level_up_growth(obj=warrior)
 
     assert result == {"strength": 1, "dexterity": 1, "max_health": 1, "max_morale": 1, "monthly_salary": 15}
+
+
+@pytest.mark.django_db
+def test_apply_level_up_growth_carries_the_mark_along():
+    warrior = WarriorFactory(max_morale=20)
+
+    Warrior.objects.apply_level_up_growth(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert warrior.peak_max_morale == 22
+
+
+@pytest.mark.django_db
+def test_apply_level_up_growth_leaves_a_mark_the_new_ceiling_stays_under():
+    warrior = WarriorFactory(max_morale=10, peak_max_morale=20)
+
+    Warrior.objects.apply_level_up_growth(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert (warrior.max_morale, warrior.peak_max_morale) == (11, 20)
 
 
 @pytest.mark.django_db

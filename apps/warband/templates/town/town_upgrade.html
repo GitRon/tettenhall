@@ -3,6 +3,41 @@
 {% block content %}
     <h1>Buildings</h1>
 
+    {# The feast is thrown in the hall, so it is priced on the page the hall is built from #}
+    <div class="mb-7 box-border bg-ground text-ink-muted border border-rule">
+        <div class="border-b border-rule px-[30px] py-[15px]">
+            <h3 class="mb-0 text-2xl leading-snug text-ink">Feast</h3>
+            <p class="mt-0 text-sm leading-snug text-ink-muted">Once a month, for the whole war band</p>
+        </div>
+        <div class="p-[30px]">
+            {% if feast.can_feast %}
+                <p class="mt-0">
+                    A man whose nerve was cut has his ceiling mended by {{ feast.restored_percent }}% of what he
+                    holds, never past the highest he has held. A whole man eats and gains nothing, and an unpaid
+                    man is fed but not lifted.
+                </p>
+                <p class="mb-0 font-mono text-label uppercase tracking-label text-ink">
+                    {{ feast.head_count }} men &times; {{ feast.price_per_head }} silver = {{ feast.costs }} silver
+                </p>
+            {% else %}
+                <p class="my-0">A town without a hall has nowhere to feast.</p>
+            {% endif %}
+        </div>
+        <div class="border-t border-rule px-[30px] py-[15px]">
+            {% if not feast.can_feast %}
+                <button class="box-border inline-block border py-[9px] text-sm uppercase px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Build a hall to feast</button>
+            {% elif feast.has_feasted %}
+                <button class="box-border inline-block border py-[9px] text-sm uppercase px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Already feasted this month</button>
+            {% elif not feast.can_afford %}
+                <button class="box-border inline-block border py-[9px] text-sm uppercase px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>A feast costs {{ feast.costs }} silver</button>
+            {% else %}
+                <button hx-post="{% url "warband:throw-feast-view" %}"
+                        hx-disabled-elt="this"
+                        class="box-border inline-block cursor-pointer border py-[9px] text-sm uppercase px-[30px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Feast for {{ feast.costs }} silver</button>
+            {% endif %}
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 gap-7 md:grid-cols-2">
         {% for building in building_list %}
             <div>

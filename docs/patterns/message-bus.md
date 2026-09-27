@@ -111,7 +111,7 @@ are reported in are game rules, so they live where something other than one view
 overlapping requests - a double click is enough - both pass the service, because both read the same state
 before either writes. The handler's first write is the guard again, as a conditional `UPDATE ... WHERE`
 or a filtered delete of the row that says the thing is still there, and it returns `None` when that write
-touches nothing: `handle_upgrade_town_building`, `handle_prepare_month`, `handle_buy_item`,
+touches nothing: `handle_upgrade_town_building`, `handle_throw_feast`, `handle_prepare_month`, `handle_buy_item`,
 `handle_recruit_pub_mercenary` and the captive handlers all have this shape. A read of the instance the
 view passed in is not a re-check - it is the same stale read. The button carries `hx-disabled-elt` as
 well, which stops most second clicks before they are sent, and none that arrive from a second tab.

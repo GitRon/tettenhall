@@ -1,8 +1,8 @@
 from queuebie import message_registry
 from queuebie.messages import Event
 
-from apps.warband.town.messages.commands.town import UpgradeTownBuilding
-from apps.warband.town.messages.events.town import TownBuildingUpgraded
+from apps.warband.town.messages.commands.town import ThrowFeast, UpgradeTownBuilding
+from apps.warband.town.messages.events.town import FeastThrown, TownBuildingUpgraded
 from apps.warband.town.models import Town
 
 
@@ -28,6 +28,28 @@ def handle_upgrade_town_building(*, context: UpgradeTownBuilding) -> Event | Non
         faction=context.faction,
         building_type=context.building_type,
         new_level=context.new_level,
+        costs=context.costs,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=ThrowFeast)
+def handle_throw_feast(*, context: ThrowFeast) -> Event | None:
+    # The once-a-month rule as one conditional UPDATE, for the reason the building upgrade above gives:
+    # a double-clicked button passes the view's check twice, and only one of the two may be charged
+    feasted_rows = (
+        Town.objects.filter(pk=context.town.pk).exclude(last_feast_at=context.month).update(last_feast_at=context.month)
+    )
+    if not feasted_rows:
+        return None
+
+    context.town.last_feast_at = context.month
+
+    return FeastThrown(
+        town=context.town,
+        faction=context.faction,
+        warrior_list=context.warrior_list,
+        restored_share=context.restored_share,
         costs=context.costs,
         month=context.month,
     )

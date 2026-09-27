@@ -129,6 +129,41 @@ def test_handle_progress_warrior_training_upgrades_maximum_value_on_full_progres
 
 
 @pytest.mark.django_db
+def test_handle_progress_warrior_training_carries_the_morale_mark_along():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, max_morale=20, morale_progress=80)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    with (
+        mock.patch("apps.warband.training.models.training.random.choice", return_value="morale"),
+        mock.patch("apps.warband.training.models.training.random.gauss", return_value=30),
+    ):
+        handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
+
+    warrior.refresh_from_db()
+    assert warrior.peak_max_morale == 21
+
+
+@pytest.mark.django_db
+def test_handle_progress_warrior_training_leaves_a_mark_the_ceiling_stays_under():
+    """
+    A man cut from twenty to ten who finishes a course is at eleven, still nine short of what he was.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, max_morale=10, peak_max_morale=20, morale_progress=80)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    with (
+        mock.patch("apps.warband.training.models.training.random.choice", return_value="morale"),
+        mock.patch("apps.warband.training.models.training.random.gauss", return_value=30),
+    ):
+        handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
+
+    warrior.refresh_from_db()
+    assert (warrior.max_morale, warrior.peak_max_morale) == (11, 20)
+
+
+@pytest.mark.django_db
 def test_handle_progress_warrior_training_stores_a_rounded_improvement():
     """
     The progress bar is a positive small integer, so a float improvement would not survive a

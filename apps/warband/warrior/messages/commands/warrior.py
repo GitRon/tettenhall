@@ -64,6 +64,9 @@ class ChangeWarriorMaxMorale(Command):
     faction: Faction
     share: float
     month: int
+    # A repair rather than growth: the raise stops at the highest ceiling he has held. What a feast
+    # asks for, where a relic in the hall asks for growth that moves the mark along with it
+    restores_toward_peak: bool = False
 
 
 @dataclass(kw_only=True)

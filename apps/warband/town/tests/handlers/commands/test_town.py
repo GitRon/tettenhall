@@ -1,8 +1,9 @@
 import pytest
 
-from apps.warband.town.handlers.commands.town import handle_upgrade_town_building
-from apps.warband.town.messages.commands.town import UpgradeTownBuilding
-from apps.warband.town.messages.events.town import TownBuildingUpgraded
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.handlers.commands.town import handle_throw_feast, handle_upgrade_town_building
+from apps.warband.town.messages.commands.town import ThrowFeast, UpgradeTownBuilding
+from apps.warband.town.messages.events.town import FeastThrown, TownBuildingUpgraded
 from apps.warband.town.models import Town
 from apps.warband.town.tests.factories.town import TownFactory
 
@@ -101,3 +102,32 @@ def test_handle_upgrade_town_building_upgrades_the_building_named_by_the_message
 
     town.refresh_from_db()
     assert town.weaponsmith == Town.WeaponsmithChoices.WEAPONSMITH_SMALL
+
+
+@pytest.mark.django_db
+def test_handle_throw_feast_records_the_month_and_passes_the_table_on():
+    town = TownFactory(hall=Town.HallChoices.HALL_SMALL)
+    warrior = WarriorFactory(faction=town.faction)
+    context = ThrowFeast(town=town, faction=town.faction, warrior_list=[warrior], restored_share=0.1, costs=15, month=4)
+
+    result = handle_throw_feast(context=context)
+
+    assert result == FeastThrown(
+        town=town, faction=town.faction, warrior_list=[warrior], restored_share=0.1, costs=15, month=4
+    )
+    town.refresh_from_db()
+    assert town.last_feast_at == 4
+
+
+@pytest.mark.django_db
+def test_handle_throw_feast_ignores_a_second_feast_in_the_same_month():
+    """
+    Two overlapping clicks both pass the view's check. The UPDATE is what lets only one be charged.
+    """
+    town = TownFactory(hall=Town.HallChoices.HALL_SMALL, last_feast_at=4)
+
+    result = handle_throw_feast(
+        context=ThrowFeast(town=town, faction=town.faction, warrior_list=[], restored_share=0.1, costs=0, month=4)
+    )
+
+    assert result is None

@@ -550,6 +550,21 @@ def test_handle_change_warrior_max_morale_lowers_the_ceiling():
 
 
 @pytest.mark.django_db
+def test_handle_change_warrior_max_morale_mends_toward_the_mark_when_asked_for_a_repair():
+    warrior = WarriorFactory(max_morale=18, peak_max_morale=20)
+
+    result = handle_change_warrior_max_morale(
+        context=ChangeWarriorMaxMorale(
+            warrior=warrior, faction=warrior.faction, share=0.3, month=3, restores_toward_peak=True
+        )
+    )
+
+    assert result == WarriorMaxMoraleChanged(warrior=warrior, faction=warrior.faction, changed_max_morale=2, month=3)
+    warrior.refresh_from_db()
+    assert warrior.max_morale == 20
+
+
+@pytest.mark.django_db
 def test_handle_award_earned_nickname_names_a_man_who_has_just_become_exceptional():
     """
     Twenty strength against a mean of ten and a spread of five is two spreads out, and the factory

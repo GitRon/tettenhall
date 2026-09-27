@@ -5,7 +5,10 @@ from django.urls import reverse
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
 
 
@@ -57,6 +60,7 @@ def test_town_upgrade_view_puts_the_effects_of_both_levels_next_to_each_other(lo
     assert _building(response, "hall")["effect_list"] == [
         {"label": "Monthly income", "current": "50 silver", "next": "300 silver"},
         {"label": "Men needed for full income", "current": "0", "next": "1"},
+        {"label": "A feast mends a cut ceiling by", "current": "No feasts", "next": "10%"},
     ]
 
 
@@ -71,6 +75,7 @@ def test_town_upgrade_view_leaves_out_an_effect_the_next_level_does_not_move(log
     assert [effect["label"] for effect in _building(response, "hall")["effect_list"]] == [
         "Monthly income",
         "Men needed for full income",
+        "A feast mends a cut ceiling by",
     ]
 
 
@@ -90,6 +95,8 @@ def test_town_upgrade_view_keeps_every_effect_at_the_maximum_level(logged_in_cli
         {"label": "Monthly income", "current": "750 silver", "next": "750 silver"},
         {"label": "Men needed for full income", "current": "3", "next": "3"},
         {"label": "Mercenaries in the pub", "current": "3", "next": "3"},
+        {"label": "A feast mends a cut ceiling by", "current": "30%", "next": "30%"},
+        {"label": "Feast per man", "current": "15 silver", "next": "15 silver"},
     ]
 
 
@@ -389,3 +396,100 @@ def test_upgrade_building_view_does_not_upgrade_a_town_of_another_savegame(logge
     assert savegame.player_faction.town.hall == Town.HallChoices.HALL_SMALL
     foreign_faction.town.refresh_from_db()
     assert foreign_faction.town.hall == Town.HallChoices.HALL_NONE
+
+
+def _feast_ready_town(current_savegame, *, silver: int = 900) -> Town:
+    town = current_savegame.player_faction.town
+    town.hall = Town.HallChoices.HALL_MEDIUM
+    town.save()
+    TransactionFactory(faction=current_savegame.player_faction, amount=silver)
+
+    return town
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_prices_the_feast_for_the_war_band_as_it_stands(logged_in_client, current_savegame):
+    _feast_ready_town(current_savegame)
+    faction = current_savegame.player_faction
+    WarriorFactory.create_batch(2, faction=faction, savegame=current_savegame, culture=faction.culture)
+    head_count = faction.warriors.exclude_dead().count()
+
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    assert response.context["feast"]["costs"] == head_count * 15
+
+
+@pytest.mark.django_db
+def test_throw_feast_view_mends_the_cut_charges_the_table_and_logs_it(logged_in_client, current_savegame):
+    """
+    Flow test through the whole chain: the month guard, the mending, the bill and the log line.
+    """
+    _feast_ready_town(current_savegame)
+    faction = current_savegame.player_faction
+    cut = WarriorFactory(
+        faction=faction, savegame=current_savegame, culture=faction.culture, max_morale=10, peak_max_morale=20
+    )
+    head_count = faction.warriors.exclude_dead().count()
+
+    response = logged_in_client.post(reverse("warband:throw-feast-view"))
+
+    assert response.status_code == 200
+    cut.refresh_from_db()
+    assert (
+        cut.max_morale,
+        Transaction.objects.current_balance(faction_id=faction.id),
+        PlayerMonthLog.objects.filter(faction=faction, kind=PlayerMonthLog.KindChoices.KIND_FEAST_THROWN).count(),
+    ) == (12, 900 - head_count * 15, 1)
+
+
+@pytest.mark.django_db
+def test_throw_feast_view_neither_feeds_nor_charges_for_a_captive_or_the_dead(logged_in_client, current_savegame):
+    _feast_ready_town(current_savegame)
+    faction = current_savegame.player_faction
+    head_count = faction.warriors.exclude_dead().count()
+    captive = WarriorFactory(
+        faction=None, savegame=current_savegame, culture=faction.culture, max_morale=10, peak_max_morale=20
+    )
+    faction.captured_warriors.add(captive)
+    WarriorFactory(
+        faction=faction,
+        savegame=current_savegame,
+        culture=faction.culture,
+        condition=Warrior.ConditionChoices.CONDITION_DEAD,
+    )
+
+    logged_in_client.post(reverse("warband:throw-feast-view"))
+
+    captive.refresh_from_db()
+    assert (captive.max_morale, Transaction.objects.current_balance(faction_id=faction.id)) == (
+        10,
+        900 - head_count * 15,
+    )
+
+
+@pytest.mark.django_db
+def test_throw_feast_view_refuses_a_town_without_a_hall(logged_in_client, current_savegame):
+    """
+    The button is disabled on the page, and a post that reaches the view anyway is refused there too.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=900)
+
+    response = logged_in_client.post(reverse("warband:throw-feast-view"))
+
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [
+        "There is no hall to feast in. Build one first."
+    ]
+    assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == 900
+
+
+@pytest.mark.django_db
+def test_throw_feast_view_refuses_a_second_feast_in_the_same_month(logged_in_client, current_savegame):
+    _feast_ready_town(current_savegame)
+    logged_in_client.post(reverse("warband:throw-feast-view"))
+    balance_after_the_first = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
+
+    logged_in_client.post(reverse("warband:throw-feast-view"))
+
+    assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == (
+        balance_after_the_first
+    )

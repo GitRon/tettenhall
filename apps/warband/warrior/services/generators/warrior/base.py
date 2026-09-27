@@ -168,6 +168,7 @@ class BaseWarriorGenerator:
             health_spread=self.HEALTH_SIGMA,
             current_morale=max_morale,
             max_morale=max_morale,
+            peak_max_morale=max_morale,
             morale_progress=morale_progress,
             morale_baseline=self.MORALE_MU,
             morale_spread=self.MORALE_SIGMA,

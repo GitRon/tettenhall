@@ -30,6 +30,8 @@ class WarriorFactory(DjangoModelFactory):
     max_health = 20
     current_morale = 20
     max_morale = 20
+    # A man never cut: the mark stands where his ceiling does, which is where every warrior starts
+    peak_max_morale = factory.SelfAttribute("max_morale")
     # Every baseline matches the value beside it, so the factory's warrior sits exactly at his kind's
     # mean in all four attributes and earns no epithet. A test that wants one moves one attribute
     health_baseline = 20

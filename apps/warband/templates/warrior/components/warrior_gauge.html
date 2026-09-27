@@ -7,5 +7,9 @@
     so "Low" reads as a man who has been hurt rather than as a man who was never worth much. Against
     his own maximum it would say nothing at all about him: every unharmed warrior in the game would
     come out the same.
+
+    "peak" is optional and only morale passes it: the highest ceiling he has held. It shows only while
+    the ceiling sits below it, so a whole man carries no third number and the one who was cut reads as
+    down from what he was - the man a feast is for.
 {% endcomment %}
-{% if knowledge.numbers_are_exact %}{{ current }}/{{ maximum }}{% else %}{{ current|obscurify:baseline }}{% endif %}
+{% if knowledge.numbers_are_exact %}{{ current }}/{{ maximum }}{% if peak and maximum < peak %} <span title="The highest his nerve has stood">(was {{ peak }})</span>{% endif %}{% else %}{{ current|obscurify:baseline }}{% endif %}
