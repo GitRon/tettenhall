@@ -142,6 +142,29 @@ def test_is_possible_for_a_cost_the_treasury_does_not_cover():
     assert HallRoofFallsIn.is_possible(faction=faction) is False
 
 
+@pytest.mark.django_db
+def test_is_possible_for_a_cost_the_wages_leave_no_room_for():
+    """
+    The salary run bills the same purse later in the month, from the balance the month opened with.
+    Against the raw balance this cost would pass, the wages would pass too, and the two together
+    would end the month in the red.
+    """
+    faction = FactionFactory()
+    WarriorFactory(faction=faction, monthly_salary=100)
+    TransactionFactory(faction=faction, amount=-HallRoofFallsIn.SILVER_CHANGE + 99)
+
+    assert HallRoofFallsIn.is_possible(faction=faction) is False
+
+
+@pytest.mark.django_db
+def test_is_possible_for_a_cost_the_wages_leave_room_for():
+    faction = FactionFactory()
+    WarriorFactory(faction=faction, monthly_salary=100)
+    TransactionFactory(faction=faction, amount=-HallRoofFallsIn.SILVER_CHANGE + 100)
+
+    assert HallRoofFallsIn.is_possible(faction=faction) is True
+
+
 def test_is_question_for_an_entry_declaring_options():
     assert AbbotAsksForLead.is_question() is True
 
