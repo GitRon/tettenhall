@@ -289,6 +289,15 @@ def handle_warrior_attacks_warrior(
     *,
     context: skirmish.WarriorAttacksWarrior,
 ) -> list[Event] | Event:
+    # Every pairing of the round is drawn before its first blow lands, and a man striking unopposed
+    # picks his target out of the whole other side - so he can fall on somebody his own pair has
+    # already put down, or be put down himself before his turn comes. Read from the database rather
+    # than off the message, whose instances are the ones the round was drawn with. A blow at a man
+    # who is no longer standing is not thrown: struck again, the dead would die a second time in the
+    # log, and a lighter blow would even wake him as merely unconscious.
+    if Warrior.objects.filter(id__in=(context.attacker.id, context.defender.id)).filter_healthy().count() < 2:
+        return []
+
     service = SkirmishDamageService(
         skirmish=context.skirmish,
         round_number=context.round_number,
