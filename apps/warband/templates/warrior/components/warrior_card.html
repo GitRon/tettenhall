@@ -97,11 +97,11 @@
             {% if knowledge.gear_is_visible %}
                 <tr>
                     <td>Weapon</td>
-                    <td>{{ warrior.weapon|default_if_none:'-' }}</td>
+                    <td>{% include 'item/components/item_inline.html' with item=warrior.weapon %}</td>
                 </tr>
                 <tr>
                     <td>Armor</td>
-                    <td>{{ warrior.armor|default_if_none:'-' }}</td>
+                    <td>{% include 'item/components/item_inline.html' with item=warrior.armor %}</td>
                 </tr>
             {% endif %}
         </table>

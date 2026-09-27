@@ -12,7 +12,7 @@
                     {{ item.display_name }}
                 </h3>
                 <p class="mt-0 text-sm leading-snug text-ink-muted">
-                    {% include 'item/components/item_stats_meta.html' with item=item %}
+                    {% include 'item/components/item_stats_meta.html' with item=item show_price=is_player_faction %}
                 </p>
             </div>
         </div>

@@ -1,12 +1,19 @@
 {% comment %}
-    The three figures every item card carries, in one place because the buy card and the sell card
-    print exactly the same line.
+    The figures an item carries wherever it is shown - the shop, the stores and on the man wearing
+    it - in one place so that an axe reads the same in all of them.
+
+    The price only where the item can change hands for it, so a caller opts in with "show_price": on
+    the shop's shelf and in the player's own stores. Gear on a man cannot be sold without taking it
+    off him first, and a rival's stores are not the player's to sell from, so a price there is a
+    number with nothing to do with it.
 
     Each pair is wrapped in a titled span: the icons are standing in for units, and a die beside a
     bare "1.5" says nothing about what the number counts. The price needs none - it writes its own
     unit out.
 {% endcomment %}
-<i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
+{% if show_price %}
+    <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
+{% endif %}
 <span title="{% if item.is_weapon %}Damage{% else %}Protection{% endif %} roll">
     {% if item.is_weapon %}
         {% include 'common/components/svg_icon.html' with icon_name='axe-sword' %}
