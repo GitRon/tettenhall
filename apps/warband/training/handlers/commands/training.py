@@ -30,7 +30,7 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
 
     # Condition is the whole test, because standing in a fight is not a state a warrior can be in
     # while this runs: the advance is refused outright when a skirmish is unresolved
-    # ("FinishMonthView", apps/month/views.py:27), and nothing the advance itself raises creates one -
+    # ("FinishMonthView"), and nothing the advance itself raises creates one -
     # both paths into a skirmish are player clicks, accepting a quest and marching on a rival.
     warriors_to_train = context.faction.warriors.filter_healthy()
 
@@ -49,6 +49,11 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
             upgraded_attribute_name = f"max_{attribute}" if attribute in ("morale", "health") else attribute
             setattr(warrior, upgraded_attribute_name, getattr(warrior, upgraded_attribute_name) + 1)
             updated_fields.append(upgraded_attribute_name)
+
+            # A finished course is growth, so a morale ceiling raised past the mark takes the mark along
+            if attribute == "morale" and warrior.max_morale > warrior.peak_max_morale:
+                warrior.peak_max_morale = warrior.max_morale
+                updated_fields.append("peak_max_morale")
 
             # Reset progress bar after upgrade
             setattr(warrior, attribute_progress_name, 0)

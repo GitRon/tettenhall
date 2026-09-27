@@ -25,7 +25,7 @@
                     <i class="fa-solid fa-heart"></i>
                     <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</i>&nbsp;
                     <i class="fa-solid fa-bolt"></i>
-                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</i>&nbsp;
+                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale peak=warrior.peak_max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</i>&nbsp;
                     {# The condition is a state, not a scale: it says the warrior is still on his #}
                     {# feet, and the health beside it says at what cost. #}
                     {% if warrior.is_healthy %}

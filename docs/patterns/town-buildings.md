@@ -44,7 +44,7 @@ holding that level's numbers:
 - **A number that differs per warrior or per item is a column, not a constant.** `Warrior.strength_baseline`
   is the archetype mean a man's strength is measured against, written by the generator that drew him: one
   constant on the attack service cannot sit on three archetype means at once.
-- **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots, weaponsmith →
+- **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots + how much a feast mends, weaponsmith →
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling, fortification →
   the `fortification_strength` a skirmish staged by a march on the town opens with (0 / 20 / 35 / 50). The
   fortification's defence bonus is not a lever: it is `SkirmishActionService.FORTIFICATION_DEFENSE_MULTIPLIER`,
@@ -83,6 +83,19 @@ holding that level's numbers:
   the one the player cannot do anything about until it is over — naming the price instead sends them off
   to raise silver they may not spend yet. The price is a disabled button on the page anyway, so a click
   reaching the view at all means the page was stale.
+- **The war band feasts in the hall, once a month and all of it at once** (#173). A level's
+  `FEAST_RESTORED_SHARE` is the share of a man's current morale ceiling a feast gives back, mended toward
+  `Warrior.peak_max_morale` — the highest ceiling he has held — and never past it; `NoHall` stands at 0
+  and cannot feast. The price is `FEAST_PRICE_PER_HEAD` times every living man under the banner, the
+  leader and the unpaid included, because the whole roster eats: a man already at his mark is fed and
+  charged and gains nothing, which is what keeps the feast a repair rather than nerve for sale.
+  Captives have no banner and are not fed; an unpaid man is fed but not lifted
+  (`Warrior.is_mended_by_a_feast`). `Town.last_feast_at` guards the month the way
+  `last_constructed_building_at` guards building — asked by `get_feast_refusal`
+  (`apps/warband/town/services/feast.py`) for the message, re-checked as a conditional `UPDATE` in
+  `handle_throw_feast` so a double-click is charged once. The mending goes through
+  `ChangeWarriorMaxMorale(restores_toward_peak=True)`: every other raise of the ceiling moves the mark
+  along with it, every cut leaves the mark standing.
 - **A rival's town is created at chosen levels, and stays there.** The player starts at every default;
   a rival is handed the sanctuary level named by `NPC_STARTING_SANCTUARY_LEVEL`
   (`apps/warband/town/buildings/sanctuary.py`), because the healing ceiling is the one lever that decides

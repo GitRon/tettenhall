@@ -83,10 +83,13 @@
                 <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
                     {% for spoil in report.items_won %}
                         <li>
-                            {% include 'common/components/svg_icon.html' with icon_name=spoil.item.type.svg_image_name %}
-                            {{ spoil.item.display_name }}
+                            {# The icon comes off the item's type, and the item may be gone by now #}
+                            {% if spoil.item %}
+                                {% include 'common/components/svg_icon.html' with icon_name=spoil.item.type.svg_image_name %}
+                            {% endif %}
+                            {{ spoil.name }}
                             <span class="text-sm leading-snug text-ink-muted">
-                                {{ spoil.item.type.base_value }}{{ spoil.item.get_modifier_as_string }}
+                                {{ spoil.dice }}
                                 {% if spoil.taken_from %}· from {{ spoil.taken_from }}{% endif %}
                             </span>
                             {% if spoil.is_upgrade %}
@@ -126,7 +129,7 @@
                 <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
                     {% for spoil in report.items_lost %}
                         <li class="text-ink-muted">
-                            {{ spoil.item.display_name }}
+                            {{ spoil.item_name }}
                             {% if spoil.warrior %}<span class="text-sm leading-snug text-ink-muted">· off {{ spoil.warrior }}</span>{% endif %}
                         </li>
                     {% endfor %}

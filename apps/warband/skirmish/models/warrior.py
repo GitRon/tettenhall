@@ -135,6 +135,11 @@ class Warrior(models.Model):
 
     current_morale = models.SmallIntegerField("Current morale")
     max_morale = models.PositiveSmallIntegerField("Maximum morale")
+    # The highest ceiling this man has ever held. Every raise that takes "max_morale" above it moves
+    # it along - a level, a training course, a relic - while a cut leaves it standing, so the gap
+    # between the two is exactly what he has lost. A feast mends toward it and never past it, which
+    # is what keeps the feast a repair rather than a way to buy nerve.
+    peak_max_morale = models.PositiveSmallIntegerField("Highest maximum morale")
     morale_progress = models.PositiveSmallIntegerField("Morale progress", default=0)
     morale_baseline = models.PositiveSmallIntegerField("Morale baseline")
     morale_spread = models.PositiveSmallIntegerField("Morale spread")
@@ -173,13 +178,14 @@ class Warrior(models.Model):
         default=ConditionChoices.CONDITION_HEALTHY,
     )
 
+    # A deleted item leaves the man empty-handed rather than taking him with it
     weapon = models.OneToOneField(
         Item,
         verbose_name="Weapon",
         related_name="warrior_weapon",
         null=True,
         blank=True,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
     )
     armor = models.OneToOneField(
         Item,
@@ -187,7 +193,7 @@ class Warrior(models.Model):
         related_name="warrior_armor",
         null=True,
         blank=True,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
     )
 
     objects = WarriorManager()
@@ -353,6 +359,23 @@ class Warrior(models.Model):
     @property
     def is_healthy(self) -> bool:
         return self.condition == self.ConditionChoices.CONDITION_HEALTHY
+
+    @property
+    def has_lost_max_morale(self) -> bool:
+        # His ceiling sits below the highest he has held: the scar the card shows and a feast mends
+        return self.max_morale < self.peak_max_morale
+
+    @property
+    def is_mended_by_a_feast(self) -> bool:
+        """
+        Whether sitting this man down at a feast gives him any nerve back.
+
+        Only a man carrying a cut has anything to mend, and an unpaid one is fed but not lifted: being
+        broke has to cost something, and a feast would otherwise buy that cost straight back - the same
+        guard the monthly morale refill keeps. One rule for the reaction that mends and the log line
+        that counts, so the two cannot come to disagree about who was helped.
+        """
+        return self.has_lost_max_morale and self.unpaid_months == 0
 
     @property
     def slavery_selling_price(self) -> int:

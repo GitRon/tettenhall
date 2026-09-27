@@ -41,7 +41,7 @@ class SkirmishCasualtyAdmin(admin.ModelAdmin):
 
 @admin.register(SkirmishSpoil)
 class SkirmishSpoilAdmin(admin.ModelAdmin):
-    list_display = ("skirmish", "faction", "kind", "item", "warrior", "amount")
+    list_display = ("skirmish", "faction", "kind", "item_name", "warrior", "amount")
     list_filter = ("kind", "skirmish")
 
 

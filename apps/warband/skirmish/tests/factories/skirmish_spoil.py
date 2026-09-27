@@ -14,3 +14,9 @@ class SkirmishSpoilFactory(DjangoModelFactory):
     faction = factory.SelfAttribute("skirmish.attacking_faction")
     kind = SkirmishSpoil.KindChoices.KIND_SILVER_LOOTED
     amount = 10
+    item = None
+    # The snapshot "create_record" writes, so a spoil built here with an item names it the same way
+    item_name = factory.LazyAttribute(lambda spoil: spoil.item.display_name if spoil.item else "")
+    item_dice = factory.LazyAttribute(
+        lambda spoil: f"{spoil.item.type.base_value}{spoil.item.get_modifier_as_string()}" if spoil.item else ""
+    )

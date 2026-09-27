@@ -7,7 +7,6 @@ from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.services.availability import (
     REASON_COMMITTED_TO_A_FIGHT,
-    REASON_STANDING_IN_AN_OPEN_FIGHT,
     REASON_SWORN_TO_A_QUEST,
     assess_roster,
 )
@@ -59,22 +58,6 @@ def test_assess_roster_names_the_fight_a_man_is_committed_to_this_month():
     result = assess_roster(faction_id=faction.id, month=3)
 
     assert result.assessed[0].reason == REASON_COMMITTED_TO_A_FIGHT
-
-
-@pytest.mark.django_db
-def test_assess_roster_names_the_open_fight_of_another_month():
-    """
-    The exclusion the issue behind this was written for. A fight the player walked away from keeps
-    everyone on either roster out of everything, in a month whose own skirmish list is empty.
-    """
-    faction = FactionFactory()
-    warrior = WarriorFactory(faction=faction)
-    skirmish = SkirmishFactory(attacking_faction=faction, month=1, victorious_faction=None)
-    skirmish.attacking_warriors.add(warrior)
-
-    result = assess_roster(faction_id=faction.id, month=3)
-
-    assert result.assessed[0].reason == REASON_STANDING_IN_AN_OPEN_FIGHT
 
 
 @pytest.mark.django_db

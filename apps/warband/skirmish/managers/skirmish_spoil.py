@@ -14,6 +14,8 @@ class SkirmishSpoilManager(manager.Manager):
             faction=faction,
             kind=kind,
             item=item,
+            item_name=item.display_name if item else "",
+            item_dice=f"{item.type.base_value}{item.get_modifier_as_string()}" if item else "",
             warrior=warrior,
             amount=amount,
             description=description,

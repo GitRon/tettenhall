@@ -8,29 +8,28 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.warrior.services.availability import REASON_STANDING_IN_AN_OPEN_FIGHT
+from apps.warband.warrior.services.availability import REASON_COMMITTED_TO_A_FIGHT
 
 
 @pytest.mark.django_db
-def test_assignable_warriors_offer_a_warrior_still_in_last_month_s_fight_with_his_reason():
+def test_assignable_warriors_offer_a_warrior_in_this_month_s_fight_with_his_reason():
     """
-    The exclusion this form used to perform silently. He is drawn now, greyed and carrying why - an
-    absence is a prompt to do nothing, where "he is standing in a fight nobody settled" is a prompt
-    to go and settle it.
+    He is drawn, greyed and carrying why, rather than left out - an absence is a prompt to do
+    nothing, where "committed to a fight this month" tells the player what is holding him.
     """
     savegame = SavegameFactory(current_month=2)
     faction = FactionFactory(savegame=savegame)
     committed_warrior = WarriorFactory(faction=faction)
     old_contract = QuestContractFactory(faction=faction, accepted_in_month=1)
     old_contract.assigned_warriors.add(committed_warrior)
-    open_skirmish = SkirmishFactory(attacking_faction=faction, month=1, victorious_faction=None)
+    open_skirmish = SkirmishFactory(attacking_faction=faction, month=2, victorious_faction=None)
     open_skirmish.attacking_warriors.add(committed_warrior)
 
     new_quest = QuestFactory(target_faction__savegame=savegame)
     form = QuestAcceptForm(quest_id=new_quest.id, player_faction_id=faction.id)
 
     assert list(form.fields["assigned_warriors"].queryset) == [committed_warrior]
-    assert form.roster.reasons_by_warrior_id == {committed_warrior.id: REASON_STANDING_IN_AN_OPEN_FIGHT}
+    assert form.roster.reasons_by_warrior_id == {committed_warrior.id: REASON_COMMITTED_TO_A_FIGHT}
 
 
 @pytest.mark.django_db

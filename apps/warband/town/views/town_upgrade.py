@@ -9,12 +9,19 @@ from apps.warband.savegame.mixins import PlayerFactionScopedQuerysetMixin, Runni
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.town.buildings import BUILDINGS
-from apps.warband.town.messages.commands.town import UpgradeTownBuilding
+from apps.warband.town.buildings.hall import Hall
+from apps.warband.town.messages.commands.town import ThrowFeast, UpgradeTownBuilding
 from apps.warband.town.models import Town
 from apps.warband.town.services.building_upgrade import (
     ALREADY_BUILT_THIS_MONTH_REFUSAL,
     UNAFFORDABLE_REFUSAL,
     get_building_upgrade_refusal,
+)
+from apps.warband.town.services.feast import (
+    ALREADY_FEASTED_THIS_MONTH_REFUSAL,
+    NO_HALL_REFUSAL,
+    UNAFFORDABLE_FEAST_REFUSAL,
+    get_feast_refusal,
 )
 
 
@@ -103,6 +110,26 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
 
         context.update({"building_list": building_list})
 
+        # The feast sits on the same page as the hall it is thrown in, priced for the war band as it
+        # stands, so the player reads the whole bill before he clicks rather than after. The card asks
+        # the refusal the feast itself asks, so a button can never offer a feast the click would refuse
+        hall = Hall.get_building_by_type(building_type=town.hall)
+        head_count = town.faction.warriors.exclude_dead().count()
+        feast_refusal = get_feast_refusal(town=town, head_count=head_count, current_savegame=current_savegame)
+        context.update(
+            {
+                "feast": {
+                    "can_feast": feast_refusal != NO_HALL_REFUSAL,
+                    "restored_percent": round(hall.FEAST_RESTORED_SHARE * 100),
+                    "head_count": head_count,
+                    "price_per_head": hall.FEAST_PRICE_PER_HEAD,
+                    "costs": hall.get_feast_price(head_count=head_count),
+                    "has_feasted": feast_refusal == ALREADY_FEASTED_THIS_MONTH_REFUSAL,
+                    "can_afford": feast_refusal != UNAFFORDABLE_FEAST_REFUSAL,
+                }
+            }
+        )
+
         return context
 
 
@@ -143,5 +170,40 @@ class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic
             )
         )
         messages.add_message(request, messages.SUCCESS, "Building upgraded.")
+
+        return hx_redirect(url=reverse("warband:town-upgrade-view"))
+
+
+class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.DetailView):
+    model = Town
+    http_method_names = ("post",)
+
+    def post(self, request, *args, **kwargs):
+        town = self.get_object()
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+
+        # The table is laid for the war band as it stands at the click: the living men under this
+        # banner. A captive has no banner, so he is off the list without anybody having to say so
+        warrior_list = list(town.faction.warriors.exclude_dead())
+
+        refusal = get_feast_refusal(town=town, head_count=len(warrior_list), current_savegame=current_savegame)
+        if refusal is not None:
+            messages.add_message(request, messages.WARNING, refusal)
+
+            return hx_redirect(url=reverse("warband:town-upgrade-view"))
+
+        hall = Hall.get_building_by_type(building_type=town.hall)
+
+        handle_message(
+            ThrowFeast(
+                town=town,
+                faction=town.faction,
+                warrior_list=warrior_list,
+                restored_share=hall.FEAST_RESTORED_SHARE,
+                costs=hall.get_feast_price(head_count=len(warrior_list)),
+                month=current_savegame.current_month,
+            )
+        )
+        messages.add_message(request, messages.SUCCESS, "The war band feasted in the hall.")
 
         return hx_redirect(url=reverse("warband:town-upgrade-view"))
