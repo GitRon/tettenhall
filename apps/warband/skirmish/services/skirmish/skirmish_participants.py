@@ -47,6 +47,9 @@ class SkirmishParticipantBuilderService:
             if warrior_id not in by_id:
                 continue
             warrior = by_id[warrior_id]
+            # A man who is down has no control on his card, and nothing downstream asks again
+            if not warrior.is_healthy:
+                raise UnofferedSkirmishActionError(f"Warrior {warrior_id} is not fit to fight this round.")
             # The select only lists what this man is offered, so anything else was typed into the post
             if skirmish_action not in {
                 action for action, _label in warrior.get_skirmish_actions(skirmish=self.skirmish)
@@ -63,11 +66,16 @@ class SkirmishParticipantBuilderService:
         defending_roster = list(self.skirmish.defending_warriors.all())
 
         # A posted id belonging to neither side is unusable input, and has to be caught before the
-        # side-building below quietly drops it
+        # side-building below quietly drops it. So is the same id twice: every copy would strike, and
+        # the copies would make his side the larger one
         known_ids = {warrior.id for warrior in attacking_roster + defending_roster}
+        posted_ids = set()
         for warrior_id, _skirmish_action in self.participants:
             if warrior_id not in known_ids:
                 raise UnknownSkirmishParticipantError(f"Warrior {warrior_id} is not fighting this skirmish.")
+            if warrior_id in posted_ids:
+                raise UnknownSkirmishParticipantError(f"Warrior {warrior_id} is posted more than once.")
+            posted_ids.add(warrior_id)
 
         # The same question SkirmishFightView asks of the same savegame. A savegame without a player
         # faction answers False for both sides rather than guessing at one, which leaves the whole

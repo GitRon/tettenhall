@@ -224,3 +224,45 @@ def test_process_refuses_an_action_above_the_warriors_level():
             participants=[(player_warrior.id, SkirmishActionChoices.RISKY_ATTACK)],
             player_faction_id=skirmish.attacking_faction_id,
         ).process()
+
+
+@pytest.mark.django_db
+def test_process_refuses_a_warrior_posted_twice():
+    """
+    Every copy of him would strike, and the copies would make his side the larger one.
+    """
+    skirmish = SkirmishFactory()
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    with pytest.raises(UnknownSkirmishParticipantError, match=f"Warrior {player_warrior.id} is posted more than once"):
+        SkirmishParticipantBuilderService(
+            skirmish=skirmish,
+            participants=[
+                (player_warrior.id, SkirmishActionChoices.SIMPLE_ATTACK),
+                (player_warrior.id, SkirmishActionChoices.SIMPLE_ATTACK),
+            ],
+            player_faction_id=skirmish.attacking_faction_id,
+        ).process()
+
+
+@pytest.mark.django_db
+def test_process_refuses_a_warrior_who_is_down():
+    skirmish = SkirmishFactory()
+    healthy_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    unconscious_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    skirmish.attacking_warriors.add(healthy_warrior, unconscious_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    with pytest.raises(UnofferedSkirmishActionError, match=f"Warrior {unconscious_warrior.id} is not fit to fight"):
+        SkirmishParticipantBuilderService(
+            skirmish=skirmish,
+            participants=[
+                (healthy_warrior.id, SkirmishActionChoices.SIMPLE_ATTACK),
+                (unconscious_warrior.id, SkirmishActionChoices.SIMPLE_ATTACK),
+            ],
+            player_faction_id=skirmish.attacking_faction_id,
+        ).process()
