@@ -296,6 +296,7 @@ def handle_warrior_attacks_warrior(
         attacker_action=context.attacker_action,
         defender=context.defender,
         defender_action=context.defender_action,
+        initiative=context.initiative,
     )
     return service.process()
 
