@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
@@ -64,23 +66,28 @@ def test_handle_log_warrior_takes_damage_logs_both_rolls():
     attacker = WarriorFactory.build(name="Beorn")
     defender = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_takes_damage(
-        context=WarriorTookDamage(
-            skirmish=skirmish,
-            round_number=1,
-            attacker=attacker,
-            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=7), value=7),
-            defender=defender,
-            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
-            damage=5,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_takes_damage(
+            context=WarriorTookDamage(
+                skirmish=skirmish,
+                round_number=1,
+                attacker=attacker,
+                attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=7), value=7),
+                defender=defender,
+                defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
+                damage=5,
+                initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+            )
         )
-    )
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Beorn strikes at 7 against Cuthred's 2 defense, and 5 damage gets through.",
+        saga="Beorn cuts at Cuthred; Cuthred brings his own blade round to parry — the blow lands hard.",
     )
 
 
@@ -93,23 +100,28 @@ def test_handle_log_warrior_takes_damage_when_the_defence_outrolls_the_attack():
     attacker = WarriorFactory.build(name="Beorn")
     defender = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_takes_damage(
-        context=WarriorTookDamage(
-            skirmish=skirmish,
-            round_number=1,
-            attacker=attacker,
-            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=12), value=12),
-            defender=defender,
-            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=20), value=20),
-            damage=3,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_takes_damage(
+            context=WarriorTookDamage(
+                skirmish=skirmish,
+                round_number=1,
+                attacker=attacker,
+                attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=12), value=12),
+                defender=defender,
+                defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=20), value=20),
+                damage=3,
+                initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+            )
         )
-    )
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Beorn strikes at 12 against Cuthred's 20 defense, and 3 damage gets through.",
+        saga="Beorn cuts at Cuthred; Cuthred brings his own blade round to parry — the blow lands hard.",
     )
 
 
@@ -118,23 +130,28 @@ def test_handle_log_warrior_defends_all_damage_names_both_rolls_when_the_armour_
     attacker = WarriorFactory.build(name="Beorn")
     defender = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_defends_all_damage(
-        context=WarriorDefendedAllDamage(
-            skirmish=skirmish,
-            round_number=1,
-            attacker=attacker,
-            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=2),
-            defender=defender,
-            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
-            outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_defends_all_damage(
+            context=WarriorDefendedAllDamage(
+                skirmish=skirmish,
+                round_number=1,
+                attacker=attacker,
+                attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=2),
+                defender=defender,
+                defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
+                outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
+                initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+            )
         )
-    )
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Beorn strikes at 2 against Cuthred's 7 defense, and nothing gets through.",
+        saga="Beorn cuts at Cuthred; Cuthred brings his own blade round to parry — his mail turns the edge.",
     )
 
 
@@ -143,21 +160,29 @@ def test_handle_log_warrior_defends_all_damage_says_a_miss_is_a_miss():
     attacker = WarriorFactory.build(name="Beorn")
     defender = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_defends_all_damage(
-        context=WarriorDefendedAllDamage(
-            skirmish=skirmish,
-            round_number=1,
-            attacker=attacker,
-            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=0),
-            defender=defender,
-            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
-            outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_defends_all_damage(
+            context=WarriorDefendedAllDamage(
+                skirmish=skirmish,
+                round_number=1,
+                attacker=attacker,
+                attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=0),
+                defender=defender,
+                defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
+                outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+                initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+            )
         )
-    )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Beorn swings at Cuthred and misses.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Beorn swings at Cuthred and misses.",
+        saga="Beorn cuts at Cuthred; Cuthred brings his own blade round to parry — the blow goes wide.",
+    )
 
 
 def test_handle_log_warrior_defends_all_damage_says_a_blow_was_never_thrown():
@@ -165,21 +190,29 @@ def test_handle_log_warrior_defends_all_damage_says_a_blow_was_never_thrown():
     attacker = WarriorFactory.build(name="Beorn")
     defender = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_defends_all_damage(
-        context=WarriorDefendedAllDamage(
-            skirmish=skirmish,
-            round_number=1,
-            attacker=attacker,
-            attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
-            attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=0),
-            defender=defender,
-            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
-            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
-            outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_defends_all_damage(
+            context=WarriorDefendedAllDamage(
+                skirmish=skirmish,
+                round_number=1,
+                attacker=attacker,
+                attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+                attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=2), value=0),
+                defender=defender,
+                defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+                defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
+                outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN,
+                initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+            )
         )
-    )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Beorn throws nothing at Cuthred this round.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Beorn throws nothing at Cuthred this round.",
+        saga="Beorn stays behind his shield and gives Cuthred nothing to answer.",
+    )
 
 
 def test_handle_log_warrior_defends_all_damage_refuses_an_outcome_it_has_no_sentence_for():
@@ -194,6 +227,7 @@ def test_handle_log_warrior_defends_all_damage_refuses_an_outcome_it_has_no_sent
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="4d6"), result=7), value=7),
         outcome=BlowOutcomeChoices.OUTCOME_HIT,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
     )
 
     with pytest.raises(RuntimeError, match="No battle log sentence for blow outcome"):
@@ -267,17 +301,21 @@ def test_handle_log_warrior_incapacitation_logs_the_knockout():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_incapacitation(
-        context=WarriorWasIncapacitated(
-            skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn"), overkill_health=1
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_incapacitation(
+            context=WarriorWasIncapacitated(
+                skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn"), overkill_health=1
+            )
         )
-    )
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Cuthred is out of the fight being unconscious.",
         kind=BattleHistory.KindChoices.KIND_WARRIOR_INCAPACITATED,
         warrior=warrior,
+        saga="Cuthred crumples to the ground, senseless.",
     )
 
 
@@ -285,15 +323,19 @@ def test_handle_log_warrior_death_logs_the_kill():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_death(
-        context=WarriorWasKilled(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn"))
-    )
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_death(
+            context=WarriorWasKilled(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn"))
+        )
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Cuthred is out of the fight being killed.",
         kind=BattleHistory.KindChoices.KIND_WARRIOR_KILLED,
         warrior=warrior,
+        saga="Cuthred falls and does not rise again.",
     )
 
 
@@ -316,19 +358,27 @@ def test_handle_log_round_finished_names_the_round_that_resolved():
 def test_handle_log_skirmish_finished_logs_the_victor():
     skirmish = SkirmishFactory.build(victorious_faction=FactionFactory.build(name="Mercia"))
 
-    result = handle_log_skirmish_finished(
-        context=SkirmishFinished(
-            skirmish=skirmish,
-            incapacitated_warriors=[],
-            defeated_unconscious_warriors=[],
-            victorious_healthy_warriors=[],
-            quest_name="Raid cattle",
-            quest_loot=250,
-            month=3,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_skirmish_finished(
+            context=SkirmishFinished(
+                skirmish=skirmish,
+                incapacitated_warriors=[],
+                defeated_unconscious_warriors=[],
+                victorious_healthy_warriors=[],
+                quest_name="Raid cattle",
+                quest_loot=250,
+                quest_contract=None,
+                month=3,
+            )
         )
-    )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Skirmish finished. Mercia won.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Skirmish finished. Mercia won.",
+        saga="The fighting is over. Mercia holds the field.",
+    )
 
 
 def test_handle_log_item_dropped_logs_the_item_name():
@@ -352,11 +402,16 @@ def test_handle_warrior_is_captured_logs_the_arrest():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Cuthred")
 
-    result = handle_warrior_is_captured(
-        context=WarriorWasCaptured(skirmish=skirmish, warrior=warrior, capturing_faction=FactionFactory.build())
-    )
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_warrior_is_captured(
+            context=WarriorWasCaptured(skirmish=skirmish, warrior=warrior, capturing_faction=FactionFactory.build())
+        )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred was captured and arrested.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="Cuthred was captured and arrested.", saga="Cuthred is seized and bound."
+    )
 
 
 def test_handle_warrior_is_captured_of_an_occupation():
@@ -399,23 +454,35 @@ def test_handle_log_leader_rallied_writes_one_line_for_the_order():
     skirmish = SkirmishFactory.build()
     leader = WarriorFactory.build(name="Offa")
 
-    result = handle_log_leader_rallied(
-        context=LeaderRallied(
-            skirmish=skirmish, leader=leader, rallied_warriors=[WarriorFactory.build(), WarriorFactory.build()]
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_leader_rallied(
+            context=LeaderRallied(
+                skirmish=skirmish, leader=leader, rallied_warriors=[WarriorFactory.build(), WarriorFactory.build()]
+            )
         )
-    )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Offa rallies his men, and the line steadies.")
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Offa rallies his men, and the line steadies.",
+        saga="Offa roars his men back into the line, and they steady.",
+    )
 
 
 def test_handle_log_leader_rallied_by_the_last_man_standing():
     skirmish = SkirmishFactory.build()
     leader = WarriorFactory.build(name="Offa")
 
-    result = handle_log_leader_rallied(context=LeaderRallied(skirmish=skirmish, leader=leader, rallied_warriors=[]))
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_leader_rallied(context=LeaderRallied(skirmish=skirmish, leader=leader, rallied_warriors=[]))
 
     assert result == CreateBattleHistory(
-        skirmish=skirmish, message="Offa calls to rally his men, but nobody is left beside him to hear."
+        skirmish=skirmish,
+        message="Offa calls to rally his men, but nobody is left beside him to hear.",
+        saga="Offa calls for his men, but nobody is left beside him to hear.",
     )
 
 
@@ -432,13 +499,17 @@ def test_handle_warrior_has_fled_logs_the_retreat():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Cuthred")
 
-    result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior))
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior))
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Cuthred is out of morale and fled the field.",
         kind=BattleHistory.KindChoices.KIND_WARRIOR_LEFT_THE_FIELD,
         warrior=warrior,
+        saga="Cuthred's nerve breaks, and he runs.",
     )
 
 
@@ -450,7 +521,10 @@ def test_handle_warrior_has_fled_names_the_right_cause_for_an_ordered_withdrawal
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Cuthred")
 
-    result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior, was_ordered=True))
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior, was_ordered=True))
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
@@ -458,6 +532,7 @@ def test_handle_warrior_has_fled_names_the_right_cause_for_an_ordered_withdrawal
         # The same kind as a rout: the sentences differ, the fact that he is gone does not
         kind=BattleHistory.KindChoices.KIND_WARRIOR_LEFT_THE_FIELD,
         warrior=warrior,
+        saga="Cuthred falls back from the line, as he was ordered.",
     )
 
 
@@ -553,19 +628,24 @@ def test_handle_log_warrior_injury_names_the_mark_and_its_price():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Cuthred")
 
-    result = handle_log_warrior_injury(
-        context=WarriorWasInjured(
-            skirmish=skirmish,
-            warrior=warrior,
-            faction=warrior.faction,
-            injury="Stiff ankle (-1 Dexterity)",
-            month=7,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_injury(
+            context=WarriorWasInjured(
+                skirmish=skirmish,
+                warrior=warrior,
+                faction=warrior.faction,
+                injury="Stiff ankle (-1 Dexterity)",
+                injury_name="Stiff ankle",
+                month=7,
+            )
         )
-    )
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Cuthred will carry it out of this fight: Stiff ankle (-1 Dexterity).",
+        saga="Cuthred will bear the mark of this day: Stiff ankle.",
     )
 
 
@@ -573,19 +653,24 @@ def test_handle_log_fortification_assaulted_says_what_is_left_standing():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Offa")
 
-    result = handle_log_fortification_assaulted(
-        context=FortificationAssaulted(
-            skirmish=skirmish,
-            round_number=1,
-            warrior=warrior,
-            assault=ActionRoll(roll=None, value=7),
-            damage=7,
-            remaining_strength=13,
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_fortification_assaulted(
+            context=FortificationAssaulted(
+                skirmish=skirmish,
+                round_number=1,
+                warrior=warrior,
+                assault=ActionRoll(roll=None, value=7),
+                damage=7,
+                remaining_strength=13,
+            )
         )
-    )
 
     assert result == CreateBattleHistory(
-        skirmish=skirmish, message="Offa storms the fortification at 7, and 13 of it still stands."
+        skirmish=skirmish,
+        message="Offa storms the fortification at 7, and 13 of it still stands.",
+        saga="Offa hacks at the wall, and timber splinters.",
     )
 
 
@@ -613,12 +698,17 @@ def test_handle_log_fortification_fell():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build(name="Offa")
 
-    result = handle_log_fortification_fell(
-        context=FortificationFell(skirmish=skirmish, round_number=1, warrior=warrior)
-    )
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_fortification_fell(
+            context=FortificationFell(skirmish=skirmish, round_number=1, warrior=warrior)
+        )
 
     assert result == CreateBattleHistory(
-        skirmish=skirmish, message="The fortification falls to Offa, and the defenders fight on without it."
+        skirmish=skirmish,
+        message="The fortification falls to Offa, and the defenders fight on without it.",
+        saga="The wall gives way under Offa's blows, and the defenders fight on in the open.",
     )
 
 

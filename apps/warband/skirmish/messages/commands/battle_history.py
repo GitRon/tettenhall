@@ -9,6 +9,9 @@ from apps.warband.skirmish.models import BattleHistory, Skirmish, Warrior
 class CreateBattleHistory(Command):
     skirmish: Skirmish
     message: str
+    # The line as the Saga tells it, and empty where the saga leaves the moment out. Defaulted because
+    # most producers write no saga at all.
+    saga: str = ""
     # Narration unless a producer says otherwise. Fifteen handlers write this command and three of
     # them are about a man going down, so the default is the case that does not have to be stated.
     kind: int = BattleHistory.KindChoices.KIND_NARRATION

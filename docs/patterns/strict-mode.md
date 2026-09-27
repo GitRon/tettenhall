@@ -28,9 +28,14 @@ a handler in that very module could share. Keep commands in a `messages/` direct
 `handle_message()` wraps event handlers in `BlockDatabaseAccess`.
 
 The blocker patches the cursor, so it blocks **reads as well as writes**: any query inside an event
-handler fails. Passing a queryset into a message is fine, because it stays lazy until a command handler
-consumes it — iterating it or calling `.get()` on it inside the event handler is not. Two of the fatal
-defects found while building the test suite were exactly that.
+handler fails. That includes the queries nobody wrote down: a queryset iterated, a reverse relation
+followed (`skirmish.quest_contract`), a `.all()` on a many-to-many. So messages carry lists, never
+querysets, and whatever an event handler needs off a relation is resolved by the command handler that
+raised the event and put on it as a field — see [the message bus](message-bus.md#the-two-message-types).
+
+A read that works in a flow can still be one. Django caches a related object on the instance that loaded
+it, so an event handler following a relation passes as long as the command handler upstream happened to
+touch the same relation on the same instance, and breaks the day either side changes.
 
 ## What it does not give you
 

@@ -81,6 +81,7 @@
         <div class="border-t border-rule px-[30px] py-[15px]">
             <button class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline"
                     hx-post="{% url 'warband:item-sell-view' item.id %}"
+                    hx-disabled-elt="this"
                     hx-swap="none"
                     hx-target="#item-card-{{ item.id|unlocalize }}"
                     type="button">Sell

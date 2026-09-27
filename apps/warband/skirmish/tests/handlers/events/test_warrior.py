@@ -2,6 +2,7 @@ import pytest
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.warrior import (
@@ -55,6 +56,7 @@ def test_handle_reduce_health_and_update_condition_costs_the_defender_health():
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
             damage=5,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -180,6 +182,7 @@ def test_handle_morale_change_on_resolved_blow_rewards_a_blow_turned_aside():
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=8), value=8),
             damage=2,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -203,6 +206,7 @@ def test_handle_morale_change_on_resolved_blow_shakes_a_beaten_guard():
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=3), value=3),
             damage=6,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -230,6 +234,7 @@ def test_handle_morale_change_on_resolved_blow_rewards_a_fully_absorbed_blow_onc
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=5), value=5),
             outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -257,6 +262,7 @@ def test_handle_morale_change_on_resolved_blow_pays_nothing_for_a_swing_that_wen
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=5), value=5),
             outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -284,6 +290,7 @@ def test_handle_morale_change_on_resolved_blow_rewards_nothing_on_a_tiny_morale_
             defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=8), value=8),
             damage=2,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -311,6 +318,7 @@ def test_handle_morale_change_on_resolved_blow_wears_down_a_turtle():
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=4), value=8),
             damage=4,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -338,6 +346,7 @@ def test_handle_morale_change_on_resolved_blow_always_costs_a_turtle_at_least_a_
             defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
             defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=4), value=8),
             outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     )
 
@@ -359,6 +368,7 @@ def test_handle_capture_unconscious_warriors_captures_every_defeated_warrior():
             victorious_healthy_warriors=[],
             quest_name="Raid",
             quest_loot=250,
+            quest_contract=None,
             month=3,
         )
     )
@@ -384,6 +394,7 @@ def test_handle_capture_unconscious_warriors_captures_nobody_without_defeated_wa
             victorious_healthy_warriors=[],
             quest_name="Raid",
             quest_loot=250,
+            quest_contract=None,
             month=3,
         )
     )
@@ -404,6 +415,7 @@ def test_handle_experience_gain_after_battle_for_victor_rewards_every_surviving_
             victorious_healthy_warriors=[healthy_attacking_warrior],
             quest_name="Raid",
             quest_loot=250,
+            quest_contract=None,
             month=3,
         )
     )
@@ -423,6 +435,7 @@ def test_handle_experience_gain_after_battle_for_victor_rewards_nobody_without_s
             victorious_healthy_warriors=[],
             quest_name="Raid",
             quest_loot=250,
+            quest_contract=None,
             month=3,
         )
     )

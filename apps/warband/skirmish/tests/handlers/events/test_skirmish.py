@@ -1,9 +1,15 @@
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.skirmish.handlers.events.skirmish import handle_create_skirmish_for_attack, handle_round_finished
-from apps.warband.skirmish.messages.commands.skirmish import CreateSkirmish, WinSkirmish
-from apps.warband.skirmish.messages.events.skirmish import FactionWasAttacked, RoundFinished
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
+from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.warband.skirmish.handlers.events.skirmish import (
+    handle_attacker_defender_decided,
+    handle_create_skirmish_for_attack,
+    handle_round_finished,
+)
+from apps.warband.skirmish.messages.commands.skirmish import CreateSkirmish, WarriorAttacksWarrior, WinSkirmish
+from apps.warband.skirmish.messages.events.skirmish import AttackerDefenderDecided, FactionWasAttacked, RoundFinished
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -34,6 +40,34 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
         month=3,
         fortification_strength=20,
         quest_contract=None,
+    )
+
+
+def test_handle_attacker_defender_decided_carries_the_initiative_to_the_blow():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build()
+    defender = WarriorFactory.build()
+
+    result = handle_attacker_defender_decided(
+        context=AttackerDefenderDecided(
+            skirmish=skirmish,
+            round_number=2,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defender=defender,
+            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
+        )
+    )
+
+    assert result == WarriorAttacksWarrior(
+        skirmish=skirmish,
+        round_number=2,
+        attacker=attacker,
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defender=defender,
+        defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+        initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
     )
 
 

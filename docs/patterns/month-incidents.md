@@ -130,8 +130,8 @@ PlayerMonthPrepared → handle_answer_open_pending_incidents_for_new_month
 - **A default never costs silver and never sells gear** — `test_pool.py` holds every entry to both. It
   is what a player who cannot afford anything else is left with, so a question can never wedge a
   savegame.
-- **A question is priced by its dearest answer.** The inherited `is_possible` checks the treasury against
-  the most expensive option, so nobody is asked a question with a button he cannot press. The month
+- **A question is priced by its dearest answer.** The inherited `is_possible` checks what the wages leave
+  of the treasury against the most expensive option, so nobody is asked a question with a button he cannot press. The month
   goes on while it waits, so `get_pending_incident_answer_refusal` checks again when the answer is given.
 - **Resolved when the answer lands.** `Incident.answer()` clamps a levy to what the reserve holds then.
   What the question was about — a rival, a piece of gear — is chosen by `ask()` and kept on the pending
@@ -148,6 +148,14 @@ PlayerMonthPrepared → handle_answer_open_pending_incidents_for_new_month
 `is_possible()` sees the board the month opened with — before a warrior has been paid, healed or
 rallied. Every entry today asks about something a month boundary does not change, which is what makes
 that harmless. An entry that needs this month's state does not belong on this hook.
+
+Silver is the one exception, and the base `is_possible` owns it. The salary run bills the same month
+from the same opening balance, because no ledger row of the month — the incident's own included — lands
+before every command has run. Weighed against the raw balance, a cost and the wages would each pass and
+overdraw together. So a cost is weighed against `Payroll.remaining_amount`: the purse after the wages
+the salary run will take, through the same projection it bills from. A month already short on wages
+leaves nothing, so costly incidents fire less often in lean months. This month's building income is not
+counted; it lands after the wages and funds the month after.
 
 **Morale means the ceiling, not this month's morale.** `handle_replenish_warrior_morale` refills
 every warrior to his maximum far later in the same month, so a change to `current_morale` made where

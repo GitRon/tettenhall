@@ -35,9 +35,11 @@ def handle_create_item(*, context: item.CreateItem) -> list[Event] | Event:
 
 
 @message_registry.register_command(command=item.SellItem)
-def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event:
-    # Remove ownership of item
-    Item.objects.update_ownership(item=context.item, new_owner=None)
+def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event | None:
+    # Only while he still owns it: the second of two overlapping requests finds it sold already, and
+    # would otherwise be paid for it again
+    if not Item.objects.hand_over(item=context.item, previous_owner=context.selling_faction, new_owner=None):
+        return None
 
     # The item keeps its list price and goes back on the shelf at it, so a poor market means selling
     # something and buying it back is a loss
@@ -58,9 +60,11 @@ def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event:
 
 
 @message_registry.register_command(command=item.BuyItem)
-def handle_buy_item(*, context: item.BuyItem) -> list[Event] | Event:
-    # Set new ownership of item
-    Item.objects.update_ownership(item=context.item, new_owner=context.buying_faction)
+def handle_buy_item(*, context: item.BuyItem) -> list[Event] | Event | None:
+    # Only while it is still unowned stock: the second of two overlapping requests finds it bought
+    # already, and would otherwise be charged for it again
+    if not Item.objects.hand_over(item=context.item, previous_owner=None, new_owner=context.buying_faction):
+        return None
 
     return ItemBought(
         buying_faction=context.buying_faction,

@@ -220,6 +220,7 @@ def handle_inflict_injury(*, context: InflictInjury) -> Event | None:
         warrior=context.warrior,
         faction=context.warrior.faction,
         injury=injury_type.description,
+        injury_name=injury_type.name,
         month=context.month,
     )
 
@@ -254,7 +255,7 @@ def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
 
 
 @message_registry.register_command(command=RecruitCapturedWarrior)
-def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[Event] | Event:
+def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[Event] | Event | None:
     """
     A man taken out of the cell and put under a new banner, at the price of a quarter of his spirit.
 
@@ -268,10 +269,13 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
     fight is what was paid for him, and the wage below is the balance: a prisoner is worth taking
     for what he costs to feed rather than for what he cost to catch.
     """
+    # Out of the cells first, and only if he is still in them: the second of two overlapping requests
+    # finds him gone, recruited or sold by the first
+    if not Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior):
+        return None
+
     # Set new faction
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
-    # Remove from captured warriors
-    Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior)
 
     # The capture is the one route by which a man who draws no wage reaches an ordinary roster, where
     # every price read off that wage is live - he would be free to keep, free to send away and free
@@ -318,11 +322,14 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
 
 
 @message_registry.register_command(command=EnslaveCapturedWarrior)
-def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior) -> list[Event] | Event:
+def handle_enslave_captured_warrior(*, context: EnslaveCapturedWarrior) -> list[Event] | Event | None:
+    # Out of the cells first, and only if he is still in them: the second of two overlapping requests
+    # finds him gone, and would otherwise be paid for the same man again
+    if not Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior):
+        return None
+
     # Set new faction
     Warrior.objects.set_faction(obj=context.warrior, faction=None)
-    # Remove from captured warriors
-    Faction.objects.remove_captive(faction=context.faction, warrior=context.warrior)
 
     return WarriorWasSoldIntoSlavery(
         warrior=context.warrior,

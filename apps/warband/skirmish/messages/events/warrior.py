@@ -31,6 +31,10 @@ class WarriorTookDamage(Event):
     defender_action: SkirmishActionTypeHint
     defense: ActionRoll
     damage: int
+    # How the attacker came to strike, an "InitiativeChoices" value, carried on from
+    # "AttackerDefenderDecided": the saga tells a man with nobody left to face apart from one who was
+    # quicker, and this event is the one it is written from
+    initiative: int
 
 
 @dataclass(kw_only=True)
@@ -48,6 +52,8 @@ class WarriorDefendedAllDamage(Event):
     # Which of the three ways nothing got through this was: a swing that went wide, an action that
     # threw nothing at all, or armour that took the whole blow
     outcome: int
+    # See "WarriorTookDamage"
+    initiative: int
 
 
 @dataclass(kw_only=True)

@@ -9,6 +9,8 @@ from apps.warband.savegame.models.savegame import Savegame
 @dataclass(kw_only=True)
 class PrepareMonth(Command):
     savegame: Savegame
+    # The month being finished, as the page the player clicked on showed it
+    month: int
 
 
 @dataclass(kw_only=True)

@@ -207,6 +207,39 @@ def test_skirmish_finish_round_view_advances_the_round(logged_in_client, current
 
 
 @pytest.mark.django_db
+def test_skirmish_finish_round_view_takes_back_the_blows_of_a_round_that_could_not_finish(
+    logged_in_client, current_savegame
+):
+    """
+    Flow test, because what it pins is the transaction around two queue runs. The duel and the end of
+    the round are two "handle_message" calls, and a round whose blows had landed while its counter
+    stayed put would be fought again on the next post.
+
+    The failure is injected into "increment_round", the first thing "FinishRound" does - a mock of our
+    own code on purpose, since nothing a player can post makes that handler raise.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    opposing_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(opposing_warrior)
+
+    with (
+        mock.patch.object(Skirmish.objects, "increment_round", side_effect=RuntimeError),
+        pytest.raises(RuntimeError),
+    ):
+        logged_in_client.post(
+            reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+            data={
+                "skirmish_participant[0][warrior_id]": player_warrior.pk,
+                "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            },
+        )
+
+    assert BattleHistory.objects.filter(skirmish=skirmish).exists() is False
+
+
+@pytest.mark.django_db
 def test_skirmish_finish_round_view_walks_a_warrior_off_the_field_when_ordered_to_flee(
     logged_in_client, current_savegame
 ):
@@ -589,6 +622,76 @@ def test_skirmish_finish_round_view_refuses_a_player_warrior_left_uncommanded(lo
     )
 
     assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_warrior_posted_twice(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            "skirmish_participant[1][warrior_id]": player_warrior.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_warrior_who_is_down(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    healthy_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    unconscious_warrior = WarriorFactory(
+        faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    skirmish.attacking_warriors.add(healthy_warrior, unconscious_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": healthy_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            "skirmish_participant[1][warrior_id]": unconscious_warrior.pk,
+            "skirmish_participant[1][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 400
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_round_while_another_fight_is_under_way(
+    logged_in_client, current_savegame
+):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+    SkirmishFactory(attacking_faction=current_savegame.player_faction, current_round=2)
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+        },
+    )
+
+    assert response.status_code == 409
     skirmish.refresh_from_db()
     assert skirmish.current_round == 1
 

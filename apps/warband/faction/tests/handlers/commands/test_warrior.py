@@ -377,6 +377,41 @@ def test_handle_draft_warrior_from_fyrd_with_empty_reserve():
 
 
 @pytest.mark.django_db
+def test_handle_draft_warrior_from_fyrd_raises_one_man_from_the_last_in_the_reserve():
+    """
+    The second of two overlapping drafts: both read a reserve of 1 off the page, and the first has
+    already called him up. A second warrior would be a man the reserve never held.
+    """
+    faction = FactionFactory(fyrd_reserve=1)
+    stale_faction = Faction.objects.get(pk=faction.pk)
+    handle_draft_warrior_from_fyrd(context=DraftWarriorFromFyrd(faction=faction, month=3))
+
+    result = handle_draft_warrior_from_fyrd(context=DraftWarriorFromFyrd(faction=stale_faction, month=3))
+
+    assert result is None
+    assert Warrior.objects.filter(faction=faction).count() == 1
+
+
+@pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_charges_nothing_for_a_man_already_hired():
+    """
+    The second of two overlapping hires: both found him in the pub, and the first has already taken
+    him. Charging again would take his price twice for one man.
+    """
+    faction = _player_faction()
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.available_mercenaries.add(mercenary)
+    stale_mercenary = Warrior.objects.get(pk=mercenary.pk)
+    handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
+
+    result = handle_recruit_pub_mercenary(
+        context=RecruitPubMercenary(warrior=stale_mercenary, faction=faction, month=3)
+    )
+
+    assert result is None
+
+
+@pytest.mark.django_db
 def test_handle_recruit_pub_mercenary_takes_him_onto_the_roster():
     faction = _player_faction()
     # Priced off the wage he draws rather than off "recruitment_price", so a veteran the player sent

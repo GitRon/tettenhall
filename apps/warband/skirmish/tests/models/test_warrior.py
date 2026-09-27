@@ -517,3 +517,16 @@ def test_decide_skirmish_action_answers_for_this_fight():
     result = warrior.decide_skirmish_action(skirmish=skirmish)
 
     assert result == (SkirmishActionChoices.SIMPLE_ATTACK.value, SkirmishActionChoices.SIMPLE_ATTACK.label)
+
+
+@pytest.mark.django_db
+def test_deleting_the_gear_a_man_wears_leaves_him_standing_empty_handed():
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON))
+    armor = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR))
+    warrior = WarriorFactory(weapon=weapon, armor=armor)
+
+    weapon.delete()
+    armor.delete()
+
+    warrior.refresh_from_db()
+    assert (warrior.weapon, warrior.armor) == (None, None)

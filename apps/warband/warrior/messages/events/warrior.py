@@ -118,6 +118,9 @@ class WarriorWasInjured(Event):
     warrior: Warrior
     faction: Faction
     injury: str
+    # The thing alone, without its price. The saga names what he carries away and leaves the arithmetic
+    # of it to the Tally, which is what "injury" says in full.
+    injury_name: str
     month: int
 
 

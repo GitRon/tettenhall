@@ -172,13 +172,14 @@ class Warrior(models.Model):
         default=ConditionChoices.CONDITION_HEALTHY,
     )
 
+    # A deleted item leaves the man empty-handed rather than taking him with it
     weapon = models.OneToOneField(
         Item,
         verbose_name="Weapon",
         related_name="warrior_weapon",
         null=True,
         blank=True,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
     )
     armor = models.OneToOneField(
         Item,
@@ -186,7 +187,7 @@ class Warrior(models.Model):
         related_name="warrior_armor",
         null=True,
         blank=True,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
     )
 
     objects = WarriorManager()

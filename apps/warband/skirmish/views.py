@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -117,9 +118,7 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
 
         if (
             self.model.objects.for_savegame(savegame_id=self.current_savegame.id)
-            .has_started()
-            .unresolved()
-            .exclude(id=self.object.id)
+            .under_way_besides(skirmish=self.object)
             .exists()
         ):
             messages.add_message(request, messages.WARNING, "Please finish your other skirmishes first.")
@@ -178,6 +177,16 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         if self.object.victorious_faction_id:
             return HttpResponse(status=HTTPStatus.CONFLICT)
 
+        # The fight page sends the player back while another fight of his is under way, and a round
+        # posted straight here has to meet the same refusal, or two fights could be fought in turns.
+        # A conflict for the same reason as above: the post is well formed, the other fight is in the way
+        if (
+            Skirmish.objects.for_savegame(savegame_id=current_savegame.id)
+            .under_way_besides(skirmish=self.object)
+            .exists()
+        ):
+            return HttpResponse(status=HTTPStatus.CONFLICT)
+
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
 
         # Every value here arrives in the request body, so anything missing, non-numeric or naming an
@@ -222,22 +231,27 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         ):
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-        # Start duel
-        handle_message(
-            StartDuel(
-                skirmish=self.object,
-                skirmish_participants_1=attacking_participants,
-                skirmish_participants_2=defending_participants,
+        # One transaction around both, because the bus opens one per call: a round whose blows,
+        # deaths and captures had landed while "FinishRound" raised would keep its counter and its
+        # undecided victor, and the next post would fight the same round again. Passing both in one
+        # "handle_message" is not the same thing - "FinishRound" would drain before the duel's events.
+        with transaction.atomic():
+            # Start duel
+            handle_message(
+                StartDuel(
+                    skirmish=self.object,
+                    skirmish_participants_1=attacking_participants,
+                    skirmish_participants_2=defending_participants,
+                )
             )
-        )
 
-        # Finish round
-        handle_message(
-            FinishRound(
-                skirmish=self.object,
-                month=current_savegame.current_month,
+            # Finish round
+            handle_message(
+                FinishRound(
+                    skirmish=self.object,
+                    month=current_savegame.current_month,
+                )
             )
-        )
 
         response = HttpResponse()
         response["HX-Trigger"] = json.dumps(

@@ -408,6 +408,40 @@ def test_handle_enslave_captured_warrior_carries_the_slavers_price():
 
 
 @pytest.mark.django_db
+def test_handle_enslave_captured_warrior_pays_nothing_for_a_man_already_sold():
+    """
+    The second of two overlapping requests: both found him in the cells, and the first has already
+    sold him. Paying the slaver's price again would turn a double click into silver.
+    """
+    faction = FactionFactory()
+    captive = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.captured_warriors.add(captive)
+    handle_enslave_captured_warrior(context=EnslaveCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    result = handle_enslave_captured_warrior(context=EnslaveCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_recruit_captured_warrior_leaves_a_man_no_longer_in_the_cells():
+    """
+    Recruit and enslave sit side by side on the captive's card, so the first of two overlapping clicks
+    may have sold him already. Recruiting him then would put a slave under the banner.
+    """
+    faction = FactionFactory()
+    captive = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.captured_warriors.add(captive)
+    handle_enslave_captured_warrior(context=EnslaveCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    result = handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captive, faction=faction, month=3))
+
+    assert result is None
+    captive.refresh_from_db()
+    assert captive.faction is None
+
+
+@pytest.mark.django_db
 def test_handle_recruit_captured_warrior_gives_a_captive_his_nerve_back():
     """
     The monthly morale sweep passes captives by, so a man recruited later than the month he was taken
@@ -580,6 +614,7 @@ def test_handle_inflict_injury_writes_the_row_and_names_it():
         warrior=warrior,
         faction=warrior.faction,
         injury="Ruined shoulder (-2 Strength)",
+        injury_name="Ruined shoulder",
         month=7,
     )
     assert Injury.objects.for_warrior(warrior_id=warrior.id).count() == 1

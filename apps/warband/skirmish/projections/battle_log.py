@@ -15,6 +15,13 @@ class BattleLogRound:
     number: int
     line_list: list[BattleHistory]
 
+    @property
+    def saga_line_list(self) -> list[BattleHistory]:
+        """
+        The round as the Saga tells it: only the lines that carry a saga sentence, in the same order.
+        """
+        return [line for line in self.line_list if line.saga]
+
 
 @dataclass(frozen=True, kw_only=True)
 class BattleLog:
@@ -32,6 +39,16 @@ class BattleLog:
     """
 
     round_list: list[BattleLogRound]
+
+    @property
+    def has_saga(self) -> bool:
+        """
+        Whether any line of the fight carries a saga sentence.
+
+        A fight that has lines and none of them told is one recorded before the saga was kept, and its
+        Saga tab says so instead of standing empty.
+        """
+        return any(log_round.saga_line_list for log_round in self.round_list)
 
     @classmethod
     def from_lines(cls, *, line_list: list[BattleHistory]) -> BattleLog:

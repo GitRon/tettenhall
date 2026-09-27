@@ -33,6 +33,13 @@ Messages carry already-resolved data — model **instances**, not IDs. Evaluate 
 putting them on a message so downstream handlers don't hit the database unexpectedly; see
 `handle_faction_wins_skirmish` in `apps/warband/skirmish/handlers/commands/skirmish.py`, which wraps its results
 in `list(...)` with the comment *"We need to evaluate the QS to avoid hitting the DB in the events"*.
+A field is typed `list[...]`, never `QuerySet[...]`; the [registry tests](registry-tests.md) reject a
+`QuerySet` annotation on any message.
+
+The same goes for relations. An event handler that needs a related object — the contract behind a
+skirmish, the men signed onto a contract — gets it as a field, filled by the command handler that raised
+the event (`SkirmishFinished.quest_contract`, `QuestAccepted.assigned_warriors`), rather than following
+the relation itself. [Strict mode](strict-mode.md#at-dispatch-time) says why.
 
 ## The golden rule
 
@@ -99,6 +106,15 @@ before dispatch, not in the view itself: `get_building_upgrade_refusal`
 (`apps/warband/town/services/building_upgrade.py`) answers with the first guard's message or `None`, and
 `UpgradeBuildingView.post` turns a message into a warning and a redirect. The guards and the order they
 are reported in are game rules, so they live where something other than one view can reach them.
+
+**A guard that protects silver, men or the month is asked a second time, in the command handler.** Two
+overlapping requests - a double click is enough - both pass the service, because both read the same state
+before either writes. The handler's first write is the guard again, as a conditional `UPDATE ... WHERE`
+or a filtered delete of the row that says the thing is still there, and it returns `None` when that write
+touches nothing: `handle_upgrade_town_building`, `handle_prepare_month`, `handle_buy_item`,
+`handle_recruit_pub_mercenary` and the captive handlers all have this shape. A read of the instance the
+view passed in is not a re-check - it is the same stale read. The button carries `hx-disabled-elt` as
+well, which stops most second clicks before they are sent, and none that arrive from a second tab.
 
 What stays in the view is input validation the game has no opinion about — the `BUILDINGS` whitelist on
 the building type from the URL, which answers `Http404` rather than a message.

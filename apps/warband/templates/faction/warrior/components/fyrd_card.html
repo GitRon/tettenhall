@@ -14,6 +14,7 @@
     </div>
     {% if faction.fyrd_reserve %}
         <button hx-post="{% url 'warband:faction-draft-warrior-from-fyrd-view' faction.id %}"
+                hx-disabled-elt="this"
                 hx-target="#fyrd-card"
                 hx-swap="outerHTML"
                 class="box-border inline-block cursor-pointer border py-[9px] text-sm uppercase px-[30px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Draft warrior

@@ -35,9 +35,21 @@ class FinishMonthView(RunningSavegameRequiredMixin, generic.View):
             )
             return response
 
+        # The button posts the month it was rendered in. A request for any other month comes from a
+        # page the month has already moved past - the second of a double click, or a stale tab - and
+        # finishing "the current month" for it would run a month the player never looked at.
+        try:
+            posted_month = int(request.POST["month"])
+        except KeyError, ValueError:
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+
+        if posted_month != current_savegame.current_month:
+            return hx_redirect(url=reverse("warband:dashboard-view"))
+
         handle_message(
             PrepareMonth(
                 savegame=current_savegame,
+                month=posted_month,
             )
         )
 

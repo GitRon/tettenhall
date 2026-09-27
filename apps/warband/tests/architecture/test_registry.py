@@ -10,14 +10,23 @@ import ast
 import dataclasses
 import importlib
 import types
+import typing
 from pathlib import Path
+from typing import ForwardRef
 
+from django.db.models import QuerySet
 from queuebie.messages import Command, Event
 
 from apps.warband.faction.messages.events.warrior import WarriorMonthPrepared
 from apps.warband.skirmish.handlers.commands.skirmish import _withdrawing_and_remaining
 from apps.warband.skirmish.messages.commands.warrior import WithdrawFromSkirmish
-from apps.warband.tests.architecture.discovery import handler_files, module_path_for, view_module_files
+from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.tests.architecture.discovery import (
+    handler_files,
+    module_path_for,
+    production_module_files,
+    view_module_files,
+)
 from apps.warband.warrior.messages.commands.warrior import HealInjuredWarrior
 
 # Events which are deliberately emitted without a consumer. All of them announce a state change
@@ -515,3 +524,72 @@ def test_every_allowlisted_handler_still_emits_the_message_type_it_was_allowed(q
     )
 
     assert entries_no_longer_needed == []
+
+
+def _message_classes() -> list[type]:
+    """
+    Every command and event defined in a "messages/" module, whether or not anything handles it yet.
+    """
+    message_classes = []
+    for file in production_module_files():
+        if "messages" not in file.parts:
+            continue
+        module = importlib.import_module(module_path_for(file=file))
+        message_classes.extend(
+            member
+            for member in vars(module).values()
+            if isinstance(member, type)
+            and issubclass(member, (Command, Event))
+            and member not in (Command, Event)
+            and member.__module__ == module.__name__
+        )
+
+    return message_classes
+
+
+def _names_a_queryset(*, annotation: object) -> bool:
+    # An annotation naming a type only imported for type checking stays unresolved, so the name is all
+    # there is to go on
+    if isinstance(annotation, str | ForwardRef):
+        return "QuerySet" in str(annotation)
+    if isinstance(annotation, type) and issubclass(annotation, QuerySet):
+        return True
+
+    origin = typing.get_origin(annotation)
+    if isinstance(origin, type) and issubclass(origin, QuerySet):
+        return True
+
+    return any(_names_a_queryset(annotation=argument) for argument in typing.get_args(annotation))
+
+
+def _queryset_fields(*, message_classes: list[type]) -> list[str]:
+    return sorted(
+        f"{message_class.__module__}.{message_class.__name__}.{field.name}"
+        for message_class in message_classes
+        if dataclasses.is_dataclass(message_class)
+        for field in dataclasses.fields(message_class)
+        if _names_a_queryset(annotation=field.type)
+    )
+
+
+def test_queryset_fields_names_every_way_of_spelling_a_queryset():
+    @dataclasses.dataclass(kw_only=True)
+    class Spelled(Event):
+        bare: QuerySet
+        generic: QuerySet[Warrior]
+        union: QuerySet[Warrior] | list[Warrior]
+        nested: list[QuerySet[Warrior]]
+        forward: QuerySet[Warrior]
+        fine: list[Warrior]
+
+    assert _queryset_fields(message_classes=[Spelled]) == [
+        f"{__name__}.Spelled.{name}" for name in ("bare", "forward", "generic", "nested", "union")
+    ]
+
+
+def test_no_message_carries_a_queryset():
+    """
+    A queryset on a message is a query waiting for whoever touches it first, and strict mode forbids
+    one in every event handler. Messages carry lists - see "docs/patterns/message-bus.md".
+    """
+    assert _queryset_fields(message_classes=_message_classes()) == []

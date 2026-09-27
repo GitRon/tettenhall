@@ -65,6 +65,21 @@ def test_handle_accept_quest_signs_the_contract():
 
 
 @pytest.mark.django_db
+def test_handle_accept_quest_sends_the_signed_men_along_as_a_list():
+    quest = QuestFactory()
+    accepting_faction = FactionFactory(savegame=quest.target_faction.savegame)
+    warrior = WarriorFactory(faction=accepting_faction)
+    accepting_faction.available_quests.add(quest)
+    WarriorFactory(faction=quest.target_faction)
+
+    result = handle_accept_quest(
+        context=AcceptQuest(accepting_faction=accepting_faction, quest=quest, assigned_warriors=[warrior], month=3)
+    )
+
+    assert result.assigned_warriors == [warrior]
+
+
+@pytest.mark.django_db
 def test_handle_accept_quest_musters_as_many_defenders_as_the_difficulty_asks_for():
     quest = QuestFactory(difficulty=Quest.DifficultyChoices.DIFFICULTY_HARD)
     accepting_faction = FactionFactory(savegame=quest.target_faction.savegame)

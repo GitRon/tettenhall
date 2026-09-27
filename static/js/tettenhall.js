@@ -119,4 +119,19 @@
             }
         });
     });
+
+    // The battle log's Saga and Tally tabs. The choice is written onto the "group" around the log
+    // rather than into it, because every finished round swaps the log out and would take the choice
+    // with it. Delegated from the document for the same reason nothing here binds to the log itself.
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-log-tab-button]');
+        if (!button) {
+            return;
+        }
+        const group = button.closest('[data-log-tab]');
+        group.dataset.logTab = button.dataset.logTabButton;
+        group.querySelectorAll('[data-log-tab-button]').forEach((element) => {
+            element.setAttribute('aria-selected', String(element === button));
+        });
+    });
 })();

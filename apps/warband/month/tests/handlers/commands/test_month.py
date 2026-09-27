@@ -5,6 +5,7 @@ from apps.warband.month.handlers.commands.month import handle_create_player_mont
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog, PrepareMonth
 from apps.warband.month.messages.events.month import FactionMonthPrepared, PlayerMonthLogCreated
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 
 
@@ -14,9 +15,26 @@ def test_handle_prepare_month_advances_the_month():
     savegame.player_faction = FactionFactory(savegame=savegame)
     savegame.save()
 
-    result = handle_prepare_month(context=PrepareMonth(savegame=savegame))
+    result = handle_prepare_month(context=PrepareMonth(savegame=savegame, month=4))
 
     assert result[0].current_month == 5
+    savegame.refresh_from_db()
+    assert savegame.current_month == 5
+
+
+@pytest.mark.django_db
+def test_handle_prepare_month_does_nothing_for_a_month_that_has_already_moved_on():
+    """
+    The second of two overlapping requests: both read month 4, and the first has already advanced it.
+    Running the month again would pay the wages and the income a second time.
+    """
+    savegame = SavegameFactory(current_month=4)
+    stale_savegame = Savegame.objects.get(pk=savegame.pk)
+    handle_prepare_month(context=PrepareMonth(savegame=savegame, month=4))
+
+    result = handle_prepare_month(context=PrepareMonth(savegame=stale_savegame, month=4))
+
+    assert result is None
     savegame.refresh_from_db()
     assert savegame.current_month == 5
 
@@ -32,7 +50,7 @@ def test_handle_prepare_month_announces_the_month_for_every_faction():
     savegame.save()
     rival_faction = FactionFactory(savegame=savegame)
 
-    result = handle_prepare_month(context=PrepareMonth(savegame=savegame))
+    result = handle_prepare_month(context=PrepareMonth(savegame=savegame, month=4))
 
     assert result[1:] == [
         FactionMonthPrepared(faction=savegame.player_faction, current_month=5),
@@ -49,7 +67,7 @@ def test_handle_prepare_month_leaves_out_the_factions_of_other_savegames():
     savegame = SavegameFactory(current_month=4, player_faction=None)
     FactionFactory()
 
-    result = handle_prepare_month(context=PrepareMonth(savegame=savegame))
+    result = handle_prepare_month(context=PrepareMonth(savegame=savegame, month=4))
 
     assert result[1:] == []
 
@@ -62,7 +80,7 @@ def test_handle_prepare_month_without_a_player_faction():
     """
     savegame = SavegameFactory(current_month=4, player_faction=None)
 
-    result = handle_prepare_month(context=PrepareMonth(savegame=savegame))
+    result = handle_prepare_month(context=PrepareMonth(savegame=savegame, month=4))
 
     assert result[0].faction is None
     assert result[0].current_month == 5

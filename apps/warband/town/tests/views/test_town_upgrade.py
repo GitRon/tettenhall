@@ -116,6 +116,24 @@ def test_town_upgrade_view_without_enough_silver_for_the_next_level(logged_in_cl
 
 
 @pytest.mark.django_db
+def test_town_upgrade_view_names_the_month_before_the_price(logged_in_client, current_savegame):
+    """
+    The page asks the refusal the upgrade asks, in its order: a town that has built this month and
+    cannot pay is told about the month, which is the one thing more silver would not change.
+    """
+    town = current_savegame.player_faction.town
+    town.last_constructed_building_at = current_savegame.current_month
+    town.save()
+
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    assert (_building(response, "hall")["has_already_built"], _building(response, "hall")["can_afford"]) == (
+        True,
+        True,
+    )
+
+
+@pytest.mark.django_db
 def test_town_upgrade_view_offers_every_building(logged_in_client, current_savegame):
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 

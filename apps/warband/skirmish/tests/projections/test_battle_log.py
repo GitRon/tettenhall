@@ -3,6 +3,45 @@ from apps.warband.skirmish.projections.battle_log import BattleLog
 from apps.warband.skirmish.tests.factories.battle_history import BattleHistoryFactory
 
 
+def test_saga_line_list_keeps_only_the_lines_the_saga_tells_in_order():
+    battle_log = BattleLog.from_lines(
+        line_list=[
+            BattleHistoryFactory.build(message="initiative", saga=""),
+            BattleHistoryFactory.build(message="first blow", saga="Beorn cuts at Cuthred."),
+            BattleHistoryFactory.build(message="morale", saga=""),
+            BattleHistoryFactory.build(message="second blow", saga="Cuthred ducks aside."),
+        ]
+    )
+
+    assert [log.saga for log in battle_log.round_list[0].saga_line_list] == [
+        "Beorn cuts at Cuthred.",
+        "Cuthred ducks aside.",
+    ]
+
+
+def test_has_saga_when_a_line_is_told():
+    battle_log = BattleLog.from_lines(
+        line_list=[
+            BattleHistoryFactory.build(message="a blow", saga="Beorn cuts at Cuthred."),
+            BattleHistoryFactory.build(kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED),
+            BattleHistoryFactory.build(message="morale", saga=""),
+        ]
+    )
+
+    assert battle_log.has_saga is True
+
+
+def test_has_saga_not_for_a_fight_recorded_before_the_saga_was_kept():
+    battle_log = BattleLog.from_lines(
+        line_list=[
+            BattleHistoryFactory.build(message="a blow", saga=""),
+            BattleHistoryFactory.build(kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED),
+        ]
+    )
+
+    assert battle_log.has_saga is False
+
+
 def test_from_lines_stacks_the_rounds_newest_first():
     """
     The stack is reversed and the lines inside a round are not, which is the whole of what this
