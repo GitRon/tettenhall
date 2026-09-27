@@ -26,7 +26,7 @@ from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.warband.skirmish.services.actions.assault_fortification import AssaultFortificationService
-from apps.warband.skirmish.services.actions.utils import get_service_by_attack_action
+from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
 from apps.warband.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
 from apps.warband.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
@@ -91,7 +91,7 @@ def _withdrawing_and_remaining(
 
     Flight is answered here rather than by a service of its own under "services/actions/", because it
     is the one action that is not something a warrior does to somebody: it removes him from the round
-    before there is anyone to do it to, so it never reaches "get_service_by_attack_action".
+    before there is anyone to do it to, so it never reaches "get_service_by_skirmish_action".
     """
     withdrawals = []
     remaining = []
@@ -244,15 +244,15 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
 
 @message_registry.register_command(command=skirmish.DetermineAttacker)
 def handle_determine_attacker_and_defender(*, context: skirmish.DetermineAttacker) -> list[Event] | Event:
-    warrior_1_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_1)
-    warrior_2_attack_action_service_class = get_service_by_attack_action(attack_action=context.action_2)
+    warrior_1_action_service_class = get_service_by_skirmish_action(skirmish_action=context.action_1)
+    warrior_2_action_service_class = get_service_by_skirmish_action(skirmish_action=context.action_2)
 
     # The effective dexterity, so a lame man loses the initiative he no longer has - the other half
     # of what an injury costs him, beside the weaker swing
-    warrior_1_matching_points = warrior_1_attack_action_service_class.get_pair_matching_points(
+    warrior_1_matching_points = warrior_1_action_service_class.get_pair_matching_points(
         warrior_dexterity=context.warrior_1.effective_dexterity
     )
-    warrior_2_matching_points = warrior_2_attack_action_service_class.get_pair_matching_points(
+    warrior_2_matching_points = warrior_2_action_service_class.get_pair_matching_points(
         warrior_dexterity=context.warrior_2.effective_dexterity
     )
 

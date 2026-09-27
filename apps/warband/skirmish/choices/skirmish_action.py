@@ -10,7 +10,7 @@ class SkirmishActionChoices(models.IntegerChoices):
     DEFENSIVE_STANCE = 4, "Defensive stance"
     # The one action that takes a warrior off the field instead of doing something on it. It is
     # answered at the start of the round, before anybody is paired, so it never reaches
-    # "get_service_by_attack_action" and has no service of its own
+    # "get_service_by_skirmish_action" and has no service of its own
     FLEE = 5, "Flee"
     # A swing at the defenders' wall rather than at a man. Offered only to the side that marched, and
     # only while there is a wall standing - see "Skirmish.can_be_assaulted_by"

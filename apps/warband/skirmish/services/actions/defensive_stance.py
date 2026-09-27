@@ -7,16 +7,16 @@ from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.commands.skirmish import (
     WarriorAttacksWarrior,
 )
-from apps.warband.skirmish.services.actions.base import AttackService
+from apps.warband.skirmish.services.actions.base import SkirmishActionService
 
 
-class DefensiveStanceService(AttackService):
+class DefensiveStanceService(SkirmishActionService):
     command: Command = WarriorAttacksWarrior
 
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
         # Being in defensive stance will never lead to being the attacker
-        return AttackService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 0
+        return SkirmishActionService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 0
 
     def get_attack_value(self) -> ActionRoll:
         # Being in defensive stance will never lead to being the attacker, so no weapon is swung and

@@ -5,7 +5,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage, WarriorTookDamage
 from apps.warband.skirmish.models import Skirmish, Warrior
-from apps.warband.skirmish.services.actions.utils import get_service_by_attack_action
+from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
 
 
 class SkirmishDamageService:
@@ -90,10 +90,10 @@ class SkirmishDamageService:
         return damage
 
     def process(self) -> list[Event]:
-        attack_service = get_service_by_attack_action(attack_action=self.attack_action)(
+        attack_service = get_service_by_skirmish_action(skirmish_action=self.attack_action)(
             skirmish=self.skirmish, warrior=self.attacker
         )
-        defend_service = get_service_by_attack_action(attack_action=self.defender_action)(
+        defend_service = get_service_by_skirmish_action(skirmish_action=self.defender_action)(
             skirmish=self.skirmish, warrior=self.defender
         )
 

@@ -5,8 +5,7 @@ from apps.warband.skirmish.messages.commands.skirmish import WarriorAttacksWarri
 from apps.warband.skirmish.models import Skirmish, Warrior
 
 
-# TODO (#95): attack service is misleading, maybe skirmish action again?
-class AttackService:
+class SkirmishActionService:
     # How much harder a man is to hurt while he stands behind his own faction's wall. A constant of the
     # mechanic rather than of any wall: a town building levers how much wall there is, never this
     FORTIFICATION_DEFENSE_MULTIPLIER = 1.5

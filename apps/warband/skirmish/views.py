@@ -182,7 +182,7 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
 
         # Every value here arrives in the request body, so anything missing, non-numeric or naming an
         # action that does not exist is bad input rather than a server error. Without the membership
-        # test an unknown number reached "get_service_by_attack_action" and raised there, answering 500
+        # test an unknown number reached "get_service_by_skirmish_action" and raised there, answering 500
         # to input this very block means to refuse. The posted "faction_id" is deliberately not read:
         # which side a warrior fights on comes from the skirmish's own rosters, since a posted one can
         # lie and "warrior.faction" changes the moment a captive is recruited.
