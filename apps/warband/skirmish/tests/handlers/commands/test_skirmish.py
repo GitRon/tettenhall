@@ -45,7 +45,7 @@ from apps.warband.skirmish.projections.skirmish_participant import SkirmishParti
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL, Palisade
-from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
@@ -964,7 +964,7 @@ def test_handle_determine_attacker_and_defender_costs_a_lame_man_the_initiative(
     lame_warrior = WarriorFactory(faction=skirmish.attacking_faction, dexterity=10)
     InjuryFactory(
         warrior=lame_warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=6),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY, magnitude=6),
     )
     enemy_warrior = WarriorFactory(faction=skirmish.defending_faction, dexterity=10)
 

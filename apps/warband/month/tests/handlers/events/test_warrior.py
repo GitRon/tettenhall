@@ -1,6 +1,7 @@
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.handlers.events.warrior import (
     handle_warrior_earned_nickname,
+    handle_warrior_gained_trait,
     handle_warrior_health_healed,
     handle_warrior_lost_morale_over_unpaid_salary,
     handle_warrior_morale_replenished,
@@ -14,6 +15,7 @@ from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
+    WarriorGainedTrait,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMoraleReplenished,
@@ -152,5 +154,21 @@ def test_handle_warrior_was_injured_records_what_the_fight_cost_him():
         title="Cuthred is marked for good: Cracked ribs (-1 Strength).",
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_INJURED,
         month=7,
+        faction=faction,
+    )
+
+
+def test_handle_warrior_gained_trait_says_he_changed_without_saying_how():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Sven", faction=faction)
+
+    result = handle_warrior_gained_trait(
+        context=WarriorGainedTrait(skirmish=SkirmishFactory.build(), warrior=warrior, faction=faction, month=5)
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Sven came back from the fight a different man.",
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_CHANGED,
+        month=5,
         faction=faction,
     )

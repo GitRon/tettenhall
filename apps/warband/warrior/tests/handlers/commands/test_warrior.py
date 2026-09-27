@@ -10,14 +10,19 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.warband.skirmish.tests.factories.skirmish_blow import SkirmishBlowFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.handlers.commands.warrior import (
     handle_award_earned_nickname,
     handle_change_warrior_max_morale,
     handle_dismiss_warrior,
+    handle_earn_traits_in_skirmish,
     handle_enslave_captured_warrior,
     handle_heal_injured_warrior,
     handle_inflict_injury,
@@ -29,6 +34,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     AwardEarnedNickname,
     ChangeWarriorMaxMorale,
     DismissWarrior,
+    EarnTraitsInSkirmish,
     EnslaveCapturedWarrior,
     HealInjuredWarrior,
     InflictInjury,
@@ -38,6 +44,7 @@ from apps.warband.warrior.messages.commands.warrior import (
 )
 from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
+    WarriorGainedTrait,
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
@@ -49,6 +56,7 @@ from apps.warband.warrior.messages.events.warrior import (
 from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.injury_type import InjuryType
 from apps.warband.warrior.services.nickname import STRENGTH_NICKNAMES
+from apps.warband.warrior.services.trait import TraitEarningService
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
@@ -612,7 +620,7 @@ def test_handle_inflict_injury_writes_the_row_and_names_it():
     skirmish = SkirmishFactory(month=7)
     warrior = WarriorFactory(faction=skirmish.attacking_faction, max_health=20)
     InjuryType.objects.all().delete()
-    InjuryTypeFactory(name="Ruined shoulder", attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2)
+    InjuryTypeFactory(name="Ruined shoulder", attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=2)
 
     with mock.patch("apps.warband.warrior.services.injury.random.random", return_value=0.0):
         result = handle_inflict_injury(
@@ -652,3 +660,94 @@ def test_handle_inflict_injury_leaves_most_men_unmarked():
 
     assert result is None
     assert Injury.objects.for_warrior(warrior_id=warrior.id).exists() is False
+
+
+def _shaken_in(*, skirmish, warrior) -> None:
+    SkirmishBlowFactory.create_batch(
+        TraitEarningService.SHAKEN_HITS_TAKEN,
+        skirmish=skirmish,
+        defender=warrior,
+        outcome=BlowOutcomeChoices.OUTCOME_HIT,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_earn_traits_in_skirmish_grants_the_players_man_his_trait():
+    skirmish = SkirmishFactory(month=6)
+    savegame = skirmish.attacking_faction.savegame
+    savegame.player_faction = skirmish.defending_faction
+    savegame.save()
+    warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(warrior)
+    _shaken_in(skirmish=skirmish, warrior=warrior)
+
+    result = handle_earn_traits_in_skirmish(context=EarnTraitsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == [
+        WarriorGainedTrait(skirmish=skirmish, warrior=warrior, faction=skirmish.defending_faction, month=6)
+    ]
+    assert list(warrior.traits.values_list("type__hook", flat=True)) == ["shaken"]
+
+
+@pytest.mark.django_db
+def test_handle_earn_traits_in_skirmish_asks_nobody_in_a_fight_between_rivals():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(warrior)
+    _shaken_in(skirmish=skirmish, warrior=warrior)
+
+    result = handle_earn_traits_in_skirmish(context=EarnTraitsInSkirmish(skirmish=skirmish, month=1))
+
+    assert result == []
+    assert not warrior.traits.exists()
+
+
+@pytest.mark.django_db
+def test_handle_earn_traits_in_skirmish_passes_over_the_dead_and_the_captured():
+    """
+    The dead are past changing, and a man left lying on the field of a lost fight is being led away.
+    A man knocked down on the winning side is neither, and is asked.
+    """
+    skirmish = SkirmishFactory()
+    player_faction = skirmish.attacking_faction
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    dead = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    captured = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    skirmish.attacking_warriors.add(dead, captured)
+    for warrior in (dead, captured):
+        _shaken_in(skirmish=skirmish, warrior=warrior)
+    Skirmish.objects.set_victor(skirmish=skirmish, victorious_faction=skirmish.defending_faction)
+
+    result = handle_earn_traits_in_skirmish(context=EarnTraitsInSkirmish(skirmish=skirmish, month=1))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_earn_traits_in_skirmish_asks_a_man_knocked_down_on_the_winning_side():
+    skirmish = SkirmishFactory()
+    player_faction = skirmish.attacking_faction
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    warrior = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    skirmish.attacking_warriors.add(warrior)
+    _shaken_in(skirmish=skirmish, warrior=warrior)
+    Skirmish.objects.set_victor(skirmish=skirmish, victorious_faction=player_faction)
+
+    result = handle_earn_traits_in_skirmish(context=EarnTraitsInSkirmish(skirmish=skirmish, month=1))
+
+    assert result == [WarriorGainedTrait(skirmish=skirmish, warrior=warrior, faction=player_faction, month=1)]
+
+
+@pytest.mark.django_db
+def test_handle_earn_traits_in_skirmish_is_silent_for_a_man_the_fight_left_as_he_was():
+    skirmish = SkirmishFactory()
+    player_faction = skirmish.attacking_faction
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    skirmish.attacking_warriors.add(WarriorFactory(faction=player_faction))
+
+    result = handle_earn_traits_in_skirmish(context=EarnTraitsInSkirmish(skirmish=skirmish, month=1))
+
+    assert result == []

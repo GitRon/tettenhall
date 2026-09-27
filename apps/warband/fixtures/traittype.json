@@ -1,0 +1,122 @@
+[
+  {
+    "model": "warband.traittype",
+    "pk": 1,
+    "fields": {
+      "name": "Bull-necked",
+      "hook": "bull-necked",
+      "group": "build",
+      "attribute": "strength",
+      "magnitude": 1,
+      "source": "innate"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 2,
+    "fields": {
+      "name": "Slight",
+      "hook": "slight",
+      "group": "build",
+      "attribute": "strength",
+      "magnitude": -1,
+      "source": "innate"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 3,
+    "fields": {
+      "name": "Nimble",
+      "hook": "nimble",
+      "group": "footing",
+      "attribute": "dexterity",
+      "magnitude": 1,
+      "source": "innate"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 4,
+    "fields": {
+      "name": "Heavy-footed",
+      "hook": "heavy-footed",
+      "group": "footing",
+      "attribute": "dexterity",
+      "magnitude": -1,
+      "source": "innate"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 5,
+    "fields": {
+      "name": "Steady",
+      "hook": "steady",
+      "group": "nerve",
+      "attribute": "dexterity",
+      "magnitude": 1,
+      "source": "innate"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 6,
+    "fields": {
+      "name": "Shaken",
+      "hook": "shaken",
+      "group": "nerve",
+      "attribute": "dexterity",
+      "magnitude": -1,
+      "source": "earned"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 7,
+    "fields": {
+      "name": "Drunkard",
+      "hook": "drunkard",
+      "group": "cup",
+      "attribute": "dexterity",
+      "magnitude": -1,
+      "source": "innate"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 8,
+    "fields": {
+      "name": "Charmed",
+      "hook": "charmed",
+      "group": "cup",
+      "attribute": "dexterity",
+      "magnitude": 1,
+      "source": "earned"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 9,
+    "fields": {
+      "name": "Headtaker",
+      "hook": "headtaker",
+      "group": "hand",
+      "attribute": "strength",
+      "magnitude": 1,
+      "source": "earned"
+    }
+  },
+  {
+    "model": "warband.traittype",
+    "pk": 10,
+    "fields": {
+      "name": "Shield-wall man",
+      "hook": "shield-wall-man",
+      "group": "hand",
+      "attribute": "dexterity",
+      "magnitude": 1,
+      "source": "earned"
+    }
+  }
+]

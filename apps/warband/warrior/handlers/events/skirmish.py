@@ -1,8 +1,9 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
+from apps.warband.skirmish.messages.events.skirmish import SkirmishFinished
 from apps.warband.skirmish.messages.events.warrior import WarriorImprovedStats, WarriorWasIncapacitated
-from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, InflictInjury
+from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, EarnTraitsInSkirmish, InflictInjury
 
 
 @message_registry.register_event(event=WarriorImprovedStats)
@@ -38,3 +39,14 @@ def handle_beating_may_leave_a_mark(*, context: WarriorWasIncapacitated) -> Comm
         overkill_health=context.overkill_health,
         month=context.skirmish.month,
     )
+
+
+@message_registry.register_event(event=SkirmishFinished)
+def handle_fight_may_change_a_man(*, context: SkirmishFinished) -> Command:
+    """
+    A fight over is the one moment the game can ask what it made of the men who fought it.
+
+    A plain relay, and one per fight: which men count is the command handler's to read, see
+    [EarnTraitsInSkirmish].
+    """
+    return EarnTraitsInSkirmish(skirmish=context.skirmish, month=context.month)

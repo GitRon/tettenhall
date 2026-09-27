@@ -121,6 +121,21 @@ class InflictInjury(Command):
 
 
 @dataclass(kw_only=True)
+class EarnTraitsInSkirmish(Command):
+    """
+    Ask of every man the player fought this skirmish with whether it made him into something new.
+
+    One per fight rather than one per man: which men count is read off the fight's rows - who stood on
+    the player's side, who is dead, who is being led away - and the producer is an event handler that
+    may not read anything. The rule lives in the command's handler, the relay only says the fight is
+    over.
+    """
+
+    skirmish: Skirmish
+    month: int
+
+
+@dataclass(kw_only=True)
 class RecruitCapturedWarrior(Command):
     warrior: Warrior
     faction: Faction

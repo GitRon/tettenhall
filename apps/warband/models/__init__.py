@@ -19,7 +19,7 @@ from apps.warband.skirmish.models import (
 )
 from apps.warband.town.models import Town
 from apps.warband.training.models import Training
-from apps.warband.warrior.models import Injury, InjuryType
+from apps.warband.warrior.models import Injury, InjuryType, Trait, TraitType
 
 __all__ = [
     "BattleHistory",
@@ -42,6 +42,8 @@ __all__ = [
     "SkirmishWarriorGrowth",
     "Town",
     "Training",
+    "Trait",
+    "TraitType",
     "Transaction",
     "Warrior",
 ]

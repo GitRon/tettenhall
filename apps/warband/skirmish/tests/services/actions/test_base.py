@@ -8,7 +8,7 @@ from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.services.actions.base import SkirmishActionService
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
@@ -90,7 +90,7 @@ def test_get_attack_value_is_weakened_by_a_lasting_injury():
     warrior = WarriorFactory(faction=skirmish.attacking_faction, strength=10, strength_baseline=10)
     InjuryFactory(
         warrior=warrior,
-        type=InjuryTypeFactory(attribute=InjuryType.AttributeChoices.ATTRIBUTE_STRENGTH, magnitude=5),
+        type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=5),
     )
     service = SkirmishActionService(skirmish=skirmish, warrior=warrior)
 

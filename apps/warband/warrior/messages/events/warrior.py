@@ -125,6 +125,22 @@ class WarriorWasInjured(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorGainedTrait(Event):
+    """
+    A fight made this man into something he was not before it.
+
+    The trait is deliberately not on the event. Traits are hidden, so everything downstream may say
+    that the man changed and nothing may say how: a consumer holding the trait would be one line of
+    wording away from printing the pub card again.
+    """
+
+    skirmish: Skirmish
+    warrior: Warrior
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorHealthHealed(Event):
     warrior: Warrior
     faction: Faction

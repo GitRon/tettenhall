@@ -1,6 +1,6 @@
 import pytest
 
-from apps.warband.warrior.models.injury_type import InjuryType
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
@@ -15,7 +15,7 @@ def test_str_is_the_name():
 def test_description_names_the_thing_and_its_price():
     injury_type = InjuryTypeFactory(
         name="Crushed hand",
-        attribute=InjuryType.AttributeChoices.ATTRIBUTE_DEXTERITY,
+        attribute=ModifiedAttributeChoices.ATTRIBUTE_DEXTERITY,
         magnitude=2,
     )
 

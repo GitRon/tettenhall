@@ -339,3 +339,16 @@ def test_process_leaves_an_ordinary_man_unnamed():
 
     assert result.nickname_state is None
     assert Warrior.objects.get(pk=result.pk).nickname_state is None
+
+
+@pytest.mark.django_db
+def test_process_writes_the_innate_traits_he_is_born_with():
+    generator = MercenaryWarriorGenerator(
+        culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id
+    )
+
+    # The one module-wide "random" is patched here, so the gear rolls see the same 0.3 and he is armed
+    with mock.patch("apps.warband.warrior.services.trait.random.uniform", return_value=0.3):
+        result = generator.process()
+
+    assert result.traits.count() == 1

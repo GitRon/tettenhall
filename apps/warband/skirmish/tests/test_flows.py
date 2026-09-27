@@ -7,6 +7,7 @@ from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.finance.models.transaction import Transaction
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
@@ -18,6 +19,7 @@ from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDama
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.warband.skirmish.tests.factories.skirmish_blow import SkirmishBlowFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.models.injury import Injury
 
@@ -165,3 +167,31 @@ def test_a_knockout_marks_the_man_without_the_bus_reading_the_database(queuebie_
         handle_message(ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=22))
 
     assert Injury.objects.for_warrior(warrior_id=defender.id).count() == 1
+
+
+@pytest.mark.django_db
+def test_a_fight_that_shakes_a_man_changes_him_and_tells_the_player_so(queuebie_registry):
+    """
+    A won fight carried through the queue to the trait it earned and the line the month log keeps.
+
+    The relay off SkirmishFinished runs behind strict mode's blocker and carries nothing but the fight;
+    which men count is read in the command handler. Only a queue run proves the relay reads nothing,
+    and that the event the handler ends in reaches the month log.
+    """
+    skirmish = SkirmishFactory(month=3)
+    player_faction = skirmish.attacking_faction
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    warrior = WarriorFactory(faction=player_faction, name="Sven")
+    skirmish.attacking_warriors.add(warrior)
+    skirmish.defending_warriors.add(
+        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
+    )
+    SkirmishBlowFactory.create_batch(4, skirmish=skirmish, defender=warrior, outcome=BlowOutcomeChoices.OUTCOME_HIT)
+
+    handle_message(WinSkirmish(skirmish=skirmish, victorious_faction=player_faction, month=3))
+
+    assert list(warrior.traits.values_list("type__hook", flat=True)) == ["shaken"]
+    assert PlayerMonthLog.objects.filter(
+        kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_CHANGED, title="Sven came back from the fight a different man."
+    ).exists()

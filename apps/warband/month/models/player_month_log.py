@@ -36,6 +36,7 @@ class PlayerMonthLog(models.Model):
         KIND_NICKNAME_EARNED = 17, "Nickname earned"
         KIND_WARRIOR_INJURED = 18, "Warrior injured"
         KIND_FEAST_THROWN = 19, "Feast thrown"
+        KIND_WARRIOR_CHANGED = 20, "Warrior changed"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -77,6 +78,9 @@ class PlayerMonthLog(models.Model):
         # A consequence, beside the salaries and the building income: the player chose the feast and
         # paid for it, and the line reports what it bought
         KindChoices.KIND_FEAST_THROWN: CategoryChoices.CATEGORY_CONSEQUENCE,
+        # A consequence, filed beside the injury it mirrors: the player chose the fight that changed
+        # the man, and the line is about one man rather than a count
+        KindChoices.KIND_WARRIOR_CHANGED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each
