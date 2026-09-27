@@ -22,11 +22,12 @@
                             hx-vals='{"option": "{{ option.key }}"}'
                             type="button">
                         {{ option.label }}
+                        {# A true minus sign, as the purse sets its figures, rather than the hyphen "+d" gives #}
                         {% if option.silver_change %}
-                            <span class="font-mono text-label tracking-label text-ink-muted">{{ option.silver_change|stringformat:"+d" }} silver</span>
+                            <span class="font-mono text-label tracking-label text-ink-muted">{% if option.silver_change < 0 %}−{{ option.silver_change|stringformat:"d"|slice:"1:" }}{% else %}+{{ option.silver_change }}{% endif %} silver</span>
                         {% endif %}
                         {% if option.fyrd_change %}
-                            <span class="font-mono text-label tracking-label text-ink-muted">{{ option.fyrd_change|stringformat:"+d" }} fyrd</span>
+                            <span class="font-mono text-label tracking-label text-ink-muted">{% if option.fyrd_change < 0 %}−{{ option.fyrd_change|stringformat:"d"|slice:"1:" }}{% else %}+{{ option.fyrd_change }}{% endif %} fyrd</span>
                         {% endif %}
                     </button>
                 {% endfor %}
