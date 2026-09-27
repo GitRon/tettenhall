@@ -1,0 +1,47 @@
+{# What is already the player's and waits on him to do something with it. None of it expires and none #}
+{# of it blocks the month, which is why it is a band of its own rather than rows on the list above - #}
+{# but each row is a decision he has not made yet, which is why it is not a line in the brief. #}
+{#  #}
+{# Rows read the way the list above reads them - count first, in one fixed mono column, the way out #}
+{# at the end - because the two bands are scanned in the same pass. Silent when nothing waits: a #}
+{# heading over nothing is a thing the player learns to skip. #}
+{% if month_standing.waiting.has_anything_waiting %}
+    <div class="mb-5 box-border border border-rule bg-ground p-[15px] text-ink-muted md:p-[30px]">
+        <h3>Waiting on you</h3>
+        <ul class="m-0 list-none p-0">
+            {% if month_standing.waiting.captive_count %}
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.waiting.captive_count }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">captive{{ month_standing.waiting.captive_count|pluralize }} in your hold</span>
+                        <span class="block text-sm leading-snug">Take them into the war band, or sell them into slavery.</span>
+                    </span>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:warband-captives-view' %}">Captives</a>
+                </li>
+            {% endif %}
+            {% if month_standing.waiting.fyrd_reserve %}
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.waiting.fyrd_reserve }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">{{ month_standing.waiting.fyrd_reserve|pluralize:"man,men" }} of the fyrd to draft</span>
+                        <span class="block text-sm leading-snug">Farmers who will take up a spear when called.</span>
+                    </span>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:warband-fyrd-view' %}">Fyrd</a>
+                </li>
+            {% endif %}
+            {% if month_standing.waiting.stored_upgrade_count %}
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.waiting.stored_upgrade_count }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">piece{{ month_standing.waiting.stored_upgrade_count|pluralize }} of gear in the stores nobody carries</span>
+                        <span class="block text-sm leading-snug">Each is better than what one of your men holds now.</span>
+                    </span>
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                       href="{% url 'warband:warband-stores-view' %}">Stores</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+{% endif %}

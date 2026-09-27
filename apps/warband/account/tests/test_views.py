@@ -253,7 +253,7 @@ def test_dashboard_view_projects_what_is_still_open_this_month(logged_in_client,
     response = logged_in_client.get(reverse("warband:dashboard-view"))
 
     assert response.status_code == 200
-    assert response.context["month_standing"].warband.fyrd_reserve == current_savegame.player_faction.fyrd_reserve
+    assert response.context["month_standing"].waiting.fyrd_reserve == current_savegame.player_faction.fyrd_reserve
     assert response.context["building_income_amount"] == 50
 
 
