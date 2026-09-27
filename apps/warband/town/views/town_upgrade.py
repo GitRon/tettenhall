@@ -5,14 +5,17 @@ from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.common.http import hx_redirect
-from apps.warband.finance.models import Transaction
 from apps.warband.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.town.buildings import BUILDINGS
 from apps.warband.town.messages.commands.town import UpgradeTownBuilding
 from apps.warband.town.models import Town
-from apps.warband.town.services.building_upgrade import get_building_upgrade_refusal
+from apps.warband.town.services.building_upgrade import (
+    ALREADY_BUILT_THIS_MONTH_REFUSAL,
+    UNAFFORDABLE_REFUSAL,
+    get_building_upgrade_refusal,
+)
 
 
 class PlayerTownMixin(PlayerFactionScopedQuerysetMixin):
@@ -40,12 +43,8 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         town = self.object
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
-        current_silver_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
-
-        has_already_built = town.last_constructed_building_at == current_savegame.current_month
 
         context = super().get_context_data(**kwargs)
-        context.update({"has_already_built": has_already_built})
 
         building_list = []
         for building_type, building_class in BUILDINGS.items():
@@ -58,6 +57,13 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
 
             current_building = building_class.get_building_by_type(building_type=current_level)
             next_building = building_class.get_building_by_type(building_type=next_level)
+
+            # The page asks the same question the upgrade does, so a button can never offer a building
+            # the click would then refuse. At most one refusal comes back, month before price, which
+            # is the order the buttons below are chosen in too.
+            refusal = get_building_upgrade_refusal(
+                town=town, building_type=building_type, current_savegame=current_savegame
+            )
 
             level_display = town.get_building_level_display(building_type=building_type, level=current_level)
             next_level_display = town.get_building_level_display(building_type=building_type, level=next_level)
@@ -88,9 +94,10 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
                         )
                         if is_at_max_level or effect.value != upgraded_effect.value
                     ],
+                    "has_already_built": refusal == ALREADY_BUILT_THIS_MONTH_REFUSAL,
                     # Answering a click with a warning that fades after a second is no way to price a
                     # building, so an unaffordable one says so on the button instead
-                    "can_afford": current_silver_balance >= next_building.BUILDING_COSTS,
+                    "can_afford": refusal != UNAFFORDABLE_REFUSAL,
                 }
             )
 
