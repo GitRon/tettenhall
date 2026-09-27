@@ -14,7 +14,8 @@ def get_pub_hire_refusal(*, faction: Faction, hiring_price: int) -> str | None:
 
     The first of two enforcement points, and the one the player hears from.
     "handle_recruit_pub_mercenary" re-checks that the man is still on the shelf as a filtered delete,
-    which is what keeps a double click from charging for him twice.
+    which is what keeps a double click from charging for him twice, and re-reads the purse, which is
+    what keeps a hire and a purchase elsewhere from both spending the same silver.
     """
     if Transaction.objects.current_balance(faction_id=faction.id) < hiring_price:
         return UNAFFORDABLE_REFUSAL

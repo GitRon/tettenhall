@@ -43,7 +43,7 @@ from apps.warband.town.models import Town
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
-def _player_faction(*, hall: int = Town.HallChoices.HALL_NONE, current_month: int = 1) -> Faction:
+def _player_faction(*, hall: int = Town.HallChoices.HALL_NONE, current_month: int = 1, purse: int = 0) -> Faction:
     """
     A faction its own savegame points to as the player's.
 
@@ -51,10 +51,15 @@ def _player_faction(*, hall: int = Town.HallChoices.HALL_NONE, current_month: in
 
     The month is the savegame's own, which is what a man standing in the pub measures his wait
     against - see [Warrior.months_in_pub].
+
+    "purse" is the silver on its ledger. A hire re-checks it before anything moves, so a test about
+    what happens to the man needs a faction that can pay for him.
     """
     faction = FactionFactory(town__hall=hall, savegame__current_month=current_month)
     faction.savegame.player_faction = faction
     faction.savegame.save()
+    if purse:
+        TransactionFactory(faction=faction, amount=purse)
 
     return faction
 
@@ -398,7 +403,7 @@ def test_handle_recruit_pub_mercenary_charges_nothing_for_a_man_already_hired():
     The second of two overlapping hires: both found him in the pub, and the first has already taken
     him. Charging again would take his price twice for one man.
     """
-    faction = _player_faction()
+    faction = _player_faction(purse=1000)
     mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
     faction.available_mercenaries.add(mercenary)
     stale_mercenary = Warrior.objects.get(pk=mercenary.pk)
@@ -412,8 +417,26 @@ def test_handle_recruit_pub_mercenary_charges_nothing_for_a_man_already_hired():
 
 
 @pytest.mark.django_db
+def test_handle_recruit_pub_mercenary_leaves_him_in_the_pub_when_the_purse_no_longer_covers_him():
+    """
+    A hire and a purchase elsewhere, both passed by their views on the same 200 silver. The purchase
+    has been paid for, so the hire has to find a purse that no longer reaches his price.
+    """
+    faction = _player_faction(purse=200)
+    TransactionFactory(faction=faction, amount=-100)
+    # Priced at twice his wage, so 180 silver
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, monthly_salary=90)
+    faction.available_mercenaries.add(mercenary)
+
+    result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
+
+    assert result is None
+    assert list(faction.available_mercenaries.all()) == [mercenary]
+
+
+@pytest.mark.django_db
 def test_handle_recruit_pub_mercenary_takes_him_onto_the_roster():
-    faction = _player_faction()
+    faction = _player_faction(purse=1000)
     # Priced off the wage he draws rather than off "recruitment_price", so a veteran the player sent
     # away costs what he is worth now - see "Warrior.hiring_price"
     mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, monthly_salary=90)
@@ -433,7 +456,7 @@ def test_handle_recruit_pub_mercenary_bills_the_wait_he_was_left_to():
     the wait it is partly made of - see [Warrior.idle_surcharge]. Read afterwards it would bill a
     veteran parked half a year as though he had never left, which is the loophole this closes.
     """
-    faction = _player_faction(current_month=7)
+    faction = _player_faction(current_month=7, purse=1000)
     veteran = WarriorFactory(
         faction=None,
         savegame=faction.savegame,
@@ -454,7 +477,7 @@ def test_handle_recruit_pub_mercenary_ends_his_wait():
     A veteran back on a roster still carrying the month he was last parked would be charged for a
     wait that ended the day the player paid for it.
     """
-    faction = _player_faction(current_month=7)
+    faction = _player_faction(current_month=7, purse=1000)
     veteran = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, pub_arrival_month=1)
     faction.available_mercenaries.add(veteran)
 
@@ -470,7 +493,7 @@ def test_handle_recruit_pub_mercenary_takes_him_out_of_the_pub():
     The monthly restock deletes what it finds in the pub, rows and all, so a hired man left linked to
     it is deleted at the start of the next month - after he has been paid for.
     """
-    faction = _player_faction()
+    faction = _player_faction(purse=1000)
     mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
     faction.available_mercenaries.add(mercenary)
 
@@ -485,7 +508,7 @@ def test_handle_recruit_pub_mercenary_hands_his_gear_to_the_faction():
     Pub gear is generated unowned, and unowned gear never reaches "get_all_unoccupied_items" - it
     could be neither re-equipped onto anybody else nor sold.
     """
-    faction = _player_faction()
+    faction = _player_faction(purse=1000)
     weapon = ItemFactory(
         type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON),
         savegame=faction.savegame,
@@ -515,7 +538,7 @@ def test_handle_recruit_pub_mercenary_clears_what_he_was_owed():
     count would put him one failed payroll from walking again the month after he was paid for, and
     the wage-bill warning would read "4 of 3 unpaid months" meanwhile.
     """
-    faction = _player_faction()
+    faction = _player_faction(purse=1000)
     mercenary = WarriorFactory(
         faction=None,
         savegame=faction.savegame,
@@ -536,7 +559,7 @@ def test_handle_recruit_pub_mercenary_who_carries_nothing():
     A mercenary rolls his weapon at 75% and his armor at 25%, so an empty-handed one is the common
     case rather than the edge.
     """
-    faction = _player_faction()
+    faction = _player_faction(purse=1000)
     mercenary = WarriorFactory(
         faction=None, savegame=faction.savegame, culture=faction.culture, weapon=None, armor=None
     )

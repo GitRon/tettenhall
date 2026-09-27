@@ -11,7 +11,8 @@ def get_purchase_refusal(*, item: Item, faction: Faction) -> str | None:
 
     The first of two enforcement points, and the one the player hears from. "handle_buy_item" re-checks
     that the item is still for sale as a conditional UPDATE, which is what keeps a double click from
-    charging for it twice.
+    charging for it twice, and re-reads the purse, which is what keeps two different purchases from
+    both spending the same silver.
     """
     if Transaction.objects.current_balance(faction_id=faction.id) < item.price:
         return UNAFFORDABLE_REFUSAL
