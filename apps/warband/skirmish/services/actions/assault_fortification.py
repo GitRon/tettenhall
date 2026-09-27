@@ -1,9 +1,9 @@
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
-from apps.warband.skirmish.services.actions.base import AttackService
+from apps.warband.skirmish.services.actions.base import SkirmishActionService
 
 
-class AssaultFortificationService(AttackService):
+class AssaultFortificationService(SkirmishActionService):
     """
     A man who spends his round on the wall rather than on the man in front of him.
 
@@ -16,7 +16,7 @@ class AssaultFortificationService(AttackService):
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
         # His back is to the man he is paired with, so he never wins the initiative over him
-        return AttackService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 0
+        return SkirmishActionService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 0
 
     def get_attack_value(self) -> ActionRoll:
         # Asked only when both men of a pair have no matching points and the tie hands him the attack -

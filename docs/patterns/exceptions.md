@@ -26,7 +26,7 @@ Anything derived from a request. It needs an exception a **caller can catch and 
 one of its own:
 
 ```python
-raise UnknownSkirmishActionError(f"Attack action {attack_action} is not a skirmish action.")
+raise UnknownSkirmishActionError(f"Action {skirmish_action} is not a skirmish action.")
 ```
 
 A bare `RuntimeError` cannot do that job: catching it would swallow the first kind too. So the exception
@@ -48,7 +48,7 @@ Every raise carries a message, custom exception or not, because
 `pytest.raises` also passes on the wrong error of the right type. An exception raised without a message
 cannot be tested that way.
 
-Put the offending value in it. `f"Attack action {attack_action} is not a skirmish action."` says which
+Put the offending value in it. `f"Action {skirmish_action} is not a skirmish action."` says which
 action; `"Invalid attack action"` sends the reader back to the logs.
 
 ## Catching
@@ -64,7 +64,7 @@ except UnknownSkirmishParticipantError:
 
 The better place to refuse bad input is the boundary, before the service is reached at all —
 `SkirmishFinishRoundView.post` constructs `SkirmishActionChoices(int(...))` off the request and answers
-400 when that fails, so an unknown action never gets as far as `get_service_by_attack_action`. The custom
+400 when that fails, so an unknown action never gets as far as `get_service_by_skirmish_action`. The custom
 exception is the guarantee for the *next* caller, which may have no such boundary.
 
 ## See also

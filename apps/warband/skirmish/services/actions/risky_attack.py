@@ -5,10 +5,10 @@ from queuebie.messages import Command
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
-from apps.warband.skirmish.services.actions.base import AttackService
+from apps.warband.skirmish.services.actions.base import SkirmishActionService
 
 
-class RiskyAttackService(AttackService):
+class RiskyAttackService(SkirmishActionService):
     command: Command = WarriorAttacksWarrior
 
     def get_attack_value(self) -> ActionRoll:
