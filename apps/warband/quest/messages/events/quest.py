@@ -21,6 +21,9 @@ class QuestAccepted(Event):
     target_faction: Faction
     quest: Quest
     quest_contract: QuestContract
+    # The men the accepting faction sent, as the list the command handler signed onto the contract -
+    # reading them back through the contract is a query the handler of this event may not run
+    assigned_warriors: list[Warrior]
     # The men the target turns out, already resolved: picking them reads its roster, and the handler
     # of this event may not - strict mode blocks the database there
     target_warriors: list[Warrior]

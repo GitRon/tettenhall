@@ -18,6 +18,7 @@ def test_handle_victorious_faction_gets_quest_reward_creates_transaction_for_loo
         victorious_healthy_warriors=[],
         quest_name="Rescue the ealdorman",
         quest_loot=250,
+        quest_contract=None,
         month=4,
     )
 
@@ -41,6 +42,7 @@ def test_handle_victorious_faction_gets_quest_reward_without_loot():
         victorious_healthy_warriors=[],
         quest_name="Rescue the ealdorman",
         quest_loot=0,
+        quest_contract=None,
         month=4,
     )
 

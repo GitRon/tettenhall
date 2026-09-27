@@ -59,7 +59,8 @@ class QuestAcceptView(
                 # The scoped object from the URL, not the posted field: the latter is a hidden
                 # input and naming someone else's quest in it must not accept that quest
                 quest=self.object,
-                assigned_warriors=form.cleaned_data["assigned_warriors"],
+                # The form cleans to a queryset, and messages carry lists
+                assigned_warriors=list(form.cleaned_data["assigned_warriors"]),
                 month=self.current_savegame.current_month,
             )
         )

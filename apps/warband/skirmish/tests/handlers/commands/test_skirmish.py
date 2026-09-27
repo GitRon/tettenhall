@@ -707,6 +707,7 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_attacking_facti
         victorious_healthy_warriors=[healthy_attacking_warrior],
         quest_name=quest_contract.quest.name,
         quest_loot=250,
+        quest_contract=quest_contract,
         month=3,
     )
 
@@ -836,6 +837,8 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_defending_facti
         victorious_healthy_warriors=[healthy_enemy_warrior],
         quest_name=quest_contract.quest.name,
         quest_loot=0,
+        # A rival who wins earns none of the purse, but the contract is still over and still travels
+        quest_contract=quest_contract,
         month=3,
     )
 
@@ -860,6 +863,7 @@ def test_handle_faction_wins_skirmish_without_a_quest_contract():
         victorious_healthy_warriors=[healthy_attacking_warrior],
         quest_name=None,
         quest_loot=0,
+        quest_contract=None,
         month=3,
     )
 

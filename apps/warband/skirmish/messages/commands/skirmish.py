@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from django.db.models import QuerySet
 from queuebie.messages import Command
 
 from apps.warband.faction.models.faction import Faction
@@ -15,7 +14,7 @@ from apps.warband.skirmish.projections.skirmish_participant import SkirmishParti
 class AttackFaction(Command):
     attacking_faction: Faction
     target_faction: Faction
-    assigned_warriors: QuerySet[Warrior] | list[Warrior]
+    assigned_warriors: list[Warrior]
     month: int
 
 
@@ -24,8 +23,8 @@ class CreateSkirmish(Command):
     name: str
     faction_1: Faction
     faction_2: Faction
-    warrior_list_1: QuerySet[Warrior] | list[Warrior]
-    warrior_list_2: QuerySet[Warrior] | list[Warrior]
+    warrior_list_1: list[Warrior]
+    warrior_list_2: list[Warrior]
     month: int
     quest_contract: QuestContract = None
     # The wall the second faction fights behind. Zero unless whoever stages the fight says otherwise,

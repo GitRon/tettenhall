@@ -33,6 +33,13 @@ Messages carry already-resolved data — model **instances**, not IDs. Evaluate 
 putting them on a message so downstream handlers don't hit the database unexpectedly; see
 `handle_faction_wins_skirmish` in `apps/warband/skirmish/handlers/commands/skirmish.py`, which wraps its results
 in `list(...)` with the comment *"We need to evaluate the QS to avoid hitting the DB in the events"*.
+A field is typed `list[...]`, never `QuerySet[...]`; the [registry tests](registry-tests.md) reject a
+`QuerySet` annotation on any message.
+
+The same goes for relations. An event handler that needs a related object — the contract behind a
+skirmish, the men signed onto a contract — gets it as a field, filled by the command handler that raised
+the event (`SkirmishFinished.quest_contract`, `QuestAccepted.assigned_warriors`), rather than following
+the relation itself. [Strict mode](strict-mode.md#at-dispatch-time) says why.
 
 ## The golden rule
 
