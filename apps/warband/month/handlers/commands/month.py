@@ -10,14 +10,23 @@ from apps.warband.month.messages.events.month import (
     PlayerMonthPrepared,
 )
 from apps.warband.month.models import PlayerMonthLog
+from apps.warband.savegame.models.savegame import Savegame
 
 
 @message_registry.register_command(command=PrepareMonth)
-def handle_prepare_month(*, context: PrepareMonth) -> list[Event]:
-    # Increment current month
-    current_month = context.savegame.current_month + 1
+def handle_prepare_month(*, context: PrepareMonth) -> list[Event] | None:
+    # One conditional UPDATE rather than read-modify-save, and before anything else touches the
+    # database: two overlapping requests both pass the view, and only one of them may run the month -
+    # wages, income, restock and incidents included
+    current_month = context.month + 1
+    advanced_rows = Savegame.objects.filter(pk=context.savegame.pk, current_month=context.month).update(
+        current_month=current_month
+    )
+    if not advanced_rows:
+        return None
+
+    # The UPDATE went around the instance, so bring it in line for the handlers downstream
     context.savegame.current_month = current_month
-    context.savegame.save()
 
     # Every faction of the savegame gets its month, the player's included - what each of them
     # actually does with it is decided by which handlers subscribe, not by who they are

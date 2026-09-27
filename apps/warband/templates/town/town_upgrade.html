@@ -36,7 +36,7 @@
                     <div class="border-t border-rule px-[30px] py-[15px]">
                         {% if building.level >= building.max_level %}
                             <button class="box-border inline-block border py-[9px] text-sm uppercase px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Max level reached</button>
-                        {% elif has_already_built %}
+                        {% elif building.has_already_built %}
                             <button class="box-border inline-block border py-[9px] text-sm uppercase px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Already constructing a building this
                                 month</button>
                         {% elif not building.can_afford %}

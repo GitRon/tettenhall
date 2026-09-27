@@ -84,6 +84,7 @@
         {# either and leaves the card standing. #}
         <button type="button"
                 hx-post="{% url 'warband:pub-mercenary-recruit-view' warrior.id %}"
+                hx-disabled-elt="this"
                 hx-target="#pub-mercenary-card-{{ warrior.id|unlocalize }}"
                 hx-swap="none"
                 class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline">Recruit for {{ warrior.hiring_price }} silver

@@ -1247,7 +1247,9 @@ def test_recruit_pub_mercenary_view_keeps_him_through_the_monthly_restock(
     FactionFactory(savegame=current_savegame)
     logged_in_client.post(reverse("warband:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(
+        reverse("warband:finish-month-view"), data={"month": current_savegame.current_month}
+    )
 
     assert response.status_code == 200
     assert Warrior.objects.filter(id=pub_mercenary.id, faction=current_savegame.player_faction).exists() is True

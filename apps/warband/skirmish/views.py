@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -230,22 +231,27 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         ):
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-        # Start duel
-        handle_message(
-            StartDuel(
-                skirmish=self.object,
-                skirmish_participants_1=attacking_participants,
-                skirmish_participants_2=defending_participants,
+        # One transaction around both, because the bus opens one per call: a round whose blows,
+        # deaths and captures had landed while "FinishRound" raised would keep its counter and its
+        # undecided victor, and the next post would fight the same round again. Passing both in one
+        # "handle_message" is not the same thing - "FinishRound" would drain before the duel's events.
+        with transaction.atomic():
+            # Start duel
+            handle_message(
+                StartDuel(
+                    skirmish=self.object,
+                    skirmish_participants_1=attacking_participants,
+                    skirmish_participants_2=defending_participants,
+                )
             )
-        )
 
-        # Finish round
-        handle_message(
-            FinishRound(
-                skirmish=self.object,
-                month=current_savegame.current_month,
+            # Finish round
+            handle_message(
+                FinishRound(
+                    skirmish=self.object,
+                    month=current_savegame.current_month,
+                )
             )
-        )
 
         response = HttpResponse()
         response["HX-Trigger"] = json.dumps(

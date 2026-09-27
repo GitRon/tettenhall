@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import manager
+from django.db.models import F, manager
 
 
 class FactionQuerySet(models.QuerySet):
@@ -169,19 +169,53 @@ class FactionManager(manager.Manager):
     def add_captive(self, *, faction, warrior):
         faction.captured_warriors.add(warrior)
 
-    def remove_captive(self, *, faction, warrior):
-        faction.captured_warriors.remove(warrior)
-
-    def remove_mercenary_from_pub(self, *, faction, warrior):
+    def remove_captive(self, *, faction, warrior) -> bool:
         """
-        Take a hired mercenary off the pub's shelf.
+        Let a captive out of this faction's cells, and say whether he was still in them.
+
+        A filtered delete on the link row rather than "captured_warriors.remove()", which answers
+        nothing: two overlapping requests both find him captive, and the one whose delete comes back
+        empty is the one that must not recruit or sell him a second time.
+        """
+        removed_rows, _ = self.model.captured_warriors.through.objects.filter(
+            faction_id=faction.id, warrior_id=warrior.id
+        ).delete()
+
+        return removed_rows > 0
+
+    def remove_mercenary_from_pub(self, *, faction, warrior) -> bool:
+        """
+        Take a hired mercenary off the pub's shelf, and say whether he was still standing on it.
 
         Not cosmetic. "handle_restock_pub_mercenaries" clears the stock with
         "available_mercenaries.all().delete()", which is a warrior queryset and deletes the rows
         themselves - so a man left linked to the pub is deleted at the start of the next month, after
         he has been paid for, equipped and marched. This is what keeps him out of that queryset.
+
+        A filtered delete on the link row for the same reason as [remove_captive]: the hire whose
+        delete comes back empty is the second of two, and must not be charged.
         """
-        faction.available_mercenaries.remove(warrior)
+        removed_rows, _ = self.model.available_mercenaries.through.objects.filter(
+            faction_id=faction.id, warrior_id=warrior.id
+        ).delete()
+
+        return removed_rows > 0
+
+    def draw_from_fyrd_reserve(self, *, faction) -> bool:
+        """
+        Take one man out of the fyrd reserve, and say whether there was one to take.
+
+        One conditional UPDATE rather than [reduce_fyrd_reserve]'s read-modify-save: two overlapping
+        drafts both read a reserve of 1 off the page, and only one of them may raise a warrior.
+        """
+        drawn_rows = self.filter(pk=faction.pk, fyrd_reserve__gt=0).update(fyrd_reserve=F("fyrd_reserve") - 1)
+        if not drawn_rows:
+            return False
+
+        # The UPDATE went around the instance, so bring it in line for the handlers downstream
+        faction.refresh_from_db(fields=("fyrd_reserve",))
+
+        return True
 
     def replenish_fyrd_reserve(self, *, faction, new_recruits: int):
         faction.refresh_from_db()

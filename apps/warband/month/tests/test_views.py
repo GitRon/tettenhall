@@ -33,7 +33,7 @@ def test_finish_month_view_advances_the_savegame_to_the_next_month(logged_in_cli
     TrainingFactory(faction=current_savegame.player_faction)
     FactionFactory(savegame=current_savegame)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     assert response["HX-Redirect"] == reverse("warband:dashboard-view")
@@ -62,7 +62,7 @@ def test_finish_month_view_lets_a_rival_faction_recover(logged_in_client, curren
         max_health=20,
     )
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     rival_warrior.refresh_from_db()
@@ -84,7 +84,7 @@ def test_finish_month_view_logs_the_recovery_of_the_player_faction_only(logged_i
     rival_faction = FactionFactory(savegame=current_savegame)
     WarriorFactory(faction=rival_faction, current_health=18, max_health=20)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     assert PlayerMonthLog.objects.filter(faction=current_savegame.player_faction).exists() is True
@@ -112,7 +112,7 @@ def test_finish_month_view_keeps_an_unpaid_warriors_morale_down(logged_in_client
         faction=current_savegame.player_faction, current_morale=10, max_morale=20, monthly_salary=500
     )
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     warrior.refresh_from_db()
@@ -136,7 +136,7 @@ def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_i
     FactionFactory(savegame=current_savegame)
     warrior = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=40)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     warrior.refresh_from_db()
@@ -160,7 +160,7 @@ def test_finish_month_view_moves_a_rivals_roster_and_purse(logged_in_client, cur
     WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
     TransactionFactory(faction=rival_faction, amount=1000, month=1)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     # Started on 1000, took 250 of income, paid 150 of wages, and the free draft wrote nothing
@@ -186,7 +186,7 @@ def test_finish_month_view_weighs_a_rivals_draft_against_the_purse_the_month_ope
     WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
     TransactionFactory(faction=rival_faction, amount=100, month=1)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     assert Warrior.objects.filter(faction=rival_faction).count() == 1
@@ -212,7 +212,7 @@ def test_finish_month_view_trains_a_rivals_warriors(logged_in_client, current_sa
     )
     TrainingFactory(faction=rival_faction, category=Training.TrainingCategory.SWIFTNESS)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     rival_warrior.refresh_from_db()
@@ -231,7 +231,7 @@ def test_finish_month_view_keeps_a_rivals_bookkeeping_out_of_the_players_log(log
     WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
     TransactionFactory(faction=rival_faction, amount=1000, month=1)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     assert PlayerMonthLog.objects.filter(faction=rival_faction).exists() is False
@@ -248,7 +248,7 @@ def test_finish_month_view_pays_a_rival_nothing_for_a_hall_it_does_not_have(logg
     rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=0)
     WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     assert Transaction.objects.filter(faction=rival_faction, reason__startswith="Building earnings").exists() is False
@@ -267,7 +267,9 @@ def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current
     current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
     current_savegame.save()
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"), headers={"hx-request": "true"})
+    response = logged_in_client.post(
+        reverse("warband:finish-month-view"), data={"month": 1}, headers={"hx-request": "true"}
+    )
 
     assert response.status_code == 204
     assert json.loads(response["HX-Trigger"]) == {"notification": "This game is over. Start a new savegame to play on."}
@@ -279,7 +281,7 @@ def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current
 def test_finish_month_view_keeps_the_month_open_while_a_skirmish_is_unresolved(logged_in_client, current_savegame):
     SkirmishFactory(attacking_faction=current_savegame.player_faction)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 204
     assert json.loads(response["HX-Trigger"]) == {
@@ -290,8 +292,33 @@ def test_finish_month_view_keeps_the_month_open_while_a_skirmish_is_unresolved(l
 
 
 @pytest.mark.django_db
-def test_finish_month_view_without_an_active_savegame(logged_in_client):
+def test_finish_month_view_leaves_a_month_the_page_did_not_show(logged_in_client, current_savegame):
+    """
+    The second click of a double click lands after the first has finished month 1, still posting
+    month 1. Finishing whatever month is current would run month 2 without the player having seen it.
+    """
+    current_savegame.current_month = 2
+    current_savegame.save()
+
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+
+    assert response["HX-Redirect"] == reverse("warband:dashboard-view")
+    current_savegame.refresh_from_db()
+    assert current_savegame.current_month == 2
+
+
+@pytest.mark.django_db
+def test_finish_month_view_refuses_a_post_without_a_month(logged_in_client, current_savegame):
     response = logged_in_client.post(reverse("warband:finish-month-view"))
+
+    assert response.status_code == 400
+    current_savegame.refresh_from_db()
+    assert current_savegame.current_month == 1
+
+
+@pytest.mark.django_db
+def test_finish_month_view_without_an_active_savegame(logged_in_client):
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 404
 
@@ -320,7 +347,7 @@ def test_finish_month_view_still_offers_a_rival_the_player_fought_last_month(log
     )
     skirmish.defending_warriors.add(veteran_defender)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     # A set because the board draws one to three cards: what matters is that the rival is on it at all,
@@ -363,7 +390,7 @@ def test_finish_month_view_lets_a_rival_hire_the_man_in_its_pub(logged_in_client
     TransactionFactory(faction=rival_faction, amount=1000, month=1)
     mercenary = _pub_mercenary(faction=rival_faction)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     mercenary.refresh_from_db()
@@ -391,7 +418,7 @@ def test_finish_month_view_restocks_every_pub_on_its_own(logged_in_client, curre
     unaffordable_mercenary = _pub_mercenary(faction=poor_rival)
     _pub_mercenary(faction=player_faction)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"))
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     # No hall anywhere, so one fresh mercenary in each pub, and the poor rival's man swept with the stock
@@ -452,7 +479,7 @@ def test_finish_month_view_answers_an_open_question_by_its_default(logged_in_cli
     FactionFactory(savegame=current_savegame)
     PendingIncidentFactory(faction=current_savegame.player_faction, month=1)
 
-    logged_in_client.post(reverse("warband:finish-month-view"))
+    logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert PendingIncident.objects.filter(month=1).exists() is False
     assert (

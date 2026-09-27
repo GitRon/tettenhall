@@ -14,6 +14,7 @@ from apps.warband.faction.forms.faction_attack import FactionAttackForm
 from apps.warband.faction.messages.commands.faction import OccupyFaction
 from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
 from apps.warband.faction.models.faction import Faction
+from apps.warband.faction.services.hiring import get_pub_hire_refusal
 from apps.warband.finance.models import Transaction
 from apps.warband.item.services.handout import annotate_held_gear_values
 from apps.warband.quest.models.quest import Quest
@@ -551,14 +552,10 @@ class RecruitPubMercenaryView(
         # would tell the player a figure the ledger never charged. See [Warrior.idle_surcharge].
         hiring_price = obj.hiring_price
 
-        current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
-        if current_balance < hiring_price:
+        refusal = get_pub_hire_refusal(faction=current_savegame.player_faction, hiring_price=hiring_price)
+        if refusal is not None:
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
-            response["HX-Trigger"] = json.dumps(
-                {
-                    "notification": "You don't have enough silver to hire this mercenary.",
-                }
-            )
+            response["HX-Trigger"] = json.dumps({"notification": refusal})
             return response
 
         handle_message(

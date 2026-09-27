@@ -7,11 +7,11 @@ from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 from queuebie.runner import handle_message
 
-from apps.warband.finance.models import Transaction
 from apps.warband.item.forms.item import AssignItemForm
 from apps.warband.item.messages.commands.item import BuyItem, EquipItem, SellItem
 from apps.warband.item.models.item import Item
 from apps.warband.item.services.handout import get_handout_note
+from apps.warband.item.services.purchase import get_purchase_refusal
 from apps.warband.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -126,14 +126,10 @@ class ItemBuyView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, Sin
         obj = self.get_object()
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
-        current_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
-        if current_balance < obj.price:
+        refusal = get_purchase_refusal(item=obj, faction=current_savegame.player_faction)
+        if refusal is not None:
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
-            response["HX-Trigger"] = json.dumps(
-                {
-                    "notification": "You don't have enough money to buy this item.",
-                }
-            )
+            response["HX-Trigger"] = json.dumps({"notification": refusal})
             return response
 
         handle_message(

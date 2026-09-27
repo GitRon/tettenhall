@@ -2,13 +2,14 @@ import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.handlers.commands.item import (
+    handle_buy_item,
     handle_change_ownership,
     handle_equip_item,
     handle_lose_item,
     handle_sell_item,
 )
-from apps.warband.item.messages.commands.item import ChangeOwnership, EquipItem, LoseItem, SellItem
-from apps.warband.item.messages.events.item import ItemEquipped, ItemSold, ItemWasLost, OwnershipChanged
+from apps.warband.item.messages.commands.item import BuyItem, ChangeOwnership, EquipItem, LoseItem, SellItem
+from apps.warband.item.messages.events.item import ItemBought, ItemEquipped, ItemSold, ItemWasLost, OwnershipChanged
 from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
@@ -70,6 +71,50 @@ def test_handle_sell_item_pays_at_least_a_silver():
     result = handle_sell_item(context=SellItem(selling_faction=faction, item=item, month=3))
 
     assert result.price == 1
+
+
+@pytest.mark.django_db
+def test_handle_sell_item_pays_nothing_for_an_item_already_sold():
+    """
+    The second of two overlapping requests: both found the item in the faction's stash, and the first
+    has already sold it. Paying out again would turn a double click into silver.
+    """
+    faction = FactionFactory()
+    item = ItemFactory(savegame=faction.savegame, owner=faction, price=200)
+    stale_item = Item.objects.get(pk=item.pk)
+    handle_sell_item(context=SellItem(selling_faction=faction, item=item, month=3))
+
+    result = handle_sell_item(context=SellItem(selling_faction=faction, item=stale_item, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_buy_item_hands_the_shop_stock_to_the_buyer():
+    faction = FactionFactory()
+    item = ItemFactory(savegame=faction.savegame, owner=None, price=200)
+
+    result = handle_buy_item(context=BuyItem(buying_faction=faction, item=item, price=200, month=3))
+
+    assert result == ItemBought(buying_faction=faction, item=item, item_name=item.display_name, price=200, month=3)
+    item.refresh_from_db()
+    assert item.owner == faction
+
+
+@pytest.mark.django_db
+def test_handle_buy_item_charges_nothing_for_an_item_already_bought():
+    """
+    The second of two overlapping requests: both found the item on the shelf, and the first has
+    already bought it. Charging again would take the price twice for one item.
+    """
+    faction = FactionFactory()
+    item = ItemFactory(savegame=faction.savegame, owner=None, price=200)
+    stale_item = Item.objects.get(pk=item.pk)
+    handle_buy_item(context=BuyItem(buying_faction=faction, item=item, price=200, month=3))
+
+    result = handle_buy_item(context=BuyItem(buying_faction=faction, item=stale_item, price=200, month=3))
+
+    assert result is None
 
 
 @pytest.mark.django_db
