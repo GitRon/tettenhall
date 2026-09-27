@@ -102,6 +102,7 @@ def test_handle_record_quest_reward_names_the_quest():
             victorious_healthy_warriors=[],
             quest_name="Silence the raiders",
             quest_loot=400,
+            quest_contract=None,
             month=3,
         )
     )
@@ -126,6 +127,7 @@ def test_handle_record_quest_reward_stays_silent_when_nothing_was_paid():
             victorious_healthy_warriors=[],
             quest_name=None,
             quest_loot=0,
+            quest_contract=None,
             month=3,
         )
     )

@@ -337,6 +337,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         return None
 
     quest_name, quest_loot = context.skirmish.quest_reward_for(victorious_faction=context.victorious_faction)
+    quest_contract = context.skirmish.quest_contract_or_none()
 
     # Everything below is about the winner and the loser, so the two sides get sorted into those
     # roles exactly once - "attacking_warriors" and "defending_warriors" only coincide with them when
@@ -385,6 +386,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         month=context.month,
         quest_name=quest_name,
         quest_loot=quest_loot,
+        quest_contract=quest_contract,
     )
 
 

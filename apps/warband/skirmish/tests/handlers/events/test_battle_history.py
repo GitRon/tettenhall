@@ -324,6 +324,7 @@ def test_handle_log_skirmish_finished_logs_the_victor():
             victorious_healthy_warriors=[],
             quest_name="Raid cattle",
             quest_loot=250,
+            quest_contract=None,
             month=3,
         )
     )
