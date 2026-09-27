@@ -9,12 +9,13 @@ from apps.warband.incident.models.pending_incident import PendingIncident
 
 
 @message_registry.register_command(command=AnswerPendingIncident)
-def handle_answer_pending_incident(*, context: AnswerPendingIncident) -> Event:
+def handle_answer_pending_incident(*, context: AnswerPendingIncident) -> Event | None:
     """
     Land the answer the player gave, and close the question.
 
     The answer raises the same event an ordinary incident does, so the levers and the chronicle line
-    apply through the handlers every incident already has.
+    apply through the handlers every incident already has. A question somebody else already closed -
+    a second click, a second option, the month's default - answers nothing.
     """
     return _answer(pending_incident=context.pending_incident, option=context.option, month=context.month)
 
@@ -32,7 +33,7 @@ def handle_answer_open_pending_incidents(*, context: AnswerOpenPendingIncidents)
         month=context.month
     )
 
-    return [
+    events = [
         _answer(
             pending_incident=pending_incident,
             option=INCIDENTS_BY_NAME[pending_incident.incident].get_default_option(),
@@ -41,10 +42,16 @@ def handle_answer_open_pending_incidents(*, context: AnswerOpenPendingIncidents)
         for pending_incident in open_incidents.select_related("faction", "rival", "item__type")
     ]
 
+    # A question the player answered while his month was ending has no default left to give
+    return [event for event in events if event is not None]
 
-def _answer(*, pending_incident: PendingIncident, option: IncidentOption, month: int) -> IncidentOccurred:
-    # Resolved before the row goes: the answer reads the rival and the gear the question was about
+
+def _answer(*, pending_incident: PendingIncident, option: IncidentOption, month: int) -> IncidentOccurred | None:
+    # Closing the question is the first write, so of two overlapping answers only one lands. The rival
+    # and the gear the answer reads are rows of their own and outlive it.
+    if not PendingIncident.objects.close(pending_incident=pending_incident):
+        return None
+
     outcome = INCIDENTS_BY_NAME[pending_incident.incident].answer(option=option, pending_incident=pending_incident)
-    pending_incident.delete()
 
     return IncidentOccurred(faction=pending_incident.faction, month=month, outcome=outcome)
