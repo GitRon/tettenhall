@@ -278,6 +278,28 @@ class WarriorManager(manager.Manager):
         """
         obj.refresh_from_db()
         obj.max_morale += max(1, int(obj.max_morale * gained_max_morale_in_percent))
+        obj.peak_max_morale = max(obj.peak_max_morale, obj.max_morale)
+        obj.save(update_fields=("max_morale", "peak_max_morale"))
+
+        return obj
+
+    def restore_max_morale(self, *, obj, restored_max_morale_in_percent: float):
+        """
+        Mend a cut ceiling toward the highest one he has held, and never past it.
+
+        The share is of the ceiling he has now, the way every other move of it is measured, and it is
+        floored at a point for the reason "increase_max_morale" is. The floor answers the cap, not the
+        other way round: a man one point short is given that point, and a man at his mark is given
+        nothing, because a repair that can add to a whole man is a stat for sale.
+
+        The mark stays where it is. It records what he once was, and mending him does not change that.
+        """
+        obj.refresh_from_db()
+        missing_max_morale = obj.peak_max_morale - obj.max_morale
+        if missing_max_morale <= 0:
+            return obj
+
+        obj.max_morale += min(missing_max_morale, max(1, int(obj.max_morale * restored_max_morale_in_percent)))
         obj.save(update_fields=("max_morale",))
 
         return obj
@@ -347,9 +369,12 @@ class WarriorManager(manager.Manager):
         for field, gain in gains.items():
             setattr(obj, field, getattr(obj, field) + gain)
 
-        # Only the five fields touched above: a full save would write back everything else this
-        # instance still holds from before
-        obj.save(update_fields=grown_fields)
+        # A level is growth, not repair, so it carries the mark along wherever the ceiling now stands
+        obj.peak_max_morale = max(obj.peak_max_morale, obj.max_morale)
+
+        # Only the fields touched above: a full save would write back everything else this instance
+        # still holds from before
+        obj.save(update_fields=(*grown_fields, "peak_max_morale"))
 
         return gains
 

@@ -50,6 +50,11 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
             setattr(warrior, upgraded_attribute_name, getattr(warrior, upgraded_attribute_name) + 1)
             updated_fields.append(upgraded_attribute_name)
 
+            # A finished course is growth, so a morale ceiling raised past the mark takes the mark along
+            if attribute == "morale" and warrior.max_morale > warrior.peak_max_morale:
+                warrior.peak_max_morale = warrior.max_morale
+                updated_fields.append("peak_max_morale")
+
             # Reset progress bar after upgrade
             setattr(warrior, attribute_progress_name, 0)
 

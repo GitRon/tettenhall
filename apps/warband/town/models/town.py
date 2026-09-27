@@ -55,6 +55,12 @@ class Town(models.Model):
         default=0,
     )
 
+    last_feast_at = models.PositiveSmallIntegerField(
+        # Months count from 1, so 0 is "never feasted" - the same reading as the building guard above
+        help_text="Month the last feast was thrown in the hall, 0 if none was",
+        default=0,
+    )
+
     objects = TownManager()
 
     class Meta:

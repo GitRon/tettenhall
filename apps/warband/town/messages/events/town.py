@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.warband.faction.models import Faction
+from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.models import Town
 
 
@@ -12,5 +13,20 @@ class TownBuildingUpgraded(Event):
     faction: Faction
     building_type: str
     new_level: int
+    costs: int
+    month: int
+
+
+@dataclass(kw_only=True)
+class FeastThrown(Event):
+    """
+    The war band feasted. Carries who was fed rather than who was mended: the one reaction that mends
+    decides that per man off the columns, and the ledger and the month log both need the whole table.
+    """
+
+    town: Town
+    faction: Faction
+    warrior_list: list[Warrior]
+    restored_share: float
     costs: int
     month: int

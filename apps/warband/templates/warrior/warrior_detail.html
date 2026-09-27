@@ -78,7 +78,7 @@
         </tr>
         <tr>
             <td>Morale</td>
-            <td>{% include 'warrior/components/warrior_gauge.html' with current=object.current_morale maximum=object.max_morale baseline=object.morale_baseline knowledge=knowledge %}</td>
+            <td>{% include 'warrior/components/warrior_gauge.html' with current=object.current_morale maximum=object.max_morale peak=object.peak_max_morale baseline=object.morale_baseline knowledge=knowledge %}</td>
         </tr>
         <tr>
             <td>Condition</td>

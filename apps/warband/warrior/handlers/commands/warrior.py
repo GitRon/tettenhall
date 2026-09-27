@@ -143,12 +143,15 @@ def handle_change_warrior_max_morale(*, context: ChangeWarriorMaxMorale) -> Even
 
     The ceiling is read back rather than calculated: both manager methods truncate the share against
     what the man actually has, and a raise is floored at a point where a cut is not, so the only
-    honest source for what changed is the row afterwards.
+    honest source for what changed is the row afterwards. A repair may change nothing at all, for a
+    man already at his mark, and the event says so with a zero.
     """
     context.warrior.refresh_from_db()
     previous_max_morale = context.warrior.max_morale
 
-    if context.share >= 0:
+    if context.share >= 0 and context.restores_toward_peak:
+        Warrior.objects.restore_max_morale(obj=context.warrior, restored_max_morale_in_percent=context.share)
+    elif context.share >= 0:
         Warrior.objects.increase_max_morale(obj=context.warrior, gained_max_morale_in_percent=context.share)
     else:
         Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=-context.share)
