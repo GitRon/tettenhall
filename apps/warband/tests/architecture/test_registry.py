@@ -39,6 +39,9 @@ TERMINAL_MESSAGES: frozenset[str] = frozenset(
         # fifth of relics rather than all of them - see [handle_raised_ceiling_earns_a_nickname].
         "apps.warband.faction.messages.events.faction.FyrdReserveChanged",
         "apps.warband.item.messages.events.item.ItemWasLost",
+        # A question waits on its pending row, and the dashboard reads it from there. What reaches the
+        # levers and the log is the IncidentOccurred its answer raises, not the asking.
+        "apps.warband.incident.messages.events.incident.IncidentAsked",
         # The player is looking at the screen that changed, and both entry points already say the
         # part he cannot see - who the item came off - in a line of their own. A chronicle entry per
         # handout would bury the month log under the shuffling a single new sword sets off.

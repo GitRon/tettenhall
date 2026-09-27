@@ -3,6 +3,7 @@
 # topic package that owns a model has to be listed below or its table is never created.
 from apps.warband.faction.models import Culture, Faction
 from apps.warband.finance.models import Transaction
+from apps.warband.incident.models import PendingIncident
 from apps.warband.item.models import Item, ItemType
 from apps.warband.month.models import PlayerMonthLog
 from apps.warband.quest.models import Quest, QuestContract, QuestType
@@ -28,6 +29,7 @@ __all__ = [
     "InjuryType",
     "Item",
     "ItemType",
+    "PendingIncident",
     "PlayerMonthLog",
     "Quest",
     "QuestContract",

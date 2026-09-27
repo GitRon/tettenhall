@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models.transaction import Transaction
+from apps.warband.incident.models.pending_incident import PendingIncident
 from apps.warband.item.models.item import Item
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -27,6 +28,44 @@ class IncidentOutcome:
     max_morale_share: float = 0.0
     warrior: Warrior | None = None
     lost_item: Item | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class IncidentOption:
+    """
+    One answer a question-shaped entry accepts, and what it does when it is given.
+
+    "label" is the button, "title" and "body" are the chronicle line the answer leaves behind. The
+    levers are the same ones an ordinary entry sets as class constants, so an answer lands through
+    the four handlers every incident already has - and through "IncidentOutcome.warrior", once an
+    entry is about a man rather than the faction.
+
+    "sells_item" hands over the piece of gear the question was asked about, which is the gear lever
+    with the item chosen when the question was asked rather than when it is answered.
+    """
+
+    key: str
+    label: str
+    title: str
+    body: str
+    silver_change: int = 0
+    fyrd_change: int = 0
+    sells_item: bool = False
+
+
+@dataclass(kw_only=True)
+class IncidentQuestion:
+    """
+    What a question-shaped entry asks, with what it is about already chosen.
+
+    "rival" and "item" are held on the pending row until the answer lands, because the answer has to
+    be about the same rival and the same piece of gear the question named.
+    """
+
+    title: str
+    body: str
+    rival: Faction | None = None
+    item: Item | None = None
 
 
 class Incident:
@@ -67,6 +106,31 @@ class Incident:
     FYRD_CHANGE = 0
     MAX_MORALE_SHARE = 0.0
 
+    # What the player may answer, for an entry that asks rather than tells. Empty for a notice, which
+    # is most of the catalogue: a month that asks something every time is a form
+    OPTIONS: tuple[IncidentOption, ...] = ()
+    # The key of the option an unanswered question takes when the month ends. Not answering is an
+    # answer, so ignoring a question never pays better than deciding it
+    DEFAULT_OPTION = ""
+
+    @classmethod
+    def is_question(cls) -> bool:
+        return bool(cls.OPTIONS)
+
+    @classmethod
+    def get_option(cls, *, key: str) -> IncidentOption | None:
+        """
+        The option this entry declares under "key", or None when it declares nothing by that name.
+
+        The one place a posted key meets the catalogue, so a key naming nothing real is turned away
+        here rather than reaching a handler.
+        """
+        return next((option for option in cls.OPTIONS if option.key == key), None)
+
+    @classmethod
+    def get_default_option(cls) -> IncidentOption | None:
+        return cls.get_option(key=cls.DEFAULT_OPTION)
+
     @classmethod
     def is_possible(cls, *, faction: Faction) -> bool:
         """
@@ -79,8 +143,11 @@ class Incident:
         Everything else can always happen, unless it has something else to take - a reserve to thin,
         a man to name, a piece of gear to lose - and says so by overriding this.
         """
-        if cls.SILVER_CHANGE < 0:
-            return Transaction.objects.current_balance(faction_id=faction.id) >= -cls.SILVER_CHANGE
+        # A question is priced by its dearest answer, so it is only asked of a player who could give
+        # every one of them. Its default never costs silver, which the pool holds it to
+        dearest_change = min([cls.SILVER_CHANGE, *[option.silver_change for option in cls.OPTIONS]])
+        if dearest_change < 0:
+            return Transaction.objects.current_balance(faction_id=faction.id) >= -dearest_change
 
         return True
 
@@ -94,6 +161,34 @@ class Incident:
             body=cls.BODY,
             silver_change=cls.SILVER_CHANGE,
             fyrd_change=cls.FYRD_CHANGE,
+        )
+
+    @classmethod
+    def ask(cls, *, faction: Faction) -> IncidentQuestion:
+        """
+        Turn a question-shaped entry's constants into what it asks. Override where the question names
+        something the faction has - a rival, a piece of gear.
+        """
+        return IncidentQuestion(title=cls.TITLE, body=cls.BODY)
+
+    @classmethod
+    def answer(cls, *, option: IncidentOption, pending_incident: PendingIncident) -> IncidentOutcome:
+        """
+        Turn the option given into the outcome the levers are applied from.
+
+        Resolved when the answer lands rather than when the question was asked, so a levy is clamped
+        to what the reserve holds by then - the same reason FeverInTheVillages clamps its own.
+        """
+        fyrd_change = option.fyrd_change
+        if fyrd_change < 0:
+            fyrd_change = -min(-fyrd_change, pending_incident.faction.fyrd_reserve)
+
+        return IncidentOutcome(
+            title=option.title,
+            body=option.body,
+            silver_change=option.silver_change,
+            fyrd_change=fyrd_change,
+            lost_item=pending_incident.item if option.sells_item else None,
         )
 
 

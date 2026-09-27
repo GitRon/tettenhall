@@ -4,6 +4,7 @@ from django.urls import path
 from apps.warband.account import views as account_views
 from apps.warband.faction import views as faction_views
 from apps.warband.finance import views as finance_views
+from apps.warband.incident import views as incident_views
 from apps.warband.item import views as item_views
 from apps.warband.month import views as month_views
 from apps.warband.quest import views as quest_views
@@ -89,6 +90,11 @@ urlpatterns = [
     path("item/<int:pk>/assign", item_views.ItemAssignView.as_view(), name="item-assign-view"),
     # Month
     path("month/finish/", month_views.FinishMonthView.as_view(), name="finish-month-view"),
+    path(
+        "incident/<int:pk>/answer",
+        incident_views.PendingIncidentAnswerView.as_view(),
+        name="pending-incident-answer-view",
+    ),
     # Quest
     path("quest/<int:pk>/accept", quest_views.QuestAcceptView.as_view(), name="quest-accept-view"),
     # Savegame

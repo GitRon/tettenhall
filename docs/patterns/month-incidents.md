@@ -81,6 +81,66 @@ raised: the handlers reacting to it run behind the blocker.
 no log to read it in. Moving that one handler to `FactionMonthPrepared` is what giving rivals
 incidents would consist of, once #3 has given them an economy for one to mean anything.
 
+## Questions
+
+Most entries are notices: they happen, the effect lands, the player reads about it. An entry becomes a
+question by declaring `OPTIONS` and naming one of them `DEFAULT_OPTION`:
+
+```python
+class AbbotAsksForLead(Incident):
+    WEIGHT = 2
+
+    TITLE = "The abbot of the minster asked for lead for the church roof."
+    BODY = "He mentioned, in passing, how long the fyrd's mothers listen to him."
+
+    OPTIONS = (
+        IncidentOption(
+            key="give", label="Give the lead", title="Lead went to the minster roof.", body="…", silver_change=-60
+        ),
+        IncidentOption(
+            key="refuse",
+            label="Refuse",
+            title="The abbot was refused his lead, and preached on it.",
+            body="…",
+            fyrd_change=-1,
+        ),
+    )
+    DEFAULT_OPTION = "refuse"
+```
+
+An option is the levers above with a button label and a chronicle line of its own. Answering turns it
+into an ordinary `IncidentOutcome` and raises the same `IncidentOccurred`, so a question costs a class
+like any other entry — no message, no view, no template. `IncidentOutcome.warrior` is there for a
+question about a man, once one exists (#283).
+
+```
+ChooseIncident → handle_choose_incident
+  └─ question drawn: PendingIncident row, IncidentAsked (evt, terminal)
+
+PendingIncidentAnswerView (option key from POST, checked against OPTIONS, 400 otherwise)
+  └─ AnswerPendingIncident → handle_answer_pending_incident → IncidentOccurred
+
+PlayerMonthPrepared → handle_answer_open_pending_incidents_for_new_month
+  └─ AnswerOpenPendingIncidents → handle_answer_open_pending_incidents → [IncidentOccurred]
+```
+
+- **Not answering is an answer.** A question still open when the month ends takes its default, dated to
+  the new month so its line survives the log clearing. So ignoring a question never pays, and the month
+  is never blocked by one.
+- **A default never costs silver and never sells gear** — `test_pool.py` holds every entry to both. It
+  is what a player who cannot afford anything else is left with, so a question can never wedge a
+  savegame.
+- **A question is priced by its dearest answer.** The inherited `is_possible` checks the treasury against
+  the most expensive option, so nobody is asked a question with a button he cannot press. The month
+  goes on while it waits, so `get_pending_incident_answer_refusal` checks again when the answer is given.
+- **Resolved when the answer lands.** `Incident.answer()` clamps a levy to what the reserve holds then.
+  What the question was about — a rival, a piece of gear — is chosen by `ask()` and kept on the pending
+  row, so the answer lands on the same one.
+- **Balance counts a question at the answer that is not its default** — the one it was written to
+  offer. Counting the default would price every question as if it were always ignored.
+- **Shown as an attention card in the month log** with its options as buttons. A stopgap: #64 owns how a
+  question finally looks.
+
 ## Two traps the hook comes with
 
 **The player's month runs before any faction's.** `handle_prepare_month` returns

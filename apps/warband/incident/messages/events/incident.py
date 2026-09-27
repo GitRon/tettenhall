@@ -4,6 +4,7 @@ from queuebie.messages import Event
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.incident.incidents.base import IncidentOutcome
+from apps.warband.incident.models.pending_incident import PendingIncident
 
 
 @dataclass(kw_only=True)
@@ -19,3 +20,15 @@ class IncidentOccurred(Event):
     faction: Faction
     month: int
     outcome: IncidentOutcome
+
+
+@dataclass(kw_only=True)
+class IncidentAsked(Event):
+    """
+    The world put a question to a faction rather than telling it something.
+
+    Nothing reacts yet: the question waits on its pending row, the dashboard reads it from there, and
+    what reaches the levers and the log is the IncidentOccurred its answer raises.
+    """
+
+    pending_incident: PendingIncident

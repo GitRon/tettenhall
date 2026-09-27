@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from apps.warband.account.tests.factories.user import UserFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.savegame.models.savegame import Savegame
@@ -133,6 +134,33 @@ def test_dashboard_view_lists_no_month_logs_without_a_player_faction(logged_in_c
 
     assert response.status_code == 200
     assert response.context["player_month_logs"].is_empty is True
+
+
+@pytest.mark.django_db
+def test_dashboard_view_lists_the_open_questions_of_the_player_faction(logged_in_client, current_savegame):
+    """
+    A question is put to the player's own faction. Scoping to the savegame would hand him the
+    buttons to a question nobody asked him.
+    """
+    pending_incident = PendingIncidentFactory(faction=current_savegame.player_faction)
+    PendingIncidentFactory(faction=FactionFactory(savegame=current_savegame))
+
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert [question.pending_incident for question in response.context["open_questions"]] == [pending_incident]
+
+
+@pytest.mark.django_db
+def test_dashboard_view_lists_no_open_questions_without_a_player_faction(
+    logged_in_client, savegame_without_player_faction
+):
+    PendingIncidentFactory(faction=FactionFactory(savegame=savegame_without_player_faction))
+
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.status_code == 200
+    assert response.context["open_questions"] == []
 
 
 @pytest.mark.django_db

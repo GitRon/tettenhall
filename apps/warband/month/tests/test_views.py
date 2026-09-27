@@ -6,6 +6,9 @@ from django.urls import reverse
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.incident.incidents.burnt_village_refugees import BurntVillageRefugees
+from apps.warband.incident.models.pending_incident import PendingIncident
+from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.savegame.models.savegame import Savegame
@@ -398,3 +401,24 @@ def test_finish_month_view_restocks_every_pub_on_its_own(logged_in_client, curre
         Warrior.objects.filter(id=unaffordable_mercenary.id).exists(),
         PlayerMonthLog.objects.filter(faction__in=(rich_rival, poor_rival)).exists(),
     ) == ([1, 1, 1], 1, False, False)
+
+
+@pytest.mark.django_db
+def test_finish_month_view_answers_an_open_question_by_its_default(logged_in_client, current_savegame):
+    """
+    Flow test, because what matters is the order the month runs in: the default's line is dated to
+    the new month, so it has to survive the log clearing that runs in the same batch.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    FactionFactory(savegame=current_savegame)
+    PendingIncidentFactory(faction=current_savegame.player_faction, month=1)
+
+    logged_in_client.post(reverse("warband:finish-month-view"))
+
+    assert PendingIncident.objects.filter(month=1).exists() is False
+    assert (
+        PlayerMonthLog.objects.filter(
+            faction=current_savegame.player_faction, month=2, title=BurntVillageRefugees.get_default_option().title
+        ).exists()
+        is True
+    )
