@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the two gates from .github/workflows/tests.yml locally, plus the one gate no CI run can have,
+# Runs the three gates from .github/workflows/tests.yml locally, plus the one gate no CI run can have,
 # and records the outcome.
 #
 # Usage: bash .claude/skills/implement-story/scripts/ci.sh .claude/runs/<slug>
@@ -61,6 +61,11 @@ trap - EXIT
 uv run pytest --cov > "$LOG_DIR/pytest.log" 2>&1
 test_status=$?
 
+# The import contracts live in pyproject.toml and are a step of their own in CI, outside pre-commit
+# and the suite - so neither gate above sees a module importing across a boundary it may not cross.
+uv run lint-imports > "$LOG_DIR/lint-imports.log" 2>&1
+imports_status=$?
+
 # The suite above already refuses a migration graph with two leaves - "migrate" raises before a single
 # database test runs. What it cannot see is the neighbouring worktree holding the other 0009, because
 # that number only becomes a conflict once both branches are in the same tree. By then the run that
@@ -90,6 +95,7 @@ fi
   echo "|---|---|---|"
   echo "| Lint | \`pre-commit run --all-files\` ($lint_passes pass(es)) | $(verdict $lint_status) |"
   echo "| Tests + coverage | \`uv run pytest --cov\` | $(verdict $test_status) |"
+  echo "| Import boundaries | \`uv run lint-imports\` | $(verdict $imports_status) |"
   echo "| Migration numbers | \`migration-numbers.sh ${BASE_REF:-github/main}\` | $migration_verdict |"
   echo
   if [ $lint_status -ne 0 ]; then
@@ -108,6 +114,14 @@ fi
     echo '```'
     echo
   fi
+  if [ $imports_status -ne 0 ]; then
+    echo "## lint-imports (last 40 lines)"
+    echo
+    echo '```'
+    tail -n 40 "$LOG_DIR/lint-imports.log"
+    echo '```'
+    echo
+  fi
   if [ "$migration_verdict" != "PASS" ]; then
     echo "## Migration numbers"
     echo
@@ -121,7 +135,7 @@ fi
 
 cat "$OUT"
 
-if [ $lint_status -eq 0 ] && [ $test_status -eq 0 ] && [ $migration_status -eq 0 ]; then
+if [ $lint_status -eq 0 ] && [ $test_status -eq 0 ] && [ $imports_status -eq 0 ] && [ $migration_status -eq 0 ]; then
   exit 0
 fi
 exit 1
