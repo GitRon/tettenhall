@@ -718,6 +718,24 @@ def test_handle_warrior_attacks_warrior_throws_nothing_at_a_man_already_down():
 
 
 @pytest.mark.django_db
+def test_handle_warrior_attacks_warrior_throws_nothing_at_a_man_already_unconscious():
+    """
+    Struck again, a man lying senseless would be carried past the death threshold by a blow meant for
+    somebody standing, or go down unconscious a second time in the log.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    Warrior.objects.filter(id=defender.id).update(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = handle_warrior_attacks_warrior(
+        context=_warrior_attacks_warrior(skirmish=skirmish, attacker=attacker, defender=defender)
+    )
+
+    assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=False)
+
+
+@pytest.mark.django_db
 def test_handle_warrior_attacks_warrior_throws_nothing_from_a_man_already_down():
     skirmish = SkirmishFactory()
     attacker = WarriorFactory(faction=skirmish.attacking_faction)
