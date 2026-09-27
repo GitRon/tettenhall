@@ -5,7 +5,7 @@ from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.models.skirmish_casualty import SkirmishCasualty
 from apps.warband.skirmish.models.skirmish_spoil import SkirmishSpoil
-from apps.warband.skirmish.projections.skirmish_report import SkirmishReport
+from apps.warband.skirmish.projections.skirmish_report import SkirmishReport, SpoiledItem
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.skirmish_casualty import SkirmishCasualtyFactory
 from apps.warband.skirmish.tests.factories.skirmish_spoil import SkirmishSpoilFactory
@@ -397,3 +397,24 @@ def test_a_fight_the_faction_lost_nobody_in_reports_no_casualties():
 
     assert (report.own_casualties, report.own_routed, report.prisoners_taken) == ([], [], [])
     assert (report.enemy_killed_count, report.enemy_downed_count) == (0, 0)
+
+
+@pytest.mark.django_db
+def test_items_won_still_names_gear_that_no_longer_exists():
+    skirmish = SkirmishFactory()
+    item = ItemFactory(
+        savegame=skirmish.attacking_faction.savegame,
+        type=ItemTypeFactory(name="Seax", base_value="4d4", is_fallback=True),
+        modifier=5,
+    )
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN,
+        item=item,
+    )
+    item.delete()
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert report.items_won == [SpoiledItem(item=None, name="Seax", dice="4d4+5", taken_from=None, is_upgrade=False)]
