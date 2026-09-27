@@ -11,7 +11,7 @@ def mark_every_ceiling_as_its_own_peak(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warband', '0018_a_fight_is_told_as_a_saga'),
+        ('warband', '0019_a_spoil_outlives_its_sword'),
     ]
 
     operations = [
