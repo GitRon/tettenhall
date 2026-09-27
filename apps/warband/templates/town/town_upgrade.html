@@ -17,7 +17,7 @@
                     man is fed but not lifted.
                 </p>
                 <p class="mb-0 font-mono text-label uppercase tracking-label text-ink">
-                    {{ feast.head_count }} men &times; {{ feast.price_per_head }} silver = {{ feast.costs }} silver
+                    {{ feast.head_count }} m{{ feast.head_count|pluralize:"an,en" }} &times; {{ feast.price_per_head }} silver = {{ feast.costs }} silver
                 </p>
             {% else %}
                 <p class="my-0">A town without a hall has nowhere to feast.</p>
