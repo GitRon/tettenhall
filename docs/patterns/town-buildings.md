@@ -123,8 +123,8 @@ holding that level's numbers:
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's
   resale ratio is worth little in silver. Its stock size is the real draw, which is why it is priced below
   the other buildings.
-- **The wage bill outweighs building costs early.** A warrior's salary is `round(recruitment_price * 0.5)`
-  (`apps/warband/warrior/services/generators/warrior/base.py:173`), and what that comes to is the archetype's
+- **The wage bill outweighs building costs early.** A warrior's salary is `round(recruitment_price * 0.5)`,
+  never below 1 (`Warrior.salary_for` in `apps/warband/skirmish/models/warrior.py`), and what that comes to is the archetype's
   to decide — around 90 silver a month for a fyrd levy and 170 for a pub mercenary, priced against
   `PRICE_STATS_YARDSTICK` and `PRICE_HEALTH_YARDSTICK`. Each grows with `LEVEL_UP_GROWTH` alongside his
   attributes. The leader is the one man off the bill entirely: `draws_a_wage` is false on his generator,

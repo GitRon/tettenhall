@@ -982,3 +982,18 @@ def test_put_on_payroll_prices_the_wage_off_the_recruitment_price():
     assert result == 188
     warrior.refresh_from_db()
     assert warrior.monthly_salary == 188
+
+
+@pytest.mark.django_db
+def test_put_on_payroll_never_prices_a_wage_at_nothing():
+    """
+    Half of a price of one rounds to nothing, which would leave the man on the roster and off the
+    wage bill.
+    """
+    warrior = WarriorFactory(recruitment_price=1, monthly_salary=0)
+
+    result = Warrior.objects.put_on_payroll(obj=warrior)
+
+    assert result == 1
+    warrior.refresh_from_db()
+    assert warrior.monthly_salary == 1

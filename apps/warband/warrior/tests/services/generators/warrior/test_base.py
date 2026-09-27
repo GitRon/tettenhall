@@ -352,3 +352,19 @@ def test_process_writes_the_innate_traits_he_is_born_with():
         result = generator.process()
 
     assert result.traits.count() == 1
+
+
+@pytest.mark.django_db
+def test_process_keeps_a_levy_rolled_at_every_floor_on_the_wage_bill():
+    """
+    Every attribute at its floor and a base price of one truncate to a price of nothing, and half of
+    nothing is a wage of nothing - a levy off the payroll and free to hire. Patched rather than
+    waited for, because it is the thin end of three draws at once.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=0.6):
+        result = generator.process()
+
+    assert result.recruitment_price == 1
+    assert result.monthly_salary == 1

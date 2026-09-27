@@ -42,6 +42,7 @@ class BaseWarriorGenerator:
     # wrong answer to what a man is worth, which is why pricing carries its own pair.
     PRICE_STATS_YARDSTICK = 10
     PRICE_HEALTH_YARDSTICK = 20
+    MIN_RECRUITMENT_PRICE = 1
 
     item_generator_class: type(BaseItemGenerator)
     chance_for_weapon = 1
@@ -115,9 +116,14 @@ class BaseWarriorGenerator:
         base_recruitment_price = 0
         while base_recruitment_price == 0:
             base_recruitment_price = max(round(random.gauss(100, 50)), 0)
-        recruitment_price = int(
-            (((strength + dexterity) / self.PRICE_STATS_YARDSTICK) + (max_health / self.PRICE_HEALTH_YARDSTICK))
-            * base_recruitment_price
+        # Never below one: a man rolled at the floor of every attribute and at the thin end of the
+        # base price truncates to nothing, and a price of nothing is a captive who sells for nothing
+        recruitment_price = max(
+            int(
+                (((strength + dexterity) / self.PRICE_STATS_YARDSTICK) + (max_health / self.PRICE_HEALTH_YARDSTICK))
+                * base_recruitment_price
+            ),
+            self.MIN_RECRUITMENT_PRICE,
         )
 
         # What he is remembered for, settled here and never again. The draws are built from the rolls
@@ -193,7 +199,7 @@ class BaseWarriorGenerator:
             recruitment_price=recruitment_price,
             # The share is the warrior's own number rather than this generator's, because the pub
             # prices a hire by inverting it - see "Warrior.hiring_price"
-            monthly_salary=round(recruitment_price * Warrior.SALARY_SHARE_OF_PRICE) if self.draws_a_wage else 0,
+            monthly_salary=Warrior.salary_for(recruitment_price=recruitment_price) if self.draws_a_wage else 0,
             weapon=weapon,
             armor=armor,
         )

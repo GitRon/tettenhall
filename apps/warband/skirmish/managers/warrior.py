@@ -573,7 +573,7 @@ class WarriorManager(manager.Manager):
         be missing, which is what this is for.
         """
         obj.refresh_from_db()
-        obj.monthly_salary = round(obj.recruitment_price * self.model.SALARY_SHARE_OF_PRICE)
+        obj.monthly_salary = self.model.salary_for(recruitment_price=obj.recruitment_price)
         obj.save(update_fields=("monthly_salary",))
 
         return obj.monthly_salary

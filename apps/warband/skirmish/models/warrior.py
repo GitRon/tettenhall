@@ -57,6 +57,8 @@ class Warrior(models.Model):
     # both directions: the generators price a wage off a rolled recruitment price, and the pub prices
     # a hire off the wage the man draws today - see [hiring_price].
     SALARY_SHARE_OF_PRICE = 0.5
+    # The least a man on the payroll draws - see [salary_for].
+    MINIMUM_MONTHLY_SALARY = 1
     # Months of wages a warrior is owed for being sent away. The silver insolvency would have taken
     # off the player anyway, which is what makes letting a man go a decision with a price rather than
     # a way to walk out of a wage bill for nothing.
@@ -440,6 +442,17 @@ class Warrior(models.Model):
         What the faction owes a man it sends away.
         """
         return self.monthly_salary * self.SEVERANCE_SALARY_MONTHS
+
+    @staticmethod
+    def salary_for(*, recruitment_price: int) -> int:
+        """
+        The monthly wage a man rolled at a given price draws, for every archetype that draws one.
+
+        Never below MINIMUM_MONTHLY_SALARY: the share of a price of one or two rounds to nothing, and
+        a man on nothing is off the payroll in all but name - no wage bill, no walk-out, and free to
+        hire, since [hiring_price] inverts the wage.
+        """
+        return max(round(recruitment_price * Warrior.SALARY_SHARE_OF_PRICE), Warrior.MINIMUM_MONTHLY_SALARY)
 
     @staticmethod
     def level_for(*, experience: int) -> int:
