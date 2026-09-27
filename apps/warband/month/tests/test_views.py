@@ -460,7 +460,7 @@ def test_finish_month_view_draws_no_cost_the_wages_leave_no_room_for(logged_in_c
         return real_choices(population, *args, **kwargs)
 
     with mock.patch("random.choices", side_effect=draw_the_herd_when_possible):
-        response = logged_in_client.post(reverse("warband:finish-month-view"))
+        response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     assert (
