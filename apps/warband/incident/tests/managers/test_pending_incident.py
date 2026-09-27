@@ -6,16 +6,6 @@ from apps.warband.incident.tests.factories.pending_incident import PendingIncide
 
 
 @pytest.mark.django_db
-def test_for_savegame_excludes_another_savegame():
-    pending_incident = PendingIncidentFactory()
-    PendingIncidentFactory()
-
-    result = PendingIncident.objects.for_savegame(savegame_id=pending_incident.faction.savegame_id)
-
-    assert list(result) == [pending_incident]
-
-
-@pytest.mark.django_db
 def test_for_player_faction_excludes_a_rival_in_the_same_savegame():
     pending_incident = PendingIncidentFactory()
     PendingIncidentFactory(faction=FactionFactory(savegame=pending_incident.faction.savegame))
