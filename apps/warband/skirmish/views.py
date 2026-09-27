@@ -117,9 +117,7 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
 
         if (
             self.model.objects.for_savegame(savegame_id=self.current_savegame.id)
-            .has_started()
-            .unresolved()
-            .exclude(id=self.object.id)
+            .under_way_besides(skirmish=self.object)
             .exists()
         ):
             messages.add_message(request, messages.WARNING, "Please finish your other skirmishes first.")
@@ -176,6 +174,16 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         # the second arrives here. A conflict rather than bad input, because the post is well formed
         # and it is the fight that has moved on.
         if self.object.victorious_faction_id:
+            return HttpResponse(status=HTTPStatus.CONFLICT)
+
+        # The fight page sends the player back while another fight of his is under way, and a round
+        # posted straight here has to meet the same refusal, or two fights could be fought in turns.
+        # A conflict for the same reason as above: the post is well formed, the other fight is in the way
+        if (
+            Skirmish.objects.for_savegame(savegame_id=current_savegame.id)
+            .under_way_besides(skirmish=self.object)
+            .exists()
+        ):
             return HttpResponse(status=HTTPStatus.CONFLICT)
 
         skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
