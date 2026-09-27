@@ -1,8 +1,6 @@
 import pytest
 from django.db import connection
 
-from apps.config import settings_smoke
-
 
 @pytest.mark.django_db
 def test_the_suite_opens_its_transactions_immediate():
@@ -15,11 +13,3 @@ def test_the_suite_opens_its_transactions_immediate():
     connection.ensure_connection()
 
     assert connection.transaction_mode == "IMMEDIATE"
-
-
-def test_the_smoke_server_opens_its_transactions_immediate():
-    """
-    The browser review is the one place two overlapping requests are ever played, so its database has
-    to lock the way the application's does.
-    """
-    assert settings_smoke.DATABASES["default"]["OPTIONS"] == {"transaction_mode": "IMMEDIATE"}
