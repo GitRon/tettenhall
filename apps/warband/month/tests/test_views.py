@@ -292,6 +292,37 @@ def test_finish_month_view_keeps_the_month_open_while_a_skirmish_is_unresolved(l
 
 
 @pytest.mark.django_db
+def test_finish_month_view_keeps_the_month_open_while_a_rivals_skirmish_is_unresolved(
+    logged_in_client, current_savegame
+):
+    """
+    The refusal is savegame-wide, not the player's fights only: an open fight of any faction would be
+    a fight from last month once the month turned.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    SkirmishFactory(attacking_faction=rival_faction, defending_faction=FactionFactory(savegame=current_savegame))
+
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+
+    assert "HX-Trigger" in response
+    current_savegame.refresh_from_db()
+    assert current_savegame.current_month == 1
+
+
+@pytest.mark.django_db
+def test_finish_month_view_ignores_an_open_skirmish_of_another_savegame(logged_in_client, current_savegame):
+    TrainingFactory(faction=current_savegame.player_faction)
+    FactionFactory(savegame=current_savegame)
+    SkirmishFactory(attacking_faction=FactionFactory(), victorious_faction=None)
+
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+
+    assert response.status_code == 200
+    current_savegame.refresh_from_db()
+    assert current_savegame.current_month == 2
+
+
+@pytest.mark.django_db
 def test_finish_month_view_leaves_a_month_the_page_did_not_show(logged_in_client, current_savegame):
     """
     The second click of a double click lands after the first has finished month 1, still posting

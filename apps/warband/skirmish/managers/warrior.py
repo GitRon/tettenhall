@@ -95,9 +95,10 @@ class WarriorQuerySet(models.QuerySet):
         """
         The men standing on the roster of a fight nobody has played out.
 
-        No month in it, unlike its two siblings. An unresolved skirmish carries over, so the men in it
-        are still in it however many months have passed - a month check on its own would hand the same
-        warrior out again while he is still standing in last month's fight.
+        Not one of the ways to be busy. An open fight is always this month's - the month refuses to turn
+        while one is unresolved - so "filter_committed_to_a_fight" already holds everyone in it. What
+        this answers is narrower: whether the fight a man marched into is still going, which is what
+        keeps the gear on him until it is settled.
         """
         from apps.warband.skirmish.models.skirmish import Skirmish
 
@@ -107,18 +108,18 @@ class WarriorQuerySet(models.QuerySet):
         """
         Every warrior fights once a month, and never two fights at the same time.
 
-        Three ways to be busy, and each of them is one of the filters above rather than a condition
+        Two ways to be busy, and each of them is one of the filters above rather than a condition
         written out a second time here. That is the whole point of the shape: [assess_roster] tells
-        the player which rule caught a man, and it reads the same three. A rule worded in two places
+        the player which rule caught a man, and it reads the same two. A rule worded in two places
         is a page that starts lying the day one of them moves.
 
-        Excluding the three in turn is excluding their union, so a warrior caught by two of them is
-        gone once.
+        A fight nobody has settled needs no rule of its own: the month cannot end while one is open
+        ("FinishMonthView"), so every unsettled fight is this month's and the fight rule holds its men.
+
+        Excluding the two in turn is excluding their union, so a warrior caught by both is gone once.
         """
-        return (
-            self.exclude(id__in=self.model.objects.filter_sworn_to_a_quest(month=month).values("id"))
-            .exclude(id__in=self.model.objects.filter_committed_to_a_fight(month=month).values("id"))
-            .exclude(id__in=self.model.objects.filter_standing_in_an_open_fight().values("id"))
+        return self.exclude(id__in=self.model.objects.filter_sworn_to_a_quest(month=month).values("id")).exclude(
+            id__in=self.model.objects.filter_committed_to_a_fight(month=month).values("id")
         )
 
 
