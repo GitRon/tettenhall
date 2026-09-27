@@ -108,6 +108,11 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+        # Every "handle_message()" drain is one transaction, and IMMEDIATE takes the write lock when it
+        # opens rather than at the first write. That is what makes a handler's re-read of the purse a
+        # real re-check - see docs/patterns/message-bus.md - and it makes an overlapping request wait
+        # for the lock instead of failing at commit with "database is locked".
+        "OPTIONS": {"transaction_mode": "IMMEDIATE"},
     }
 }
 

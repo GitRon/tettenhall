@@ -10,14 +10,15 @@ import os
 from pathlib import Path
 
 from apps.config.settings import *  # noqa: F403
-from apps.config.settings import BASE_DIR
+from apps.config.settings import BASE_DIR, DATABASES
 
 # Every run directory gets its own database, so the path comes from the environment rather than
 # being fixed here. The fallback keeps "manage.py ... --settings=apps.config.settings_smoke" usable
-# by hand without exporting anything first.
+# by hand without exporting anything first. Only the name is swapped, so the smoke server keeps the
+# transaction mode the application runs on.
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
+        **DATABASES["default"],
         "NAME": Path(os.environ.get("SMOKE_DB_PATH", BASE_DIR / "smoke.sqlite3")),
     }
 }
