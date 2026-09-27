@@ -36,7 +36,7 @@
                     <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.waiting.stored_upgrade_count }}</span>
                     <span class="min-w-0 flex-1">
                         <span class="text-ink">piece{{ month_standing.waiting.stored_upgrade_count|pluralize }} of gear in the stores nobody carries</span>
-                        <span class="block text-sm leading-snug">Each is better than what one of your men holds now.</span>
+                        <span class="block text-sm leading-snug">{{ month_standing.waiting.stored_upgrade_count|pluralize:"It is,Each is" }} better than what one of your men holds now.</span>
                     </span>
                     <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:warband-stores-view' %}">Stores</a>
