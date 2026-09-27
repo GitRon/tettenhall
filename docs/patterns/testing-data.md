@@ -36,7 +36,7 @@ at the app root rather than in the topic package that owns the model) and every 
 `FyrdItemGenerator` narrows further, to the rustic tier — so without them item, warrior and quest
 generation raises `RuntimeError`.
 
-The root `conftest.py` loads all four fixtures once per session via `django_db_setup`. **Don't hand-seed
+The root `conftest.py` loads all five fixtures once per session via `django_db_setup`. **Don't hand-seed
 cultures, item types, quest types, injury types or trait types**, and don't build look-alikes: a test that creates its own
 `ItemType(name="Spear")` passes while asserting nothing about the data the game actually ships.
 
