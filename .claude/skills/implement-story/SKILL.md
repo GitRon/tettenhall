@@ -261,6 +261,8 @@ bash .claude/skills/implement-story/scripts/ci.sh .claude/runs/<slug>
 Runs the two gates from `.github/workflows/tests.yml` - `pre-commit run --all-files` (twice, because the
 formatting hooks fail the run they rewrote) and `uv run pytest --cov` behind the 100% branch gate - plus
 `migration-numbers.sh`, which no CI run can stand in for. Results land in `ci.md`, full output in `ci-logs/`.
+The lint gate covers files the story created but has not staged yet as well - they are marked intent-to-add
+for the run and unmarked afterwards, so the index is left as it was.
 
 The suite already refuses a migration graph with two leaves: `migrate` raises before a single database test
 gets a connection. What it cannot see is the neighbouring worktree holding the other `0009`. That number is
