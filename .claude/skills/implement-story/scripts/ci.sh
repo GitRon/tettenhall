@@ -23,6 +23,24 @@ LOG_DIR="$RUN_DIR/ci-logs"
 mkdir -p "$LOG_DIR"
 OUT="$RUN_DIR/ci.md"
 
+# "--all-files" means every file git tracks, so a file the story created and has not staged yet is never
+# linted - and the commit hook is the first thing to see it. Marking those files intent-to-add puts them
+# in the list pre-commit reads without staging their content, and the trap takes the marks off again on
+# any exit, so the index is left exactly as it was found. Naming them with "--files" instead would not
+# scale: the whole tree's paths overrun the Windows command line.
+UNTRACKED_LIST="$(mktemp)"
+git ls-files --others --exclude-standard -z > "$UNTRACKED_LIST"
+restore_index() {
+  if [ -s "$UNTRACKED_LIST" ]; then
+    xargs -0 git reset --quiet -- < "$UNTRACKED_LIST"
+  fi
+  rm -f "$UNTRACKED_LIST"
+}
+trap restore_index EXIT
+if [ -s "$UNTRACKED_LIST" ]; then
+  xargs -0 git add --intent-to-add -- < "$UNTRACKED_LIST"
+fi
+
 # The formatting hooks rewrite files and then fail the very run that rewrote them, so a single red pass
 # proves nothing. The second pass on the rewritten tree is the honest signal - hence a retry, not a loop.
 pre-commit run --all-files > "$LOG_DIR/pre-commit.log" 2>&1
@@ -33,6 +51,10 @@ if [ $lint_status -ne 0 ]; then
   lint_status=$?
   lint_passes=2
 fi
+# Only the lint gate needs the marks. Taken off now rather than at exit, so a run killed during the suite
+# does not leave them behind for "git status" to report
+restore_index
+trap - EXIT
 
 # Coverage config lives in pyproject.toml and fails below 100% branch coverage, so this one command is
 # both the test gate and the coverage gate.
