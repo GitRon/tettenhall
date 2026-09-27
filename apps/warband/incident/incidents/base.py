@@ -5,6 +5,7 @@ from apps.warband.finance.models.transaction import Transaction
 from apps.warband.incident.models.pending_incident import PendingIncident
 from apps.warband.item.models.item import Item
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.projections.payroll import Payroll
 
 
 @dataclass(kw_only=True)
@@ -88,6 +89,10 @@ class Incident:
     boundary does not change, which is what makes that harmless; an entry that needs this month's
     state does not belong on this hook.
 
+    **Silver is the one exception, and the base check owns it.** The wages come out of the same purse
+    later in the same month, so a cost is weighed against what is left once they are paid - see
+    [is_possible].
+
     **A magnitude is a constant, never a roll.** The variety is the pool's job. A rolled magnitude
     would put a branch behind a dice throw - which the coverage gate rightly refuses - and hands a
     float to a positive integer column, where anything under one truncates to nothing.
@@ -140,6 +145,14 @@ class Incident:
         SILVER_CHANGE inherits from here: #45 made being broke bite, and an incident opening a hole
         the player did not dig takes a decision away from him rather than handing him one.
 
+        **Paid out of what the wages leave.** The salary run bills this same month from the balance
+        the month opened with, because no ledger row of the month lands before it - the incident's
+        own included. Checked against the raw balance, both bills would pass on their own and
+        overdraw together. So the wages are reserved first, through the same [Payroll] the salary run
+        bills from, and a cost only asks for silver that is actually free. A month already short on
+        wages leaves nothing free, and costly incidents fire less often in lean months. This month's
+        building income is not counted: it lands after the wages and funds the month after.
+
         Everything else can always happen, unless it has something else to take - a reserve to thin,
         a man to name, a piece of gear to lose - and says so by overriding this.
         """
@@ -147,7 +160,11 @@ class Incident:
         # every one of them. Its default never costs silver, which the pool holds it to
         dearest_change = min([cls.SILVER_CHANGE, *[option.silver_change for option in cls.OPTIONS]])
         if dearest_change < 0:
-            return Transaction.objects.current_balance(faction_id=faction.id) >= -dearest_change
+            payroll = Payroll.for_faction(
+                faction=faction,
+                budget=Transaction.objects.current_balance(faction_id=faction.id),
+            )
+            return payroll.remaining_amount >= -dearest_change
 
         return True
 

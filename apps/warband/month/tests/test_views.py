@@ -1,4 +1,6 @@
 import json
+import random
+from unittest import mock
 
 import pytest
 from django.urls import reverse
@@ -7,6 +9,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.incident.incidents.burnt_village_refugees import BurntVillageRefugees
+from apps.warband.incident.incidents.elf_shot_herd import ElfShotHerd
 from apps.warband.incident.models.pending_incident import PendingIncident
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
 from apps.warband.item.tests.factories.item import ItemFactory
@@ -401,6 +404,42 @@ def test_finish_month_view_restocks_every_pub_on_its_own(logged_in_client, curre
         Warrior.objects.filter(id=unaffordable_mercenary.id).exists(),
         PlayerMonthLog.objects.filter(faction__in=(rich_rival, poor_rival)).exists(),
     ) == ([1, 1, 1], 1, False, False)
+
+
+@pytest.mark.django_db
+def test_finish_month_view_draws_no_cost_the_wages_leave_no_room_for(logged_in_client, current_savegame):
+    """
+    Flow test, because the defect is two checks that each pass on their own: the incident is drawn
+    against the balance the month opened with, and the salary run bills that same balance, since no
+    ledger row of the month lands before it. Weighed against the raw 100, the herd's 60 and the wage
+    of 100 both go through and the month ends in the red.
+
+    The draw is steered, not replaced: "random.choices" is one module object, and the same month
+    restocks a shop and a pub off it, so every other call passes through to the real function. Only
+    the incident pool - the one population led by the quiet month's None - is answered, with the herd
+    whenever it is a candidate. The quiet month that comes back otherwise is the precondition refusing
+    it, not the dice.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    FactionFactory(savegame=current_savegame)
+    player_faction = current_savegame.player_faction
+    WarriorFactory(faction=player_faction, monthly_salary=100)
+    TransactionFactory(faction=player_faction, amount=100, month=1)
+    real_choices = random.choices
+
+    def draw_the_herd_when_possible(population, *args, **kwargs) -> list:
+        if population and population[0] is None:
+            return [ElfShotHerd] if ElfShotHerd in population else [None]
+        return real_choices(population, *args, **kwargs)
+
+    with mock.patch("random.choices", side_effect=draw_the_herd_when_possible):
+        response = logged_in_client.post(reverse("warband:finish-month-view"))
+
+    assert response.status_code == 200
+    assert (
+        Transaction.objects.filter(faction=player_faction, amount=ElfShotHerd.SILVER_CHANGE).exists(),
+        Transaction.objects.current_balance(faction_id=player_faction.id) >= 0,
+    ) == (False, True)
 
 
 @pytest.mark.django_db
