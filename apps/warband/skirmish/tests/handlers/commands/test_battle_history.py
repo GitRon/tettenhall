@@ -39,3 +39,18 @@ def test_handle_create_battle_history_carries_the_kind_and_the_man_to_the_row():
     record = BattleHistory.objects.get()
     assert record.kind == BattleHistory.KindChoices.KIND_WARRIOR_KILLED
     assert record.faction == skirmish.attacking_faction
+
+
+@pytest.mark.django_db
+def test_handle_create_battle_history_carries_the_saga_to_the_row():
+    skirmish = SkirmishFactory()
+
+    handle_create_battle_history(
+        context=CreateBattleHistory(
+            skirmish=skirmish,
+            message="Skirmish finished. Mercia won.",
+            saga="The fighting is over. Mercia holds the field.",
+        )
+    )
+
+    assert BattleHistory.objects.get().saga == "The fighting is over. Mercia holds the field."
