@@ -29,7 +29,7 @@ def snapshot_every_item_spoil(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warband', '0017_an_incident_asks_a_question'),
+        ('warband', '0018_a_fight_is_told_as_a_saga'),
     ]
 
     operations = [
