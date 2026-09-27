@@ -1,18 +1,34 @@
-from apps.warband.incident.incidents.base import Incident
+from apps.warband.incident.incidents.base import Incident, IncidentOption
 
 
 class BurntVillageRefugees(Incident):
     """
-    Two levers at once: men for the fyrd, and the cost of feeding them through the winter.
+    Men for the fyrd, and the cost of feeding them through the winter - if the player takes them.
 
-    The one entry where what the player gains and what he pays for it arrive in the same line, which
-    is the shape most of the catalogue in #73 should have.
+    The question whose default only misses a gain: turning the villagers away changes nothing, and
+    the levy that did not join is the price. Paired with TributeToARival, whose default costs
+    something, so both shapes of a question are in the catalogue.
     """
 
     WEIGHT = 3
 
     TITLE = "Villagers came in from a burnt settlement to the north."
-    BODY = "They ask for bread and a banner to stand under. Both are given, and only one of them is cheap."
+    BODY = "They ask for bread and a banner to stand under. Both can be given, and only one of them is cheap."
 
-    SILVER_CHANGE = -120
-    FYRD_CHANGE = 2
+    OPTIONS = (
+        IncidentOption(
+            key="take_in",
+            label="Take them in",
+            title="The villagers from the north were taken in.",
+            body="Bread and a banner were both given, and only one of them was cheap.",
+            silver_change=-120,
+            fyrd_change=2,
+        ),
+        IncidentOption(
+            key="turn_away",
+            label="Turn them away",
+            title="The villagers from the north were sent on.",
+            body="They went south to try another hall's door.",
+        ),
+    )
+    DEFAULT_OPTION = "turn_away"

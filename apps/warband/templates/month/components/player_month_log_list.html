@@ -3,6 +3,37 @@
 {# produced is a plain line, and the recovery sweeps - which write one row per warrior and would #}
 {# otherwise be most of the month - are tallied into a single sentence with the rows behind it. #}
 <div class="mb-5">
+    {# A question the world put to the player is attention too, and read from its own row rather than #}
+    {# from the log, which it outlives. Its answers take the place an acknowledge action would have. #}
+    {# A stopgap on purpose: how a question finally looks is #64's to decide, and it should replace #}
+    {# this card rather than build on it. #}
+    {% for question in open_questions %}
+        <div class="mb-5 bg-ground border border-blood p-[15px] text-ink">
+            <h4 class="m-0">
+                <i class="fa-solid fa-circle-question"></i> {{ question.pending_incident.title }}
+            </h4>
+            {% if question.pending_incident.body %}
+                <p class="mt-2.5 mb-0">{{ question.pending_incident.body }}</p>
+            {% endif %}
+            <div class="mt-[15px] flex flex-wrap gap-2.5">
+                {% for option in question.options %}
+                    <button class="box-border cursor-pointer border border-rule bg-transparent px-[15px] py-[9px] text-sm uppercase leading-normal text-ink hover:bg-raised"
+                            hx-post="{% url 'warband:pending-incident-answer-view' question.pending_incident.id %}"
+                            hx-vals='{"option": "{{ option.key }}"}'
+                            type="button">
+                        {{ option.label }}
+                        {% if option.silver_change %}
+                            <span class="font-mono text-label tracking-label text-ink-muted">{{ option.silver_change|stringformat:"+d" }} silver</span>
+                        {% endif %}
+                        {% if option.fyrd_change %}
+                            <span class="font-mono text-label tracking-label text-ink-muted">{{ option.fyrd_change|stringformat:"+d" }} fyrd</span>
+                        {% endif %}
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
     {% for message in player_month_logs.attention %}
         <div class="mb-5 bg-raised border border-blood py-[15px] pl-[15px] pr-[29px] text-blood">
             <h4 class="m-0">
@@ -47,7 +78,7 @@
         </details>
     {% endif %}
 
-    {% if player_month_logs.is_empty %}
+    {% if player_month_logs.is_empty and not open_questions %}
         <p class="text-sm leading-snug text-ink-muted">Nothing to report this month.</p>
     {% endif %}
 </div>

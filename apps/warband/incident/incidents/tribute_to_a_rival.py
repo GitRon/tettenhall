@@ -1,38 +1,63 @@
 import random
 
 from apps.warband.faction.models.faction import Faction
-from apps.warband.incident.incidents.base import Incident, IncidentOutcome
+from apps.warband.incident.incidents.base import (
+    Incident,
+    IncidentOption,
+    IncidentOutcome,
+    IncidentQuestion,
+)
+from apps.warband.incident.models.pending_incident import PendingIncident
 
 
 class TributeToARival(Incident):
     """
-    A rival asks for silver with an army behind the asking, and gets it.
+    A rival asks for silver with an army behind the asking, and the player decides whether it gets it.
 
-    The half of a tribute demand that needs no decision: the choice to refuse is #75's, and the
-    rival arriving at strength when refused is a scheduled consequence, #74's. What is left is the
-    dearest ordinary cost after the hall roof, weighted low for being the one entry that names an
-    enemy.
+    The first question in the catalogue, and the one whose default costs something: refusing is what
+    happens when nobody answers, and the rival takes it out on the land. The rival arriving at
+    strength later is a scheduled consequence, #74's.
 
-    Only a rival still on the board can ask - one knocked out has no army to ask with.
+    Only a rival still on the board can ask - one knocked out has no army to ask with. And only a
+    player who could pay is asked, through the inherited pricing by the dearest answer.
     """
 
     WEIGHT = 2
 
-    TITLE = "Tribute went to {rival}, who asked for it with an army behind the asking."
-    BODY = "It was handed over with the usual words about friendship. Neither side wrote them down."
+    TITLE = "{rival} asked for tribute, with an army behind the asking."
+    BODY = "The envoy spoke at length about friendship. The army did not need to."
 
-    SILVER_CHANGE = -150
+    OPTIONS = (
+        IncidentOption(
+            key="pay",
+            label="Pay",
+            title="Tribute went to {rival}, who asked for it with an army behind the asking.",
+            body="It was handed over with the usual words about friendship. Neither side wrote them down.",
+            silver_change=-150,
+        ),
+        IncidentOption(
+            key="refuse",
+            label="Refuse",
+            title="Tribute was refused to {rival}, who took it out on the land.",
+            body="Two steadings burned on the border. Their men are rebuilding rather than answering the call.",
+            fyrd_change=-2,
+        ),
+    )
+    DEFAULT_OPTION = "refuse"
 
     @classmethod
     def is_possible(cls, *, faction: Faction) -> bool:
         return super().is_possible(faction=faction) and Faction.objects.rivals_in_play(player_faction=faction).exists()
 
     @classmethod
-    def resolve(cls, *, faction: Faction) -> IncidentOutcome:
+    def ask(cls, *, faction: Faction) -> IncidentQuestion:
         rival = random.choice(list(Faction.objects.rivals_in_play(player_faction=faction)))
 
-        return IncidentOutcome(
-            title=cls.TITLE.format(rival=rival),
-            body=cls.BODY,
-            silver_change=cls.SILVER_CHANGE,
-        )
+        return IncidentQuestion(title=cls.TITLE.format(rival=rival), body=cls.BODY, rival=rival)
+
+    @classmethod
+    def answer(cls, *, option: IncidentOption, pending_incident: PendingIncident) -> IncidentOutcome:
+        outcome = super().answer(option=option, pending_incident=pending_incident)
+        outcome.title = outcome.title.format(rival=pending_incident.rival)
+
+        return outcome

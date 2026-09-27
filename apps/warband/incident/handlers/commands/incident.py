@@ -5,7 +5,8 @@ from queuebie.messages import Event
 
 from apps.warband.incident.incidents import INCIDENTS, QUIET_MONTH_WEIGHT
 from apps.warband.incident.messages.commands.incident import ChooseIncident
-from apps.warband.incident.messages.events.incident import IncidentOccurred
+from apps.warband.incident.messages.events.incident import IncidentAsked, IncidentOccurred
+from apps.warband.incident.models.pending_incident import PendingIncident
 
 
 @message_registry.register_command(command=ChooseIncident)
@@ -21,6 +22,9 @@ def handle_choose_incident(*, context: ChooseIncident) -> Event | None:
     Nothing happening is a weight in that draw, not a branch around it. Two things follow: the odds
     of a quiet month are one number somebody chose rather than a side effect of how many entries
     exist, and a month with no possible candidate is quiet for the same reason as any other.
+
+    A question-shaped entry is not applied here but put to the player: it waits on a pending row
+    until he answers it, or until his month ends and its default answers for him.
     """
     candidates = [incident for incident in INCIDENTS if incident.is_possible(faction=context.faction)]
 
@@ -32,6 +36,19 @@ def handle_choose_incident(*, context: ChooseIncident) -> Event | None:
 
     if chosen_incident is None:
         return None
+
+    if chosen_incident.is_question():
+        question = chosen_incident.ask(faction=context.faction)
+        pending_incident = PendingIncident.objects.create(
+            faction=context.faction,
+            month=context.month,
+            incident=chosen_incident.__name__,
+            title=question.title,
+            body=question.body,
+            rival=question.rival,
+            item=question.item,
+        )
+        return IncidentAsked(pending_incident=pending_incident)
 
     return IncidentOccurred(
         faction=context.faction,

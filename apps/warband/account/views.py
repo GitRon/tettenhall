@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 
 from apps.warband.account.forms.login import LoginForm
+from apps.warband.incident.services.pending_incident import get_open_questions
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.month.projections.month_standing import MonthStanding
 from apps.warband.month.services.player_month_log import group_player_month_logs
@@ -90,6 +91,14 @@ class DashboardView(generic.TemplateView):
                 # their own is ten to thirty queries on the page every month starts on, and
                 # RivalFactionListView is this codebase's standing example of answering a page's
                 # questions once for the whole page instead.
+                # The questions the world has put to him and he has not answered. Read with the month
+                # log, which is where they are shown, but from their own rows: a question outlives
+                # the log it is shown in
+                context["open_questions"] = (
+                    get_open_questions(faction_id=current_savegame.player_faction_id)
+                    if current_savegame.player_faction_id
+                    else []
+                )
                 month_standing = MonthStanding.for_savegame(savegame=current_savegame)
                 context["month_standing"] = month_standing
 

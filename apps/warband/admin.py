@@ -3,6 +3,7 @@
 # has to be listed here or its pages are missing, with nothing anywhere reporting it.
 import apps.warband.faction.admin
 import apps.warband.finance.admin
+import apps.warband.incident.admin
 import apps.warband.item.admin
 import apps.warband.month.admin
 import apps.warband.quest.admin

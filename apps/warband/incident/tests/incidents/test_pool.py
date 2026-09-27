@@ -34,6 +34,52 @@ def test_every_title_fits_the_log_line():
     ] == []
 
 
+def test_every_answer_fits_the_log_line():
+    """
+    An answer's title lands in the same capped column the question's would, with the same names
+    filled in.
+    """
+    title_length = PlayerMonthLog._meta.get_field("title").max_length
+    long_name = "W" * 20
+
+    assert [
+        option.key
+        for incident in INCIDENTS
+        for option in incident.OPTIONS
+        if len(option.title.format(warrior=long_name, rival=long_name, item=long_name)) > title_length
+    ] == []
+
+
+def test_every_question_declares_its_default_among_its_options():
+    """
+    An unanswered question takes its default when the month ends, so a default naming no option
+    would leave the question with nothing to land.
+    """
+    assert [
+        incident for incident in INCIDENTS if incident.is_question() and incident.get_default_option() is None
+    ] == []
+
+
+def test_no_default_costs_silver():
+    """
+    The default is what a player who cannot afford anything else is left with. One costing silver
+    would open a hole he did not dig - the rule every cost in the pool is held to by "is_possible".
+    """
+    assert [
+        incident for incident in INCIDENTS if incident.is_question() and incident.get_default_option().silver_change < 0
+    ] == []
+
+
+def test_no_default_sells_gear():
+    """
+    A default lands without asking, and gear is the one lever that destroys something the player
+    paid for - handing it over is his decision or nobody's.
+    """
+    assert [
+        incident for incident in INCIDENTS if incident.is_question() and incident.get_default_option().sells_item
+    ] == []
+
+
 def test_a_quiet_month_is_the_likeliest_outcome():
     """
     The register works because most months are silent. An incident every month is a chronicle
@@ -47,7 +93,16 @@ def test_silver_nets_out_negative():
     #45 gave insolvency teeth and #3 is about to make silver contested. A pool that pays out on
     average flattens both, so the costs have to outweigh the windfalls.
     """
-    weighted_silver = sum(incident.WEIGHT * incident.SILVER_CHANGE for incident in INCIDENTS)
+    # A question counts at the answer that is not its default - the one it was written to offer.
+    # Counting the default instead would price every question as if it were always ignored
+    weighted_silver = sum(
+        incident.WEIGHT
+        * (
+            incident.SILVER_CHANGE
+            + sum(option.silver_change for option in incident.OPTIONS if option.key != incident.DEFAULT_OPTION)
+        )
+        for incident in INCIDENTS
+    )
 
     assert weighted_silver < 0
 
@@ -57,7 +112,15 @@ def test_the_fyrd_nets_out_flat():
     The reserve is the brake on a war band's growth, so a drift here changes the pace of the whole
     game rather than one month of it. "Flat" is a tolerance, not a zero: the entries are whole men.
     """
-    weighted_recruits = sum(incident.WEIGHT * incident.FYRD_CHANGE for incident in INCIDENTS)
+    # A question counts at the answer that is not its default, as the silver does above
+    weighted_recruits = sum(
+        incident.WEIGHT
+        * (
+            incident.FYRD_CHANGE
+            + sum(option.fyrd_change for option in incident.OPTIONS if option.key != incident.DEFAULT_OPTION)
+        )
+        for incident in INCIDENTS
+    )
 
     assert abs(weighted_recruits) <= 2
 

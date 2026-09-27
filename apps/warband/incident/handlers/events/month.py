@@ -2,6 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.incident.messages.commands.incident import ChooseIncident
+from apps.warband.incident.messages.commands.pending_incident import AnswerOpenPendingIncidents
 from apps.warband.month.messages.events.month import PlayerMonthPrepared
 
 
@@ -16,3 +17,13 @@ def handle_choose_incident_for_new_month(*, context: PlayerMonthPrepared) -> Com
     that change would be.
     """
     return ChooseIncident(faction=context.faction, month=context.current_month)
+
+
+@message_registry.register_event(event=PlayerMonthPrepared)
+def handle_answer_open_pending_incidents_for_new_month(*, context: PlayerMonthPrepared) -> Command:
+    """
+    A question left open when the month ended is answered by its default.
+
+    On the player's month, like the drawing: only the player is ever asked anything.
+    """
+    return AnswerOpenPendingIncidents(faction=context.faction, month=context.current_month)
