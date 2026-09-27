@@ -97,6 +97,18 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
     return CreateBattleHistory(skirmish=context.skirmish, message=message)
 
 
+@message_registry.register_event(event=warrior.BlowWasNotStruck)
+def handle_log_blow_was_not_struck(*, context: warrior.BlowWasNotStruck) -> Command:
+    # The Tally only: the line it closes is a Tally line, and the saga tells a blow by what came of
+    # it, so a blow that never came has nothing to tell there
+    if context.attacker_is_down:
+        message = f"{context.attacker} is down before his blow at {context.defender} is struck."
+    else:
+        message = f"{context.attacker} finds {context.defender} already down, and the blow is never struck."
+
+    return CreateBattleHistory(skirmish=context.skirmish, message=message)
+
+
 @message_registry.register_event(event=skirmish.FortificationAssaulted)
 def handle_log_fortification_assaulted(*, context: skirmish.FortificationAssaulted) -> Command:
     # A second man storming a wall the first already brought down this round swung at rubble, and

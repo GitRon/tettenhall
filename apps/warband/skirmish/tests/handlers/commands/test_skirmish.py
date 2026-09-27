@@ -41,6 +41,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
     RoundFinished,
     SkirmishFinished,
 )
+from apps.warband.skirmish.messages.events.warrior import BlowWasNotStruck
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
@@ -713,7 +714,7 @@ def test_handle_warrior_attacks_warrior_throws_nothing_at_a_man_already_down():
         context=_warrior_attacks_warrior(skirmish=skirmish, attacker=attacker, defender=defender)
     )
 
-    assert result == []
+    assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=False)
 
 
 @pytest.mark.django_db
@@ -727,7 +728,7 @@ def test_handle_warrior_attacks_warrior_throws_nothing_from_a_man_already_down()
         context=_warrior_attacks_warrior(skirmish=skirmish, attacker=attacker, defender=defender)
     )
 
-    assert result == []
+    assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=True)
 
 
 @pytest.mark.django_db

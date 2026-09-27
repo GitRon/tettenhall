@@ -57,6 +57,21 @@ class WarriorDefendedAllDamage(Event):
 
 
 @dataclass(kw_only=True)
+class BlowWasNotStruck(Event):
+    """
+    A blow the round drew that never came, because one of the two men was down before it was his
+    turn. The Tally has already said who comes at whom by then, and this is what closes that line.
+    """
+
+    skirmish: Skirmish
+    attacker: Warrior
+    defender: Warrior
+    # Which of the two is down: the defender when somebody else put him down first, the attacker when
+    # he was struck down himself before he could swing
+    attacker_is_down: bool
+
+
+@dataclass(kw_only=True)
 class WarriorWasIncapacitated(Event):
     skirmish: Skirmish
     warrior: Warrior

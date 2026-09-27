@@ -11,6 +11,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.battle_history import (
     handle_log_attacker_defender_decided,
+    handle_log_blow_was_not_struck,
     handle_log_fortification_assaulted,
     handle_log_fortification_fell,
     handle_log_item_dropped,
@@ -42,6 +43,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
 )
 from apps.warband.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.warband.skirmish.messages.events.warrior import (
+    BlowWasNotStruck,
     LeaderRallied,
     WarriorDefendedAllDamage,
     WarriorGainedExperience,
@@ -692,6 +694,32 @@ def test_handle_log_fortification_assaulted_on_a_wall_already_down():
     assert result == CreateBattleHistory(
         skirmish=skirmish, message="Offa storms the fortification, but it has already fallen."
     )
+
+
+def test_handle_log_blow_was_not_struck_at_a_man_already_down():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Offa")
+    defender = WarriorFactory.build(name="Rasmus")
+
+    result = handle_log_blow_was_not_struck(
+        context=BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=False)
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="Offa finds Rasmus already down, and the blow is never struck."
+    )
+
+
+def test_handle_log_blow_was_not_struck_by_a_man_already_down():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Offa")
+    defender = WarriorFactory.build(name="Rasmus")
+
+    result = handle_log_blow_was_not_struck(
+        context=BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=True)
+    )
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Offa is down before his blow at Rasmus is struck.")
 
 
 def test_handle_log_fortification_fell():
