@@ -630,3 +630,16 @@ def test_handle_occupy_faction_of_an_empty_treasury():
     result = handle_occupy_faction(context=OccupyFaction(faction=faction, occupying_faction=occupying_faction, month=3))
 
     assert result.plundered_silver == 0
+
+
+@pytest.mark.django_db
+def test_handle_replenish_fyrd_reserve_in_the_harvest_month():
+    """Month 6 is Haligmonath, whose men are in the fields."""
+    faction = FactionFactory(fyrd_reserve=3)
+
+    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randrange", return_value=2):
+        result = handle_replenish_fyrd_reserve(context=ReplenishFyrdReserve(faction=faction, month=6))
+
+    assert result is None
+    faction.refresh_from_db()
+    assert faction.fyrd_reserve == 3

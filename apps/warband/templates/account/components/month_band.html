@@ -11,7 +11,14 @@
 {# colour. #}
 <div class="mb-5 flex flex-col items-start gap-y-3 border border-rule bg-raised p-[15px] md:flex-row md:items-center md:justify-between md:gap-x-5">
     <div class="flex flex-col gap-y-1">
-        <h1 class="m-0">Month {{ current_savegame.current_month }}</h1>
+        {# The month of the year, its season and the year, with what the month does to the game under #}
+        {# it - read off the same month class the rules take their numbers from. #}
+        <h1 class="m-0">{{ current_savegame.current_date.label }}</h1>
+        <ul class="m-0 list-none p-0 text-ink">
+            {% for effect in current_savegame.current_date.calendar_month.get_effects %}
+                <li>{{ effect }}</li>
+            {% endfor %}
+        </ul>
         {% if month_standing.open_skirmish_count %}
             <span class="text-blood">
                 <i aria-hidden="true" class="fa-solid fa-triangle-exclamation"></i>

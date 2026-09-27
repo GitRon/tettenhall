@@ -4,10 +4,12 @@ from django import forms
 from django.db.models import QuerySet
 
 from apps.common import form_styles
+from apps.warband.calendar.months import get_calendar_month
 from apps.warband.faction.models import Faction
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.models.quest_contract import QuestContract
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.services.march import get_march_cost_refusal
 from apps.warband.warrior.forms.widgets import RosterCheckboxSelectMultiple
 from apps.warband.warrior.services.availability import assess_roster
 
@@ -60,9 +62,14 @@ class QuestAcceptForm(forms.ModelForm):
         # The whole war band, each man with a verdict - not just the men who can go. A picker that
         # silently dropped the other four rendered a shorter roster than the one the player owns and
         # left him to work out the difference, which reads as a broken page rather than as a rule.
+        self.faction = faction
+        self.month = quest.target_faction.savegame.current_month
+        # What marching costs a man this month, which the page names before the player commits
+        self.calendar_month = get_calendar_month(month=self.month)
+
         self.roster = assess_roster(
             faction_id=faction.id,
-            month=quest.target_faction.savegame.current_month,
+            month=self.month,
         )
 
         # The widget before the queryset, not after: assigning a queryset is what hands a field's
@@ -99,3 +106,21 @@ class QuestAcceptForm(forms.ModelForm):
             )
 
         return assigned_warriors
+
+    def clean(self) -> dict:
+        """
+        Refuse a quest the purse cannot march the chosen men to: accepting one is a march.
+        """
+        cleaned_data = super().clean()
+
+        # A roster that failed its own cleaning has no head count to price
+        if "assigned_warriors" in cleaned_data:
+            refusal = get_march_cost_refusal(
+                faction_id=self.faction.id,
+                month=self.month,
+                warrior_count=len(cleaned_data["assigned_warriors"]),
+            )
+            if refusal:
+                raise forms.ValidationError(refusal)
+
+        return cleaned_data

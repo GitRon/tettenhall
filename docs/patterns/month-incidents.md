@@ -163,6 +163,20 @@ incidents are drawn is erased in the same tick. `max_morale` is the one morale n
 touch — and it is close to a one-way ratchet, since nothing else raises it but a level-up, which is
 why the entries moving it are weighted against each other.
 
+## Months
+
+An entry is drawn in every month unless it declares `MONTHS`, a tuple of month classes from
+[the calendar](calendar.md). `handle_choose_incident` asks `is_drawn_in()` before `is_possible()`, so an
+out-of-season entry never runs its queries.
+
+**A month-bound entry carries a raised weight, so it is drawn as often across a year as before.**
+`OathFeast` is a Yule feast, drawn only in Ærra Geola and Æfterra Geola at weight 18 — six times the 3
+its balance against `PriestDenounces` and `ChildWithHisFace` is struck at, because it is in the pool two
+months in twelve. `get_yearly_weight()` is that weight
+averaged over the year, and it is what the pool's balance is measured in: the three drifts below net out
+over a year, not inside any one month. Restricting an entry without raising its weight halves or worse
+its share of the year, and silently breaks whatever it was weighted against.
+
 ## Weights
 
 `QUIET_MONTH_WEIGHT` sits in `apps/warband/incident/incidents/__init__.py` beside the pool and stands in the
@@ -170,11 +184,11 @@ draw as the month where nothing happens. Two things follow: the odds of a quiet 
 somebody chose rather than a side effect of how many entries exist, and a month with nothing possible
 is quiet for the same reason as any other month is.
 
-It is deliberately larger than the pool's total weight. The register below works because most months
-are silent, and an incident every month is a chronicle nobody reads.
+It is deliberately larger than the pool's total weight in the busiest month of the year. The register
+below works because most months are silent, and an incident every month is a chronicle nobody reads.
 
 Per-entry weights price frequency; the constants price severity. Both matter, and `test_pool.py`
-holds the three drifts that a reweighting is most likely to cause:
+holds the three drifts that a reweighting is most likely to cause, each weighed at the yearly weight:
 
 - **Silver nets out negative** across the pool. #45 gave insolvency teeth and #3 is about to make
   silver contested, so a pool that pays out on average flattens both.

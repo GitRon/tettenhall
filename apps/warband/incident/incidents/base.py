@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from apps.warband.calendar.months import YEAR, CalendarMonth
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models.transaction import Transaction
 from apps.warband.incident.models.pending_incident import PendingIncident
@@ -102,6 +103,11 @@ class Incident:
     # rather than uniformly: a windfall and a bereavement do not want the same odds
     WEIGHT = 0
 
+    # The months of the year this entry can be drawn in. Empty is every month, which is most of the
+    # catalogue. An entry tied to fewer months carries a weight raised to match, so it is drawn as
+    # often across a year as it would be across all twelve - see [get_yearly_weight]
+    MONTHS: tuple[type[CalendarMonth], ...] = ()
+
     # The report, and the sentence that undercuts it. "{warrior}" and "{item}" are filled in by an
     # overriding [resolve]
     TITLE = ""
@@ -117,6 +123,22 @@ class Incident:
     # The key of the option an unanswered question takes when the month ends. Not answering is an
     # answer, so ignoring a question never pays better than deciding it
     DEFAULT_OPTION = ""
+
+    @classmethod
+    def is_drawn_in(cls, *, calendar_month: type[CalendarMonth]) -> bool:
+        """Whether this entry belongs to the pool in "calendar_month" at all."""
+        return not cls.MONTHS or calendar_month in cls.MONTHS
+
+    @classmethod
+    def get_yearly_weight(cls) -> float:
+        """
+        The weight this entry carries averaged over a whole year.
+
+        What the pool's balance is measured in: an entry drawn in two months at 18 is drawn as often
+        across a year as one drawn in twelve at 3, and the silver, the fyrd and the morale ceiling net
+        out over the year rather than inside any one month.
+        """
+        return cls.WEIGHT * sum(cls.is_drawn_in(calendar_month=calendar_month) for calendar_month in YEAR) / len(YEAR)
 
     @classmethod
     def is_question(cls) -> bool:

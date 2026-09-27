@@ -56,11 +56,13 @@
         {# per faction per month - and the month was on no screen the player is looking at while #}
         {# spending them. It sits here rather than in "base.html" so that finishing a month, which #}
         {# redirects, and every htmx swap that leaves the navbar alone both leave it right. Font #}
-        {# Awesome rather than an "svg_icon": the icon set carries no month. #}
-        <a class="text-ink no-underline hover:text-ink-muted"
+        {# Awesome rather than an "svg_icon": the icon set carries no month. The month of the year #}
+        {# and its season, as a label, because the season is what prices a march and paces training. #}
+        {# The icon gives way on a phone, where the longest names need the room; both words stay. #}
+        <a class="whitespace-nowrap font-mono text-label uppercase tracking-label text-ink no-underline hover:text-ink-muted"
            href="{% url 'warband:dashboard-view' %}"
-           title="Month">
-            <i class="fa-solid fa-calendar-days"></i> {{ current_savegame.current_month }}
+           title="{{ current_savegame.current_date.label }}">
+            <i class="fa-solid fa-calendar-days hidden md:inline"></i> {{ current_savegame.current_date.season_label }}
         </a>
     {% endif %}
 </div>

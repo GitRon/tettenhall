@@ -52,7 +52,9 @@ INCIDENTS_BY_NAME: dict[str, type[Incident]] = {incident.__name__: incident for 
 # a quiet month would change silently every time an entry is added, and it is also what makes an
 # empty candidate set unremarkable - a month with nothing possible is a quiet month like any other.
 #
-# Against the 51 points the pool carries it puts an incident at 51 in 141, so something happens about
-# one month in three - which is the dosage the register needs. The tone works because most entries
+# Against the 51 points the pool carries across a year it puts an incident at 51 in 141, so something
+# happens about one month in three - which is the dosage the register needs. The Yule months carry
+# more, 66 points, because the oath feast is drawn only then: an incident about one month in two and
+# a half there, still less often than a quiet one. The tone works because most entries
 # are genuinely dry, and it stops working if the chronicle speaks every month.
 QUIET_MONTH_WEIGHT = 90

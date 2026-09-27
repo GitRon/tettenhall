@@ -181,3 +181,21 @@ def test_handle_progress_warrior_training_stores_a_rounded_improvement():
 
     warrior.refresh_from_db()
     assert warrior.strength_progress == 71
+
+
+@pytest.mark.django_db
+def test_handle_progress_warrior_training_advances_faster_in_winter():
+    """Month 7 is Winterfylleth, and a winter roll of 20 is worth 30."""
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    with (
+        mock.patch("apps.warband.training.models.training.random.choice", return_value="strength"),
+        mock.patch("apps.warband.training.models.training.random.gauss", return_value=20),
+    ):
+        result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=7))
+
+    assert result == []
+    warrior.refresh_from_db()
+    assert warrior.strength_progress == 70

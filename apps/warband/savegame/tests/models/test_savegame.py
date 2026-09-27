@@ -1,6 +1,8 @@
 import pytest
 
 from apps.warband.account.tests.factories.user import UserFactory
+from apps.warband.calendar.date import START_YEAR_EARLIEST, START_YEAR_LATEST, CalendarDate
+from apps.warband.calendar.months import Winterfylleth
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
@@ -50,3 +52,16 @@ def test_is_over_once_the_game_has_been_decided():
     savegame = SavegameFactory(outcome=Savegame.OutcomeChoices.OUTCOME_LOST)
 
     assert savegame.is_over is True
+
+
+@pytest.mark.django_db
+def test_start_year_is_drawn_when_the_savegame_is_created():
+    savegame = SavegameFactory()
+
+    assert START_YEAR_EARLIEST <= savegame.start_year <= START_YEAR_LATEST
+
+
+def test_current_date():
+    savegame = SavegameFactory.build(current_month=7, start_year=768)
+
+    assert savegame.current_date == CalendarDate(calendar_month=Winterfylleth, year=768)

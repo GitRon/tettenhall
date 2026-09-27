@@ -6,11 +6,14 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.incident.handlers.commands.incident import handle_choose_incident
 from apps.warband.incident.incidents.boys_from_the_hundred import BoysFromTheHundred
 from apps.warband.incident.incidents.burnt_village_refugees import BurntVillageRefugees
+from apps.warband.incident.incidents.oath_feast import OathFeast
 from apps.warband.incident.incidents.plough_hoard import PloughHoard
 from apps.warband.incident.incidents.toll_on_the_old_road import TollOnTheOldRoad
 from apps.warband.incident.messages.commands.incident import ChooseIncident
 from apps.warband.incident.messages.events.incident import IncidentAsked, IncidentOccurred
 from apps.warband.incident.models.pending_incident import PendingIncident
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.models.town import Town
 
 
 @pytest.mark.django_db
@@ -72,3 +75,30 @@ def test_handle_choose_incident_puts_a_question_to_the_player():
         3,
         BurntVillageRefugees.TITLE,
     )
+
+
+@pytest.mark.django_db
+def test_handle_choose_incident_draws_a_yule_entry_in_yule():
+    """Month 9 is Ærra Geola, the one kind of month the oath feast is drawn in."""
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_SMALL)
+    WarriorFactory(faction=faction)
+
+    with mock.patch(
+        "apps.warband.incident.handlers.commands.incident.random.choices", return_value=[None]
+    ) as mocked_draw:
+        handle_choose_incident(context=ChooseIncident(faction=faction, month=9))
+
+    assert OathFeast in mocked_draw.call_args.args[0]
+
+
+@pytest.mark.django_db
+def test_handle_choose_incident_leaves_a_yule_entry_out_of_summer():
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_SMALL)
+    WarriorFactory(faction=faction)
+
+    with mock.patch(
+        "apps.warband.incident.handlers.commands.incident.random.choices", return_value=[None]
+    ) as mocked_draw:
+        handle_choose_incident(context=ChooseIncident(faction=faction, month=3))
+
+    assert OathFeast not in mocked_draw.call_args.args[0]

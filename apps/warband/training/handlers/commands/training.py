@@ -3,6 +3,7 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Event
 
+from apps.warband.calendar.months import get_calendar_month
 from apps.warband.training.messages.commands.training import CreateNewTraining, TrainWarriors
 from apps.warband.training.messages.events.training import NewTrainingCreated, WarriorUpgradedSkill
 from apps.warband.training.models import Training
@@ -27,6 +28,8 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
         return []
 
     training_category = training.category
+    # Winter drills indoors, so the whole war band advances faster in the same month
+    improvement_factor = get_calendar_month(month=context.month).TRAINING_FACTOR
 
     # Condition is the whole test, because standing in a fight is not a state a warrior can be in
     # while this runs: the advance is refused outright when a skirmish is unresolved
@@ -37,7 +40,9 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
     event_list = []
 
     for warrior in warriors_to_train:
-        attribute, improvement = training.get_random_attribute_and_improvement_for_category(category=training_category)
+        attribute, improvement = training.get_random_attribute_and_improvement_for_category(
+            category=training_category, improvement_factor=improvement_factor
+        )
 
         attribute_progress_name = f"{attribute}_progress"
         new_value = getattr(warrior, attribute_progress_name) + improvement

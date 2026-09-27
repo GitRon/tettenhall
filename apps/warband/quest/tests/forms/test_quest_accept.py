@@ -1,6 +1,7 @@
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.quest.forms.quest_accept import QuestAcceptForm
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
@@ -127,3 +128,22 @@ def test_clean_assigned_warriors_refuses_a_man_who_cannot():
 
     assert form.is_valid() is False
     assert form.errors["assigned_warriors"] == ["Beorn cannot take a quest this month."]
+
+
+@pytest.mark.django_db
+def test_clean_refuses_a_winter_march_the_purse_cannot_pay():
+    """Accepting a quest is a march: month 7 is Winterfylleth, and one man costs 10."""
+    savegame = SavegameFactory(current_month=7)
+    faction = FactionFactory(savegame=savegame)
+    warrior = WarriorFactory(faction=faction)
+    TransactionFactory(faction=faction, amount=9)
+
+    quest = QuestFactory(target_faction__savegame=savegame)
+    form = QuestAcceptForm(
+        data={"faction": faction.id, "quest": quest.id, "assigned_warriors": [warrior.id]},
+        quest_id=quest.id,
+        player_faction_id=faction.id,
+    )
+
+    assert form.is_valid() is False
+    assert form.non_field_errors() == ["Marching 1 man this month costs 10 silver, and you have 9."]

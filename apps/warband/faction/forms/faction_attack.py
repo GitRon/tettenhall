@@ -4,7 +4,9 @@ from django import forms
 from django.db.models import QuerySet
 
 from apps.common import form_styles
+from apps.warband.calendar.months import get_calendar_month
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.services.march import get_march_cost_refusal
 from apps.warband.warrior.forms.widgets import RosterCheckboxSelectMultiple
 from apps.warband.warrior.services.availability import assess_roster
 
@@ -37,6 +39,8 @@ class FactionAttackForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.leader = kwargs.pop("leader")
         self.month = kwargs.pop("month")
+        # What marching costs a man this month, which the page names before the player commits
+        self.calendar_month = get_calendar_month(month=self.month)
 
         super().__init__(*args, **kwargs)
 
@@ -94,6 +98,24 @@ class FactionAttackForm(forms.Form):
             )
 
         return assigned_warriors
+
+    def clean(self) -> dict:
+        """
+        Refuse a march the purse cannot pay for, counting the leader, who marches regardless.
+        """
+        cleaned_data = super().clean()
+
+        # A roster that failed its own cleaning has no head count to price
+        if "assigned_warriors" in cleaned_data:
+            refusal = get_march_cost_refusal(
+                faction_id=self.leader.faction_id,
+                month=self.month,
+                warrior_count=len(self.get_assigned_warriors()),
+            )
+            if refusal:
+                raise forms.ValidationError(refusal)
+
+        return cleaned_data
 
     def get_assigned_warriors(self) -> list[Warrior]:
         """

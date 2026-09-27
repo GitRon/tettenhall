@@ -37,6 +37,7 @@ class PlayerMonthLog(models.Model):
         KIND_WARRIOR_INJURED = 18, "Warrior injured"
         KIND_FEAST_THROWN = 19, "Feast thrown"
         KIND_WARRIOR_CHANGED = 20, "Warrior changed"
+        KIND_HARVEST = 21, "Harvest"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -81,6 +82,9 @@ class PlayerMonthLog(models.Model):
         # A consequence, filed beside the injury it mirrors: the player chose the fight that changed
         # the man, and the line is about one man rather than a count
         KindChoices.KIND_WARRIOR_CHANGED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        # A consequence, beside the building income: it is silver the month brought in, and the
+        # player planned for it rather than being surprised by it
+        KindChoices.KIND_HARVEST: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

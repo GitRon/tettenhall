@@ -4,6 +4,7 @@ from django.db.models import Q
 from queuebie import message_registry
 from queuebie.messages import Event
 
+from apps.warband.calendar.months import get_calendar_month
 from apps.warband.faction.domain.occupation_spoils import OccupationSpoils
 from apps.warband.faction.domain.rival_income import RivalIncome
 from apps.warband.faction.messages.commands.faction import (
@@ -142,6 +143,10 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
 
 @message_registry.register_command(command=ReplenishFyrdReserve)
 def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | None:
+    # A month whose men are in the fields - the harvest - sends nobody to the reserve
+    if not get_calendar_month(month=context.month).FYRD_REPLENISHES:
+        return None
+
     new_recruits = random.randrange(0, 3)
 
     if new_recruits == 0:

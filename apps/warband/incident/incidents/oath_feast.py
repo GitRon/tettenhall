@@ -1,5 +1,6 @@
 import random
 
+from apps.warband.calendar.months import AefterraGeola, AerraGeola
 from apps.warband.faction.models.faction import Faction
 from apps.warband.incident.incidents.base import Incident, IncidentOutcome, roster
 from apps.warband.town.models.town import Town
@@ -9,16 +10,19 @@ class OathFeast(Incident):
     """
     The war band renews its oath at the mead-bench, and one man means it more than he did.
 
-    The feast needs a hall to hold it in, so a town that has not built one never draws it. Not tied
-    to a season: the game has no calendar, only a month count, and a feast that is Yule in name
-    would be drawn in midsummer.
+    The feast needs a hall to hold it in, so a town that has not built one never draws it. It is a
+    Yule feast, drawn only in Ærra Geola and Æfterra Geola.
 
     The only raise to the morale ceiling besides [HallRelic], and the counterweight to
-    [PriestDenounces] and [ChildWithHisFace] - their weighted shares sum to its own, so the ceiling
-    still nets out flat.
+    [PriestDenounces] and [ChildWithHisFace] - their yearly weighted shares sum to its own, so the
+    ceiling still nets out flat.
     """
 
-    WEIGHT = 3
+    # Two months of the twelve, so six times the weight of 3 the ceiling's balance is struck at: drawn
+    # as often across a year as an entry of weight 3 in every month, which is what the two entries
+    # above are weighed against
+    WEIGHT = 18
+    MONTHS = (AerraGeola, AefterraGeola)
 
     TITLE = "The war band renewed its oaths at the mead-bench, and {warrior} spoke first."
     BODY = "The words were older than the hall, and he knew all of them."

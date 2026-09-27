@@ -2,6 +2,7 @@ import pytest
 
 from apps.warband.faction.forms.faction_attack import FactionAttackForm
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -147,3 +148,28 @@ def test_get_assigned_warriors_marches_the_leader_out_alone():
 
     assert form.is_valid() is True
     assert form.get_assigned_warriors() == [leader]
+
+
+@pytest.mark.django_db
+def test_clean_refuses_a_winter_march_the_purse_cannot_pay():
+    """Month 7 is Winterfylleth: the leader and his man cost 20, and the purse holds 19."""
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    follower = WarriorFactory(faction=faction)
+    TransactionFactory(faction=faction, amount=19)
+
+    form = FactionAttackForm(data={"assigned_warriors": [follower.id]}, leader=leader, month=7)
+
+    assert form.is_valid() is False
+    assert form.non_field_errors() == ["Marching 2 men this month costs 20 silver, and you have 19."]
+
+
+@pytest.mark.django_db
+def test_clean_lets_a_winter_march_the_purse_can_pay():
+    faction = FactionFactory()
+    leader = WarriorFactory(faction=faction)
+    TransactionFactory(faction=faction, amount=10)
+
+    form = FactionAttackForm(data={}, leader=leader, month=7)
+
+    assert form.is_valid() is True
