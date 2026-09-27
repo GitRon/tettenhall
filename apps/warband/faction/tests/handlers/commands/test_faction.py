@@ -362,10 +362,25 @@ def test_handle_create_factions_for_new_savegame_starts_with_the_player_faction(
         )
 
     assert result[0] == NewFactionCreated(
-        faction=Faction.objects.get(name="Wessex"), current_month=savegame.current_month
+        faction=Faction.objects.get(name="Wessex"), current_month=savegame.current_month, is_player=True
     )
     savegame.refresh_from_db()
     assert savegame.player_faction == result[0].faction
+
+
+@pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_announces_no_rival_as_the_player():
+    savegame = SavegameFactory()
+    culture = CultureFactory()
+
+    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3):
+        result = handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=culture.id
+            )
+        )
+
+    assert [event.is_player for event in result] == [True, False, False, False]
 
 
 @pytest.mark.django_db

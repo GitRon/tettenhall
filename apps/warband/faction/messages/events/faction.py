@@ -9,8 +9,17 @@ from apps.warband.skirmish.models.warrior import Warrior
 
 @dataclass(kw_only=True)
 class NewFactionCreated(Event):
+    """
+    One faction and its town exist, and the savegame's opening hand can be dealt to it.
+
+    "is_player" rides along because some of that hand is the player's alone, and every consumer is an
+    event handler under strict mode's database blocker: comparing against "savegame.player_faction_id"
+    would be a query, or a read of whichever relation happened to be cached.
+    """
+
     faction: Faction
     current_month: int
+    is_player: bool
 
 
 @dataclass(kw_only=True)

@@ -137,7 +137,12 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
         )
 
     return [
-        NewFactionCreated(faction=faction, current_month=context.savegame.current_month) for faction in faction_list
+        NewFactionCreated(
+            faction=faction,
+            current_month=context.savegame.current_month,
+            is_player=faction.id == context.savegame.player_faction_id,
+        )
+        for faction in faction_list
     ]
 
 

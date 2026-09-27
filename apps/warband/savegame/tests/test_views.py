@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from apps.warband.account.tests.factories.user import UserFactory
 from apps.warband.faction.models import Culture, Faction
+from apps.warband.item.models.item import Item
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 
@@ -54,6 +55,11 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     # Three stalls in a town without a market of its own
     assert savegame.player_faction.available_items.count() == 3
     assert savegame.player_faction.available_quests.count() == 2
+    # A weapon and a piece of armour in the player's stores, and nothing lying in a rival's
+    stored_items = Item.objects.filter(
+        savegame=savegame, owner__isnull=False, warrior_weapon__isnull=True, warrior_armor__isnull=True
+    )
+    assert [item.owner for item in stored_items] == [savegame.player_faction] * 2
 
 
 @pytest.mark.django_db
