@@ -14,6 +14,14 @@
                 <p class="mt-0 text-sm leading-snug text-ink-muted">
                     {% include 'item/components/item_stats_meta.html' with item=item show_price=True %}
                 </p>
+                {# So a second one is bought on purpose. The stores are a section away, and the #}
+                {# player standing at the stall cannot see what is already lying there. #}
+                {% if item.stored_copy_count %}
+                    <p class="m-0 text-sm leading-snug text-ink-muted">
+                        You already have <span class="font-mono tabular-nums text-ink">{{ item.stored_copy_count }}</span>
+                        {{ item.type.name }} unused in the stores.
+                    </p>
+                {% endif %}
             </div>
         </div>
     </div>

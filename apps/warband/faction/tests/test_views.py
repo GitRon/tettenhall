@@ -1069,6 +1069,22 @@ def test_recruit_pub_mercenary_view_hires_him(logged_in_client, current_savegame
 
 
 @pytest.mark.django_db
+def test_recruit_pub_mercenary_view_renders_the_way_on_to_the_man_hired(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    """
+    Arming a new man lives in the Warband section, so the hire answers with the line that links to
+    him rather than leaving the player to find him through the nav.
+    """
+    TransactionFactory(faction=current_savegame.player_faction, amount=500)
+
+    response = logged_in_client.post(reverse("warband:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.context["warrior"] == pub_mercenary
+    assert "HX-Trigger" in response
+
+
+@pytest.mark.django_db
 def test_recruit_pub_mercenary_view_debits_his_price(
     logged_in_client, current_savegame, pub_mercenary, queuebie_registry
 ):
@@ -1516,6 +1532,20 @@ def test_town_shop_view_shows_the_gear_on_the_stalls(logged_in_client, current_s
 
     assert response.status_code == 200
     assert list(response.context["object"].available_items.all()) == [shop_item]
+
+
+@pytest.mark.django_db
+def test_town_shop_view_says_what_already_lies_in_the_stores(logged_in_client, current_savegame):
+    """
+    Buying puts the item in the stores, a section away. The shelf says how much is lying there so the
+    player can hand it out without walking the nav, and does not buy a second one by accident.
+    """
+    ItemFactory(savegame=current_savegame, owner=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:town-shop-view"))
+
+    assert response.status_code == 200
+    assert response.context["stored_item_count"] == 1
 
 
 @pytest.mark.django_db

@@ -5,5 +5,5 @@
 
     {# The heading is the page's and not the list's: the list is an htmx swap target, so a heading #}
     {# inside it is a heading the first swap replaces. #}
-    {% include "faction/item/components/shop_item_list.html" with faction=object item_list=object.available_items.all %}
+    {% include "faction/item/components/shop_item_list.html" with faction=object %}
 {% endblock content %}

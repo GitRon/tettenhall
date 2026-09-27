@@ -26,7 +26,7 @@ def test_handle_offer_new_quests_on_bulletin_board_maps_a_created_faction_to_the
     registered message is what pins that.
     """
     faction = FactionFactory.build()
-    context = NewFactionCreated(faction=faction, current_month=7)
+    context = NewFactionCreated(faction=faction, current_month=7, is_player=True)
 
     result = handle_offer_new_quests_on_bulletin_board(context=context)
 
