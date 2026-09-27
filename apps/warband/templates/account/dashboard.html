@@ -57,6 +57,7 @@
 
                 {% if month_standing %}
                     {% include 'account/components/month_openings.html' %}
+                    {% include 'account/components/month_waiting.html' %}
                 {% endif %}
 
                 {% for active_quest in faction.active_quests.all %}

@@ -44,6 +44,41 @@ def annotate_held_gear_values(*, roster: Iterable[Warrior]) -> list[Warrior]:
     return warriors
 
 
+def get_handout_roster(*, faction) -> list[Warrior]:
+    """
+    The men an unused item may be handed to, each carrying what his slots are worth.
+
+    A man standing in a fight nobody has settled fights on with what he marched out with, so handing
+    him something would be a control that could only ever be refused - the refusal lives in
+    "get_equip_refusal", which the assign view asks before it dispatches.
+    """
+    return annotate_held_gear_values(
+        roster=faction.get_all_living_warriors().exclude(
+            id__in=Warrior.objects.filter_standing_in_an_open_fight().values("id")
+        )
+    )
+
+
+def count_stored_upgrades(*, faction) -> int:
+    """
+    How many unused items in the stores would improve at least one man who could be handed them.
+
+    An upgrade rather than an empty slot, because an empty slot stops being the question after the
+    first months: every man carries something, and the sword that beats half of it sits in the
+    stores unmentioned. A spare kept on purpose - no better than what anybody already holds - is
+    not counted, so a player who keeps one is not told about it every month.
+    """
+    roster = get_handout_roster(faction=faction)
+    if not roster:
+        return 0
+
+    return sum(
+        1
+        for item in faction.get_all_unoccupied_items().select_related("type")
+        if any(item.expectancy_value > warrior.held_gear_values[item.gear_slot] for warrior in roster)
+    )
+
+
 def get_handout_note(*, warrior: Warrior, item: Item | None, slot: str) -> str | None:
     """
     What the player has to be told about a handout he cannot see the far side of.

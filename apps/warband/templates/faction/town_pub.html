@@ -5,5 +5,10 @@
 
     {# The heading is the page's and not the list's: the list is an htmx swap target, so a heading #}
     {# inside it is a heading the first swap replaces. #}
+    {# Where each hire leaves its way on to the man hired. Outside the list, because the list #}
+    {# replaces itself after every hire and would take the lines with it. Empty until somebody is #}
+    {# hired on this visit - the roster is where the men hired before it are. #}
+    <ul id="pub-hired-list" class="mb-5 mt-0 list-none p-0 empty:hidden"></ul>
+
     {% include 'faction/warrior/components/pub_mercenary_list.html' with faction=object %}
 {% endblock content %}

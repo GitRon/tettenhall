@@ -1,7 +1,8 @@
 import pytest
 
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.models.item_type import ItemType
-from apps.warband.item.services.handout import annotate_held_gear_values, get_handout_note
+from apps.warband.item.services.handout import annotate_held_gear_values, count_stored_upgrades, get_handout_note
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -124,3 +125,45 @@ def test_get_handout_note_stays_quiet_when_the_man_keeps_what_he_has():
     warrior.save()
 
     assert get_handout_note(warrior=warrior, item=warrior.weapon, slot="weapon") is None
+
+
+@pytest.mark.django_db
+def test_count_stored_upgrades_counts_an_item_better_than_what_a_man_holds():
+    warrior = WarriorFactory()
+    warrior.weapon = ItemFactory(
+        savegame=warrior.savegame, owner=warrior.faction, type=ItemTypeFactory(base_value="1d4")
+    )
+    warrior.save()
+    ItemFactory(savegame=warrior.savegame, owner=warrior.faction, type=ItemTypeFactory(base_value="2d6"))
+
+    result = count_stored_upgrades(faction=warrior.faction)
+
+    assert result == 1
+
+
+@pytest.mark.django_db
+def test_count_stored_upgrades_leaves_out_a_spare_nobody_would_gain_from():
+    """
+    A shield kept on purpose, no better than what every man already carries, is not waiting on the
+    player - counting it would put the same row in front of him every month.
+    """
+    warrior = WarriorFactory()
+    warrior.weapon = ItemFactory(
+        savegame=warrior.savegame, owner=warrior.faction, type=ItemTypeFactory(base_value="2d6")
+    )
+    warrior.save()
+    ItemFactory(savegame=warrior.savegame, owner=warrior.faction, type=ItemTypeFactory(base_value="2d6"))
+
+    result = count_stored_upgrades(faction=warrior.faction)
+
+    assert result == 0
+
+
+@pytest.mark.django_db
+def test_count_stored_upgrades_is_nil_with_nobody_to_hand_anything_to():
+    faction = FactionFactory()
+    ItemFactory(savegame=faction.savegame, owner=faction, type=ItemTypeFactory(base_value="2d6"))
+
+    result = count_stored_upgrades(faction=faction)
+
+    assert result == 0

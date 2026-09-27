@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from django.db.models import Count, Q
 
 from apps.warband.faction.models.faction import Faction
+from apps.warband.item.services.handout import count_stored_upgrades
 from apps.warband.quest.models import Quest
 from apps.warband.skirmish.models import Skirmish, Warrior
 from apps.warband.town.models import Town
@@ -31,10 +32,6 @@ class WarbandStanding:
     # whose leader is wounded, dead or already promised to a quest has no attack to launch at all,
     # and today the player only learns that by opening a rival's page.
     leader_can_march: bool
-    # Neither of these expires when the month turns, which is why they are two lines here rather
-    # than rows on the panel of things that do.
-    fyrd_reserve: int
-    captive_count: int
 
     @property
     def is_intact(self) -> bool:
@@ -43,15 +40,42 @@ class WarbandStanding:
 
 
 @dataclass(frozen=True, kw_only=True)
+class WaitingStanding:
+    """
+    What sits in the player's own hands until he does something with it.
+
+    None of it expires when the month turns and none of it blocks the month, so it is not an offer on
+    [MonthStanding]'s list - but it is not something to read either: a captive, a levy and a better
+    sword in the stores are each a decision the player has not made yet. The line is that the thing
+    is already his. Anything that could merely be done - a march, a scouting trip - is not here, or
+    the band would be the menu again.
+    """
+
+    captive_count: int
+    fyrd_reserve: int
+    # Counted as upgrades rather than as unused items - see "count_stored_upgrades"
+    stored_upgrade_count: int
+
+    @property
+    def has_anything_waiting(self) -> bool:
+        return bool(self.captive_count or self.fyrd_reserve or self.stored_upgrade_count)
+
+
+@dataclass(frozen=True, kw_only=True)
 class MonthStanding:
     """
-    What the player still has open before the month turns, and what shape his war band is in.
+    What the player still has open before the month turns, what is waiting on him, and what shape
+    his war band is in.
 
-    A thing earns a place here if it *expires when the month turns* - the board is redrawn, the shop
-    and the pub are restocked, a building may be raised once, a rival is open to be marched on for
-    as long as his men are free - or if it *blocks the month*, which only an unresolved skirmish
-    does. That rule is what keeps the page from becoming a second navbar with numbers on it, and it
-    is why the fyrd reserve and the captives sit on [WarbandStanding] instead.
+    A thing earns a place on the list of offers if it *expires when the month turns* - the board is
+    redrawn, the shop and the pub are restocked, a building may be raised once, an empty town is
+    free to be ridden into until somebody else does - or if it *blocks the month*, which only an
+    unresolved skirmish does. That rule is what keeps the page from becoming a second navbar with
+    numbers on it, and it is why the fyrd reserve and the captives sit on [WaitingStanding] instead.
+
+    A rival that may be marched on is on neither. It is true every month there are rivals and a fit
+    leader, so as a row it said the same thing month after month - the Rivals page is where that
+    question is asked.
 
     Every count is asked through the queryset the acting view resolves with, for the reason the
     attack button already does: a dashboard offering a fight the attack view then refuses is worse
@@ -66,16 +90,15 @@ class MonthStanding:
     # not only warn about them - it offers the way in, and a way in needs the row it leads to.
     open_skirmish_list: list
     quest_count: int
-    # Named rather than counted, because "which rival" is a fact about the player's own war band and
-    # a player who has to click to find out has learned nothing. Nothing about their strength: that
-    # is knowledge scouting is for.
-    attackable_rival_list: list
+    # Named rather than counted, because "which town" is a fact the player can act on and a player
+    # who has to click to find out has learned nothing
     occupiable_rival_list: list
     can_build: bool
     shop_item_count: int
     pub_mercenary_count: int
     building_income: int
     warband: WarbandStanding
+    waiting: WaitingStanding
 
     @property
     def open_skirmish_count(self) -> int:
@@ -116,7 +139,6 @@ class MonthStanding:
         """
         return bool(
             self.quest_count
-            or self.attackable_rival_list
             or self.occupiable_rival_list
             or self.can_build
             or self.shop_item_count
@@ -146,7 +168,6 @@ class MonthStanding:
         return cls(
             open_skirmish_list=list(Skirmish.objects.for_savegame(savegame_id=savegame.id).unresolved()),
             quest_count=Quest.objects.for_player_faction(faction_id=player_faction.id).resolvable(month=month).count(),
-            attackable_rival_list=list(Faction.objects.attackable_by(savegame=savegame).order_by("name")),
             occupiable_rival_list=list(Faction.objects.occupiable_by(savegame=savegame).order_by("name")),
             can_build=town is not None and town.last_constructed_building_at != month,
             shop_item_count=player_faction.available_items.count(),
@@ -166,6 +187,11 @@ class MonthStanding:
             if town
             else 0,
             warband=_build_warband_standing(player_faction=player_faction, month=month),
+            waiting=WaitingStanding(
+                captive_count=player_faction.captured_warriors.count(),
+                fyrd_reserve=player_faction.fyrd_reserve,
+                stored_upgrade_count=count_stored_upgrades(faction=player_faction),
+            ),
         )
 
 
@@ -183,7 +209,5 @@ def _build_warband_standing(*, player_faction, month: int) -> WarbandStanding:
     return WarbandStanding(
         leader=player_faction.leader,
         leader_can_march=player_faction.get_available_leader(month=month) is not None,
-        fyrd_reserve=player_faction.fyrd_reserve,
-        captive_count=player_faction.captured_warriors.count(),
         **condition_counts,
     )

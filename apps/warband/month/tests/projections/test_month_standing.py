@@ -2,7 +2,8 @@ import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.tests.factories.item import ItemFactory
-from apps.warband.month.projections.month_standing import MonthStanding, WarbandStanding
+from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.month.projections.month_standing import MonthStanding, WaitingStanding, WarbandStanding
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
@@ -19,8 +20,6 @@ def test_is_intact_is_true_while_every_man_left_is_fit():
         fleeing_count=0,
         leader=None,
         leader_can_march=False,
-        fyrd_reserve=0,
-        captive_count=0,
     )
 
     assert warband.is_intact is True
@@ -33,8 +32,6 @@ def test_is_intact_is_false_with_a_man_still_routed():
         fleeing_count=1,
         leader=None,
         leader_can_march=False,
-        fyrd_reserve=0,
-        captive_count=0,
     )
 
     assert warband.is_intact is False
@@ -47,8 +44,6 @@ def test_is_intact_is_false_with_a_man_down():
         fleeing_count=0,
         leader=None,
         leader_can_march=False,
-        fyrd_reserve=0,
-        captive_count=0,
     )
 
     assert warband.is_intact is False
@@ -172,24 +167,22 @@ def test_quest_count_counts_only_the_quests_that_can_still_be_taken_on():
 
 
 @pytest.mark.django_db
-def test_attackable_rival_list_names_the_rivals_a_war_band_may_march_on():
+def test_has_offers_open_is_false_with_only_a_rival_to_march_on():
     """
-    Named rather than counted, and asked through the queryset the attack view resolves its target
-    with - a rival offered here that the attack then refuses is worse than offering nobody.
+    A rival is open to be marched on every month there is one and a fit leader, so as an offer it
+    would say the same thing month after month. The Rivals page is where that is asked.
     """
-    savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
+    savegame = SavegameFactory(current_month=4)
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
     player_faction.leader = WarriorFactory(faction=player_faction)
     player_faction.save()
     savegame.player_faction = player_faction
     savegame.save()
-    rival = FactionFactory(savegame=savegame, name="Hwicce")
-    WarriorFactory(faction=rival)
-    FactionFactory(savegame=savegame, name="Magonsaete")
+    WarriorFactory(faction=FactionFactory(savegame=savegame))
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
-    assert standing.attackable_rival_list == [rival]
+    assert standing.has_offers_open is False
 
 
 @pytest.mark.django_db
@@ -460,7 +453,7 @@ def test_warband_has_no_leader_before_one_is_appointed():
 
 
 @pytest.mark.django_db
-def test_warband_reads_the_fyrd_and_the_captives_off_the_faction():
+def test_waiting_reads_the_fyrd_and_the_captives_off_the_faction():
     savegame = SavegameFactory()
     player_faction = FactionFactory(savegame=savegame, fyrd_reserve=7)
     savegame.player_faction = player_faction
@@ -471,5 +464,31 @@ def test_warband_reads_the_fyrd_and_the_captives_off_the_faction():
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
-    assert standing.warband.fyrd_reserve == 7
-    assert standing.warband.captive_count == 1
+    assert standing.waiting.fyrd_reserve == 7
+    assert standing.waiting.captive_count == 1
+
+
+@pytest.mark.django_db
+def test_waiting_counts_the_upgrades_lying_in_the_stores():
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame)
+    savegame.player_faction = player_faction
+    savegame.save()
+    WarriorFactory(faction=player_faction)
+    ItemFactory(savegame=savegame, owner=player_faction, type=ItemTypeFactory(base_value="2d6"))
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.waiting.stored_upgrade_count == 1
+
+
+def test_has_anything_waiting_is_true_with_a_single_captive():
+    waiting = WaitingStanding(captive_count=1, fyrd_reserve=0, stored_upgrade_count=0)
+
+    assert waiting.has_anything_waiting is True
+
+
+def test_has_anything_waiting_is_false_with_nothing_in_hand():
+    waiting = WaitingStanding(captive_count=0, fyrd_reserve=0, stored_upgrade_count=0)
+
+    assert waiting.has_anything_waiting is False

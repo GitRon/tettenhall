@@ -1,12 +1,24 @@
-{# What the month will do to the purse, in the four figures the decision is made against. #}
+{# What the month will do to the purse, in the figures the decision is made against. #}
 {#  #}
 {# The same numbers the cost card on the ledger shows, off the same payroll the salary run bills from #}
 {# - "wage_bill_payroll" rides in on the finance context processor and the income is read off the #}
 {# town by whichever view renders this, so the two screens cannot promise different figures. What #}
 {# differs here is the shape and only the shape: the month page reads this beside a list of #}
 {# decisions, and a six-row table would be the loudest thing on it. #}
+{% load purse %}
 <section class="mb-5 flex flex-col gap-y-2 border-l border-rule pl-[15px]">
     <h3 class="m-0 font-mono text-label uppercase tracking-label text-ink-muted">The purse</h3>
+
+    {# The one figure the player opens the purse for: is the month making silver or losing it. #}
+    {# First and largest, and shown on a shortfall too - that is the month the answer is "losing", #}
+    {# and the warning at the top of the page says what happens rather than at what rate. #}
+    <div class="flex items-baseline justify-between gap-x-2.5 border-b border-rule pb-2">
+        <span>
+            <span class="text-ink">Net a month</span>
+            <span class="block text-sm leading-snug">Hall income less wages.</span>
+        </span>
+        <span class="font-mono text-xl tabular-nums text-ink">{{ building_income_amount|net_of_wages:wage_bill_payroll }}</span>
+    </div>
 
     <div class="flex items-baseline justify-between gap-x-2.5">
         <span>In hand</span>

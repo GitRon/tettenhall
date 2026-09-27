@@ -4,6 +4,20 @@
      hx-disinherit="hx-swap">
     {# Headed by the page, not here: this element is what the swap replaces, so a heading inside it #}
     {# is a heading that disappears the first time something is bought off the stalls. #}
+
+    {# The way on from a purchase. Buying puts the item in the stores and handing it out lives there, #}
+    {# so without this line every sword bought is a walk through the section nav to reach a man. #}
+    {# Inside the swap target, so it says so the moment the purchase lands. #}
+    {% if stored_item_count %}
+        <p class="mb-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border-l border-rule pl-[15px] text-ink-muted">
+            <span>
+                <span class="font-mono tabular-nums text-ink">{{ stored_item_count }}</span>
+                piece{{ stored_item_count|pluralize }} of gear in your stores nobody carries.
+            </span>
+            <a href="{% url 'warband:warband-stores-view' %}">Give {{ stored_item_count|pluralize:"it,them" }} to someone</a>
+        </p>
+    {% endif %}
+
     {% for item in item_list %}
         {% include 'item/components/item_buy_card.html' with item=item %}
     {% endfor %}

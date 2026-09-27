@@ -30,23 +30,9 @@
                        href="{% url 'warband:town-board-view' %}">Board</a>
                 </li>
             {% endif %}
-            {# Named rather than counted. Which rival is a fact about the player's own war band - #}
-            {# nothing here says how weak one of them is, which is knowledge scouting is for. #}
-            {% if month_standing.attackable_rival_list %}
-                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
-                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.attackable_rival_list|length }}</span>
-                    <span class="min-w-0 flex-1">
-                        <span class="text-ink">rival{{ month_standing.attackable_rival_list|length|pluralize }} you may march on</span>
-                        <span class="block text-sm leading-snug">
-                            {% for rival in month_standing.attackable_rival_list %}
-                                {{ rival }}{% if not forloop.last %}, {% endif %}
-                            {% endfor %}
-                        </span>
-                    </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
-                       href="{% url 'warband:rival-faction-list-view' %}">Rivals</a>
-                </li>
-            {% endif %}
+            {# A rival that may be marched on is not a row: it is true every month there is a rival #}
+            {# and a fit leader, so it would say the same thing every month. An empty town is taken #}
+            {# by whoever rides in first, which is an offer that does run out. #}
             {% if month_standing.occupiable_rival_list %}
                 <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
                     <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.occupiable_rival_list|length }}</span>

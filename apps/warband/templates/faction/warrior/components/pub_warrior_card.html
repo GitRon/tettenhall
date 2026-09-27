@@ -79,14 +79,16 @@
                 <i>{{ warrior.months_in_pub }} months waiting here, and {{ warrior.idle_surcharge }} silver of back wages on his price</i>
             </p>
         {% endif %}
-        {# Swaps nothing: the pub list reloads itself on the trigger the response carries, which is #}
-        {# what lets the empty state fire on the path that empties it. A refused hire swaps nothing #}
-        {# either and leaves the card standing. #}
+        {# The card is not the swap target: the pub list reloads itself on the trigger the response #}
+        {# carries, which is what lets the empty state fire on the path that empties it. What the #}
+        {# response does render is the way on to the man just hired, and that is appended to the list #}
+        {# above the pub, outside what the reload replaces. A refused hire swaps nothing and leaves #}
+        {# the card standing. #}
         <button type="button"
                 hx-post="{% url 'warband:pub-mercenary-recruit-view' warrior.id %}"
                 hx-disabled-elt="this"
-                hx-target="#pub-mercenary-card-{{ warrior.id|unlocalize }}"
-                hx-swap="none"
+                hx-target="#pub-hired-list"
+                hx-swap="beforeend"
                 class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline">Recruit for {{ warrior.hiring_price }} silver
         </button>
     </div>
