@@ -48,12 +48,17 @@ class Payroll:
 
     def __post_init__(self) -> None:
         paid_amount = 0
+        # A purse in the red covers exactly what an empty one does: nobody who costs silver, and
+        # everybody who costs none. Against the raw negative balance, a leader on no wage would fail
+        # "0 <= budget" and be billed as unpaid for a shortfall of nothing. The floor keeps
+        # "paid_amount <= spendable" true after every step, so a zero wage always passes
+        spendable = max(self.budget, 0)
 
         for warrior in self.warrior_list:
             # No early exit on the first man the purse cannot cover: the roster is sorted by salary,
             # so everybody after him costs at least as much and fails the same test anyway, and the
             # loop collects them all without a second branch to get wrong
-            if paid_amount + warrior.monthly_salary <= self.budget:
+            if paid_amount + warrior.monthly_salary <= spendable:
                 paid_amount += warrior.monthly_salary
                 self.paid_warrior_list.append(warrior)
             else:
