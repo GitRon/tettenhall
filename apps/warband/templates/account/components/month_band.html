@@ -54,6 +54,8 @@
             {# out of Tab's reach and announced as text. #}
             <button class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ground hover:border-ink"
                     hx-post="{% url 'warband:finish-month-view' %}"
+                    hx-vals='{"month": {{ current_savegame.current_month }}}'
+                    hx-disabled-elt="this"
                     type="button">
                 Finish month
             </button>
