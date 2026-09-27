@@ -567,6 +567,23 @@ def test_handle_warrior_monthly_salaries_stays_silent_about_the_nothing_it_paid(
 
 
 @pytest.mark.django_db
+def test_handle_warrior_monthly_salaries_pays_a_leader_on_no_wage_out_of_a_purse_in_the_red():
+    """
+    A shortfall of nothing is no shortfall: the leader costs no silver, so a balance below zero owes
+    him nothing, reports nothing and forgives the months he is recorded as having gone without.
+    """
+    faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=-10)
+    leader = WarriorFactory(faction=faction, monthly_salary=0, unpaid_months=1)
+
+    result = handle_warrior_monthly_salaries(context=PayMonthlyWarriorSalaries(faction=faction, month=3))
+
+    assert result == []
+    leader.refresh_from_db()
+    assert leader.unpaid_months == 0
+
+
+@pytest.mark.django_db
 def test_handle_warrior_monthly_salaries_with_an_empty_roster():
     faction = FactionFactory()
 
