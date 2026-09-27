@@ -1,0 +1,14 @@
+{# One line of a fight, in whichever account is rendering it: "text" is the Tally's message or the #}
+{# Saga's sentence for the same row, so both accounts mark the same casualties the same way. #}
+{# The lines where a man was taken out of the fight are the only ones marked. The swings and #}
+{# the misses stay plain - twenty marked lines mark nothing. #}
+{# Three weights, because losing a man and felling one are both worth reading and are not the #}
+{# same news: his own in danger, theirs in success, and neither on a fight between two rivals #}
+{# he is only watching, where colouring a stranger's death as a gain would be a lie. #}
+{% if log.is_casualty %}
+    <div class="{% if not player_faction_id %}text-ink-muted{% elif log.faction_id == player_faction_id %}text-blood{% else %}text-ink{% endif %}">
+        <i class="fa-solid {{ log.icon }}"></i> <strong>{{ text }}</strong>
+    </div>
+{% else %}
+    <div>{{ text }}</div>
+{% endif %}
