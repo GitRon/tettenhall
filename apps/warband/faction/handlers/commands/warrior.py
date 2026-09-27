@@ -187,7 +187,9 @@ def handle_consider_pub_hire(*, context: ConsiderPubHire) -> list[Event]:
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)
 def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Event] | Event | None:
-    if context.faction.fyrd_reserve <= 0:
+    # Asked of the row rather than of the instance the view read: a double click sends two drafts
+    # that both saw a reserve of 1, and only one of them may raise a warrior
+    if not Faction.objects.draw_from_fyrd_reserve(faction=context.faction):
         return None
 
     # Create warrior
@@ -195,9 +197,6 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
         culture=context.faction.culture, faction=context.faction, savegame_id=context.faction.savegame_id
     )
     warrior = warrior_generator.process()
-
-    # Update reserve
-    Faction.objects.reduce_fyrd_reserve(faction=context.faction, drafted_warriors=1)
 
     return WarriorRecruited(
         faction=context.faction,
@@ -208,7 +207,7 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
 
 
 @message_registry.register_command(command=RecruitPubMercenary)
-def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event] | Event:
+def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event] | Event | None:
     """
     Hire the man standing in the pub.
 
@@ -232,10 +231,14 @@ def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event]
     # the price of a man who had never been parked, which is the loophole the surcharge closes.
     hiring_price = context.warrior.hiring_price
 
+    # Off the shelf first, and only if he is still on it: the second of two overlapping hires finds
+    # him gone, and would otherwise be charged for a man already in the war band
+    if not Faction.objects.remove_mercenary_from_pub(faction=context.faction, warrior=context.warrior):
+        return None
+
     Warrior.objects.set_faction(obj=context.warrior, faction=context.faction)
     Warrior.objects.forgive_unpaid_months(obj=context.warrior)
     Warrior.objects.transfer_equipment_ownership(obj=context.warrior, new_owner=context.faction)
-    Faction.objects.remove_mercenary_from_pub(faction=context.faction, warrior=context.warrior)
     Warrior.objects.set_pub_arrival(obj=context.warrior, month=None)
 
     return WarriorRecruited(
