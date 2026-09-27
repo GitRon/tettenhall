@@ -9,9 +9,14 @@ from apps.warband.skirmish.models import Skirmish, SkirmishCasualty, SkirmishSpo
 class SpoiledItem:
     """
     A piece of gear the fight moved, and whether picking it up is worth doing anything about.
+
+    Named from the spoil's snapshot rather than from the item, which may be long gone: sold on and
+    cleared off the shop shelf, or lost. The item itself is there only while it still exists.
     """
 
-    item: Item
+    item: Item | None
+    name: str
+    dice: str
     taken_from: Warrior | None
     # Measured against the best of its kind the faction's men are actually wearing, which is the
     # question the numbers on the item exist to answer and the one the game never asked out loud
@@ -117,7 +122,12 @@ class SkirmishReport:
             if spoil.kind == kind and spoil.faction_id != self.faction.id and spoil.warrior_id in self.own_warrior_ids
         ]
 
-    def _is_upgrade(self, *, item: Item) -> bool:
+    def _is_upgrade(self, *, item: Item | None) -> bool:
+        # Only gear still in the faction's stash is anything its men can pick up: not gear that no longer
+        # exists, and not gear it has sold on, which sits on a shop shelf and would have to be bought back
+        if item is None or item.owner_id != self.faction.id:
+            return False
+
         if item.is_weapon:
             return item.expectancy_value > self.best_worn_weapon_value
 
@@ -126,7 +136,13 @@ class SkirmishReport:
     @property
     def items_won(self) -> list[SpoiledItem]:
         return [
-            SpoiledItem(item=spoil.item, taken_from=spoil.warrior, is_upgrade=self._is_upgrade(item=spoil.item))
+            SpoiledItem(
+                item=spoil.item,
+                name=spoil.item_name,
+                dice=spoil.item_dice,
+                taken_from=spoil.warrior,
+                is_upgrade=self._is_upgrade(item=spoil.item),
+            )
             for spoil in self._gained(kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN)
         ]
 

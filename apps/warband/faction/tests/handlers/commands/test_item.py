@@ -19,9 +19,13 @@ from apps.warband.faction.messages.events.item import (
     TownShopRestocked,
 )
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.item.handlers.commands.item import handle_sell_item
+from apps.warband.item.messages.commands.item import SellItem
 from apps.warband.item.models import ItemType
 from apps.warband.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.skirmish.models.skirmish_spoil import SkirmishSpoil
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 
 
 @pytest.mark.django_db
@@ -187,3 +191,20 @@ def test_handle_buy_item_for_faction_leaves_the_owner_to_the_item_package():
 
     item.refresh_from_db()
     assert item.owner is None
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_keeps_the_report_line_of_a_sold_spoil():
+    skirmish = SkirmishFactory()
+    faction = skirmish.attacking_faction
+    item = ItemFactory(savegame=faction.savegame, owner=faction)
+    spoil = SkirmishSpoil.objects.create_record(
+        skirmish=skirmish, faction=faction, kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN, item=item
+    )
+    handle_sell_item(context=SellItem(selling_faction=faction, item=item, month=3))
+    handle_add_item_to_shop(context=AddItemToTownShop(faction=faction, item=item, month=3))
+
+    with mock.patch("apps.warband.faction.handlers.commands.item.random.getrandbits", return_value=1):
+        handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=4))
+
+    assert SkirmishSpoil.objects.get(id=spoil.id).item_name == item.display_name
