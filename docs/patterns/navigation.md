@@ -116,13 +116,37 @@ the structure holds either way.
 
 ## Where the onward links are
 
-Navigation is not only the shell. Three places create an intent the shell cannot serve:
+Navigation is not only the shell. These places create an intent the shell cannot serve:
 
 - **A warrior's page** links back to the roster he was read off, and to the men either side of him in
   it. Without that, equipping a second man cost the same walk as the first.
 - **A decided fight** links to the captives, because the prisoners it just made are there. A list of
   battles already fought is the one place its own report cannot be acted on.
 - **The counters** link to what they count.
+- **A hire** leaves a line above the pub naming the man, with his page and the stores beside it. He
+  arrives on the roster with his pub gear and nothing else, and arming him is Warband's.
+- **The shop** says how much unused gear already lies in the stores, links there, and tells each card
+  how many of its kind are waiting. Buying puts an item in the stores and handing it out lives there,
+  so the most common errand in the game crosses from Town to Warband.
+
+Those two are the errands that cross the Town–Warband seam most often. The fix is a short cut across
+the seam, never a page moved to the other side of it.
+
+## What the Month page lists
+
+The Month page's left column is what the player decides; the right is what he reads.
+
+- **Still open to you** holds what *expires when the month turns* — the board, the stalls, the pub, the
+  one building, an empty town somebody else could ride into — plus the fight that *blocks* it, which is
+  the band at the top rather than a row.
+- **Waiting on you** holds what is *already his and waits on a decision*: captives, the fyrd, and gear
+  in the stores that would improve a man who could be handed it. A spare no better than anything worn
+  is not counted, or the row would name the same shield every month.
+- A thing that could merely be done — a rival to march on — is on neither. It is true every month
+  there is a rival, and a row that never changes is a row the player learns to skip. The Rivals page
+  asks it.
+- **The purse** leads with the net a month, hall income less wages, signed. Quest rewards, loot and
+  sales are not a rate, so they are not in it, and the label says so.
 
 ## See also
 

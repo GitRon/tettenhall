@@ -16,7 +16,8 @@ from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd,
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.hiring import get_pub_hire_refusal
 from apps.warband.finance.models import Transaction
-from apps.warband.item.services.handout import annotate_held_gear_values
+from apps.warband.item.services.handout import get_handout_roster
+from apps.warband.item.services.shop import annotate_stored_copy_counts
 from apps.warband.quest.models.quest import Quest
 from apps.warband.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
@@ -167,15 +168,7 @@ class HandoutRosterContextMixin(PlayerFactionAwareContextMixin):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        context["handout_roster"] = (
-            annotate_held_gear_values(
-                roster=self.object.get_all_living_warriors().exclude(
-                    id__in=Warrior.objects.filter_standing_in_an_open_fight().values("id")
-                )
-            )
-            if context["is_player_faction"]
-            else []
-        )
+        context["handout_roster"] = get_handout_roster(faction=self.object) if context["is_player_faction"] else []
 
         return context
 
@@ -566,13 +559,21 @@ class RecruitPubMercenaryView(
             )
         )
 
-        # An empty body on purpose: nothing is swapped in place of the card. The pub list reloads
-        # itself on "loadPubMercenaryList", which is what renders its empty state when the man just
-        # hired was the last one in it.
-        response = HttpResponse(status=HTTPStatus.OK)
+        # The body is the way on to the man, appended above the pub rather than swapped in place of
+        # his card: the pub list reloads itself on "loadPubMercenaryList", which is what renders its
+        # empty state when the man just hired was the last one in it, and a line inside the list
+        # would go with the reload. The line names the man and his price, so a toast would only
+        # repeat it.
+        response = render(
+            self.request,
+            "faction/warrior/components/pub_hired_row.html",
+            {
+                "warrior": obj,
+                "hiring_price": hiring_price,
+            },
+        )
         response["HX-Trigger"] = json.dumps(
             {
-                "notification": f"{obj} joins your war band for {hiring_price} silver.",
                 "loadPubMercenaryList": "-",
                 "updateResourceBar": "-",
             }
@@ -763,7 +764,26 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         return context
 
 
-class TownShopView(PlayerFactionMixin, generic.DetailView):
+class ShopShelfContextMixin:
+    """
+    The shelf, each item carrying how many of its kind already lie unused in the stores, for both the
+    shop page and the list that replaces itself after every purchase - the two have to agree or the
+    first purchase changes what the cards say.
+
+    The stores are the faction's own whose shop this is. The page only ever renders the player's; the
+    partial is reachable for any faction of the savegame, and a rival's shelf then reads a rival's
+    stores rather than telling the player about gear that is not his.
+    """
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["item_list"], context["stored_item_count"] = annotate_stored_copy_counts(
+            item_list=self.object.available_items.select_related("type"), faction=self.object
+        )
+        return context
+
+
+class TownShopView(ShopShelfContextMixin, PlayerFactionMixin, generic.DetailView):
     """
     The gear on the stalls this month, which is where the Town entry lands.
 
@@ -806,14 +826,9 @@ class TownBoardView(PlayerFactionMixin, generic.DetailView):
         return context
 
 
-class FactionShopItemListView(SavegameScopedQuerysetMixin, generic.DetailView):
+class FactionShopItemListView(ShopShelfContextMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Faction
     template_name = "faction/item/components/shop_item_list.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["item_list"] = self.object.available_items.all()
-        return context
 
 
 class ResourceBarHtmxView(generic.TemplateView):
