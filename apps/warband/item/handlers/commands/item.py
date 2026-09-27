@@ -19,7 +19,7 @@ from apps.warband.town.buildings.marketplace import Marketplace
 @message_registry.register_command(command=item.CreateItem)
 def handle_create_item(*, context: item.CreateItem) -> list[Event] | Event:
     generator = context.generator_class(
-        faction=None,
+        faction=context.owner,
         item_function=context.item_function,
         savegame_id=context.faction.savegame_id,
         quality_bonus=context.quality_bonus,

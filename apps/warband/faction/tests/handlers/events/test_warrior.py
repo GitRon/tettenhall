@@ -135,7 +135,7 @@ def test_handle_restock_mercenaries_in_pub_for_new_faction_maps_to_command():
     faction = FactionFactory.build()
 
     result = handle_restock_mercenaries_in_pub_for_new_faction(
-        context=NewFactionCreated(faction=faction, current_month=1)
+        context=NewFactionCreated(faction=faction, current_month=1, is_player=True)
     )
 
     assert result == RestockTownMercenaries(faction=faction, month=1)

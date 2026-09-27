@@ -5,14 +5,30 @@ from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.item.handlers.commands.item import (
     handle_buy_item,
     handle_change_ownership,
+    handle_create_item,
     handle_equip_item,
     handle_lose_item,
     handle_sell_item,
 )
-from apps.warband.item.messages.commands.item import BuyItem, ChangeOwnership, EquipItem, LoseItem, SellItem
-from apps.warband.item.messages.events.item import ItemBought, ItemEquipped, ItemSold, ItemWasLost, OwnershipChanged
+from apps.warband.item.messages.commands.item import (
+    BuyItem,
+    ChangeOwnership,
+    CreateItem,
+    EquipItem,
+    LoseItem,
+    SellItem,
+)
+from apps.warband.item.messages.events.item import (
+    ItemBought,
+    ItemCreated,
+    ItemEquipped,
+    ItemSold,
+    ItemWasLost,
+    OwnershipChanged,
+)
 from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
+from apps.warband.item.services.generators.item.fyrd import FyrdItemGenerator
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -332,3 +348,22 @@ def test_handle_equip_item_leaves_the_other_slot_alone():
 
     warrior.refresh_from_db()
     assert warrior.armor == armor
+
+
+@pytest.mark.django_db
+def test_handle_create_item_puts_an_owned_item_in_its_owners_stores():
+    faction = FactionFactory()
+    ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON, tier=ItemType.TierChoices.TIER_RUSTIC)
+
+    result = handle_create_item(
+        context=CreateItem(
+            owner=faction,
+            faction=faction,
+            generator_class=FyrdItemGenerator,
+            item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+            month=1,
+        )
+    )
+
+    assert result == ItemCreated(owner=faction, faction=faction, item=result.item, month=1)
+    assert Item.objects.get(pk=result.item.pk).owner == faction
