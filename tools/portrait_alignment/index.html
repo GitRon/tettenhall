@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portrait alignment</title>
+<style>
+  :root {
+    --ground: #0c0b0a; --panel: #171513; --line: #2e2a26; --ink: #e6dcc9; --muted: #8b8373;
+    --accent: #c05d46; --done: #6f8f5a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  main { display: grid; grid-template-columns: auto 1fr; gap: 20px; padding: 16px; }
+  h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  section { background: var(--panel); border: 1px solid var(--line); padding: 12px; margin-bottom: 12px; }
+  #stage { display: block; cursor: grab; touch-action: none; background: #808080; }
+  #stage.dragging { cursor: grabbing; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  button, select, input[type=color] {
+    background: var(--ground); color: var(--ink); border: 1px solid var(--line); padding: 4px 8px; font: inherit;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  button.active { border-color: var(--accent); color: #fff; }
+  .piece { width: 44px; font-variant-numeric: tabular-nums; }
+  .piece.placed { background: #1d2618; border-color: var(--done); }
+  .piece.active { outline: 2px solid var(--accent); }
+  .swatch { width: 24px; height: 24px; padding: 0; }
+  #faces { display: grid; grid-template-columns: repeat(8, auto); gap: 6px; }
+  #faces canvas { display: block; cursor: pointer; border: 1px solid transparent; }
+  #faces canvas.active { border-color: var(--accent); }
+  .preview { image-rendering: pixelated; border: 1px solid var(--line); }
+  kbd { border: 1px solid var(--line); padding: 0 4px; font-size: 12px; }
+  #status { color: var(--muted); }
+  #status.error { color: var(--accent); }
+  .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <canvas id="stage"></canvas>
+    <p class="muted">
+      Drag or <kbd>←↑→↓</kbd> to move (<kbd>Shift</kbd> ×5, <kbd>Alt</kbd> ¼ px) ·
+      wheel or <kbd>+</kbd><kbd>−</kbd> to scale · <kbd>Tab</kbd> hair/beard ·
+      <kbd>N</kbd><kbd>P</kbd> next/previous piece · <kbd>F</kbd><kbd>D</kbd> next/previous face ·
+      <kbd>O</kbd> see through the active layer · <kbd>Enter</kbd> mark placed
+    </p>
+  </div>
+
+  <div>
+    <section>
+      <h2>Active layer</h2>
+      <div class="row">
+        <button id="layer-hair">Hair</button>
+        <button id="layer-beard">Beard</button>
+        <span id="readout" class="muted"></span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="mark">Mark placed</button>
+        <button id="reset">Back to default</button>
+        <button id="copy-from">Copy position from…</button>
+        <select id="copy-source"></select>
+      </div>
+    </section>
+
+    <section>
+      <h2>Pieces</h2>
+      <div class="row" id="hair-pieces"><span class="muted" style="width:44px">Hair</span></div>
+      <div class="row" id="beard-pieces" style="margin-top:6px"><span class="muted" style="width:44px">Beard</span></div>
+      <div class="row" style="margin-top:8px">
+        <label><input type="checkbox" id="show-hair" checked> hair</label>
+        <label><input type="checkbox" id="show-beard" checked> beard</label>
+        <span id="progress" class="muted"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Colour</h2>
+      <div class="row" id="hair-tints"><span class="muted" style="width:44px">Hair</span></div>
+      <div class="row" id="beard-tints" style="margin-top:6px"><span class="muted" style="width:44px">Beard</span></div>
+    </section>
+
+    <section>
+      <h2>Card size and value range</h2>
+      <div class="row" style="align-items:flex-end">
+        <canvas id="card" width="40" height="40" class="preview" title="40×40, as on the warrior card"></canvas>
+        <canvas id="card-zoom" width="160" height="160" class="preview" title="40×40 scaled up without smoothing"></canvas>
+        <canvas id="grey" width="160" height="160" class="preview" title="Active sprite, coloured, on mid-grey"></canvas>
+      </div>
+      <p class="muted">40×40 · the same at 4× · the active sprite coloured on mid-grey</p>
+    </section>
+
+    <section>
+      <h2>Every face with this combination</h2>
+      <div id="faces"></div>
+    </section>
+
+    <section>
+      <div class="row">
+        <button id="save">Save</button>
+        <button id="copy-json">Copy JSON</button>
+        <span id="status">Loading…</span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const SCALE = 3;
+const THUMB = 0.6;
+const TINTS = {
+  black: "#2b2521", brown: "#6b4a2f", chestnut: "#8a4f2a", red: "#a4532d",
+  blonde: "#d9bb84", ash: "#a8a39b", white: "#e6e1d8",
+};
+
+const state = {
+  pieces: null, images: { faces: [], hair: [], beard: [] },
+  placement: { hair: {}, beard: {} },
+  face: 6, hair: 1, beard: 1, active: "hair",
+  show: { hair: true, beard: true }, tint: { hair: TINTS.brown, beard: TINTS.brown },
+  seeThrough: false, dirty: false,
+};
+
+const $ = (id) => document.getElementById(id);
+const key = (n) => String(n).padStart(2, "0");
+const faceW = () => state.pieces.face_size[0];
+const faceH = () => state.pieces.face_size[1];
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`cannot load ${src}`));
+    img.src = src;
+  });
+}
+
+// Placement is kept in face-canvas pixels while editing and stored as fractions of the face canvas.
+function defaultPlacement(kind, n) {
+  const [hx, hy, hw, hh] = state.pieces.faces[5].head;
+  const rule = kind === "hair"
+    ? { width: 1.20, dx: -0.16, dy: -0.055 }
+    : { width: 0.92, dx: 0.16, dy: 0.32 };
+  return { left: hx + rule.dx * hw, top: hy + rule.dy * hh, width: rule.width * hw, placed: false };
+}
+
+function placement(kind, n) {
+  const stored = state.placement[kind][key(n)];
+  if (stored) return stored;
+  const fresh = defaultPlacement(kind, n);
+  state.placement[kind][key(n)] = fresh;
+  return fresh;
+}
+
+const tintCache = new Map();
+function tinted(img, colour) {
+  const cacheKey = img.src + colour;
+  if (tintCache.has(cacheKey)) return tintCache.get(cacheKey);
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext("2d");
+  g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = "multiply";
+  g.fillStyle = colour;
+  g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = "destination-in";
+  g.drawImage(img, 0, 0);
+  tintCache.set(cacheKey, c);
+  return c;
+}
+
+function drawLayer(g, kind, n, scale, alpha = 1) {
+  if (!n || !state.show[kind]) return;
+  const img = state.images[kind][n - 1];
+  const p = placement(kind, n);
+  const h = p.width * img.naturalHeight / img.naturalWidth;
+  g.globalAlpha = alpha;
+  g.drawImage(tinted(img, state.tint[kind]), p.left * scale, p.top * scale, p.width * scale, h * scale);
+  g.globalAlpha = 1;
+}
+
+function compose(g, face, scale, ghost = false) {
+  g.imageSmoothingQuality = "high";
+  g.drawImage(state.images.faces[face - 1], 0, 0, faceW() * scale, faceH() * scale);
+  for (const kind of ["beard", "hair"]) {
+    const see = ghost && state.seeThrough && kind === state.active;
+    drawLayer(g, kind, state[kind], scale, see ? 0.45 : 1);
+  }
+}
+
+function cardCrop(face) {
+  const [hx, hy, hw] = state.pieces.faces[face - 1].head;
+  const side = hw * 1.6;
+  return { x: hx + hw / 2 - side / 2, y: hy - side * 0.12, side };
+}
+
+function render() {
+  const stage = $("stage");
+  const g = stage.getContext("2d");
+  g.clearRect(0, 0, stage.width, stage.height);
+  compose(g, state.face, SCALE, true);
+
+  const full = document.createElement("canvas");
+  full.width = faceW() * 2; full.height = faceH() * 2;
+  compose(full.getContext("2d"), state.face, 2);
+  const crop = cardCrop(state.face);
+  const card = $("card").getContext("2d");
+  card.imageSmoothingQuality = "high";
+  card.clearRect(0, 0, 40, 40);
+  card.drawImage(full, crop.x * 2, crop.y * 2, crop.side * 2, crop.side * 2, 0, 0, 40, 40);
+  const zoom = $("card-zoom").getContext("2d");
+  zoom.imageSmoothingEnabled = false;
+  zoom.drawImage($("card"), 0, 0, 160, 160);
+
+  const grey = $("grey").getContext("2d");
+  grey.fillStyle = "#808080";
+  grey.fillRect(0, 0, 160, 160);
+  const n = state[state.active];
+  if (n) {
+    const img = state.images[state.active][n - 1];
+    const fit = Math.min(150 / img.naturalWidth, 150 / img.naturalHeight);
+    const w = img.naturalWidth * fit, h = img.naturalHeight * fit;
+    grey.drawImage(tinted(img, state.tint[state.active]), (160 - w) / 2, (160 - h) / 2, w, h);
+  }
+
+  document.querySelectorAll("#faces canvas").forEach((c, i) => {
+    const t = c.getContext("2d");
+    t.clearRect(0, 0, c.width, c.height);
+    compose(t, i + 1, THUMB);
+    c.classList.toggle("active", i + 1 === state.face);
+  });
+
+  renderControls();
+}
+
+function renderControls() {
+  $("layer-hair").classList.toggle("active", state.active === "hair");
+  $("layer-beard").classList.toggle("active", state.active === "beard");
+  for (const kind of ["hair", "beard"]) {
+    document.querySelectorAll(`#${kind}-pieces .piece`).forEach((b) => {
+      const n = Number(b.dataset.n);
+      b.classList.toggle("placed", !!state.placement[kind][key(n)]?.placed);
+      b.classList.toggle("active", state[kind] === n && state.active === kind);
+    });
+    document.querySelectorAll(`#${kind}-tints .swatch`).forEach((b) => {
+      b.classList.toggle("active", b.dataset.colour === state.tint[kind]);
+    });
+  }
+  const n = state[state.active];
+  if (n) {
+    const p = placement(state.active, n);
+    $("readout").textContent =
+      `${state.active} ${key(n)} on face ${key(state.face)} · x ${p.left.toFixed(1)} y ${p.top.toFixed(1)} ` +
+      `w ${p.width.toFixed(1)} · ${p.placed ? "placed" : "not placed yet"}`;
+    $("mark").textContent = p.placed ? "Unmark" : "Mark placed";
+  } else {
+    $("readout").textContent = `no ${state.active} selected`;
+  }
+  const count = (kind) => Object.values(state.placement[kind]).filter((p) => p.placed).length;
+  $("progress").textContent = `placed: hair ${count("hair")}/12 · beard ${count("beard")}/12`;
+  const source = $("copy-source");
+  const options = Array.from({ length: 12 }, (_, i) => i + 1).filter((i) => i !== n);
+  source.innerHTML = options.map((i) => `<option value="${i}">${state.active} ${key(i)}</option>`).join("");
+}
+
+function edit(fn) {
+  const n = state[state.active];
+  if (!n) return;
+  const p = placement(state.active, n);
+  fn(p);
+  p.placed = true;
+  changed();
+}
+
+function scaleAround(p, factor, cx, cy) {
+  p.left = cx - (cx - p.left) * factor;
+  p.top = cy - (cy - p.top) * factor;
+  p.width *= factor;
+}
+
+function centre(kind, p) {
+  const img = state.images[kind][state[kind] - 1];
+  return [p.left + p.width / 2, p.top + p.width * img.naturalHeight / img.naturalWidth / 2];
+}
+
+let saveTimer;
+function changed() {
+  state.dirty = true;
+  $("status").textContent = "unsaved";
+  $("status").classList.remove("error");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 600);
+  render();
+}
+
+function serialise() {
+  const out = { canvas: { width: faceW(), height: faceH() }, hair: {}, beard: {} };
+  for (const kind of ["hair", "beard"]) {
+    for (let n = 1; n <= 12; n++) {
+      const p = placement(kind, n);
+      out[kind][key(n)] = {
+        left: +(p.left / faceW()).toFixed(4),
+        top: +(p.top / faceH()).toFixed(4),
+        width: +(p.width / faceW()).toFixed(4),
+        placed: p.placed,
+      };
+    }
+  }
+  return out;
+}
+
+async function save() {
+  clearTimeout(saveTimer);
+  try {
+    const response = await fetch("placement.json", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serialise()),
+    });
+    if (!response.ok) throw new Error(`${response.status}`);
+    state.dirty = false;
+    $("status").textContent = `saved ${new Date().toLocaleTimeString()}`;
+  } catch (error) {
+    $("status").textContent = `not saved (${error.message}) - use Copy JSON`;
+    $("status").classList.add("error");
+  }
+}
+
+function build() {
+  const stage = $("stage");
+  stage.width = faceW() * SCALE;
+  stage.height = faceH() * SCALE;
+
+  for (const kind of ["hair", "beard"]) {
+    const row = $(`${kind}-pieces`);
+    for (let n = 1; n <= 12; n++) {
+      const b = document.createElement("button");
+      b.className = "piece";
+      b.dataset.n = n;
+      b.textContent = key(n);
+      b.onclick = () => { state.active = kind; state[kind] = n; state.show[kind] = true; $(`show-${kind}`).checked = true; render(); };
+      row.append(b);
+    }
+    $(`show-${kind}`).onchange = (e) => { state.show[kind] = e.target.checked; render(); };
+
+    const tints = $(`${kind}-tints`);
+    for (const [name, colour] of Object.entries(TINTS)) {
+      const b = document.createElement("button");
+      b.className = "swatch";
+      b.title = name;
+      b.dataset.colour = colour;
+      b.style.background = colour;
+      b.onclick = () => { state.tint[kind] = colour; render(); };
+      tints.append(b);
+    }
+    const picker = document.createElement("input");
+    picker.type = "color";
+    picker.value = state.tint[kind];
+    picker.oninput = (e) => { state.tint[kind] = e.target.value; render(); };
+    tints.append(picker);
+  }
+
+  const faces = $("faces");
+  for (let n = 1; n <= 16; n++) {
+    const c = document.createElement("canvas");
+    c.width = Math.round(faceW() * THUMB);
+    c.height = Math.round(faceH() * THUMB);
+    c.title = `face ${key(n)}`;
+    c.onclick = () => { state.face = n; render(); };
+    faces.append(c);
+  }
+
+  $("layer-hair").onclick = () => { state.active = "hair"; render(); };
+  $("layer-beard").onclick = () => { state.active = "beard"; render(); };
+  $("mark").onclick = () => {
+    const n = state[state.active];
+    if (!n) return;
+    const p = placement(state.active, n);
+    p.placed = !p.placed;
+    changed();
+  };
+  $("reset").onclick = () => {
+    const n = state[state.active];
+    if (!n) return;
+    state.placement[state.active][key(n)] = defaultPlacement(state.active, n);
+    changed();
+  };
+  $("copy-from").onclick = () => {
+    const source = placement(state.active, Number($("copy-source").value));
+    edit((p) => { p.left = source.left; p.top = source.top; p.width = source.width; });
+  };
+  $("save").onclick = save;
+  $("copy-json").onclick = async () => {
+    await navigator.clipboard.writeText(JSON.stringify(serialise(), null, 2));
+    $("status").textContent = "JSON copied";
+  };
+
+  let drag = null;
+  stage.addEventListener("pointerdown", (e) => {
+    const n = state[state.active];
+    if (!n) return;
+    const p = placement(state.active, n);
+    drag = { x: e.clientX, y: e.clientY, left: p.left, top: p.top };
+    stage.setPointerCapture(e.pointerId);
+    stage.classList.add("dragging");
+  });
+  stage.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    edit((p) => {
+      p.left = drag.left + (e.clientX - drag.x) / SCALE;
+      p.top = drag.top + (e.clientY - drag.y) / SCALE;
+    });
+  });
+  const endDrag = () => { drag = null; stage.classList.remove("dragging"); };
+  stage.addEventListener("pointerup", endDrag);
+  stage.addEventListener("pointercancel", endDrag);
+  stage.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const rect = stage.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) / SCALE, cy = (e.clientY - rect.top) / SCALE;
+    const factor = Math.exp(-e.deltaY * (e.shiftKey ? 0.002 : 0.0005));
+    edit((p) => scaleAround(p, factor, cx, cy));
+  }, { passive: false });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+    const step = e.shiftKey ? 5 : e.altKey ? 0.25 : 1;
+    const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    const cycle = (value, delta, max) => ((value - 1 + delta + max) % max) + 1;
+    if (moves[e.key]) {
+      e.preventDefault();
+      const [dx, dy] = moves[e.key];
+      edit((p) => { p.left += dx; p.top += dy; });
+    } else if (e.key === "+" || e.key === "=" || e.key === "-" || e.key === "_") {
+      const grow = e.key === "+" || e.key === "=";
+      const factor = grow ? (e.shiftKey ? 1.05 : 1.01) : (e.shiftKey ? 1 / 1.05 : 1 / 1.01);
+      edit((p) => { const [cx, cy] = centre(state.active, p); scaleAround(p, factor, cx, cy); });
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      state.active = state.active === "hair" ? "beard" : "hair";
+      render();
+    } else if (e.key === "n" || e.key === "p") {
+      state[state.active] = cycle(state[state.active] || 1, e.key === "n" ? 1 : -1, 12);
+      render();
+    } else if (e.key === "f" || e.key === "d") {
+      state.face = cycle(state.face, e.key === "f" ? 1 : -1, 16);
+      render();
+    } else if (e.key === "o") {
+      state.seeThrough = !state.seeThrough;
+      render();
+    } else if (e.key === "Enter") {
+      $("mark").click();
+    }
+  });
+
+  window.addEventListener("beforeunload", (e) => { if (state.dirty) e.preventDefault(); });
+}
+
+async function main() {
+  try {
+    state.pieces = await (await fetch("pieces.json")).json();
+    const stored = await (await fetch("placement.json")).json();
+    const [images, hair, beard] = await Promise.all([
+      Promise.all(state.pieces.faces.map((f) => loadImage(`portrait/${f.src}`))),
+      Promise.all(state.pieces.hair.map((h) => loadImage(`portrait/${h.src}`))),
+      Promise.all(state.pieces.beards.map((b) => loadImage(`portrait/${b.src}`))),
+    ]);
+    state.images = { faces: images, hair, beard };
+    for (const kind of ["hair", "beard"]) {
+      for (const [k, p] of Object.entries(stored[kind] || {})) {
+        state.placement[kind][k] = {
+          left: p.left * faceW(), top: p.top * faceH(), width: p.width * faceW(), placed: !!p.placed,
+        };
+      }
+    }
+    build();
+    render();
+    $("status").textContent = stored.hair ? "loaded placement.json" : "no placement.json yet - defaults from the measured rule";
+  } catch (error) {
+    $("status").textContent = `failed to load: ${error.message}`;
+    $("status").classList.add("error");
+  }
+}
+
+main();
+</script>
+</body>
+</html>

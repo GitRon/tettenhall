@@ -42,6 +42,8 @@ inferring the conventions from nearby code.
   desk, and what to do with a screen that has no portrait form
 - [Visual identity](docs/patterns/visual-identity.md) — the eight colours, the three faces, what `blood`
   and `brass` are reserved for, and why an icon is a mask
+- [Portraits](docs/patterns/portraits.md) — how a man's face is drawn, stacked and coloured, and how a new
+  piece is placed
 
 ### Testing
 

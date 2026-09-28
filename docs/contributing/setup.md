@@ -17,7 +17,7 @@ Cultures, item types, quest types, injury types and trait types are reference da
 and the item, warrior and quest generators query them — a database without them raises `RuntimeError` during generation:
 
 ```bash
-uv run python manage.py loaddata culture itemtype questtype injurytype traittype
+uv run python manage.py loaddata culture itemtype questtype injurytype traittype portraitpiece haircolour
 ```
 
 The test suite loads all four automatically, see [test data](../patterns/testing-data.md).
