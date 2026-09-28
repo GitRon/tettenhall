@@ -123,13 +123,14 @@ holding that level's numbers:
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's
   resale ratio is worth little in silver. Its stock size is the real draw, which is why it is priced below
   the other buildings.
-- **The wage bill outweighs building costs early.** A warrior's salary is `round(recruitment_price * 0.5)`,
-  never below 1 (`Warrior.salary_for` in `apps/warband/skirmish/models/warrior.py`), and what that comes to is the archetype's
+- **The wage bill outweighs building costs early.** A warrior's salary is his recruitment price times
+  `Warrior.SALARY_SHARE_OF_PRICE` (0.5), never below `MINIMUM_MONTHLY_SALARY`
+  (`Warrior.salary_for` in `apps/warband/skirmish/models/warrior.py`), and what that comes to is the archetype's
   to decide — around 90 silver a month for a fyrd levy and 170 for a pub mercenary, priced against
   `PRICE_STATS_YARDSTICK` and `PRICE_HEALTH_YARDSTICK`. Each grows with `LEVEL_UP_GROWTH` alongside his
   attributes. The leader is the one man off the bill entirely: `draws_a_wage` is false on his generator,
   because he is bought by nobody, cannot be dismissed and cannot walk out, so a price on him would answer
   no decision the player ever makes. A faction opens with 1000 silver
-  (`apps/warband/finance/handlers/events/faction.py:76`) and the cheapest upgrade in the game is the marketplace's
+  (`STARTING_SILVER` in `apps/warband/finance/handlers/events/faction.py`) and the cheapest upgrade in the game is the marketplace's
   first paid level at 400, so a band of four mercenaries bills more every month than that building costs
   once. Buildings are what the player saves for; wages are what stops him.

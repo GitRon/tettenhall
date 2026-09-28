@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.faker_frisian import FRISIAN_BASE_LOCALE, FRISIAN_LOCALE
+from apps.warband.faction.domain.fyrd_reserve import FyrdReserve
 from apps.warband.faction.handlers.commands.faction import (
     _create_faction,
     handle_change_fyrd_reserve,
@@ -50,7 +51,7 @@ def test_create_faction_for_player_faction():
     savegame = SavegameFactory(current_month=5)
     culture = CultureFactory()
 
-    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=4):
+    with mock.patch.object(FyrdReserve, "roll_starting_reserve", return_value=4):
         result = _create_faction(
             name="Wessex",
             town_name="Winchester",
@@ -69,7 +70,7 @@ def test_create_faction_for_a_rival():
     savegame = SavegameFactory(current_month=5)
     culture = CultureFactory()
 
-    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=4):
+    with mock.patch.object(FyrdReserve, "roll_starting_reserve", return_value=4):
         result = _create_faction(
             name="Mercia",
             town_name="Tamworth",
@@ -217,7 +218,7 @@ def test_handle_defeat_faction_of_lost_leader_for_an_already_defeated_faction():
 def test_handle_replenish_fyrd_reserve_with_new_recruits():
     faction = FactionFactory(fyrd_reserve=3)
 
-    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randrange", return_value=2):
+    with mock.patch.object(FyrdReserve, "roll_monthly_recruits", return_value=2):
         result = handle_replenish_fyrd_reserve(context=ReplenishFyrdReserve(faction=faction, month=3))
 
     assert result == FactionFyrdReserveReplenished(faction=faction, new_recruits=2, month=3)
@@ -229,7 +230,7 @@ def test_handle_replenish_fyrd_reserve_with_new_recruits():
 def test_handle_replenish_fyrd_reserve_without_new_recruits():
     faction = FactionFactory(fyrd_reserve=3)
 
-    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randrange", return_value=0):
+    with mock.patch.object(FyrdReserve, "roll_monthly_recruits", return_value=0):
         result = handle_replenish_fyrd_reserve(context=ReplenishFyrdReserve(faction=faction, month=3))
 
     assert result is None
@@ -409,6 +410,7 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
     savegame = SavegameFactory()
     norse_rival = CultureFactory(locale="no_NO")
     frisian_rival = CultureFactory(locale=FRISIAN_LOCALE)
+    swedish_rival = CultureFactory(locale="sv_SE")
 
     # Faker is third party and random by nature. Standing it in for a stub that echoes the locale it was
     # built with is the only way to tie a generated name back to the culture it was drawn from; seeding
@@ -417,9 +419,10 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
     # The Frisian rival echoes its base locale rather than "ofs", which is the factory doing its job:
     # Faker refuses "ofs" and the instance is built on "nl_NL" with the provider added on top.
     with (
-        mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=2),
+        mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3),
         mock.patch(
-            "apps.warband.faction.handlers.commands.faction.random.choice", side_effect=[norse_rival, frisian_rival]
+            "apps.warband.faction.handlers.commands.faction.random.choice",
+            side_effect=[norse_rival, frisian_rival, swedish_rival],
         ),
         mock.patch(
             "apps.warband.faction.services.faker.Faker",
@@ -652,7 +655,7 @@ def test_handle_replenish_fyrd_reserve_in_the_harvest_month():
     """Month 6 is Haligmonath, whose men are in the fields."""
     faction = FactionFactory(fyrd_reserve=3)
 
-    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randrange", return_value=2):
+    with mock.patch.object(FyrdReserve, "roll_monthly_recruits", return_value=2):
         result = handle_replenish_fyrd_reserve(context=ReplenishFyrdReserve(faction=faction, month=6))
 
     assert result is None
