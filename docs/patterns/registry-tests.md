@@ -1,16 +1,17 @@
 # Registry tests
 
 Eight rules in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
-[message bus](message-bus.md) at once, plus three tests keeping its two allowlists honest. Unit tests can only ever verify a single handler; whether the
-handlers form a chain is decided at runtime by the registry, so neither the IDE nor a type checker notices
-when a message is emitted that nobody consumes.
+[message bus](message-bus.md) at once, plus three tests keeping its two allowlists honest. Unit tests can
+only ever verify a single handler; whether the handlers form a chain is decided at runtime by the
+registry, so neither the IDE nor a type checker notices when a message is emitted that nobody consumes.
 
-They sit beside the other whole-tree tests in `apps/warband/tests/architecture/`. Every one of those
-that walks the Python tree finds its input through `discovery.py` rather than a glob of its own. That module reads
-queuebie's own exclusion setting to decide where handlers can live, so a test cannot quietly disagree
-with what the bus actually imports — and the three that used to carry a private copy disagreed on glob
-depth and on whether `__init__.py` counts, which is how a view in a `views/` package came to be checked
-for savegame scoping and skipped by the finished-savegame guard.
+They sit beside the other whole-tree tests in `apps/warband/tests/architecture/`, see
+[architecture tests](architecture-tests.md). Every one of those that walks the Python tree finds its
+input through `discovery.py` rather than a glob of its own. That module reads queuebie's own exclusion
+setting to decide where handlers can live, so a test cannot quietly disagree with what the bus actually
+imports. It also settles glob depth and whether `__init__.py` counts once for all of them: tests
+answering those two questions separately would check a view in a `views/` package for savegame scoping
+in one module and skip it for the finished-savegame guard in the next.
 
 1. **Autodiscovery finds every handler** — every function decorated with `register_command` /
    `register_event` ends up in the registry.
