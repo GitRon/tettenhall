@@ -1,0 +1,116 @@
+{% load static %}
+{% comment %}
+    One man, as a row: every list that shows warriors side by side - a war band's roster, the captives a
+    faction holds, the mercenaries in its pub - is a list the player compares, and a card per man put one
+    of them on a screen.
+
+    What the row carries is what decides a month: level, health and morale, wage, the gear he stands in,
+    and whether he can fight. Everything else - culture, strength and dexterity, injuries, what a blade
+    rolls - is one click away on his own page, which the name leads to and which answers every relation
+    this row is rendered for.
+
+    What may be known is not this template's to decide: "knowledge" arrives from the list, and the gauge
+    and the gear follow it - exact figures for his own men, a bucket for everybody else, and no gear at
+    all for a rival's. See docs/patterns/warrior-knowledge.md.
+
+    The flags say which list this is: "is_captured" for a faction's prisoners, "is_pub" for its pub, and
+    neither for a roster. "is_player_faction" decides whether there is anything to press.
+
+    A phone gets the avatar and the name on one line, the tags across the whole row below, and the
+    controls under them - squeezed beside a control, the tags stack one to a line. A desk puts the
+    controls on the name's line.
+{% endcomment %}
+<li class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-[15px] py-3 md:grid-cols-[40px_minmax(0,1fr)_auto] md:px-5">
+    {# The slot a portrait of his own drops into (#273). A pub mercenary has no avatar of his own yet. #}
+    {% if is_pub %}
+        {# "xl" is three times the text it sits in, so 13px text is what fits it to the 40px slot #}
+        <span class="flex h-10 w-10 items-center justify-center text-[13px] text-ink-muted">{% include 'common/components/svg_icon.html' with icon_name='swordman' size='xl' %}</span>
+    {% else %}
+        <img class="h-10 w-10 border border-rule" width="40" height="40" src="{% static warrior.avatar_url %}" alt="">
+    {% endif %}
+    <a class="min-w-0 leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.display_name }}</a>
+
+    <div class="col-span-2 flex flex-col gap-y-1.5 md:col-span-1 md:col-start-2 md:row-start-2">
+        <span class="flex flex-wrap gap-1.5 font-mono text-label uppercase tracking-label text-ink-muted">
+            <span class="border border-rule px-1.5 py-0.5">Level <span class="text-ink">{{ warrior.level }}</span></span>
+            <span class="border border-rule px-1.5 py-0.5">Health <span class="text-ink">{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</span></span>
+            <span class="border border-rule px-1.5 py-0.5">Morale <span class="text-ink">{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale peak=warrior.peak_max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</span></span>
+            <span class="border border-rule px-1.5 py-0.5" title="Monthly salary in silver">Wage <span class="text-ink">{{ warrior.monthly_salary }}</span></span>
+            {% if knowledge.gear_is_visible %}
+                <span class="border border-rule px-1.5 py-0.5">Weapon <span class="normal-case text-ink">{{ warrior.weapon.display_name|default:"empty-handed" }}</span></span>
+                <span class="border border-rule px-1.5 py-0.5">Armour <span class="normal-case text-ink">{{ warrior.armor.display_name|default:"unarmoured" }}</span></span>
+            {% endif %}
+            {# A state, not a scale: whole reads as the brightest outline, a man who is down in the red. #}
+            {% if warrior.is_healthy %}
+                <span class="border border-ink px-1.5 py-0.5 text-ink">Able to fight</span>
+            {% else %}
+                <span class="border border-blood px-1.5 py-0.5 text-ink">{{ warrior.get_condition_display }}</span>
+            {% endif %}
+        </span>
+        {% comment %}
+            Why the morale on this row is stuck. The monthly sweep skips a man carrying unpaid months, so
+            he sits below his ceiling while every other warrior refills for free - and without this the
+            player reads the low figure and no cause. Attached by "FactionRosterContextMixin" and only
+            for the player's own faction, so every other list prints nothing here.
+        {% endcomment %}
+        {% if warrior.unpaid_wages_note %}
+            <span class="text-sm leading-snug text-blood" title="A man who goes unpaid loses morale and cannot recover it">
+                <i class="fa-solid fa-sack-xmark"></i> {{ warrior.unpaid_wages_note }}
+            </span>
+        {% endif %}
+        {# Why a mercenary's price is not the one the player remembers. Only once the surcharge is real, #}
+        {# so the generated mercenary and the man sent away last month carry no line at all. #}
+        {% if is_pub and warrior.idle_surcharge %}
+            <span class="text-sm leading-snug text-ink-muted">
+                <i class="fa-solid fa-hourglass-half"></i>
+                {{ warrior.months_in_pub }} months waiting here, and {{ warrior.idle_surcharge }} silver of back wages on his price
+            </span>
+        {% endif %}
+    </div>
+
+    <div class="col-span-2 flex flex-wrap justify-end gap-2.5 empty:hidden md:col-span-1 md:col-start-3 md:row-span-2 md:row-start-1">{% spaceless %}
+        {% if is_pub %}
+            {# The row is not the swap target: the pub list reloads itself on the trigger the response #}
+            {# carries, which is what lets the empty state fire on the path that empties it. What the #}
+            {# response does render is the way on to the man just hired, appended to the list above the #}
+            {# pub, outside what the reload replaces. A refused hire swaps nothing and leaves the row. #}
+            <button type="button"
+                    hx-post="{% url 'warband:pub-mercenary-recruit-view' warrior.id %}"
+                    hx-disabled-elt="this"
+                    hx-target="#pub-hired-list"
+                    hx-swap="beforeend"
+                    class="row-action">Recruit for {{ warrior.hiring_price }} silver</button>
+        {% elif is_captured %}
+            {% comment %}
+                Only the player may act on his own prisoners. On a rival's page these two would post to
+                a view that answers for the faction in the URL, staffing and paying the rival on the
+                player's click.
+            {% endcomment %}
+            {% if is_player_faction %}
+                {# The nought mirrors the "recruitment_price=0" in "handle_recruit_captured_warrior": a man #}
+                {# already in your cells costs no silver, only the quarter of his nerve it takes off him. #}
+                <button type="button"
+                        hx-post="{% url 'warband:warrior-recruit-captured-view' warrior.id faction.id %}"
+                        hx-disabled-elt="this, next button"
+                        class="row-action">Recruit for 0 silver</button>
+                <button type="button"
+                        hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
+                        hx-disabled-elt="this, previous button"
+                        class="row-action">Enslave for {{ warrior.slavery_selling_price }} silver</button>
+            {% endif %}
+        {% elif is_player_faction %}
+            {% comment %}
+                Only on the player's own roster, and only where "FactionRosterContextMixin" answered the
+                question. The refusal is the same control, disabled, with the reason as its label: "your
+                leader stays" is a rule the player would otherwise meet as an absence.
+            {% endcomment %}
+            {% if warrior.dismissal_refusal %}
+                <button class="row-action" disabled type="button">{{ warrior.dismissal_refusal }}</button>
+            {% else %}
+                <button type="button"
+                        hx-post="{% url 'warband:warrior-dismiss-view' warrior.id %}"
+                        class="row-action">Dismiss for {{ warrior.severance_pay }} silver</button>
+            {% endif %}
+        {% endif %}
+    {% endspaceless %}</div>
+</li>

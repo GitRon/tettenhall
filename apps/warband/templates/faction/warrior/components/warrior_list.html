@@ -3,7 +3,14 @@
      hx-swap="outerHTML"
      hx-disinherit="hx-swap">
     <h2>Warriors</h2>
-    {% for warrior in warrior_list %}
-        {% include 'warrior/components/warrior_card.html' with warrior=warrior knowledge=roster_knowledge %}
-    {% endfor %}
+    {# The list sits inside the swap target rather than being it, so a reload keeps the element's own #}
+    {# classes. One box for the war band, a hairline between men. #}
+    {# A war band that has lost every man draws no empty box. #}
+    {% if warrior_list %}
+        <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+            {% for warrior in warrior_list %}
+                {% include 'warrior/components/warrior_row.html' with warrior=warrior knowledge=roster_knowledge %}
+            {% endfor %}
+        </ul>
+    {% endif %}
 </div>

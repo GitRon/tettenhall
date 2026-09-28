@@ -4,12 +4,18 @@
      hx-disinherit="hx-swap">
     {# Headed by the page, not here: this element is what the swap replaces, so a heading inside it #}
     {# is a heading that disappears the first time somebody is hired out of the list. #}
-    {% for warrior in faction.get_pub_stock %}
-        {# A mercenary for hire is held, not commanded: the pub names the gear it is charging for and #}
-        {# buckets everything else, which is the gamble it is selling. On a rival's town square these #}
-        {# are not the player's to hire and nothing about them is his to read. #}
-        {% include 'faction/warrior/components/pub_warrior_card.html' with warrior=warrior knowledge=held_knowledge %}
-    {% empty %}
-        <p class="text-sm leading-snug text-ink-muted">Nobody is drinking here this month.</p>
-    {% endfor %}
+    {% with mercenary_list=faction.get_pub_stock %}
+        {% if mercenary_list %}
+            <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+                {% for warrior in mercenary_list %}
+                    {# A mercenary for hire is held, not commanded: the pub names the gear it is charging for #}
+                    {# and buckets everything else, which is the gamble it is selling. On a rival's town #}
+                    {# square these are not the player's to hire and nothing about them is his to read. #}
+                    {% include 'warrior/components/warrior_row.html' with warrior=warrior knowledge=held_knowledge is_pub=True %}
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-sm leading-snug text-ink-muted">Nobody is drinking here this month.</p>
+        {% endif %}
+    {% endwith %}
 </div>
