@@ -1,14 +1,19 @@
 {% comment %}
-    One gauge on the roster: a bar for how full, the figure beside it for exactly how full.
+    One gauge in a table of men: a bar for how full, the figure beside it for exactly how full.
 
     The bar is decorative - the figure carries the value - so it is hidden from assistive technology.
     "blood" below a third of his own maximum. "widthratio" rounds to a whole percent, which is all a
     four-rem bar can show anyway.
+
+    Only where the numbers are exact. A bar drawn to scale gives away the very figure the fuzzed word
+    stands in for, so a prisoner's gauge is the word alone - see docs/patterns/warrior-knowledge.md.
 {% endcomment %}
-{% widthratio current maximum 100 as percent %}
 <div class="flex items-center gap-x-2.5">
-    <span aria-hidden="true" class="relative h-1 w-20 shrink-0 bg-rule-strong">
-        <span class="absolute inset-y-0 left-0 {% if percent|add:0 < 34 %}bg-blood{% else %}bg-ink{% endif %}" style="width: {{ percent }}%"></span>
-    </span>
+    {% if knowledge.numbers_are_exact %}
+        {% widthratio current maximum 100 as percent %}
+        <span aria-hidden="true" class="relative h-1 w-20 shrink-0 bg-rule-strong">
+            <span class="absolute inset-y-0 left-0 {% if percent|add:0 < 34 %}bg-blood{% else %}bg-ink{% endif %}" style="width: {{ percent }}%"></span>
+        </span>
+    {% endif %}
     <span class="whitespace-nowrap font-mono text-figure tabular-nums text-ink">{% include 'warrior/components/warrior_gauge.html' %}</span>
 </div>

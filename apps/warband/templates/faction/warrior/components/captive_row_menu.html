@@ -1,0 +1,44 @@
+{% comment %}
+    What can be done with one prisoner, behind three dots at the end of his line - the roster's menu,
+    "roster_row_menu.html", which says why it is a popover and how "static/js/tettenhall.js" runs it.
+
+    Recruiting posts at once: he joins the war band, which can still send him away. Enslaving sells
+    him and cannot be taken back, so it asks first, and the safe answer takes the focus.
+
+    Only ever drawn for the player's own cells. On a rival's page these would post to a view that
+    answers for the faction in the URL, staffing and paying the rival on the player's click.
+
+    The nought mirrors the "recruitment_price=0" in "handle_recruit_captured_warrior": a man already
+    in your cells costs no silver, only the quarter of his nerve it takes off him.
+{% endcomment %}
+<button type="button"
+        class="inline-flex h-8 w-8 items-center justify-center border border-transparent p-0 text-ink-muted hover:border-rule-strong hover:text-ink"
+        popovertarget="row-menu-{{ warrior.id }}"
+        aria-label="Actions for {{ warrior.name }}">
+    <i aria-hidden="true" class="fa-solid fa-ellipsis-vertical"></i>
+</button>
+<div class="row-menu" id="row-menu-{{ warrior.id }}" popover data-row-menu>
+    <ul class="m-0 list-none p-0 [&>li+li]:border-t [&>li+li]:border-rule" data-row-menu-step="choose">
+        <li><a class="row-menu-item" href="{% url 'warband:warrior-detail-view' warrior.id %}">Open his page</a></li>
+        {# "none": the answer carries no markup, and the lists reload themselves on the triggers it sends #}
+        <li>
+            <button type="button"
+                    class="row-menu-item"
+                    hx-post="{% url 'warband:warrior-recruit-captured-view' warrior.id faction.id %}"
+                    hx-swap="none"
+                    hx-disabled-elt="this">Recruit for 0 silver</button>
+        </li>
+        <li><button class="row-menu-item" type="button" data-row-menu-ask>Enslave for {{ warrior.slavery_selling_price }} silver</button></li>
+    </ul>
+    <div class="flex flex-col gap-y-3 p-3.5" data-row-menu-step="confirm" hidden>
+        <p class="m-0 text-base leading-snug text-ink">Sell {{ warrior.name }} into slavery for {{ warrior.slavery_selling_price }} silver? He is gone for good.</p>
+        <div class="flex flex-wrap gap-2">
+            <button type="button"
+                    class="row-action"
+                    hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
+                    hx-swap="none"
+                    hx-disabled-elt="this, next button">Enslave</button>
+            <button type="button" class="row-action" data-row-menu-cancel>Keep him</button>
+        </div>
+    </div>
+</div>

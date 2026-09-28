@@ -6,13 +6,18 @@
     {# says what it is showing does not need it said again inside. #}
     {% with captive_list=faction.get_held_captives %}
         {% if captive_list %}
-            <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-                {% for warrior in captive_list %}
-                    {# A prisoner is held, not commanded: the player can see what he carries and not what he #}
-                    {# is worth. On a rival's page these are the rival's prisoners and he is owed neither. #}
-                    {% include 'warrior/components/warrior_row.html' with warrior=warrior faction=faction is_captured=True knowledge=held_knowledge %}
-                {% endfor %}
-            </ul>
+            {# A prisoner is held, not commanded: the player can see what he carries and not what he is #}
+            {# worth. His own cells are a table he decides from, like his roster; a rival's prisoners keep #}
+            {# the row, since the player is owed neither their figures nor their gear. #}
+            {% if is_player_faction %}
+                {% include 'faction/warrior/components/captive_table.html' with captive_list=captive_list faction=faction knowledge=held_knowledge %}
+            {% else %}
+                <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+                    {% for warrior in captive_list %}
+                        {% include 'warrior/components/warrior_row.html' with warrior=warrior knowledge=held_knowledge %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
         {# The same list serves a rival's page, where the captives being described are not the player's #}
         {% elif is_player_faction %}
             <p class="text-sm leading-snug text-ink-muted">You hold no captives.</p>
