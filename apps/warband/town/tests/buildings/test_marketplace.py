@@ -49,6 +49,26 @@ def test_get_levels_matches_the_model_choices():
     assert len(Marketplace.get_levels()) == len(Town.MarketChoices)
 
 
+@pytest.mark.parametrize(
+    ("marketplace", "expected"),
+    [(NoMarketplace, 36), (SmallMarketplace, 49), (MediumMarketplace, 63), (LargeMarketplace, 76)],
+)
+def test_get_sell_payout_pays_the_level_s_share_of_the_list_price(marketplace, expected):
+    assert marketplace.get_sell_payout(price=90) == expected
+
+
+def test_get_sell_payout_rounds_a_half_share_down():
+    """
+    110 at 55% is exactly 60.5. In floats it comes out as 60.500000000000004, which would round up to
+    61 while 90 at 85% (exactly 76.5) rounds down - so the share is taken in whole silver.
+    """
+    assert SmallMarketplace.get_sell_payout(price=110) == 60
+
+
+def test_get_sell_payout_pays_at_least_a_silver():
+    assert NoMarketplace.get_sell_payout(price=1) == 1
+
+
 def test_get_effects_names_the_resale_share_and_the_stock_size():
     result = SmallMarketplace.get_effects()
 

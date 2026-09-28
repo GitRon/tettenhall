@@ -1,4 +1,4 @@
-{% load handout l10n %}
+{% load handout l10n stores %}
 <div class="box-border bg-ground text-ink-muted border border-rule-strong">
     <div class="border-b border-rule px-[30px] py-[15px]">
         {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
@@ -14,8 +14,10 @@
                 {% if item|improves_nobody:roster %}
                     {% include 'item/components/improves_nobody_tag.html' %}
                 {% endif %}
+                {# No list price here: what an item cost is not what selling it pays, and the one #}
+                {# figure the stores decide on stands on the Sell button below #}
                 <p class="mt-0 text-sm leading-snug text-ink-muted">
-                    {% include 'item/components/item_stats_meta.html' with item=item show_price=is_player_faction %}
+                    {% include 'item/components/item_stats_meta.html' with item=item %}
                 </p>
             </div>
         </div>
@@ -87,7 +89,7 @@
                     hx-disabled-elt="this"
                     hx-swap="none"
                     hx-target="#item-card-{{ item.id|unlocalize }}"
-                    type="button">Sell
+                    type="button">Sell for <span class="font-mono tabular-nums">{{ item|sell_payout:faction }}</span>
             </button>
         </div>
     {% endif %}

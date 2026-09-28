@@ -63,34 +63,6 @@ def test_handle_sell_item_without_a_market_of_its_own():
 
 
 @pytest.mark.django_db
-def test_handle_sell_item_rounds_a_half_share_down():
-    """
-    A float ratio made this depend on binary representation error: 110 * 0.55 is 60.500000000000004
-    and rounded up to 61, while 90 * 0.85 is exactly 76.5 and rounded down to 76 - two sales at the
-    same advertised share landing on opposite sides of the half.
-    """
-    faction = FactionFactory(town__marketplace=1)
-    item = ItemFactory(savegame=faction.savegame, owner=faction, price=110)
-
-    result = handle_sell_item(context=SellItem(selling_faction=faction, item=item, month=3))
-
-    assert result.price == 60
-
-
-@pytest.mark.django_db
-def test_handle_sell_item_pays_at_least_a_silver():
-    """
-    Rounding a cheap item's share down reaches zero, which handed the item over for nothing.
-    """
-    faction = FactionFactory()
-    item = ItemFactory(savegame=faction.savegame, owner=faction, price=1)
-
-    result = handle_sell_item(context=SellItem(selling_faction=faction, item=item, month=3))
-
-    assert result.price == 1
-
-
-@pytest.mark.django_db
 def test_handle_sell_item_pays_nothing_for_an_item_already_sold():
     """
     The second of two overlapping requests: both found the item in the faction's stash, and the first

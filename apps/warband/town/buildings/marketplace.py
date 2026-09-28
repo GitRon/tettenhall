@@ -29,6 +29,17 @@ class Marketplace(Building):
         return (NoMarketplace, SmallMarketplace, MediumMarketplace, LargeMarketplace)
 
     @classmethod
+    def get_sell_payout(cls, *, price: int) -> int:
+        """
+        What selling an item of this list price pays at this level.
+
+        Integer arithmetic throughout, rounded down: a float share would make the payout depend on
+        binary representation error. The floor of one silver keeps the cheapest items from being
+        handed over for nothing.
+        """
+        return max(price * cls.SELL_PERCENTAGE // 100, 1)
+
+    @classmethod
     def get_effects(cls) -> tuple[BuildingEffect, ...]:
         return (
             BuildingEffect(label="Paid when selling an item", value=f"{cls.SELL_PERCENTAGE}% of its price"),
