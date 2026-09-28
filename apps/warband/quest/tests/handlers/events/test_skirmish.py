@@ -1,6 +1,6 @@
 import pytest
 
-from apps.warband.quest.handlers.events.quest_contract import (
+from apps.warband.quest.handlers.events.skirmish import (
     handle_finish_quest_contract,
     handle_link_quest_contract_to_its_skirmish,
 )

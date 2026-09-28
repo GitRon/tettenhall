@@ -1,16 +1,17 @@
 # Registry tests
 
-Eight tests in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
-[message bus](message-bus.md) at once. Unit tests can only ever verify a single handler; whether the
-handlers form a chain is decided at runtime by the registry, so neither the IDE nor a type checker notices
-when a message is emitted that nobody consumes.
+Eight rules in `apps/warband/tests/architecture/test_registry.py` cover every edge of the
+[message bus](message-bus.md) at once, plus three tests keeping its two allowlists honest. Unit tests can
+only ever verify a single handler; whether the handlers form a chain is decided at runtime by the
+registry, so neither the IDE nor a type checker notices when a message is emitted that nobody consumes.
 
-They sit beside the other whole-tree tests in `apps/warband/tests/architecture/`. Every one of those
-that walks the Python tree finds its input through `discovery.py` rather than a glob of its own. That module reads
-queuebie's own exclusion setting to decide where handlers can live, so a test cannot quietly disagree
-with what the bus actually imports — and the three that used to carry a private copy disagreed on glob
-depth and on whether `__init__.py` counts, which is how a view in a `views/` package came to be checked
-for savegame scoping and skipped by the finished-savegame guard.
+They sit beside the other whole-tree tests in `apps/warband/tests/architecture/`, see
+[architecture tests](architecture-tests.md). Every one of those that walks the Python tree finds its
+input through `discovery.py` rather than a glob of its own. That module reads queuebie's own exclusion
+setting to decide where handlers can live, so a test cannot quietly disagree with what the bus actually
+imports. It also settles glob depth and whether `__init__.py` counts once for all of them: tests
+answering those two questions separately would check a view in a `views/` package for savegame scoping
+in one module and skip it for the finished-savegame guard in the next.
 
 1. **Autodiscovery finds every handler** — every function decorated with `register_command` /
    `register_event` ends up in the registry.
@@ -28,6 +29,11 @@ for savegame scoping and skipped by the finished-savegame guard.
    belongs in is a judgement call about its subject, see [where code goes](app-layout.md); that the
    command and its handler agree on the answer is not. Autodiscovery walks directories, so a command
    handled two modules away wires up and runs identically — this is the only thing that notices.
+
+   Its second half holds the **event** side of the same table: a `handlers/events/` module whose handlers
+   all react to events of **one** topic other than its own is named after that topic. The two fallbacks
+   app-layout allows — a topic reacting to its own events, and a module reacting to several topics — name
+   a subject, which is a judgement call, so the test leaves them alone.
 7. **A command handler emits events and an event handler emits commands** — the golden rule of
    [the message bus](message-bus.md), which nothing in the framework enforces. Strict mode looks at a
    command handler's scope and at an event handler's database access, never at the direction of a hop, so
@@ -44,8 +50,10 @@ for savegame scoping and skipped by the finished-savegame guard.
 
 Two allowlists, both deliberately maintained, both wanting the reason written next to the entry.
 
-`TERMINAL_MESSAGES` holds events nobody is meant to consume. A new dead edge turns test 4 red without a
-single extra flow test.
+`TERMINAL_MESSAGES` holds events nobody is meant to consume, as a dict from the event to the reason
+nobody does. A new dead edge turns test 4 red without a single extra flow test. Being a dict is what lets
+a test hold the reasons rather than a reviewer: one fails on an entry without one, and another when an
+entry has gone stale — the event gained a consumer, or is no longer raised at all.
 
 `DIRECTION_ALLOWLIST` holds the command handlers allowed to emit commands, and has exactly one entry — see
 [the message bus](message-bus.md) for the rule it encodes. A further test fails when an entry stops being

@@ -35,7 +35,7 @@ def handle_record_skirmish_spoil(*, context: RecordSkirmishSpoil) -> Event:
 def handle_record_warrior_growth(*, context: RecordWarriorGrowth) -> Event:
     # Which side the man fought on is a query, so it is answered here rather than carried on the
     # command - the event handlers raising it are not allowed to run one
-    growth = SkirmishWarriorGrowth.objects.record_growth(
+    growth = SkirmishWarriorGrowth.objects.create_record(
         skirmish=context.skirmish,
         warrior=context.warrior,
         faction=context.warrior.faction,
@@ -53,7 +53,7 @@ def handle_record_warrior_growth(*, context: RecordWarriorGrowth) -> Event:
 
 @message_registry.register_command(command=RecordSkirmishCasualty)
 def handle_record_skirmish_casualty(*, context: RecordSkirmishCasualty) -> Event:
-    casualty = SkirmishCasualty.objects.record_casualty(
+    casualty = SkirmishCasualty.objects.create_record(
         skirmish=context.skirmish,
         warrior=context.warrior,
         fate=context.fate,

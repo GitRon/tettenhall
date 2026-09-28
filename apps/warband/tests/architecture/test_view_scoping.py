@@ -9,8 +9,10 @@ and the id comes straight from the URL, so this is checked here for every view a
 import ast
 import importlib
 import inspect
+import textwrap
 
-from django.db.models import Model
+from django.db.models import Model, QuerySet
+from django.views import View
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.list import MultipleObjectMixin
 
@@ -24,12 +26,40 @@ from apps.warband.tests.architecture.discovery import module_path_for, view_modu
 # price of some slack - a statement merely mentioning one of these passes.
 SCOPING_EXPRESSIONS = ("for_savegame", "for_player_faction", "for_user", "current_savegame", "self.object")
 
+# Queryset methods which narrow to what the current player may reach: his savegame, his faction, or - for
+# the views picking a savegame - his user. A "get_queryset" override has scoped its queryset when every
+# one of its returns goes through one of these, ends in ".none()", or builds on a "super().get_queryset()"
+# that is scoped itself. Each of them takes the savegame, the faction or the user as an argument, so the
+# caller is the one naming whose objects are meant.
+SCOPING_QUERYSET_METHODS: frozenset[str] = frozenset(
+    {
+        "for_savegame",
+        "for_player_faction",
+        "for_user",
+        # The mercenaries in one faction's pub, and the items on one faction's shop shelf
+        "in_pub_of",
+        "on_sale_at",
+        # The rivals of the player of a savegame, narrowed by who can be fought or ridden into
+        "rivals_in_play",
+        "attackable_by",
+        "occupiable_by",
+    }
+)
+
 # Views which deliberately don't scope by savegame. Every entry needs a reason.
 UNSCOPED_VIEWS: frozenset[str] = frozenset(
     {
         # Scope by user instead - these are the views for picking a savegame in the first place
         "SavegameListView",
         "SavegameLoadView",
+        # Before and after there is a player at all
+        "LoginView",
+        "LogoutView",
+        # Makes a savegame rather than reading one, so there is none yet to scope by
+        "SavegameCreateView",
+        # Resolves nothing: the navbar's counters come from the context processors every authenticated
+        # page runs, and those read the session's current savegame, never an id from the URL
+        "ResourceBarHtmxView",
     }
 )
 
@@ -48,6 +78,16 @@ UNCOLLECTED_SCOPED_VIEWS: frozenset[str] = frozenset(
         # "account/tests/test_views.py::test_dashboard_view_lists_the_month_logs_of_the_player_faction"
         # plants a rival's row in the same savegame and asserts it is excluded.
         "DashboardView",
+        # A "TemplateView" resolving a skirmish and one of its two sides from the URL, the skirmish through
+        # "for_savegame". "skirmish/tests/test_views.py::
+        # test_faction_warrior_list_update_htmx_view_cannot_list_warriors_of_another_savegame" asks for a
+        # skirmish of another savegame and asserts the 404.
+        "FactionWarriorListUpdateHtmxView",
+        # A plain "View" turning the session's current savegame to its next month. The one query it runs
+        # itself, for open skirmishes, goes through "for_savegame", and
+        # "month/tests/test_views.py::test_finish_month_view_ignores_an_open_skirmish_of_another_savegame"
+        # leaves another savegame's fight open and asserts the month still turns.
+        "FinishMonthView",
     }
 )
 
@@ -71,13 +111,69 @@ def _project_view_classes() -> list[type]:
     return view_classes
 
 
-def _scopes_its_queryset(view_class: type) -> bool:
+def _is_super_get_queryset(*, node: ast.AST) -> bool:
     """
-    Whether the view narrows its queryset itself, either directly or through one of our mixins.
+    Whether the node is the call "super().get_queryset()".
     """
-    return any(
-        "get_queryset" in klass.__dict__ and klass.__module__.startswith("apps.") for klass in view_class.__mro__
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "get_queryset"
+        and isinstance(node.func.value, ast.Call)
+        and isinstance(node.func.value.func, ast.Name)
+        and node.func.value.func.id == "super"
     )
+
+
+def _chained_calls(*, expression: ast.expr) -> list[ast.Call]:
+    """
+    Every call of a method chain, outermost first: "a.b().c()" gives "c()" and then "b()".
+    """
+    calls = []
+    while isinstance(expression, ast.Call) and isinstance(expression.func, ast.Attribute):
+        calls.append(expression)
+        expression = expression.func.value
+
+    return calls
+
+
+def _return_scopes(*, expression: ast.expr, super_scopes: bool) -> bool:
+    calls = _chained_calls(expression=expression)
+    method_names = {call.func.attr for call in calls}
+
+    if "none" in method_names or method_names & SCOPING_QUERYSET_METHODS:
+        return True
+
+    return super_scopes and any(_is_super_get_queryset(node=call) for call in calls)
+
+
+def _scopes_its_queryset(view_class: type, *, start: int = 0) -> bool:
+    """
+    Whether the queryset the view resolves its objects from is narrowed to the current player.
+
+    Reads what the effective "get_queryset" override returns rather than whether there is one: an
+    override returning "Model.objects.all()" is an override all the same. A return building on
+    "super().get_queryset()" is only as scoped as the rest of the MRO, so that is asked next - which is
+    how a view ordering the queryset of a scoping mixin passes, and one ordering Django's own does not.
+    """
+    mro = view_class.__mro__
+
+    for index in range(start, len(mro)):
+        function = mro[index].__dict__.get("get_queryset")
+        if function is None:
+            continue
+        if not mro[index].__module__.startswith("apps."):
+            return False
+
+        tree = ast.parse(textwrap.dedent(inspect.getsource(function)))
+        returned = [node.value for node in ast.walk(tree) if isinstance(node, ast.Return) and node.value is not None]
+        super_scopes = _scopes_its_queryset(view_class, start=index + 1)
+
+        return bool(returned) and all(
+            _return_scopes(expression=expression, super_scopes=super_scopes) for expression in returned
+        )
+
+    return False
 
 
 def test_model_backed_views_scope_their_queryset():
@@ -90,6 +186,48 @@ def test_model_backed_views_scope_their_queryset():
     ]
 
     assert unscoped == []
+
+
+def test_scopes_its_queryset_refuses_an_override_returning_every_object():
+    class Leaky(SingleObjectMixin):
+        def get_queryset(self) -> QuerySet:
+            return Savegame.objects.all()
+
+    assert _scopes_its_queryset(Leaky) is False
+
+
+def test_scopes_its_queryset_accepts_a_scoping_queryset_method():
+    class Narrowed(SingleObjectMixin):
+        def get_queryset(self) -> QuerySet:
+            return Savegame.objects.for_user(user_id=self.request.user.id)
+
+    assert _scopes_its_queryset(Narrowed) is True
+
+
+def test_scopes_its_queryset_accepts_building_on_a_scoping_mixin():
+    class Ordered(SavegameScopedQuerysetMixin, SingleObjectMixin):
+        def get_queryset(self) -> QuerySet:
+            return super().get_queryset().order_by("id")
+
+    assert _scopes_its_queryset(Ordered) is True
+
+
+def test_scopes_its_queryset_refuses_building_on_djangos_own_queryset():
+    class Ordered(SingleObjectMixin):
+        def get_queryset(self) -> QuerySet:
+            return super().get_queryset().order_by("id")
+
+    assert _scopes_its_queryset(Ordered) is False
+
+
+def test_scopes_its_queryset_refuses_an_override_with_one_unscoped_return():
+    class HalfScoped(SingleObjectMixin):
+        def get_queryset(self) -> QuerySet:
+            if self.request is None:
+                return Savegame.objects.none()
+            return Savegame.objects.all()
+
+    assert _scopes_its_queryset(HalfScoped) is False
 
 
 def test_views_the_check_cannot_see_are_still_out_of_its_reach():
@@ -108,6 +246,23 @@ def test_views_the_check_cannot_see_are_still_out_of_its_reach():
     }
 
     assert UNCOLLECTED_SCOPED_VIEWS & collected == set()
+
+
+def test_every_view_the_check_cannot_see_is_listed():
+    """
+    Keeps the two lists above complete. A view outside the collection is checked by nothing here, so it
+    has to say why: "UNCOLLECTED_SCOPED_VIEWS" names the test vouching for its scoping, "UNSCOPED_VIEWS"
+    the reason it has none to do.
+    """
+    unlisted = sorted(
+        view_class.__name__
+        for view_class in _project_view_classes()
+        if issubclass(view_class, View)
+        and not issubclass(view_class, SingleObjectMixin | MultipleObjectMixin)
+        and view_class.__name__ not in UNCOLLECTED_SCOPED_VIEWS | UNSCOPED_VIEWS
+    )
+
+    assert unlisted == []
 
 
 def _resolve(*, node: ast.expr, module) -> object | None:
@@ -204,5 +359,57 @@ def test_scoped_views_do_not_bypass_their_own_queryset():
                     continue
 
                 violations.append(f"{file.name}:{node.lineno} {class_node.name} queries {ast.unparse(node)}")
+
+    assert violations == []
+
+
+def _get_object_bypasses(*, tree: ast.AST) -> list[str]:
+    """
+    Every "get_object()" defined on a class that calls "super().get_queryset()".
+    """
+    violations = []
+
+    for class_node in ast.walk(tree):
+        if not isinstance(class_node, ast.ClassDef):
+            continue
+
+        for method in class_node.body:
+            if not isinstance(method, ast.FunctionDef) or method.name != "get_object":
+                continue
+
+            violations.extend(
+                f"{class_node.name}:{node.lineno}" for node in ast.walk(method) if _is_super_get_queryset(node=node)
+            )
+
+    return violations
+
+
+def test_get_object_bypasses_names_a_get_object_calling_super_get_queryset():
+    source = (
+        "class Leaky:\n"
+        "    def get_object(self, queryset=None):\n"
+        "        return super().get_queryset().first()\n"
+        "\n"
+        "class Safe:\n"
+        "    def get_object(self, queryset=None):\n"
+        "        return self.get_queryset().first()\n"
+    )
+
+    result = _get_object_bypasses(tree=ast.parse(source))
+
+    assert result == ["Leaky:3"]
+
+
+def test_get_object_does_not_skip_the_scoped_queryset():
+    """
+    The first trap of "docs/patterns/savegame-scoping.md". When the scoping lives on the view class
+    itself, "super().get_queryset()" inside "get_object()" steps past it and resolves the id from the URL
+    against every player's objects - while the scoping override sits right there, looking applied.
+    """
+    violations = [
+        f"{file.name} {violation}"
+        for file in view_module_files()
+        for violation in _get_object_bypasses(tree=ast.parse(file.read_text(encoding="utf-8")))
+    ]
 
     assert violations == []

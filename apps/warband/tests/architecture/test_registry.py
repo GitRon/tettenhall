@@ -29,53 +29,82 @@ from apps.warband.tests.architecture.discovery import (
 )
 from apps.warband.warrior.messages.commands.warrior import HealInjuredWarrior
 
-# Events which are deliberately emitted without a consumer. All of them announce a state change
-# their emitting command handler has already carried out, so nobody has to react - they exist so
-# something can subscribe later. Commands are never allowlisted, see the tests at the bottom.
-TERMINAL_MESSAGES: frozenset[str] = frozenset(
-    {
-        "apps.warband.faction.messages.events.faction.NewLeaderWarriorSet",
-        "apps.warband.faction.messages.events.warrior.WarriorWasAddedToPub",
-        "apps.warband.faction.messages.events.item.ItemWasAddedToShop",
-        "apps.warband.faction.messages.events.item.ItemWasRemovedFromShop",
-        # Two of the three levers an incident pulls in somebody else's app. Each announces a change its
-        # own command handler has already made, and the incident wrote the player's line about it before
-        # either of them ran - a consumer here would be a second line for one event.
-        #
-        # The third, "WarriorMaxMoraleChanged", is consumed: the relic is the largest gain in nerve the
-        # game hands out and can be what first makes a man worth naming, so the epithet ratchet listens
-        # to it. That is a line about a different fact than the incident's own, and it appears on a
-        # fifth of relics rather than all of them - see [handle_raised_ceiling_earns_a_nickname].
-        "apps.warband.faction.messages.events.faction.FyrdReserveChanged",
-        "apps.warband.item.messages.events.item.ItemWasLost",
-        # A question waits on its pending row, and the dashboard reads it from there. What reaches the
-        # levers and the log is the IncidentOccurred its answer raises, not the asking.
-        "apps.warband.incident.messages.events.incident.IncidentAsked",
-        # The player is looking at the screen that changed, and both entry points already say the
-        # part he cannot see - who the item came off - in a line of their own. A chronicle entry per
-        # handout would bury the month log under the shuffling a single new sword sets off.
-        "apps.warband.item.messages.events.item.ItemEquipped",
-        "apps.warband.finance.messages.events.transaction.TransactionCreated",
-        "apps.warband.item.messages.events.item.OwnershipChanged",
-        "apps.warband.month.messages.events.month.PlayerMonthLogCleared",
-        "apps.warband.month.messages.events.month.PlayerMonthLogCreated",
-        "apps.warband.quest.messages.events.quest.NewQuestCreated",
-        "apps.warband.quest.messages.events.quest_contract.QuestContractAsActiveQuestRemoved",
-        "apps.warband.quest.messages.events.quest_contract.SkirmishToQuestContractAssigned",
-        "apps.warband.skirmish.messages.events.battle_history.BattleHistoryCreated",
-        "apps.warband.skirmish.messages.events.skirmish_report.SkirmishBlowRecorded",
-        "apps.warband.skirmish.messages.events.skirmish_report.SkirmishCasualtyRecorded",
-        "apps.warband.skirmish.messages.events.skirmish_report.SkirmishSpoilRecorded",
-        "apps.warband.skirmish.messages.events.skirmish_report.WarriorGrowthRecorded",
-        "apps.warband.skirmish.messages.events.warrior.LastUsedSkirmishActionStored",
-        "apps.warband.training.messages.events.training.NewTrainingCreated",
-    }
+# Events which are deliberately emitted without a consumer, each with the reason nobody reacts. All of them
+# announce a state change their emitting command handler has already carried out - they exist so something
+# can subscribe later. Commands are never allowlisted, see the tests at the bottom.
+#
+# A dict rather than a set with comments beside it, so "every entry carries a reason" is something the
+# test below can hold instead of something a reviewer has to count.
+_RECORD_WRITTEN = (
+    "A record of something that already happened, written to be read back as history. It is the end of "
+    "its chain: a reaction to a record being written would be a record about a record."
 )
+_SHELF_CHANGED = (
+    "One row of a pub or shop changing hands. The month log speaks for a restock as a whole "
+    "(TownMercenariesRestocked, TownShopRestocked), and the pages read the relation when they render."
+)
+_CONTRACT_BOOKKEEPING = (
+    "Bookkeeping on a quest contract the skirmish drives. The reward and the report both hang off "
+    "SkirmishFinished, which carries the contract itself."
+)
+_INCIDENT_LEVER = (
+    "One of the levers an incident pulls in somebody else's topic. It announces a change its own command "
+    "handler has already made, and the incident wrote the player's line about it before it ran - a "
+    "consumer here would be a second line for one event. The third lever, WarriorMaxMoraleChanged, is "
+    "consumed: the relic is the largest gain in nerve the game hands out and can be what first makes a man "
+    "worth naming, so the epithet ratchet listens to it - see [handle_raised_ceiling_earns_a_nickname]."
+)
+TERMINAL_MESSAGES: dict[str, str] = {
+    "apps.warband.faction.messages.events.faction.NewLeaderWarriorSet": (
+        "Everything that asks who leads a faction reads faction.leader when it needs to, so there is nothing to push."
+    ),
+    "apps.warband.faction.messages.events.warrior.WarriorWasAddedToPub": _SHELF_CHANGED,
+    "apps.warband.faction.messages.events.item.ItemWasAddedToShop": _SHELF_CHANGED,
+    "apps.warband.faction.messages.events.item.ItemWasRemovedFromShop": _SHELF_CHANGED,
+    "apps.warband.faction.messages.events.faction.FyrdReserveChanged": _INCIDENT_LEVER,
+    "apps.warband.item.messages.events.item.ItemWasLost": _INCIDENT_LEVER,
+    "apps.warband.incident.messages.events.incident.IncidentAsked": (
+        "A question waits on its pending row, and the dashboard reads it from there. What reaches the levers "
+        "and the log is the IncidentOccurred its answer raises, not the asking."
+    ),
+    "apps.warband.item.messages.events.item.ItemEquipped": (
+        "The player is looking at the screen that changed, and both entry points already say the part he "
+        "cannot see - who the item came off - in a line of their own. A chronicle entry per handout would "
+        "bury the month log under the shuffling a single new sword sets off."
+    ),
+    "apps.warband.finance.messages.events.transaction.TransactionCreated": _RECORD_WRITTEN,
+    "apps.warband.item.messages.events.item.OwnershipChanged": (
+        "Raised for loot changing hands after a fight, which the spoils of the skirmish report already "
+        "record. Who owns an item is read off the item."
+    ),
+    "apps.warband.month.messages.events.month.PlayerMonthLogCleared": (
+        "Housekeeping at the turn of the month: the lines of past months are gone, and nobody had anything "
+        "left to do with them."
+    ),
+    "apps.warband.month.messages.events.month.PlayerMonthLogCreated": _RECORD_WRITTEN,
+    "apps.warband.quest.messages.events.quest.NewQuestCreated": (
+        "The bulletin board speaks for the batch through BulletinBoardQuestsOffered; one quest being written "
+        "adds nothing to that."
+    ),
+    "apps.warband.quest.messages.events.quest_contract.QuestContractAsActiveQuestRemoved": _CONTRACT_BOOKKEEPING,
+    "apps.warband.quest.messages.events.quest_contract.SkirmishToQuestContractAssigned": _CONTRACT_BOOKKEEPING,
+    "apps.warband.skirmish.messages.events.battle_history.BattleHistoryCreated": _RECORD_WRITTEN,
+    "apps.warband.skirmish.messages.events.skirmish_report.SkirmishBlowRecorded": _RECORD_WRITTEN,
+    "apps.warband.skirmish.messages.events.skirmish_report.SkirmishCasualtyRecorded": _RECORD_WRITTEN,
+    "apps.warband.skirmish.messages.events.skirmish_report.SkirmishSpoilRecorded": _RECORD_WRITTEN,
+    "apps.warband.skirmish.messages.events.skirmish_report.WarriorGrowthRecorded": _RECORD_WRITTEN,
+    "apps.warband.skirmish.messages.events.warrior.LastUsedSkirmishActionStored": (
+        "A default for the next round's order form, read off the warrior when the fight page renders."
+    ),
+    "apps.warband.training.messages.events.training.NewTrainingCreated": (
+        "A new faction's regimen, read off its row when the training page renders. Nothing else holds a copy "
+        "that would need telling."
+    ),
+}
 
 
 # Command handlers allowed to emit commands, against the golden rule in
-# "docs/patterns/message-bus.md". One entry, and an addition wants the reason written next to it the way
-# TERMINAL_MESSAGES does.
+# "docs/patterns/message-bus.md". One entry, and an addition wants the reason written next to it.
 #
 # "handle_assign_fighter_pairs" decomposes one order into several and writes nothing itself. The orders it
 # issues are late-bound by design - "handle_warrior_withdraws_from_skirmish" re-checks the man when the
@@ -235,7 +264,27 @@ def test_every_command_has_exactly_one_handler(queuebie_registry):
 def test_every_emitted_event_is_either_consumed_or_terminal(queuebie_registry):
     emitted_events = _emitted_message_paths(message_type=Event)
 
-    assert emitted_events - set(queuebie_registry.event_dict) - TERMINAL_MESSAGES == set()
+    assert emitted_events - set(queuebie_registry.event_dict) - set(TERMINAL_MESSAGES) == set()
+
+
+def test_every_terminal_message_carries_a_reason():
+    entries_without_a_reason = sorted(path for path, reason in TERMINAL_MESSAGES.items() if not reason.strip())
+
+    assert entries_without_a_reason == []
+
+
+def test_every_terminal_message_is_still_emitted_and_still_unconsumed(queuebie_registry):
+    """
+    A stale entry is invisible otherwise. An event that gained a consumer, or stopped being raised at all,
+    keeps its place on the list - and the reason beside it goes on explaining a silence that is no longer
+    there.
+    """
+    emitted_events = _emitted_message_paths(message_type=Event)
+    stale_entries = sorted(
+        path for path in TERMINAL_MESSAGES if path not in emitted_events or path in queuebie_registry.event_dict
+    )
+
+    assert stale_entries == []
 
 
 def _context_attribute_violations(*, registry) -> list[str]:
@@ -298,6 +347,88 @@ def test_a_command_is_handled_in_the_module_named_after_the_one_defining_it(queu
     modules away wires up and runs exactly the same.
     """
     mismatches = _command_module_mismatches(registry=queuebie_registry)
+
+    assert mismatches == []
+
+
+def _topic_of(*, module_path: str) -> str:
+    # "apps.warband.<topic>.…"
+    return module_path.split(".")[2]
+
+
+def _event_module_mismatches(*, registry) -> list[str]:
+    """
+    Every "handlers/events/" module that reacts to one foreign topic only and is not named after it.
+
+    The two fallbacks from "docs/patterns/app-layout.md" are left alone because they name a subject, and a
+    subject is a judgement call this cannot check: a module reacting to its own topic's events, and one
+    reacting to several topics.
+    """
+    origins_by_module: dict[str, set[str]] = {}
+
+    for event_path, handler_list in registry.event_dict.items():
+        for definition in handler_list:
+            origins_by_module.setdefault(definition["module"], set()).add(_topic_of(module_path=event_path))
+
+    mismatches = []
+    for module_path, origins in sorted(origins_by_module.items()):
+        module_name = module_path.rsplit(".", 1)[-1]
+        if len(origins) != 1 or _topic_of(module_path=module_path) in origins:
+            continue
+
+        (origin,) = origins
+        if module_name != origin:
+            mismatches.append(f"{module_path} only reacts to {origin} events but is named {module_name!r}")
+
+    return mismatches
+
+
+def test_event_module_mismatches_names_a_module_reacting_to_one_foreign_topic_under_another_name():
+    registry = types.SimpleNamespace(
+        event_dict={
+            "apps.warband.skirmish.messages.events.skirmish.SkirmishFinished": [
+                {"module": "apps.warband.finance.handlers.events.quest_contract", "name": "handler"},
+                {"module": "apps.warband.finance.handlers.events.skirmish", "name": "handler"},
+            ],
+        }
+    )
+
+    result = _event_module_mismatches(registry=registry)
+
+    assert result == [
+        "apps.warband.finance.handlers.events.quest_contract only reacts to skirmish events but is named "
+        "'quest_contract'"
+    ]
+
+
+def test_event_module_mismatches_leaves_the_two_subject_fallbacks_alone():
+    """
+    A topic reacting to its own events, and a module reacting to several topics, both name a subject.
+    """
+    registry = types.SimpleNamespace(
+        event_dict={
+            "apps.warband.skirmish.messages.events.skirmish.SkirmishFinished": [
+                {"module": "apps.warband.skirmish.handlers.events.warrior", "name": "handler"},
+                {"module": "apps.warband.faction.handlers.events.item", "name": "handler"},
+            ],
+            "apps.warband.month.messages.events.month.MonthPrepared": [
+                {"module": "apps.warband.faction.handlers.events.item", "name": "handler"},
+            ],
+        }
+    )
+
+    result = _event_module_mismatches(registry=registry)
+
+    assert result == []
+
+
+def test_an_event_handler_module_is_named_after_the_topic_it_reacts_to(queuebie_registry):
+    """
+    The other half of the test above. Under "handlers/events/" the topic package is the reactor, so the
+    module name is what carries the origin - which is what makes a cross-topic subscription findable at
+    all. A module named after a subject instead wires up and runs exactly the same.
+    """
+    mismatches = _event_module_mismatches(registry=queuebie_registry)
 
     assert mismatches == []
 
