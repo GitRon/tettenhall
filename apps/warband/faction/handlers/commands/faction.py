@@ -210,7 +210,7 @@ def handle_prepare_faction_warriors_for_month(*, context: PrepareFactionWarriors
     """
     warrior_list = Warrior.objects.filter(
         Q(faction=context.faction) | Q(id__in=context.faction.captured_warriors.all())
-    ).exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    ).exclude_dead()
 
     return [
         WarriorMonthPrepared(faction=context.faction, warrior=warrior, month=context.month) for warrior in warrior_list
@@ -298,16 +298,11 @@ def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list
     letting rivals build their way out of that would be handing them a second income. They earn off
     their war band instead, see [RivalIncome].
 
-    The men are counted here rather than inside the town, because the cost card asks the same
-    question of the same faction a page earlier and the two have to get the same answer. Counted
-    every month rather than stored: a player who hires in month twelve is paid the fuller revenue in
-    month twelve, and one whose war band walks out is back to the baseline the month after.
+    The figure is [Faction.get_monthly_income], which the cost card reads as well.
     """
-    warriors_on_payroll = Warrior.objects.filter_drawing_a_wage().filter_faction(faction_id=context.faction.id).count()
-
     return MonthlyBuildingMoneyEarned(
         faction=context.faction,
-        amount=context.faction.town.get_monthly_income(warriors_on_payroll=warriors_on_payroll),
+        amount=context.faction.get_monthly_income(),
         month=context.month,
     )
 

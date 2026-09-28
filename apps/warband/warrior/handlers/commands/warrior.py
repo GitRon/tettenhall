@@ -253,7 +253,7 @@ def handle_earn_traits_in_skirmish(*, context: EarnTraitsInSkirmish) -> list[Eve
     else:
         return []
 
-    warriors = warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    warriors = warriors.exclude_dead()
     if context.skirmish.victorious_faction_id != faction.id:
         warriors = warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 

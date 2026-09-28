@@ -1,7 +1,12 @@
+import typing
+
 from django.db import models
 from django.db.models import Q, manager
 
 from apps.warband.item.models.item import Item
+
+if typing.TYPE_CHECKING:
+    from apps.warband.skirmish.models.warrior import Warrior
 
 
 class WarriorQuerySet(models.QuerySet):
@@ -129,6 +134,26 @@ class WarriorManager(manager.Manager):
     # he stays FLEEING for the rest of the savegame. Every permanent cut goes through this floor.
     MINIMUM_MAX_MORALE = 1
 
+    @staticmethod
+    def _clamp(*, value: int, floor: int, ceiling: int) -> int:
+        """
+        Hold a morale figure between its floor and its ceiling.
+
+        Every move of morale goes through here rather than spelling its bounds out itself: a bound
+        written out in five methods is a bound one of them gets wrong.
+        """
+        return max(floor, min(value, ceiling))
+
+    def _add_morale(self, *, obj, points: int) -> None:
+        """
+        Raise a warrior's morale by "points", up to his ceiling, without saving.
+
+        Shared by [increase_morale] and [replenish_current_morale], which differ only in what else
+        they write: the monthly refill also clears a rout, and the save of each covers its own fields.
+        """
+        obj.refresh_from_db()
+        obj.current_morale = self._clamp(value=obj.current_morale + points, floor=0, ceiling=obj.max_morale)
+
     def reduce_current_health(self, *, obj, damage: int):
         obj.refresh_from_db()
 
@@ -231,11 +256,7 @@ class WarriorManager(manager.Manager):
         Rallied to zero is not rallied, which is why the morale is asked about as well as the
         condition.
         """
-        obj.refresh_from_db()
-        obj.current_morale += recovered_morale_points
-
-        if obj.current_morale > obj.max_morale:
-            obj.current_morale = obj.max_morale
+        self._add_morale(obj=obj, points=recovered_morale_points)
 
         if obj.current_morale > 0 and obj.is_fleeing:
             obj.condition = obj.ConditionChoices.CONDITION_HEALTHY
@@ -249,19 +270,21 @@ class WarriorManager(manager.Manager):
         Drop morale to a minimum of zero
         """
         obj.refresh_from_db()
-        obj.current_morale = 0 if obj.current_morale - lost_morale < 0 else obj.current_morale - lost_morale
+        obj.current_morale = self._clamp(value=obj.current_morale - lost_morale, floor=0, ceiling=obj.max_morale)
         obj.save(update_fields=("current_morale",))
 
         return obj
 
     def reduce_max_morale(self, *, obj, lost_max_morale_in_percent: float):
         """
-        Drop max morale to a minimum of zero
+        Cut the ceiling, never below [MINIMUM_MAX_MORALE], and bring the current morale under it.
         """
         obj.refresh_from_db()
         lost_morale = int(obj.max_morale * lost_max_morale_in_percent)
-        obj.max_morale = 0 if obj.max_morale - lost_morale < 0 else obj.max_morale - lost_morale
-        obj.current_morale = min(obj.current_morale, obj.max_morale)
+        obj.max_morale = self._clamp(
+            value=obj.max_morale - lost_morale, floor=self.MINIMUM_MAX_MORALE, ceiling=obj.max_morale
+        )
+        obj.current_morale = self._clamp(value=obj.current_morale, floor=0, ceiling=obj.max_morale)
         obj.save(update_fields=("max_morale", "current_morale"))
 
         return obj
@@ -309,11 +332,7 @@ class WarriorManager(manager.Manager):
         """
         Increase morale to a defined maximum
         """
-        obj.refresh_from_db()
-        if obj.current_morale + increased_morale > obj.max_morale:
-            obj.current_morale = obj.max_morale
-        else:
-            obj.current_morale = obj.current_morale + increased_morale
+        self._add_morale(obj=obj, points=increased_morale)
         obj.save(update_fields=("current_morale",))
 
         return obj
@@ -394,7 +413,7 @@ class WarriorManager(manager.Manager):
         whose salary grew with every level, so insolvency costs a faction its best men first.
         """
         return list(
-            self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
+            self.exclude_dead()
             .filter(faction=faction)
             # By id as well, or two warriors on the same salary come back in whatever order the
             # database feels like and the tests below them flap
@@ -536,7 +555,7 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def set_nickname_state(self, *, obj, nickname_state) -> int:
+    def set_nickname_state(self, *, obj, nickname_state) -> Warrior:
         """
         Write the epithet a warrior has just earned.
 
@@ -549,7 +568,7 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def set_faction(self, *, obj, faction) -> int:
+    def set_faction(self, *, obj, faction) -> Warrior:
         """
         Set a new faction for the given warrior.
         """

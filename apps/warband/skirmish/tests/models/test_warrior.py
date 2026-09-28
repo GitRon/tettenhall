@@ -1,6 +1,8 @@
 from unittest import mock
 
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.item.models.item_type import ItemType
@@ -332,6 +334,31 @@ def test_roll_attack_names_bare_hands_as_the_fallback_type():
     result = warrior.roll_attack()
 
     assert result.item_type.is_fallback is True
+
+
+@pytest.mark.django_db
+def test_get_armor_or_fallback_hands_an_unarmoured_man_the_fallback_armour():
+    warrior = WarriorFactory(armor=None)
+
+    result = warrior.get_armor_or_fallback()
+
+    assert (result.type.is_fallback, result.type.function) == (True, ItemType.FunctionChoices.FUNCTION_ARMOR)
+
+
+@pytest.mark.django_db
+def test_get_weapon_or_fallback_reads_both_fallbacks_once_per_man():
+    """
+    The warrior card asks for each empty slot twice, its icon and its name, so a lookup per call would
+    be four queries on every card of an unarmed man.
+    """
+    warrior = WarriorFactory(weapon=None, armor=None)
+
+    with CaptureQueriesContext(connection) as queries:
+        for _ in range(2):
+            warrior.get_weapon_or_fallback()
+            warrior.get_armor_or_fallback()
+
+    assert len(queries) == 1
 
 
 @pytest.mark.django_db

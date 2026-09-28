@@ -14,6 +14,7 @@ from apps.warband.faction.forms.faction_attack import FactionAttackForm
 from apps.warband.faction.messages.commands.faction import OccupyFaction
 from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
 from apps.warband.faction.models.faction import Faction
+from apps.warband.faction.services.attack_standing import AttackRefusal, get_attack_standing
 from apps.warband.faction.services.hiring import get_pub_hire_refusal
 from apps.warband.finance.models import Transaction
 from apps.warband.item.services.handout import annotate_held_gear_values, get_handout_roster
@@ -221,61 +222,17 @@ class FactionDetailView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Asked through the same queryset the attack view resolves its target with, so the button
-        # and the page it leads to can never disagree about who may be attacked
         current_savegame = self.current_savegame
-        context["can_be_attacked"] = (
-            Faction.objects.attackable_by(savegame=current_savegame).filter(id=self.object.id).exists()
-        )
         # A button that simply vanishes teaches the player nothing, and "every warrior fights once a
-        # month" is the rule he is most likely to walk into without noticing. Three separate things can
-        # take the button away, so each gets its own sentence: his war band has fought, his leader is
-        # unfit to lead one, or the rival's men are spoken for.
-        #
-        # All three are asked against "rivals_still_standing" rather than "attackable_targets", which is
-        # narrower by exactly one of the rules being explained: a faction excluded for having committed
-        # defenders would drop out of the test for whether to explain why it is excluded. Anything
-        # outside that queryset never offered a fight in the first place - the player's own faction, one
-        # already knocked out - and a sentence about it would be a non sequitur.
-        player_faction = current_savegame.player_faction
-        is_a_standing_rival = (
-            player_faction is not None
-            and Faction.objects.rivals_still_standing(player_faction=player_faction).filter(id=self.object.id).exists()
-        )
-        # The leader decides which of the three applies, so he is asked once. Busy is the first, unfit
-        # the second, and fit and free means the refusal is the rival's doing - the three are exclusive
-        # by construction rather than by the order the template happens to test them in.
-        has_available_leader = (
-            player_faction is not None
-            and player_faction.get_available_leader(month=current_savegame.current_month) is not None
-        )
-        context["has_marched_this_month"] = (
-            not context["can_be_attacked"]
-            and is_a_standing_rival
-            and player_faction.has_marched_this_month(month=current_savegame.current_month)
-        )
-        # Not busy and still unavailable means wounded or routed. "Your warriors have already fought" is
-        # untrue of him and blaming the rival would be worse, so this is the one that says what the
-        # player can actually do about it: mend him.
-        context["leader_cannot_march"] = (
-            not context["can_be_attacked"]
-            and is_a_standing_rival
-            and not context["has_marched_this_month"]
-            and not has_available_leader
-        )
-        # Their men are alive and well and already in a fight, which is most often the one the player
-        # just had with them, or a quest he accepted against them. Only said once the player could
-        # otherwise have marched, or it blames the rival for a refusal that is nothing to do with them.
-        context["their_war_band_is_committed"] = (
-            not context["can_be_attacked"]
-            and is_a_standing_rival
-            and has_available_leader
-            and not Faction.objects.attackable_targets(
-                player_faction=player_faction, month=current_savegame.current_month
-            )
-            .filter(id=self.object.id)
-            .exists()
-        )
+        # month" is the rule he is most likely to walk into without noticing. Several things can take
+        # the button away, so each gets its own sentence - and all of them come off the one service the
+        # rivals list reads, so the two pages cannot word the rule differently.
+        attack_standing = get_attack_standing(savegame=current_savegame)
+        attack_refusal = attack_standing.refusals.get(self.object.id)
+        context["can_be_attacked"] = self.object.id in attack_standing.attackable_rival_ids
+        context["has_marched_this_month"] = attack_refusal == AttackRefusal.HAS_MARCHED_THIS_MONTH
+        context["leader_cannot_march"] = attack_refusal == AttackRefusal.LEADER_CANNOT_MARCH
+        context["their_war_band_is_committed"] = attack_refusal == AttackRefusal.WAR_BAND_IS_COMMITTED
         # The opposite question to the three above, and the only one of the four that offers the
         # player something rather than explaining an absence: this rival has nobody left to hold his
         # town. Asked through the same queryset FactionOccupyView resolves its target with, so the
@@ -386,42 +343,23 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
         if self.current_savegame is None or self.current_savegame.player_faction is None:
             return context
 
-        player_faction = self.current_savegame.player_faction
-        month = self.current_savegame.current_month
-
-        # Both questions are asked once for the whole page and answered out of a set, because asking
-        # them per row is a query per row - and it is the same "attackable_by" the attack view
-        # resolves its target with, so a button here and the page it leads to cannot disagree.
-        attackable_rival_ids = set(
-            Faction.objects.attackable_by(savegame=self.current_savegame).values_list("id", flat=True)
-        )
-        # Wider by exactly the "their men are already in a fight" rule, which is what makes it the
-        # right guard for the sentences below: outside it a rival never offered a fight in the first
-        # place, and explaining a button that was never there would be a non sequitur.
-        standing_rival_ids = set(
-            Faction.objects.rivals_still_standing(player_faction=self.current_savegame.player_faction).values_list(
-                "id", flat=True
-            )
-        )
-        # The leader decides whose refusal it is: unfit or busy and it is the player's own doing, fit
-        # and free and the rival's men are the only thing left in the way
-        has_available_leader = player_faction.get_available_leader(month=month) is not None
-
-        # Evaluated into a list, because the template iterating the queryset again would re-run it and
-        # lose these two answers
+        # The same answer the faction page reads for its one rival, asked once for the whole table
+        attack_standing = get_attack_standing(savegame=self.current_savegame)
         # Asked once for the whole page as well, for the same reason: a lookup per row is a query per
-        # row. Not the complement of either set above - a rival can be out of both while its healthy
+        # row. Not the complement of the attackable set - a rival can be out of it while its healthy
         # men are merely spoken for elsewhere, and that town is still defended.
         occupiable_rival_ids = set(
             Faction.objects.occupiable_by(savegame=self.current_savegame).values_list("id", flat=True)
         )
 
+        # Evaluated into a list, because the template iterating the queryset again would re-run it and
+        # lose these answers
         rival_list = list(context[self.context_object_name])
         for rival in rival_list:
-            rival.can_be_attacked = rival.id in attackable_rival_ids
+            rival.can_be_attacked = rival.id in attack_standing.attackable_rival_ids
             rival.can_be_occupied = rival.id in occupiable_rival_ids
             rival.their_war_band_is_committed = (
-                has_available_leader and rival.id in standing_rival_ids and rival.id not in attackable_rival_ids
+                attack_standing.refusals.get(rival.id) == AttackRefusal.WAR_BAND_IS_COMMITTED
             )
         context[self.context_object_name] = rival_list
 
@@ -433,17 +371,9 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
         # war band, so no rival is what decides them, and a row each would be the same sentence
         # repeated as many times as there are rivals. Only said at all while somebody is still
         # standing - over a board that has been cleared it explains the absence of a button that
-        # nothing would have offered anyway.
-        context["has_marched_this_month"] = (
-            len(standing_rival_ids) > 0
-            and not has_available_leader
-            and player_faction.has_marched_this_month(month=month)
-        )
-        # Not busy and still unavailable means wounded, routed or dead. Blaming the month would be
-        # untrue of him, so this is the one that says what the player can do about it: mend him.
-        context["leader_cannot_march"] = (
-            len(standing_rival_ids) > 0 and not has_available_leader and not context["has_marched_this_month"]
-        )
+        # nothing would have offered anyway, which is what "war_band_refusal" being None there means.
+        context["has_marched_this_month"] = attack_standing.war_band_refusal == AttackRefusal.HAS_MARCHED_THIS_MONTH
+        context["leader_cannot_march"] = attack_standing.war_band_refusal == AttackRefusal.LEADER_CANNOT_MARCH
 
         return context
 
@@ -742,18 +672,11 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         # projection the salary run bills from and the navbar warns from, which the finance context
         # processor puts on every render - computing it here again is what made the card and the
         # month disagree about who goes unpaid. Only the income is this card's own, because it is
-        # the one number on it that nothing else shows - and it is read off the town, the same way
-        # the month reads it, rather than assembled from a building here.
-        warriors_on_payroll = (
-            Warrior.objects.filter_drawing_a_wage()
-            .filter_faction(faction_id=current_savegame.player_faction_id)
-            .count()
-        )
+        # the one number on it that nothing else shows - and it is the faction's own figure, the one
+        # the month pays out, rather than assembled from a building here.
         hall = Hall.get_building_by_type(building_type=current_savegame.player_faction.town.hall)
 
-        context["building_income_amount"] = current_savegame.player_faction.town.get_monthly_income(
-            warriors_on_payroll=warriors_on_payroll
-        )
+        context["building_income_amount"] = current_savegame.player_faction.get_monthly_income()
         # What the hall would pay fully manned, and what fully manned takes. A hall paying a share
         # because the war band is short of it is a rule the player has to be able to see on the page
         # where he reads what the month will do to his purse - the alternative is silver going

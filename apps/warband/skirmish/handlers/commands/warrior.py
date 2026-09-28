@@ -77,7 +77,7 @@ def handle_leader_rallies_remaining_warriors(*, context: warrior.RallyRemainingW
     else:
         side = context.skirmish.attacking_warriors
 
-    healthy = list(side.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY))
+    healthy = list(side.filter_healthy())
     if context.leader not in healthy:
         return []
 

@@ -22,9 +22,9 @@ def annotate_held_gear_values(*, roster: Iterable[Warrior]) -> list[Warrior]:
 
     An empty slot is worth what the fight says it is worth. A bare-handed man still throws the
     fallback's dice ("Warrior.get_weapon_or_fallback"), so comparing against nothing would call every
-    empty slot the same and rank none of them. That method fetches its type on every call, which is a
-    query per option here - so the two fallbacks are read once for the whole column instead, and the
-    slots they fill are the slots this answers for.
+    empty slot the same and rank none of them. That method caches the fallbacks per man, which is still
+    a query per option here - so the two are read once for the whole column instead, and the slots they
+    fill are the slots this answers for.
 
     The filled case costs nothing: "Faction.get_all_living_warriors" already carries "weapon__type"
     and "armor__type", and "type" is where the dice live.

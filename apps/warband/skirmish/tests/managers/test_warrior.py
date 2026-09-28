@@ -556,6 +556,19 @@ def test_reduce_max_morale_leaves_the_mark_where_it_was():
 
 
 @pytest.mark.django_db
+def test_reduce_max_morale_never_cuts_the_ceiling_to_zero():
+    """
+    A ceiling of zero is a man refilled to zero every month, whose rout then never clears - so the cut
+    stops at the floor the manager keeps for it.
+    """
+    warrior = WarriorFactory(max_morale=1, current_morale=1)
+
+    result = Warrior.objects.reduce_max_morale(obj=warrior, lost_max_morale_in_percent=1.0)
+
+    assert (result.max_morale, result.current_morale) == (Warrior.objects.MINIMUM_MAX_MORALE, 1)
+
+
+@pytest.mark.django_db
 def test_restore_max_morale_mends_a_share_of_the_ceiling():
     warrior = WarriorFactory(max_morale=10, peak_max_morale=20)
 

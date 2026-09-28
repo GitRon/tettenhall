@@ -50,11 +50,7 @@ def draw_warrior_name(*, culture: Culture, savegame_id: int) -> str:
     empty every time.
     """
     faker = faker_for_locale(locale=culture.locale)
-    names_in_play = set(
-        Warrior.objects.filter(savegame_id=savegame_id)
-        .exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
-        .values_list("name", flat=True)
-    )
+    names_in_play = set(Warrior.objects.filter(savegame_id=savegame_id).exclude_dead().values_list("name", flat=True))
 
     name = faker.first_name_male()
     attempts = 1
