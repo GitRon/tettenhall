@@ -394,8 +394,8 @@ class Warrior(models.Model):
 
         The month is read off his own savegame rather than handed in, so that the button the player
         clicks, the balance the view checks it against and the row the ledger gets all name one
-        number. It is a foreign key read per warrior, on a card that already dereferences his
-        culture, his weapon and his armour to render.
+        number. That makes it a foreign key read per warrior, which is why the pub's list brings the
+        savegame along with the men - see [Faction.get_pub_stock].
         """
         if self.pub_arrival_month is None:
             return 0

@@ -74,12 +74,16 @@
             {# carries, which is what lets the empty state fire on the path that empties it. What the #}
             {# response does render is the way on to the man just hired, appended to the list above the #}
             {# pub, outside what the reload replaces. A refused hire swaps nothing and leaves the row. #}
-            <button type="button"
-                    hx-post="{% url 'warband:pub-mercenary-recruit-view' warrior.id %}"
-                    hx-disabled-elt="this"
-                    hx-target="#pub-hired-list"
-                    hx-swap="beforeend"
-                    class="row-action">Recruit for {{ warrior.hiring_price }} silver</button>
+            {# Only in the player's own pub: the view hires out of his pub alone, so on a rival's it #}
+            {# could only ever answer with a 404. #}
+            {% if is_player_faction %}
+                <button type="button"
+                        hx-post="{% url 'warband:pub-mercenary-recruit-view' warrior.id %}"
+                        hx-disabled-elt="this"
+                        hx-target="#pub-hired-list"
+                        hx-swap="beforeend"
+                        class="row-action">Recruit for {{ warrior.hiring_price }} silver</button>
+            {% endif %}
         {% elif is_captured %}
             {% comment %}
                 Only the player may act on his own prisoners. On a rival's page these two would post to
