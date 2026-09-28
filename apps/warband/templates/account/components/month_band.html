@@ -12,13 +12,21 @@
 <div class="mb-5 flex flex-col items-start gap-y-3 border border-rule bg-raised p-[15px] md:flex-row md:items-center md:justify-between md:gap-x-5">
     <div class="flex flex-col gap-y-1">
         {# The month of the year, its season and the year, with what the month does to the game under #}
-        {# it - read off the same month class the rules take their numbers from. #}
-        <h1 class="m-0">{{ current_savegame.current_date.label }}</h1>
-        <ul class="m-0 list-none p-0 text-ink">
-            {% for effect in current_savegame.current_date.calendar_month.get_effects %}
-                <li>{{ effect }}</li>
-            {% endfor %}
-        </ul>
+        {# it - read off the same month class the rules take their numbers from. "data-month-heading" #}
+        {# is what the resource bar keys on to drop its own copy of the date - see resource_bar.html. #}
+        {#  #}
+        {# An ordinary month says nothing under the heading: no effects, nothing holding it. What is #}
+        {# worth the most prominent spot on the page is the exception, so only the exception gets it. #}
+        <h1 class="m-0" data-month-heading>{{ current_savegame.current_date.label }}</h1>
+        {% with effects=current_savegame.current_date.calendar_month.get_effects %}
+            {% if effects %}
+                <ul class="m-0 list-none p-0 text-ink">
+                    {% for effect in effects %}
+                        <li>{{ effect }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
         {% if month_standing.open_skirmish_count %}
             <span class="text-blood">
                 <i aria-hidden="true" class="fa-solid fa-triangle-exclamation"></i>
@@ -26,8 +34,6 @@
                 unresolved skirmish{{ month_standing.open_skirmish_count|pluralize:"es" }} —
                 the month cannot turn until {{ month_standing.open_skirmish_count|pluralize:"it is,they are" }} fought out.
             </span>
-        {% else %}
-            <span>Nothing holds the month. It is yours to finish when you are done with it.</span>
         {% endif %}
     </div>
 

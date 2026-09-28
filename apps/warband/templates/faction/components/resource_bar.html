@@ -59,7 +59,12 @@
         {# Awesome rather than an "svg_icon": the icon set carries no month. The month of the year #}
         {# and its season, as a label, because the season is what prices a march and paces training. #}
         {# The icon gives way on a phone, where the longest names need the room; both words stay. #}
-        <a class="whitespace-nowrap font-mono text-label uppercase tracking-label text-ink no-underline hover:text-ink-muted"
+        {#  #}
+        {# On the Month page the heading already reads month, season and year, so the entry steps #}
+        {# aside wherever a "data-month-heading" is on screen. In CSS rather than in the view: this #}
+        {# element is re-fetched by its own htmx view, whose request knows nothing of the page it #}
+        {# lands on. #}
+        <a class="whitespace-nowrap font-mono text-label uppercase tracking-label text-ink no-underline hover:text-ink-muted in-[body:has([data-month-heading])]:hidden"
            href="{% url 'warband:dashboard-view' %}"
            title="{{ current_savegame.current_date.label }}">
             <i class="fa-solid fa-calendar-days hidden md:inline"></i> {{ current_savegame.current_date.season_label }}

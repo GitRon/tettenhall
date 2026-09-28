@@ -26,8 +26,9 @@ A month's constants are the whole of what it does:
 **A number a month levers lives on the month or its season, never in a handler.** The handler asks
 `get_calendar_month(month=...)` and reads the constant. `get_effects()` words the same constants for the
 page, so the dashboard's description of a month and what the month does cannot drift apart. A new
-constant needs a line in `get_effects()` and an entry in `EFFECT_CONSTANTS`, or the page stops telling
-the truth about it.
+constant needs a line in `get_effects()`, or the page stops telling the truth about it. A month that
+levers nothing has no lines: the month band says nothing then, and the year strip says "Nothing out of
+the ordinary." under a month that would otherwise open onto a bare title.
 
 ## Month, season and year
 
