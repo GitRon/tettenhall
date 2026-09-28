@@ -140,10 +140,10 @@ look a little different, which a player reads as four kinds of thing.
 
 ### The row menu
 
-Where a table line has actions the player uses rarely - *Dismiss* on the roster - they sit behind
-three dots at the end of the line, in the `row-menu` popover, rather than as a row action on every
-line. Six identical outlined controls down the right edge are the loudest column in the table and the
-least used. Each line of the menu is `row-menu-item`: the mono label at 500, `raised` on hover, and a
+Where a table line has actions - *Dismiss* on the roster, *Recruit* and *Enslave* in the player's
+cells - they sit behind three dots at the end of the line, in the `row-menu` popover, rather than as
+row actions on every line. Six identical outlined controls down the right edge are the loudest column
+in the table, and a table is read down its columns before anything on a line is pressed. Each line of the menu is `row-menu-item`: the mono label at 500, `raised` on hover, and a
 refusal disabled in `ink-muted` with its reason underneath, the same as a disabled row action.
 
 Anything that costs silver and cannot be taken back asks first, inside the menu: the item turns the

@@ -1,9 +1,9 @@
 {% load static %}
 {% comment %}
     One man, as a row: the lists that show somebody else's warriors side by side - a rival's roster, the
-    captives a faction holds, the mercenaries in its pub. The player's own war band is a table instead,
-    "faction/warrior/components/roster_table.html", because he knows enough about his own men to fill
-    its columns.
+    captives a rival holds, the mercenaries in a pub. The player's own war band and his own cells are
+    tables instead, "faction/warrior/components/roster_table.html" and "captive_table.html", because
+    those are the men he decides about and compares down a column.
 
     What the row carries is what decides a month: level, health and morale, wage, the gear he stands in,
     and whether he can fight. Everything else - culture, strength and dexterity, injuries, what a blade
@@ -14,8 +14,8 @@
     and the gear follow it - exact figures for his own men, a bucket for everybody else, and no gear at
     all for a rival's. See docs/patterns/warrior-knowledge.md.
 
-    The flags say which list this is: "is_captured" for a faction's prisoners, "is_pub" for its pub, and
-    neither for a rival's roster. "is_player_faction" decides whether there is anything to press.
+    "is_pub" says the list is a pub, where "is_player_faction" decides whether there is anything to
+    press. Nothing else drawn as a row has a control.
 
     A phone gets the avatar and the name on one line, the tags across the whole row below, and the
     controls under them - squeezed beside a control, the tags stack one to a line. A desk puts the
@@ -72,24 +72,6 @@
                         hx-target="#pub-hired-list"
                         hx-swap="beforeend"
                         class="row-action">Recruit for {{ warrior.hiring_price }} silver</button>
-            {% endif %}
-        {% elif is_captured %}
-            {% comment %}
-                Only the player may act on his own prisoners. On a rival's page these two would post to
-                a view that answers for the faction in the URL, staffing and paying the rival on the
-                player's click.
-            {% endcomment %}
-            {% if is_player_faction %}
-                {# The nought mirrors the "recruitment_price=0" in "handle_recruit_captured_warrior": a man #}
-                {# already in your cells costs no silver, only the quarter of his nerve it takes off him. #}
-                <button type="button"
-                        hx-post="{% url 'warband:warrior-recruit-captured-view' warrior.id faction.id %}"
-                        hx-disabled-elt="this, next button"
-                        class="row-action">Recruit for 0 silver</button>
-                <button type="button"
-                        hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
-                        hx-disabled-elt="this, previous button"
-                        class="row-action">Enslave for {{ warrior.slavery_selling_price }} silver</button>
             {% endif %}
         {% endif %}
     {% endspaceless %}</div>
