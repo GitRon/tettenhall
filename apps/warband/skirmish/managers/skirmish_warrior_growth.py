@@ -8,7 +8,7 @@ class SkirmishWarriorGrowthQuerySet(models.QuerySet):
 
 
 class SkirmishWarriorGrowthManager(manager.Manager):
-    def record_growth(
+    def create_record(
         self,
         *,
         skirmish,

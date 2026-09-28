@@ -1,10 +1,13 @@
+import pytest
+
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.handlers.events.skirmish import (
     handle_faction_loots_warriors_silver,
     handle_pay_march_cost_for_attack,
+    handle_victorious_faction_gets_quest_reward,
 )
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
-from apps.warband.skirmish.messages.events.skirmish import FactionWasAttacked
+from apps.warband.skirmish.messages.events.skirmish import FactionWasAttacked, SkirmishFinished
 from apps.warband.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -58,5 +61,49 @@ def test_handle_pay_march_cost_for_attack_in_summer():
             month=3,
         )
     )
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_victorious_faction_gets_quest_reward_creates_transaction_for_loot():
+    victorious_faction = FactionFactory()
+    skirmish = SkirmishFactory(victorious_faction=victorious_faction)
+    context = SkirmishFinished(
+        skirmish=skirmish,
+        incapacitated_warriors=[],
+        defeated_unconscious_warriors=[],
+        victorious_healthy_warriors=[],
+        quest_name="Rescue the ealdorman",
+        quest_loot=250,
+        quest_contract=None,
+        month=4,
+    )
+
+    result = handle_victorious_faction_gets_quest_reward(context=context)
+
+    assert result == CreateTransaction(
+        faction=victorious_faction,
+        amount=250,
+        reason="Quest 'Rescue the ealdorman' finished! 250 silver looted",
+        month=4,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_victorious_faction_gets_quest_reward_without_loot():
+    skirmish = SkirmishFactory(victorious_faction=FactionFactory())
+    context = SkirmishFinished(
+        skirmish=skirmish,
+        incapacitated_warriors=[],
+        defeated_unconscious_warriors=[],
+        victorious_healthy_warriors=[],
+        quest_name="Rescue the ealdorman",
+        quest_loot=0,
+        quest_contract=None,
+        month=4,
+    )
+
+    result = handle_victorious_faction_gets_quest_reward(context=context)
 
     assert result is None

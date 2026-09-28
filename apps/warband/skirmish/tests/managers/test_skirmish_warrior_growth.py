@@ -7,11 +7,11 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.mark.django_db
-def test_record_growth_creates_the_row_on_the_first_grant():
+def test_create_record_creates_the_row_on_the_first_grant():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction)
 
-    growth = SkirmishWarriorGrowth.objects.record_growth(
+    growth = SkirmishWarriorGrowth.objects.create_record(
         skirmish=skirmish, warrior=warrior, faction=warrior.faction, gained_experience=25
     )
 
@@ -20,10 +20,10 @@ def test_record_growth_creates_the_row_on_the_first_grant():
 
 
 @pytest.mark.django_db
-def test_record_growth_adds_a_second_grant_to_the_first():
+def test_create_record_adds_a_second_grant_to_the_first():
     existing = SkirmishWarriorGrowthFactory(gained_experience=25)
 
-    growth = SkirmishWarriorGrowth.objects.record_growth(
+    growth = SkirmishWarriorGrowth.objects.create_record(
         skirmish=existing.skirmish, warrior=existing.warrior, faction=existing.faction, gained_experience=10
     )
 
@@ -32,10 +32,10 @@ def test_record_growth_adds_a_second_grant_to_the_first():
 
 
 @pytest.mark.django_db
-def test_record_growth_states_the_level_and_the_wage_rather_than_summing_them():
+def test_create_record_states_the_level_and_the_wage_rather_than_summing_them():
     existing = SkirmishWarriorGrowthFactory(reached_level=2, new_monthly_salary=11)
 
-    growth = SkirmishWarriorGrowth.objects.record_growth(
+    growth = SkirmishWarriorGrowth.objects.create_record(
         skirmish=existing.skirmish,
         warrior=existing.warrior,
         faction=existing.faction,
@@ -48,10 +48,10 @@ def test_record_growth_states_the_level_and_the_wage_rather_than_summing_them():
 
 
 @pytest.mark.django_db
-def test_record_growth_leaves_the_level_and_the_wage_alone_when_no_level_was_reached():
+def test_create_record_leaves_the_level_and_the_wage_alone_when_no_level_was_reached():
     existing = SkirmishWarriorGrowthFactory(reached_level=2, new_monthly_salary=11)
 
-    growth = SkirmishWarriorGrowth.objects.record_growth(
+    growth = SkirmishWarriorGrowth.objects.create_record(
         skirmish=existing.skirmish, warrior=existing.warrior, faction=existing.faction, gained_experience=10
     )
 

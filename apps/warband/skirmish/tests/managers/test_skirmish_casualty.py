@@ -7,11 +7,11 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.mark.django_db
-def test_record_casualty_creates_the_row_on_the_first_fate():
+def test_create_record_creates_the_row_on_the_first_fate():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction)
 
-    casualty = SkirmishCasualty.objects.record_casualty(
+    casualty = SkirmishCasualty.objects.create_record(
         skirmish=skirmish, warrior=warrior, fate=SkirmishCasualty.FateChoices.FATE_KILLED
     )
 
@@ -20,13 +20,13 @@ def test_record_casualty_creates_the_row_on_the_first_fate():
 
 
 @pytest.mark.django_db
-def test_record_casualty_overwrites_the_fate_of_a_man_already_recorded():
+def test_create_record_overwrites_the_fate_of_a_man_already_recorded():
     """
     The case of every prisoner in the game: knocked out first, taken once the fight was decided.
     """
     existing = SkirmishCasualtyFactory(fate=SkirmishCasualty.FateChoices.FATE_INCAPACITATED)
 
-    casualty = SkirmishCasualty.objects.record_casualty(
+    casualty = SkirmishCasualty.objects.create_record(
         skirmish=existing.skirmish, warrior=existing.warrior, fate=SkirmishCasualty.FateChoices.FATE_CAPTURED
     )
 

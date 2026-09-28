@@ -8,7 +8,7 @@ class SkirmishCasualtyQuerySet(models.QuerySet):
 
 
 class SkirmishCasualtyManager(manager.Manager):
-    def record_casualty(self, *, skirmish, warrior, fate: int):
+    def create_record(self, *, skirmish, warrior, fate: int):
         """
         Stamps what became of one man in one fight, replacing whatever was stamped before.
 
