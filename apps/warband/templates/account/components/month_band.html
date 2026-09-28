@@ -9,7 +9,8 @@
 {# An unresolved skirmish is lifted out of the list of openings for the same reason: it is not an #}
 {# offer that expires, it is the state of the month, and it was row one of seven marked only by #}
 {# colour. #}
-<div class="mb-5 flex flex-col items-start gap-y-3 border border-rule-strong bg-raised p-[15px] md:flex-row md:items-center md:justify-between md:gap-x-5">
+<div class="mb-5 border border-rule-strong bg-raised p-[15px]">
+<div class="flex flex-col items-start gap-y-3 md:flex-row md:items-center md:justify-between md:gap-x-5">
     <div class="flex flex-col gap-y-1">
         {# The month of the year, its season and the year, with what the month does to the game under #}
         {# it - read off the same month class the rules take their numbers from. "data-month-heading" #}
@@ -41,7 +42,7 @@
         {% if month_standing.open_skirmish_count %}
             {# The fight is what the screen wants, so it is the one filled control on it. "Finish #}
             {# month" keeps its place rather than disappearing - the player learns where it lives - #}
-            {# and wears the rule and the dim ink the palette reserves for a control that refuses. #}
+            {# as a disabled row action, the face the identity gives a control that refuses. #}
             {# The view refuses it as well, and that guard stays: this is the honest face of it. #}
             {#  #}
             {# Straight into the fight wherever there is only one it could mean - one open, or one #}
@@ -74,4 +75,7 @@
             </button>
         {% endif %}
     </div>
+</div>
+{# The year the month sits in, as the band's last line rather than the page's second section. #}
+{% include 'calendar/components/year_at_a_glance.html' %}
 </div>
