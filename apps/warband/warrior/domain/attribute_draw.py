@@ -15,10 +15,9 @@ class AttributeDraw:
     value: int
     baseline: int
     spread: int
-    # The lowest this attribute can come out of its generator. One by default, which is what the
-    # guarded attributes are worth: health and morale are re-rolled while zero rather than floored, so
-    # nothing below one survives generation. Strength and dexterity are floored properly and pass
-    # their own "STATS_MIN".
+    # The lowest this attribute can come out of its generator. One by default, which is what health
+    # and morale are worth: they are re-rolled while zero, so nothing below one survives generation.
+    # Strength and dexterity are re-rolled below their own "STATS_MIN" and pass it.
     minimum: int = 1
 
     @property
@@ -30,13 +29,3 @@ class AttributeDraw:
         lets one rule ask which of four attributes a warrior should be named for.
         """
         return (self.value - self.baseline) / self.spread
-
-    @property
-    def is_at_floor(self) -> bool:
-        """
-        Whether this came out as low as the generator can put it.
-
-        At or below rather than on it: training only ever raises an attribute, so nothing generated
-        sits underneath its own minimum, but nothing reading this should depend on that staying true.
-        """
-        return self.value <= self.minimum

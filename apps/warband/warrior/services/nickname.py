@@ -1,3 +1,5 @@
+import math
+
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
 
@@ -10,9 +12,7 @@ NICKNAME_FAR_SPREAD_THRESHOLD = 2.5
 
 # And how far below it he has to fall. Further out than the flattering threshold is near, because the
 # downward end is compressed: see [draw_nickname_state]. Measured across the three generators, 1.75 is
-# the value that keeps every unflattering state between one and six percent for every archetype - at
-# 1.5 a leader's nerve fails him a tenth of the time, and at 2.0 a mercenary's health reaches the
-# state once in two hundred.
+# the value that keeps every unflattering state between one and six percent for every archetype.
 NICKNAME_DESCENT_THRESHOLD = 1.75
 
 # Several wordings per state, so a war band does not read as one man repeated. They are synonyms and
@@ -27,7 +27,7 @@ HEALTH_FAR_NICKNAMES = ("the Ironhide", "the Boar")
 MORALE_NICKNAMES = ("the Brave", "the Bold")
 MORALE_FAR_NICKNAMES = ("the Fearless", "the Wolfheart")
 
-STATS_FLOOR_NICKNAMES = ("the Weak", "the Feeble", "the Reed")
+STATS_LOW_NICKNAMES = ("the Weak", "the Feeble", "the Reed")
 HEALTH_LOW_NICKNAMES = ("the Frail", "the Sickly", "the Wisp")
 MORALE_LOW_NICKNAMES = ("the Craven", "the Timid", "the Meek")
 
@@ -43,7 +43,7 @@ NICKNAME_WORDINGS: dict[int, tuple[str, ...]] = {
     NicknameStateChoices.HEALTH_FAR: HEALTH_FAR_NICKNAMES,
     NicknameStateChoices.MORALE: MORALE_NICKNAMES,
     NicknameStateChoices.MORALE_FAR: MORALE_FAR_NICKNAMES,
-    NicknameStateChoices.STATS_AT_FLOOR: STATS_FLOOR_NICKNAMES,
+    NicknameStateChoices.STATS_AT_BOTTOM: STATS_LOW_NICKNAMES,
     NicknameStateChoices.HEALTH_AT_BOTTOM: HEALTH_LOW_NICKNAMES,
     NicknameStateChoices.MORALE_AT_BOTTOM: MORALE_LOW_NICKNAMES,
 }
@@ -59,13 +59,28 @@ def _has_fallen_to_the_bottom(*, draw: AttributeDraw) -> bool:
     Whether this attribute came out at the bottom of what its archetype can roll.
 
     The cut is a distance below the mean like the flattering ones, but clamped to what the generator
-    can actually produce, because for half the archetype-attribute pairs in the game the honest
-    distance lands underneath the floor. A fyrd man's health is drawn at a mean of ten with a spread of
-    ten, so 1.75 spreads below it is a negative figure and the clamp puts the cut on the floor itself,
-    where 3% of them sit. A leader's is a mean of twenty against a spread of five, the tail is intact,
-    and the cut lands at 11.
+    can actually produce, because for some archetype-attribute pairs the honest distance lands
+    underneath the floor. A fyrd man's nerve is drawn at a mean of five with a spread of three, so 1.75
+    spreads below it is a negative figure and the clamp puts the cut on the floor itself. A leader's
+    health is a mean of twenty against a spread of five, the tail is intact, and the cut lands at 11.
     """
     return draw.value <= max(draw.minimum, round(draw.baseline - NICKNAME_DESCENT_THRESHOLD * draw.spread))
+
+
+def _have_both_arms_fallen_to_the_bottom(*, strength: AttributeDraw, dexterity: AttributeDraw) -> bool:
+    """
+    Whether strength and dexterity together came out at the bottom of what his archetype rolls.
+
+    The same cut as [_has_fallen_to_the_bottom], taken on the sum of the two. Two independent draws
+    from one distribution add up to a draw at twice the mean with the spread grown by the square root
+    of two, so a fyrd man's arms are read against ten with a spread of 2.8 and fall to the bottom at
+    five between them - a one and a four as much as two and a three. The clamp is both minimums at once,
+    which is as low as the two rolls can add up to.
+    """
+    combined_spread = math.hypot(strength.spread, dexterity.spread)
+    cut = round(strength.baseline + dexterity.baseline - NICKNAME_DESCENT_THRESHOLD * combined_spread)
+
+    return strength.value + dexterity.value <= max(strength.minimum + dexterity.minimum, cut)
 
 
 def draw_nickname_state(
@@ -86,29 +101,27 @@ def draw_nickname_state(
     Measured against the distributions he was drawn from rather than against fixed numbers, because
     the archetypes share neither their means nor their spreads: a fyrd man reaching nine strength is a
     monster among his own kind and a mercenary reaching nine is unremarkable. Counted in spreads, all
-    three archetypes earn epithets at comparable rates - between 19% and 25% of the men they make.
+    three archetypes earn epithets at comparable rates - between 18% and 26% of the men they make.
 
-    **A good roll outranks a bad one.** A man two spreads above his kind in nerve and on the floor in
+    **A good roll outranks a bad one.** A man two spreads above his kind in nerve and at the bottom in
     both arms is named for the nerve: what he is exceptional at is the more interesting fact, and the
     unflattering states are otherwise the commoner ones and would swallow him.
 
     Upwards, only the attribute that reached furthest is named, and a dead heat goes to the earlier of
     the four - the order they are declared in, which is the order they sit on the warrior.
 
-    **Downwards the four do not divide the same way, because the distributions do not.** Two of them
-    are floored at "STATS_MIN" and the mass that would have been a left tail sits on the floor itself:
-    a quarter of every fyrd man's and every mercenary's strength rolls land exactly there, so no
-    unflattering epithet taken off strength alone could ever be a remark about somebody unusual. Those
-    two are therefore read together - a man at the floor in both arms is not clumsy in particular, he
-    is the worst his kind produces, and that is 1.4% of leaders and about 6% of everyone else. Health
-    and morale are floored only by the generator's refusal of zero, which leaves them a bottom of
-    their own to fall to, so each carries its own epithet - see [_has_fallen_to_the_bottom].
+    **Downwards the arms are read together, health and morale each alone.** Strength and dexterity
+    are drawn from the same trio and are the two halves of how a man fights, so what is named is the
+    pair: a man feeble in one arm and ordinary in the other is not the worst his kind produces, a man
+    feeble in both is, and that is between 1% and 4% of every archetype - see
+    [_have_both_arms_fallen_to_the_bottom]. Health and morale each carry an epithet of their own - see
+    [_has_fallen_to_the_bottom].
 
     A man can be in two of the three at once, and the arms are named first - not because they are the
     rarest, which they are not, but because they are the completest failing: two attributes gone at the
     same time rather than one. Rarest-first is not available to any fixed order, because the ranking
-    flips between archetypes - the arms are the rarest failing a leader has at 1.5% against health's
-    4.4%, and the commonest a mercenary has at 6.7% against health's 1.5%.
+    flips between archetypes - the arms are the rarest failing a leader has at 1.3% against health's
+    3.9%, while a mercenary's nerve fails him more rarely than his arms, at 1.4% against 2.1%.
     """
     candidates = (
         (strength, NicknameStateChoices.STRENGTH, NicknameStateChoices.STRENGTH_FAR),
@@ -125,8 +138,8 @@ def draw_nickname_state(
     if furthest.reach >= NICKNAME_SPREAD_THRESHOLD:
         return near_state
 
-    if strength.is_at_floor and dexterity.is_at_floor:
-        return NicknameStateChoices.STATS_AT_FLOOR
+    if _have_both_arms_fallen_to_the_bottom(strength=strength, dexterity=dexterity):
+        return NicknameStateChoices.STATS_AT_BOTTOM
 
     if _has_fallen_to_the_bottom(draw=health):
         return NicknameStateChoices.HEALTH_AT_BOTTOM
