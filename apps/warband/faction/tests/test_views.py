@@ -572,6 +572,24 @@ def test_rival_faction_list_view_offers_no_attack_once_the_game_is_over(
 
 
 @pytest.mark.django_db
+def test_rival_faction_list_view_does_not_blame_the_rivals_men_once_the_game_is_over(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    """
+    A free leader and nobody attackable reads as "already in a fight this month" unless the decided
+    savegame is asked first - and the row would say it under the sentence that the game is over.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
+
+    assert [rival.their_war_band_is_committed for rival in response.context["rival_list"]] == [False]
+
+
+@pytest.mark.django_db
 def test_rival_faction_list_view_says_the_leader_cannot_march(logged_in_client, current_savegame):
     """
     Nothing is keeping the war band busy, so the reason is the leader himself - here a faction that
