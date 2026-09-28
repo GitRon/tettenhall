@@ -38,54 +38,55 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-7 md:grid-cols-2">
+    {% comment %}
+        One comparison rather than a card per building: the question this page answers is which building
+        moves which number, for how much, and that is read down a list. Each row is the building and its
+        level, what it does now against what the next level would do, and the control whose label carries
+        the price. Every figure comes from the view, which reads it off "apps/warband/town/buildings/"
+        through "get_effects()" - nothing here works a number out.
+
+        A phone keeps each building as one stacked row, the effects still aligned as label, now and next -
+        the columns side by side are the only thing it gives up.
+    {% endcomment %}
+    <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
         {% for building in building_list %}
-            <div>
-                <div class="mb-5 box-border bg-ground text-ink-muted border border-rule-strong">
-                    <div class="border-b border-rule px-[30px] py-[15px]">
-                        <h3 class="mb-0 text-2xl leading-snug text-ink">{{ building.label }}</h3>
-                        <p class="mt-0 text-sm leading-snug text-ink-muted">
-                            {{ building.level_display }} (level {{ building.level }} of {{ building.max_level }})
-                        </p>
-                    </div>
-                    <div class="p-[30px]">
-                        {# A small divided table - tighter cells than the page tables, and a rule #}
-                        {# between rows - scrolling inside its own box rather than dragging the page #}
-                        {# sideways on a phone. #64 decides what a table should become at that width. #}
-                        <div class="overflow-x-auto">
-                        <table class="m-0 [&_td]:border-t [&_td]:border-rule [&_td]:px-3 [&_td]:py-2.5 [&_tr:first-child_td]:border-t-0">
-                            <tbody>
-                                {% for effect in building.effect_list %}
-                                    <tr>
-                                        <td class="text-sm leading-snug text-ink-muted">{{ effect.label }}</td>
-                                        <td class="whitespace-nowrap">{{ effect.current }}</td>
-                                        {% if building.level < building.max_level %}
-                                            <td class="whitespace-nowrap text-ink">&rarr; {{ effect.next }}</td>
-                                        {% endif %}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
-                        {% if building.level >= building.max_level %}
-                            <button class="row-action" disabled>Max level reached</button>
-                        {% elif building.has_already_built %}
-                            <button class="row-action" disabled>Already constructing a building this
-                                month</button>
-                        {% elif not building.can_afford %}
-                            <button class="row-action" disabled>{{ building.next_level_display }} costs
-                                {{ building.costs }} silver</button>
-                        {% else %}
-                            <button hx-post="{% url "warband:upgrade-building-view" building.building_type %}"
-                                    class="row-action">Build {{ building.next_level_display }} for
-                                {{ building.costs }} silver
-                            </button>
-                        {% endif %}
-                    </div>
+            <li class="grid grid-cols-1 gap-x-6 gap-y-3 px-[15px] py-4 md:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto] md:items-center md:px-5">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 md:flex-col md:justify-start">
+                    <span class="leading-snug text-ink">{{ building.label }}</span>
+                    {# Two pieces that each hold together, so a narrow column breaks between them #}
+                    <span class="flex flex-wrap gap-x-2 font-mono text-label uppercase tracking-label text-ink-muted">
+                        <span class="whitespace-nowrap">{{ building.level_display }} ·</span>
+                        <span class="whitespace-nowrap">level <span class="text-ink">{{ building.level }}</span> of {{ building.max_level }}</span>
+                    </span>
                 </div>
-            </div>
+                {% comment %}
+                    Aligned across the building's own effects, so the figures stand in columns. A desk reads
+                    label, now and next on one line; a phone gives the label its own line above the two
+                    figures, which cannot wrap and would otherwise squeeze it to nothing. At the top level
+                    there is no next, and the arrow column goes with it.
+                {% endcomment %}
+                <div class="grid {% if building.level < building.max_level %}grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[max-content_auto_auto]{% else %}grid-cols-1 md:grid-cols-[max-content_auto]{% endif %} items-baseline gap-x-4 gap-y-1 md:gap-y-1.5">
+                    {% for effect in building.effect_list %}
+                        <span class="{% if building.level < building.max_level %}col-span-2 md:col-span-1{% endif %} {% if not forloop.first %}mt-1.5 md:mt-0{% endif %} text-sm leading-snug text-ink-muted">{{ effect.label }}</span>
+                        <span class="whitespace-nowrap font-mono text-sm tabular-nums text-ink-muted">{{ effect.current }}</span>
+                        {% if building.level < building.max_level %}
+                            <span class="whitespace-nowrap font-mono text-sm tabular-nums text-ink">&rarr; {{ effect.next }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="flex justify-end">
+                    {% if building.level >= building.max_level %}
+                        <button class="row-action" disabled>Max level reached</button>
+                    {% elif building.has_already_built %}
+                        <button class="row-action" disabled>Already constructing a building this month</button>
+                    {% elif not building.can_afford %}
+                        <button class="row-action" disabled>{{ building.next_level_display }} costs {{ building.costs }} silver</button>
+                    {% else %}
+                        <button hx-post="{% url "warband:upgrade-building-view" building.building_type %}"
+                                class="row-action">Build {{ building.next_level_display }} for {{ building.costs }} silver</button>
+                    {% endif %}
+                </div>
+            </li>
         {% endfor %}
-    </div>
+    </ul>
 {% endblock content %}
