@@ -419,6 +419,7 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
     # The Frisian rival echoes its base locale rather than "ofs", which is the factory doing its job:
     # Faker refuses "ofs" and the instance is built on "nl_NL" with the provider added on top.
     with (
+        mock.patch.object(FyrdReserve, "roll_starting_reserve", return_value=2),
         mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3),
         mock.patch(
             "apps.warband.faction.handlers.commands.faction.random.choice",
