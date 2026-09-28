@@ -23,7 +23,7 @@
                 <p class="my-0">A town without a hall has nowhere to feast.</p>
             {% endif %}
         </div>
-        <div class="border-t border-rule px-[30px] py-[15px]">
+        <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
             {% if not feast.can_feast %}
                 <button class="row-action" disabled>Build a hall to feast</button>
             {% elif feast.has_feasted %}
@@ -68,7 +68,7 @@
                         </table>
                         </div>
                     </div>
-                    <div class="border-t border-rule px-[30px] py-[15px]">
+                    <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
                         {% if building.level >= building.max_level %}
                             <button class="row-action" disabled>Max level reached</button>
                         {% elif building.has_already_built %}
