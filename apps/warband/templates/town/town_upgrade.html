@@ -23,17 +23,17 @@
                 <p class="my-0">A town without a hall has nowhere to feast.</p>
             {% endif %}
         </div>
-        <div class="border-t border-rule px-[30px] py-[15px]">
+        <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
             {% if not feast.can_feast %}
-                <button class="box-border inline-block border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Build a hall to feast</button>
+                <button class="row-action" disabled>Build a hall to feast</button>
             {% elif feast.has_feasted %}
-                <button class="box-border inline-block border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Already feasted this month</button>
+                <button class="row-action" disabled>Already feasted this month</button>
             {% elif not feast.can_afford %}
-                <button class="box-border inline-block border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>A feast costs {{ feast.costs }} silver</button>
+                <button class="row-action" disabled>A feast costs {{ feast.costs }} silver</button>
             {% else %}
                 <button hx-post="{% url "warband:throw-feast-view" %}"
                         hx-disabled-elt="this"
-                        class="box-border inline-block cursor-pointer border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Feast for {{ feast.costs }} silver</button>
+                        class="row-action">Feast for {{ feast.costs }} silver</button>
             {% endif %}
         </div>
     </div>
@@ -68,18 +68,18 @@
                         </table>
                         </div>
                     </div>
-                    <div class="border-t border-rule px-[30px] py-[15px]">
+                    <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
                         {% if building.level >= building.max_level %}
-                            <button class="box-border inline-block border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Max level reached</button>
+                            <button class="row-action" disabled>Max level reached</button>
                         {% elif building.has_already_built %}
-                            <button class="box-border inline-block border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>Already constructing a building this
+                            <button class="row-action" disabled>Already constructing a building this
                                 month</button>
                         {% elif not building.can_afford %}
-                            <button class="box-border inline-block border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-rule bg-transparent text-ink-dim cursor-not-allowed" disabled>{{ building.next_level_display }} costs
+                            <button class="row-action" disabled>{{ building.next_level_display }} costs
                                 {{ building.costs }} silver</button>
                         {% else %}
                             <button hx-post="{% url "warband:upgrade-building-view" building.building_type %}"
-                                    class="box-border inline-block cursor-pointer border py-[9px] font-mono text-label uppercase tracking-label px-[30px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Build {{ building.next_level_display }} for
+                                    class="row-action">Build {{ building.next_level_display }} for
                                 {{ building.costs }} silver
                             </button>
                         {% endif %}

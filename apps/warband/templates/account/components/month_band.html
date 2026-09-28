@@ -57,7 +57,7 @@
                href="{% if month_standing.skirmish_to_enter %}{% url 'warband:skirmish-fight-view' month_standing.skirmish_to_enter.id %}{% else %}{% url 'warband:skirmish-list-view' %}{% endif %}">
                 {% if month_standing.skirmish_to_enter %}To the fight{% else %}To the fights{% endif %}
             </a>
-            <button class="box-border inline-block shrink-0 border border-rule bg-transparent px-[30px] py-[9px] text-center font-mono text-label uppercase tracking-label leading-normal text-ink-dim"
+            <button class="row-action"
                     disabled
                     type="button">
                 Finish month

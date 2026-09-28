@@ -350,3 +350,50 @@
         background-color: var(--color-raised);
     }
 }
+
+/*
+ * The row action: the one control for "do this to this row" - Accept, Buy, Recruit, Build, the Month
+ * page's way to each section. It is a utility rather than a string repeated at every call site because
+ * the call sites are thirty templates, and a class list copied that often drifts into several controls
+ * that each look a little different, which is exactly what a player reads as "these do different kinds
+ * of thing".
+ *
+ * Outlined in "rule-strong", never "blood": a list of three quests is three row actions, and three red
+ * outlines on one screen is two red things too many. The red stays with the one filled control a screen
+ * has and with what has gone wrong.
+ *
+ * A control that refuses stays readable. "ink-muted" is the lowest colour text may be, the label is the
+ * reason ("Build a hall to feast"), and the outline drops to "rule" so the refusal is quieter than the
+ * controls that would work - but never "ink-dim", which may not carry meaning.
+ */
+@utility row-action {
+    display: inline-block;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    padding: 6px 15px;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: var(--tracking-label);
+    text-align: center;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-ink);
+    cursor: pointer;
+    background-color: transparent;
+    border: 1px solid var(--color-rule-strong);
+
+    &:hover {
+        color: var(--color-ink);
+        background-color: var(--color-raised);
+    }
+
+    &:disabled,
+    &[aria-disabled="true"] {
+        color: var(--color-ink-muted);
+        cursor: not-allowed;
+        background-color: transparent;
+        border-color: var(--color-rule);
+    }
+}

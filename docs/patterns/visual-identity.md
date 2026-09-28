@@ -21,8 +21,9 @@ an element that inherits its colour still reads, where a hue nobody chose looks 
 | `blood` | `#c8644d` | Something needs the player, or went wrong. Never decorative | 5.04:1 |
 | `brass` | `#9c8650` | A gain, or something ready and worth having. Never decorative | 5.56:1 |
 
-`ink-dim` `#6b6459` is 3.36:1 and therefore decorative only — a disabled control, a divider that wants
-to be quieter than a rule. **It never carries meaning**, because a player who cannot read it has not
+`ink-dim` `#6b6459` is 3.36:1 and therefore decorative only — a divider that wants to be quieter than a
+rule, or the name on a greyed option when the reason beside it (in `ink-muted`) is what says why. Not a
+disabled control's label: a refusal is meant to be read, so it wears `ink-muted` itself. **It never carries meaning**, because a player who cannot read it has not
 been told.
 
 Every value that carries text clears WCAG AA at any size, on `ground` and on `raised` alike: `ink-muted`
@@ -97,10 +98,28 @@ screen exists for: **Fight!** on the fight screen, the control in the month band
 the fight holding it up while one is unresolved — on the month page. Everything
 else is outlined.
 
-That makes a list a specific case: five buildings each with a Build button are five row actions, not
-four primary ones, so they are outlined (`border-blood bg-transparent text-ink`). **A disabled control
-is never `blood` in any form** — it wears `border-rule` and `ink-dim`, because a control that refuses
-must not wear the colour reserved for one that wants you.
+### The row action
+
+Every other control that acts on one thing - *Accept* on a quest, *Buy*, *Sell*, *Recruit*, *Build*, the
+Month page's way into each section - is the **row action**, the `row-action` utility in
+`assets/css/tailwind.css`: the mono label in `ink`, a `rule-strong` outline, the `raised` hover, one size.
+It sits at the right of its row or of its card's footer, as a control. Never as bare text, and never
+several joined by slashes in a sentence.
+
+**It is never `blood`.** Five buildings each with a Build button are five row actions, and five red
+outlines on one screen is four red things too many - the reserved colour would stop meaning anything on
+exactly the screens where the player compares. The red stays with the one filled control and with what
+has gone wrong.
+
+**A disabled row action stays readable.** `row-action` on a `disabled` button (or one with
+`aria-disabled="true"`) drops to `ink-muted` with a `rule` outline, and its label is the reason: *Build a
+hall to feast*, *Already feasted this month*, *Your leader stays*. It is quieter than the controls that
+would work, but it is text the player is meant to read, so it never goes to `ink-dim` - and never
+`blood`, the colour of a control that wants you.
+
+A class written into the stylesheet is the exception here, and this is why it is one: the row action is
+on thirty templates, and the same utility list copied thirty times drifts into four controls that each
+look a little different, which a player reads as four kinds of thing.
 
 ## The icons
 
