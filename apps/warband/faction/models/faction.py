@@ -123,16 +123,17 @@ class Faction(models.Model):
         The prisoners in this faction's cells, as the captive list renders them.
 
         Read through here rather than as "captured_warriors.all" in the template, for the reason
-        [get_all_living_warriors] exists: the card names every lasting injury a man carries, and a
-        bare related manager makes that one query per prisoner plus one per injury.
+        [get_all_living_warriors] exists: the row names the weapon and the armour a man carries, an
+        item's name reads its type, and a bare related manager makes that up to four queries per
+        prisoner.
         """
-        return self.captured_warriors.prefetch_related("injuries__type")
+        return self.captured_warriors.select_related("weapon__type", "armor__type")
 
     def get_pub_stock(self) -> QuerySet:
         """
-        The men standing in this faction's pub, with their injuries along for the card.
+        The men standing in this faction's pub, with the gear the row names along for it.
 
         The twin of [get_held_captives], and separate because they are two different relations - the
         pub is what a faction is offering and the cells are what it is holding.
         """
-        return self.available_mercenaries.prefetch_related("injuries__type")
+        return self.available_mercenaries.select_related("weapon__type", "armor__type")

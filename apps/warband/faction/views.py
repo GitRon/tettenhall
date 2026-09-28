@@ -87,16 +87,14 @@ class FactionRosterContextMixin:
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        # The card prints the man's faction, so the join is one query instead of one per card, and
-        # names every lasting injury he carries, so those come along in two more rather than in one
-        # per man plus one per injury.
+        # The row names the weapon and the armour a man stands in, and an item's name reads its type,
+        # so all four come along in the one query rather than in up to four per man.
         #
         # By name, and the id only to break a tie between two men of the same one: the progress table
         # reads the same list, and a warrior's own page walks it with Previous and Next - so an
         # unordered roster would be three screens disagreeing about who comes after whom.
         context["warrior_list"] = list(
-            Warrior.objects.select_related("faction")
-            .prefetch_related("injuries__type")
+            Warrior.objects.select_related("weapon__type", "armor__type")
             .exclude_dead()
             .filter_faction(faction_id=self.object.id)
             .order_by("name", "id")
@@ -746,9 +744,12 @@ class TownBoardView(PlayerFactionMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Asked through the same queryset QuestAcceptView resolves its quest with, so a card is only
-        # ever shown for a quest that can actually be taken on
-        context["quest_list"] = Quest.objects.for_player_faction(faction_id=self.object.id).resolvable(
-            month=self.object.savegame.current_month
+        # ever shown for a quest that can actually be taken on. Every row names the faction it marches
+        # on, so that comes along in the same query rather than in one per quest.
+        context["quest_list"] = (
+            Quest.objects.for_player_faction(faction_id=self.object.id)
+            .resolvable(month=self.object.savegame.current_month)
+            .select_related("target_faction")
         )
         return context
 

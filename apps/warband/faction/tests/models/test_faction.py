@@ -1,12 +1,12 @@
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
-from apps.warband.warrior.tests.factories.injury import InjuryFactory
 
 
 @pytest.mark.django_db
@@ -121,21 +121,25 @@ def test_get_held_captives_is_the_men_in_the_cells():
 
 
 @pytest.mark.django_db
-def test_get_held_captives_brings_the_injuries_along(django_assert_num_queries):
+def test_get_held_captives_brings_the_gear_along(django_assert_num_queries):
     """
-    The card names every mark a prisoner carries, so a bare related manager would cost a query per
-    man plus one per injury - see [get_all_living_warriors], which exists for the same reason.
+    The row names the weapon and the armour a prisoner carries, and an item's name reads its type, so
+    a bare related manager would cost up to four queries per man.
     """
     faction = FactionFactory()
-    captive = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    captive = WarriorFactory(
+        faction=None,
+        savegame=faction.savegame,
+        culture=faction.culture,
+        weapon=ItemFactory(savegame=faction.savegame),
+        armor=ItemFactory(savegame=faction.savegame),
+    )
     faction.captured_warriors.add(captive)
-    InjuryFactory(warrior=captive)
 
     held_captive = faction.get_held_captives().get()
 
-    # The prefetch already has them, so reading the row and its catalogue entry costs nothing more
     with django_assert_num_queries(0):
-        assert held_captive.injuries.all()[0].type.name
+        assert held_captive.weapon.display_name and held_captive.armor.display_name
 
 
 @pytest.mark.django_db
@@ -146,6 +150,26 @@ def test_get_pub_stock_is_the_men_on_the_shelf():
     WarriorFactory(faction=faction)
 
     assert list(faction.get_pub_stock()) == [mercenary]
+
+
+@pytest.mark.django_db
+def test_get_pub_stock_brings_the_gear_along(django_assert_num_queries):
+    """The twin of [test_get_held_captives_brings_the_gear_along], for the pub's rows."""
+    faction = FactionFactory()
+    mercenary = WarriorFactory(
+        faction=None,
+        savegame=faction.savegame,
+        culture=faction.culture,
+        is_pub_stock=True,
+        weapon=ItemFactory(savegame=faction.savegame),
+        armor=ItemFactory(savegame=faction.savegame),
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    stocked_mercenary = faction.get_pub_stock().get()
+
+    with django_assert_num_queries(0):
+        assert stocked_mercenary.weapon.display_name and stocked_mercenary.armor.display_name
 
 
 @pytest.mark.django_db

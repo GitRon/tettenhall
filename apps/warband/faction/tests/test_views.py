@@ -285,6 +285,36 @@ def test_warband_roster_view_shows_the_players_own_men(logged_in_client, current
 
 
 @pytest.mark.django_db
+def test_warband_roster_view_brings_the_gear_along(logged_in_client, current_savegame):
+    """
+    Every row names the weapon and the armour a man stands in, and an item's name reads its type - up
+    to four queries per man if the roster does not bring them along. Counted over the whole request
+    rather than off the context, because rendering the rows leaves the gear cached on the very
+    instances the context holds.
+    """
+    player_faction = current_savegame.player_faction
+
+    def add_armed_man() -> None:
+        WarriorFactory(
+            faction=player_faction,
+            weapon=ItemFactory(owner=player_faction, savegame=current_savegame),
+            armor=ItemFactory(owner=player_faction, savegame=current_savegame),
+        )
+
+    def count_queries() -> int:
+        with CaptureQueriesContext(connection) as captured_queries:
+            logged_in_client.get(reverse("warband:warband-roster-view"))
+        return len(captured_queries)
+
+    add_armed_man()
+    queries_for_one = count_queries()
+    add_armed_man()
+    add_armed_man()
+
+    assert count_queries() == queries_for_one
+
+
+@pytest.mark.django_db
 def test_warband_roster_view_reads_the_war_band_off_the_savegame(
     logged_in_client, savegame_whose_rival_is_the_older_faction
 ):
@@ -1646,6 +1676,31 @@ def test_town_board_view_offers_only_quests_that_can_still_be_taken_on(logged_in
 
     assert response.status_code == 200
     assert list(response.context["quest_list"]) == [fightable_quest]
+
+
+@pytest.mark.django_db
+def test_town_board_view_brings_the_target_faction_along(logged_in_client, current_savegame):
+    """
+    Every row names the faction the quest marches on, which is a query per quest if it is not joined.
+    Counted over the whole request, for the reason the roster's gear test gives.
+    """
+
+    def pin_a_quest() -> None:
+        quest = QuestFactory(target_faction__savegame=current_savegame)
+        WarriorFactory(faction=quest.target_faction)
+        current_savegame.player_faction.available_quests.add(quest)
+
+    def count_queries() -> int:
+        with CaptureQueriesContext(connection) as captured_queries:
+            logged_in_client.get(reverse("warband:town-board-view"))
+        return len(captured_queries)
+
+    pin_a_quest()
+    queries_for_one = count_queries()
+    pin_a_quest()
+    pin_a_quest()
+
+    assert count_queries() == queries_for_one
 
 
 @pytest.mark.django_db
