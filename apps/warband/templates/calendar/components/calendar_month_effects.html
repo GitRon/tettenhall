@@ -1,5 +1,6 @@
 {# One month of the year: its name and season as a label, and one line per effect it has in force. #}
 {# "heading" says where the month stands relative to the current one, when that is worth saying. #}
+{# A month that levers nothing still gets a line, or its popover opens onto a bare title. #}
 <div>
     <div class="font-mono text-label uppercase tracking-label text-ink">
         {% if heading %}{{ heading }} · {% endif %}{{ calendar_month.NAME }} · {{ calendar_month.SEASON }}
@@ -7,6 +8,8 @@
     <ul class="m-0 list-none p-0">
         {% for effect in calendar_month.get_effects %}
             <li>{{ effect }}</li>
+        {% empty %}
+            <li>Nothing out of the ordinary.</li>
         {% endfor %}
     </ul>
 </div>

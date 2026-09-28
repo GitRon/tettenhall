@@ -32,22 +32,6 @@ class CalendarMonth:
     # Whether the fyrd reserve grows this month at all
     FYRD_REPLENISHES = True
 
-    # The constants a month may set apart from its season. A month whose values all match its
-    # season's has nothing of its own, which the page says rather than leaving blank
-    EFFECT_CONSTANTS = ("MARCH_COST_PER_WARRIOR", "TRAINING_FACTOR", "HARVEST_SILVER", "FYRD_REPLENISHES")
-
-    NOTHING_BEYOND_THE_SEASON = "Nothing marks this month beyond its season."
-
-    @classmethod
-    def get_season(cls) -> type[CalendarMonth]:
-        """The season class this month belongs to: the nearest ancestor that names a season itself."""
-        return next(klass for klass in cls.__mro__ if "SEASON" in vars(klass))
-
-    @classmethod
-    def has_effects_beyond_its_season(cls) -> bool:
-        season = cls.get_season()
-        return any(getattr(cls, constant) != getattr(season, constant) for constant in cls.EFFECT_CONSTANTS)
-
     @classmethod
     def get_march_cost(cls, *, warrior_count: int) -> int:
         """What sending "warrior_count" men against a rival costs this month."""
@@ -58,7 +42,9 @@ class CalendarMonth:
         """
         One line per effect in force this month, season and month together, in display order.
 
-        Read off the constants, so a month that changes a number describes itself.
+        Read off the constants, so a month that changes a number describes itself. A month that
+        levers nothing - a plain summer month - has no lines at all, and each page decides for itself
+        whether that is worth saying.
         """
         effects = []
         if cls.MARCH_COST_PER_WARRIOR:
@@ -69,6 +55,4 @@ class CalendarMonth:
             effects.append(f"The harvest brings in {cls.HARVEST_SILVER} silver")
         if not cls.FYRD_REPLENISHES:
             effects.append("The fyrd does not grow: its men are in the fields")
-        if not cls.has_effects_beyond_its_season():
-            effects.append(cls.NOTHING_BEYOND_THE_SEASON)
         return tuple(effects)
