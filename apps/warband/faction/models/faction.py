@@ -131,9 +131,10 @@ class Faction(models.Model):
 
     def get_pub_stock(self) -> QuerySet:
         """
-        The men standing in this faction's pub, with the gear the row names along for it.
+        The men standing in this faction's pub, with the gear the row names along for it, and the
+        savegame his price reads the current month off - see [Warrior.months_in_pub].
 
         The twin of [get_held_captives], and separate because they are two different relations - the
         pub is what a faction is offering and the cells are what it is holding.
         """
-        return self.available_mercenaries.select_related("weapon__type", "armor__type")
+        return self.available_mercenaries.select_related("weapon__type", "armor__type", "savegame")

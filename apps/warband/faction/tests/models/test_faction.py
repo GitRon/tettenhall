@@ -173,6 +173,28 @@ def test_get_pub_stock_brings_the_gear_along(django_assert_num_queries):
 
 
 @pytest.mark.django_db
+def test_get_pub_stock_brings_the_savegame_along(django_assert_num_queries):
+    """
+    Every row prints a man's price, which reads how long he has waited off his savegame's month - a
+    query per mercenary if the savegame does not come along.
+    """
+    faction = FactionFactory()
+    mercenary = WarriorFactory(
+        faction=None,
+        savegame=faction.savegame,
+        culture=faction.culture,
+        is_pub_stock=True,
+        pub_arrival_month=faction.savegame.current_month,
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    stocked_mercenary = faction.get_pub_stock().get()
+
+    with django_assert_num_queries(0):
+        assert stocked_mercenary.months_in_pub == 0
+
+
+@pytest.mark.django_db
 def test_get_monthly_income_counts_only_the_men_drawing_a_wage():
     """
     A leader draws nothing and the dead are paid nothing, so neither mans the hall: two of the four
