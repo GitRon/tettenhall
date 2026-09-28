@@ -4,13 +4,22 @@
      hx-disinherit="hx-swap">
     <h2>Warriors</h2>
     {# The list sits inside the swap target rather than being it, so a reload keeps the element's own #}
-    {# classes. One box for the war band, a hairline between men. #}
-    {# A war band that has lost every man draws no empty box. #}
+    {# classes. A war band that has lost every man draws no empty box. #}
+    {% comment %}
+        The player's own men are a table: the columns are what he compares them by, and a column is
+        what lets the eye run down six men's health at once. A rival's men keep the row, because the
+        player knows too little about them to fill most of those columns - see
+        docs/patterns/warrior-knowledge.md.
+    {% endcomment %}
     {% if warrior_list %}
-        <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-            {% for warrior in warrior_list %}
-                {% include 'warrior/components/warrior_row.html' with warrior=warrior knowledge=roster_knowledge %}
-            {% endfor %}
-        </ul>
+        {% if is_player_faction %}
+            {% include 'faction/warrior/components/roster_table.html' with warrior_list=warrior_list faction=faction knowledge=roster_knowledge %}
+        {% else %}
+            <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+                {% for warrior in warrior_list %}
+                    {% include 'warrior/components/warrior_row.html' with warrior=warrior knowledge=roster_knowledge %}
+                {% endfor %}
+            </ul>
+        {% endif %}
     {% endif %}
 </div>

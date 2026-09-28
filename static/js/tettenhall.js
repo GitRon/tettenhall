@@ -1,6 +1,6 @@
 /*
- * Everything the pages need from JavaScript: the CSRF header htmx has to send, the toasts, and the
- * account menu in the navbar. A static file rather than a block in "base.html", so nothing here is
+ * Everything the pages need from JavaScript: the CSRF header htmx has to send, the toasts, the
+ * account menu in the navbar, and the row menus on the roster. A static file rather than a block in "base.html", so nothing here is
  * rendered by Django and no value has to survive being written into a script literal.
  */
 (() => {
@@ -118,6 +118,110 @@
                 element.open = false;
             }
         });
+    });
+
+    /*
+     * The row menu - see "faction/warrior/components/roster_row_menu.html". The browser opens and
+     * closes it; this places it and runs its two steps.
+     *
+     * Placed beside its trigger, to the left, tops aligned - not under it, where it would cover the
+     * next row's trigger and turn "open the next man's menu" into a click on this one's Dismiss. It
+     * rises instead when there is no room below, and is pushed back on screen when a phone has
+     * scrolled the table so far that the left has no room either. Fixed, because the top layer has no
+     * containing block but the viewport - so a scroll would leave it floating away from its row, and
+     * scrolling closes it instead.
+     */
+    const ROW_MENU_GAP = 4;
+    const ROW_MENU_EDGE = 8;
+    const openRowMenus = () => document.querySelectorAll('[data-row-menu]:popover-open');
+
+    const placeRowMenu = (menu) => {
+        const trigger = document.querySelector(`[popovertarget="${menu.id}"]`);
+        if (!trigger) {
+            return;
+        }
+        const anchor = trigger.getBoundingClientRect();
+        const viewportWidth = document.documentElement.clientWidth;
+        menu.style.position = 'fixed';
+        menu.style.right = `${Math.max(viewportWidth - anchor.left + ROW_MENU_GAP, ROW_MENU_EDGE)}px`;
+        menu.style.top = `${anchor.top}px`;
+        menu.style.bottom = 'auto';
+        // Its size is only known once it is showing, so the two corrections below measure it.
+        // "beforetoggle" still sets the first guess, so it is never painted in the middle of the screen.
+        if (!menu.matches(':popover-open')) {
+            return;
+        }
+        const box = menu.getBoundingClientRect();
+        if (box.left < ROW_MENU_EDGE) {
+            menu.style.right = `${Math.max(viewportWidth - box.width - ROW_MENU_EDGE, ROW_MENU_EDGE)}px`;
+        }
+        if (box.bottom > window.innerHeight && anchor.bottom > box.height) {
+            menu.style.top = 'auto';
+            menu.style.bottom = `${window.innerHeight - anchor.bottom}px`;
+        }
+    };
+
+    const rowMenuStep = (menu, step) => {
+        menu.querySelectorAll('[data-row-menu-step]').forEach((element) => {
+            element.hidden = element.dataset.rowMenuStep !== step;
+        });
+    };
+
+    // Neither toggle event bubbles, so both are caught on the way down
+    document.addEventListener('beforetoggle', (event) => {
+        const menu = event.target;
+        if (!(menu instanceof HTMLElement) || !menu.matches('[data-row-menu]')) {
+            return;
+        }
+        if (event.newState === 'open') {
+            placeRowMenu(menu);
+        } else {
+            // Closed half-way through asking is the same as "Keep him", so the next open starts over
+            rowMenuStep(menu, 'choose');
+        }
+    }, true);
+
+    document.addEventListener('toggle', (event) => {
+        const menu = event.target;
+        if (menu instanceof HTMLElement && menu.matches('[data-row-menu]') && event.newState === 'open') {
+            placeRowMenu(menu);
+        }
+    }, true);
+
+    // Capturing, so the table's own sideways scroll box counts as well as the page
+    document.addEventListener('scroll', (event) => {
+        openRowMenus().forEach((menu) => {
+            if (!menu.contains(event.target)) {
+                menu.hidePopover();
+            }
+        });
+    }, true);
+    window.addEventListener('resize', () => openRowMenus().forEach((menu) => menu.hidePopover()));
+
+    document.addEventListener('click', (event) => {
+        const ask = event.target.closest('[data-row-menu-ask]');
+        if (ask) {
+            const menu = ask.closest('[data-row-menu]');
+            rowMenuStep(menu, 'confirm');
+            // The question is taller than the list it replaces
+            placeRowMenu(menu);
+            // The safe answer takes the focus, so an Enter pressed out of habit keeps the man
+            menu.querySelector('[data-row-menu-cancel]')?.focus();
+            return;
+        }
+        const cancel = event.target.closest('[data-row-menu-cancel]');
+        if (cancel) {
+            cancel.closest('[data-row-menu]').hidePopover();
+        }
+    });
+
+    // Once the confirmed post has answered, whatever it said: a dismissal reloads the list, which takes
+    // the menu with it, and a refusal arrives as a toast the open menu would otherwise sit on top of.
+    document.body.addEventListener('htmx:afterRequest', (event) => {
+        const menu = event.detail.elt.closest('[data-row-menu]');
+        if (menu && menu.matches(':popover-open')) {
+            menu.hidePopover();
+        }
     });
 
     // The battle log's Saga and Tally tabs. The choice is written onto the "group" around the log

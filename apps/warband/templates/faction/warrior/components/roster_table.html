@@ -1,0 +1,87 @@
+{% load static %}
+{% comment %}
+    The player's own war band, one line per man, in columns he can compare down.
+
+    What the line carries is what decides a month: level, health and morale, the gear he stands in,
+    his wage, and whether he can fight. Everything else - culture, strength and dexterity, injuries,
+    experience - is on his own page, which the name leads to.
+
+    Health and morale are a bar and the figure beside it. The bar is against his own maximum, because
+    the column asks how hurt he is, and it goes "blood" below a third, which is where a man is one bad
+    blow from dropping. The figure is still the gauge component, so the numbers stay governed by
+    docs/patterns/warrior-knowledge.md even though only his own men are ever drawn here.
+
+    The status cell is empty for a man who can fight. That is the normal state, and a tag on five
+    rows out of six would be the loudest thing in the table while saying nothing.
+
+    The table scrolls inside its own box on a phone rather than dragging the page sideways. The box is
+    positioned so that it contains the visually hidden column head: an absolutely positioned element
+    escapes an overflow box that is not its containing block, and that one would widen the page.
+{% endcomment %}
+<div class="relative overflow-x-auto border border-rule-strong">
+    <table class="m-0 min-w-[58rem]">
+        <thead>
+        <tr>
+            <th class="pl-4">Man</th>
+            <th class="text-right">Lvl</th>
+            <th>Health</th>
+            <th>Morale</th>
+            <th>Weapon</th>
+            <th>Armour</th>
+            <th class="text-right">Wage</th>
+            <th>Status</th>
+            <th class="pr-4"><span class="sr-only">Actions</span></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for warrior in warrior_list %}
+            <tr class="hover:bg-raised">
+                <td class="py-3 pl-4 align-middle">
+                    <div class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3">
+                        {# The slot a portrait of his own drops into (#273). The leader's frame is the brightest rule. #}
+                        <img class="h-10 w-10 border {% if warrior.id == faction.leader_id %}border-ink{% else %}border-rule-strong{% endif %}"
+                             width="40" height="40" src="{% static warrior.avatar_url %}" alt="">
+                        <div class="min-w-0">
+                            <a class="leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.name }}</a>
+                            {% if warrior.nickname or warrior.id == faction.leader_id %}
+                                <div class="text-[0.9375rem] leading-snug text-ink-muted">
+                                    {{ warrior.nickname|default:"" }}{% if warrior.nickname and warrior.id == faction.leader_id %} &middot; {% endif %}{% if warrior.id == faction.leader_id %}leader{% endif %}
+                                </div>
+                            {% endif %}
+                            {% comment %}
+                                Why the morale on this line is stuck. The monthly sweep skips a man
+                                carrying unpaid months, so he sits below his ceiling while every other
+                                warrior refills for free - and without this the player reads the low
+                                figure and no cause.
+                            {% endcomment %}
+                            {% if warrior.unpaid_wages_note %}
+                                <div class="text-sm leading-snug text-blood" title="A man who goes unpaid loses morale and cannot recover it">{{ warrior.unpaid_wages_note }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td class="py-3 text-right align-middle font-mono text-figure tabular-nums text-ink">{{ warrior.level }}</td>
+                <td class="py-3 align-middle">
+                    {% include 'faction/warrior/components/roster_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}
+                </td>
+                <td class="py-3 align-middle">
+                    {% include 'faction/warrior/components/roster_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale peak=warrior.peak_max_morale baseline=warrior.morale_baseline knowledge=knowledge %}
+                </td>
+                <td class="py-3 align-middle">{% include 'faction/warrior/components/roster_gear.html' with item=warrior.weapon %}</td>
+                <td class="py-3 align-middle">{% include 'faction/warrior/components/roster_gear.html' with item=warrior.armor %}</td>
+                <td class="py-3 text-right align-middle font-mono text-figure tabular-nums text-ink" title="Monthly salary in silver">
+                    {{ warrior.monthly_salary }}
+                </td>
+                <td class="py-3 align-middle">
+                    {% if not warrior.is_healthy %}
+                        <span class="whitespace-nowrap border border-blood px-2 py-0.5 font-mono text-label font-medium uppercase tracking-label text-ink">{{ warrior.get_condition_display }}</span>
+                    {% endif %}
+                </td>
+                <td class="py-3 pr-4 text-right align-middle">
+                    {% include 'faction/warrior/components/roster_row_menu.html' with warrior=warrior %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
