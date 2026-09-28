@@ -7,6 +7,9 @@ if typing.TYPE_CHECKING:
 
 
 class SkirmishActionDecisionService:
+    # Below this share of his health a man stops fighting to win and fights to live
+    DESPERATE_HEALTH_SHARE = 0.25
+
     warrior: Warrior
     skirmish: Skirmish
 
@@ -22,7 +25,7 @@ class SkirmishActionDecisionService:
 
         wanted = []
         # Warriors will try to save themselves
-        if self.warrior.current_health < self.warrior.max_health * 0.25:
+        if self.warrior.current_health < self.warrior.max_health * self.DESPERATE_HEALTH_SHARE:
             wanted.append(SkirmishActionChoices.DEFENSIVE_STANCE)
         # Strong men batter gates. Ahead of the two below, because a wall left standing shields every
         # defender from every blow, so taking it down is worth more than any single swing at a man

@@ -15,8 +15,15 @@ from apps.warband.skirmish.messages.commands.warrior import (
 )
 from apps.warband.skirmish.messages.events import skirmish, warrior
 
-# The share of his own morale ceiling a man gets back when his leader rallies the side
-RALLY_MORALE_SHARE = 0.1
+# The share of a morale ceiling every morale move in a fight is pegged to: a comrade falling, a blow
+# blocked or beaten, a stance held, a rally heard. One number, so one rally buys back exactly one
+# failed block or one fallen comrade.
+FIGHT_MORALE_SHARE = 0.1
+
+# What a man earns for taking an opponent out of the fight, and what every healthy man on the winning
+# side earns once it is over
+EXPERIENCE_FOR_TAKING_A_MAN_DOWN = 25
+EXPERIENCE_FOR_A_WON_SKIRMISH = 10
 
 
 @message_registry.register_event(event=skirmish.FighterPairsMatched)
@@ -90,11 +97,10 @@ def handle_morale_drop_on_watching_a_comrade_fall(*, context: warrior.WarriorSaw
     who is not healthy, so a man who went down in the same round as his comrade is turned away there
     rather than counted twice here.
     """
-    # Ten percent of what the fallen man could hold, the lever every morale move in a fight uses
     return ReduceMorale(
         skirmish=context.skirmish,
         warrior=context.warrior,
-        lost_morale=round(context.fallen_warrior.max_morale * 0.1),
+        lost_morale=round(context.fallen_warrior.max_morale * FIGHT_MORALE_SHARE),
     )
 
 
@@ -111,7 +117,7 @@ def handle_morale_gain_on_being_rallied(*, context: warrior.WarriorWasRallied) -
     A rally never clears a rout. "increase_morale" moves the number and never the condition, and the
     receiving handler refuses a man who is no longer healthy.
     """
-    increased_morale = round(context.warrior.max_morale * RALLY_MORALE_SHARE)
+    increased_morale = round(context.warrior.max_morale * FIGHT_MORALE_SHARE)
     if increased_morale == 0:
         return None
 
@@ -129,12 +135,10 @@ def handle_experience_gain_on_warrior_incapacitation(
     *,
     context: [warrior.WarriorWasIncapacitated, warrior.WarriorWasKilled],
 ) -> Command:
-    gained_experience = 25
-
     return IncreaseExperience(
         skirmish=context.skirmish,
         warrior=context.by_warrior,
-        increased_experience=gained_experience,
+        increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN,
     )
 
 
@@ -179,8 +183,7 @@ def handle_morale_change_on_resolved_blow(
     WarriorHasFled, and a fleeing warrior is not a healthy one, which is what the defeat check in
     handle_finish_round already counts.
     """
-    # Ten percent of what he can hold, the lever every morale move in a fight uses
-    morale_at_stake = round(context.defender.max_morale * 0.1)
+    morale_at_stake = round(context.defender.max_morale * FIGHT_MORALE_SHARE)
 
     if context.defender_action == SkirmishActionChoices.DEFENSIVE_STANCE:
         # Floored at one point, and only here: a tenth of a small morale pool rounds away to nothing,
@@ -238,14 +241,12 @@ def handle_capture_unconscious_warriors(*, context: skirmish.SkirmishFinished) -
 def handle_experience_gain_after_battle_for_victor(*, context: skirmish.SkirmishFinished) -> list[Command]:
     message_list = []
 
-    gained_experience = 10
-
     for victorious_warrior in context.victorious_healthy_warriors:
         message_list.append(
             IncreaseExperience(
                 skirmish=context.skirmish,
                 warrior=victorious_warrior,
-                increased_experience=gained_experience,
+                increased_experience=EXPERIENCE_FOR_A_WON_SKIRMISH,
             )
         )
 

@@ -52,6 +52,11 @@ class Warrior(models.Model):
     # player watches the war band sour for two months before it starts shrinking.
     UNPAID_MORALE_LOSS = 0.25
     UNPAID_MONTHS_UNTIL_WALKOUT = 3
+    # What being taken in a fight costs a man's morale ceiling, as a share of it, once he is turned to
+    # the captor's banner
+    CAPTIVITY_MORALE_LOSS = 0.25
+    # What a captive fetches sold into slavery, as a share of what he would cost to hire
+    SLAVERY_PRICE_SHARE = 0.5
 
     # What a warrior's monthly wage is worth as a share of what it costs to hire him. One number for
     # both directions: the generators price a wage off a rolled recruitment price, and the pub prices
@@ -380,7 +385,7 @@ class Warrior(models.Model):
 
     @property
     def slavery_selling_price(self) -> int:
-        return int(self.recruitment_price / 2)
+        return int(self.recruitment_price * self.SLAVERY_PRICE_SHARE)
 
     @property
     def months_in_pub(self) -> int:

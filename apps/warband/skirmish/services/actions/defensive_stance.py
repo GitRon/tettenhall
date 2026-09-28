@@ -13,6 +13,8 @@ from apps.warband.skirmish.services.actions.base import SkirmishActionService
 class DefensiveStanceService(SkirmishActionService):
     command: Command = WarriorAttacksWarrior
 
+    DEFENSE_MULTIPLIER = 2
+
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
         # Being in defensive stance will never lead to being the attacker
@@ -24,7 +26,7 @@ class DefensiveStanceService(SkirmishActionService):
         return ActionRoll(roll=None, value=0, outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN)
 
     def get_defense_value(self) -> ActionRoll:
-        # Defense value is doubled, and the die it was doubled from is kept as it fell
+        # Defense value is multiplied, and the die it was multiplied from is kept as it fell
         defense = super().get_defense_value()
 
-        return dataclasses.replace(defense, value=defense.value * 2)
+        return dataclasses.replace(defense, value=defense.value * self.DEFENSE_MULTIPLIER)

@@ -62,7 +62,9 @@
         {# sitting over the top of the set. It is carried by the lower row, between that row's margin #}
         {# and its padding, which is what centres it in the gap instead of tucking it under the text #}
         {# above. #}
-        <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
+        {# In "ink": the month's news is why the player is on this page, so it is not the quietest #}
+        {# text on it. The icon stays muted - it is a marker, not the news. #}
+        <ul class="list-none p-0 text-ink [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
             {% for message in player_month_logs.consequence %}
                 <li>
                     <i class="fa-solid fa-scroll text-ink-muted"></i> {{ message.title }}

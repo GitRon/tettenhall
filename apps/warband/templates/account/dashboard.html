@@ -35,10 +35,10 @@
         {# routes to is not an answer. #}
         {% include 'month/components/player_month_log_list.html' %}
     {% else %}
-        {# The state of the month and the control that ends it, above everything the month contains. #}
-        {# It carries the page's heading, so there is no second one over it. #}
+        {# The state of the month and the control that ends it, above everything the month contains, #}
+        {# with the year it sits in along its foot. It carries the page's heading, so there is no second #}
+        {# one over it. #}
         {% include 'account/components/month_band.html' %}
-        {% include 'calendar/components/year_at_a_glance.html' %}
 
         {# Two tracks on a desk, one column on a phone, split by what the player does with each half: #}
         {# the left is decided, the right is read. The order is the same at both widths - the #}

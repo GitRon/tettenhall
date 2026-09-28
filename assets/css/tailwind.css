@@ -382,6 +382,9 @@
     display: inline-block;
     box-sizing: border-box;
     flex-shrink: 0;
+    /* A refusal's label is its reason and can be a whole sentence; held to the width it is given, it
+     * wraps instead of running out of the row on a phone. */
+    max-width: 100%;
     padding: 6px 15px;
     font-family: var(--font-mono);
     font-size: var(--text-label);
