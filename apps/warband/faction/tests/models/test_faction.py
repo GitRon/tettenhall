@@ -5,6 +5,7 @@ from apps.warband.quest.tests.factories.quest_contract import QuestContractFacto
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.models import Town
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 
 
@@ -145,3 +146,18 @@ def test_get_pub_stock_is_the_men_on_the_shelf():
     WarriorFactory(faction=faction)
 
     assert list(faction.get_pub_stock()) == [mercenary]
+
+
+@pytest.mark.django_db
+def test_get_monthly_income_counts_only_the_men_drawing_a_wage():
+    """
+    A leader draws nothing and the dead are paid nothing, so neither mans the hall: two of the four
+    here count, which is a Great Hall paid in full.
+    """
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_MEDIUM)
+    faction.leader = WarriorFactory(faction=faction, monthly_salary=0)
+    faction.save()
+    WarriorFactory.create_batch(2, faction=faction, monthly_salary=10)
+    WarriorFactory(faction=faction, monthly_salary=10, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    assert faction.get_monthly_income() == 550

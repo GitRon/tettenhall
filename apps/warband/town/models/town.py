@@ -90,9 +90,8 @@ class Town(models.Model):
         bills it and the cost card promises it, and a card naming a different figure than the month
         pays is the kind of thing a player never forgives.
 
-        The roster is handed in rather than counted here: the month and the card each already hold
-        the faction whose men these are, and a model method reaching for a queryset of its own is
-        how the two would come to count different men.
+        The roster is handed in rather than counted here: the men are the faction's, and
+        [Faction.get_monthly_income] is the one place they are counted for this.
         """
         return Hall.get_building_by_type(building_type=self.hall).get_revenue_for_war_band(
             warriors_on_payroll=warriors_on_payroll

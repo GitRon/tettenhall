@@ -86,6 +86,19 @@ class Faction(models.Model):
 
         return not Warrior.objects.filter(id=self.leader_id).exclude_currently_busy(month=month).exists()
 
+    def get_monthly_income(self) -> int:
+        """
+        What this faction's town pays out when a month turns, for the men it keeps today.
+
+        The one head-count behind the figure, because the month pays it and the cost card promises it a
+        page earlier, and the two have to get the same answer. Counted every time rather than stored: a
+        player who hires in month twelve is paid the fuller revenue in month twelve, and one whose war
+        band walks out is back to the baseline the month after.
+        """
+        warriors_on_payroll = Warrior.objects.filter_drawing_a_wage().filter_faction(faction_id=self.id).count()
+
+        return self.town.get_monthly_income(warriors_on_payroll=warriors_on_payroll)
+
     def get_all_unoccupied_items(self) -> QuerySet:
         from apps.warband.item.models.item import Item
 

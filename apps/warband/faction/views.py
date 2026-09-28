@@ -742,18 +742,11 @@ class MonthlyCostOverview(SavegameScopedQuerysetMixin, generic.DetailView):
         # projection the salary run bills from and the navbar warns from, which the finance context
         # processor puts on every render - computing it here again is what made the card and the
         # month disagree about who goes unpaid. Only the income is this card's own, because it is
-        # the one number on it that nothing else shows - and it is read off the town, the same way
-        # the month reads it, rather than assembled from a building here.
-        warriors_on_payroll = (
-            Warrior.objects.filter_drawing_a_wage()
-            .filter_faction(faction_id=current_savegame.player_faction_id)
-            .count()
-        )
+        # the one number on it that nothing else shows - and it is the faction's own figure, the one
+        # the month pays out, rather than assembled from a building here.
         hall = Hall.get_building_by_type(building_type=current_savegame.player_faction.town.hall)
 
-        context["building_income_amount"] = current_savegame.player_faction.town.get_monthly_income(
-            warriors_on_payroll=warriors_on_payroll
-        )
+        context["building_income_amount"] = current_savegame.player_faction.get_monthly_income()
         # What the hall would pay fully manned, and what fully manned takes. A hall paying a share
         # because the war band is short of it is a rule the player has to be able to see on the page
         # where he reads what the month will do to his purse - the alternative is silver going
