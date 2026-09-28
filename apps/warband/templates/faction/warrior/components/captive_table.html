@@ -3,7 +3,10 @@
     The prisoners in the player's own cells, one line per man, in the roster's columns - a captive is
     a man he may be about to take into that roster, so he compares them by the same figures.
 
-    Held rather than commanded: health and morale arrive fuzzed and the gear is named, as
+    Unlike the roster, the line carries strength and dexterity: for a man he does not yet command,
+    they are most of what recruiting him would buy.
+
+    Held rather than commanded: the numbers arrive fuzzed and the gear is named, as
     docs/patterns/warrior-knowledge.md has it for a prisoner, so the gauge draws the word and no bar.
     The wage is public, and it is what recruiting him commits the player to every month after.
 
@@ -11,11 +14,13 @@
     The table scrolls inside its own box on a phone, for the reason "roster_table.html" gives.
 {% endcomment %}
 <div class="relative overflow-x-auto border border-rule-strong">
-    <table class="m-0 min-w-[58rem]">
+    <table class="m-0 min-w-[66rem]">
         <thead>
         <tr>
             <th class="pl-4">Man</th>
             <th class="text-right">Lvl</th>
+            <th>Str</th>
+            <th>Dex</th>
             <th>Health</th>
             <th>Morale</th>
             <th>Weapon</th>
@@ -40,6 +45,13 @@
                     </div>
                 </td>
                 <td class="py-3 text-right align-middle font-mono text-figure tabular-nums text-ink">{{ warrior.level }}</td>
+                <td class="py-3 align-middle whitespace-nowrap font-mono text-figure tabular-nums text-ink">
+                    {% include 'warrior/components/warrior_attribute.html' with value=warrior.strength baseline=warrior.strength_baseline knowledge=knowledge %}
+                </td>
+                {# Against the strength baseline: the two are drawn from one distribution. #}
+                <td class="py-3 align-middle whitespace-nowrap font-mono text-figure tabular-nums text-ink">
+                    {% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}
+                </td>
                 <td class="py-3 align-middle">
                     {% include 'faction/warrior/components/roster_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}
                 </td>
