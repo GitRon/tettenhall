@@ -12,8 +12,8 @@ from apps.warband.item.messages.events.item import (
     OwnershipChanged,
 )
 from apps.warband.item.models.item import Item
+from apps.warband.item.services.sale import get_sell_payout
 from apps.warband.skirmish.models import Warrior
-from apps.warband.town.buildings.marketplace import Marketplace
 
 
 @message_registry.register_command(command=item.CreateItem)
@@ -44,18 +44,11 @@ def handle_sell_item(*, context: item.SellItem) -> list[Event] | Event | None:
 
     # The item keeps its list price and goes back on the shelf at it, so a poor market means selling
     # something and buying it back is a loss
-    marketplace = Marketplace.get_building_by_type(building_type=context.selling_faction.town.marketplace)
-
-    # Integer arithmetic throughout, rounded down: a float share would make the payout depend on
-    # binary representation error. The floor of one silver keeps the cheapest items from being
-    # handed over for nothing.
-    payout = max(context.item.price * marketplace.SELL_PERCENTAGE // 100, 1)
-
     return ItemSold(
         selling_faction=context.selling_faction,
         item=context.item,
         item_name=context.item.display_name,
-        price=payout,
+        price=get_sell_payout(item=context.item, faction=context.selling_faction),
         month=context.month,
     )
 
