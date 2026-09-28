@@ -18,9 +18,9 @@
 
     A phone gets the avatar and the name on one line, the tags across the whole row below, and the
     controls under them - squeezed beside a control, the tags stack one to a line. A desk puts the
-    controls on the name's line.
+    controls on the name's line. Set left explicitly: a rival's page centres the column it sits in.
 {% endcomment %}
-<li class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-[15px] py-3 md:grid-cols-[40px_minmax(0,1fr)_auto] md:px-5">
+<li class="text-left grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-[15px] py-3 md:grid-cols-[40px_minmax(0,1fr)_auto] md:px-5">
     {# The slot a portrait of his own drops into (#273). A pub mercenary has no avatar of his own yet. #}
     {% if is_pub %}
         {# "xl" is three times the text it sits in, so 13px text is what fits it to the 40px slot #}
