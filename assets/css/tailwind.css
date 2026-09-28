@@ -30,7 +30,7 @@
  *
  * "--color-*: initial" is the enforcement, and it is the reason this block opens the way it does: it
  * drops Tailwind's own palette, so "bg-sky-100" and "text-white" stop compiling and there is no
- * quiet way to introduce a seventh hue. A stray colour utility becomes an element that inherits its
+ * quiet way to introduce a hue nobody chose. A stray colour utility becomes an element that inherits its
  * colour and still reads, rather than a hue nobody chose. "transparent" and "current" are put back
  * because they name a behaviour rather than a colour.
  *
@@ -43,12 +43,14 @@
     --color-current: currentColor;
 
     --color-ground: #0c0b0a;
-    --color-raised: #131110;
+    --color-raised: #1a1714;
     --color-rule: #23201c;
+    --color-rule-strong: #3a342d;
     --color-ink: #e6dcc9;
     --color-ink-muted: #8b8373;
     --color-ink-dim: #6b6459;
-    --color-blood: #c05d46;
+    --color-blood: #c8644d;
+    --color-brass: #9c8650;
 
     --font-display: "Cinzel", Georgia, serif;
     --font-body: "Spectral", Georgia, serif;
@@ -92,9 +94,15 @@
     }
 
     /*
-     * Cinzel, uppercase and tracked, at every level. The face carries no lowercase worth reading at
-     * these sizes and the letter-spacing is what stops the caps closing up, so the two travel
-     * together - a heading that sets one without the other is the thing this block exists to prevent.
+     * Three levels of heading, one face each, so that a page title, a section and a card no longer
+     * look alike.
+     *
+     * "h1" is the page title and the only heading in Cinzel: the display face means "this is where
+     * you are", and it is uppercase and tracked because the face carries no lowercase worth reading
+     * and the letter-spacing is what stops the caps closing up. "h2" to "h4" - a section, a card, a
+     * line of the month's news - are Spectral at the reading weight, sentence case, told apart from
+     * prose by size and by "ink". An "h4" is often a whole sentence, which is why it is not the
+     * label. "h5" and "h6" are the mono label, the same voice as a column head.
      */
     h1,
     h2,
@@ -103,42 +111,48 @@
     h5,
     h6 {
         margin: 0 0 20px;
-        font-family: var(--font-display);
-        font-weight: 500;
         color: var(--color-ink);
-        text-transform: uppercase;
     }
 
     h1 {
+        font-family: var(--font-display);
         font-size: 2.25rem;
         font-weight: 700;
         line-height: 1.1;
         letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    h2,
+    h3,
+    h4 {
+        font-family: var(--font-body);
+        font-weight: 400;
     }
 
     h2 {
-        font-size: 1.75rem;
-        line-height: 1.2;
-        letter-spacing: 0.06em;
+        font-size: 1.625rem;
+        line-height: 1.25;
     }
 
     h3 {
-        font-size: 1.375rem;
+        font-size: 1.3125rem;
         line-height: 1.3;
-        letter-spacing: 0.06em;
     }
 
     h4 {
         font-size: 1.125rem;
         line-height: 1.4;
-        letter-spacing: 0.08em;
     }
 
     h5,
     h6 {
-        font-size: 0.8125rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-label);
+        font-weight: 400;
         line-height: 1.4;
-        letter-spacing: 0.1em;
+        letter-spacing: var(--tracking-label);
+        text-transform: uppercase;
     }
 
     p,
@@ -314,14 +328,17 @@
      * A button is outlined by default. The one filled element a screen is allowed says so at its own
      * call site, which is what keeps "one per screen" a thing somebody has to choose rather than a
      * thing that happens.
+     *
+     * Its label is the mono label, like every other short word the game shows as a control or a
+     * status, so the display face is left to where the player is.
      */
     button,
     input[type="submit"] {
         padding: 10px 20px;
-        font-family: var(--font-display);
-        font-size: 0.8125rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-label);
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: var(--tracking-label);
         color: var(--color-ink);
         cursor: pointer;
         background-color: transparent;
