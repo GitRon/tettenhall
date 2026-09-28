@@ -7,15 +7,16 @@
 {# Loot keeps its knowledge rule - the bucket against what a quest of this difficulty pays on average, #}
 {# never the figure itself. #}
 {#  #}
-{# A phone gets two lines - the name over the tags, Accept beside both - and a desk gets one. #}
+{# A phone gets the name with Accept beside it, and the tags below across the whole row - squeezed #}
+{# next to Accept instead, the four of them stack one to a line. A desk gets one line. #}
 <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-[15px] py-3 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_auto] md:px-5">
     <span class="leading-snug text-ink">{{ quest.name }}</span>
-    <span class="col-start-1 row-start-2 flex flex-wrap gap-1.5 font-mono text-label uppercase tracking-label text-ink-muted md:col-start-2 md:row-start-1">
+    <span class="col-span-2 row-start-2 flex flex-wrap gap-1.5 font-mono text-label uppercase tracking-label text-ink-muted md:col-span-1 md:col-start-2 md:row-start-1">
         <span class="border border-rule px-1.5 py-0.5">Against <span class="text-ink">{{ quest.target_faction }}</span></span>
         <span class="border border-rule px-1.5 py-0.5">Difficulty <span class="text-ink">{{ quest.get_difficulty_display }}</span></span>
         <span class="border border-rule px-1.5 py-0.5">Fortification <span class="text-ink">{{ quest.fortification_strength }}</span></span>
         <span class="border border-rule px-1.5 py-0.5">Loot <span class="text-ink">{{ quest.loot|obscurify:quest.average_loot }}</span></span>
     </span>
-    <a class="row-action col-start-2 row-span-2 row-start-1 self-center md:col-start-3 md:row-span-1"
+    <a class="row-action col-start-2 row-start-1 md:col-start-3"
        href="{% url 'warband:quest-accept-view' quest.id %}">Accept</a>
 </li>
