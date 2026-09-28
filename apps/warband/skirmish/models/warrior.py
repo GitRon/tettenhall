@@ -102,10 +102,9 @@ class Warrior(models.Model):
     strength_baseline = models.PositiveSmallIntegerField("Strength baseline")
     # The spread of that same population, and the lowest it can roll, stamped on him by the same
     # generator. Together they are what tells an exceptional roll from an ordinary one: the archetypes
-    # differ in spread by a factor of nearly three, so how far from the mean is far depends on which
-    # kind of man was rolled, and the minimum is where the whole of the left tail ends up. Both
-    # describe his dexterity as well as his strength, drawn as it is from the same "STATS_SIGMA" and
-    # "STATS_MIN" - see "get_nickname".
+    # differ in spread by a factor of two, so how far from the mean is far depends on which kind of man
+    # was rolled, and the minimum is as low as a roll can come out. Both describe his dexterity as well
+    # as his strength, drawn as it is from the same "STATS_SIGMA" and "STATS_MIN" - see "get_nickname".
     stats_spread = models.PositiveSmallIntegerField("Stats spread")
     stats_minimum = models.PositiveSmallIntegerField("Stats minimum")
     # What this man is named for, and which of the several wordings phrases it. Both are drawn once
@@ -219,8 +218,8 @@ class Warrior(models.Model):
 
         Strength and dexterity share a baseline, a spread and a floor, all three being drawn from the
         one "STATS_MU"/"STATS_SIGMA"/"STATS_MIN" trio. Health and morale each have their own pair, and
-        take the default floor of one: their generator re-rolls a zero rather than flooring them, so
-        one is as low as they come.
+        take the default minimum of one: their generator re-rolls a zero, so one is as low as they
+        come.
 
         The stored columns, never [effective_strength] and [effective_dexterity]. This feeds the
         epithet, which is drawn once and kept - a man called "the Strong" who loses a shoulder is

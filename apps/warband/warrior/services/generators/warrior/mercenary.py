@@ -6,11 +6,11 @@ class MercenaryWarriorGenerator(BaseWarriorGenerator):
     XP_MU = 100
     XP_SIGMA = 75
     HEALTH_MU = 20
-    HEALTH_SIGMA = 10
+    HEALTH_SIGMA = 8
     MORALE_MU = 10
     MORALE_SIGMA = 5
     STATS_MU = 10
-    STATS_SIGMA = 10
+    STATS_SIGMA = 4
     STATS_MIN = 3
     PROGRESS_MU = 50
     PROGRESS_SIGMA = 50

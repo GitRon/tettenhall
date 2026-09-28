@@ -71,6 +71,23 @@ class BaseWarriorGenerator:
         self.faction = faction
         self.savegame_id = savegame_id
 
+    def roll_stat(self) -> int:
+        """
+        One strength or dexterity roll, re-rolled while it falls below STATS_MIN.
+
+        Re-rolled rather than lifted onto the minimum, because lifting piles the whole left tail onto
+        one value: every roll below the floor becomes the floor, and a wide enough spread puts a quarter
+        of an archetype there. A re-roll leaves the floor a tail like any other value near it. It also
+        nudges the mean upwards by what it cuts off, which is why each generator keeps its spread narrow
+        against the distance from its mean down to its floor - "strength_baseline" is stamped as
+        STATS_MU and has to stay the average man of his kind.
+        """
+        stat = self.STATS_MIN - 1
+        while stat < self.STATS_MIN:
+            stat = round(random.gauss(self.STATS_MU, self.STATS_SIGMA))
+
+        return stat
+
     def process(self) -> Warrior:
         # Every roll is rounded to the integer its column holds, and rounded before the guard sees
         # it. The guards compare against zero, and a raw "random.gauss" float of 0.42 satisfies them
@@ -99,15 +116,13 @@ class BaseWarriorGenerator:
         while morale_progress < 0 or morale_progress > 100:
             morale_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
 
-        # Floored at STATS_MIN rather than guarded and re-rolled: every generator sets a minimum of
-        # at least one, so a stat cannot come out at zero the way health and morale can.
-        strength = max(round(random.gauss(self.STATS_MU, self.STATS_SIGMA)), self.STATS_MIN)
+        strength = self.roll_stat()
 
         strength_progress = -1
         while strength_progress < 0 or strength_progress > 100:
             strength_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
 
-        dexterity = max(round(random.gauss(self.STATS_MU, self.STATS_SIGMA)), self.STATS_MIN)
+        dexterity = self.roll_stat()
 
         dexterity_progress = -1
         while dexterity_progress < 0 or dexterity_progress > 100:
