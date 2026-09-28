@@ -44,6 +44,10 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
     model = Warrior
     template_name = "warrior/warrior_detail.html"
 
+    def get_queryset(self) -> QuerySet:
+        # The page opens on his portrait, which is five foreign keys
+        return super().get_queryset().with_portrait()
+
     def _add_roster_context(self, *, context: dict, player_faction: Faction | None) -> None:
         """
         Names the list this man was read off, and who stands either side of him in it.
