@@ -53,7 +53,8 @@ class QuestGenerator:
         if not quest_type_list:
             raise RuntimeError(
                 "There are no quest types to draw from. "
-                "Load the reference data with 'loaddata culture itemtype questtype injurytype traittype'."
+                "Load the reference data with "
+                "'loaddata culture itemtype questtype injurytype traittype portraitpiece haircolour'."
             )
 
         quest_type = random.choice(quest_type_list)

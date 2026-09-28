@@ -15,6 +15,7 @@ from apps.warband.skirmish.services.actions.requirements import get_offered_acti
 from apps.warband.skirmish.services.skirmish.skirmish_action_decision import SkirmishActionDecisionService
 from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
+from apps.warband.warrior.choices.portrait_kind import PortraitKindChoices
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
 from apps.warband.warrior.services.nickname import resolve_nickname
 
@@ -95,7 +96,53 @@ class Warrior(models.Model):
     )
     savegame = models.ForeignKey("warband.Savegame", verbose_name="Savegame", on_delete=models.CASCADE)
 
-    avatar_id = models.PositiveSmallIntegerField("Avatar-ID", default=1)
+    # What he looks like, drawn once by his generator and kept, for the reason "nickname_variant" is: a
+    # man with one face on the roster and another in the pub is two men to the player. Hair and beard
+    # are empty for a bald or clean-shaven man, the face only for a man generated before faces were
+    # drawn, who keeps the silhouette - see docs/patterns/portraits.md.
+    portrait_face = models.ForeignKey(
+        "warband.PortraitPiece",
+        verbose_name="Face",
+        related_name="warriors_with_face",
+        limit_choices_to={"kind": PortraitKindChoices.KIND_FACE},
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+    )
+    portrait_hair = models.ForeignKey(
+        "warband.PortraitPiece",
+        verbose_name="Hair",
+        related_name="warriors_with_hair",
+        limit_choices_to={"kind": PortraitKindChoices.KIND_HAIR},
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+    )
+    portrait_beard = models.ForeignKey(
+        "warband.PortraitPiece",
+        verbose_name="Beard",
+        related_name="warriors_with_beard",
+        limit_choices_to={"kind": PortraitKindChoices.KIND_BEARD},
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+    )
+    hair_colour = models.ForeignKey(
+        "warband.HairColour",
+        verbose_name="Hair colour",
+        related_name="warriors_with_hair_colour",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+    )
+    beard_colour = models.ForeignKey(
+        "warband.HairColour",
+        verbose_name="Beard colour",
+        related_name="warriors_with_beard_colour",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+    )
 
     strength = models.PositiveSmallIntegerField("Strength")
     strength_progress = models.PositiveSmallIntegerField("Strength progress", default=0)
@@ -345,10 +392,6 @@ class Warrior(models.Model):
         nickname = self.nickname
 
         return f"{self.name} {nickname}" if nickname else self.name
-
-    @property
-    def avatar_url(self) -> str:
-        return f"img/warrior/avatars/avatar_{self.avatar_id}.jpg"
 
     @property
     def is_dead(self) -> bool:

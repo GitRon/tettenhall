@@ -408,3 +408,14 @@ def test_process_keeps_a_levy_rolled_at_every_floor_on_the_wage_bill():
 
     assert result.recruitment_price == 1
     assert result.monthly_salary == 1
+
+
+@pytest.mark.django_db
+def test_process_gives_the_warrior_a_face_of_his_own():
+    """Drawn once and stored, so the row carries it rather than anything deriving it at render time."""
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert result.portrait_face is not None
+    assert Warrior.objects.get(pk=result.pk).portrait_face == result.portrait_face

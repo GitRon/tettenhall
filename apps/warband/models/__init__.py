@@ -19,18 +19,20 @@ from apps.warband.skirmish.models import (
 )
 from apps.warband.town.models import Town
 from apps.warband.training.models import Training
-from apps.warband.warrior.models import Injury, InjuryType, Trait, TraitType
+from apps.warband.warrior.models import HairColour, Injury, InjuryType, PortraitPiece, Trait, TraitType
 
 __all__ = [
     "BattleHistory",
     "Culture",
     "Faction",
+    "HairColour",
     "Injury",
     "InjuryType",
     "Item",
     "ItemType",
     "PendingIncident",
     "PlayerMonthLog",
+    "PortraitPiece",
     "Quest",
     "QuestContract",
     "QuestType",

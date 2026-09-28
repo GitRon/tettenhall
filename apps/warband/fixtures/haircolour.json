@@ -1,0 +1,66 @@
+[
+  {
+    "model": "warband.haircolour",
+    "pk": 1,
+    "fields": {
+      "name": "Black",
+      "hex": "#2b2521"
+    }
+  },
+  {
+    "model": "warband.haircolour",
+    "pk": 2,
+    "fields": {
+      "name": "Dark brown",
+      "hex": "#4a3222"
+    }
+  },
+  {
+    "model": "warband.haircolour",
+    "pk": 3,
+    "fields": {
+      "name": "Brown",
+      "hex": "#6b4a2f"
+    }
+  },
+  {
+    "model": "warband.haircolour",
+    "pk": 4,
+    "fields": {
+      "name": "Chestnut",
+      "hex": "#8a4f2a"
+    }
+  },
+  {
+    "model": "warband.haircolour",
+    "pk": 5,
+    "fields": {
+      "name": "Red",
+      "hex": "#a4532d"
+    }
+  },
+  {
+    "model": "warband.haircolour",
+    "pk": 6,
+    "fields": {
+      "name": "Dark blonde",
+      "hex": "#b08d5c"
+    }
+  },
+  {
+    "model": "warband.haircolour",
+    "pk": 7,
+    "fields": {
+      "name": "Blonde",
+      "hex": "#d9bb84"
+    }
+  },
+  {
+    "model": "warband.haircolour",
+    "pk": 8,
+    "fields": {
+      "name": "Grey",
+      "hex": "#a8a39b"
+    }
+  }
+]
