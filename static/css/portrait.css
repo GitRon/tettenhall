@@ -1,0 +1,86 @@
+/*
+ * A warrior's portrait, stacked from a bare face and a hair and a beard layer - see
+ * docs/patterns/portraits.md and "warrior_portrait.html".
+ *
+ * Hair and beard are greyscale value maps and take their colour here, by multiply: value x colour. The
+ * layer shows the grey map, and its "::after" is a block of the colour, masked by the same sprite and
+ * multiplied onto it. The layer is isolated so the multiply only ever meets its own sprite: without that
+ * the colour would also darken the face showing through a soft edge.
+ *
+ * Where a layer sits arrives as fractions of the face canvas in "--left", "--top" and "--width". "top"
+ * and "height" percentages are taken against the canvas height and everything else against its width,
+ * so the fractions carry across both axes as they were measured.
+ */
+.portrait {
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.portrait-canvas {
+    position: absolute;
+    display: block;
+    aspect-ratio: 198 / 204;
+}
+
+.portrait-face {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.portrait-layer {
+    position: absolute;
+    left: calc(var(--left) * 100%);
+    top: calc(var(--top) * 100%);
+    width: calc(var(--width) * 100%);
+    isolation: isolate;
+}
+
+.portrait-layer img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.portrait-layer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--tint, #fff);
+    -webkit-mask-image: var(--sprite);
+    mask-image: var(--sprite);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    mix-blend-mode: multiply;
+}
+
+/*
+ * Head and neck in the 40px slot of a list. One crop box for every face, because the bases register
+ * within a few pixels: a square 1.6 head widths across, centred on the head and starting just above the
+ * crown - 163 canvas pixels from (14.5, 10). The canvas is scaled up to fill it and shifted by the
+ * offset, both as shares of the square slot.
+ */
+.portrait-card {
+    width: 40px;
+    height: 40px;
+}
+
+.portrait-card .portrait-canvas {
+    width: 121.5%;
+    left: -8.9%;
+    top: -6.1%;
+}
+
+/* The whole canvas, on his own page */
+.portrait-full {
+    width: 198px;
+    max-width: 100%;
+    aspect-ratio: 198 / 204;
+}
+
+.portrait-full .portrait-canvas {
+    inset: 0;
+    width: 100%;
+}

@@ -1,4 +1,3 @@
-{% load static %}
 {% comment %}
     The player's own war band, one line per man, in columns he can compare down.
 
@@ -38,9 +37,12 @@
             <tr class="hover:bg-raised">
                 <td class="py-3 pl-4 align-middle">
                     <div class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3">
-                        {# The slot a portrait of his own drops into (#273). The leader's frame is the brightest rule. #}
-                        <img class="h-10 w-10 border {% if warrior.id == faction.leader_id %}border-ink{% else %}border-rule-strong{% endif %}"
-                             width="40" height="40" src="{% static warrior.avatar_url %}" alt="">
+                        {# The leader's frame is the brightest rule. #}
+                        {% if warrior.id == faction.leader_id %}
+                            {% include 'warrior/components/warrior_portrait.html' with warrior=warrior frame='border border-ink' %}
+                        {% else %}
+                            {% include 'warrior/components/warrior_portrait.html' with warrior=warrior frame='border border-rule-strong' %}
+                        {% endif %}
                         <div class="min-w-0">
                             <a class="leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.name }}</a>
                             {% if warrior.nickname or warrior.id == faction.leader_id %}

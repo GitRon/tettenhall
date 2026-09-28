@@ -1,0 +1,482 @@
+[
+  {
+    "model": "warband.portraitpiece",
+    "pk": 1,
+    "fields": {
+      "kind": "face",
+      "number": 1,
+      "image": "img/warrior/portrait/face/01.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 2,
+    "fields": {
+      "kind": "face",
+      "number": 2,
+      "image": "img/warrior/portrait/face/02.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 3,
+    "fields": {
+      "kind": "face",
+      "number": 3,
+      "image": "img/warrior/portrait/face/03.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 4,
+    "fields": {
+      "kind": "face",
+      "number": 4,
+      "image": "img/warrior/portrait/face/04.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 5,
+    "fields": {
+      "kind": "face",
+      "number": 5,
+      "image": "img/warrior/portrait/face/05.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 6,
+    "fields": {
+      "kind": "face",
+      "number": 6,
+      "image": "img/warrior/portrait/face/06.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 7,
+    "fields": {
+      "kind": "face",
+      "number": 7,
+      "image": "img/warrior/portrait/face/07.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 8,
+    "fields": {
+      "kind": "face",
+      "number": 8,
+      "image": "img/warrior/portrait/face/08.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 9,
+    "fields": {
+      "kind": "face",
+      "number": 9,
+      "image": "img/warrior/portrait/face/09.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 10,
+    "fields": {
+      "kind": "face",
+      "number": 10,
+      "image": "img/warrior/portrait/face/10.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 11,
+    "fields": {
+      "kind": "face",
+      "number": 11,
+      "image": "img/warrior/portrait/face/11.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 12,
+    "fields": {
+      "kind": "face",
+      "number": 12,
+      "image": "img/warrior/portrait/face/12.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 13,
+    "fields": {
+      "kind": "face",
+      "number": 13,
+      "image": "img/warrior/portrait/face/13.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 14,
+    "fields": {
+      "kind": "face",
+      "number": 14,
+      "image": "img/warrior/portrait/face/14.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 15,
+    "fields": {
+      "kind": "face",
+      "number": 15,
+      "image": "img/warrior/portrait/face/15.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 16,
+    "fields": {
+      "kind": "face",
+      "number": 16,
+      "image": "img/warrior/portrait/face/16.png",
+      "left": 0,
+      "top": 0,
+      "width": 1
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 17,
+    "fields": {
+      "kind": "hair",
+      "number": 1,
+      "image": "img/warrior/portrait/hair/01.png",
+      "left": 0.1753,
+      "top": 0.1218,
+      "width": 0.5703
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 18,
+    "fields": {
+      "kind": "hair",
+      "number": 2,
+      "image": "img/warrior/portrait/hair/02.png",
+      "left": 0.1382,
+      "top": 0.0911,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 19,
+    "fields": {
+      "kind": "hair",
+      "number": 3,
+      "image": "img/warrior/portrait/hair/03.png",
+      "left": 0.15,
+      "top": 0.1009,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 20,
+    "fields": {
+      "kind": "hair",
+      "number": 4,
+      "image": "img/warrior/portrait/hair/04.png",
+      "left": 0.1141,
+      "top": 0.0868,
+      "width": 0.6966
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 21,
+    "fields": {
+      "kind": "hair",
+      "number": 5,
+      "image": "img/warrior/portrait/hair/05.png",
+      "left": 0.123,
+      "top": 0.0094,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 22,
+    "fields": {
+      "kind": "hair",
+      "number": 6,
+      "image": "img/warrior/portrait/hair/06.png",
+      "left": 0.1382,
+      "top": 0.1124,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 23,
+    "fields": {
+      "kind": "hair",
+      "number": 7,
+      "image": "img/warrior/portrait/hair/07.png",
+      "left": 0.1535,
+      "top": 0.0815,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 24,
+    "fields": {
+      "kind": "hair",
+      "number": 8,
+      "image": "img/warrior/portrait/hair/08.png",
+      "left": 0.1449,
+      "top": 0.1124,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 25,
+    "fields": {
+      "kind": "hair",
+      "number": 9,
+      "image": "img/warrior/portrait/hair/09.png",
+      "left": 0.1382,
+      "top": 0.1124,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 26,
+    "fields": {
+      "kind": "hair",
+      "number": 10,
+      "image": "img/warrior/portrait/hair/10.png",
+      "left": 0.1382,
+      "top": 0.1124,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 27,
+    "fields": {
+      "kind": "hair",
+      "number": 11,
+      "image": "img/warrior/portrait/hair/11.png",
+      "left": 0.1202,
+      "top": 0.0958,
+      "width": 0.6966
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 28,
+    "fields": {
+      "kind": "hair",
+      "number": 12,
+      "image": "img/warrior/portrait/hair/12.png",
+      "left": 0.1281,
+      "top": 0.1124,
+      "width": 0.6303
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 29,
+    "fields": {
+      "kind": "beard",
+      "number": 1,
+      "image": "img/warrior/portrait/beard/01.png",
+      "left": 0.3572,
+      "top": 0.4334,
+      "width": 0.3956
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 30,
+    "fields": {
+      "kind": "beard",
+      "number": 2,
+      "image": "img/warrior/portrait/beard/02.png",
+      "left": 0.3559,
+      "top": 0.4104,
+      "width": 0.4159
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 31,
+    "fields": {
+      "kind": "beard",
+      "number": 3,
+      "image": "img/warrior/portrait/beard/03.png",
+      "left": 0.3831,
+      "top": 0.4515,
+      "width": 0.3763
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 32,
+    "fields": {
+      "kind": "beard",
+      "number": 4,
+      "image": "img/warrior/portrait/beard/04.png",
+      "left": 0.3944,
+      "top": 0.4216,
+      "width": 0.3763
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 33,
+    "fields": {
+      "kind": "beard",
+      "number": 5,
+      "image": "img/warrior/portrait/beard/05.png",
+      "left": 0.3842,
+      "top": 0.4411,
+      "width": 0.3763
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 34,
+    "fields": {
+      "kind": "beard",
+      "number": 6,
+      "image": "img/warrior/portrait/beard/06.png",
+      "left": 0.3676,
+      "top": 0.4533,
+      "width": 0.3956
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 35,
+    "fields": {
+      "kind": "beard",
+      "number": 7,
+      "image": "img/warrior/portrait/beard/07.png",
+      "left": 0.3955,
+      "top": 0.4863,
+      "width": 0.3763
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 36,
+    "fields": {
+      "kind": "beard",
+      "number": 8,
+      "image": "img/warrior/portrait/beard/08.png",
+      "left": 0.3883,
+      "top": 0.4573,
+      "width": 0.3956
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 37,
+    "fields": {
+      "kind": "beard",
+      "number": 9,
+      "image": "img/warrior/portrait/beard/09.png",
+      "left": 0.3748,
+      "top": 0.4946,
+      "width": 0.3956
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 38,
+    "fields": {
+      "kind": "beard",
+      "number": 10,
+      "image": "img/warrior/portrait/beard/10.png",
+      "left": 0.3775,
+      "top": 0.4787,
+      "width": 0.3956
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 39,
+    "fields": {
+      "kind": "beard",
+      "number": 11,
+      "image": "img/warrior/portrait/beard/11.png",
+      "left": 0.3852,
+      "top": 0.4824,
+      "width": 0.3956
+    }
+  },
+  {
+    "model": "warband.portraitpiece",
+    "pk": 40,
+    "fields": {
+      "kind": "beard",
+      "number": 12,
+      "image": "img/warrior/portrait/beard/12.png",
+      "left": 0.389,
+      "top": 0.5056,
+      "width": 0.3956
+    }
+  }
+]

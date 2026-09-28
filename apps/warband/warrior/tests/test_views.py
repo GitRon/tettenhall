@@ -13,6 +13,7 @@ from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.equipping import WEARER_REFUSAL
+from apps.warband.warrior.services.portrait import draw_portrait
 
 
 @pytest.mark.django_db
@@ -23,6 +24,18 @@ def test_warrior_detail_view_shows_the_warrior(logged_in_client, current_savegam
 
     assert response.status_code == 200
     assert response.context["warrior"] == warrior
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_brings_the_portrait_along(logged_in_client, current_savegame, django_assert_num_queries):
+    """The page opens on his portrait, which is five foreign keys read one at a time without it."""
+    warrior = WarriorFactory(faction=current_savegame.player_faction, **draw_portrait())
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    shown = response.context["warrior"]
+    with django_assert_num_queries(0):
+        assert shown.portrait_face.image and shown.hair_colour.hex
 
 
 @pytest.mark.django_db

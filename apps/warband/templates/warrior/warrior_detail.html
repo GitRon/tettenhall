@@ -29,6 +29,11 @@
         </div>
     {% endif %}
 
+    {# The whole portrait, which the lists only have room for the head of #}
+    <div class="mb-5">
+        {% include 'warrior/components/warrior_portrait.html' with warrior=object crop='full' frame='border border-rule-strong' %}
+    </div>
+
     {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
     {# decides what a table should actually become at that width. #}
     <div class="overflow-x-auto">

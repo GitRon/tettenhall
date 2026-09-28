@@ -4,7 +4,8 @@
 and a screen that needs a ninth value is a conversation rather than an edit.**
 
 The whole identity lives in the `@theme` block of `assets/css/tailwind.css`. Nothing else in the
-project names a colour: the block drops Tailwind's own palette with `--color-*: initial`, so a stray
+project names an interface colour (the hair on a portrait is paint, see
+[where this does not reach](#where-this-does-not-reach)): the block drops Tailwind's own palette with `--color-*: initial`, so a stray
 `bg-sky-100` or `text-white` does not compile at all. That is the enforcement, and it is deliberate —
 an element that inherits its colour still reads, where a hue nobody chose looks fine and is wrong.
 
@@ -168,6 +169,11 @@ Font Awesome covers the UI verbs and inherits `color` in the ordinary way. Which
 which concept is not settled — see #64.
 
 ## Where this does not reach
+
+**Hair colours** (`apps/warband/fixtures/haircolour.json`) are the one colour named outside the `@theme`
+block. They are pigment for a painting, not colours of the interface: they reach the page as an inline
+custom property on a portrait layer and colour nothing else. A hair colour is never a text, rule or status
+colour, and a UI colour is never added to that fixture - see [portraits](portraits.md).
 
 `403.html`, `404.html` and `500.html` do not extend `base.html`, because they are what Django reaches
 for when the shell itself may be what failed. They carry the values they use - `ground`, `rule`, `ink`,

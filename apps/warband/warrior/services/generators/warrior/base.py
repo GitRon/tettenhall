@@ -8,6 +8,7 @@ from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.domain.attribute_draw import AttributeDraw
 from apps.warband.warrior.models.trait import Trait
 from apps.warband.warrior.services.nickname import NICKNAME_VARIANT_BOUND, draw_nickname_state
+from apps.warband.warrior.services.portrait import draw_portrait
 from apps.warband.warrior.services.trait import InnateTraitDrawService
 from apps.warband.warrior.services.unique_name import draw_warrior_name
 
@@ -217,6 +218,8 @@ class BaseWarriorGenerator:
             monthly_salary=Warrior.salary_for(recruitment_price=recruitment_price) if self.draws_a_wage else 0,
             weapon=weapon,
             armor=armor,
+            # His face, drawn with the rest of him and kept, so he looks the same on every page
+            **draw_portrait(),
         )
 
         # What kind of man he is, drawn with the rolls that say how good he is and kept for good. Written

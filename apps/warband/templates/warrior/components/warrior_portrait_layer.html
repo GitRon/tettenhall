@@ -1,0 +1,3 @@
+{% load l10n static %}
+{# One hair or beard layer of "warrior_portrait.html": where the piece sits, as fractions of the face, and the colour it is multiplied with. Unlocalised, because a decimal comma is not CSS. #}
+<span class="portrait-layer" style="--left: {{ piece.left|unlocalize }}; --top: {{ piece.top|unlocalize }}; --width: {{ piece.width|unlocalize }}; --sprite: url('{% static piece.image %}');{% if colour %} --tint: {{ colour.hex }};{% endif %}"><img src="{% static piece.image %}" alt=""></span>

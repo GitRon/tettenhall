@@ -8,6 +8,7 @@ from apps.warband.quest.tests.factories.quest_contract import QuestContractFacto
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.services.portrait import draw_portrait
 
 
 @pytest.mark.django_db
@@ -1010,3 +1011,20 @@ def test_put_on_payroll_never_prices_a_wage_at_nothing():
     assert result == 1
     warrior.refresh_from_db()
     assert warrior.monthly_salary == 1
+
+
+@pytest.mark.django_db
+def test_with_portrait_brings_the_five_pieces_of_a_face_along(django_assert_num_queries):
+    """A list draws every man's face, and five foreign keys read one at a time are five queries per row."""
+    warrior = WarriorFactory(**draw_portrait())
+
+    fetched = Warrior.objects.with_portrait().get(pk=warrior.pk)
+
+    with django_assert_num_queries(0):
+        assert [
+            fetched.portrait_face,
+            fetched.portrait_hair,
+            fetched.portrait_beard,
+            fetched.hair_colour,
+            fetched.beard_colour,
+        ]
