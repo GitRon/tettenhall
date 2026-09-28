@@ -19,7 +19,7 @@
             {# a second option clicked while the first answer is on its way would otherwise be sent too #}
             <fieldset class="mt-[15px] flex flex-wrap gap-2.5">
                 {% for option in question.options %}
-                    <button class="box-border cursor-pointer border border-rule bg-transparent px-[15px] py-[9px] text-sm uppercase leading-normal text-ink hover:bg-raised"
+                    <button class="box-border cursor-pointer border border-rule bg-transparent px-[15px] py-[9px] font-mono text-label uppercase tracking-label leading-normal text-ink hover:bg-raised"
                             hx-post="{% url 'warband:pending-incident-answer-view' question.pending_incident.id %}"
                             hx-vals='{"option": "{{ option.key }}"}'
                             hx-disabled-elt="closest fieldset"

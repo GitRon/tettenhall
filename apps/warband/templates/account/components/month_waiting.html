@@ -6,7 +6,7 @@
 {# at the end - because the two bands are scanned in the same pass. Silent when nothing waits: a #}
 {# heading over nothing is a thing the player learns to skip. #}
 {% if month_standing.waiting.has_anything_waiting %}
-    <div class="mb-5 box-border border border-rule bg-ground p-[15px] text-ink-muted md:p-[30px]">
+    <div class="mb-5 box-border border border-rule-strong bg-ground p-[15px] text-ink-muted md:p-[30px]">
         <h3>Waiting on you</h3>
         <ul class="m-0 list-none p-0">
             {% if month_standing.waiting.captive_count %}
@@ -16,7 +16,7 @@
                         <span class="text-ink">captive{{ month_standing.waiting.captive_count|pluralize }} in your hold</span>
                         <span class="block text-sm leading-snug">Take them into the war band, or sell them into slavery.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:warband-captives-view' %}">Captives</a>
                 </li>
             {% endif %}
@@ -27,7 +27,7 @@
                         <span class="text-ink">{{ month_standing.waiting.fyrd_reserve|pluralize:"man,men" }} of the fyrd to draft</span>
                         <span class="block text-sm leading-snug">Farmers who will take up a spear when called.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:warband-fyrd-view' %}">Fyrd</a>
                 </li>
             {% endif %}
@@ -38,7 +38,7 @@
                         <span class="text-ink">piece{{ month_standing.waiting.stored_upgrade_count|pluralize }} of gear in the stores nobody carries</span>
                         <span class="block text-sm leading-snug">{{ month_standing.waiting.stored_upgrade_count|pluralize:"It is,Each is" }} better than what one of your men holds now.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:warband-stores-view' %}">Stores</a>
                 </li>
             {% endif %}

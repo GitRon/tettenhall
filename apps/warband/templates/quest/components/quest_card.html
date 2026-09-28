@@ -1,7 +1,7 @@
 {% load l10n obscurify %}
 {# The card shell repeats across the eight hand-rolled cards. #64 owns collecting them into one #}
 {# component; this keeps them where they are and only changes what they are built from. #}
-<div class="mb-5 box-border bg-ground text-ink-muted border border-rule">
+<div class="mb-5 box-border bg-ground text-ink-muted border border-rule-strong">
     <div class="border-b border-rule px-[30px] py-[15px]">
         {# The swap target keeps its id on the element that carries it, and its classes with it: this #}
         {# is replaced whole, so styling moved to a wrapper would be dropped on the second render. #}
@@ -20,7 +20,7 @@
         <p>Loot: {{ quest.loot|obscurify:quest.average_loot }}</p>
     </div>
     <div class="border-t border-rule px-[30px] py-[15px]">
-        <a class="cursor-pointer bg-none p-0 uppercase leading-normal text-ink no-underline hover:text-ink hover:underline"
+        <a class="cursor-pointer bg-none p-0 font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:text-ink hover:underline"
            href="{% url 'warband:quest-accept-view' quest.id %}">Accept</a>
     </div>
 </div>

@@ -1,5 +1,5 @@
 {% load l10n static %}
-<div id="pub-mercenary-card-{{ warrior.id|unlocalize }}" class="mb-5 box-border bg-ground text-ink-muted border border-rule">
+<div id="pub-mercenary-card-{{ warrior.id|unlocalize }}" class="mb-5 box-border bg-ground text-ink-muted border border-rule-strong">
     <div class="border-b border-rule px-[30px] py-[15px]">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div class="w-auto">
@@ -7,24 +7,19 @@
             </div>
             <div class="flex-1">
                 <h3 class="mb-0 text-2xl leading-snug text-ink">{{ warrior.display_name }}</h3>
-                <p class="mt-0 text-sm leading-snug text-ink-muted">
-                    <i class="fa-solid fa-award"></i> <i>Level {{ warrior.level }}</i>&nbsp;
-                    <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
-                    <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>&nbsp;
+                {# The same labelled mono line as the roster card: each figure beside its word. #}
+                <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-label uppercase leading-snug tracking-label text-ink-muted">
+                    <span>Level <span class="text-ink">{{ warrior.level }}</span></span>
+                    <span><span class="text-ink">{{ warrior.experience }}</span> XP</span>
+                    <span title="Monthly salary in silver">Wage <span class="text-ink">{{ warrior.monthly_salary }}</span></span>
                     {# Through the same components the roster card uses, against the man's own #}
                     {# baselines rather than a literal: a fyrd levy and a mercenary are not drawn #}
                     {# from one distribution. See docs/patterns/warrior-knowledge.md. #}
-                    <i class="fa-solid fa-heart"></i>
-                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</i>&nbsp;
-                    <i class="fa-solid fa-bolt"></i>
-                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</i>&nbsp;
+                    <span>Health <span class="text-ink">{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</span></span>
+                    <span>Morale <span class="text-ink">{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</span></span>
                     {# The condition is a state, not a scale, and reads the same on every card the #}
                     {# player sees a warrior on. #}
-                    {% if warrior.is_healthy %}
-                        <i class="fa-solid fa-user-injured"></i> <i>Able to fight</i>
-                    {% else %}
-                        <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
-                    {% endif %}
+                    <span class="text-ink">{% if warrior.is_healthy %}Able to fight{% else %}{{ warrior.get_condition_display }}{% endif %}</span>
                 </p>
             </div>
         </div>
@@ -89,7 +84,7 @@
                 hx-disabled-elt="this"
                 hx-target="#pub-hired-list"
                 hx-swap="beforeend"
-                class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline">Recruit for {{ warrior.hiring_price }} silver
+                class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline">Recruit for {{ warrior.hiring_price }} silver
         </button>
     </div>
 </div>

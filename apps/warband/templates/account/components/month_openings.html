@@ -7,7 +7,7 @@
 {# so seven rows are scanned in one pass. The sentence stays, it just stops being the thing the eye #}
 {# has to parse; the way out of the row is a control at its end rather than a link trailing the prose, #}
 {# which on a phone wrapped underneath and put every action at the bottom of its own row. #}
-<div class="mb-5 box-border border border-rule bg-ground p-[15px] text-ink-muted md:p-[30px]">
+<div class="mb-5 box-border border border-rule-strong bg-ground p-[15px] text-ink-muted md:p-[30px]">
     <h3>Still open to you</h3>
     {% if not month_standing.has_offers_open %}
         <p class="m-0">
@@ -26,7 +26,7 @@
                         <span class="text-ink">quest{{ month_standing.quest_count|pluralize }} on the board</span>
                         <span class="block text-sm leading-snug">The board is redrawn when the month turns.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:town-board-view' %}">Board</a>
                 </li>
             {% endif %}
@@ -48,18 +48,18 @@
                             — ride in and {{ month_standing.occupiable_rival_list|length|pluralize:"it is,they are" }} yours.
                         </span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:rival-faction-list-view' %}">Rivals</a>
                 </li>
             {% endif %}
             {% if month_standing.can_build %}
                 <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
-                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">1</span>
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-brass">1</span>
                     <span class="min-w-0 flex-1">
                         <span class="text-ink">building may be raised</span>
                         <span class="block text-sm leading-snug">Only one a month, and none has been raised in this one.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:town-upgrade-view' %}">Buildings</a>
                 </li>
             {% endif %}
@@ -70,7 +70,7 @@
                         <span class="text-ink">piece{{ month_standing.shop_item_count|pluralize }} of gear in the shop</span>
                         <span class="block text-sm leading-snug">The stalls are restocked when the month turns.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:town-shop-view' %}">Shop</a>
                 </li>
             {% endif %}
@@ -81,7 +81,7 @@
                         <span class="text-ink">{{ month_standing.pub_mercenary_count|pluralize:"man,men" }} standing in the pub</span>
                         <span class="block text-sm leading-snug">They drink elsewhere when the month turns.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] text-sm uppercase leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
                        href="{% url 'warband:town-pub-view' %}">Pub</a>
                 </li>
             {% endif %}

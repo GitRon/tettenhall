@@ -9,7 +9,7 @@
 {# An unresolved skirmish is lifted out of the list of openings for the same reason: it is not an #}
 {# offer that expires, it is the state of the month, and it was row one of seven marked only by #}
 {# colour. #}
-<div class="mb-5 flex flex-col items-start gap-y-3 border border-rule bg-raised p-[15px] md:flex-row md:items-center md:justify-between md:gap-x-5">
+<div class="mb-5 flex flex-col items-start gap-y-3 border border-rule-strong bg-raised p-[15px] md:flex-row md:items-center md:justify-between md:gap-x-5">
     <div class="flex flex-col gap-y-1">
         {# The month of the year, its season and the year, with what the month does to the game under #}
         {# it - read off the same month class the rules take their numbers from. #}
@@ -47,11 +47,11 @@
             {# are two different numbers once a fight is under way, and the sentence above already #}
             {# counts them. A button reading "to the fights" that opens one fight is the very thing #}
             {# this control was wrong about before. #}
-            <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ground no-underline hover:border-ink"
+            <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center font-mono text-label uppercase tracking-label leading-normal text-ground no-underline hover:border-ink"
                href="{% if month_standing.skirmish_to_enter %}{% url 'warband:skirmish-fight-view' month_standing.skirmish_to_enter.id %}{% else %}{% url 'warband:skirmish-list-view' %}{% endif %}">
                 {% if month_standing.skirmish_to_enter %}To the fight{% else %}To the fights{% endif %}
             </a>
-            <button class="box-border inline-block shrink-0 border border-rule bg-transparent px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ink-dim"
+            <button class="box-border inline-block shrink-0 border border-rule bg-transparent px-[30px] py-[9px] text-center font-mono text-label uppercase tracking-label leading-normal text-ink-dim"
                     disabled
                     type="button">
                 Finish month
@@ -59,7 +59,7 @@
         {% else %}
             {# A button rather than an anchor, because this posts the month: an "a" with no href is #}
             {# out of Tab's reach and announced as text. #}
-            <button class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center text-sm uppercase leading-normal text-ground hover:border-ink"
+            <button class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center font-mono text-label uppercase tracking-label leading-normal text-ground hover:border-ink"
                     hx-post="{% url 'warband:finish-month-view' %}"
                     hx-vals='{"month": {{ current_savegame.current_month }}}'
                     hx-disabled-elt="this"

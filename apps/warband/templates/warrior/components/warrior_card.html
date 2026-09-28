@@ -1,5 +1,5 @@
 {% load static %}
-<div class="mb-5 box-border bg-ground text-ink-muted border border-rule">
+<div class="mb-5 box-border bg-ground text-ink-muted border border-rule-strong">
     <div class="border-b border-rule px-[30px] py-[15px]">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div class="w-auto">
@@ -7,14 +7,12 @@
             </div>
             <div class="flex-1">
                 <h3 class="mb-0 text-2xl leading-snug text-ink">{{ warrior.display_name }}</h3>
-                <p class="mt-0 text-sm leading-snug text-ink-muted">
-                    <i class="fa-solid fa-award"></i> <i>Level {{ warrior.level }}</i>&nbsp;
-                    <i class="fa-solid fa-layer-group"></i> <i>{{ warrior.experience }} XP</i>&nbsp;
-                    {# A coin and a bare number sits two icons away from the pub card's recruitment #}
-                    {# price, which is also a coin and a bare number, and they are not the same figure. #}
-                    <span title="Monthly salary in silver">
-                        <i class="fa-solid fa-coins"></i> <i>{{ warrior.monthly_salary }}</i>
-                    </span>&nbsp;
+                {# One mono line, every figure beside the word for it. The pub card's recruitment #}
+                {# price is also silver, and the word is what keeps the wage from being read as it. #}
+                <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-label uppercase leading-snug tracking-label text-ink-muted">
+                    <span>Level <span class="text-ink">{{ warrior.level }}</span></span>
+                    <span><span class="text-ink">{{ warrior.experience }}</span> XP</span>
+                    <span title="Monthly salary in silver">Wage <span class="text-ink">{{ warrior.monthly_salary }}</span></span>
                     {% comment %}
                         Health and morale are figures for the men the player commands and a bucket for
                         everybody else - his prisoners, the mercenaries in his pub, a rival's war band.
@@ -22,19 +20,13 @@
                         being rendered in, and the rule lives in one place. See
                         docs/patterns/warrior-knowledge.md.
                     {% endcomment %}
-                    <i class="fa-solid fa-heart"></i>
-                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</i>&nbsp;
-                    <i class="fa-solid fa-bolt"></i>
-                    <i>{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale peak=warrior.peak_max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</i>&nbsp;
+                    <span>Health <span class="text-ink">{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}</span></span>
+                    <span>Morale <span class="text-ink">{% include 'warrior/components/warrior_gauge.html' with current=warrior.current_morale maximum=warrior.max_morale peak=warrior.peak_max_morale baseline=warrior.morale_baseline knowledge=knowledge %}</span></span>
                     {# The condition is a state, not a scale: it says the warrior is still on his #}
                     {# feet, and the health beside it says at what cost. #}
-                    {% if warrior.is_healthy %}
-                        <i class="fa-solid fa-user-injured"></i> <i>Able to fight</i>
-                    {% else %}
-                        <i class="fa-solid fa-user-injured"></i> <i>{{ warrior.get_condition_display }}</i>
-                    {% endif %}
+                    <span class="text-ink">{% if warrior.is_healthy %}Able to fight{% else %}{{ warrior.get_condition_display }}{% endif %}</span>
                     {% comment %}
-                        Why the morale two icons to the left is stuck. The monthly sweep skips a man
+                        Why the morale on this line is stuck. The monthly sweep skips a man
                         carrying unpaid months, so he sits below his ceiling while every other
                         warrior refills for free - and without this the player reads the low figure
                         and no cause. Attached by "FactionRosterContextMixin" and only for the
@@ -42,8 +34,8 @@
                         nothing here rather than an empty label.
                     {% endcomment %}
                     {% if warrior.unpaid_wages_note %}
-                        &nbsp;<span class="text-blood" title="A man who goes unpaid loses morale and cannot recover it">
-                            <i class="fa-solid fa-sack-xmark"></i> <i>{{ warrior.unpaid_wages_note }}</i>
+                        <span class="text-blood" title="A man who goes unpaid loses morale and cannot recover it">
+                            <i class="fa-solid fa-sack-xmark"></i> {{ warrior.unpaid_wages_note }}
                         </span>
                     {% endif %}
                 </p>
@@ -120,15 +112,15 @@
             <button type="button"
                     hx-post="{% url 'warband:warrior-recruit-captured-view' warrior.id faction.id %}"
                     hx-disabled-elt="this, next button"
-                    class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline">
+                    class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline">
                 Recruit for <i class="fa-solid fa-coins"></i> <i>0</i></button> /
             <button type="button"
                     hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
                     hx-disabled-elt="this, previous button"
-                    class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline">
+                    class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline">
                 Enslave for <i class="fa-solid fa-coins"></i> <i>{{ warrior.slavery_selling_price }}</i>&nbsp;</button>
         {% else %}
-            <a href="{% url 'warband:warrior-detail-view' warrior.id %}" class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline">Detail</a>
+            <a href="{% url 'warband:warrior-detail-view' warrior.id %}" class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline">Detail</a>
             {% comment %}
                 Only on the player's own roster, and only where "FactionRosterContextMixin" answered
                 the question - a rival's card carries no control to offer and the captured list above
@@ -142,7 +134,7 @@
                 {% else %}
                     / <button type="button"
                               hx-post="{% url 'warband:warrior-dismiss-view' warrior.id %}"
-                              class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline">
+                              class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline">
                         Dismiss for <i class="fa-solid fa-coins"></i> <i>{{ warrior.severance_pay }}</i>&nbsp;</button>
                 {% endif %}
             {% endif %}

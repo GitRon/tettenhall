@@ -5,7 +5,7 @@
 
     <div class="grid grid-cols-1 gap-7 text-center md:grid-cols-4">
         <div>
-            <div class="mb-5 box-border bg-ground text-ink-muted border border-rule p-[30px]">
+            <div class="mb-5 box-border bg-ground text-ink-muted border border-rule-strong p-[30px]">
                 <h2>Details</h2>
                 {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
                 {# decides what a table should actually become at that width. #}
@@ -36,12 +36,12 @@
                 </div>
                 {% if can_be_attacked %}
                     <a href="{% url 'warband:faction-attack-view' object.id %}"
-                       class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Attack this faction</a>
+                       class="box-border inline-block cursor-pointer border py-[4px] font-mono text-label uppercase tracking-label px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">Attack this faction</a>
                 {% elif can_be_occupied %}
                     {# Nobody healthy is left to hold the town, so there is nothing to fight and nothing to compose #}
                     <form method="post" action="{% url 'warband:faction-occupy-view' object.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="box-border inline-block cursor-pointer border py-[4px] text-sm uppercase px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
+                        <button type="submit" class="box-border inline-block cursor-pointer border py-[4px] font-mono text-label uppercase tracking-label px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
                             Ride into {{ object.town_name }}
                         </button>
                     </form>
