@@ -3,9 +3,14 @@
 {% block content %}
     <h1>Board</h1>
 
-    {% for quest in quest_list %}
-        {% include 'quest/components/quest_card.html' with quest=quest %}
-    {% empty %}
+    {# One box for the whole board, a hairline between quests: a list is a card whose rows are its parts. #}
+    {% if quest_list %}
+        <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+            {% for quest in quest_list %}
+                {% include 'quest/components/quest_row.html' with quest=quest %}
+            {% endfor %}
+        </ul>
+    {% else %}
         <p class="text-sm leading-snug text-ink-muted">Nothing is pinned to the board this month.</p>
-    {% endfor %}
+    {% endif %}
 {% endblock content %}
