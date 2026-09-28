@@ -30,6 +30,13 @@ class WarriorQuerySet(models.QuerySet):
         """
         return self.exclude_dead().filter(monthly_salary__gt=0)
 
+    def with_portrait(self) -> WarriorQuerySet:
+        """
+        The five things a portrait is stacked from, in the one query that fetches the men: a list draws
+        every man's face, and five foreign keys read one at a time are five queries per row.
+        """
+        return self.select_related("portrait_face", "portrait_hair", "portrait_beard", "hair_colour", "beard_colour")
+
     def filter_faction(self, *, faction_id: int):
         return self.filter(faction=faction_id)
 

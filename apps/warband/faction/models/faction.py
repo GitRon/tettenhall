@@ -127,7 +127,7 @@ class Faction(models.Model):
         item's name reads its type, and a bare related manager makes that up to four queries per
         prisoner.
         """
-        return self.captured_warriors.select_related("weapon__type", "armor__type")
+        return self.captured_warriors.select_related("weapon__type", "armor__type").with_portrait()
 
     def get_pub_stock(self) -> QuerySet:
         """
@@ -137,4 +137,4 @@ class Faction(models.Model):
         The twin of [get_held_captives], and separate because they are two different relations - the
         pub is what a faction is offering and the cells are what it is holding.
         """
-        return self.available_mercenaries.select_related("weapon__type", "armor__type", "savegame")
+        return self.available_mercenaries.select_related("weapon__type", "armor__type", "savegame").with_portrait()

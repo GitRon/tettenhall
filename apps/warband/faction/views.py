@@ -95,6 +95,7 @@ class FactionRosterContextMixin:
         # unordered roster would be three screens disagreeing about who comes after whom.
         context["warrior_list"] = list(
             Warrior.objects.select_related("weapon__type", "armor__type")
+            .with_portrait()
             .exclude_dead()
             .filter_faction(faction_id=self.object.id)
             .order_by("name", "id")

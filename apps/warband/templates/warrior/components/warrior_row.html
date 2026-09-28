@@ -1,4 +1,3 @@
-{% load static %}
 {% comment %}
     One man, as a row: the lists that show somebody else's warriors side by side - a rival's roster, the
     captives a faction holds, the mercenaries in its pub. The player's own war band is a table instead,
@@ -17,18 +16,12 @@
     The flags say which list this is: "is_captured" for a faction's prisoners, "is_pub" for its pub, and
     neither for a rival's roster. "is_player_faction" decides whether there is anything to press.
 
-    A phone gets the avatar and the name on one line, the tags across the whole row below, and the
+    A phone gets the portrait and the name on one line, the tags across the whole row below, and the
     controls under them - squeezed beside a control, the tags stack one to a line. A desk puts the
     controls on the name's line. Set left explicitly: a rival's page centres the column it sits in.
 {% endcomment %}
 <li class="text-left grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-[15px] py-3 md:grid-cols-[40px_minmax(0,1fr)_auto] md:px-5">
-    {# The slot a portrait of his own drops into (#273). A pub mercenary has no avatar of his own yet. #}
-    {% if is_pub %}
-        {# "xl" is three times the text it sits in, so 13px text is what fits it to the 40px slot #}
-        <span class="flex h-10 w-10 items-center justify-center text-[13px] text-ink-muted">{% include 'common/components/svg_icon.html' with icon_name='swordman' size='xl' %}</span>
-    {% else %}
-        <img class="h-10 w-10 border border-rule" width="40" height="40" src="{% static warrior.avatar_url %}" alt="">
-    {% endif %}
+    {% include 'warrior/components/warrior_portrait.html' with warrior=warrior frame='border border-rule' %}
     <a class="min-w-0 leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.display_name }}</a>
 
     <div class="col-span-2 flex flex-col gap-y-1.5 md:col-span-1 md:col-start-2 md:row-start-2">

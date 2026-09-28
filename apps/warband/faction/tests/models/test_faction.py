@@ -7,6 +7,7 @@ from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
+from apps.warband.warrior.services.portrait import draw_portrait
 
 
 @pytest.mark.django_db
@@ -207,3 +208,31 @@ def test_get_monthly_income_counts_only_the_men_drawing_a_wage():
     WarriorFactory(faction=faction, monthly_salary=10, condition=Warrior.ConditionChoices.CONDITION_DEAD)
 
     assert faction.get_monthly_income() == 550
+
+
+@pytest.mark.django_db
+def test_get_held_captives_brings_the_portrait_along(django_assert_num_queries):
+    """Every row draws the prisoner's face, which is five foreign keys."""
+    faction = FactionFactory()
+    captive = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, **draw_portrait())
+    faction.captured_warriors.add(captive)
+
+    held_captive = faction.get_held_captives().get()
+
+    with django_assert_num_queries(0):
+        assert held_captive.portrait_face.image and held_captive.hair_colour.hex
+
+
+@pytest.mark.django_db
+def test_get_pub_stock_brings_the_portrait_along(django_assert_num_queries):
+    """The twin of [test_get_held_captives_brings_the_portrait_along], for the pub's rows."""
+    faction = FactionFactory()
+    mercenary = WarriorFactory(
+        faction=None, savegame=faction.savegame, culture=faction.culture, is_pub_stock=True, **draw_portrait()
+    )
+    faction.available_mercenaries.add(mercenary)
+
+    stocked_mercenary = faction.get_pub_stock().get()
+
+    with django_assert_num_queries(0):
+        assert stocked_mercenary.portrait_face.image and stocked_mercenary.hair_colour.hex

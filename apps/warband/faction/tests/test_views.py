@@ -26,6 +26,7 @@ from apps.warband.town.models import Town
 from apps.warband.training.tests.factories.training import TrainingFactory
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import LEADER_REFUSAL
+from apps.warband.warrior.services.portrait import draw_portrait
 from apps.warband.warrior.services.unpaid_wages import LEADER_NOTE
 
 
@@ -2001,3 +2002,16 @@ def test_faction_detail_view_lists_a_rivals_roster_by_name(logged_in_client, cur
     response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
     assert list(response.context["warrior_list"]) == [aelfric, cenwulf]
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_brings_the_portraits_along(logged_in_client, current_savegame, django_assert_num_queries):
+    """Every line draws the man's face, which is five foreign keys a bare queryset reads one at a time."""
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction, **draw_portrait())
+
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    warrior = response.context["warrior_list"][0]
+    with django_assert_num_queries(0):
+        assert warrior.portrait_face.image and warrior.hair_colour.hex

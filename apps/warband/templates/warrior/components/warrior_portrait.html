@@ -1,0 +1,29 @@
+{% load l10n static %}
+{% comment %}
+    A man's face, stacked from the pieces he was drawn with: the bare face, then his beard, then his hair.
+    How the layers are coloured and why they sit where they do is in static/css/portrait.css and
+    docs/patterns/portraits.md.
+
+    "crop" is "card" for the 40px slot on a list - head and neck, where colour carries almost the whole
+    signal - and "full" for the whole canvas on his own page. "frame" is the border the caller wants
+    around it.
+
+    A man generated before faces were drawn has none, and keeps the silhouette the lists showed for
+    everybody before.
+{% endcomment %}
+{% if warrior.portrait_face %}
+    <span class="portrait portrait-{{ crop|default:'card' }} {{ frame }}">
+        <span class="portrait-canvas">
+            <img class="portrait-face" src="{% static warrior.portrait_face.image %}" width="198" height="204" alt="">
+            {% if warrior.portrait_beard %}
+                {% include 'warrior/components/warrior_portrait_layer.html' with piece=warrior.portrait_beard colour=warrior.beard_colour %}
+            {% endif %}
+            {% if warrior.portrait_hair %}
+                {% include 'warrior/components/warrior_portrait_layer.html' with piece=warrior.portrait_hair colour=warrior.hair_colour %}
+            {% endif %}
+        </span>
+    </span>
+{% else %}
+    {# "xl" is three times the text it sits in, so 13px text is what fits it to the 40px slot #}
+    <span class="flex h-10 w-10 shrink-0 items-center justify-center text-[13px] text-ink-muted {{ frame }}">{% include 'common/components/svg_icon.html' with icon_name='swordman' size='xl' %}</span>
+{% endif %}
