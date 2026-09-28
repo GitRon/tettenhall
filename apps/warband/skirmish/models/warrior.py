@@ -485,25 +485,34 @@ class Warrior(models.Model):
         service = SkirmishActionDecisionService(warrior=self, skirmish=skirmish)
         return service.process()
 
+    @cached_property
+    def _fallback_item_types(self) -> dict[int, ItemType]:
+        """
+        What an empty slot fights with, keyed by the function of the slot.
+
+        One query for both, and cached on the instance: a card asks for each slot twice - its icon and
+        its name - and the fight asks once per blow. The fallbacks are reference data nothing in play
+        ever changes, so there is nothing that can move under a cached value.
+        """
+        return {item_type.function: item_type for item_type in ItemType.objects.filter(is_fallback=True)}
+
+    def _get_gear_or_fallback(self, *, item: Item | None, function: int) -> Item:
+        """
+        The item in a slot, or the fallback for its function when the slot is empty.
+
+        Built unsaved and owned by his faction, so a bare-handed man reads like any other one holding
+        something: the fallback has a type, dice and an owner, and no row.
+        """
+        if item is not None:
+            return item
+
+        return Item(type=self._fallback_item_types[function], owner=self.faction)
+
     def get_weapon_or_fallback(self) -> Item:
-        return (
-            self.weapon
-            if self.weapon
-            else Item(
-                type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_WEAPON),
-                owner=self.faction,
-            )
-        )
+        return self._get_gear_or_fallback(item=self.weapon, function=ItemType.FunctionChoices.FUNCTION_WEAPON)
 
     def get_armor_or_fallback(self) -> Item:
-        return (
-            self.armor
-            if self.armor
-            else Item(
-                type=ItemType.objects.get(is_fallback=True, function=ItemType.FunctionChoices.FUNCTION_ARMOR),
-                owner=self.faction,
-            )
-        )
+        return self._get_gear_or_fallback(item=self.armor, function=ItemType.FunctionChoices.FUNCTION_ARMOR)
 
     @property
     def expected_damage(self) -> float:
