@@ -114,13 +114,25 @@
         color: var(--color-ink);
     }
 
+    /*
+     * The size is the phone's and "md" adds the desk's, like every other width in the project - see
+     * docs/patterns/responsive-layout.md. Caps in Cinzel run wide, and a month such as Þrimilcemonath
+     * is one word that cannot wrap. "anywhere" is for the titles built from names - a warrior, a rival,
+     * a skirmish - that no size can promise to fit: a broken name reads worse than a whole one, and
+     * still better than a page that scrolls sideways.
+     */
     h1 {
         font-family: var(--font-display);
-        font-size: 2.25rem;
+        font-size: 1.75rem;
         font-weight: 700;
         line-height: 1.1;
         letter-spacing: 0.04em;
         text-transform: uppercase;
+        overflow-wrap: anywhere;
+
+        @variant md {
+            font-size: 2.25rem;
+        }
     }
 
     h2,

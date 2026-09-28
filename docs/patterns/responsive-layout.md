@@ -44,7 +44,7 @@ Not the reverse:
 Both render the same thing today. The first one is still correct when someone adds a third child and
 forgets the prefix; the second one is broken on a phone the moment anyone touches it.
 
-Three rules follow from the default:
+Four rules follow from the default:
 
 - **No fixed width is ever unprefixed.** A `w-96` or a `min-w-*` without an `md:` in front of it is a
   horizontal scrollbar on a phone. Widths belong behind `md:`; the phone gets `w-full`.
@@ -52,6 +52,10 @@ Three rules follow from the default:
 - **A table gets a scroll container, not a narrower table.** `overflow-x-auto` on a wrapper is the
   honest answer for a table with more than three columns — the table keeps its shape and the page body
   stops scrolling sideways.
+- **Type has a phone size too.** A display size is a width like any other: one word of 36px Cinzel caps
+  is wider than a phone. The page title is set small in the base layer of `assets/css/tailwind.css` and
+  grows at `md:`, and it may break inside a word - a heading that can hold a player-visible name
+  cannot promise the name fits.
 
 ## When one column is not enough
 
