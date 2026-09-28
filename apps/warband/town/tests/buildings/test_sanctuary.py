@@ -53,7 +53,7 @@ def test_get_levels_matches_the_model_choices():
 def test_get_effects_names_the_healing_ceiling():
     result = SmallSanctuary.get_effects()
 
-    assert result == (BuildingEffect(label="Healed per month at most", value="8 health points"),)
+    assert result == (BuildingEffect(label="Healed per month at most", value="16 health points"),)
 
 
 def test_npc_starting_sanctuary_level_is_the_shrine():
@@ -64,7 +64,7 @@ def test_npc_starting_sanctuary_level_is_the_shrine():
     result = Sanctuary.get_building_by_type(building_type=NPC_STARTING_SANCTUARY_LEVEL)
 
     assert isinstance(result, SmallSanctuary)
-    assert result.MAX_HEALING_POINTS == 8
+    assert result.MAX_HEALING_POINTS == 16
 
 
 def test_npc_starting_sanctuary_level_is_a_level_the_column_accepts():

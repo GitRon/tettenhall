@@ -5,8 +5,8 @@ from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGen
 class MercenaryWarriorGenerator(BaseWarriorGenerator):
     XP_MU = 100
     XP_SIGMA = 75
-    HEALTH_MU = 20
-    HEALTH_SIGMA = 8
+    HEALTH_MU = 40
+    HEALTH_SIGMA = 16
     MORALE_MU = 10
     MORALE_SIGMA = 5
     STATS_MU = 10

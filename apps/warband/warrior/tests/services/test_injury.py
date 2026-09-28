@@ -19,10 +19,10 @@ def test_chance_at_the_lip_is_the_lower_bound():
 
 @pytest.mark.django_db
 def test_chance_at_the_death_threshold_is_the_upper_bound():
-    # Three points is the whole band for a man who can hold twenty, DEATH_OVERKILL_SHARE being 0.15
+    # Ten points is the whole band for a man who can hold twenty, DEATH_OVERKILL_SHARE being 0.5
     warrior = WarriorFactory(max_health=20)
 
-    service = InjuryRollService(warrior=warrior, overkill_health=3)
+    service = InjuryRollService(warrior=warrior, overkill_health=10)
 
     assert service.chance == InjuryRollService.CHANCE_AT_DEATHS_DOOR
 
@@ -31,9 +31,10 @@ def test_chance_at_the_death_threshold_is_the_upper_bound():
 def test_chance_scales_with_the_overkill_depth():
     warrior = WarriorFactory(max_health=20)
 
-    service = InjuryRollService(warrior=warrior, overkill_health=1)
+    # Halfway through the ten-point band, so halfway between the two chances
+    service = InjuryRollService(warrior=warrior, overkill_health=5)
 
-    assert service.chance == pytest.approx(0.2333, abs=0.0001)
+    assert service.chance == pytest.approx(0.3, abs=0.0001)
 
 
 @pytest.mark.django_db

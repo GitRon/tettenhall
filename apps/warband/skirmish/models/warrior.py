@@ -31,7 +31,7 @@ class Warrior(models.Model):
     # hold. Named rather than written at the one comparison that decides dead from unconscious,
     # because the injury roll has to measure its own depth against the very same threshold - see
     # [InjuryRollService].
-    DEATH_OVERKILL_SHARE = 0.15
+    DEATH_OVERKILL_SHARE = 0.5
 
     # No injury or trait may take an attribute to nothing. Strength scales a blow by
     # "strength / strength_baseline", so a zero is a man who can never hurt anybody again - a worse

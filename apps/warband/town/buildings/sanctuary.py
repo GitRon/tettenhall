@@ -6,7 +6,7 @@ class Sanctuary(Building):
     Drives how fast injured warriors recover between months.
 
     The points are the upper bound of the monthly healing roll, not a flat amount, so a level raises
-    the ceiling rather than guaranteeing it. Mercenaries carry around 20 maximum health, which is
+    the ceiling rather than guaranteeing it. Mercenaries carry around 40 maximum health, which is
     what makes the Great Sanctuary able to mend one in a single month.
     """
 
@@ -28,25 +28,25 @@ class Sanctuary(Building):
 
 
 class NoSanctuary(Sanctuary):
-    MAX_HEALING_POINTS = 4
+    MAX_HEALING_POINTS = 8
 
     BUILDING_COSTS = 0
 
 
 class SmallSanctuary(Sanctuary):
-    MAX_HEALING_POINTS = 8
+    MAX_HEALING_POINTS = 16
 
     BUILDING_COSTS = 500
 
 
 class MediumSanctuary(Sanctuary):
-    MAX_HEALING_POINTS = 14
+    MAX_HEALING_POINTS = 28
 
     BUILDING_COSTS = 1750
 
 
 class LargeSanctuary(Sanctuary):
-    MAX_HEALING_POINTS = 20
+    MAX_HEALING_POINTS = 40
 
     BUILDING_COSTS = 3500
 
