@@ -53,15 +53,21 @@
             <li class="grid grid-cols-1 gap-x-6 gap-y-3 px-[15px] py-4 md:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto] md:items-center md:px-5">
                 <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 md:flex-col md:justify-start">
                     <span class="leading-snug text-ink">{{ building.label }}</span>
-                    <span class="font-mono text-label uppercase tracking-label text-ink-muted">
-                        {{ building.level_display }} · level <span class="text-ink">{{ building.level }}</span> of {{ building.max_level }}
+                    {# Two pieces that each hold together, so a narrow column breaks between them #}
+                    <span class="flex flex-wrap gap-x-2 font-mono text-label uppercase tracking-label text-ink-muted">
+                        <span class="whitespace-nowrap">{{ building.level_display }} ·</span>
+                        <span class="whitespace-nowrap">level <span class="text-ink">{{ building.level }}</span> of {{ building.max_level }}</span>
                     </span>
                 </div>
-                {# Aligned across the building's own effects, so the figures stand in columns. At the top #}
-                {# level there is no next, and the arrow column goes with it. #}
-                <div class="grid {% if building.level < building.max_level %}grid-cols-[minmax(0,1fr)_auto_auto]{% else %}grid-cols-[minmax(0,1fr)_auto]{% endif %} items-baseline gap-x-4 gap-y-1.5">
+                {% comment %}
+                    Aligned across the building's own effects, so the figures stand in columns. A desk reads
+                    label, now and next on one line; a phone gives the label its own line above the two
+                    figures, which cannot wrap and would otherwise squeeze it to nothing. At the top level
+                    there is no next, and the arrow column goes with it.
+                {% endcomment %}
+                <div class="grid {% if building.level < building.max_level %}grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[max-content_auto_auto]{% else %}grid-cols-1 md:grid-cols-[max-content_auto]{% endif %} items-baseline gap-x-4 gap-y-1 md:gap-y-1.5">
                     {% for effect in building.effect_list %}
-                        <span class="text-sm leading-snug text-ink-muted">{{ effect.label }}</span>
+                        <span class="{% if building.level < building.max_level %}col-span-2 md:col-span-1{% endif %} {% if not forloop.first %}mt-1.5 md:mt-0{% endif %} text-sm leading-snug text-ink-muted">{{ effect.label }}</span>
                         <span class="whitespace-nowrap font-mono text-sm tabular-nums text-ink-muted">{{ effect.current }}</span>
                         {% if building.level < building.max_level %}
                             <span class="whitespace-nowrap font-mono text-sm tabular-nums text-ink">&rarr; {{ effect.next }}</span>
