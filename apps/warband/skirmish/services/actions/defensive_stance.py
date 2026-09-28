@@ -15,6 +15,8 @@ class DefensiveStanceService(SkirmishActionService):
 
     DEFENSE_MULTIPLIER = 2
 
+    THROWS_A_BLOW = False
+
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
         # Being in defensive stance will never lead to being the attacker

@@ -15,8 +15,9 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.commands.skirmish import WinSkirmish
 from apps.warband.skirmish.messages.commands.warrior import IncreaseExperience, ReduceHealth
-from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage
+from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage, WarriorTookDamage
 from apps.warband.skirmish.models.battle_history import BattleHistory
+from apps.warband.skirmish.models.skirmish_blow import SkirmishBlow
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.skirmish_blow import SkirmishBlowFactory
@@ -155,7 +156,7 @@ def test_a_knockout_marks_the_man_without_the_bus_reading_the_database(queuebie_
     disabled in this context." His faction is read in the command handler now, and this is the test
     that says so.
 
-    Twenty-two points against twenty health leaves him two past nothing, inside the 15% band that
+    Twenty-two points against twenty health leaves him two past nothing, inside the 50% band that
     tells a corpse from a captive. The roll is patched to land, because whether he keeps something is
     not what this is about.
     """
@@ -195,3 +196,57 @@ def test_a_fight_that_shakes_a_man_changes_him_and_tells_the_player_so(queuebie_
     assert PlayerMonthLog.objects.filter(
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_CHANGED, title="Sven came back from the fight a different man."
     ).exists()
+
+
+def _first_blow(*, skirmish, attacker, defender, damage: int) -> WarriorTookDamage:
+    return WarriorTookDamage(
+        skirmish=skirmish,
+        round_number=1,
+        attacker=attacker,
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        attack=ActionRoll(
+            roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=damage),
+            item_type=ItemTypeFactory(base_value="2d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+            value=damage,
+        ),
+        defender=defender,
+        defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defense=ActionRoll(
+            roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=1),
+            item_type=ItemTypeFactory(base_value="1d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+            value=0,
+        ),
+        damage=damage,
+        initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+    )
+
+
+@pytest.mark.django_db
+def test_the_slower_man_of_a_pair_strikes_back_once_the_first_blow_has_landed(queuebie_registry):
+    """
+    The counter is raised off the first blow's result, and only a real queue run shows it is actually
+    thrown - the blow record it leaves is written three hops further down.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_health=40, max_health=40)
+
+    handle_message(_first_blow(skirmish=skirmish, attacker=attacker, defender=defender, damage=5))
+
+    assert SkirmishBlow.objects.filter(attacker=defender, defender=attacker).count() == 1
+
+
+@pytest.mark.django_db
+def test_a_man_the_first_blow_puts_down_does_not_strike_back(queuebie_registry):
+    """
+    What the counter's position in the queue is for. It is declared below the health handler, so it
+    drains behind "ReduceHealth" and sees the man already down. Raised beside the first blow instead, it
+    would drain first, and a man lying senseless would swing back at the one who felled him.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction, current_health=5, max_health=40)
+
+    handle_message(_first_blow(skirmish=skirmish, attacker=attacker, defender=defender, damage=8))
+
+    assert SkirmishBlow.objects.filter(attacker=defender).count() == 0

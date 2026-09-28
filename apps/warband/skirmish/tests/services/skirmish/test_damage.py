@@ -200,3 +200,57 @@ def test_process_sets_each_mans_own_gear_and_action_against_the_others():
             initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
         )
     ]
+
+
+def _counter_service(*, first_strikers_action: int) -> SkirmishDamageService:
+    """
+    A counter from a man with a 2d6 weapon at a man in 1d4 armour, who struck first with the given action.
+    """
+    skirmish = SkirmishFactory()
+    savegame = skirmish.attacking_faction.savegame
+
+    return SkirmishDamageService(
+        skirmish=skirmish,
+        round_number=2,
+        attacker=WarriorFactory(
+            faction=skirmish.attacking_faction,
+            weapon=ItemFactory(
+                savegame=savegame,
+                type=ItemTypeFactory(base_value="2d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+            ),
+        ),
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defender=WarriorFactory(
+            faction=skirmish.defending_faction,
+            armor=ItemFactory(
+                savegame=savegame,
+                type=ItemTypeFactory(base_value="1d4", function=ItemType.FunctionChoices.FUNCTION_ARMOR),
+            ),
+        ),
+        defender_action=first_strikers_action,
+        initiative=InitiativeChoices.INITIATIVE_COUNTER,
+    )
+
+
+@pytest.mark.django_db
+def test_process_halves_a_counter_at_a_fast_attacker_before_his_armour():
+    """
+    Six on the swing, halved to three, against three on the armour: the halving comes first, so what is
+    left is the floor's share of three rather than of six.
+    """
+    service = _counter_service(first_strikers_action=SkirmishActionChoices.FAST_ATTACK)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        result = service.process()
+
+    assert (result[0].attack.value, result[0].damage) == (3, 1)
+
+
+@pytest.mark.django_db
+def test_process_leaves_a_counter_at_any_other_attacker_at_full_weight():
+    service = _counter_service(first_strikers_action=SkirmishActionChoices.SIMPLE_ATTACK)
+
+    with mock.patch("apps.common.domain.dice.random.randint", return_value=3):
+        result = service.process()
+
+    assert (result[0].attack.value, result[0].damage) == (6, 3)

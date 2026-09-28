@@ -10,6 +10,11 @@ class SkirmishActionService:
     # mechanic rather than of any wall: a town building levers how much wall there is, never this
     FORTIFICATION_DEFENSE_MULTIPLIER = 1.5
 
+    # Whether this action swings at the man in front of him. It decides whether the slower man of a
+    # pair strikes back once the quicker one's blow has landed: a man behind his shield, at the wall
+    # or shouting to his men has no blow to answer with, and his opponent gets the round's only one
+    THROWS_A_BLOW = True
+
     command: WarriorAttacksWarrior
 
     skirmish: Skirmish

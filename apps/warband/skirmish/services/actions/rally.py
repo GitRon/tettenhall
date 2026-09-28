@@ -15,6 +15,8 @@ class RallyService(SkirmishActionService):
     assembled.
     """
 
+    THROWS_A_BLOW = False
+
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
         # He is facing his own men, so he never wins the initiative over the man in front of him

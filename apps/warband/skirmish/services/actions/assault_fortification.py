@@ -13,6 +13,8 @@ class AssaultFortificationService(SkirmishActionService):
     takes off the wall.
     """
 
+    THROWS_A_BLOW = False
+
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
         # His back is to the man he is paired with, so he never wins the initiative over him

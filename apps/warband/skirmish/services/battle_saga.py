@@ -16,6 +16,7 @@ from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.models import Warrior
+from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
 
 # How much of the defender's health a blow took, as a share of his maximum, below which it reads as a
 # graze or as a solid hit. Anything above is a blow that nearly ends him. Measured against his maximum
@@ -127,6 +128,10 @@ NOT_THROWN = {
 }
 
 UNOPPOSED_PREFIX = "With nobody left to face him, "
+# The slower man's blow, once the quicker one's has landed - and the weaker one he manages when that
+# was a fast attack that caught him off-balance
+COUNTER_PREFIX = "Striking back, "
+OFF_BALANCE_COUNTER_PREFIX = "Caught off-balance and striking back weakly, "
 
 KILLED = (
     "{warrior} falls and does not rise again.",
@@ -226,6 +231,12 @@ def saga_for_blow(
 
     if initiative == InitiativeChoices.INITIATIVE_UNOPPOSED:
         return f"{UNOPPOSED_PREFIX}{sentence}"
+
+    if initiative == InitiativeChoices.INITIATIVE_COUNTER:
+        # The same rule the damage service halved the swing by, so the sentence cannot drift from it
+        if SkirmishDamageService.is_off_balance_counter(defender_action=defender_action):
+            return f"{OFF_BALANCE_COUNTER_PREFIX}{sentence}"
+        return f"{COUNTER_PREFIX}{sentence}"
 
     return sentence
 

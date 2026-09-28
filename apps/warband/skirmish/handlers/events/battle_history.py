@@ -8,15 +8,33 @@ from apps.warband.skirmish.messages.commands.battle_history import CreateBattleH
 from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.warband.skirmish.models import BattleHistory
 from apps.warband.skirmish.services import battle_saga
+from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
+from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
 from apps.warband.warrior.messages.events import warrior as warrior_injury
+
+
+def _blow_verb(*, context: warrior.WarriorTookDamage | warrior.WarriorDefendedAllDamage, verb: str) -> str:
+    """
+    The attacker and the verb of a blow's line, told as a counter when it is one.
+
+    A counter at a fast attacker is the one blow in the game weakened by the other man's action, and
+    the line says so - the number it names is already the halved one.
+    """
+    if context.initiative != InitiativeChoices.INITIATIVE_COUNTER:
+        return f"{context.attacker} {verb}"
+
+    if SkirmishDamageService.is_off_balance_counter(defender_action=context.defender_action):
+        return f"{context.attacker}, caught off-balance, {verb} back weakly"
+
+    return f"{context.attacker} {verb} back"
 
 
 @message_registry.register_event(event=warrior.WarriorTookDamage)
 def handle_log_warrior_takes_damage(*, context: warrior.WarriorTookDamage) -> Command:
     return CreateBattleHistory(
         skirmish=context.skirmish,
-        message=f"{context.attacker} strikes at {context.attack.value} against {context.defender}'s "
-        f"{context.defense.value} defense, and {context.damage} damage gets through.",
+        message=f"{_blow_verb(context=context, verb='strikes')} at {context.attack.value} against "
+        f"{context.defender}'s {context.defense.value} defense, and {context.damage} damage gets through.",
         saga=battle_saga.saga_for_blow(
             attacker=context.attacker,
             attacker_action=context.attacker_action,
@@ -41,13 +59,13 @@ def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAll
     if context.outcome == BlowOutcomeChoices.OUTCOME_NOT_THROWN:
         message = f"{context.attacker} throws nothing at {context.defender} this round."
     elif context.outcome == BlowOutcomeChoices.OUTCOME_MISSED:
-        message = f"{context.attacker} swings at {context.defender} and misses."
+        message = f"{_blow_verb(context=context, verb='swings')} at {context.defender} and misses."
     elif context.outcome == BlowOutcomeChoices.OUTCOME_ABSORBED:
         # The sibling line's wording with its tail changed: the two describe one exchange, and
         # naming the same two rolls the same way is what lets them be read as a pair
         message = (
-            f"{context.attacker} strikes at {context.attack.value} against {context.defender}'s "
-            f"{context.defense.value} defense, and nothing gets through."
+            f"{_blow_verb(context=context, verb='strikes')} at {context.attack.value} against "
+            f"{context.defender}'s {context.defense.value} defense, and nothing gets through."
         )
     else:
         raise RuntimeError(f"No battle log sentence for blow outcome {context.outcome}.")
@@ -70,18 +88,28 @@ def handle_log_warrior_defends_all_damage(*, context: warrior.WarriorDefendedAll
 @message_registry.register_event(event=skirmish.AttackerDefenderDecided)
 def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDecided) -> Command:
     """
-    Who strikes, why it is him rather than the other man, and where the other man's order went.
+    Who strikes first, why it is him rather than the other man, and where the other man's order went.
 
     The order the defender was given is not swallowed: the damage service feeds it through
-    "get_defense_value", so it is spent as his defence. Saying only that he is the defender is what
-    reads as a command the game ignored - he chose an attack, and no line accounted for it.
+    "get_defense_value", so it is spent as his defence against the first blow, and when it throws a
+    blow of its own he swings back after it - see "handle_counter_blow". Saying only that he is the
+    defender is what reads as a command the game ignored - he chose an attack, and no line accounted
+    for it.
 
-    A third way to become the attacker raises rather than picking up a sentence nobody wrote for it.
+    Any other way to come to a blow raises rather than picking up a sentence nobody wrote for it. The
+    counter never arrives here: it is raised off the first blow's result, not decided with the pair.
     """
     attack = SkirmishActionChoices(context.attacker_action).label
     defence = SkirmishActionChoices(context.defender_action).label
 
-    if context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL:
+    if context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL and (
+        get_service_by_skirmish_action(skirmish_action=context.defender_action).THROWS_A_BLOW
+    ):
+        message = (
+            f"{context.attacker} is quicker than {context.defender} and strikes first with a {attack}, "
+            f"and {context.defender}'s {defence} comes after it."
+        )
+    elif context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL:
         message = (
             f"{context.attacker} is quicker than {context.defender} and comes at him with a {attack}, "
             f"so {context.defender}'s {defence} serves as his defence."

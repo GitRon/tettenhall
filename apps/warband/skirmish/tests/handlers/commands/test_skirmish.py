@@ -674,7 +674,9 @@ def test_handle_determine_attacker_and_defender_with_two_defensive_stances():
     )
 
 
-def _warrior_attacks_warrior(*, skirmish, attacker, defender) -> WarriorAttacksWarrior:
+def _warrior_attacks_warrior(
+    *, skirmish, attacker, defender, initiative: int = InitiativeChoices.INITIATIVE_UNOPPOSED
+) -> WarriorAttacksWarrior:
     return WarriorAttacksWarrior(
         skirmish=skirmish,
         round_number=1,
@@ -682,7 +684,7 @@ def _warrior_attacks_warrior(*, skirmish, attacker, defender) -> WarriorAttacksW
         attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
         defender=defender,
         defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
-        initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
+        initiative=initiative,
     )
 
 
@@ -747,6 +749,46 @@ def test_handle_warrior_attacks_warrior_throws_nothing_from_a_man_already_down()
     )
 
     assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=True)
+
+
+@pytest.mark.django_db
+def test_handle_warrior_attacks_warrior_drops_a_counter_its_striker_is_too_far_gone_for():
+    """
+    The first blow put him down, and his fall has its own line. Nothing announced the counter, so there
+    is no line for a refusal to close either.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    Warrior.objects.filter(id=attacker.id).update(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = handle_warrior_attacks_warrior(
+        context=_warrior_attacks_warrior(
+            skirmish=skirmish, attacker=attacker, defender=defender, initiative=InitiativeChoices.INITIATIVE_COUNTER
+        )
+    )
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_warrior_attacks_warrior_tells_a_counter_at_a_man_somebody_else_put_down():
+    """
+    The man he means to strike back at went down to a blow from outside the pair, in between. That the
+    counter found him already down is worth saying, as it is for any other blow.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    Warrior.objects.filter(id=defender.id).update(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+    result = handle_warrior_attacks_warrior(
+        context=_warrior_attacks_warrior(
+            skirmish=skirmish, attacker=attacker, defender=defender, initiative=InitiativeChoices.INITIATIVE_COUNTER
+        )
+    )
+
+    assert result == BlowWasNotStruck(skirmish=skirmish, attacker=attacker, defender=defender, attacker_is_down=False)
 
 
 @pytest.mark.django_db

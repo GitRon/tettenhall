@@ -1,8 +1,9 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
-from apps.warband.skirmish.messages.commands.skirmish import DetermineAttacker
+from apps.warband.skirmish.messages.commands.skirmish import DetermineAttacker, WarriorAttacksWarrior
 from apps.warband.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
@@ -14,6 +15,7 @@ from apps.warband.skirmish.messages.commands.warrior import (
     StoreLastUsedSkirmishAction,
 )
 from apps.warband.skirmish.messages.events import skirmish, warrior
+from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
 
 # The share of a morale ceiling every morale move in a fight is pegged to: a comrade falling, a blow
 # blocked or beaten, a stance held, a rally heard. One number, so one rally buys back exactly one
@@ -218,6 +220,46 @@ def handle_morale_change_on_resolved_blow(
         skirmish=context.skirmish,
         warrior=context.defender,
         lost_morale=morale_at_stake,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorTookDamage)
+@message_registry.register_event(event=warrior.WarriorDefendedAllDamage)
+def handle_counter_blow(
+    *,
+    context: [
+        warrior.WarriorTookDamage,
+        warrior.WarriorDefendedAllDamage,
+    ],
+) -> Command | None:
+    """
+    The slower man of a pair swings back once the quicker one's blow has landed.
+
+    Initiative decides who strikes first, not who strikes at all. Only a blow won on the roll is
+    answered: a man striking unopposed falls on somebody busy with his own pair, and a counter is not
+    answered again. A man whose order throws nothing at his opponent - a stance, the wall, a rally -
+    has no blow to answer with.
+
+    Raised off the first blow's result rather than beside it, and declared below the health and
+    morale handlers of the same two events, so its command is queued behind "ReduceHealth" and
+    "ReduceMorale". Both write synchronously when they drain, so by the time the counter is handled a
+    man the first blow knocked down or broke is no longer healthy, and "handle_warrior_attacks_warrior"
+    refuses his swing. Raised beside the first blow, it would drain before either write.
+    """
+    if context.initiative != InitiativeChoices.INITIATIVE_WON_THE_ROLL:
+        return None
+
+    if not get_service_by_skirmish_action(skirmish_action=context.defender_action).THROWS_A_BLOW:
+        return None
+
+    return WarriorAttacksWarrior(
+        skirmish=context.skirmish,
+        round_number=context.round_number,
+        attacker=context.defender,
+        attacker_action=context.defender_action,
+        defender=context.attacker,
+        defender_action=context.attacker_action,
+        initiative=InitiativeChoices.INITIATIVE_COUNTER,
     )
 
 
