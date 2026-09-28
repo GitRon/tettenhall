@@ -756,3 +756,89 @@ def test_handle_log_fortification_assaulted_by_the_swing_that_brings_it_down():
     )
 
     assert result == CreateBattleHistory(skirmish=skirmish, message="Offa storms the fortification at 20.")
+
+
+def test_handle_log_warrior_takes_damage_tells_a_counter_as_one():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Cuthred")
+    defender = WarriorFactory.build(name="Beorn")
+
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_takes_damage(
+            context=WarriorTookDamage(
+                skirmish=skirmish,
+                round_number=1,
+                attacker=attacker,
+                attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+                attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=7), value=7),
+                defender=defender,
+                defender_action=SkirmishActionChoices.RISKY_ATTACK,
+                defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
+                damage=5,
+                initiative=InitiativeChoices.INITIATIVE_COUNTER,
+            )
+        )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Cuthred strikes back at 7 against Beorn's 2 defense, and 5 damage gets through.",
+        saga="Striking back, Cuthred cuts at Beorn; Beorn, winding up a great blow of his own, is caught open — "
+        "the blow lands hard.",
+    )
+
+
+def test_handle_log_warrior_defends_all_damage_tells_a_counter_a_fast_attack_threw_off_balance():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Cuthred")
+    defender = WarriorFactory.build(name="Beorn")
+
+    with mock.patch(
+        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+    ):
+        result = handle_log_warrior_defends_all_damage(
+            context=WarriorDefendedAllDamage(
+                skirmish=skirmish,
+                round_number=1,
+                attacker=attacker,
+                attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+                attack=ActionRoll(roll=None, value=0, outcome=BlowOutcomeChoices.OUTCOME_MISSED),
+                defender=defender,
+                defender_action=SkirmishActionChoices.FAST_ATTACK,
+                defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
+                outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+                initiative=InitiativeChoices.INITIATIVE_COUNTER,
+            )
+        )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Cuthred, caught off-balance, swings back weakly at Beorn and misses.",
+        saga="Caught off-balance and striking back weakly, Cuthred takes a huge swing at Beorn; Beorn tries to "
+        "dance clear — the blow goes wide.",
+    )
+
+
+def test_handle_log_attacker_defender_decided_says_the_slower_man_answers_after():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Beorn")
+    defender = WarriorFactory.build(name="Cuthred")
+
+    result = handle_log_attacker_defender_decided(
+        context=AttackerDefenderDecided(
+            skirmish=skirmish,
+            round_number=1,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.FAST_ATTACK,
+            defender=defender,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Beorn is quicker than Cuthred and strikes first with a Fast attack, and Cuthred's "
+        "Simple attack comes after it.",
+    )

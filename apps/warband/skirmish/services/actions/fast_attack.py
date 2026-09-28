@@ -13,6 +13,10 @@ class FastAttackService(SkirmishActionService):
     # Quick enough to be the attacker more often, too quick to put weight behind the blow
     PAIR_MATCHING_MULTIPLIER = 2
     ATTACK_MULTIPLIER = 0.5
+    # What the man he beat to the blow has left for his counter: caught off-balance, he swings back
+    # at this share before armour. Applied by "SkirmishDamageService", which is the one place that sees
+    # both men of the exchange - see there
+    OFF_BALANCE_COUNTER_MULTIPLIER = 0.5
 
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:

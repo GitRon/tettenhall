@@ -1,10 +1,14 @@
+import dataclasses
+
 from queuebie.messages import Event
 
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
-from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
+from apps.warband.skirmish.choices.initiative import InitiativeChoices
+from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices, SkirmishActionTypeHint
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.messages.events.warrior import WarriorDefendedAllDamage, WarriorTookDamage
 from apps.warband.skirmish.models import Skirmish, Warrior
+from apps.warband.skirmish.services.actions.fast_attack import FastAttackService
 from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
 
 
@@ -57,6 +61,16 @@ class SkirmishDamageService:
 
         self.initiative = initiative
 
+    @staticmethod
+    def is_off_balance_counter(*, defender_action: SkirmishActionTypeHint) -> bool:
+        """
+        Whether a counter at a man using this action is thrown off-balance.
+
+        Asked of the counter's defender, who is the man that struck first. Public because the battle log
+        words the counter by the same rule and must not drift from what the damage actually did.
+        """
+        return defender_action == SkirmishActionChoices.FAST_ATTACK
+
     def _deal_damage(self, *, attack: ActionRoll, defense: ActionRoll) -> int:
         damage = max(attack.value - defense.value, round(attack.value * self.MINIMUM_DAMAGE_SHARE))
 
@@ -106,6 +120,17 @@ class SkirmishDamageService:
 
         attack = attack_service.get_attack_value()
         defense = defend_service.get_defense_value()
+
+        # A man beaten to the blow by a fast attack swings back off-balance. This is the one multiplier
+        # that does not go through "_scaled_by_strength", and it cannot: that method sees only its own
+        # warrior, and what weakens this swing is the other man's action. Only here are both actions
+        # and the order they came in known at once. Before armour, like every other multiplier
+        if self.initiative == InitiativeChoices.INITIATIVE_COUNTER and self.is_off_balance_counter(
+            defender_action=self.defender_action
+        ):
+            attack = dataclasses.replace(
+                attack, value=round(attack.value * FastAttackService.OFF_BALANCE_COUNTER_MULTIPLIER)
+            )
         self._deal_damage(attack=attack, defense=defense)
 
         return self.message_list

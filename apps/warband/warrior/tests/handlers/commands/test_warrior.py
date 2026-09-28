@@ -144,18 +144,18 @@ def test_handle_heal_injured_warrior_can_roll_the_maximum():
     randrange() excludes its upper bound, so the maximum recoverable amount needs the "+ 1" to be
     reachable at all.
     """
-    # A Shrine mends up to 8 points a month
+    # A Shrine mends up to 16 points a month
     warrior = WarriorFactory(current_health=1, max_health=20, faction__town__sanctuary=1)
 
     with mock.patch(
-        "apps.warband.warrior.handlers.commands.warrior.random.randrange", return_value=8
+        "apps.warband.warrior.handlers.commands.warrior.random.randrange", return_value=16
     ) as mocked_randrange:
         result = handle_heal_injured_warrior(
             context=HealInjuredWarrior(faction=warrior.faction, warrior=warrior, month=3)
         )
 
-    mocked_randrange.assert_called_once_with(1, 9)
-    assert result.healed_points == 8
+    mocked_randrange.assert_called_once_with(1, 17)
+    assert result.healed_points == 16
 
 
 @pytest.mark.django_db
@@ -164,15 +164,15 @@ def test_handle_heal_injured_warrior_heals_further_with_a_larger_sanctuary():
     The sanctuary sets the ceiling of the monthly healing roll, so the building is what decides how
     fast a warrior comes back.
     """
-    warrior = WarriorFactory(current_health=1, max_health=30, faction__town__sanctuary=3)
+    warrior = WarriorFactory(current_health=1, max_health=50, faction__town__sanctuary=3)
 
     with mock.patch(
         "apps.warband.warrior.handlers.commands.warrior.random.randrange", return_value=1
     ) as mocked_randrange:
         handle_heal_injured_warrior(context=HealInjuredWarrior(faction=warrior.faction, warrior=warrior, month=3))
 
-    # A Great Sanctuary reaches 20 points, against the 4 a town without one manages
-    mocked_randrange.assert_called_once_with(1, 21)
+    # A Great Sanctuary reaches 40 points, against the 8 a town without one manages
+    mocked_randrange.assert_called_once_with(1, 41)
 
 
 @pytest.mark.django_db
@@ -197,8 +197,8 @@ def test_handle_heal_injured_warrior_mends_a_rival_at_the_level_he_was_created_w
     ) as mocked_randrange:
         handle_heal_injured_warrior(context=HealInjuredWarrior(faction=rival, warrior=warrior, month=3))
 
-    # A Shrine reaches 8 points, against the 4 a town without a sanctuary manages
-    mocked_randrange.assert_called_once_with(1, 9)
+    # A Shrine reaches 16 points, against the 8 a town without a sanctuary manages
+    mocked_randrange.assert_called_once_with(1, 17)
 
 
 @pytest.mark.django_db
@@ -218,13 +218,13 @@ def test_handle_heal_injured_warrior_mends_a_captive_at_his_captors_sanctuary():
     captor.captured_warriors.add(captive)
 
     with mock.patch(
-        "apps.warband.warrior.handlers.commands.warrior.random.randrange", return_value=8
+        "apps.warband.warrior.handlers.commands.warrior.random.randrange", return_value=16
     ) as mocked_randrange:
         result = handle_heal_injured_warrior(context=HealInjuredWarrior(faction=captor, warrior=captive, month=3))
 
-    # A Shrine mends up to 8 points a month, against the 4 of the town the captive no longer has
-    mocked_randrange.assert_called_once_with(1, 9)
-    assert result == WarriorHealthHealed(warrior=captive, faction=captor, healed_points=8, month=3)
+    # A Shrine mends up to 16 points a month, against the 8 of the town the captive no longer has
+    mocked_randrange.assert_called_once_with(1, 17)
+    assert result == WarriorHealthHealed(warrior=captive, faction=captor, healed_points=16, month=3)
 
 
 @pytest.mark.django_db

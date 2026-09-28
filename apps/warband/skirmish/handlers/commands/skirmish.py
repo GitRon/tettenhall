@@ -112,7 +112,8 @@ def _assaults(*, skirmish: Skirmish, round_number: int, participants: list[Skirm
 
     He stays in the pairing all the same: storming a gate does not take him out of reach of the man
     in front of it, so he is still paired and still takes his opponent's blow. What he does not do is
-    swing at that opponent - his action yields no matching points, so he is never his pair's attacker.
+    swing at that opponent - his action yields no matching points and throws no blow, so he neither
+    strikes first nor strikes back.
     """
     return [
         WarriorAssaultsFortification(skirmish=skirmish, round_number=round_number, warrior=participant.warrior)
@@ -302,6 +303,12 @@ def handle_warrior_attacks_warrior(
         .values_list("id", flat=True)
     )
     if len(standing_ids) < 2:
+        # A counter is raised off the first blow, which is usually what put its striker down or broke
+        # his nerve. That has a line of its own, and nothing ever announced the counter, so there is no
+        # line for this one to close
+        if context.initiative == InitiativeChoices.INITIATIVE_COUNTER and context.attacker.id not in standing_ids:
+            return []
+
         return BlowWasNotStruck(
             skirmish=context.skirmish,
             attacker=context.attacker,

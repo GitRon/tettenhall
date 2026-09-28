@@ -7,6 +7,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.warrior import (
     handle_capture_unconscious_warriors,
+    handle_counter_blow,
     handle_experience_gain_after_battle_for_victor,
     handle_experience_gain_on_warrior_incapacitation,
     handle_morale_change_on_resolved_blow,
@@ -16,6 +17,7 @@ from apps.warband.skirmish.handlers.events.warrior import (
     handle_reduce_health_and_update_condition,
     handle_stat_growth_on_warrior_level_up,
 )
+from apps.warband.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
 from apps.warband.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
@@ -461,5 +463,96 @@ def test_handle_morale_gain_on_being_rallied_gives_nothing_when_the_tenth_rounds
     warrior = WarriorFactory.build(max_morale=4)
 
     result = handle_morale_gain_on_being_rallied(context=WarriorWasRallied(skirmish=skirmish, warrior=warrior))
+
+    assert result is None
+
+
+def _blow_that_landed(
+    *, initiative: int, defender_action: int = SkirmishActionChoices.SIMPLE_ATTACK
+) -> WarriorTookDamage:
+    return WarriorTookDamage(
+        skirmish=SkirmishFactory.build(),
+        round_number=2,
+        attacker=WarriorFactory.build(),
+        attacker_action=SkirmishActionChoices.FAST_ATTACK,
+        attack=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="2d6"), result=7), value=7),
+        defender=WarriorFactory.build(),
+        defender_action=defender_action,
+        defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
+        damage=5,
+        initiative=initiative,
+    )
+
+
+def test_handle_counter_blow_swings_back_at_a_blow_won_on_the_roll():
+    context = _blow_that_landed(initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL)
+
+    result = handle_counter_blow(context=context)
+
+    assert result == WarriorAttacksWarrior(
+        skirmish=context.skirmish,
+        round_number=2,
+        attacker=context.defender,
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defender=context.attacker,
+        defender_action=SkirmishActionChoices.FAST_ATTACK,
+        initiative=InitiativeChoices.INITIATIVE_COUNTER,
+    )
+
+
+def test_handle_counter_blow_swings_back_at_a_blow_that_got_nothing_through():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build()
+    defender = WarriorFactory.build()
+
+    result = handle_counter_blow(
+        context=WarriorDefendedAllDamage(
+            skirmish=skirmish,
+            round_number=2,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.RISKY_ATTACK,
+            attack=ActionRoll(roll=None, value=0, outcome=BlowOutcomeChoices.OUTCOME_MISSED),
+            defender=defender,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defense=ActionRoll(roll=DiceRoll(notation=DiceNotation(dice_string="1d4"), result=2), value=2),
+            outcome=BlowOutcomeChoices.OUTCOME_MISSED,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+        )
+    )
+
+    assert result == WarriorAttacksWarrior(
+        skirmish=skirmish,
+        round_number=2,
+        attacker=defender,
+        attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+        defender=attacker,
+        defender_action=SkirmishActionChoices.RISKY_ATTACK,
+        initiative=InitiativeChoices.INITIATIVE_COUNTER,
+    )
+
+
+@pytest.mark.parametrize(
+    "defender_action",
+    [
+        SkirmishActionChoices.DEFENSIVE_STANCE,
+        SkirmishActionChoices.ASSAULT_FORTIFICATION,
+        SkirmishActionChoices.RALLY,
+    ],
+)
+def test_handle_counter_blow_gives_a_man_who_throws_nothing_no_counter(defender_action):
+    result = handle_counter_blow(
+        context=_blow_that_landed(initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL, defender_action=defender_action)
+    )
+
+    assert result is None
+
+
+@pytest.mark.parametrize("initiative", [InitiativeChoices.INITIATIVE_UNOPPOSED, InitiativeChoices.INITIATIVE_COUNTER])
+def test_handle_counter_blow_answers_only_a_blow_won_on_the_roll(initiative):
+    """
+    A man striking unopposed falls on somebody busy with his own pair, and a counter is not answered
+    again - otherwise one pairing would trade blows until one of them fell.
+    """
+    result = handle_counter_blow(context=_blow_that_landed(initiative=initiative))
 
     assert result is None

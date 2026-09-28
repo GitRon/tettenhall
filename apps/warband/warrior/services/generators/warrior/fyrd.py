@@ -5,8 +5,8 @@ from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGen
 class FyrdWarriorGenerator(BaseWarriorGenerator):
     XP_MU = 30
     XP_SIGMA = 10
-    HEALTH_MU = 10
-    HEALTH_SIGMA = 4
+    HEALTH_MU = 20
+    HEALTH_SIGMA = 8
     MORALE_MU = 5
     MORALE_SIGMA = 3
     STATS_MU = 5

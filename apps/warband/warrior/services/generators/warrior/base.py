@@ -41,7 +41,7 @@ class BaseWarriorGenerator:
     # deals his weapon's full damage. Relative is the right answer to what a blow is worth and the
     # wrong answer to what a man is worth, which is why pricing carries its own pair.
     PRICE_STATS_YARDSTICK = 10
-    PRICE_HEALTH_YARDSTICK = 20
+    PRICE_HEALTH_YARDSTICK = 40
     MIN_RECRUITMENT_PRICE = 1
 
     item_generator_class: type(BaseItemGenerator)

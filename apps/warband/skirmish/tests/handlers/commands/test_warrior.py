@@ -125,7 +125,7 @@ def test_handle_reduce_warrior_health_kills_the_warrior():
     defender = WarriorFactory(faction=skirmish.defending_faction, current_health=20, max_health=20)
 
     result = handle_reduce_warrior_health(
-        context=ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=24)
+        context=ReduceHealth(skirmish=skirmish, warrior=defender, attacker=attacker, lost_health=31)
     )
 
     assert result == [WarriorWasKilled(skirmish=skirmish, warrior=defender, by_warrior=attacker)]
