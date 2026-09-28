@@ -1,8 +1,9 @@
 {% load static %}
 {% comment %}
-    One man, as a row: every list that shows warriors side by side - a war band's roster, the captives a
-    faction holds, the mercenaries in its pub - is a list the player compares, and a card per man put one
-    of them on a screen.
+    One man, as a row: the lists that show somebody else's warriors side by side - a rival's roster, the
+    captives a faction holds, the mercenaries in its pub. The player's own war band is a table instead,
+    "faction/warrior/components/roster_table.html", because he knows enough about his own men to fill
+    its columns.
 
     What the row carries is what decides a month: level, health and morale, wage, the gear he stands in,
     and whether he can fight. Everything else - culture, strength and dexterity, injuries, what a blade
@@ -14,7 +15,7 @@
     all for a rival's. See docs/patterns/warrior-knowledge.md.
 
     The flags say which list this is: "is_captured" for a faction's prisoners, "is_pub" for its pub, and
-    neither for a roster. "is_player_faction" decides whether there is anything to press.
+    neither for a rival's roster. "is_player_faction" decides whether there is anything to press.
 
     A phone gets the avatar and the name on one line, the tags across the whole row below, and the
     controls under them - squeezed beside a control, the tags stack one to a line. A desk puts the
@@ -47,17 +48,6 @@
                 <span class="border border-blood px-1.5 py-0.5 text-ink">{{ warrior.get_condition_display }}</span>
             {% endif %}
         </span>
-        {% comment %}
-            Why the morale on this row is stuck. The monthly sweep skips a man carrying unpaid months, so
-            he sits below his ceiling while every other warrior refills for free - and without this the
-            player reads the low figure and no cause. Attached by "FactionRosterContextMixin" and only
-            for the player's own faction, so every other list prints nothing here.
-        {% endcomment %}
-        {% if warrior.unpaid_wages_note %}
-            <span class="text-sm leading-snug text-blood" title="A man who goes unpaid loses morale and cannot recover it">
-                <i class="fa-solid fa-sack-xmark"></i> {{ warrior.unpaid_wages_note }}
-            </span>
-        {% endif %}
         {# Why a mercenary's price is not the one the player remembers. Only once the surcharge is real, #}
         {# so the generated mercenary and the man sent away last month carry no line at all. #}
         {% if is_pub and warrior.idle_surcharge %}
@@ -101,19 +91,6 @@
                         hx-post="{% url 'warband:warrior-enslave-captured-view' warrior.id faction.id %}"
                         hx-disabled-elt="this, previous button"
                         class="row-action">Enslave for {{ warrior.slavery_selling_price }} silver</button>
-            {% endif %}
-        {% elif is_player_faction %}
-            {% comment %}
-                Only on the player's own roster, and only where "FactionRosterContextMixin" answered the
-                question. The refusal is the same control, disabled, with the reason as its label: "your
-                leader stays" is a rule the player would otherwise meet as an absence.
-            {% endcomment %}
-            {% if warrior.dismissal_refusal %}
-                <button class="row-action" disabled type="button">{{ warrior.dismissal_refusal }}</button>
-            {% else %}
-                <button type="button"
-                        hx-post="{% url 'warband:warrior-dismiss-view' warrior.id %}"
-                        class="row-action">Dismiss for {{ warrior.severance_pay }} silver</button>
             {% endif %}
         {% endif %}
     {% endspaceless %}</div>

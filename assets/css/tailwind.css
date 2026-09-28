@@ -57,9 +57,14 @@
     --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
     /* The label: every count, status mark and column head in the game is set in these two, so they
-     * are a token rather than a pair of arbitrary values repeated at a dozen call sites. */
-    --text-label: 0.6875rem;
-    --tracking-label: 0.16em;
+     * are a token rather than a pair of arbitrary values repeated at a dozen call sites. 12px and a
+     * tenth of an em is the smallest the mono reads comfortably in uppercase on this ground. */
+    --text-label: 0.75rem;
+    --tracking-label: 0.1em;
+
+    /* A figure standing in a column on its own - a level, a wage, a health reading - one step above
+     * the label, so the number is the loud part and the word naming it the quiet one. */
+    --text-figure: 0.8125rem;
 
     --radius-*: initial;
     --shadow-*: initial;
@@ -237,12 +242,12 @@
     th {
         padding: 16px 12px;
         font-family: var(--font-mono);
-        font-size: 0.6875rem;
+        font-size: var(--text-label);
         font-weight: 400;
         color: var(--color-ink-muted);
         text-align: left;
         text-transform: uppercase;
-        letter-spacing: 0.16em;
+        letter-spacing: var(--tracking-label);
         vertical-align: bottom;
     }
 
@@ -342,13 +347,16 @@
      * thing that happens.
      *
      * Its label is the mono label, like every other short word the game shows as a control or a
-     * status, so the display face is left to where the player is.
+     * status, so the display face is left to where the player is. At 500 rather than the 400 the
+     * labels around it wear: a control is text the player acts on, and the thin cut at this size
+     * turns to grey hairlines on the dark ground.
      */
     button,
     input[type="submit"] {
         padding: 10px 20px;
         font-family: var(--font-mono);
         font-size: var(--text-label);
+        font-weight: 500;
         text-transform: uppercase;
         letter-spacing: var(--tracking-label);
         color: var(--color-ink);
@@ -388,7 +396,7 @@
     padding: 6px 15px;
     font-family: var(--font-mono);
     font-size: var(--text-label);
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.5;
     letter-spacing: var(--tracking-label);
     text-align: center;
@@ -410,5 +418,58 @@
         cursor: not-allowed;
         background-color: transparent;
         border-color: var(--color-rule);
+    }
+}
+
+/*
+ * The row menu: what can be done to one line of a table, behind three dots at its end - see
+ * "faction/warrior/components/roster_row_menu.html".
+ *
+ * A popover, so the browser draws it centred in the viewport with its own border and background
+ * until told otherwise. The inset and margin are cleared here and "static/js/tettenhall.js" places it
+ * under its trigger; the rest is the card: the ground, a "rule-strong" edge, no radius, no shadow.
+ */
+@utility row-menu {
+    inset: auto;
+    width: max-content;
+    min-width: 15rem;
+    max-width: min(22rem, calc(100vw - 32px));
+    margin: 0;
+    padding: 0;
+    color: var(--color-ink);
+    background-color: var(--color-ground);
+    border: 1px solid var(--color-rule-strong);
+}
+
+/*
+ * One line of it. A link and a button look the same here, because to the player they are both "a
+ * thing to do to this man". A refusal stays readable, the same way a disabled row action does.
+ */
+@utility row-menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: var(--tracking-label);
+    text-align: left;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-ink);
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+
+    &:hover {
+        color: var(--color-ink);
+        background-color: var(--color-raised);
+    }
+
+    &:disabled {
+        color: var(--color-ink-muted);
+        cursor: not-allowed;
+        background-color: transparent;
     }
 }

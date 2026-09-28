@@ -55,7 +55,7 @@ tags the shop, stores and pub are to carry (#207) wear it too.
 |---|---|---|
 | `font-display` | Cinzel 500/700 | **Where the player is**: the page title (`h1`) and nothing else. Always uppercase, tracked |
 | `font-body` | Spectral 300/400 | All prose, and the headings below the page title: a section (`h2`), a card (`h3`), a line of news (`h4`). Never below 17px, never uppercase |
-| `font-mono` | IBM Plex Mono 400 | Every number and every label: silver, men, months, stat lines, status marks, column heads, button labels, the section nav. Uppercase, `text-label` with `tracking-label` |
+| `font-mono` | IBM Plex Mono 400/500 | Every number and every label: silver, men, months, stat lines, status marks, column heads, button labels, the section nav. Labels uppercase, `text-label` with `tracking-label`; 500 for what the player presses or reads as a state |
 
 **The display face means "this is where you are".** A page title, a section, a card and a button each
 set in their own voice, so they stop looking alike - a card title is a label for what is in the card,
@@ -68,8 +68,17 @@ warrior's line reads `LEVEL 1 · 94 XP · WAGE 0 · HEALTH 16/16`, and a figure 
 nothing but an icon has to be learned before it can be read. The word is the quiet label in
 `ink-muted`, the figure the loud part in `ink`.
 
-`--text-label` (11px) and `--tracking-label` (`0.16em`) are the mono label, tokenised because every
-count, status tag and column head in the game is set in them.
+`--text-label` (12px) and `--tracking-label` (`0.1em`) are the mono label, tokenised because every
+count, status tag and column head in the game is set in them. That is the smallest the mono reads
+comfortably in uppercase on this ground; wider tracking at a smaller size breaks a word into letters.
+
+**A control or a status is the label at 500.** Buttons, the row action, the row menu and status tags
+wear the heavier cut, because the 400 at this size thins to grey hairlines on the dark ground, and
+those are the words the player acts on. Column heads and the quiet word beside a figure stay at 400.
+
+`--text-figure` (13px) is a figure standing in a column on its own - a level, a wage, a health
+reading - one step above the label, so the number is the loud part and the word naming it the quiet
+one. Not uppercased: there is nothing in a figure to capitalise, and a die roll keeps its `d`.
 
 The three are self-hosted out of `node_modules` via `@fontsource`, linked from `base.html`, and only at
 the weights above. A face loaded at a weight nothing sets is bytes on every page load for nothing.
@@ -84,7 +93,9 @@ set on `body`.
 - **No shadows, no gradients, no glows, no texture images.** `--shadow-*` is dropped too.
 - **Separation comes from a 1px rule and space**, not from a box. A card is `bg-ground` with
   `border border-rule-strong`; the hairlines inside it are `rule`.
-- **Status is a 1px outlined mono tag**, never a filled pill. The word inside stays `ink` — the outline
+- **Status is a 1px outlined mono tag**, never a filled pill, and **only for the exception**: a man
+  who can fight, a quest that is open, carries no tag, because a tag on five rows out of six is the
+  loudest thing in the list while saying nothing. The word inside stays `ink` — the outline
   carries the meaning: `border-blood` when it wants the player, `border-brass` when it is a gain or
   better than what is there, `border-ink` when the thing it marks is whole and ready, `border-rule`
   when it is merely a fact. A figure that is good news takes `text-brass` rather than a tag.
@@ -124,6 +135,18 @@ would work, but it is text the player is meant to read, so it never goes to `ink
 A class written into the stylesheet is the exception here, and this is why it is one: the row action is
 on thirty templates, and the same utility list copied thirty times drifts into four controls that each
 look a little different, which a player reads as four kinds of thing.
+
+### The row menu
+
+Where a table line has actions the player uses rarely - *Dismiss* on the roster - they sit behind
+three dots at the end of the line, in the `row-menu` popover, rather than as a row action on every
+line. Six identical outlined controls down the right edge are the loudest column in the table and the
+least used. Each line of the menu is `row-menu-item`: the mono label at 500, `raised` on hover, and a
+refusal disabled in `ink-muted` with its reason underneath, the same as a disabled row action.
+
+Anything that costs silver and cannot be taken back asks first, inside the menu: the item turns the
+menu into the question and two row actions, and the safe answer takes the focus. Never `confirm()`,
+which is the browser's look rather than the game's.
 
 ## The icons
 

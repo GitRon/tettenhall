@@ -1,0 +1,13 @@
+{% comment %}
+    A weapon or an armour on the roster: the name in the body face, and under it the roll and its
+    average in mono - the same two figures "item/components/item_stats_meta.html" prints, without the
+    words, because the column head already says which slot this is. A weak weapon shows up down the
+    column without anybody having to open the man.
+{% endcomment %}
+{% if item %}
+    <div class="leading-snug text-ink">{{ item.display_name }}</div>
+    <div class="mt-0.5 font-mono text-xs tabular-nums text-ink-muted"
+         title="{% if item.is_weapon %}Damage{% else %}Protection{% endif %} roll and its average">{{ item.type.base_value }}{{ item.get_modifier_as_string }} &middot; {{ item.expectancy_value|floatformat }}</div>
+{% else %}
+    <span class="font-mono text-ink-dim">&mdash;</span>
+{% endif %}

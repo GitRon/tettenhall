@@ -1,0 +1,50 @@
+{% comment %}
+    What can be done to one man, behind three dots at the end of his line.
+
+    A menu rather than a button per row: six identical outlined controls down the right edge are the
+    loudest column in the table and the least often used. A popover rather than a "details", because
+    it renders in the top layer - the table's scroll box cannot clip it - and the browser gives it
+    Escape, light dismiss and one-open-at-a-time for free. "static/js/tettenhall.js" puts it under its
+    trigger and runs the two steps below.
+
+    Dismissing costs silver and cannot be taken back, so it asks first, inside the menu and in the
+    game's own look. Only the confirming button posts. A refusal is the same item, disabled, with the
+    reason as its second line: "your leader stays" is a rule the player would otherwise meet as an
+    absence. Both come off "RosterDismissalContextMixin", which asks the service the dismiss view
+    asks before it dispatches.
+{% endcomment %}
+<button type="button"
+        class="inline-flex h-8 w-8 items-center justify-center border border-transparent p-0 text-ink-muted hover:border-rule-strong hover:text-ink"
+        popovertarget="row-menu-{{ warrior.id }}"
+        aria-label="Actions for {{ warrior.name }}">
+    <i aria-hidden="true" class="fa-solid fa-ellipsis-vertical"></i>
+</button>
+<div class="row-menu" id="row-menu-{{ warrior.id }}" popover data-row-menu>
+    <ul class="m-0 list-none p-0 [&>li+li]:border-t [&>li+li]:border-rule" data-row-menu-step="choose">
+        <li><a class="row-menu-item" href="{% url 'warband:warrior-detail-view' warrior.id %}">Open his page</a></li>
+        <li>
+            {% if warrior.dismissal_refusal %}
+                <button class="row-menu-item" disabled type="button">
+                    Dismiss
+                    <span class="mt-1 block font-body text-sm font-light normal-case tracking-normal">{{ warrior.dismissal_refusal }}</span>
+                </button>
+            {% else %}
+                <button class="row-menu-item" type="button" data-row-menu-ask>Dismiss for {{ warrior.severance_pay }} silver</button>
+            {% endif %}
+        </li>
+    </ul>
+    {% if not warrior.dismissal_refusal %}
+        <div class="flex flex-col gap-y-3 p-3.5" data-row-menu-step="confirm" hidden>
+            <p class="m-0 text-base leading-snug text-ink">Dismiss {{ warrior.name }} for {{ warrior.severance_pay }} silver? He leaves for the pub, and his gear stays in your stores.</p>
+            <div class="flex flex-wrap gap-2">
+                {# "none": the answer carries no markup, and the list reloads itself on the trigger it sends #}
+                <button type="button"
+                        class="row-action"
+                        hx-post="{% url 'warband:warrior-dismiss-view' warrior.id %}"
+                        hx-swap="none"
+                        hx-disabled-elt="this, next button">Dismiss</button>
+                <button type="button" class="row-action" data-row-menu-cancel>Keep him</button>
+            </div>
+        </div>
+    {% endif %}
+</div>
