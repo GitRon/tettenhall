@@ -26,7 +26,7 @@ Three failure classes, three tools:
 | Handler unit | ~85% | Call the handler directly as a function |
 | Flow | ~5–10% | Only where ordering or rollback matters. Doubles as the test for the action views |
 | View (read-only) | ~5% | One per view: status code, context, savegame scoping |
-| Registry | 7 tests | Discovery, dead commands, one handler per command, terminal events, attribute compatibility, handler placement, hop direction |
+| Registry | 8 rules | Discovery, dead commands, one handler per command, terminal events, attribute compatibility, handler placement, hop direction, no querysets on messages |
 
 ## Handler unit tests (the default)
 

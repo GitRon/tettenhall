@@ -21,10 +21,12 @@ QUEUEBIE_LOGGER_NAME = "queuebie"
 would make every installed package a local app, and a dependency shipping a `handlers/commands/`
 directory would register handlers on our bus.
 
-`QUEUEBIE_STRICT_MODE` enforces the command→event / event→command contract, and rejects a command
-handler outside the scope of its command. If a handler returns the wrong message category, strict mode
-complains — fix the handler, don't disable the mode. What it does and does not catch is in
-[strict mode](../patterns/strict-mode.md).
+`QUEUEBIE_STRICT_MODE` does two things: it rejects a command handler outside the scope of its command
+when the handler is registered, and it blocks database access inside event handlers when they run
+through `handle_message()`. If it complains, fix the handler — don't disable the mode. It does **not**
+look at the direction of a hop: that a command handler emits events and an event handler emits commands
+is held by [registry test 7](../patterns/registry-tests.md). What strict mode does and does not catch is
+in [strict mode](../patterns/strict-mode.md).
 
 `QUEUEBIE_EXCLUDED_DIRECTORIES` is not set, so queuebie's default applies: autodiscovery walks the
 whole subtree of both apps but skips `__pycache__`, `fixtures`, `locale`, `media`, `migrations`,

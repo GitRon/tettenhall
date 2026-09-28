@@ -41,7 +41,7 @@ with no error anywhere:
 | `templatetags/` | `<app>/templatetags/` |
 | `management/commands/` | `<app>/management/commands/` |
 | `fixtures/` | `<app>/fixtures/` |
-| `admin.py` | `<app>/admin.py` — hence the imports it collects |
+| `admin.py` | `<app>/admin.py` — hence the imports it collects, one per topic `admin.py`, which `test_admin_imports.py` checks |
 | `apps.py`, `urls.py` | named from settings and the root urlconf |
 
 Everything else — `handlers/`, `messages/`, `services/`, `managers/`, `models/*.py`, `views.py`,
@@ -84,9 +84,10 @@ apps/warband/<topic>/handlers/events/<domain>.py     # functions handling Events
   **several** topics: `apps/warband/faction/handlers/events/item.py` is named after the shop it
   stocks, and reacts to `item`, `faction` and `month` events to do it.
 
-  The mirror in the second row is not a convention to remember: a
-  [registry test](registry-tests.md) fails when a command and its handler sit in differently-named
-  modules.
+  Neither of the last two rows is a convention to remember: [registry test 6](registry-tests.md) fails
+  when a command and its handler sit in differently-named modules, and when a `handlers/events/` module
+  reacting to a single foreign topic is named anything but that topic. The two subject fallbacks are the
+  judgement calls it leaves alone.
 - Keep new modules importable so autodiscovery picks up the decorators. An `__init__.py` is no longer
   strictly required — Python treats the directory as a namespace package without one — but every
   existing `handlers/` directory has one and new ones should match.
@@ -138,4 +139,6 @@ computes condition, modifier and price and then calls `Item.objects.create()` wi
 six keyword arguments and none of the deciding.
 
 The method is called `create_record` whatever the model is. The model is the manager's already, so its
-name does not go in the method's.
+name does not go in the method's. `apps/warband/tests/architecture/test_record_managers.py` fails on a
+manager method writing a row through `self.create()`, `get_or_create()`, `update_or_create()` or
+`bulk_create()` under any other name.

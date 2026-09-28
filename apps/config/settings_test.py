@@ -7,7 +7,7 @@ from apps.config.settings import *  # noqa: F403
 # Tests don't need a secure (and therefore slow) hasher
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-# Keep strict mode enabled: it rejects commands being registered across app borders and blocks
+# Keep strict mode enabled: it rejects a command handler outside its command's topic package and blocks
 # database access inside event handlers when they run through "handle_message()".
 QUEUEBIE_STRICT_MODE = True
 

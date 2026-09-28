@@ -14,7 +14,7 @@ so without that reset registrations leak between tests.
 - Each topic package's `tests/` mirrors the structure of its production code:
   `apps/warband/item/services/generators/item.py` → `apps/warband/item/tests/services/generators/test_item.py`.
   The tests that check the whole tree at once rather than one testee live in
-  `apps/warband/tests/architecture/`, see [registry tests](registry-tests.md).
+  `apps/warband/tests/architecture/`, see [architecture tests](architecture-tests.md).
 - One test module per testee. If a module would have to hold tests for two testees, split it.
 - **Always add `__init__.py`** to every `tests/` package and sub-package. Without it, two topics that
   both contain e.g. `tests/test_item.py` collide during collection and pytest fails on the duplicate
