@@ -28,8 +28,8 @@
             </div>
         </div>
     </div>
-    <div class="border-t border-rule px-[30px] py-[15px]">
-        <button class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline"
+    <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
+        <button class="row-action"
                 hx-post="{% url 'warband:item-buy-view' item.id %}"
                 hx-disabled-elt="this"
                 hx-swap="none"

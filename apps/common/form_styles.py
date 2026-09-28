@@ -46,9 +46,11 @@ _BUTTON_SMALL = f"{_BUTTON} px-[15px] py-[4px]"
 _FILLED = "border-blood bg-blood text-ground hover:border-ink"
 _PRIMARY = _FILLED
 _DANGER = _FILLED
-_DEFAULT = "border-rule bg-transparent text-ink hover:bg-raised"
 
 BUTTON_PRIMARY = f"{_BUTTON_MEDIUM} {_PRIMARY}"
 BUTTON_PRIMARY_SMALL = f"{_BUTTON_SMALL} {_PRIMARY}"
 BUTTON_DANGER_SMALL = f"{_BUTTON_SMALL} {_DANGER}"
-BUTTON_DEFAULT_SMALL = f"{_BUTTON_SMALL} {_DEFAULT}"
+
+#: The outlined control beside a form's filled one is the row action every template uses, defined once in
+#: the stylesheet - see "The row action" in docs/patterns/visual-identity.md.
+BUTTON_DEFAULT_SMALL = "row-action"

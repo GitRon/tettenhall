@@ -67,7 +67,7 @@
                         {# no id raises. Outlined rather than filled: the fight is offered by the band #}
                         {# at the top of the page, which is the one filled control this screen has. #}
                         {% if active_quest.skirmish_id %}
-                            <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-transparent px-[30px] py-[9px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
+                            <a class="row-action"
                                href="{% url 'warband:skirmish-fight-view' active_quest.skirmish_id %}">
                                 Fight skirmish
                             </a>

@@ -75,14 +75,14 @@
                             </option>
                         {% endfor %}
                     </select>
-                    <button class="box-border inline-block cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase leading-normal tracking-label text-ink hover:bg-raised"
+                    <button class="row-action"
                             type="submit">Give to
                     </button>
                 </form>
             </div>
         {% endif %}
-        <div class="border-t border-rule px-[30px] py-[15px]">
-            <button class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline"
+        <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
+            <button class="row-action"
                     hx-post="{% url 'warband:item-sell-view' item.id %}"
                     hx-disabled-elt="this"
                     hx-swap="none"

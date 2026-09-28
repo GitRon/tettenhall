@@ -65,11 +65,11 @@
         </table>
         </div>
     </div>
-    <div class="border-t border-rule px-[30px] py-[15px]">
+    <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
         {# Why the price is not the one the player remembers. Shown only once the surcharge is real, #}
         {# so the generated mercenary and the man sent away last month carry no line at all. #}
         {% if warrior.idle_surcharge %}
-            <p class="mb-2 mt-0 text-sm leading-snug text-ink-muted">
+            <p class="m-0 mr-auto text-sm leading-snug text-ink-muted">
                 <i class="fa-solid fa-hourglass-half"></i>
                 <i>{{ warrior.months_in_pub }} months waiting here, and {{ warrior.idle_surcharge }} silver of back wages on his price</i>
             </p>
@@ -84,7 +84,7 @@
                 hx-disabled-elt="this"
                 hx-target="#pub-hired-list"
                 hx-swap="beforeend"
-                class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline">Recruit for {{ warrior.hiring_price }} silver
+                class="row-action">Recruit for {{ warrior.hiring_price }} silver
         </button>
     </div>
 </div>

@@ -19,8 +19,8 @@
         <p>Fortification: {{ quest.fortification_strength }}</p>
         <p>Loot: {{ quest.loot|obscurify:quest.average_loot }}</p>
     </div>
-    <div class="border-t border-rule px-[30px] py-[15px]">
-        <a class="cursor-pointer bg-none p-0 font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:text-ink hover:underline"
+    <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
+        <a class="row-action"
            href="{% url 'warband:quest-accept-view' quest.id %}">Accept</a>
     </div>
 </div>

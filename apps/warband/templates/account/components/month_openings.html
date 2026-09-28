@@ -26,7 +26,7 @@
                         <span class="text-ink">quest{{ month_standing.quest_count|pluralize }} on the board</span>
                         <span class="block text-sm leading-snug">The board is redrawn when the month turns.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="row-action"
                        href="{% url 'warband:town-board-view' %}">Board</a>
                 </li>
             {% endif %}
@@ -48,7 +48,7 @@
                             — ride in and {{ month_standing.occupiable_rival_list|length|pluralize:"it is,they are" }} yours.
                         </span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="row-action"
                        href="{% url 'warband:rival-faction-list-view' %}">Rivals</a>
                 </li>
             {% endif %}
@@ -59,7 +59,7 @@
                         <span class="text-ink">building may be raised</span>
                         <span class="block text-sm leading-snug">Only one a month, and none has been raised in this one.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="row-action"
                        href="{% url 'warband:town-upgrade-view' %}">Buildings</a>
                 </li>
             {% endif %}
@@ -70,7 +70,7 @@
                         <span class="text-ink">piece{{ month_standing.shop_item_count|pluralize }} of gear in the shop</span>
                         <span class="block text-sm leading-snug">The stalls are restocked when the month turns.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="row-action"
                        href="{% url 'warband:town-shop-view' %}">Shop</a>
                 </li>
             {% endif %}
@@ -81,7 +81,7 @@
                         <span class="text-ink">{{ month_standing.pub_mercenary_count|pluralize:"man,men" }} standing in the pub</span>
                         <span class="block text-sm leading-snug">They drink elsewhere when the month turns.</span>
                     </span>
-                    <a class="box-border inline-block shrink-0 cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase tracking-label leading-normal text-ink no-underline hover:bg-raised"
+                    <a class="row-action"
                        href="{% url 'warband:town-pub-view' %}">Pub</a>
                 </li>
             {% endif %}

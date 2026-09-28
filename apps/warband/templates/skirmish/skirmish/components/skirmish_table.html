@@ -36,7 +36,7 @@
                     {# has - and which table the row is in is what it has to carry #}
                     <a href="{% url 'warband:skirmish-fight-view' skirmish.id %}"
                        aria-label="{{ action_label }} {{ skirmish.name }}"
-                       class="box-border inline-block cursor-pointer border py-[4px] font-mono text-label uppercase tracking-label px-[15px] leading-normal border-blood bg-transparent text-ink hover:bg-raised hover:text-ink">
+                       class="row-action">
                         <i class="fa-solid {{ action_icon }}"></i>
                     </a>
                 </td>
