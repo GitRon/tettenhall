@@ -1,10 +1,8 @@
-{% load static %}
 {% comment %}
     The prisoners in the player's own cells, one line per man, in the roster's columns - a captive is
-    a man he may be about to take into that roster, so he compares them by the same figures.
-
-    Unlike the roster, the line carries strength and dexterity: for a man he does not yet command,
-    they are most of what recruiting him would buy.
+    a man he may be about to take into that roster, so he compares them by the same figures, strength
+    and dexterity among them: for a man he does not yet command, they are most of what recruiting him
+    would buy.
 
     Held rather than commanded: the numbers arrive fuzzed and the gear is named, as
     docs/patterns/warrior-knowledge.md has it for a prisoner, so the gauge draws the word and no bar.
@@ -35,7 +33,7 @@
             <tr class="hover:bg-raised">
                 <td class="py-3 pl-4 align-middle">
                     <div class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3">
-                        <img class="h-10 w-10 border border-rule-strong" width="40" height="40" src="{% static warrior.avatar_url %}" alt="">
+                        {% include 'warrior/components/warrior_portrait.html' with warrior=warrior frame='border border-rule-strong' %}
                         <div class="min-w-0">
                             <a class="leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.name }}</a>
                             {% if warrior.nickname %}
