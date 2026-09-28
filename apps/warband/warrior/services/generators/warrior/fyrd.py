@@ -6,11 +6,11 @@ class FyrdWarriorGenerator(BaseWarriorGenerator):
     XP_MU = 30
     XP_SIGMA = 10
     HEALTH_MU = 10
-    HEALTH_SIGMA = 10
+    HEALTH_SIGMA = 4
     MORALE_MU = 5
     MORALE_SIGMA = 3
     STATS_MU = 5
-    STATS_SIGMA = 5
+    STATS_SIGMA = 2
     STATS_MIN = 1
     PROGRESS_MU = 50
     PROGRESS_SIGMA = 50

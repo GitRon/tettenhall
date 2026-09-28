@@ -21,8 +21,8 @@ class NicknameStateChoices(models.IntegerChoices):
     HEALTH_FAR = 6, "Health, past the far threshold"
     MORALE = 7, "Morale, past the near threshold"
     MORALE_FAR = 8, "Morale, past the far threshold"
-    # One state for both arms rather than one each: the two are floored at the same "STATS_MIN" and
-    # the left tail of both sits on that floor, so neither says anything about somebody unusual alone
-    STATS_AT_FLOOR = 9, "Both arms at the floor"
+    # One state for both arms rather than one each: they are drawn from the same trio, and read
+    # together as a sum they name the feeblest of a kind rather than one man in ten per arm
+    STATS_AT_BOTTOM = 9, "Both arms at the bottom"
     HEALTH_AT_BOTTOM = 10, "Health at the bottom"
     MORALE_AT_BOTTOM = 11, "Morale at the bottom"

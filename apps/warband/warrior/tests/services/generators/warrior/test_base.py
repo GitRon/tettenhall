@@ -1,3 +1,4 @@
+from statistics import NormalDist
 from unittest import mock
 
 import pytest
@@ -83,19 +84,56 @@ def test_process_keeps_a_progress_roll_at_its_ceiling():
     assert result.morale_progress == 100
 
 
-@pytest.mark.django_db
-def test_process_floors_the_stats_at_the_generator_minimum():
+def test_roll_stat_rerolls_a_roll_below_the_generator_minimum():
     """
-    A leader sits at STATS_MIN = 4, so a roll that rounds to one is lifted to the minimum instead of
-    being re-rolled - which is why the two stats need no guard.
+    A leader sits at STATS_MIN = 4, so a roll that rounds to one is thrown away rather than lifted onto
+    the minimum, which would pile the whole left tail onto the floor.
     """
-    generator = LeaderWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+    generator = LeaderWarriorGenerator(culture=None, faction=None, savegame_id=0)
 
-    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=0.6):
-        result = generator.process()
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", side_effect=[0.6, 5]):
+        result = generator.roll_stat()
 
-    assert result.strength == 4
-    assert result.dexterity == 4
+    assert result == 5
+
+
+def test_roll_stat_keeps_a_roll_on_the_generator_minimum():
+    generator = LeaderWarriorGenerator(culture=None, faction=None, savegame_id=0)
+
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=4.4):
+        result = generator.roll_stat()
+
+    assert result == 4
+
+
+# Every guarded draw a generator makes, as (mean, spread, lowest value kept)
+GUARDED_DRAWS = [
+    pytest.param(generator.STATS_MU, generator.STATS_SIGMA, generator.STATS_MIN, id=f"{generator.__name__}-stats")
+    for generator in (FyrdWarriorGenerator, MercenaryWarriorGenerator, LeaderWarriorGenerator)
+] + [
+    pytest.param(mu, sigma, 1, id=f"{generator.__name__}-{attribute}")
+    for generator in (FyrdWarriorGenerator, MercenaryWarriorGenerator, LeaderWarriorGenerator)
+    for attribute, mu, sigma in (
+        ("health", generator.HEALTH_MU, generator.HEALTH_SIGMA),
+        ("morale", generator.MORALE_MU, generator.MORALE_SIGMA),
+    )
+]
+
+
+@pytest.mark.parametrize(("mu", "sigma", "minimum"), GUARDED_DRAWS)
+def test_generator_keeps_its_average_man_on_its_own_mean(mu, sigma, minimum):
+    """
+    Throwing the rolls below the minimum away raises the mean of the ones kept, by the mean of a
+    normal distribution cut off at that point. The baselines stamped on a warrior are the generator's
+    means, and a fight scales a blow by strength against its baseline, so a mean that drifted off it
+    would be a standing bonus to every man of the archetype. A spread of five on a levy's strength
+    would put his average man two points above the baseline he swings against.
+    """
+    cut = (minimum - 0.5 - mu) / sigma
+
+    drift = sigma * NormalDist().pdf(cut) / (1 - NormalDist().cdf(cut))
+
+    assert drift < 0.5
 
 
 @pytest.mark.django_db
@@ -241,7 +279,7 @@ def test_process_stamps_the_leader_baseline_on_the_warrior():
 def test_process_stamps_the_levy_spread_on_the_warrior():
     """
     The spread travels for the same reason the baseline does: it is what an exceptional roll is
-    recognised by, and the archetypes differ in it by nearly a factor of three.
+    recognised by, and the archetypes differ in it by a factor of two.
     """
     generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
 
@@ -254,8 +292,8 @@ def test_process_stamps_the_levy_spread_on_the_warrior():
 @pytest.mark.django_db
 def test_process_stamps_the_levy_floor_on_the_warrior():
     """
-    The floor travels too, because it is the whole of the downward end: the roll is clamped to it, so
-    that is where a quarter of every levy lands and the only position a feeble man can be in.
+    The floor travels too, because it is the downward end of the draw and the clamp on the cut a
+    feeble man's epithet is measured against.
     """
     generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
 
@@ -269,7 +307,7 @@ def test_process_stamps_the_levy_floor_on_the_warrior():
 def test_process_stamps_the_levy_health_draw_on_the_warrior():
     """
     Health carries its own mean and spread rather than borrowing the stats ones: a fyrd man is rolled
-    for ten health against a spread of ten and for five strength against a spread of five, and the
+    for ten health against a spread of four and for five strength against a spread of two, and the
     two pairs stand in no fixed ratio across the archetypes.
     """
     generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
@@ -309,14 +347,16 @@ def test_process_draws_the_warriors_nickname_variant_once():
 def test_process_stamps_the_warriors_nickname_state_against_his_own_archetype():
     """
     A fyrd man's nerve is drawn at a mean of five against a spread of three, so thirteen is two and
-    two thirds spreads out and a wonder among his own kind. Every attribute is handed that same
-    thirteen and none of the others reaches a threshold on it - his strength is one and three fifths
-    spreads out and his health three tenths - which is what makes this a statement about the pairing
-    rather than about the number.
+    two thirds spreads out and a wonder among his own kind. Only the nerve roll is handed thirteen:
+    strength shares his mean of five against a spread of two, so thirteen there would be four spreads
+    out and would outrank it.
     """
     generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
 
-    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=13):
+    with mock.patch(
+        "apps.warband.warrior.services.generators.warrior.base.random.gauss",
+        side_effect=lambda mu, sigma: 13 if sigma == FyrdWarriorGenerator.MORALE_SIGMA else mu,
+    ):
         result = generator.process()
 
     assert result.nickname_state == NicknameStateChoices.MORALE_FAR
