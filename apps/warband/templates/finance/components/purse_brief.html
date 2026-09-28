@@ -17,7 +17,11 @@
             <span class="text-ink">Net a month</span>
             <span class="block text-sm leading-snug">Hall income less wages.</span>
         </span>
-        <span class="font-mono text-xl tabular-nums text-ink">{{ building_income_amount|net_of_wages:wage_bill_payroll }}</span>
+        {# A month that makes silver is said in brass, the colour reserved for a gain. A loss stays #}
+        {# "ink": it is not trouble until the wages cannot be paid, and that has its own red alert. #}
+        {% with net=building_income_amount|net_of_wages:wage_bill_payroll %}
+            <span class="font-mono text-xl tabular-nums {% if net|first == '+' %}text-brass{% else %}text-ink{% endif %}">{{ net }}</span>
+        {% endwith %}
     </div>
 
     <div class="flex items-baseline justify-between gap-x-2.5">

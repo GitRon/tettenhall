@@ -14,7 +14,7 @@
         {% for log_round in battle_log.round_list %}
             {% if log_round.saga_line_list %}
                 <div class="mb-2.5">
-                    <div class="text-sm uppercase leading-snug text-ink-muted">Round {{ log_round.number }}</div>
+                    <div class="font-mono text-label uppercase tracking-label leading-snug text-ink-muted">Round {{ log_round.number }}</div>
                     {% for log in log_round.saga_line_list %}
                         {% include 'skirmish/battle_history/components/log_line.html' with text=log.saga %}
                     {% endfor %}
@@ -27,7 +27,7 @@
 <div class="hidden group-data-[log-tab=tally]:block">
     {% for log_round in battle_log.round_list %}
         <div class="mb-2.5">
-            <div class="text-sm uppercase leading-snug text-ink-muted">Round {{ log_round.number }}</div>
+            <div class="font-mono text-label uppercase tracking-label leading-snug text-ink-muted">Round {{ log_round.number }}</div>
             {% for log in log_round.line_list %}
                 {% include 'skirmish/battle_history/components/log_line.html' with text=log.message %}
             {% endfor %}

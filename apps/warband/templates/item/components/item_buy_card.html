@@ -1,5 +1,5 @@
 {% load handout l10n %}
-<div class="box-border bg-ground text-ink-muted border border-rule">
+<div class="box-border bg-ground text-ink-muted border border-rule-strong">
     <div class="border-b border-rule px-[30px] py-[15px]">
         {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
         {# classes rather than handing either to a wrapper. #}
@@ -29,7 +29,7 @@
         </div>
     </div>
     <div class="border-t border-rule px-[30px] py-[15px]">
-        <button class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline"
+        <button class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline"
                 hx-post="{% url 'warband:item-buy-view' item.id %}"
                 hx-disabled-elt="this"
                 hx-swap="none"

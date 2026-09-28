@@ -3,7 +3,7 @@
 {# played through. #}
 {# "group" is what the rows below read the kit control with. Each panel is its own group, so the two #}
 {# war bands on the screen carry a control each and neither reaches the other's men. #}
-<div class="group box-border border border-rule bg-ground p-6">
+<div class="group box-border border border-rule-strong bg-ground p-6">
     {# The name of the band and the one thing the panel can be asked for, on a row: the same shape the #}
     {# battle report beside this one gives its own header and the Fight! button. It wraps, so a long #}
     {# faction name on a phone pushes the control onto its own line rather than squeezing the name. #}
@@ -26,7 +26,7 @@
         {# The checkbox is the control and it is only visually hidden, so it still takes the keyboard. #}
         {# "has-[:focus-visible]" is what draws the ring the sighted keyboard user needs: the label is #}
         {# the input's parent rather than its sibling, so "peer-focus-visible" would reach nothing. #}
-        <label class="cursor-pointer font-display text-[13px] uppercase tracking-[0.06em] text-ink-muted hover:text-ink has-[:focus-visible]:text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-offset-4">
+        <label class="cursor-pointer font-mono text-label uppercase tracking-label text-ink-muted hover:text-ink has-[:focus-visible]:text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-offset-4">
             <input type="checkbox"
                    class="kit-toggle peer sr-only">
             <span class="sr-only">Show kit</span>

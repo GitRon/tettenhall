@@ -5,7 +5,7 @@
 {# on "updateResourceBar", which every view that moves one of them fires. #}
 {# This element is the swap target, so its own classes travel with every re-fetch - which is why the #}
 {# layout sits here rather than on a wrapper in "base.html" that a swap would leave behind. #}
-<div class="flex items-center gap-x-3 text-sm text-ink"
+<div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-sm uppercase tabular-nums text-ink"
      hx-get="{% url 'warband:resource-bar-htmx' %}"
      hx-trigger="updateResourceBar from:body"
      hx-swap="outerHTML"
@@ -17,6 +17,9 @@
     {# every screen, so a fight the month is blocked on is one tap away from wherever the player #}
     {# noticed the number - and the ledger, which is no section of its own, is reached here and #}
     {# nowhere else. #}
+    {# Every figure carries its word, in the mono every number in the game is set in: silver and #}
+    {# men are what each decision is weighed against, and a bare glyph beside them has to be learned #}
+    {# before it can be read. The word is the quiet label, the figure the loud part. #}
     {% if current_savegame %}
         {# A savegame can be without a player faction, and there is no war band to walk into then - #}
         {# which is the same answer the section nav gives by dropping the entry entirely #}
@@ -24,10 +27,10 @@
             <a class="text-ink no-underline hover:text-ink-muted"
                href="{% url 'warband:warband-roster-view' %}"
                title="Your war band">
-                {% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}
+                <span class="text-label tracking-label text-ink-muted">Men</span> {{ faction_warriors.count }}
             </a>
         {% else %}
-            <span>{% include 'common/components/svg_icon.html' with icon_name="warrior_face" size='sm' %} {{ faction_warriors.count }}</span>
+            <span><span class="text-label tracking-label text-ink-muted">Men</span> {{ faction_warriors.count }}</span>
         {% endif %}
         {# The one element guaranteed to be in front of the player when they click "Finish #}
         {# month", so it is where the wage bill has to speak up. The detail stays on the #}
@@ -36,7 +39,7 @@
             <span class="text-blood">
                 <a class="text-blood" href="{% url 'warband:transaction-list-view' %}"
                    title="{{ wage_bill_payroll.missing_amount }} silver short of next month's wages">
-                    {% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %}
+                    <span class="text-label tracking-label">Silver</span>
                     {{ current_balance }} <i class="fa-solid fa-triangle-exclamation"></i>
                 </a>
             </span>
@@ -44,13 +47,13 @@
             <a class="text-ink no-underline hover:text-ink-muted"
                href="{% url 'warband:transaction-list-view' %}"
                title="The ledger">
-                {% include 'common/components/svg_icon.html' with icon_name="silver" size='sm' %} {{ current_balance }}
+                <span class="text-label tracking-label text-ink-muted">Silver</span> {{ current_balance }}
             </a>
         {% endif %}
         <a class="text-ink no-underline hover:text-ink-muted"
            href="{% url 'warband:skirmish-list-view' %}"
            title="Skirmishes still open">
-            {% include 'common/components/svg_icon.html' with icon_name="crossed_swords" size='sm' %} {{ open_skirmishes.count }}
+            <span class="text-label tracking-label text-ink-muted">Fights</span> {{ open_skirmishes.count }}
         </a>
         {# Every cost in the game is denominated in months - healing, training, building, one fight #}
         {# per faction per month - and the month was on no screen the player is looking at while #}
@@ -64,7 +67,7 @@
         {# aside wherever a "data-month-heading" is on screen. In CSS rather than in the view: this #}
         {# element is re-fetched by its own htmx view, whose request knows nothing of the page it #}
         {# lands on. #}
-        <a class="whitespace-nowrap font-mono text-label uppercase tracking-label text-ink no-underline hover:text-ink-muted in-[body:has([data-month-heading])]:hidden"
+        <a class="whitespace-nowrap text-label tracking-label text-ink no-underline hover:text-ink-muted in-[body:has([data-month-heading])]:hidden"
            href="{% url 'warband:dashboard-view' %}"
            title="{{ current_savegame.current_date.label }}">
             <i class="fa-solid fa-calendar-days hidden md:inline"></i> {{ current_savegame.current_date.season_label }}

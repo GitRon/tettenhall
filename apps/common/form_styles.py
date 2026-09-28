@@ -32,7 +32,7 @@ FIELD_SPACING = "mb-5"
 #: A fieldset carries the browser's own margin, padding and border, and the layouts want none of them.
 FIELDSET = "m-0 border-0 p-0"
 
-_BUTTON = "box-border inline-block cursor-pointer border py-0 font-display text-sm uppercase tracking-[0.06em]"
+_BUTTON = "box-border inline-block cursor-pointer border py-0 font-mono text-label uppercase tracking-label"
 _BUTTON_MEDIUM = f"{_BUTTON} px-[30px] py-[9px]"
 _BUTTON_SMALL = f"{_BUTTON} px-[15px] py-[4px]"
 
