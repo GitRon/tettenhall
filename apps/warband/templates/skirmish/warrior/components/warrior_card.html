@@ -33,7 +33,7 @@
             <span class="font-mono whitespace-nowrap text-label uppercase tracking-label text-ink-muted">
                 <i class="fa-solid fa-award"></i> Level {{ warrior.level }}
             </span>
-            <p class="m-0 inline-block border border-ink px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
+            <p class="m-0 inline-block border border-ink px-2 py-1 font-mono font-medium whitespace-nowrap text-label uppercase tracking-label text-ink">
                 <i class="fa-solid fa-feather-pointed"></i> Ready
             </p>
         </div>
@@ -115,7 +115,7 @@
             <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink-muted">
                 <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
             </span>
-            <p class="m-0 inline-block border border-blood px-2 py-1 font-mono whitespace-nowrap text-label uppercase tracking-label text-ink">
+            <p class="m-0 inline-block border border-blood px-2 py-1 font-mono font-medium whitespace-nowrap text-label uppercase tracking-label text-ink">
                 {% if warrior.is_unconscious %}<i class="fa-solid fa-moon"></i>{% elif warrior.is_fleeing %}<i class="fa-solid fa-person-running"></i>{% else %}<i class="fa-solid fa-skull"></i>{% endif %}
                 {{ warrior.get_condition_display }}
             </p>

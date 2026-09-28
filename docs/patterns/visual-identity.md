@@ -72,9 +72,11 @@ nothing but an icon has to be learned before it can be read. The word is the qui
 count, status tag and column head in the game is set in them. That is the smallest the mono reads
 comfortably in uppercase on this ground; wider tracking at a smaller size breaks a word into letters.
 
-**A control or a status is the label at 500.** Buttons, the row action, the row menu and status tags
-wear the heavier cut, because the 400 at this size thins to grey hairlines on the dark ground, and
-those are the words the player acts on. Column heads and the quiet word beside a figure stay at 400.
+**A control or a status is the label at 500.** Buttons, the row action, the row menu and the
+outlined tag that names a state (*Unconscious*, *Ready*, *No upgrade*) wear the heavier cut, because
+the 400 at this size thins to grey hairlines on the dark ground, and those are the words the player
+acts on. Column heads, the quiet word beside a figure and the fact boxes that pair one with a figure
+(`LEVEL 2`, `LOOT HIGH`) stay at 400.
 
 `--text-figure` (13px) is a figure standing in a column on its own - a level, a wage, a health
 reading - one step above the label, so the number is the loud part and the word naming it the quiet

@@ -124,13 +124,42 @@
      * The row menu - see "faction/warrior/components/roster_row_menu.html". The browser opens and
      * closes it; this places it and runs its two steps.
      *
-     * Placed under its trigger, right edges aligned, and above it when there is no room below. Fixed,
-     * because the top layer has no containing block but the viewport - so a scroll would leave it
-     * floating away from its row, and scrolling closes it instead. "beforetoggle" rather than
-     * "toggle", so it is never painted in the middle of the screen first.
+     * Placed beside its trigger, to the left, tops aligned - not under it, where it would cover the
+     * next row's trigger and turn "open the next man's menu" into a click on this one's Dismiss. It
+     * rises instead when there is no room below, and is pushed back on screen when a phone has
+     * scrolled the table so far that the left has no room either. Fixed, because the top layer has no
+     * containing block but the viewport - so a scroll would leave it floating away from its row, and
+     * scrolling closes it instead.
      */
     const ROW_MENU_GAP = 4;
+    const ROW_MENU_EDGE = 8;
     const openRowMenus = () => document.querySelectorAll('[data-row-menu]:popover-open');
+
+    const placeRowMenu = (menu) => {
+        const trigger = document.querySelector(`[popovertarget="${menu.id}"]`);
+        if (!trigger) {
+            return;
+        }
+        const anchor = trigger.getBoundingClientRect();
+        const viewportWidth = document.documentElement.clientWidth;
+        menu.style.position = 'fixed';
+        menu.style.right = `${Math.max(viewportWidth - anchor.left + ROW_MENU_GAP, ROW_MENU_EDGE)}px`;
+        menu.style.top = `${anchor.top}px`;
+        menu.style.bottom = 'auto';
+        // Its size is only known once it is showing, so the two corrections below measure it.
+        // "beforetoggle" still sets the first guess, so it is never painted in the middle of the screen.
+        if (!menu.matches(':popover-open')) {
+            return;
+        }
+        const box = menu.getBoundingClientRect();
+        if (box.left < ROW_MENU_EDGE) {
+            menu.style.right = `${Math.max(viewportWidth - box.width - ROW_MENU_EDGE, ROW_MENU_EDGE)}px`;
+        }
+        if (box.bottom > window.innerHeight && anchor.bottom > box.height) {
+            menu.style.top = 'auto';
+            menu.style.bottom = `${window.innerHeight - anchor.bottom}px`;
+        }
+    };
 
     const rowMenuStep = (menu, step) => {
         menu.querySelectorAll('[data-row-menu-step]').forEach((element) => {
@@ -138,42 +167,24 @@
         });
     };
 
+    // Neither toggle event bubbles, so both are caught on the way down
     document.addEventListener('beforetoggle', (event) => {
         const menu = event.target;
         if (!(menu instanceof HTMLElement) || !menu.matches('[data-row-menu]')) {
             return;
         }
-        if (event.newState !== 'open') {
+        if (event.newState === 'open') {
+            placeRowMenu(menu);
+        } else {
             // Closed half-way through asking is the same as "Keep him", so the next open starts over
             rowMenuStep(menu, 'choose');
-            return;
         }
-        const trigger = document.querySelector(`[popovertarget="${menu.id}"]`);
-        if (!trigger) {
-            return;
-        }
-        const anchor = trigger.getBoundingClientRect();
-        menu.style.position = 'fixed';
-        menu.style.right = `${Math.max(document.documentElement.clientWidth - anchor.right, 0)}px`;
-        menu.style.top = `${anchor.bottom + ROW_MENU_GAP}px`;
-        menu.style.bottom = 'auto';
     }, true);
 
-    // Measured once it is showing, because its height is only known then: flipped above the trigger
-    // when it would run off the bottom of the viewport.
     document.addEventListener('toggle', (event) => {
         const menu = event.target;
-        if (!(menu instanceof HTMLElement) || !menu.matches('[data-row-menu]') || event.newState !== 'open') {
-            return;
-        }
-        const trigger = document.querySelector(`[popovertarget="${menu.id}"]`);
-        if (!trigger) {
-            return;
-        }
-        const anchor = trigger.getBoundingClientRect();
-        if (menu.getBoundingClientRect().bottom > window.innerHeight && anchor.top > menu.offsetHeight) {
-            menu.style.top = 'auto';
-            menu.style.bottom = `${window.innerHeight - anchor.top + ROW_MENU_GAP}px`;
+        if (menu instanceof HTMLElement && menu.matches('[data-row-menu]') && event.newState === 'open') {
+            placeRowMenu(menu);
         }
     }, true);
 
@@ -192,6 +203,8 @@
         if (ask) {
             const menu = ask.closest('[data-row-menu]');
             rowMenuStep(menu, 'confirm');
+            // The question is taller than the list it replaces
+            placeRowMenu(menu);
             // The safe answer takes the focus, so an Enter pressed out of habit keeps the man
             menu.querySelector('[data-row-menu-cancel]')?.focus();
             return;

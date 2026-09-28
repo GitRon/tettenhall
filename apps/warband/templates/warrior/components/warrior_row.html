@@ -41,11 +41,10 @@
                 <span class="border border-rule px-1.5 py-0.5">Weapon <span class="normal-case text-ink">{{ warrior.weapon.display_name|default:"empty-handed" }}</span></span>
                 <span class="border border-rule px-1.5 py-0.5">Armour <span class="normal-case text-ink">{{ warrior.armor.display_name|default:"unarmoured" }}</span></span>
             {% endif %}
-            {# A state, not a scale: whole reads as the brightest outline, a man who is down in the red. #}
-            {% if warrior.is_healthy %}
-                <span class="border border-ink px-1.5 py-0.5 text-ink">Able to fight</span>
-            {% else %}
-                <span class="border border-blood px-1.5 py-0.5 text-ink">{{ warrior.get_condition_display }}</span>
+            {# A state, not a scale, and only the exception: a man who can fight is how things stand, and a #}
+            {# tag saying so on every row would be the loudest thing in the list. #}
+            {% if not warrior.is_healthy %}
+                <span class="border border-blood px-1.5 py-0.5 font-medium text-ink">{{ warrior.get_condition_display }}</span>
             {% endif %}
         </span>
         {# Why a mercenary's price is not the one the player remembers. Only once the surcharge is real, #}

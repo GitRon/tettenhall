@@ -14,9 +14,11 @@
     The status cell is empty for a man who can fight. That is the normal state, and a tag on five
     rows out of six would be the loudest thing in the table while saying nothing.
 
-    The table scrolls inside its own box on a phone rather than dragging the page sideways.
+    The table scrolls inside its own box on a phone rather than dragging the page sideways. The box is
+    positioned so that it contains the visually hidden column head: an absolutely positioned element
+    escapes an overflow box that is not its containing block, and that one would widen the page.
 {% endcomment %}
-<div class="overflow-x-auto border border-rule-strong">
+<div class="relative overflow-x-auto border border-rule-strong">
     <table class="m-0 min-w-[58rem]">
         <thead>
         <tr>
@@ -68,7 +70,7 @@
                 <td class="py-3 align-middle">{% include 'faction/warrior/components/roster_gear.html' with item=warrior.weapon %}</td>
                 <td class="py-3 align-middle">{% include 'faction/warrior/components/roster_gear.html' with item=warrior.armor %}</td>
                 <td class="py-3 text-right align-middle font-mono text-figure tabular-nums text-ink" title="Monthly salary in silver">
-                    {% if warrior.monthly_salary %}{{ warrior.monthly_salary }}{% else %}<span class="text-ink-dim">&mdash;</span>{% endif %}
+                    {{ warrior.monthly_salary }}
                 </td>
                 <td class="py-3 align-middle">
                     {% if not warrior.is_healthy %}
