@@ -7,23 +7,20 @@
     off him first, and a rival's stores are not the player's to sell from, so a price there is a
     number with nothing to do with it.
 
-    Each pair is wrapped in a titled span: the icons are standing in for units, and a die beside a
-    bare "1.5" says nothing about what the number counts. The price needs none - it writes its own
-    unit out.
+    Set as the warrior's line is: the mono label, each figure beside the word for what it counts, so
+    a die roll and a bare "1.5" are never left for the player to tell apart. The roll keeps its
+    lowercase "d", which is how dice are written.
 {% endcomment %}
-{% if show_price %}
-    <i class="fa-solid fa-sack-xmark"></i> <i>{{ item.price }} silver</i>&nbsp;
-{% endif %}
-<span title="{% if item.is_weapon %}Damage{% else %}Protection{% endif %} roll">
-    {% if item.is_weapon %}
-        {% include 'common/components/svg_icon.html' with icon_name='axe-sword' %}
-    {% else %}
-        {% include 'common/components/svg_icon.html' with icon_name='shield' %}
+<span class="inline-flex flex-wrap gap-x-3 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted">
+    {% if show_price %}
+        <span><span class="text-ink">{{ item.price }}</span> silver</span>
     {% endif %}
-    <i>{{ item.type.base_value }}{{ item.get_modifier_as_string }}</i>
-</span>&nbsp;
-<span title="Expected {% if item.is_weapon %}damage{% else %}protection{% endif %} per roll">
+    <span title="{% if item.is_weapon %}Damage{% else %}Protection{% endif %} roll">
+        {% if item.is_weapon %}Damage{% else %}Protection{% endif %} <span class="normal-case text-ink">{{ item.type.base_value }}{{ item.get_modifier_as_string }}</span>
+    </span>
     {# Trimmed, so a weapon averaging a whole number reads "5" rather than "5.0" - and reads the #}
     {# same here as it does on the option a warrior is equipped from #}
-    <i class="fa-solid fa-dice"></i> <i>{{ item.expectancy_value|floatformat }}</i>
+    <span title="Expected {% if item.is_weapon %}damage{% else %}protection{% endif %} per roll">
+        Average <span class="text-ink">{{ item.expectancy_value|floatformat }}</span>
+    </span>
 </span>

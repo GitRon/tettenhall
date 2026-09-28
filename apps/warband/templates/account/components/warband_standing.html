@@ -38,7 +38,7 @@
         {% if not month_standing.warband.leader %}
             The war band has no leader.
         {% elif month_standing.warband.leader_can_march %}
-            <span class="text-ink">{{ month_standing.warband.leader }}</span> is fit to march.
+            <span class="text-ink">{{ month_standing.warband.leader }}</span> is <span class="text-brass">fit to march</span>.
         {% else %}
             <span class="text-ink">{{ month_standing.warband.leader }}</span> is in no condition to
             march this month, so there is no attack to launch.

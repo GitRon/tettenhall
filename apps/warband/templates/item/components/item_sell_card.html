@@ -1,5 +1,5 @@
 {% load handout l10n %}
-<div class="box-border bg-ground text-ink-muted border border-rule">
+<div class="box-border bg-ground text-ink-muted border border-rule-strong">
     <div class="border-b border-rule px-[30px] py-[15px]">
         {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
         {# classes rather than handing either to a wrapper. #}
@@ -75,14 +75,14 @@
                             </option>
                         {% endfor %}
                     </select>
-                    <button class="box-border inline-block cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-display text-sm uppercase leading-normal tracking-[0.06em] text-ink hover:bg-raised"
+                    <button class="box-border inline-block cursor-pointer border border-rule bg-transparent px-[15px] py-[4px] font-mono text-label uppercase leading-normal tracking-label text-ink hover:bg-raised"
                             type="submit">Give to
                     </button>
                 </form>
             </div>
         {% endif %}
         <div class="border-t border-rule px-[30px] py-[15px]">
-            <button class="cursor-pointer border-none bg-transparent p-0 uppercase leading-normal text-ink hover:underline"
+            <button class="cursor-pointer border-none bg-transparent p-0 font-mono text-label uppercase tracking-label leading-normal text-ink hover:underline"
                     hx-post="{% url 'warband:item-sell-view' item.id %}"
                     hx-disabled-elt="this"
                     hx-swap="none"

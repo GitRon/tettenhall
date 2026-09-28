@@ -21,7 +21,7 @@
                     {# The rule sits above the entry on a phone and below it on a desk, because the bar #}
                     {# itself has swapped ends: pinned to the bottom of the screen, a bottom border is #}
                     {# two pixels on the last row the screen has. #}
-                    <a class="flex flex-col items-center gap-y-1 border-t-2 py-2 text-xs uppercase no-underline md:flex-row md:gap-x-2 md:gap-y-0 md:border-b-2 md:border-t-0 md:py-3 md:text-sm {% if section.key == current_nav_section %}border-blood text-ink hover:text-ink md:border-b-blood{% else %}border-transparent text-ink-muted hover:text-ink md:border-b-transparent{% endif %}"
+                    <a class="flex flex-col items-center gap-y-1 border-t-2 py-2 font-mono text-label uppercase tracking-label no-underline md:flex-row md:gap-x-2 md:gap-y-0 md:border-b-2 md:border-t-0 md:py-3 {% if section.key == current_nav_section %}border-blood text-ink hover:text-ink md:border-b-blood{% else %}border-transparent text-ink-muted hover:text-ink md:border-b-transparent{% endif %}"
                        href="{{ section.url }}"
                        {% if section.key == current_nav_section %}aria-current="page"{% endif %}>
                         <i aria-hidden="true" class="fa-solid {{ section.icon }}"></i>
