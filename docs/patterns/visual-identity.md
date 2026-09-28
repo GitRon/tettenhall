@@ -37,9 +37,13 @@ decoration, and never the way a screen says "this part is important". If two thi
 red, at least one of them is wrong.
 
 **`brass` is the second reservation, and it is kept the same way.** It says "good": a month that makes
-silver, a leader fit to march, a building that may be raised this month, gear better than anything the
-men carry. It is never a heading, never a link, never a decoration, and if two unrelated things on a
-screen wear it, one of them is wrong. It is deliberately a muted brass rather than a green, which would
+silver, gear better than anything the men carry. It is never a heading, never a link, never a decoration,
+and if two unrelated things on a screen wear it, one of them is wrong.
+
+**A normal state is not good news.** A leader fit to march, a building that may be raised this month -
+those are how things usually stand, and they read as fine by being plain `ink`. Brass on them would shout
+every ordinary month, and the Month page, which carries all three, would have three brass things on it.
+Brass is for a gain the player would otherwise have to work out. It is deliberately a muted brass rather than a green, which would
 pull the game towards a dashboard, and deliberately only a little brighter than `blood` - `blood` is the
 more saturated of the two and still reads first, so the thing that wants the player stays at least as
 loud as the thing that pleases them. A brighter gold would out-shout it on every screen. The upgrade
