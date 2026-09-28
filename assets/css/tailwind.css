@@ -427,7 +427,7 @@
  *
  * A popover, so the browser draws it centred in the viewport with its own border and background
  * until told otherwise. The inset and margin are cleared here and "static/js/tettenhall.js" places it
- * under its trigger; the rest is the card: the ground, a "rule-strong" edge, no radius, no shadow.
+ * beside its trigger; the rest is the card: the ground, a "rule-strong" edge, no radius, no shadow.
  */
 @utility row-menu {
     inset: auto;
