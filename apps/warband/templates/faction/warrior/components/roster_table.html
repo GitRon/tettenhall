@@ -1,9 +1,12 @@
 {% comment %}
     The player's own war band, one line per man, in columns he can compare down.
 
-    What the line carries is what decides a month: level, health and morale, the gear he stands in,
-    his wage, and whether he can fight. Everything else - culture, strength and dexterity, injuries,
+    What the line carries is what decides a month: level, strength and dexterity, health and morale,
+    the gear he stands in, his wage, and whether he can fight. Everything else - culture, injuries,
     experience - is on his own page, which the name leads to.
+
+    Strength and dexterity are the stored figures, the ones his own page and the captive table show,
+    each against the strength baseline because the two are drawn from one distribution.
 
     Health and morale are a bar and the figure beside it. The bar is against his own maximum, because
     the column asks how hurt he is, and it goes "blood" below a third, which is where a man is one bad
@@ -18,11 +21,13 @@
     escapes an overflow box that is not its containing block, and that one would widen the page.
 {% endcomment %}
 <div class="relative overflow-x-auto border border-rule-strong">
-    <table class="m-0 min-w-[58rem]">
+    <table class="m-0 min-w-[66rem]">
         <thead>
         <tr>
             <th class="pl-4">Man</th>
             <th class="text-right">Lvl</th>
+            <th>Str</th>
+            <th>Dex</th>
             <th>Health</th>
             <th>Morale</th>
             <th>Weapon</th>
@@ -63,6 +68,12 @@
                     </div>
                 </td>
                 <td class="py-3 text-right align-middle font-mono text-figure tabular-nums text-ink">{{ warrior.level }}</td>
+                <td class="py-3 align-middle whitespace-nowrap font-mono text-figure tabular-nums text-ink">
+                    {% include 'warrior/components/warrior_attribute.html' with value=warrior.strength baseline=warrior.strength_baseline knowledge=knowledge %}
+                </td>
+                <td class="py-3 align-middle whitespace-nowrap font-mono text-figure tabular-nums text-ink">
+                    {% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}
+                </td>
                 <td class="py-3 align-middle">
                     {% include 'faction/warrior/components/roster_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}
                 </td>
