@@ -11,6 +11,10 @@ from apps.warband.faction.messages.events.faction import (
 )
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
 
+# What every faction opens its ledger with in month 1. The first paid level of every building is
+# priced against it - see Building.BUILDING_COSTS.
+STARTING_SILVER = 1000
+
 
 @message_registry.register_event(event=warrior.WarriorRecruited)
 def handle_warrior_recruited(*, context: warrior.WarriorRecruited) -> Command | None:
@@ -73,7 +77,7 @@ def handle_monthly_faction_income(*, context: MonthlyFactionIncomeEarned) -> Com
 
 @message_registry.register_event(event=NewFactionCreated)
 def handle_hand_out_starting_silver_for_new_factions(*, context: NewFactionCreated) -> Command:
-    return CreateTransaction(faction=context.faction, month=1, amount=1000, reason="Starting silver")
+    return CreateTransaction(faction=context.faction, month=1, amount=STARTING_SILVER, reason="Starting silver")
 
 
 @message_registry.register_event(event=FactionWasOccupied)

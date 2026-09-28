@@ -336,7 +336,7 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
         Warrior.objects.put_on_payroll(obj=context.warrior)
 
     # Reduce morale
-    Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=0.25)
+    Warrior.objects.reduce_max_morale(obj=context.warrior, lost_max_morale_in_percent=Warrior.CAPTIVITY_MORALE_LOSS)
 
     # Measured after the cut, so the refill is to the ceiling he is left with and never past it
     recovered_morale = context.warrior.max_morale - context.warrior.current_morale

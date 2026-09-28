@@ -11,10 +11,13 @@ from apps.warband.skirmish.services.actions.base import SkirmishActionService
 class RiskyAttackService(SkirmishActionService):
     command: Command = WarriorAttacksWarrior
 
+    # What a swing that lands is worth, against the half of them that go wide
+    ATTACK_MULTIPLIER = 2
+
     def get_attack_value(self) -> ActionRoll:
         # Attack has 50% chance to miss
         if bool(random.getrandbits(1)):
-            return self._scaled_by_strength(attack=self.warrior.roll_attack(), action_multiplier=2)
+            return self._scaled_by_strength(attack=self.warrior.roll_attack(), action_multiplier=self.ATTACK_MULTIPLIER)
 
         # No die and no weapon at all, and it says so: a swing that went wide is not a blow the armour
         # stopped, and a zero on its own cannot tell the two apart

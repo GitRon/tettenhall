@@ -10,11 +10,18 @@ from apps.warband.skirmish.services.actions.base import SkirmishActionService
 class FastAttackService(SkirmishActionService):
     command: Command = WarriorAttacksWarrior
 
+    # Quick enough to be the attacker more often, too quick to put weight behind the blow
+    PAIR_MATCHING_MULTIPLIER = 2
+    ATTACK_MULTIPLIER = 0.5
+
     @staticmethod
     def get_pair_matching_points(*, warrior_dexterity: int) -> int:
-        # Fast attack will double the base points for being the attacker instead of the defender
-        return SkirmishActionService.get_pair_matching_points(warrior_dexterity=warrior_dexterity) * 2
+        # A fast attack weighs more towards being the attacker instead of the defender
+        return (
+            SkirmishActionService.get_pair_matching_points(warrior_dexterity=warrior_dexterity)
+            * FastAttackService.PAIR_MATCHING_MULTIPLIER
+        )
 
     def get_attack_value(self) -> ActionRoll:
-        # Attack will cause only 50% damage since it's a fast one
-        return self._scaled_by_strength(attack=self.warrior.roll_attack(), action_multiplier=0.5)
+        # A fast attack lands lighter than a plain one
+        return self._scaled_by_strength(attack=self.warrior.roll_attack(), action_multiplier=self.ATTACK_MULTIPLIER)

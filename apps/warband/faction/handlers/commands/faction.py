@@ -5,6 +5,7 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.warband.calendar.months import get_calendar_month
+from apps.warband.faction.domain.fyrd_reserve import FyrdReserve
 from apps.warband.faction.domain.occupation_spoils import OccupationSpoils
 from apps.warband.faction.domain.rival_income import RivalIncome
 from apps.warband.faction.messages.commands.faction import (
@@ -39,6 +40,10 @@ from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION
 from apps.warband.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
 from apps.warband.town.models import Town
 
+# How many rivals a new savegame deals the player
+RIVAL_FACTIONS_MIN = 3
+RIVAL_FACTIONS_MAX = 5
+
 
 def _create_faction(*, name: str, town_name: str, culture_id: int, savegame: Savegame, is_player: bool) -> Faction:
     """
@@ -53,7 +58,7 @@ def _create_faction(*, name: str, town_name: str, culture_id: int, savegame: Sav
         town_name=town_name,
         culture_id=culture_id,
         savegame=savegame,
-        fyrd_reserve=random.randint(2, 5),
+        fyrd_reserve=FyrdReserve.roll_starting_reserve(),
     )
 
     if is_player:
@@ -121,7 +126,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
         )
     ]
 
-    for _ in range(random.randint(3, 5)):
+    for _ in range(random.randint(RIVAL_FACTIONS_MIN, RIVAL_FACTIONS_MAX)):
         rival_culture = random.choice(rival_cultures)
         # A rival is named in the culture on its own row, because that is the culture its warriors are
         # generated from - naming it from anything else puts a Norse town in front of a Frisian war band.
@@ -152,7 +157,7 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | N
     if not get_calendar_month(month=context.month).FYRD_REPLENISHES:
         return None
 
-    new_recruits = random.randrange(0, 3)
+    new_recruits = FyrdReserve.roll_monthly_recruits()
 
     if new_recruits == 0:
         return None
