@@ -210,7 +210,7 @@ def handle_prepare_faction_warriors_for_month(*, context: PrepareFactionWarriors
     """
     warrior_list = Warrior.objects.filter(
         Q(faction=context.faction) | Q(id__in=context.faction.captured_warriors.all())
-    ).exclude(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    ).exclude_dead()
 
     return [
         WarriorMonthPrepared(faction=context.faction, warrior=warrior, month=context.month) for warrior in warrior_list

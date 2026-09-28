@@ -396,7 +396,7 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
 
     # Only the ones still standing when it was over share in the victory: a warrior who was knocked
     # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did
-    victorious_healthy_warriors = victorious_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY)
+    victorious_healthy_warriors = victorious_warriors.filter_healthy()
 
     # We need to evaluate the QS to avoid hitting the DB in the events
     return SkirmishFinished(
@@ -422,11 +422,11 @@ def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event
 
     # Check if one faction has been defeated
     victor = None
-    if not context.skirmish.defending_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+    if not context.skirmish.defending_warriors.filter_healthy().exists():
         # Checked first on purpose: if both sides are wiped out in the same round, the tie goes to
         # the side that marched
         victor = context.skirmish.attacking_faction
-    elif not context.skirmish.attacking_warriors.filter(condition=Warrior.ConditionChoices.CONDITION_HEALTHY).exists():
+    elif not context.skirmish.attacking_warriors.filter_healthy().exists():
         victor = context.skirmish.defending_faction
 
     return RoundFinished(skirmish=context.skirmish, round_number=finished_round, victor=victor, month=context.month)

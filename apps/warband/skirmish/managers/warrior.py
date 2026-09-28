@@ -394,7 +394,7 @@ class WarriorManager(manager.Manager):
         whose salary grew with every level, so insolvency costs a faction its best men first.
         """
         return list(
-            self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
+            self.exclude_dead()
             .filter(faction=faction)
             # By id as well, or two warriors on the same salary come back in whatever order the
             # database feels like and the tests below them flap
