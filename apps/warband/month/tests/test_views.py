@@ -12,7 +12,9 @@ from apps.warband.incident.incidents.burnt_village_refugees import BurntVillageR
 from apps.warband.incident.incidents.elf_shot_herd import ElfShotHerd
 from apps.warband.incident.models.pending_incident import PendingIncident
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
+from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
@@ -519,3 +521,26 @@ def test_finish_month_view_answers_an_open_question_by_its_default(logged_in_cli
         ).exists()
         is True
     )
+
+
+@pytest.mark.django_db
+def test_finish_month_view_arms_a_rivals_new_levy_out_of_its_stores(logged_in_client, current_savegame):
+    """
+    Flow test rather than a unit test, because what it pins is two hops apart in the registry: the draft
+    raises "WarriorRecruited", and the handout hanging off it has to see the man the draft just wrote.
+
+    The rival has no men and a mail shirt in its stores, so the levy it calls up this month is the only
+    one who can wear it - and he marches in it from the month he arrives rather than the one after.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=1)
+    mail = ItemFactory(
+        savegame=current_savegame,
+        owner=rival_faction,
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR, base_value="4d6"),
+    )
+
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+
+    assert response.status_code == 200
+    assert Warrior.objects.get(faction=rival_faction).armor == mail

@@ -5,10 +5,12 @@ from queuebie.messages import Event
 
 from apps.warband.faction.messages.commands.item import (
     AddItemToTownShop,
+    HandOutFactionGear,
     RemoveItemFromTownShop,
     RestockTownShopItems,
 )
 from apps.warband.faction.messages.events.item import (
+    GearHandoutApproved,
     ItemWasAddedToShop,
     ItemWasRemovedFromShop,
     RequestNewItemForTownShop,
@@ -16,6 +18,7 @@ from apps.warband.faction.messages.events.item import (
 )
 from apps.warband.item.models import ItemType
 from apps.warband.item.services.generators.item.mercenary import MercenaryItemGenerator
+from apps.warband.item.services.handout import plan_gear_handout
 from apps.warband.town.buildings.marketplace import Marketplace
 from apps.warband.town.buildings.weaponsmith import Weaponsmith
 
@@ -98,3 +101,25 @@ def handle_buy_item_for_faction(*, context: RemoveItemFromTownShop) -> Event:
     context.faction.available_items.remove(context.item)
 
     return ItemWasRemovedFromShop(faction=context.faction, item=context.item, month=context.month)
+
+
+@message_registry.register_command(command=HandOutFactionGear)
+def handle_hand_out_faction_gear(*, context: HandOutFactionGear) -> list[Event]:
+    """
+    Which of a rival's items go on which of its men - see [plan_gear_handout] for who gets what.
+
+    Shaped like [handle_consider_pub_hire]: this decides and writes nothing, and each equip it settles
+    on goes out as an approval that becomes the same "EquipItem" the player's own handout dispatches.
+    The player is refused, because choosing who carries what is his to do.
+
+    Asked again every time something it depends on changes, so two askings can land in one drain and
+    both be planned on the same state. The second then only approves what the first already did, and
+    each of those equips finds the item in the slot already and moves nothing.
+    """
+    if context.faction.savegame.player_faction_id == context.faction.id:
+        return []
+
+    return [
+        GearHandoutApproved(faction=context.faction, warrior=warrior, item=item, slot=slot)
+        for warrior, item, slot in plan_gear_handout(faction=context.faction)
+    ]

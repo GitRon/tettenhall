@@ -73,10 +73,6 @@ TERMINAL_MESSAGES: dict[str, str] = {
         "bury the month log under the shuffling a single new sword sets off."
     ),
     "apps.warband.finance.messages.events.transaction.TransactionCreated": _RECORD_WRITTEN,
-    "apps.warband.item.messages.events.item.OwnershipChanged": (
-        "Raised for loot changing hands after a fight, which the spoils of the skirmish report already "
-        "record. Who owns an item is read off the item."
-    ),
     "apps.warband.month.messages.events.month.PlayerMonthLogCleared": (
         "Housekeeping at the turn of the month: the lines of past months are gone, and nobody had anything "
         "left to do with them."

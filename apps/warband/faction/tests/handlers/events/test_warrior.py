@@ -6,10 +6,12 @@ from apps.warband.faction.handlers.events.warrior import (
     handle_add_warrior_who_walked_out_to_pub,
     handle_consider_pub_hire_for_new_month,
     handle_draft_warrior_for_approved_fyrd_draft,
+    handle_hand_out_gear_for_recruited_warrior,
     handle_recruit_mercenary_for_approved_pub_hire,
     handle_restock_mercenaries_in_pub_for_new_faction,
     handle_restock_mercenaries_in_pub_once_hiring_is_considered,
 )
+from apps.warband.faction.messages.commands.item import HandOutFactionGear
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
     ConsiderPubHire,
@@ -22,6 +24,7 @@ from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubHiringConsidered,
     PubMercenaryHireApproved,
+    WarriorRecruited,
 )
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
@@ -172,3 +175,13 @@ def test_handle_restock_mercenaries_in_pub_once_hiring_is_considered_maps_to_com
     )
 
     assert result == RestockTownMercenaries(faction=faction, month=7)
+
+
+def test_handle_hand_out_gear_for_recruited_warrior_maps_to_command():
+    faction = FactionFactory.build()
+
+    result = handle_hand_out_gear_for_recruited_warrior(
+        context=WarriorRecruited(faction=faction, warrior=WarriorFactory.build(), recruitment_price=0, month=4)
+    )
+
+    assert result == HandOutFactionGear(faction=faction)

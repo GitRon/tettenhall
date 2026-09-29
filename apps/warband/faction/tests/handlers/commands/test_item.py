@@ -6,14 +6,17 @@ import pytest
 from apps.warband.faction.handlers.commands.item import (
     handle_add_item_to_shop,
     handle_buy_item_for_faction,
+    handle_hand_out_faction_gear,
     handle_restock_shop_items,
 )
 from apps.warband.faction.messages.commands.item import (
     AddItemToTownShop,
+    HandOutFactionGear,
     RemoveItemFromTownShop,
     RestockTownShopItems,
 )
 from apps.warband.faction.messages.events.item import (
+    GearHandoutApproved,
     ItemWasAddedToShop,
     ItemWasRemovedFromShop,
     TownShopRestocked,
@@ -24,8 +27,10 @@ from apps.warband.item.messages.commands.item import SellItem
 from apps.warband.item.models import ItemType
 from apps.warband.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.mark.django_db
@@ -208,3 +213,25 @@ def test_handle_restock_shop_items_keeps_the_report_line_of_a_sold_spoil():
         handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=4))
 
     assert SkirmishSpoil.objects.get(id=spoil.id).item_name == item.display_name
+
+
+@pytest.mark.django_db
+def test_handle_hand_out_faction_gear_approves_an_upgrade_for_a_rival():
+    warrior = WarriorFactory()
+    sword = ItemFactory(savegame=warrior.savegame, owner=warrior.faction, type=ItemTypeFactory(base_value="2d6"))
+
+    result = handle_hand_out_faction_gear(context=HandOutFactionGear(faction=warrior.faction))
+
+    assert result == [GearHandoutApproved(faction=warrior.faction, warrior=warrior, item=sword, slot="weapon")]
+
+
+@pytest.mark.django_db
+def test_handle_hand_out_faction_gear_leaves_the_player_to_arm_his_own_men():
+    warrior = WarriorFactory()
+    warrior.savegame.player_faction = warrior.faction
+    warrior.savegame.save()
+    ItemFactory(savegame=warrior.savegame, owner=warrior.faction, type=ItemTypeFactory(base_value="2d6"))
+
+    result = handle_hand_out_faction_gear(context=HandOutFactionGear(faction=warrior.faction))
+
+    assert result == []
