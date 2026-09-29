@@ -12,8 +12,8 @@ class ItemType(models.Model):
         """
         The band of standing a type belongs to, which is what an item generator draws its pool from.
 
-        Not a damage ordering: the Spear (3d2, 4.5) sits in the rustic band and outdamages the Short
-        sword (2d3, 4.0) beside it. Two bands rather than three, because every band then holds both a
+        Not a damage ordering: the Spear (3d2, 4.5) sits in the rustic band and outdamages the Seax
+        (2d3, 4.0) beside it. Two bands rather than three, because every band then holds both a
         weapon and a piece of armour and no pool the shipped fixture can produce is ever empty.
         """
 

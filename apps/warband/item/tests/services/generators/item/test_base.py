@@ -83,9 +83,9 @@ def test_get_queryset_for_type_without_a_pool_reaches_the_whole_table(item_gener
 
     assert sorted(result.values_list("name", flat=True)) == [
         "Battle axe",
-        "Long sword",
         "Pitchfork",
-        "Short sword",
+        "Seax",
+        "Spatha",
         "Spear",
     ]
 
@@ -96,7 +96,7 @@ def test_get_queryset_for_type_narrows_to_the_declared_pool(item_generator):
 
     result = item_generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Long sword"]
+    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Spatha"]
 
 
 @pytest.mark.django_db

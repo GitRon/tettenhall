@@ -63,7 +63,7 @@ def test_warrior_weapon_update_view_renders_the_requested_field(logged_in_client
 def test_warrior_weapon_update_view_equips_the_chosen_weapon(logged_in_client, current_savegame):
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=current_savegame.player_faction,
         savegame=current_savegame,
     )
@@ -87,12 +87,12 @@ def test_warrior_weapon_update_view_swaps_with_the_man_carrying_the_chosen_weapo
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     holder = WarriorFactory(faction=current_savegame.player_faction)
     wanted_weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=current_savegame.player_faction,
         savegame=current_savegame,
     )
     held_weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=current_savegame.player_faction,
         savegame=current_savegame,
     )
@@ -120,7 +120,7 @@ def test_warrior_weapon_update_view_announces_the_far_end_of_a_swap(logged_in_cl
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     holder = WarriorFactory(faction=current_savegame.player_faction)
     holder.weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=current_savegame.player_faction,
         savegame=current_savegame,
     )
@@ -138,7 +138,7 @@ def test_warrior_weapon_update_view_announces_the_far_end_of_a_swap(logged_in_cl
 def test_warrior_weapon_update_view_cannot_change_a_warrior_of_another_savegame(logged_in_client, current_savegame):
     foreign_warrior = WarriorFactory()
     weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=foreign_warrior.faction,
         savegame=foreign_warrior.savegame,
     )
@@ -593,7 +593,7 @@ def test_warrior_dismiss_view_leaves_his_gear_on_the_shelf(logged_in_client, cur
     "get_all_unoccupied_items" needs to see before the faction page will offer it.
     """
     weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=current_savegame.player_faction,
         savegame=current_savegame,
     )
@@ -808,7 +808,7 @@ def test_warrior_weapon_update_view_keeps_the_gear_of_a_man_standing_in_an_open_
 ):
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=current_savegame.player_faction,
         savegame=current_savegame,
     )
@@ -836,7 +836,7 @@ def test_warrior_weapon_update_view_declines_to_take_a_weapon_off_a_man_in_an_op
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     holder = WarriorFactory(faction=current_savegame.player_faction)
     wanted_weapon = ItemFactory(
-        type=ItemType.objects.get(name="Short sword"),
+        type=ItemType.objects.get(name="Seax"),
         owner=current_savegame.player_faction,
         savegame=current_savegame,
     )

@@ -21,9 +21,9 @@ def test_get_queryset_for_type_offers_every_weapon_but_the_fallback():
 
     assert sorted(result.values_list("name", flat=True)) == [
         "Battle axe",
-        "Long sword",
         "Pitchfork",
-        "Short sword",
+        "Seax",
+        "Spatha",
         "Spear",
     ]
 

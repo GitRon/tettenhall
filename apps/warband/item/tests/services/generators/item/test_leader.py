@@ -15,7 +15,7 @@ def test_get_queryset_for_type_offers_only_fine_weapons():
 
     result = generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Long sword"]
+    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Spatha"]
 
 
 @pytest.mark.django_db
