@@ -20,6 +20,13 @@ Six where getting it wrong is both expensive and silent:
 | add a model, template, template tag, fixture, admin or management command | [Where code goes](docs/patterns/app-layout.md) |
 | write a colour, a typeface, a border or an icon into any template | [Visual identity](docs/patterns/visual-identity.md) |
 
+**A design skill reviews; it does not choose the look.** `.claude/skills/impeccable` (vendored, see its
+`VENDORED.md`) is for evaluating and hardening a screen: `critique`, `audit`, `harden`, `clarify`,
+`adapt`, `polish`, `distill`, `quieter`. Its commands that add colour, weight or motion (`bolder`,
+`colorize`, `delight`, `animate`, `overdrive`) and its new-work flow do not apply here. Wherever the
+skill's defaults and [Visual identity](docs/patterns/visual-identity.md) disagree, the doc wins, and a
+finding that argues with the doc is a question for an issue, not an edit.
+
 **There are two Django apps, and neither is a topic.** `apps.warband` is the whole game and
 `apps.common` is its one satellite app — `apps.faker_frisian`, `apps.faker_gaelic` and
 `apps.faker_old_english` are satellites as well, but plain packages under `apps/` rather than apps. The game's structure lives in topic packages *inside* `warband`
