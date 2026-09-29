@@ -3,10 +3,10 @@
     "model": "warband.itemtype",
     "pk": 1,
     "fields": {
-      "name": "Short sword",
+      "name": "Seax",
       "function": 1,
       "base_value": "2d3",
-      "svg_image_name": "gladius",
+      "svg_image_name": "seax",
       "is_fallback": false,
       "tier": 1
     }
@@ -78,7 +78,7 @@
       "name": "Battle axe",
       "function": 1,
       "base_value": "3d5",
-      "svg_image_name": "battle-axe",
+      "svg_image_name": "bearded-axe",
       "is_fallback": false,
       "tier": 2
     }
@@ -90,7 +90,7 @@
       "name": "Spear",
       "function": 1,
       "base_value": "3d2",
-      "svg_image_name": "spear-feather",
+      "svg_image_name": "spear",
       "is_fallback": false,
       "tier": 1
     }
@@ -99,10 +99,10 @@
     "model": "warband.itemtype",
     "pk": 9,
     "fields": {
-      "name": "Long sword",
+      "name": "Spatha",
       "function": 1,
       "base_value": "4d4",
-      "svg_image_name": "gladius",
+      "svg_image_name": "spatha",
       "is_fallback": false,
       "tier": 2
     }

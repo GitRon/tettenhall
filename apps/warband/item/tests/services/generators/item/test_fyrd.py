@@ -15,7 +15,7 @@ def test_get_queryset_for_type_offers_only_rustic_weapons():
 
     result = generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Pitchfork", "Short sword", "Spear"]
+    assert sorted(result.values_list("name", flat=True)) == ["Pitchfork", "Seax", "Spear"]
 
 
 @pytest.mark.django_db
