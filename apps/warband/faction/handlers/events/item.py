@@ -3,6 +3,7 @@ from queuebie.messages import Command
 
 from apps.warband.faction.messages.commands.item import (
     AddItemToTownShop,
+    HandOutFactionGear,
     RemoveItemFromTownShop,
     RestockTownShopItems,
 )
@@ -33,3 +34,10 @@ def handle_remove_bought_item_from_shop(*, context: item.ItemBought) -> Command:
 @message_registry.register_event(event=PlayerMonthPrepared)
 def handle_restock_items_in_shop_for_new_month(*, context: PlayerMonthPrepared | NewFactionCreated) -> Command:
     return RestockTownShopItems(faction=context.faction, month=context.current_month)
+
+
+@message_registry.register_event(event=item.OwnershipChanged)
+def handle_hand_out_gear_for_changed_ownership(*, context: item.OwnershipChanged) -> Command:
+    # The spoils of a fight land in the victor's stores one item at a time, and whether any of them
+    # beats what its men carry is the hand-out's question - which also refuses the player
+    return HandOutFactionGear(faction=context.new_owner)

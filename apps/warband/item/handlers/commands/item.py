@@ -118,8 +118,15 @@ def handle_equip_item(*, context: item.EquipItem) -> list[Event] | Event:
     Both slots are emptied in one statement before either is filled. The slot is a "OneToOneField",
     so between the two writes of a swap there is a moment when one item would be claimed by two
     warriors, and the unique index refuses exactly that.
+
+    Who holds what is read off the rows, not off the instances on the message. A rival's handout queues
+    a line of these, and an instance loaded before the first of them ran still names the man an item
+    was taken off as its holder - which would empty his slot a second time.
     """
-    previous_holder = context.item.worn_by if context.item else None
+    context.warrior.refresh_from_db(fields=(context.slot,))
+    previous_holder = (
+        Warrior.objects.filter(**{context.slot: context.item}).first() if context.item is not None else None
+    )
     displaced_item = getattr(context.warrior, context.slot)
 
     # The slot saved on what was already in it. Nothing moves, and both ends of the move have to fall

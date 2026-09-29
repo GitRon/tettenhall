@@ -12,6 +12,16 @@ SLOT_NAMES = {
 }
 
 
+def get_fallback_values() -> dict[str, float]:
+    """
+    What an empty slot is worth, per slot: the dice a bare-handed man still throws.
+    """
+    return {
+        fallback.gear_slot: fallback.expectancy_value
+        for fallback in (Item(type=item_type) for item_type in ItemType.objects.filter(is_fallback=True))
+    }
+
+
 def annotate_held_gear_values(*, roster: Iterable[Warrior]) -> list[Warrior]:
     """
     What each man on the roster has in each slot, as the figure the picker has to beat.
@@ -29,10 +39,7 @@ def annotate_held_gear_values(*, roster: Iterable[Warrior]) -> list[Warrior]:
     The filled case costs nothing: "Faction.get_all_living_warriors" already carries "weapon__type"
     and "armor__type", and "type" is where the dice live.
     """
-    fallback_values = {
-        fallback.gear_slot: fallback.expectancy_value
-        for fallback in (Item(type=item_type) for item_type in ItemType.objects.filter(is_fallback=True))
-    }
+    fallback_values = get_fallback_values()
 
     warriors = list(roster)
     for warrior in warriors:
@@ -57,6 +64,85 @@ def get_handout_roster(*, faction) -> list[Warrior]:
             id__in=Warrior.objects.filter_standing_in_an_open_fight().values("id")
         )
     )
+
+
+def rank_for_slot(*, roster: Iterable[Warrior], leader_id: int | None, slot: str) -> list[Warrior]:
+    """
+    The order a faction hands out one slot's gear in: the leader first, then by level.
+
+    The leader goes first because losing him loses the faction. A tie on level goes to the man the slot
+    does most for - strength for a weapon, which scales the blow, and maximum health for armour, the man
+    with the most to lose to one. The id settles the rest, so the same roster always ranks the same way.
+    """
+    tie_breaker = "strength" if slot == "weapon" else "max_health"
+
+    return sorted(
+        roster,
+        key=lambda warrior: (
+            warrior.id != leader_id,
+            -warrior.level,
+            -getattr(warrior, tie_breaker),
+            warrior.id,
+        ),
+    )
+
+
+def plan_gear_handout(*, faction) -> list[tuple[Warrior, Item, str]]:
+    """
+    Which of a faction's items go to which of its men: the best of each slot to the best man, and so on
+    down the line. Answered as the equips that get there, in the order they have to run.
+
+    The pool is everything the faction could put in a man's hand - the stores and what its men already
+    carry. A man standing in an open fight is not on the roster, so he and what he holds are left out of
+    both, for the reason "get_equip_refusal" gives.
+
+    Each man takes the best item still free, but only if it beats what he holds now - an empty slot
+    being worth the fallback's dice, as in "annotate_held_gear_values". Equal is not better, so a man is
+    never handed a sidegrade.
+
+    The walk replays "handle_equip_item" as it goes rather than planning against the state it started
+    from: taking an item off another man hands him the receiver's old one, and a man further down may
+    then want that. Every equip lands on a man before anybody below him is considered, and nobody below
+    him can take what he ended up with, so running the equips in this order ends on the state the walk
+    ends on.
+    """
+    roster = get_handout_roster(faction=faction)
+    stored_item_list = list(faction.get_all_unoccupied_items().select_related("type"))
+    fallback_values = get_fallback_values()
+
+    equip_list = []
+    for slot in SLOT_NAMES:
+        holding = {warrior.id: getattr(warrior, slot) for warrior in roster}
+        holder_ids = {item.id: warrior_id for warrior_id, item in holding.items() if item}
+        pool = [item for item in stored_item_list if item.gear_slot == slot] + [
+            item for item in holding.values() if item
+        ]
+        settled_item_ids = set()
+
+        for warrior in rank_for_slot(roster=roster, leader_id=faction.leader_id, slot=slot):
+            held_item = holding[warrior.id]
+            held_value = held_item.expectancy_value if held_item else fallback_values[slot]
+            best_item = max(
+                (item for item in pool if item.id not in settled_item_ids),
+                key=lambda item: (item.expectancy_value, -item.id),
+                default=None,
+            )
+
+            if best_item is not None and best_item.expectancy_value > held_value:
+                previous_holder_id = holder_ids.get(best_item.id)
+                holding[warrior.id] = best_item
+                holder_ids[best_item.id] = warrior.id
+                if previous_holder_id is not None:
+                    # The exchange "handle_equip_item" makes, or an empty hand when there is nothing to give back
+                    holding[previous_holder_id] = held_item
+                if held_item:
+                    holder_ids[held_item.id] = previous_holder_id
+                equip_list.append((warrior, best_item, slot))
+
+            if holding[warrior.id]:
+                settled_item_ids.add(holding[warrior.id].id)
+
+    return equip_list
 
 
 def count_stored_upgrades(*, faction) -> int:

@@ -2,8 +2,8 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import NewFactionCreated
-from apps.warband.faction.messages.events.item import RequestNewItemForTownShop
-from apps.warband.item.messages.commands.item import CreateItem
+from apps.warband.faction.messages.events.item import GearHandoutApproved, RequestNewItemForTownShop
+from apps.warband.item.messages.commands.item import CreateItem, EquipItem
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.fyrd import FyrdItemGenerator
 
@@ -51,3 +51,10 @@ def handle_stock_starting_gear_for_player_faction(*, context: NewFactionCreated)
         )
         for item_function in (ItemType.FunctionChoices.FUNCTION_WEAPON, ItemType.FunctionChoices.FUNCTION_ARMOR)
     ]
+
+
+@message_registry.register_event(event=GearHandoutApproved)
+def handle_equip_item_for_approved_gear_handout(*, context: GearHandoutApproved) -> Command:
+    # Pure mapping, because handle_hand_out_faction_gear already weighed the whole decision. That is what
+    # lets a rival arm its men through the same command the player's own handout dispatches.
+    return EquipItem(warrior=context.warrior, item=context.item, slot=context.slot)

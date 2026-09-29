@@ -31,6 +31,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.fyrd import FyrdItemGenerator
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -339,3 +340,25 @@ def test_handle_create_item_puts_an_owned_item_in_its_owners_stores():
 
     assert result == ItemCreated(owner=faction, faction=faction, item=result.item, month=1)
     assert Item.objects.get(pk=result.item.pk).owner == faction
+
+
+@pytest.mark.django_db
+def test_handle_equip_item_reads_the_holder_off_the_rows_rather_than_the_message():
+    """
+    A rival's handout queues a line of equips, and an instance loaded before the first of them ran still
+    names the man the item came off as its holder. Trusting it would empty his new slot a second time.
+    """
+    leader = WarriorFactory()
+    levy = WarriorFactory(faction=leader.faction)
+    old_sword = ItemFactory(savegame=leader.savegame, owner=leader.faction)
+    new_sword = ItemFactory(savegame=leader.savegame, owner=leader.faction)
+    leader.weapon = old_sword
+    leader.save()
+    stale_old_sword = Warrior.objects.select_related("weapon").get(id=leader.id).weapon
+    handle_equip_item(context=EquipItem(warrior=leader, item=new_sword, slot="weapon"))
+
+    handle_equip_item(context=EquipItem(warrior=levy, item=stale_old_sword, slot="weapon"))
+
+    leader.refresh_from_db()
+    levy.refresh_from_db()
+    assert (leader.weapon, levy.weapon) == (new_sword, old_sword)

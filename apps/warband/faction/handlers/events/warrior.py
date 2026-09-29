@@ -2,6 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.faction.messages.commands.faction import SetNewLeaderWarrior
+from apps.warband.faction.messages.commands.item import HandOutFactionGear
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
     ConsiderPubHire,
@@ -14,6 +15,7 @@ from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubHiringConsidered,
     PubMercenaryHireApproved,
+    WarriorRecruited,
 )
 from apps.warband.month.messages.events.month import FactionMonthPrepared
 from apps.warband.warrior.messages.events.warrior import (
@@ -122,3 +124,10 @@ def handle_draft_warrior_for_approved_fyrd_draft(*, context: FyrdDraftApproved) 
     # what lets a rival's monthly draft run through the same command the player's fyrd card
     # dispatches instead of a second flow beside it.
     return DraftWarriorFromFyrd(faction=context.faction, month=context.month)
+
+
+@message_registry.register_event(event=WarriorRecruited)
+def handle_hand_out_gear_for_recruited_warrior(*, context: WarriorRecruited) -> Command:
+    # A new man is armed the moment he joins, whether a levy out of the fyrd or a mercenary out of the
+    # pub, rather than marching once in what he brought while the stores hold something better
+    return HandOutFactionGear(faction=context.faction)
