@@ -180,6 +180,12 @@ for when the shell itself may be what failed. They carry the values they use - `
 `ink-muted` and `blood` - hand-written in an inline `<style>`. A change to one of those has to be made in
 four places, and those three are the other three.
 
+## Design skills
+
+A design skill brings its own defaults: palettes, type scales, motion and radius. This document overrides
+them. `impeccable` is in the repository to review screens against these rules, not to choose new ones -
+see [AGENTS.md](../../AGENTS.md) for which of its commands apply.
+
 ## See also
 
 - [Responsive layout](responsive-layout.md) — the phone is the default, `md:` adds the desk

@@ -35,5 +35,8 @@ htmlcov/
 # content here, so without this a nested checkout of the project can be committed by accident.
 .claude/worktrees/
 
+# Critique snapshots and config the vendored impeccable skill writes into the project it reviews.
+.impeccable/
+
 # Snapshots and screenshots the Playwright MCP server drops here during a content review.
 .playwright-mcp/
