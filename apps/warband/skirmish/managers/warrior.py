@@ -354,6 +354,26 @@ class WarriorManager(manager.Manager):
 
         return obj
 
+    def increase_renown(self, *, obj, renown: int):
+        """
+        Increase renown
+        """
+        obj.refresh_from_db()
+        obj.renown += renown
+        obj.save(update_fields=("renown",))
+
+        return obj
+
+    def reduce_renown(self, *, obj, lost_renown: int):
+        """
+        Drop renown to a minimum of zero
+        """
+        obj.refresh_from_db()
+        obj.renown = max(0, obj.renown - lost_renown)
+        obj.save(update_fields=("renown",))
+
+        return obj
+
     def apply_level_up_growth(self, *, obj) -> dict[str, int]:
         """
         Grow everything a level touches by LEVEL_UP_GROWTH, and return what each one gained.

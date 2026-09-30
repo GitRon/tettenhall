@@ -149,6 +149,15 @@ class WarriorHealthHealed(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorRenownFaded(Event):
+    warrior: Warrior
+    # The faction holding him, which for a captive is his captor, as on [WarriorMonthPrepared]
+    faction: Faction
+    lost_renown: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class NewLeaderWarriorCreated(Event):
     warrior: Warrior
     faction: Faction

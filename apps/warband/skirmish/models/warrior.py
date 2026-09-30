@@ -48,6 +48,17 @@ class Warrior(models.Model):
     # What every level adds to the four attributes and to the salary alike
     LEVEL_UP_GROWTH = 0.1
 
+    # Renown is what a man is known for rather than what he can do, so it is paid by who fell and it
+    # fades when he stops fighting - the two things that keep it from being experience under another
+    # name. Putting a man down is worth this much per level of the man who fell, and a faction's
+    # leader three times that: a levy is 10, a level-3 veteran or a green leader 30.
+    RENOWN_PER_LEVEL_OF_THE_FALLEN = 10
+    RENOWN_FOR_A_LEADER_MULTIPLIER = 3
+    # What a month spent in no fight costs, as a share of the renown he has, and never less than one
+    # point, so a small name is forgotten outright rather than lingering at a fraction forever. A
+    # quarter is gentle on purpose: a rival's men fight only when the player comes for them.
+    RENOWN_IDLE_MONTH_SHARE = 0.25
+
     # What a month without wages costs, as a share of the warrior's maximum morale, and how many
     # such months in a row he puts up with before walking. Two drops and then he is gone, so the
     # player watches the war band sour for two months before it starts shrinking.
@@ -198,6 +209,7 @@ class Warrior(models.Model):
     morale_spread = models.PositiveSmallIntegerField("Morale spread")
 
     experience = models.PositiveIntegerField("Experience", default=0)
+    renown = models.PositiveIntegerField("Renown", default=0)
     monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
     # Consecutive months this warrior went without his wages, reset the moment he is paid again.
     # Per warrior rather than per faction because the salary run pays the roster cheapest first and
@@ -524,6 +536,26 @@ class Warrior(models.Model):
         something rather than as a number that appears from nowhere on a battlefield.
         """
         return self.level**2 * self.XP_LEVEL_BASE
+
+    @staticmethod
+    def renown_for_taking_down(*, level: int, is_leader: bool) -> int:
+        """
+        What putting down a man of "level" is worth, three times over if he leads a faction.
+        """
+        renown = level * Warrior.RENOWN_PER_LEVEL_OF_THE_FALLEN
+
+        if is_leader:
+            renown *= Warrior.RENOWN_FOR_A_LEADER_MULTIPLIER
+
+        return renown
+
+    @property
+    def renown_lost_to_an_idle_month(self) -> int:
+        """
+        What a month in no fight takes off him: a share of what he has, at least one point, never more
+        than he has.
+        """
+        return min(self.renown, max(1, int(self.renown * self.RENOWN_IDLE_MONTH_SHARE)))
 
     def get_skirmish_actions(self, *, skirmish: Skirmish) -> list[tuple]:
         return get_offered_actions(warrior=self, skirmish=skirmish)

@@ -58,6 +58,14 @@ TERMINAL_MESSAGES: dict[str, str] = {
     "apps.warband.faction.messages.events.faction.NewLeaderWarriorSet": (
         "Everything that asks who leads a faction reads faction.leader when it needs to, so there is nothing to push."
     ),
+    "apps.warband.skirmish.messages.events.warrior.WarriorGainedRenown": (
+        "Renown is a standing read off the warrior's column where it is shown, and nothing yet reacts to it "
+        "moving. What it unlocks, and whether a gain earns a line in the report, is #190's."
+    ),
+    "apps.warband.warrior.messages.events.warrior.WarriorRenownFaded": (
+        "A fade is a quarter of a number nobody is told about yet. It becomes worth a month-log line once "
+        "renown gates something the player can lose, which is #190's."
+    ),
     "apps.warband.faction.messages.events.warrior.WarriorWasAddedToPub": _SHELF_CHANGED,
     "apps.warband.faction.messages.events.item.ItemWasAddedToShop": _SHELF_CHANGED,
     "apps.warband.faction.messages.events.item.ItemWasRemovedFromShop": _SHELF_CHANGED,

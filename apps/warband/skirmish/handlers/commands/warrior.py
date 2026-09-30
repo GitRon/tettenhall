@@ -10,6 +10,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorGainedExperience,
     WarriorGainedLevel,
     WarriorGainedMorale,
+    WarriorGainedRenown,
     WarriorHasFled,
     WarriorImprovedStats,
     WarriorLostMorale,
@@ -304,6 +305,25 @@ def handle_warrior_increasing_experience(*, context: warrior.IncreaseExperience)
         )
 
     return message_list
+
+
+@message_registry.register_command(command=warrior.IncreaseRenown)
+def handle_warrior_increasing_renown(*, context: warrior.IncreaseRenown) -> Event:
+    """
+    Books what putting a man down was worth, weighed by who he was.
+
+    Leadership is asked of every faction rather than of the two in this fight: a leader is known as
+    one whoever brings him down, and "Faction.leader" is the only record of it once capture has
+    cleared his own faction.
+    """
+    gained_renown = Warrior.renown_for_taking_down(
+        level=context.fallen_warrior.level,
+        is_leader=Faction.objects.filter(leader=context.fallen_warrior).exists(),
+    )
+
+    context.warrior = Warrior.objects.increase_renown(obj=context.warrior, renown=gained_renown)
+
+    return WarriorGainedRenown(skirmish=context.skirmish, warrior=context.warrior, gained_renown=gained_renown)
 
 
 @message_registry.register_command(command=warrior.IncreaseWarriorStatsOnLevelUp)

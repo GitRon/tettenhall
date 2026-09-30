@@ -10,6 +10,7 @@ from apps.warband.skirmish.handlers.commands.warrior import (
     handle_store_last_used_skirmish_action,
     handle_warrior_increasing_experience,
     handle_warrior_increasing_morale,
+    handle_warrior_increasing_renown,
     handle_warrior_is_captured,
     handle_warrior_losing_morale,
     handle_warrior_withdraws_from_skirmish,
@@ -18,6 +19,7 @@ from apps.warband.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    IncreaseRenown,
     IncreaseWarriorStatsOnLevelUp,
     RallyRemainingWarriors,
     ReduceHealth,
@@ -32,6 +34,7 @@ from apps.warband.skirmish.messages.events.warrior import (
     WarriorGainedExperience,
     WarriorGainedLevel,
     WarriorGainedMorale,
+    WarriorGainedRenown,
     WarriorHasFled,
     WarriorImprovedStats,
     WarriorLostMorale,
@@ -452,6 +455,37 @@ def test_handle_leader_rallies_remaining_warriors_gives_no_order_from_a_leader_w
     result = handle_leader_rallies_remaining_warriors(context=RallyRemainingWarriors(skirmish=skirmish, leader=leader))
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_warrior_increasing_renown_pays_by_the_level_of_the_fallen():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, renown=5)
+    # 400 experience is level 3
+    fallen_warrior = WarriorFactory(faction=skirmish.defending_faction, experience=400)
+
+    result = handle_warrior_increasing_renown(
+        context=IncreaseRenown(skirmish=skirmish, warrior=warrior, fallen_warrior=fallen_warrior)
+    )
+
+    assert result == WarriorGainedRenown(skirmish=skirmish, warrior=warrior, gained_renown=30)
+    warrior.refresh_from_db()
+    assert warrior.renown == 35
+
+
+@pytest.mark.django_db
+def test_handle_warrior_increasing_renown_pays_three_times_for_a_leader():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    fallen_leader = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_faction.leader = fallen_leader
+    skirmish.defending_faction.save(update_fields=("leader",))
+
+    result = handle_warrior_increasing_renown(
+        context=IncreaseRenown(skirmish=skirmish, warrior=warrior, fallen_warrior=fallen_leader)
+    )
+
+    assert result == WarriorGainedRenown(skirmish=skirmish, warrior=warrior, gained_renown=30)
 
 
 @pytest.mark.django_db

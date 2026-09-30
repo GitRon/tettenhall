@@ -8,6 +8,7 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.handlers.events.faction import (
+    handle_fade_an_idle_warriors_renown_for_new_month,
     handle_heal_a_wounded_warrior_for_new_month,
     handle_pub_mercenary_slot_opened,
     handle_replenish_a_warriors_morale_for_new_month,
@@ -15,6 +16,7 @@ from apps.warband.warrior.handlers.events.faction import (
 )
 from apps.warband.warrior.messages.commands.warrior import (
     CreateWarrior,
+    FadeIdleWarriorRenown,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
     ReplenishWarriorMorale,
@@ -234,6 +236,28 @@ def test_handle_replenish_a_warriors_morale_for_new_month_passes_over_a_man_at_f
 
     result = handle_replenish_a_warriors_morale_for_new_month(
         context=WarriorMonthPrepared(faction=faction, warrior=steady_warrior, month=3)
+    )
+
+    assert result is None
+
+
+def test_handle_fade_an_idle_warriors_renown_for_new_month_asks_whether_he_fought():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(faction=faction, renown=12)
+
+    result = handle_fade_an_idle_warriors_renown_for_new_month(
+        context=WarriorMonthPrepared(faction=faction, warrior=warrior, month=3)
+    )
+
+    assert result == FadeIdleWarriorRenown(faction=faction, warrior=warrior, month=3)
+
+
+def test_handle_fade_an_idle_warriors_renown_for_new_month_passes_over_a_man_with_none():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(faction=faction, renown=0)
+
+    result = handle_fade_an_idle_warriors_renown_for_new_month(
+        context=WarriorMonthPrepared(faction=faction, warrior=warrior, month=3)
     )
 
     assert result is None

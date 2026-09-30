@@ -637,6 +637,24 @@ def test_increase_experience_adds_the_gained_points():
 
 
 @pytest.mark.django_db
+def test_increase_renown_adds_the_gained_points():
+    warrior = WarriorFactory(renown=10)
+
+    result = Warrior.objects.increase_renown(obj=warrior, renown=30)
+
+    assert result.renown == 40
+
+
+@pytest.mark.django_db
+def test_reduce_renown_stops_at_zero():
+    warrior = WarriorFactory(renown=3)
+
+    result = Warrior.objects.reduce_renown(obj=warrior, lost_renown=5)
+
+    assert result.renown == 0
+
+
+@pytest.mark.django_db
 def test_apply_level_up_growth_takes_a_tenth_of_every_grown_value():
     warrior = WarriorFactory(strength=10, dexterity=10, max_health=20, max_morale=20, monthly_salary=150)
 

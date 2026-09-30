@@ -15,6 +15,7 @@ from apps.warband.skirmish.handlers.events.warrior import (
     handle_morale_drop_on_watching_a_comrade_fall,
     handle_morale_gain_on_being_rallied,
     handle_reduce_health_and_update_condition,
+    handle_renown_gain_on_warrior_incapacitation,
     handle_stat_growth_on_warrior_level_up,
 )
 from apps.warband.skirmish.messages.commands.skirmish import WarriorAttacksWarrior
@@ -22,6 +23,7 @@ from apps.warband.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    IncreaseRenown,
     IncreaseWarriorStatsOnLevelUp,
     ReduceHealth,
     ReduceMorale,
@@ -150,6 +152,35 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior()
     )
 
     assert result == IncreaseExperience(skirmish=skirmish, warrior=killer, increased_experience=25)
+
+
+def test_handle_renown_gain_on_warrior_incapacitation_for_an_incapacitated_warrior():
+    """
+    One test per registered message: the handler is registered for two of them.
+    """
+    skirmish = SkirmishFactory.build()
+    incapacitated_warrior = WarriorFactory.build(faction=skirmish.defending_faction)
+    attacker = WarriorFactory.build(faction=skirmish.attacking_faction)
+
+    result = handle_renown_gain_on_warrior_incapacitation(
+        context=WarriorWasIncapacitated(
+            skirmish=skirmish, warrior=incapacitated_warrior, by_warrior=attacker, overkill_health=1
+        )
+    )
+
+    assert result == IncreaseRenown(skirmish=skirmish, warrior=attacker, fallen_warrior=incapacitated_warrior)
+
+
+def test_handle_renown_gain_on_warrior_incapacitation_for_a_killed_warrior():
+    skirmish = SkirmishFactory.build()
+    killed_warrior = WarriorFactory.build(faction=skirmish.defending_faction)
+    killer = WarriorFactory.build(faction=skirmish.attacking_faction)
+
+    result = handle_renown_gain_on_warrior_incapacitation(
+        context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
+    )
+
+    assert result == IncreaseRenown(skirmish=skirmish, warrior=killer, fallen_warrior=killed_warrior)
 
 
 def test_handle_stat_growth_on_warrior_level_up_asks_for_the_growth():

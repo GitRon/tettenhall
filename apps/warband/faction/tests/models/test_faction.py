@@ -11,6 +11,34 @@ from apps.warband.warrior.services.portrait import draw_portrait
 
 
 @pytest.mark.django_db
+def test_renown_is_the_leaders():
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction, renown=45)
+    faction.save()
+
+    assert faction.renown == 45
+
+
+@pytest.mark.django_db
+def test_renown_of_a_defeated_faction_is_nothing():
+    """
+    The leader relation outlives the defeat, so his renown would still be readable through it.
+    """
+    faction = FactionFactory(is_defeated=True)
+    faction.leader = WarriorFactory(faction=faction, renown=45)
+    faction.save()
+
+    assert faction.renown == 0
+
+
+@pytest.mark.django_db
+def test_renown_without_a_leader():
+    faction = FactionFactory(leader=None)
+
+    assert faction.renown == 0
+
+
+@pytest.mark.django_db
 def test_get_available_leader_returns_the_leader():
     faction = FactionFactory()
     faction.leader = WarriorFactory(faction=faction)
