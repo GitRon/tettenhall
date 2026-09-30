@@ -30,16 +30,25 @@ def test_play_rides_into_a_town_nobody_holds(player_savegame, rng, report, queue
 
 @pytest.mark.django_db
 def test_play_stops_on_a_fight_it_cannot_finish(player_savegame, rng, report, queuebie_registry):
-    """The month goes no further than a fight that never came to a victor - not even to the occupation."""
+    """
+    The month goes no further than a fight that never came to a victor - not even to the occupation. A
+    second rival's town stands empty, so a turn that carried on would ride into it.
+    """
     rival = FactionFactory(savegame=player_savegame)
     rival.leader = WarriorFactory(faction=rival)
     rival.save()
+    empty_town_rival = FactionFactory(savegame=player_savegame)
+    empty_town_rival.leader = WarriorFactory(
+        faction=empty_town_rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    empty_town_rival.save()
 
     result = PlayerTurn(
         savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report, max_rounds=0
     ).play()
 
     assert result == STOP_FIGHT_STUCK
+    assert report.occupations == 0
 
 
 @pytest.mark.django_db
