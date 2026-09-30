@@ -183,6 +183,7 @@ class BaseWarriorGenerator:
             faction=self.faction,
             savegame_id=self.savegame_id,
             experience=experience,
+            renown=Warrior.renown_on_arrival(experience=experience),
             current_health=max_health,
             max_health=max_health,
             health_progress=health_progress,

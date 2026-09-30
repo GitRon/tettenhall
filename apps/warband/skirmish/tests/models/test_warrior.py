@@ -230,6 +230,10 @@ def test_renown_for_taking_down_a_leader_is_worth_three_times_his_level():
     assert Warrior.renown_for_taking_down(level=2, is_leader=True) == 60
 
 
+def test_renown_on_arrival_is_a_twentieth_of_his_experience_rounded_down():
+    assert Warrior.renown_on_arrival(experience=119) == 5
+
+
 def test_renown_lost_to_an_idle_month_is_a_quarter_rounded_down():
     assert WarriorFactory.build(renown=30).renown_lost_to_an_idle_month == 7
 

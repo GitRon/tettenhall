@@ -58,6 +58,10 @@ class Warrior(models.Model):
     # point, so a small name is forgotten outright rather than lingering at a fraction forever. A
     # quarter is gentle on purpose: a rival's men fight only when the player comes for them.
     RENOWN_IDLE_MONTH_SHARE = 0.25
+    # What a man is known for on the day he is generated, as a share of the experience he arrives with.
+    # Small on purpose: a veteran from the pub is known a little better than a farmer from the fyrd
+    # (about 5 against 1 or 2), and still for less than putting down a single levy is worth.
+    RENOWN_ON_ARRIVAL_SHARE_OF_EXPERIENCE = 0.05
 
     # What a month without wages costs, as a share of the warrior's maximum morale, and how many
     # such months in a row he puts up with before walking. Two drops and then he is gone, so the
@@ -548,6 +552,13 @@ class Warrior(models.Model):
             renown *= Warrior.RENOWN_FOR_A_LEADER_MULTIPLIER
 
         return renown
+
+    @staticmethod
+    def renown_on_arrival(*, experience: int) -> int:
+        """
+        What a newly generated man is already known for, read off the experience he arrives with.
+        """
+        return int(experience * Warrior.RENOWN_ON_ARRIVAL_SHARE_OF_EXPERIENCE)
 
     @property
     def renown_lost_to_an_idle_month(self) -> int:
