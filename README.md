@@ -55,6 +55,8 @@ inferring the conventions from nearby code.
 - [Registry tests](docs/patterns/registry-tests.md) — the eight rules covering the message wiring
 - [Architecture tests](docs/patterns/architecture-tests.md) — the whole-tree tests, and the rule each one
   holds
+- [Measuring balance](docs/patterns/measuring-balance.md) — playing seeded savegames without a browser,
+  what a game plays and what its report holds
 
 ### Planning
 
