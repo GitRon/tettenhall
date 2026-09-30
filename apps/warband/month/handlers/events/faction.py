@@ -3,6 +3,7 @@ from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderSucceeded,
     FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
     MonthlyWarriorSalariesPaid,
@@ -63,8 +64,9 @@ def handle_log_rival_defeat(*, context: FactionWasDefeated) -> Command | None:
     the player put down and the faction leaving the war is the part he cannot reconstruct - the
     battle report names the prisoner and says nothing about what taking him ended.
 
-    Silent for the player's own faction: his leader falling ends the savegame, and the line about
-    that is already written against SavegameEnded. Two lines for the one faction would compete.
+    Silent for the player's own faction: his war band running out of men ends the savegame, and the
+    line about that is already written against SavegameEnded. Two lines for the one faction would
+    compete.
     """
     # The instances rather than their ids: Django compares two unsaved rows by identity instead of
     # by a primary key they both lack, so this stays right for a handler called with built factions
@@ -80,6 +82,34 @@ def handle_log_rival_defeat(*, context: FactionWasDefeated) -> Command | None:
         title=f"{context.faction} is out of the war.",
         body=f"{fate} There is nobody left to answer for the faction.",
         kind=PlayerMonthLog.KindChoices.KIND_RIVAL_DEFEATED,
+        month=context.month,
+        faction=context.player_faction,
+    )
+
+
+@message_registry.register_event(event=FactionLeaderSucceeded)
+def handle_log_leader_succession(*, context: FactionLeaderSucceeded) -> Command:
+    """
+    Says who fell and who leads now, for the player's own war band and for a rival alike.
+
+    The player's own line matters most: a fallen leader used to end his savegame, and now the game
+    goes on under a man he did not pick. A rival's matters because the man he just put down did not
+    knock that faction out, and the one he has to beat next is named here.
+    """
+    fate = "fell in the fighting" if context.leader_was_killed else "was taken prisoner"
+
+    # The instances rather than their ids, for the reason handle_log_rival_defeat gives
+    if context.faction == context.player_faction:
+        title = f"{context.fallen_leader} {fate}. {context.successor} leads the war band now."
+        body = "He had the most renown of the men left, and they follow him."
+    else:
+        title = f"{context.faction} has a new leader."
+        body = f"{context.fallen_leader} led them, and he {fate}. {context.successor} leads them now."
+
+    return CreatePlayerMonthLog(
+        title=title,
+        body=body,
+        kind=PlayerMonthLog.KindChoices.KIND_LEADER_SUCCEEDED,
         month=context.month,
         faction=context.player_faction,
     )

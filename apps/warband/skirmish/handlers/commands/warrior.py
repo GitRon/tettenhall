@@ -140,6 +140,8 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
 
     # Update condition
     if context.warrior.current_health <= 0:
+        fell_as_a_leader = Faction.objects.filter(leader=context.warrior, is_defeated=False).exists()
+
         if context.warrior.current_health < context.warrior.max_health * -Warrior.DEATH_OVERKILL_SHARE:
             condition = Warrior.ConditionChoices.CONDITION_DEAD
             message_list.append(
@@ -147,6 +149,7 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
                     skirmish=context.skirmish,
                     warrior=context.warrior,
                     by_warrior=context.attacker,
+                    fell_as_a_leader=fell_as_a_leader,
                 )
             )
         else:
@@ -159,6 +162,7 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
                     # Read here, where the negative health still stands, because the write below is
                     # what takes it away
                     overkill_health=-context.warrior.current_health,
+                    fell_as_a_leader=fell_as_a_leader,
                 )
             )
 
@@ -312,13 +316,12 @@ def handle_warrior_increasing_renown(*, context: warrior.IncreaseRenown) -> Even
     """
     Books what putting a man down was worth, weighed by who he was.
 
-    Leadership is asked of every faction still standing rather than of the two in this fight: a leader
-    is known as one whoever brings him down. A defeated faction's "leader" is only the record of the
-    man it lost - taken and turned to another banner, he leads nobody any more.
+    Whether he led is carried in rather than asked here: the leader's own fall seats his successor or
+    knocks his faction out before this drains, so the question would no longer name him.
     """
     gained_renown = Warrior.renown_for_taking_down(
         level=context.fallen_warrior.level,
-        is_leader=Faction.objects.filter(leader=context.fallen_warrior, is_defeated=False).exists(),
+        is_leader=context.fell_as_a_leader,
     )
 
     context.warrior = Warrior.objects.increase_renown(obj=context.warrior, renown=gained_renown)

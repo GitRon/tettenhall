@@ -19,6 +19,22 @@ class WarriorQuerySet(models.QuerySet):
     def exclude_dead(self):
         return self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
 
+    def successors_of(self, *, faction, fallen_leader):
+        """
+        The men who could take a fallen leader's seat, the one who will first.
+
+        Every living man still on the roster, whatever state the fight left him in: a man lying
+        senseless is still somebody the others follow. A captive has no faction, so he is not asked.
+        The order is the rule - the most renown, then the most experience, then the man who joined
+        first - so the same roster always gives the same successor.
+        """
+        return (
+            self.filter(faction=faction)
+            .exclude_dead()
+            .exclude(id=fallen_leader.id)
+            .order_by("-renown", "-experience", "id")
+        )
+
     def filter_drawing_a_wage(self):
         """
         The men a faction is paying for, which is the roster the wage bill covers.

@@ -30,3 +30,16 @@ def test_handle_defeat_faction_of_a_lost_leader_for_a_captured_warrior():
     )
 
     assert result == DefeatFactionOfLostLeader(warrior=warrior)
+
+
+def test_handle_defeat_faction_of_a_lost_leader_for_an_occupation_allows_no_successor():
+    """
+    A capture with no skirmish is the one an occupation makes: the town is taken with the leader.
+    """
+    warrior = WarriorFactory.build()
+
+    result = handle_defeat_faction_of_a_lost_leader(
+        context=WarriorWasCaptured(skirmish=None, warrior=warrior, capturing_faction=FactionFactory.build())
+    )
+
+    assert result == DefeatFactionOfLostLeader(warrior=warrior, allow_succession=False)

@@ -21,6 +21,7 @@ from apps.warband.faction.messages.commands.faction import (
 )
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderSucceeded,
     FactionWasDefeated,
     FactionWasOccupied,
     FyrdReserveChanged,
@@ -226,14 +227,19 @@ def handle_prepare_faction_warriors_for_month(*, context: PrepareFactionWarriors
 @message_registry.register_command(command=DefeatFactionOfLostLeader)
 def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) -> Event | None:
     """
-    Knocks out the faction this warrior led, if he led one.
+    Seats a successor in the place of the leader this warrior was, or knocks his faction out when there
+    is nobody to seat.
 
     Most warriors are nobody's leader, so the usual answer is None. "Faction.leader" is looked up
     rather than "warrior.faction" because capture clears the latter before this runs - the leader
     relation is the only remaining record of who led whom.
 
+    The same rule for the player and his rivals: the man with the most renown on the roster leads
+    from now on, and only a faction with nobody left to lead is out of the game. An occupation is
+    the exception the command carries - the town is taken as well, and nobody is left to rally.
+
     The player's faction, the month and the fallen man are read here and put on the event, because
-    the handlers announcing the knockout run under strict mode's database blocker and could not.
+    the handlers announcing it run under strict mode's database blocker and could not.
     """
     faction = (
         Faction.objects.still_in_play(savegame_id=context.warrior.savegame_id).filter(leader=context.warrior).first()
@@ -242,19 +248,39 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
     if faction is None:
         return None
 
+    savegame = faction.savegame
+    # Dead or merely taken, which is the difference between the two sentences the log can write.
+    # A captured leader is dealt with first and taken afterwards, so anything but dead is taken
+    leader_was_killed = context.warrior.is_dead
+
+    successor = (
+        Warrior.objects.successors_of(faction=faction, fallen_leader=context.warrior).first()
+        if context.allow_succession
+        else None
+    )
+
+    if successor is not None:
+        faction.leader = successor
+        faction.save(update_fields=("leader",))
+
+        return FactionLeaderSucceeded(
+            faction=faction,
+            player_faction=savegame.player_faction,
+            fallen_leader=context.warrior,
+            successor=successor,
+            leader_was_killed=leader_was_killed,
+            month=savegame.current_month,
+        )
+
     faction.is_defeated = True
     faction.save(update_fields=("is_defeated",))
-
-    savegame = faction.savegame
 
     return FactionWasDefeated(
         faction=faction,
         savegame=savegame,
         player_faction=savegame.player_faction,
         leader=context.warrior,
-        # Dead or merely taken, which is the difference between the two sentences the log can write.
-        # A captured leader is knocked out first and taken afterwards, so anything but dead is taken
-        leader_was_killed=context.warrior.is_dead,
+        leader_was_killed=leader_was_killed,
         month=savegame.current_month,
     )
 

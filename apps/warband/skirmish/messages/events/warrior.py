@@ -82,6 +82,10 @@ class WarriorWasIncapacitated(Event):
     # it is the injury roll, which is scaled by it: a man carried to the edge of death should not walk
     # away as clean as one who was tapped over.
     overkill_health: int
+    # Whether the fallen man led a faction still in the war when the blow landed. Read by the handler
+    # that struck it, because by the time anything reacts his faction may already have seated a
+    # successor or been knocked out, and the question would get the wrong answer
+    fell_as_a_leader: bool = False
 
 
 @dataclass(kw_only=True)
@@ -106,6 +110,10 @@ class WarriorWasKilled(Event):
     skirmish: Skirmish
     warrior: Warrior
     by_warrior: Warrior
+    # Whether the fallen man led a faction still in the war when the blow landed. Read by the handler
+    # that struck it, because by the time anything reacts his faction may already have seated a
+    # successor or been knocked out, and the question would get the wrong answer
+    fell_as_a_leader: bool = False
 
 
 @dataclass(kw_only=True)

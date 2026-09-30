@@ -77,6 +77,9 @@ class DefeatFactionOfLostLeader(Command):
     # Carries nothing but the warrior on purpose: the event handlers raising this cannot look up which
     # faction he led, or whether he led one at all, without a query strict mode forbids them
     warrior: Warrior
+    # False when his town was ridden into: an occupied faction has lost its town as well as its
+    # leader, and nobody is left there to rally round a successor
+    allow_succession: bool = True
 
 
 @dataclass(kw_only=True)

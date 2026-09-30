@@ -38,6 +38,7 @@ class PlayerMonthLog(models.Model):
         KIND_FEAST_THROWN = 19, "Feast thrown"
         KIND_WARRIOR_CHANGED = 20, "Warrior changed"
         KIND_HARVEST = 21, "Harvest"
+        KIND_LEADER_SUCCEEDED = 22, "Leader succeeded"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -85,6 +86,9 @@ class PlayerMonthLog(models.Model):
         # A consequence, beside the building income: it is silver the month brought in, and the
         # player planned for it rather than being surprised by it
         KindChoices.KIND_HARVEST: CategoryChoices.CATEGORY_CONSEQUENCE,
+        # A chronicle entry, like the defeat it stands in for: a leader falling and another man
+        # taking his seat is the board changing, and naming both takes a second sentence
+        KindChoices.KIND_LEADER_SUCCEEDED: CategoryChoices.CATEGORY_CHRONICLE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

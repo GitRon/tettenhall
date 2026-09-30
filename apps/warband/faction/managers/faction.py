@@ -69,8 +69,9 @@ class FactionQuerySet(models.QuerySet):
 
         A leaderless faction is left out. The occupation ends a faction by seizing the man who leads
         it, and there is nothing to seize here - without this the town would be occupiable again every
-        month for the rest of the savegame. Unreachable in ordinary play, where a leader who falls
-        takes his faction with him, so this is a guard rather than a rule the player will meet.
+        month for the rest of the savegame. Unreachable in ordinary play, where a fallen leader is
+        either succeeded or takes his faction with him, so this is a guard rather than a rule the
+        player will meet.
         """
         if savegame.is_over:
             return self.none()
