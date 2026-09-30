@@ -222,6 +222,30 @@ def test_slavery_selling_price_survives_a_wage_of_zero():
     assert warrior.slavery_selling_price == 130
 
 
+def test_renown_for_taking_down_a_levy():
+    assert Warrior.renown_for_taking_down(level=1, is_leader=False) == 10
+
+
+def test_renown_for_taking_down_a_leader_is_worth_three_times_his_level():
+    assert Warrior.renown_for_taking_down(level=2, is_leader=True) == 60
+
+
+def test_renown_on_arrival_is_a_twentieth_of_his_experience_rounded_down():
+    assert Warrior.renown_on_arrival(experience=119) == 5
+
+
+def test_renown_lost_to_an_idle_month_is_a_quarter_rounded_down():
+    assert WarriorFactory.build(renown=30).renown_lost_to_an_idle_month == 7
+
+
+def test_renown_lost_to_an_idle_month_is_at_least_one_point():
+    assert WarriorFactory.build(renown=2).renown_lost_to_an_idle_month == 1
+
+
+def test_renown_lost_to_an_idle_month_for_a_man_with_none():
+    assert WarriorFactory.build(renown=0).renown_lost_to_an_idle_month == 0
+
+
 def test_level_for_an_untested_warrior():
     assert Warrior.level_for(experience=0) == 1
 

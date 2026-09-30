@@ -28,6 +28,15 @@ def test_process_leaves_a_warrior_whose_experience_is_an_integer():
 
 
 @pytest.mark.django_db
+def test_process_gives_a_new_warrior_the_renown_his_experience_carries():
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    result = generator.process()
+
+    assert Warrior.objects.get(pk=result.pk).renown == Warrior.renown_on_arrival(experience=result.experience)
+
+
+@pytest.mark.django_db
 def test_process_rounds_a_sub_one_health_roll_up_to_a_point():
     """
     The band between zero and one is the one a truncating column turns into a warrior with no health

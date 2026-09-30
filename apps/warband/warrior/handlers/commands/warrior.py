@@ -15,6 +15,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     DismissWarrior,
     EarnTraitsInSkirmish,
     EnslaveCapturedWarrior,
+    FadeIdleWarriorRenown,
     HealInjuredWarrior,
     InflictInjury,
     PunishUnpaidWarrior,
@@ -30,6 +31,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
+    WarriorRenownFaded,
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
     WarriorWasInjured,
@@ -270,6 +272,29 @@ def handle_earn_traits_in_skirmish(*, context: EarnTraitsInSkirmish) -> list[Eve
         )
 
     return message_list
+
+
+@message_registry.register_command(command=FadeIdleWarriorRenown)
+def handle_fade_idle_warrior_renown(*, context: FadeIdleWarriorRenown) -> Event | None:
+    """
+    A man who stood in no fight in the month that ended is a little less known for it.
+
+    "Stood in" is the roster, not the outcome: a man who fled in the first round or lay senseless
+    through the whole of it was there. The month cannot turn while a fight is open, so the month
+    being asked about is settled by the time this runs.
+    """
+    if Warrior.objects.filter_committed_to_a_fight(month=context.month - 1).filter(id=context.warrior.id).exists():
+        return None
+
+    lost_renown = context.warrior.renown_lost_to_an_idle_month
+    Warrior.objects.reduce_renown(obj=context.warrior, lost_renown=lost_renown)
+
+    return WarriorRenownFaded(
+        warrior=context.warrior,
+        faction=context.faction,
+        lost_renown=lost_renown,
+        month=context.month,
+    )
 
 
 @message_registry.register_command(command=HealInjuredWarrior)

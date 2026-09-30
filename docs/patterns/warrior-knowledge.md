@@ -21,7 +21,7 @@ wrong with any of the four answers; the rule they should all have been derived f
 - **Numbers** are strength, dexterity, health and morale.
 - **Gear** is the weapon and the armor.
 - **Everything else is public**, on every screen, for everybody: name, epithet, culture, faction,
-  level, experience, salary, condition, town, leader, roster size. These are what a neighbour knows
+  level, experience, renown, salary, condition, town, leader, roster size. These are what a neighbour knows
   about a neighbour, and withholding them buys nothing.
 
 A screen asks `knowledge.numbers_are_exact` and `knowledge.gear_is_visible`. It does not ask which

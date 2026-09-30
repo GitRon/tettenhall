@@ -8,6 +8,7 @@ from apps.warband.skirmish.messages.commands.warrior import (
     CaptureWarrior,
     IncreaseExperience,
     IncreaseMorale,
+    IncreaseRenown,
     IncreaseWarriorStatsOnLevelUp,
     ReduceHealth,
     ReduceMorale,
@@ -141,6 +142,19 @@ def handle_experience_gain_on_warrior_incapacitation(
         skirmish=context.skirmish,
         warrior=context.by_warrior,
         increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN,
+    )
+
+
+@message_registry.register_event(event=warrior.WarriorWasIncapacitated)
+@message_registry.register_event(event=warrior.WarriorWasKilled)
+def handle_renown_gain_on_warrior_incapacitation(
+    *,
+    context: [warrior.WarriorWasIncapacitated, warrior.WarriorWasKilled],
+) -> Command:
+    return IncreaseRenown(
+        skirmish=context.skirmish,
+        warrior=context.by_warrior,
+        fallen_warrior=context.warrior,
     )
 
 

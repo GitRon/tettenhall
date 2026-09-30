@@ -189,6 +189,13 @@ class WarriorGainedExperience(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorGainedRenown(Event):
+    skirmish: Skirmish
+    warrior: Warrior
+    gained_renown: int
+
+
+@dataclass(kw_only=True)
 class WarriorGainedLevel(Event):
     skirmish: Skirmish
     warrior: Warrior

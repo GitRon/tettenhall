@@ -60,6 +60,20 @@ class Faction(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    @property
+    def renown(self) -> int:
+        """
+        What the faction is known for, which is what its leader is known for.
+
+        Read through the leader rather than stored, so it cannot drift from him. A defeated faction is
+        known for nothing: "leader" still points at the man it lost, dead or in somebody else's cell,
+        and his name is no longer the faction's.
+        """
+        if self.is_defeated or self.leader is None:
+            return 0
+
+        return self.leader.renown
+
     def get_available_leader(self, *, month: int) -> Warrior | None:
         """
         The faction's leader, if he is fit to march this month.

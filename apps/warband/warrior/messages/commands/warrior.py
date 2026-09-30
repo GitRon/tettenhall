@@ -84,6 +84,15 @@ class AwardEarnedNickname(Command):
 
 
 @dataclass(kw_only=True)
+class FadeIdleWarriorRenown(Command):
+    # The faction holding him, which for a captive is his captor, as on [WarriorMonthPrepared]
+    faction: Faction
+    warrior: Warrior
+    # The month that has just begun. The one he is judged on is the month before it
+    month: int
+
+
+@dataclass(kw_only=True)
 class HealInjuredWarrior(Command):
     # The faction mending him, which is not always the one he belongs to: a captive is healed by the
     # faction holding him, and capture has cleared his own

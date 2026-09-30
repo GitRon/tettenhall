@@ -6,6 +6,7 @@ from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened,
 from apps.warband.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
     CreateWarrior,
+    FadeIdleWarriorRenown,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
     ReplenishWarriorMorale,
@@ -69,6 +70,22 @@ def handle_replenish_a_warriors_morale_for_new_month(*, context: WarriorMonthPre
         return None
 
     return ReplenishWarriorMorale(warrior=context.warrior, month=context.month)
+
+
+@message_registry.register_event(event=WarriorMonthPrepared)
+def handle_fade_an_idle_warriors_renown_for_new_month(*, context: WarriorMonthPrepared) -> Command | None:
+    """
+    A man's renown fades in a month he did not fight, captives included - a name is forgotten in a
+    cell as surely as at home.
+
+    Whether he fought is a query, so it is the command's to ask. What this decides off the instance
+    is only that a man with no renown has nothing to lose, which spares the query for most of the
+    roster.
+    """
+    if context.warrior.renown == 0:
+        return None
+
+    return FadeIdleWarriorRenown(faction=context.faction, warrior=context.warrior, month=context.month)
 
 
 @message_registry.register_event(event=MonthlyWarriorSalariesUnpaid)

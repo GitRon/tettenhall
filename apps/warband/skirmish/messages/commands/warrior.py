@@ -95,6 +95,15 @@ class IncreaseExperience(Command):
 
 
 @dataclass(kw_only=True)
+class IncreaseRenown(Command):
+    skirmish: Skirmish
+    warrior: Warrior
+    # The man he put down, because what the deed is worth is who fell - his level, and whether he
+    # leads a faction, which is a query the event handler raising this may not make
+    fallen_warrior: Warrior
+
+
+@dataclass(kw_only=True)
 class IncreaseWarriorStatsOnLevelUp(Command):
     skirmish: Skirmish
     warrior: Warrior
