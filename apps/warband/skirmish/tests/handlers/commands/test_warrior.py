@@ -489,6 +489,24 @@ def test_handle_warrior_increasing_renown_pays_three_times_for_a_leader():
 
 
 @pytest.mark.django_db
+def test_handle_warrior_increasing_renown_pays_a_defeated_factions_old_leader_as_anybody():
+    """
+    "Faction.leader" outlives the defeat, so a captured leader who was turned to another banner is
+    still named on it - and leads nobody.
+    """
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    former_leader = WarriorFactory(faction=skirmish.defending_faction)
+    FactionFactory(savegame=skirmish.attacking_faction.savegame, leader=former_leader, is_defeated=True)
+
+    result = handle_warrior_increasing_renown(
+        context=IncreaseRenown(skirmish=skirmish, warrior=warrior, fallen_warrior=former_leader)
+    )
+
+    assert result == WarriorGainedRenown(skirmish=skirmish, warrior=warrior, gained_renown=10)
+
+
+@pytest.mark.django_db
 def test_handle_warrior_increasing_experience_adds_the_gained_points():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=100)

@@ -312,13 +312,13 @@ def handle_warrior_increasing_renown(*, context: warrior.IncreaseRenown) -> Even
     """
     Books what putting a man down was worth, weighed by who he was.
 
-    Leadership is asked of every faction rather than of the two in this fight: a leader is known as
-    one whoever brings him down, and "Faction.leader" is the only record of it once capture has
-    cleared his own faction.
+    Leadership is asked of every faction still standing rather than of the two in this fight: a leader
+    is known as one whoever brings him down. A defeated faction's "leader" is only the record of the
+    man it lost - taken and turned to another banner, he leads nobody any more.
     """
     gained_renown = Warrior.renown_for_taking_down(
         level=context.fallen_warrior.level,
-        is_leader=Faction.objects.filter(leader=context.fallen_warrior).exists(),
+        is_leader=Faction.objects.filter(leader=context.fallen_warrior, is_defeated=False).exists(),
     )
 
     context.warrior = Warrior.objects.increase_renown(obj=context.warrior, renown=gained_renown)
