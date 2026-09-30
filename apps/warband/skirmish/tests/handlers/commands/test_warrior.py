@@ -137,6 +137,42 @@ def test_handle_reduce_warrior_health_kills_the_warrior():
 
 
 @pytest.mark.django_db
+def test_handle_reduce_warrior_health_marks_a_fallen_leader():
+    """
+    Read at the blow, because his faction seats a successor before anything reacting to it drains.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    leader = WarriorFactory(faction=skirmish.defending_faction, current_health=20, max_health=20)
+    skirmish.defending_faction.leader = leader
+    skirmish.defending_faction.save(update_fields=("leader",))
+
+    result = handle_reduce_warrior_health(
+        context=ReduceHealth(skirmish=skirmish, warrior=leader, attacker=attacker, lost_health=31)
+    )
+
+    assert result == [WarriorWasKilled(skirmish=skirmish, warrior=leader, by_warrior=attacker, fell_as_a_leader=True)]
+
+
+@pytest.mark.django_db
+def test_handle_reduce_warrior_health_does_not_mark_a_defeated_factions_old_leader():
+    """
+    "Faction.leader" outlives the defeat, so a captured leader turned to another banner is still named
+    on it - and leads nobody.
+    """
+    skirmish = SkirmishFactory()
+    attacker = WarriorFactory(faction=skirmish.attacking_faction)
+    former_leader = WarriorFactory(faction=skirmish.defending_faction, current_health=20, max_health=20)
+    FactionFactory(savegame=skirmish.attacking_faction.savegame, leader=former_leader, is_defeated=True)
+
+    result = handle_reduce_warrior_health(
+        context=ReduceHealth(skirmish=skirmish, warrior=former_leader, attacker=attacker, lost_health=31)
+    )
+
+    assert result == [WarriorWasKilled(skirmish=skirmish, warrior=former_leader, by_warrior=attacker)]
+
+
+@pytest.mark.django_db
 def test_handle_reduce_warrior_health_incapacitates_the_warrior():
     skirmish = SkirmishFactory()
     attacker = WarriorFactory(faction=skirmish.attacking_faction)
@@ -465,7 +501,9 @@ def test_handle_warrior_increasing_renown_pays_by_the_level_of_the_fallen():
     fallen_warrior = WarriorFactory(faction=skirmish.defending_faction, experience=400)
 
     result = handle_warrior_increasing_renown(
-        context=IncreaseRenown(skirmish=skirmish, warrior=warrior, fallen_warrior=fallen_warrior)
+        context=IncreaseRenown(
+            skirmish=skirmish, warrior=warrior, fallen_warrior=fallen_warrior, fell_as_a_leader=False
+        )
     )
 
     assert result == WarriorGainedRenown(skirmish=skirmish, warrior=warrior, gained_renown=30)
@@ -478,32 +516,12 @@ def test_handle_warrior_increasing_renown_pays_three_times_for_a_leader():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction)
     fallen_leader = WarriorFactory(faction=skirmish.defending_faction)
-    skirmish.defending_faction.leader = fallen_leader
-    skirmish.defending_faction.save(update_fields=("leader",))
 
     result = handle_warrior_increasing_renown(
-        context=IncreaseRenown(skirmish=skirmish, warrior=warrior, fallen_warrior=fallen_leader)
+        context=IncreaseRenown(skirmish=skirmish, warrior=warrior, fallen_warrior=fallen_leader, fell_as_a_leader=True)
     )
 
     assert result == WarriorGainedRenown(skirmish=skirmish, warrior=warrior, gained_renown=30)
-
-
-@pytest.mark.django_db
-def test_handle_warrior_increasing_renown_pays_a_defeated_factions_old_leader_as_anybody():
-    """
-    "Faction.leader" outlives the defeat, so a captured leader who was turned to another banner is
-    still named on it - and leads nobody.
-    """
-    skirmish = SkirmishFactory()
-    warrior = WarriorFactory(faction=skirmish.attacking_faction)
-    former_leader = WarriorFactory(faction=skirmish.defending_faction)
-    FactionFactory(savegame=skirmish.attacking_faction.savegame, leader=former_leader, is_defeated=True)
-
-    result = handle_warrior_increasing_renown(
-        context=IncreaseRenown(skirmish=skirmish, warrior=warrior, fallen_warrior=former_leader)
-    )
-
-    assert result == WarriorGainedRenown(skirmish=skirmish, warrior=warrior, gained_renown=10)
 
 
 @pytest.mark.django_db

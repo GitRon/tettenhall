@@ -155,6 +155,7 @@ def handle_renown_gain_on_warrior_incapacitation(
         skirmish=context.skirmish,
         warrior=context.by_warrior,
         fallen_warrior=context.warrior,
+        fell_as_a_leader=context.fell_as_a_leader,
     )
 
 

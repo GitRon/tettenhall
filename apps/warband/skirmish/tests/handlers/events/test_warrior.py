@@ -168,7 +168,9 @@ def test_handle_renown_gain_on_warrior_incapacitation_for_an_incapacitated_warri
         )
     )
 
-    assert result == IncreaseRenown(skirmish=skirmish, warrior=attacker, fallen_warrior=incapacitated_warrior)
+    assert result == IncreaseRenown(
+        skirmish=skirmish, warrior=attacker, fallen_warrior=incapacitated_warrior, fell_as_a_leader=False
+    )
 
 
 def test_handle_renown_gain_on_warrior_incapacitation_for_a_killed_warrior():
@@ -177,10 +179,12 @@ def test_handle_renown_gain_on_warrior_incapacitation_for_a_killed_warrior():
     killer = WarriorFactory.build(faction=skirmish.attacking_faction)
 
     result = handle_renown_gain_on_warrior_incapacitation(
-        context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
+        context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer, fell_as_a_leader=True)
     )
 
-    assert result == IncreaseRenown(skirmish=skirmish, warrior=killer, fallen_warrior=killed_warrior)
+    assert result == IncreaseRenown(
+        skirmish=skirmish, warrior=killer, fallen_warrior=killed_warrior, fell_as_a_leader=True
+    )
 
 
 def test_handle_stat_growth_on_warrior_level_up_asks_for_the_growth():
