@@ -594,9 +594,9 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
 
         Read back out of the database rather than handed over: "handle_message" drains the queue and
         returns nothing, so the skirmish the chain created is not a value this view ever holds. The
-        three columns below name exactly one row - a faction's leader marches once a month and joins
-        every attack, so there cannot be a second march on the same rival in the same month for this
-        to pick the wrong one of.
+        three columns below name exactly one row - a war band marches once a month, whoever leads it
+        (see "Faction.has_marched_this_month"), so there cannot be a second march on the same rival in
+        the same month for this to pick the wrong one of.
 
         Unguarded against finding nothing, on purpose. "handle_create_skirmish_for_attack" stages the
         fight unconditionally, and the whole chain runs inside one transaction, so a march that

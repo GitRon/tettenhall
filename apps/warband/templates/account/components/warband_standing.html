@@ -37,6 +37,8 @@
     <p class="m-0 text-sm leading-snug">
         {% if not month_standing.warband.leader %}
             The war band has no leader.
+        {% elif month_standing.warband.has_marched %}
+            Your warriors have already fought this month.
         {% elif month_standing.warband.leader_can_march %}
             <span class="text-ink">{{ month_standing.warband.leader }}</span> is fit to march.
         {% else %}

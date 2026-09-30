@@ -89,16 +89,25 @@ class Faction(models.Model):
 
     def has_marched_this_month(self, *, month: int) -> bool:
         """
-        Whether this faction's war band has already been committed to a fight this month.
+        Whether this faction's war band has already taken the field this month.
 
-        Asked of the leader, because he is the one who joins every attack - once he is busy, nothing
-        the faction does can put another war band in the field. Only here to tell the player why the
-        attack button is gone; the guarding is done by [get_available_leader].
+        A war band marches once a month, and it is out whenever its leader went into a fight - every
+        attack, and a quest when he was sent on it. Asked of the fights rather than of the man leading
+        today: a leader who falls is succeeded mid-month, and the man who takes the seat may have stayed
+        at home and be busy with nothing. A quest fought without the leader leaves the march open, as it
+        leaves the leader free.
         """
-        if self.leader_id is None:
-            return False
+        return self.attacking_skirmishes.filter(month=month, attacking_leader__isnull=False).exists()
 
-        return not Warrior.objects.filter(id=self.leader_id).exclude_currently_busy(month=month).exists()
+    def can_march_this_month(self, *, month: int) -> bool:
+        """
+        Whether this faction may put a war band in the field this month.
+
+        Two conditions, and both are needed: the month's march not yet spent, and a leader fit and free
+        to lead the next one. The first is not implied by the second once a fallen leader's successor
+        sits in his place, and the second is not implied by the first while the leader lies wounded.
+        """
+        return not self.has_marched_this_month(month=month) and self.get_available_leader(month=month) is not None
 
     def get_monthly_income(self) -> int:
         """

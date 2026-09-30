@@ -326,8 +326,8 @@ def test_attackable_by_excludes_a_faction_whose_defenders_are_already_in_a_fight
 @pytest.mark.django_db
 def test_attackable_by_offers_nobody_once_the_war_band_has_marched(player_faction):
     """
-    Every warrior fights once a month and the leader joins every attack, so one fight uses the month
-    up - against this rival and against every other one.
+    A war band marches once a month, so one fight uses the month up - against this rival and against
+    every other one.
     """
     rival_faction = FactionFactory(savegame=player_faction.savegame)
     WarriorFactory(faction=rival_faction)
@@ -335,6 +335,7 @@ def test_attackable_by_offers_nobody_once_the_war_band_has_marched(player_factio
     WarriorFactory(faction=untouched_faction)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction,
+        attacking_leader=player_faction.leader,
         defending_faction=rival_faction,
         victorious_faction=player_faction,
         month=3,
@@ -352,6 +353,7 @@ def test_attackable_by_offers_a_rival_again_the_month_after(player_faction):
     WarriorFactory(faction=rival_faction)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction,
+        attacking_leader=player_faction.leader,
         defending_faction=rival_faction,
         victorious_faction=player_faction,
         month=2,
@@ -361,6 +363,27 @@ def test_attackable_by_offers_a_rival_again_the_month_after(player_faction):
     result = Faction.objects.attackable_by(savegame=player_faction.savegame)
 
     assert list(result) == [rival_faction]
+
+
+@pytest.mark.django_db
+def test_attackable_by_offers_nobody_under_a_successor_once_the_war_band_has_marched(player_faction):
+    """
+    The leader was killed on the march and a man who stayed at home took his seat. He is on no roster
+    this month, and the month's march is spent all the same.
+    """
+    untouched_faction = FactionFactory(savegame=player_faction.savegame)
+    WarriorFactory(faction=untouched_faction)
+    fallen_leader = player_faction.leader
+    fallen_leader.condition = Warrior.ConditionChoices.CONDITION_DEAD
+    fallen_leader.save()
+    skirmish = SkirmishFactory(attacking_faction=player_faction, attacking_leader=fallen_leader, month=3)
+    skirmish.attacking_warriors.add(fallen_leader)
+    player_faction.leader = WarriorFactory(faction=player_faction)
+    player_faction.save()
+
+    result = Faction.objects.attackable_by(savegame=player_faction.savegame)
+
+    assert list(result) == []
 
 
 @pytest.mark.django_db

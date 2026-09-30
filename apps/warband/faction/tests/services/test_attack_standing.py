@@ -46,6 +46,7 @@ def test_get_attack_standing_says_the_war_band_has_marched(savegame_ready_to_mar
     WarriorFactory(faction=rival_faction)
     SkirmishFactory(
         attacking_faction=player_faction,
+        attacking_leader=player_faction.leader,
         defending_faction=FactionFactory(savegame=savegame_ready_to_march),
         month=savegame_ready_to_march.current_month,
     ).attacking_warriors.add(player_faction.leader)
@@ -53,6 +54,26 @@ def test_get_attack_standing_says_the_war_band_has_marched(savegame_ready_to_mar
     standing = get_attack_standing(savegame=savegame_ready_to_march)
 
     assert standing.refusals == {rival_faction.id: AttackRefusal.HAS_MARCHED_THIS_MONTH}
+    assert standing.war_band_refusal == AttackRefusal.HAS_MARCHED_THIS_MONTH
+
+
+@pytest.mark.django_db
+def test_get_attack_standing_says_the_war_band_has_marched_under_a_successor(savegame_ready_to_march):
+    """
+    A successor from home is fit and free, so the leader alone would call the war band ready to march.
+    """
+    player_faction = savegame_ready_to_march.player_faction
+    rival_faction = FactionFactory(savegame=savegame_ready_to_march)
+    WarriorFactory(faction=rival_faction)
+    SkirmishFactory(
+        attacking_faction=player_faction,
+        attacking_leader=WarriorFactory(faction=player_faction),
+        defending_faction=FactionFactory(savegame=savegame_ready_to_march),
+        month=savegame_ready_to_march.current_month,
+    )
+
+    standing = get_attack_standing(savegame=savegame_ready_to_march)
+
     assert standing.war_band_refusal == AttackRefusal.HAS_MARCHED_THIS_MONTH
 
 
