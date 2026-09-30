@@ -148,11 +148,9 @@ class FactionQuerySet(models.QuerySet):
         and a rule about the game being over belongs beside the rules about the month and the leader
         rather than in each of the three templates separately.
 
-        How often the player may attack is not asked here either, and deliberately so. Every warrior
-        fights once a month, the leader joins every attack, so a war band that has marched is a
-        leader who is busy - and this returns nothing for the rest of the month, whoever the target
-        is. A separate per-rival cap sat here once; it never got to decide anything and only looked
-        like a rule.
+        How often the player may attack is asked of the faction, not of any one rival: a war band
+        marches once a month, so once it has, this returns nothing for the rest of the month, whoever
+        the target is and whoever leads it now - see [Faction.can_march_this_month].
         """
         if savegame.is_over:
             return self.none()
@@ -160,7 +158,7 @@ class FactionQuerySet(models.QuerySet):
         player_faction = savegame.player_faction
         month = savegame.current_month
 
-        if player_faction is None or player_faction.get_available_leader(month=month) is None:
+        if player_faction is None or not player_faction.can_march_this_month(month=month):
             return self.none()
 
         return self.attackable_targets(player_faction=player_faction, month=month)

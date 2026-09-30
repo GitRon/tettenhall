@@ -45,6 +45,17 @@ class Skirmish(models.Model):
         null=True,
         blank=True,
     )
+    # The attacking faction's leader, when he was on the attacking roster as the fight was staged.
+    # "attacking_faction.leader" cannot answer it afterwards: a leader who falls is succeeded, and the
+    # faction's one fight a month has to stay spent under the man who takes his seat
+    attacking_leader = models.ForeignKey(
+        Warrior,
+        verbose_name="Attacking leader",
+        related_name="led_skirmishes",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     attacking_warriors = models.ManyToManyField(
         Warrior,
         verbose_name="Attacking warriors",

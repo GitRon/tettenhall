@@ -34,9 +34,18 @@ class BaseSkirmishGenerator:
         if not self.warriors_faction_2:
             raise RuntimeError(f'Skirmish "{self.name}" has no warriors on the defending side.')
 
+        attacking_faction = self.warriors_faction_1[0].faction
+        # A march always carries the leader, a quest only when the player sent him
+        attacking_leader_id = (
+            attacking_faction.leader_id
+            if attacking_faction.leader_id in {warrior.id for warrior in self.warriors_faction_1}
+            else None
+        )
+
         skirmish = Skirmish.objects.create(
             name=self.name,
-            attacking_faction_id=self.warriors_faction_1[0].faction.id,
+            attacking_faction_id=attacking_faction.id,
+            attacking_leader_id=attacking_leader_id,
             defending_faction_id=self.warriors_faction_2[0].faction.id,
             month=self.month,
             fortification_strength=self.fortification_strength,

@@ -77,12 +77,55 @@ def test_has_marched_this_month_after_a_fight():
     faction = FactionFactory()
     faction.leader = WarriorFactory(faction=faction)
     faction.save()
-    skirmish = SkirmishFactory(attacking_faction=faction, victorious_faction=faction, month=3)
-    skirmish.attacking_warriors.add(faction.leader)
+    SkirmishFactory(attacking_faction=faction, attacking_leader=faction.leader, victorious_faction=faction, month=3)
 
     result = faction.has_marched_this_month(month=3)
 
     assert result is True
+
+
+@pytest.mark.django_db
+def test_has_marched_this_month_under_a_successor_who_stayed_at_home():
+    """
+    The leader fell on the march and a man who never left the hall took his seat. He is free and fit,
+    and the month's march is still spent.
+    """
+    faction = FactionFactory()
+    fallen_leader = WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    SkirmishFactory(attacking_faction=faction, attacking_leader=fallen_leader, victorious_faction=faction, month=3)
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+
+    result = faction.has_marched_this_month(month=3)
+
+    assert result is True
+
+
+@pytest.mark.django_db
+def test_has_marched_this_month_after_a_quest_fought_without_the_leader():
+    """
+    An errand the leader was not sent on leaves him free, and with him the month's march.
+    """
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+    SkirmishFactory(attacking_faction=faction, attacking_leader=None, month=3)
+
+    result = faction.has_marched_this_month(month=3)
+
+    assert result is False
+
+
+@pytest.mark.django_db
+def test_has_marched_this_month_after_last_month_s_fight():
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+    SkirmishFactory(attacking_faction=faction, attacking_leader=faction.leader, victorious_faction=faction, month=2)
+
+    result = faction.has_marched_this_month(month=3)
+
+    assert result is False
 
 
 @pytest.mark.django_db
@@ -105,6 +148,41 @@ def test_has_marched_this_month_without_a_leader():
     faction = FactionFactory(leader=None)
 
     result = faction.has_marched_this_month(month=3)
+
+    assert result is False
+
+
+@pytest.mark.django_db
+def test_can_march_this_month_with_a_fit_leader_and_the_month_unspent():
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+
+    result = faction.can_march_this_month(month=3)
+
+    assert result is True
+
+
+@pytest.mark.django_db
+def test_can_march_this_month_once_the_march_is_spent():
+    faction = FactionFactory()
+    fallen_leader = WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    SkirmishFactory(attacking_faction=faction, attacking_leader=fallen_leader, month=3)
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+
+    result = faction.can_march_this_month(month=3)
+
+    assert result is False
+
+
+@pytest.mark.django_db
+def test_can_march_this_month_with_a_wounded_leader():
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    faction.save()
+
+    result = faction.can_march_this_month(month=3)
 
     assert result is False
 

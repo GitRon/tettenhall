@@ -11,9 +11,9 @@ class AttackRefusal(StrEnum):
 
     The order is the rule, the way "get_dismissal_refusals" orders its own: the first reason that
     applies is the one the player is told. A decided savegame is why nothing of his marches, whatever
-    month it stopped in. A war band that has fought is a leader who is busy, so that comes before the
-    leader being unfit - the three about the player are exclusive by construction rather than by the
-    order a template happens to test them in. And the rival's men being spoken for is only ever said
+    month it stopped in. A war band that has fought comes before the leader being unfit, because the
+    spent month is the reason whoever leads it, and a leader who fell in that fight is not the reason
+    the player should be given. And the rival's men being spoken for is only ever said
     once the player could otherwise have marched, or it blames the rival for a refusal that is nothing
     to do with them.
     """
@@ -83,18 +83,19 @@ def _get_war_band_refusal(*, savegame: Savegame, player_faction: Faction) -> Att
     """
     The reason the player's own war band cannot march on anybody, or None if it could.
 
-    The leader decides it, because he joins every attack: busy means the war band has fought, and not
-    busy but still unavailable means wounded, routed or dead - "your warriors have already fought" is
-    untrue of him then, so the sentence says what the player can actually do about it: mend him.
+    The spent month first, asked of the faction's fights rather than of the man leading it now - a
+    successor seated after the march is free and fit, and still leads nobody out again this month.
+    Only then the leader: unavailable without a march behind him means wounded or routed, and the
+    sentence says what the player can do about it - mend him.
     """
     if savegame.is_over:
         return AttackRefusal.SAVEGAME_IS_OVER
 
     month = savegame.current_month
-    if player_faction.get_available_leader(month=month) is not None:
-        return None
-
     if player_faction.has_marched_this_month(month=month):
         return AttackRefusal.HAS_MARCHED_THIS_MONTH
 
-    return AttackRefusal.LEADER_CANNOT_MARCH
+    if player_faction.get_available_leader(month=month) is None:
+        return AttackRefusal.LEADER_CANNOT_MARCH
+
+    return None

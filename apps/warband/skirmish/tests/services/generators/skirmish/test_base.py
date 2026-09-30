@@ -24,6 +24,40 @@ def test_process_sets_up_both_sides():
 
 
 @pytest.mark.django_db
+def test_process_names_the_leader_who_marched():
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+    attacking_faction.leader = WarriorFactory(faction=attacking_faction)
+    attacking_faction.save()
+
+    result = BaseSkirmishGenerator(
+        name="Attack on Wessex",
+        warriors_faction_1=[WarriorFactory(faction=attacking_faction), attacking_faction.leader],
+        warriors_faction_2=[WarriorFactory(faction=enemy_faction)],
+        month=7,
+    ).process()
+
+    assert result.attacking_leader == attacking_faction.leader
+
+
+@pytest.mark.django_db
+def test_process_names_no_leader_for_a_quest_he_was_not_sent_on():
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+    attacking_faction.leader = WarriorFactory(faction=attacking_faction)
+    attacking_faction.save()
+
+    result = BaseSkirmishGenerator(
+        name="Clear the ford",
+        warriors_faction_1=[WarriorFactory(faction=attacking_faction)],
+        warriors_faction_2=[WarriorFactory(faction=enemy_faction)],
+        month=7,
+    ).process()
+
+    assert result.attacking_leader is None
+
+
+@pytest.mark.django_db
 def test_process_raises_the_wall_it_is_given():
     attacking_faction = FactionFactory()
     enemy_faction = FactionFactory(savegame=attacking_faction.savegame)

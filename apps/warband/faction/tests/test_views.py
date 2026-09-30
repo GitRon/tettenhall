@@ -179,6 +179,7 @@ def test_faction_detail_view_says_why_the_attack_is_gone(
     WarriorFactory(faction=untouched_rival)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
+        attacking_leader=player_faction_ready_to_march.leader,
         defending_faction=FactionFactory(savegame=current_savegame),
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
@@ -204,6 +205,7 @@ def test_faction_detail_view_says_why_the_attack_is_gone_on_the_rival_he_marched
     rival_warrior = WarriorFactory(faction=rival_faction)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
+        attacking_leader=player_faction_ready_to_march.leader,
         defending_faction=rival_faction,
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
@@ -263,6 +265,7 @@ def test_faction_detail_view_says_nothing_about_marching_on_a_defeated_faction(
     WarriorFactory(faction=defeated_faction)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
+        attacking_leader=player_faction_ready_to_march.leader,
         defending_faction=defeated_faction,
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
@@ -552,6 +555,7 @@ def test_rival_faction_list_view_says_the_war_band_has_already_marched(
     WarriorFactory(faction=untouched_rival)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
+        attacking_leader=player_faction_ready_to_march.leader,
         defending_faction=FactionFactory(savegame=current_savegame),
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
@@ -1454,6 +1458,7 @@ def test_faction_attack_view_cannot_march_twice_in_a_month(
     already_fought = FactionFactory(savegame=current_savegame)
     fought_skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
+        attacking_leader=player_faction_ready_to_march.leader,
         defending_faction=already_fought,
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,
@@ -1834,6 +1839,7 @@ def test_faction_detail_view_blames_the_march_rather_than_the_leader_when_he_has
     WarriorFactory(faction=rival_faction)
     skirmish = SkirmishFactory(
         attacking_faction=player_faction_ready_to_march,
+        attacking_leader=player_faction_ready_to_march.leader,
         defending_faction=FactionFactory(savegame=current_savegame),
         victorious_faction=player_faction_ready_to_march,
         month=current_savegame.current_month,

@@ -19,6 +19,7 @@ def test_is_intact_is_true_while_every_man_left_is_fit():
         unconscious_count=0,
         fleeing_count=0,
         leader=None,
+        has_marched=False,
         leader_can_march=False,
     )
 
@@ -31,6 +32,7 @@ def test_is_intact_is_false_with_a_man_still_routed():
         unconscious_count=0,
         fleeing_count=1,
         leader=None,
+        has_marched=False,
         leader_can_march=False,
     )
 
@@ -43,6 +45,7 @@ def test_is_intact_is_false_with_a_man_down():
         unconscious_count=1,
         fleeing_count=0,
         leader=None,
+        has_marched=False,
         leader_can_march=False,
     )
 
@@ -437,6 +440,26 @@ def test_warband_leader_cannot_march_once_he_is_down():
     standing = MonthStanding.for_savegame(savegame=savegame)
 
     assert standing.warband.leader_can_march is False
+
+
+@pytest.mark.django_db
+def test_warband_has_marched_under_a_successor_who_stayed_at_home():
+    """
+    The man who took the fallen leader's seat is fit and free, and the page must not offer him a march
+    the month has already spent.
+    """
+    savegame = SavegameFactory(current_month=3)
+    player_faction = FactionFactory(savegame=savegame)
+    fallen_leader = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    SkirmishFactory(attacking_faction=player_faction, attacking_leader=fallen_leader, month=3)
+    player_faction.leader = WarriorFactory(faction=player_faction)
+    player_faction.save()
+    savegame.player_faction = player_faction
+    savegame.save()
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.warband.has_marched is True
 
 
 @pytest.mark.django_db

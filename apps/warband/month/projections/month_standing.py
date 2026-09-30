@@ -28,6 +28,10 @@ class WarbandStanding:
     fleeing_count: int
     # The player's own leader, so the page can name him. Nothing here is said about a rival's.
     leader: Warrior | None
+    # Whether the war band has already taken the field this month. Asked first, because it is the
+    # answer whoever leads it: a successor seated after the march is fit and free, and still has no
+    # attack to launch until the month turns.
+    has_marched: bool
     # Whether he may march this month, which is the question the attack button asks. A war band
     # whose leader is wounded, dead or already promised to a quest has no attack to launch at all,
     # and today the player only learns that by opening a rival's page.
@@ -208,6 +212,7 @@ def _build_warband_standing(*, player_faction, month: int) -> WarbandStanding:
 
     return WarbandStanding(
         leader=player_faction.leader,
+        has_marched=player_faction.has_marched_this_month(month=month),
         leader_can_march=player_faction.get_available_leader(month=month) is not None,
         **condition_counts,
     )
