@@ -39,6 +39,61 @@ def test_renown_without_a_leader():
 
 
 @pytest.mark.django_db
+def test_get_successor_is_the_man_with_the_most_renown():
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction, renown=50)
+    faction.save()
+    WarriorFactory(faction=faction, renown=5)
+    successor = WarriorFactory(faction=faction, renown=12)
+
+    assert faction.get_successor() == successor
+
+
+@pytest.mark.django_db
+def test_get_successor_on_equal_renown_is_the_man_succession_would_seat():
+    """
+    The tie-break is the rule's, not the page's: more experience first.
+    """
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+    WarriorFactory(faction=faction, renown=10, experience=5)
+    successor = WarriorFactory(faction=faction, renown=10, experience=40)
+
+    assert faction.get_successor() == successor
+
+
+@pytest.mark.django_db
+def test_get_successor_never_names_the_dead_or_a_captive():
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+    WarriorFactory(faction=faction, renown=99, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    faction.captured_warriors.add(
+        WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture, renown=99)
+    )
+    successor = WarriorFactory(faction=faction, renown=1)
+
+    assert faction.get_successor() == successor
+
+
+@pytest.mark.django_db
+def test_get_successor_of_a_leader_alone():
+    faction = FactionFactory()
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+
+    assert faction.get_successor() is None
+
+
+@pytest.mark.django_db
+def test_get_successor_without_a_leader():
+    faction = FactionFactory(leader=None)
+
+    assert faction.get_successor() is None
+
+
+@pytest.mark.django_db
 def test_get_available_leader_returns_the_leader():
     faction = FactionFactory()
     faction.leader = WarriorFactory(faction=faction)

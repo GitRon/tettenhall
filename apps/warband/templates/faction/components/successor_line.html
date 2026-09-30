@@ -1,0 +1,18 @@
+{% comment %}
+    Who takes the leader's seat if he falls: "Faction.get_successor", which is the query succession
+    itself reads. One sentence in one place, because the dashboard and the attack page both say it and
+    two wordings of one rule drift.
+
+    "leader" and "successor" arrive from the page. Nothing is said without a leader - there is no seat
+    to fill - and a leader with nobody behind him is told plainly that his fall ends the war band.
+{% endcomment %}
+{% if leader %}
+    <p class="m-0 text-sm leading-snug text-ink-muted">
+        Should <span class="text-ink">{{ leader }}</span> fall,
+        {% if successor %}
+            <span class="text-ink">{{ successor }}</span> leads.
+        {% else %}
+            the war band is finished.
+        {% endif %}
+    </p>
+{% endif %}
