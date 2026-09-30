@@ -19,6 +19,7 @@ def test_is_intact_is_true_while_every_man_left_is_fit():
         unconscious_count=0,
         fleeing_count=0,
         leader=None,
+        successor=None,
         has_marched=False,
         leader_can_march=False,
     )
@@ -32,6 +33,7 @@ def test_is_intact_is_false_with_a_man_still_routed():
         unconscious_count=0,
         fleeing_count=1,
         leader=None,
+        successor=None,
         has_marched=False,
         leader_can_march=False,
     )
@@ -45,6 +47,7 @@ def test_is_intact_is_false_with_a_man_down():
         unconscious_count=1,
         fleeing_count=0,
         leader=None,
+        successor=None,
         has_marched=False,
         leader_can_march=False,
     )
@@ -404,6 +407,22 @@ def test_warband_counts_only_the_men_of_the_player_faction():
     standing = MonthStanding.for_savegame(savegame=savegame)
 
     assert standing.warband.warrior_count == 1
+
+
+@pytest.mark.django_db
+def test_warband_names_the_man_who_would_take_the_leader_s_seat():
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame)
+    player_faction.leader = WarriorFactory(faction=player_faction)
+    player_faction.save()
+    WarriorFactory(faction=player_faction, renown=5)
+    successor = WarriorFactory(faction=player_faction, renown=12)
+    savegame.player_faction = player_faction
+    savegame.save()
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.warband.successor == successor
 
 
 @pytest.mark.django_db

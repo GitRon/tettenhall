@@ -563,6 +563,7 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         context["object"] = self.object
         # Said before the march, from the same answer the march itself is staged with
         context["fortification_strength"] = self.object.town.get_fortification_strength()
+        context["successor"] = self.current_savegame.player_faction.get_successor()
         return context
 
     def form_valid(self, form):

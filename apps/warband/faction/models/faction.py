@@ -74,6 +74,19 @@ class Faction(models.Model):
 
         return self.leader.renown
 
+    def get_successor(self) -> Warrior | None:
+        """
+        The man who would take the leader's seat if he fell now, or None if nobody would.
+
+        The first of [WarriorQuerySet.successors_of], the query succession itself reads, so what the
+        page names and who the rule seats cannot come apart. None without a leader too: there is no seat
+        to fill, and nothing to say about one.
+        """
+        if self.leader is None:
+            return None
+
+        return Warrior.objects.successors_of(faction=self, fallen_leader=self.leader).first()
+
     def get_available_leader(self, *, month: int) -> Warrior | None:
         """
         The faction's leader, if he is fit to march this month.

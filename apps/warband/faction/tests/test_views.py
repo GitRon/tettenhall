@@ -1349,6 +1349,20 @@ def test_faction_attack_view_warns_of_the_wall_before_the_march(
 
 
 @pytest.mark.django_db
+def test_faction_attack_view_names_who_takes_the_seat_if_the_leader_falls(
+    logged_in_client, current_savegame, player_faction_ready_to_march
+):
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction)
+    successor = WarriorFactory(faction=player_faction_ready_to_march, renown=20)
+
+    response = logged_in_client.get(reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert response.context["successor"] == successor
+
+
+@pytest.mark.django_db
 def test_faction_attack_view_fights_the_rivals_own_war_band(
     logged_in_client, current_savegame, player_faction_ready_to_march, queuebie_registry
 ):
