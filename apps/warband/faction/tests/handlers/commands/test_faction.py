@@ -27,6 +27,7 @@ from apps.warband.faction.messages.commands.faction import (
 )
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderSucceeded,
     FactionWasDefeated,
     FactionWasOccupied,
     FyrdReserveChanged,
@@ -187,6 +188,106 @@ def test_handle_defeat_faction_of_lost_leader_for_a_captured_leader():
         leader_was_killed=False,
         month=1,
     )
+
+
+def _rival_led_by_a_fallen_leader() -> tuple[Faction, Faction, Warrior]:
+    player_faction = FactionFactory()
+    savegame = player_faction.savegame
+    savegame.player_faction = player_faction
+    savegame.current_month = 4
+    savegame.save()
+    faction = FactionFactory(savegame=savegame)
+    leader = WarriorFactory(faction=faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    faction.leader = leader
+    faction.save()
+
+    return player_faction, faction, leader
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_seats_the_man_with_the_most_renown():
+    player_faction, faction, leader = _rival_led_by_a_fallen_leader()
+    WarriorFactory(faction=faction, savegame=faction.savegame, renown=5, experience=900)
+    successor = WarriorFactory(
+        faction=faction, savegame=faction.savegame, renown=20, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    assert result == FactionLeaderSucceeded(
+        faction=faction,
+        player_faction=player_faction,
+        fallen_leader=leader,
+        successor=successor,
+        leader_was_killed=True,
+        month=4,
+    )
+    faction.refresh_from_db()
+    assert (faction.leader, faction.is_defeated) == (successor, False)
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_settles_a_tie_on_experience():
+    _, faction, leader = _rival_led_by_a_fallen_leader()
+    WarriorFactory(faction=faction, savegame=faction.savegame, renown=10, experience=100)
+    successor = WarriorFactory(faction=faction, savegame=faction.savegame, renown=10, experience=300)
+
+    handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    faction.refresh_from_db()
+    assert faction.leader == successor
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_passes_over_the_dead():
+    _, faction, leader = _rival_led_by_a_fallen_leader()
+    WarriorFactory(faction=faction, savegame=faction.savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    assert isinstance(result, FactionWasDefeated)
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_seats_a_successor_for_the_player_too():
+    """
+    The same rule for both sides: the player's savegame goes on while he has a man left.
+    """
+    player_faction = FactionFactory()
+    savegame = player_faction.savegame
+    savegame.player_faction = player_faction
+    savegame.save()
+    leader = WarriorFactory(
+        faction=player_faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+    player_faction.leader = leader
+    player_faction.save()
+    successor = WarriorFactory(faction=player_faction, savegame=savegame)
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    assert result == FactionLeaderSucceeded(
+        faction=player_faction,
+        player_faction=player_faction,
+        fallen_leader=leader,
+        successor=successor,
+        leader_was_killed=True,
+        month=1,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_for_an_occupation_knocks_the_faction_out_anyway():
+    _, faction, leader = _rival_led_by_a_fallen_leader()
+    WarriorFactory(faction=faction, savegame=faction.savegame, renown=20)
+
+    result = handle_defeat_faction_of_lost_leader(
+        context=DefeatFactionOfLostLeader(warrior=leader, allow_succession=False)
+    )
+
+    assert isinstance(result, FactionWasDefeated)
+    faction.refresh_from_db()
+    assert (faction.leader, faction.is_defeated) == (leader, True)
 
 
 @pytest.mark.django_db

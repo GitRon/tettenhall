@@ -1,5 +1,6 @@
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderSucceeded,
     FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
     MonthlyWarriorSalariesPaid,
@@ -12,6 +13,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.handlers.events.faction import (
     handle_bulletin_board_quests_offered,
     handle_faction_fyrd_reserve_replenished,
+    handle_log_leader_succession,
     handle_log_rival_defeat,
     handle_monthly_building_earnings,
     handle_pay_monthly_salary,
@@ -276,4 +278,50 @@ def test_handle_town_shop_restocked_keeps_a_single_item_singular():
         kind=PlayerMonthLog.KindChoices.KIND_SHOP_RESTOCKED,
         month=3,
         faction=faction,
+    )
+
+
+def test_handle_log_leader_succession_for_the_players_own_war_band():
+    player_faction = FactionFactory.build(name="Tettenhall")
+
+    result = handle_log_leader_succession(
+        context=FactionLeaderSucceeded(
+            faction=player_faction,
+            player_faction=player_faction,
+            fallen_leader=WarriorFactory.build(name="Vincent"),
+            successor=WarriorFactory.build(name="Beorn"),
+            leader_was_killed=True,
+            month=3,
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Vincent fell in the fighting. Beorn leads the war band now.",
+        body="He had the most renown of the men left, and they follow him.",
+        kind=PlayerMonthLog.KindChoices.KIND_LEADER_SUCCEEDED,
+        month=3,
+        faction=player_faction,
+    )
+
+
+def test_handle_log_leader_succession_for_a_rival_whose_leader_was_taken():
+    player_faction = FactionFactory.build(name="Tettenhall")
+
+    result = handle_log_leader_succession(
+        context=FactionLeaderSucceeded(
+            faction=FactionFactory.build(name="Kristinefoss"),
+            player_faction=player_faction,
+            fallen_leader=WarriorFactory.build(name="Vincent"),
+            successor=WarriorFactory.build(name="Beorn"),
+            leader_was_killed=False,
+            month=3,
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Kristinefoss has a new leader.",
+        body="Vincent led them, and he was taken prisoner. Beorn leads them now.",
+        kind=PlayerMonthLog.KindChoices.KIND_LEADER_SUCCEEDED,
+        month=3,
+        faction=player_faction,
     )
