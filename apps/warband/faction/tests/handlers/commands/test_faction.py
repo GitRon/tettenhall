@@ -29,6 +29,7 @@ from apps.warband.faction.messages.commands.faction import (
 )
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
     FactionMonthPlanned,
     FactionWasDefeated,
@@ -43,6 +44,7 @@ from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubMercenaryHireApproved,
     WarriorMonthPrepared,
+    WarriorRecruited,
 )
 from apps.warband.faction.models.culture import Culture
 from apps.warband.faction.models.faction import Faction
@@ -143,12 +145,13 @@ def test_create_faction_gives_a_rival_a_chosen_sanctuary_and_wall():
 
 @pytest.mark.django_db
 def test_handle_defeat_faction_of_lost_leader_knocks_the_faction_out():
+    """Nobody on the roster and nobody left in the fyrd: there is no one to take the seat."""
     player_faction = FactionFactory()
     savegame = player_faction.savegame
     savegame.player_faction = player_faction
     savegame.current_month = 4
     savegame.save()
-    faction = FactionFactory(savegame=savegame)
+    faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
     leader = WarriorFactory(faction=faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD)
     faction.leader = leader
     faction.save()
@@ -180,7 +183,7 @@ def test_handle_defeat_faction_of_lost_leader_for_a_captured_leader():
     savegame = player_faction.savegame
     savegame.player_faction = player_faction
     savegame.save()
-    faction = FactionFactory(savegame=savegame)
+    faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
     leader = WarriorFactory(
         faction=faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
@@ -201,13 +204,14 @@ def test_handle_defeat_faction_of_lost_leader_for_a_captured_leader():
     )
 
 
-def _rival_led_by_a_fallen_leader() -> tuple[Faction, Faction, Warrior]:
+def _rival_led_by_a_fallen_leader(*, fyrd_reserve: int = 0) -> tuple[Faction, Faction, Warrior]:
+    """The fyrd is empty unless asked for, so a roster with nobody on it knocks the rival out."""
     player_faction = FactionFactory()
     savegame = player_faction.savegame
     savegame.player_faction = player_faction
     savegame.current_month = 4
     savegame.save()
-    faction = FactionFactory(savegame=savegame)
+    faction = FactionFactory(savegame=savegame, fyrd_reserve=fyrd_reserve)
     leader = WarriorFactory(faction=faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD)
     faction.leader = leader
     faction.save()
@@ -289,7 +293,8 @@ def test_handle_defeat_faction_of_lost_leader_seats_a_successor_for_the_player_t
 
 @pytest.mark.django_db
 def test_handle_defeat_faction_of_lost_leader_for_an_occupation_knocks_the_faction_out_anyway():
-    _, faction, leader = _rival_led_by_a_fallen_leader()
+    """Neither the man on the roster nor the fyrd behind him saves a town that has been taken."""
+    _, faction, leader = _rival_led_by_a_fallen_leader(fyrd_reserve=3)
     WarriorFactory(faction=faction, savegame=faction.savegame, renown=20)
 
     result = handle_defeat_faction_of_lost_leader(
@@ -299,6 +304,53 @@ def test_handle_defeat_faction_of_lost_leader_for_an_occupation_knocks_the_facti
     assert isinstance(result, FactionWasDefeated)
     faction.refresh_from_db()
     assert (faction.leader, faction.is_defeated) == (leader, True)
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_raises_a_leader_from_the_fyrd():
+    """
+    Nobody is left on the roster, but the fyrd has two men: one of them takes the seat, and comes with
+    the recruitment the hand-out arms him off.
+    """
+    player_faction, faction, leader = _rival_led_by_a_fallen_leader(fyrd_reserve=2)
+
+    result = handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    faction.refresh_from_db()
+    assert result == [
+        FactionLeaderRaisedFromFyrd(
+            faction=faction,
+            player_faction=player_faction,
+            fallen_leader=leader,
+            successor=faction.leader,
+            leader_was_killed=True,
+            month=4,
+        ),
+        WarriorRecruited(faction=faction, warrior=faction.leader, recruitment_price=0, month=4),
+    ]
+    assert (faction.leader.faction, faction.fyrd_reserve, faction.is_defeated) == (faction, 1, False)
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_raises_a_leader_from_the_fyrd_for_the_player_too():
+    player_faction = FactionFactory(fyrd_reserve=1)
+    savegame = player_faction.savegame
+    savegame.player_faction = player_faction
+    savegame.save()
+    leader = WarriorFactory(
+        faction=player_faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+    player_faction.leader = leader
+    player_faction.save()
+
+    handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    player_faction.refresh_from_db()
+    assert (player_faction.leader != leader, player_faction.fyrd_reserve, player_faction.is_defeated) == (
+        True,
+        0,
+        False,
+    )
 
 
 @pytest.mark.django_db

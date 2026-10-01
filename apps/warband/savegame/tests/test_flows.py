@@ -20,9 +20,11 @@ def test_losing_the_leader_ends_the_game_and_decides_the_open_fight(queuebie_reg
     It is dispatched from the command rather than from a real round because a leader dying is decided
     by the dice, and pinning that would mock the combat this is meant to run for real. Everything from
     here on is the production chain, event handlers and blocker included.
+
+    The fyrd is empty, so there is nobody left to raise in his place either.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
+    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
     savegame.player_faction = player_faction
     savegame.save()
     rival_faction = FactionFactory(savegame=savegame)
@@ -52,9 +54,10 @@ def test_a_warrior_in_two_open_fights_is_taken_prisoner_only_once(queuebie_regis
 
     A flow test rather than a unit test because that is the whole defect: the capture handler is
     correct on its own and only misbehaves when the force-resolve above it calls it a second time.
+    The fyrd is empty, so his fall ends the game rather than raising a levy in his place.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
+    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
     savegame.player_faction = player_faction
     savegame.save()
     first_rival = FactionFactory(savegame=savegame)
@@ -86,7 +89,8 @@ def test_losing_the_last_rival_wins_the_game(queuebie_registry):
     player_faction = FactionFactory(savegame=savegame)
     savegame.player_faction = player_faction
     savegame.save()
-    rival_faction = FactionFactory(savegame=savegame)
+    # Nobody left in its fyrd either, so the rival is finished
+    rival_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
 
     leader = WarriorFactory(faction=rival_faction, savegame=savegame, condition=Warrior.ConditionChoices.CONDITION_DEAD)
     rival_faction.leader = leader

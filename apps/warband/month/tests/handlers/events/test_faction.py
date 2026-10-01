@@ -1,5 +1,6 @@
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
     FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
@@ -13,6 +14,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.handlers.events.faction import (
     handle_bulletin_board_quests_offered,
     handle_faction_fyrd_reserve_replenished,
+    handle_log_leader_raised_from_fyrd,
     handle_log_leader_succession,
     handle_log_rival_defeat,
     handle_monthly_building_earnings,
@@ -322,6 +324,53 @@ def test_handle_log_leader_succession_for_a_rival_whose_leader_was_taken():
         title="Kristinefoss has a new leader.",
         body="Vincent led them, and he was taken prisoner. Beorn leads them now.",
         kind=PlayerMonthLog.KindChoices.KIND_LEADER_SUCCEEDED,
+        month=3,
+        faction=player_faction,
+    )
+
+
+def test_handle_log_leader_raised_from_fyrd_for_the_players_own_war_band():
+    player_faction = FactionFactory.build(name="Tettenhall")
+
+    result = handle_log_leader_raised_from_fyrd(
+        context=FactionLeaderRaisedFromFyrd(
+            faction=player_faction,
+            player_faction=player_faction,
+            fallen_leader=WarriorFactory.build(name="Vincent"),
+            successor=WarriorFactory.build(name="Beorn"),
+            leader_was_killed=True,
+            month=3,
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Vincent fell in the fighting. The fyrd has raised Beorn to lead the war band.",
+        body="Nobody was left in the war band to follow, so the men of the land sent one of their own.",
+        kind=PlayerMonthLog.KindChoices.KIND_LEADER_RAISED_FROM_FYRD,
+        month=3,
+        faction=player_faction,
+    )
+
+
+def test_handle_log_leader_raised_from_fyrd_for_a_rival_whose_leader_was_taken():
+    player_faction = FactionFactory.build(name="Tettenhall")
+
+    result = handle_log_leader_raised_from_fyrd(
+        context=FactionLeaderRaisedFromFyrd(
+            faction=FactionFactory.build(name="Kristinefoss"),
+            player_faction=player_faction,
+            fallen_leader=WarriorFactory.build(name="Vincent"),
+            successor=WarriorFactory.build(name="Beorn"),
+            leader_was_killed=False,
+            month=3,
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Kristinefoss has a new leader.",
+        body="Vincent led them, and he was taken prisoner. Nobody was left in their war band, so their fyrd "
+        "has raised Beorn to lead them.",
+        kind=PlayerMonthLog.KindChoices.KIND_LEADER_RAISED_FROM_FYRD,
         month=3,
         faction=player_faction,
     )

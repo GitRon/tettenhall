@@ -39,6 +39,7 @@ class PlayerMonthLog(models.Model):
         KIND_WARRIOR_CHANGED = 20, "Warrior changed"
         KIND_HARVEST = 21, "Harvest"
         KIND_LEADER_SUCCEEDED = 22, "Leader succeeded"
+        KIND_LEADER_RAISED_FROM_FYRD = 23, "Leader raised from the fyrd"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -89,6 +90,8 @@ class PlayerMonthLog(models.Model):
         # A chronicle entry, like the defeat it stands in for: a leader falling and another man
         # taking his seat is the board changing, and naming both takes a second sentence
         KindChoices.KIND_LEADER_SUCCEEDED: CategoryChoices.CATEGORY_CHRONICLE,
+        # The same board change as a succession, with a faction kept in the war by its land
+        KindChoices.KIND_LEADER_RAISED_FROM_FYRD: CategoryChoices.CATEGORY_CHRONICLE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

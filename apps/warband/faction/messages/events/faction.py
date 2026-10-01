@@ -63,6 +63,25 @@ class FactionLeaderSucceeded(Event):
 
 
 @dataclass(kw_only=True)
+class FactionLeaderRaisedFromFyrd(Event):
+    """
+    A faction lost the man who led it with nobody left on its roster, and its fyrd raised a levy to lead
+    it instead.
+
+    Carries the same resolved fields as [FactionLeaderSucceeded], for the same reason. Kept apart from
+    it because what happened is a different fact: the faction ran out of men and was saved by its land,
+    not by the man next in line.
+    """
+
+    faction: Faction
+    player_faction: Faction
+    fallen_leader: Warrior
+    successor: Warrior
+    leader_was_killed: bool
+    month: int
+
+
+@dataclass(kw_only=True)
 class FactionFyrdReserveReplenished(Event):
     faction: Faction
     new_recruits: int
