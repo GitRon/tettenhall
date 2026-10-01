@@ -4,6 +4,9 @@
     and dexterity among them: for a man he does not yet command, they are most of what recruiting him
     would buy.
 
+    Renown is public and exact. It is the figure that decides where a recruited man stands in the
+    line of succession, and a rival's fallen leader can carry enough of it to go straight to the front.
+
     Held rather than commanded: the numbers arrive fuzzed and the gear is named, as
     docs/patterns/warrior-knowledge.md has it for a prisoner, so the gauge draws the word and no bar.
     The wage is public, and it is what recruiting him commits the player to every month after.
@@ -13,11 +16,12 @@
     "roster_table.html" gives.
 {% endcomment %}
 <div class="relative overflow-x-auto border border-rule-strong">
-    <table class="table-stack m-0 md:min-w-[66rem]">
+    <table class="table-stack m-0 md:min-w-[70rem]">
         <thead>
         <tr>
             <th class="pl-4">Man</th>
             <th class="text-right">Lvl</th>
+            <th class="text-right">Renown</th>
             <th>Str</th>
             <th>Dex</th>
             <th>Health</th>
@@ -44,6 +48,7 @@
                     </div>
                 </td>
                 <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Lvl">{{ warrior.level }}</td>
+                <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Renown">{{ warrior.renown }}</td>
                 <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3" data-label="Str">
                     {% include 'warrior/components/warrior_attribute.html' with value=warrior.strength baseline=warrior.strength_baseline knowledge=knowledge %}
                 </td>
