@@ -49,6 +49,7 @@ class BaseSkirmishGenerator:
             defending_faction_id=self.warriors_faction_2[0].faction.id,
             month=self.month,
             fortification_strength=self.fortification_strength,
+            starting_fortification_strength=self.fortification_strength,
         )
 
         skirmish.attacking_warriors.add(*self.warriors_faction_1)
