@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 from django.urls import reverse
 
+from apps.warband.faction.domain.fyrd_reserve import FyrdReserve
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
@@ -417,13 +418,17 @@ def test_finish_month_view_lets_a_rival_hire_the_man_in_its_pub(logged_in_client
     the man a rival chose must be off it by then. Only a real queue run shows that the hire the rival
     decided on lands before its pub is swept, through the same command the player's pub dispatches -
     faction, gear, shelf and ledger all moving together.
+
+    The rival's fyrd is empty and stays empty through the month's replenishment, because a rival with
+    free men left in it hires nobody.
     """
     TrainingFactory(faction=current_savegame.player_faction)
-    rival_faction = FactionFactory(savegame=current_savegame)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=0)
     TransactionFactory(faction=rival_faction, amount=1000, month=1)
     mercenary = _pub_mercenary(faction=rival_faction)
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+    with mock.patch.object(FyrdReserve, "roll_monthly_recruits", return_value=0):
+        response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     mercenary.refresh_from_db()

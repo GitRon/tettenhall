@@ -154,10 +154,20 @@ def handle_consider_pub_hire(*, context: ConsiderPubHire) -> list[Event]:
     purpose: the restock hangs off it and clears the shelf with a row delete, and a man approved here
     is only taken off it once his "RecruitPubMercenary" drains. The approvals are queued first, so
     their commands drain first, whatever order anything else runs in.
+
+    A rival with free men left in its fyrd hires nobody. The reserve, which refills by a few men a
+    month, is the brake #3 balanced a rival's growth on: "RivalIncome" pays more per man than he costs,
+    so a purse spent freely in the pub pays for the next hire and the war band compounds (#387). This
+    is a guard on that income, not a rule of its own - it goes once a rival lives on its town (#393).
+    The reserve is read off the row rather than the instance on the message, so the answer is the
+    reserve as the month's replenishment left it, whoever else holds the same faction.
     """
     considered = PubHiringConsidered(faction=context.faction, month=context.month)
 
     if context.faction.savegame.player_faction_id == context.faction.id:
+        return [considered]
+
+    if Faction.objects.filter(id=context.faction.id).values_list("fyrd_reserve", flat=True).get() > 0:
         return [considered]
 
     purse = Transaction.objects.current_balance(faction_id=context.faction.id)
