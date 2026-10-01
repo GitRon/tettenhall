@@ -54,6 +54,18 @@ RENDER_ROWS = {
     "common.box-header": [
         ("<c-common.box-header>Battle report</c-common.box-header>", {}),
     ],
+    "common.card": [
+        ("<c-common.card>Current costs</c-common.card>", {}),
+        (
+            '<c-common.card id="fyrd-card" class="mb-5"><c-slot name="header">Feast</c-slot>'
+            'Once a month<c-slot name="footer">Feast for 40 silver</c-slot></c-common.card>',
+            {},
+        ),
+        (
+            '<c-common.card><c-slot name="header">Seax</c-slot> <c-slot name="footer">Buy</c-slot></c-common.card>',
+            {},
+        ),
+    ],
     "warrior.gauge": [
         (
             '<c-warrior.gauge :current="current" :maximum="maximum" :baseline="baseline" :knowledge="knowledge" />',

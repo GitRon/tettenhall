@@ -1,6 +1,6 @@
 {% load handout l10n stores %}
-<div class="box-border bg-ground text-ink-muted border border-rule-strong">
-    <div class="border-b border-rule px-[30px] py-[15px]">
+<c-common.card>
+    <c-slot name="header">
         {# "hx-target" points at this id, so the element carrying it keeps both the id and its own #}
         {# classes rather than handing either to a wrapper. #}
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2" id="item-card-{{ item.id|unlocalize }}">
@@ -21,8 +21,8 @@
                 </p>
             </div>
         </div>
-    </div>
-    <div class="p-[30px] text-left">
+    </c-slot>
+    <div class="text-left">
         {% comment %}
             Both branches are written even though "get_all_unoccupied_items" feeds the one list that
             includes this card today: the card is a component, and a wearer named without a way to
@@ -38,21 +38,23 @@
     </div>
     {% comment %}
         Only the player's own items can be sold or handed out: both views are scoped to the player
-        faction, so on a rival's page these are controls that could only ever 404.
+        faction, so on a rival's page these are controls that could only ever 404. Without them the
+        footer is empty and the card leaves it out.
     {% endcomment %}
-    {% if is_player_faction %}
-        {% comment %}
-            Giving belongs beside selling, because they are the two things loot is for. With only a
-            Sell button here the column read as though selling were the only one, and the route to
-            the other was the warrior's own page - a page at a time, down the whole roster.
+    <c-slot name="footer">
+        {% if is_player_faction %}
+            {% comment %}
+                Giving belongs beside selling, because they are the two things loot is for. With only a
+                Sell button here the column read as though selling were the only one, and the route to
+                the other was the warrior's own page - a page at a time, down the whole roster. Both sit
+                on the one footer row, and a narrow card wraps the Sell button underneath.
 
-            The roster is handed in by the list rather than read off the item, so a column of unused
-            items costs one query for it instead of one per card. A faction with no living men left
-            gets no picker: a select with nothing in it is a control that can only fail.
-        {% endcomment %}
-        {% if roster %}
-            <div class="border-t border-rule px-[30px] py-[15px]">
-                <form class="flex flex-wrap items-center gap-x-4 gap-y-2"
+                The roster is handed in by the list rather than read off the item, so a column of unused
+                items costs one query for it instead of one per card. A faction with no living men left
+                gets no picker: a select with nothing in it is a control that can only fail.
+            {% endcomment %}
+            {% if roster %}
+                <form class="flex min-w-0 flex-1 basis-64 flex-wrap items-center gap-x-4 gap-y-2"
                       hx-post="{% url 'warband:item-assign-view' item.id %}"
                       hx-swap="none">
                     {# Named after the item rather than "Give to": every unused item renders one of #}
@@ -81,9 +83,7 @@
                             type="submit">Give to
                     </button>
                 </form>
-            </div>
-        {% endif %}
-        <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[30px] py-[15px]">
+            {% endif %}
             <button class="row-action"
                     hx-post="{% url 'warband:item-sell-view' item.id %}"
                     hx-disabled-elt="this"
@@ -91,6 +91,6 @@
                     hx-target="#item-card-{{ item.id|unlocalize }}"
                     type="button">Sell for <span class="font-mono tabular-nums">{{ item|sell_payout:faction }}</span>
             </button>
-        </div>
-    {% endif %}
-</div>
+        {% endif %}
+    </c-slot>
+</c-common.card>

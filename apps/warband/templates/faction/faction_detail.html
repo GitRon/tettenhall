@@ -5,7 +5,7 @@
 
     <div class="grid grid-cols-1 gap-7 text-center md:grid-cols-4">
         <div>
-            <div class="mb-5 box-border bg-ground text-ink-muted border border-rule-strong p-[30px]">
+            <c-common.card class="mb-5">
                 <h2>Details</h2>
                 {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
                 {# decides what a table should actually become at that width. #}
@@ -58,7 +58,7 @@
                 {% elif their_war_band_is_committed %}
                     <p class="text-sm leading-snug text-ink-muted">Their warriors are already committed to a fight this month.</p>
                 {% endif %}
-            </div>
+            </c-common.card>
         </div>
         <div>
             {% include "faction/warrior/components/warrior_list.html" with faction=object warrior_list=warrior_list %}
