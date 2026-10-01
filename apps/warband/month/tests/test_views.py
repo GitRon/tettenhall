@@ -554,3 +554,37 @@ def test_finish_month_view_arms_a_rivals_new_levy_out_of_its_stores(logged_in_cl
 
     assert response.status_code == 200
     assert Warrior.objects.get(faction=rival_faction).armor == mail
+
+
+@pytest.mark.django_db
+def test_finish_month_view_lets_a_rival_buy_off_its_shelf_and_arm_a_man_with_it(logged_in_client, current_savegame):
+    """
+    Flow test, because the story is the order four hops apart land in: the purchase hands the sword over,
+    the restock that follows clears the shelf while the sword is still on it, and the hand-out that
+    hangs off the purchase has to find it in the stores.
+
+    The rival's one man is bare-handed and its fyrd stays empty, so the sword is the one thing its
+    month is spent on.
+    """
+    TrainingFactory(faction=current_savegame.player_faction)
+    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=0)
+    TransactionFactory(faction=rival_faction, amount=1000, month=1)
+    warrior = WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=50)
+    sword = ItemFactory(
+        savegame=current_savegame,
+        owner=None,
+        price=60,
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON, base_value="2d6"),
+    )
+    rival_faction.available_items.add(sword)
+
+    with mock.patch.object(FyrdReserve, "roll_monthly_recruits", return_value=0):
+        response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+
+    assert response.status_code == 200
+    warrior.refresh_from_db()
+    assert (
+        warrior.weapon,
+        rival_faction.available_items.filter(id=sword.id).exists(),
+        Transaction.objects.filter(faction=rival_faction, amount=-60).exists(),
+    ) == (sword, False, True)
