@@ -44,18 +44,25 @@
         {# one in "ink-muted" - since the palette keeps its one colour for trouble. "ink-dim" is not #}
         {# what morale wears: it carries no meaning by rule, and morale is what decides whether a man #}
         {# keeps fighting. #}
+        {# Each figure carries its word, because a glyph has to be learned before it can be read and the #}
+        {# two pairs are otherwise the same shape. The word is the quiet half, the figure the loud one, #}
+        {# on both lines alike: the bars already say which reading weighs more. #}
         {# "progress" resolves its own proportion from value and max, and needs a box with a width to #}
         {# draw it in, which is what the grid column gives it. #}
         <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-[5px]">
             <progress class="h-[3px] w-full bg-rule [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink [&::-moz-progress-bar]:bg-ink"
-                      value="{{ warrior.current_health }}" max="{{ warrior.max_health }}"></progress>
-            <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink">
-                <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
+                      value="{{ warrior.current_health }}" max="{{ warrior.max_health }}"
+                      aria-label="Health"></progress>
+            <span class="font-mono whitespace-nowrap">
+                <span class="text-label uppercase tracking-label text-ink-muted">Health</span>
+                <span class="text-figure tabular-nums text-ink">{{ warrior.current_health }} / {{ warrior.max_health }}</span>
             </span>
             <progress class="h-[2px] w-full bg-rule [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-ink-muted [&::-moz-progress-bar]:bg-ink-muted"
-                      value="{{ warrior.current_morale }}" max="{{ warrior.max_morale }}"></progress>
-            <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink-muted">
-                <i class="fa-solid fa-bolt"></i> {{ warrior.current_morale }} / {{ warrior.max_morale }}
+                      value="{{ warrior.current_morale }}" max="{{ warrior.max_morale }}"
+                      aria-label="Morale"></progress>
+            <span class="font-mono whitespace-nowrap">
+                <span class="text-label uppercase tracking-label text-ink-muted">Morale</span>
+                <span class="text-figure tabular-nums text-ink">{{ warrior.current_morale }} / {{ warrior.max_morale }}</span>
             </span>
         </div>
 
@@ -112,8 +119,9 @@
         {# out, and a name the player cannot read has not told him who. #}
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p class="m-0 min-w-0 flex-1 leading-snug text-ink-muted">{{ warrior.display_name }}</p>
-            <span class="font-mono text-label uppercase tracking-label whitespace-nowrap text-ink-muted">
-                <i class="fa-solid fa-heart"></i> {{ warrior.current_health }} / {{ warrior.max_health }}
+            <span class="font-mono whitespace-nowrap text-ink-muted">
+                <span class="text-label uppercase tracking-label">Health</span>
+                <span class="text-figure tabular-nums">{{ warrior.current_health }} / {{ warrior.max_health }}</span>
             </span>
             <p class="m-0 inline-block border border-blood px-2 py-1 font-mono font-medium whitespace-nowrap text-label uppercase tracking-label text-ink">
                 {% if warrior.is_unconscious %}<i class="fa-solid fa-moon"></i>{% elif warrior.is_fleeing %}<i class="fa-solid fa-person-running"></i>{% else %}<i class="fa-solid fa-skull"></i>{% endif %}
