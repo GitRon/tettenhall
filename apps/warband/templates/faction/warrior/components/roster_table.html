@@ -51,9 +51,9 @@
                     <div class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3">
                         {# The leader's frame is the brightest rule. #}
                         {% if warrior.id == faction.leader_id %}
-                            {% include 'warrior/components/warrior_portrait.html' with warrior=warrior frame='border border-ink' %}
+                            <c-warrior.portrait :warrior="warrior" frame="border border-ink" />
                         {% else %}
-                            {% include 'warrior/components/warrior_portrait.html' with warrior=warrior frame='border border-rule-strong' %}
+                            <c-warrior.portrait :warrior="warrior" frame="border border-rule-strong" />
                         {% endif %}
                         <div class="min-w-0">
                             <a class="leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.name }}</a>
@@ -77,10 +77,10 @@
                 <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Lvl">{{ warrior.level }}</td>
                 <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Renown">{{ warrior.renown }}</td>
                 <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3" data-label="Str">
-                    {% include 'warrior/components/warrior_attribute.html' with value=warrior.strength baseline=warrior.strength_baseline knowledge=knowledge %}
+                    <c-warrior.attribute :value="warrior.strength" :baseline="warrior.strength_baseline" :knowledge="knowledge" />
                 </td>
                 <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3" data-label="Dex">
-                    {% include 'warrior/components/warrior_attribute.html' with value=warrior.dexterity baseline=warrior.strength_baseline knowledge=knowledge %}
+                    <c-warrior.attribute :value="warrior.dexterity" :baseline="warrior.strength_baseline" :knowledge="knowledge" />
                 </td>
                 <td class="align-middle max-md:col-span-2 md:py-3" data-label="Health">
                     {% include 'faction/warrior/components/roster_gauge.html' with current=warrior.current_health maximum=warrior.max_health baseline=warrior.health_baseline knowledge=knowledge %}

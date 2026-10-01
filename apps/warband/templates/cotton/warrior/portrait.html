@@ -1,3 +1,4 @@
+<c-vars warrior frame="" crop="card" />
 {% load static %}
 {% comment %}
     A man's face, stacked from the pieces he was drawn with: the bare face, then his beard, then his hair.
@@ -12,14 +13,14 @@
     everybody before.
 {% endcomment %}
 {% if warrior.portrait_face %}
-    <span class="portrait portrait-{{ crop|default:'card' }} {{ frame }}">
+    <span class="portrait portrait-{{ crop }} {{ frame }}">
         <span class="portrait-canvas">
             <img class="portrait-face" src="{% static warrior.portrait_face.image %}" width="198" height="204" alt="">
             {% if warrior.portrait_beard %}
-                {% include 'warrior/components/warrior_portrait_layer.html' with piece=warrior.portrait_beard colour=warrior.beard_colour %}
+                <c-warrior.portrait-layer :piece="warrior.portrait_beard" :colour="warrior.beard_colour" />
             {% endif %}
             {% if warrior.portrait_hair %}
-                {% include 'warrior/components/warrior_portrait_layer.html' with piece=warrior.portrait_hair colour=warrior.hair_colour %}
+                <c-warrior.portrait-layer :piece="warrior.portrait_hair" :colour="warrior.hair_colour" />
             {% endif %}
         </span>
     </span>

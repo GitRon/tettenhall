@@ -33,7 +33,7 @@ than the death he was one point short of, and reachable by no other route.
   that moves an attribute afterwards may rename a man — not a level, not a training course, and not an
   injury. *The Strong* who loses a shoulder is still *the Strong*.
 - **The cards**, which print the stored figure and list what a man carries beside it. The fuzz in
-  `warrior/components/warrior_attribute.html` buckets a value against the distribution it was drawn
+  `<c-warrior.attribute>` buckets a value against the distribution it was drawn
   from ([warrior knowledge](warrior-knowledge.md)), and feeding it a modified value would change what
   "High" means rather than telling the player anything. What they list beside it is the injuries only: no
   screen renders a trait, which the player finds out through the fights it changes.

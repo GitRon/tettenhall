@@ -31,7 +31,7 @@
 
     {# The whole portrait, which the lists only have room for the head of #}
     <div class="mb-5">
-        {% include 'warrior/components/warrior_portrait.html' with warrior=object crop='full' frame='border border-rule-strong' %}
+        <c-warrior.portrait :warrior="object" crop="full" frame="border border-rule-strong" />
     </div>
 
     <table>
@@ -70,13 +70,13 @@
         {% endcomment %}
         <tr>
             <td>Strength</td>
-            <td>{% include 'warrior/components/warrior_attribute.html' with value=object.strength baseline=object.strength_baseline knowledge=knowledge %}</td>
+            <td><c-warrior.attribute :value="object.strength" :baseline="object.strength_baseline" :knowledge="knowledge" /></td>
         </tr>
         <tr>
             <td>Dexterity</td>
             {# Against the strength baseline, because the two are drawn from one distribution - #}
             {# see "Warrior.attribute_draws", which pairs them off the same trio. #}
-            <td>{% include 'warrior/components/warrior_attribute.html' with value=object.dexterity baseline=object.strength_baseline knowledge=knowledge %}</td>
+            <td><c-warrior.attribute :value="object.dexterity" :baseline="object.strength_baseline" :knowledge="knowledge" /></td>
         </tr>
         <tr>
             <td>Health</td>
