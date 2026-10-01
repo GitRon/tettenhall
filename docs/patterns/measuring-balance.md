@@ -40,18 +40,22 @@ refusal each view asks first (`scripts/playtest/player.py`):
 1. every captive is taken into the band;
 2. the whole fyrd reserve is drafted;
 3. the pub is hired from, cheapest first, while 150 silver stays back;
-4. one building is raised: the first of hall, sanctuary, weaponsmith and marketplace that may be upgraded
+4. the shop is bought from by the rule a rival buys by (`RivalPolicy`), while the 150 stays back;
+5. the gear the faction holds - bought or looted - is handed out the way a rival's is, the best to the
+   best men (`plan_gear_handout`);
+6. one building is raised: the first of hall, sanctuary, weaponsmith and marketplace that may be upgraded
    and still leaves the 150;
-5. the band marches on the rival with the fewest men on their feet, if the policy says so, and shrinks
+7. the band marches on the rival with the fewest men on their feet, if the policy says so, and shrinks
    until the march is affordable;
-6. the fight is played out round by round;
-7. every town with nobody left to hold it is ridden into;
-8. the month is finished.
+8. the fight is played out round by round;
+9. every town with nobody left to hold it is ridden into;
+10. the month is finished.
 
-The player's men fight the way a rival's do: each one takes the action the game's own decision service
-picks for him. The harness brings no fighting judgement of its own, so a change to how the AI fights moves
-both sides. It uses no quests, no Rally or Assault by choice, no feasts and no equipment. A question that
-turns on one of those needs a policy that uses it.
+The player's men fight, shop and arm the way a rival's do: each one takes the action the game's own
+decision service picks for him, and the faction buys and hands out by the rivals' rules. The harness brings
+no judgement of its own to either, so a change to how the AI fights or spends moves both sides. It uses no
+quests, no Rally or Assault by choice and no feasts. A question that turns on one of those needs a policy
+that uses it.
 
 **Policies** differ only in when the band marches:
 
@@ -72,6 +76,7 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
 
 - fights won and lost, and marches held back by the policy or by the purse;
 - how many men were drafted, hired and taken in from the cells, and how many towns were occupied;
+- how many items the player bought, and how many equips the hand-out made;
 - successions on either side, and the months rivals were knocked out;
 - what was built, as `[month, building, level]`;
 - how many items the rivals bought, read off their ledgers;

@@ -37,6 +37,8 @@ class GameReport:
     occupations: int = 0
     drafted: int = 0
     hired: int = 0
+    items_bought: int = 0
+    items_equipped: int = 0
     captives_recruited: int = 0
     player_successions: int = 0
     rival_successions: int = 0

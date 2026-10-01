@@ -14,7 +14,6 @@ from apps.warband.faction.domain.rival_policy import (
     PubOffer,
     RivalMonthSnapshot,
     RivalPolicy,
-    ShopOffer,
 )
 from apps.warband.faction.messages.commands.faction import (
     ChangeFyrdReserve,
@@ -49,8 +48,8 @@ from apps.warband.faction.messages.events.warrior import (
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.faker import faker_for_locale
+from apps.warband.faction.services.purchase_snapshot import get_held_gear_values, get_shop_offers
 from apps.warband.finance.models import Transaction
-from apps.warband.item.services.handout import SLOT_NAMES, get_handout_roster
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.payroll import Payroll
@@ -223,8 +222,6 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
     # Priced once per man, and before anything moves him - the price is partly made of his wait
     mercenary_by_id = {mercenary.id: mercenary for mercenary in context.faction.available_mercenaries.all()}
     item_by_id = {item.id: item for item in context.faction.available_items.select_related("type")}
-    # The men the hand-out may arm, each with what his slots are worth - what a purchase is weighed against
-    handout_roster = get_handout_roster(faction=context.faction)
     snapshot = RivalMonthSnapshot(
         fyrd_reserve=Faction.objects.filter(id=context.faction.id).values_list("fyrd_reserve", flat=True).get(),
         purse=Transaction.objects.current_balance(faction_id=context.faction.id),
@@ -239,11 +236,8 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
             )
             for mercenary in mercenary_by_id.values()
         ],
-        shop_offer_list=[
-            ShopOffer(item_id=item.id, price=item.price, slot=item.gear_slot, value=item.expectancy_value)
-            for item in item_by_id.values()
-        ],
-        held_gear_values={slot: [warrior.held_gear_values[slot] for warrior in handout_roster] for slot in SLOT_NAMES},
+        shop_offer_list=get_shop_offers(item_list=item_by_id.values()),
+        held_gear_values=get_held_gear_values(faction=context.faction),
     )
 
     events: list[Event] = []
