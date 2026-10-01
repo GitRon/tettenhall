@@ -103,6 +103,10 @@ class MonthStanding:
     can_build: bool
     shop_item_count: int
     pub_mercenary_count: int
+    # The prisoners above what the cells hold. An offer by the rule above: they are gone when the
+    # month turns, unless the player takes them into the war band or sells them first
+    captives_over_cell_places: int
+    cell_places: int
     building_income: int
     warband: WarbandStanding
     waiting: WaitingStanding
@@ -150,6 +154,7 @@ class MonthStanding:
             or self.can_build
             or self.shop_item_count
             or self.pub_mercenary_count
+            or self.captives_over_cell_places
         )
 
     @classmethod
@@ -179,6 +184,8 @@ class MonthStanding:
             can_build=town is not None and town.last_constructed_building_at != month,
             shop_item_count=player_faction.available_items.count(),
             pub_mercenary_count=player_faction.available_mercenaries.count(),
+            captives_over_cell_places=player_faction.get_captives_over_cell_places() if town else 0,
+            cell_places=town.get_cell_places() if town else 0,
             # Read off the town the way the month reads it, rather than assembled from a building
             # here. The cost card promises this figure and the month pays it, and the two must agree.
             #

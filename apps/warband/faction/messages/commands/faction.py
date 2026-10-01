@@ -22,6 +22,19 @@ class ReplenishFyrdReserve(Command):
 
 
 @dataclass(kw_only=True)
+class LetCaptivesFleeOverfullCells(Command):
+    """
+    The prisoners a faction holds above what its cells hold slip away as the month turns.
+
+    A command because how many is a count against the town's hall, and the event handler on the
+    monthly event may read neither.
+    """
+
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
 class PlanFactionMonth(Command):
     """
     Asks what this faction does with its month - for a rival, what [RivalPolicy] decides.

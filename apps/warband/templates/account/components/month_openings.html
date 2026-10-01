@@ -85,6 +85,20 @@
                        href="{% url 'warband:town-pub-view' %}">Pub</a>
                 </li>
             {% endif %}
+            {% if month_standing.captives_over_cell_places %}
+                <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.captives_over_cell_places }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="text-ink">captive{{ month_standing.captives_over_cell_places|pluralize }} will slip away</span>
+                        <span class="block text-sm leading-snug">
+                            Your cells hold {{ month_standing.cell_places }}. Take the rest into the war band or sell
+                            them before the month turns.
+                        </span>
+                    </span>
+                    <a class="row-action"
+                       href="{% url 'warband:warband-captives-view' %}">Captives</a>
+                </li>
+            {% endif %}
         </ul>
     {% endif %}
 </c-common.card>

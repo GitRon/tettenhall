@@ -283,6 +283,24 @@ def test_get_held_captives_is_the_men_in_the_cells():
 
 
 @pytest.mark.django_db
+def test_get_captives_over_cell_places_counts_the_men_without_a_place():
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_SMALL)
+    faction.captured_warriors.add(
+        *WarriorFactory.create_batch(3, faction=None, savegame=faction.savegame, culture=faction.culture)
+    )
+
+    assert faction.get_captives_over_cell_places() == 1
+
+
+@pytest.mark.django_db
+def test_get_captives_over_cell_places_is_nothing_with_room_to_spare():
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_SMALL)
+    faction.captured_warriors.add(WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture))
+
+    assert faction.get_captives_over_cell_places() == 0
+
+
+@pytest.mark.django_db
 def test_get_held_captives_brings_the_gear_along(django_assert_num_queries):
     """
     The row names the weapon and the armour a prisoner carries, and an item's name reads its type, so

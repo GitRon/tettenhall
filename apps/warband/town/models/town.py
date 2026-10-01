@@ -106,3 +106,12 @@ class Town(models.Model):
         number, so this reads it off the level standing rather than holding a copy.
         """
         return Fortification.get_building_by_type(building_type=self.fortification).FORTIFICATION_STRENGTH
+
+    def get_cell_places(self) -> int:
+        """
+        How many prisoners this town still holds when the month turns.
+
+        One answer for the month-end flight and the pages that warn about it, so the number the player
+        is shown is the number the month enforces. The hall owns it.
+        """
+        return Hall.get_building_by_type(building_type=self.hall).CELL_PLACES

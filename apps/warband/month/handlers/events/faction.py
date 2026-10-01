@@ -2,6 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
     FactionFyrdReserveReplenished,
     FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
@@ -15,6 +16,17 @@ from apps.warband.faction.messages.events.quest import BulletinBoardQuestsOffere
 from apps.warband.faction.messages.events.warrior import TownMercenariesRestocked
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+
+
+@message_registry.register_event(event=CaptiveFledOverfullCells)
+def handle_captive_fled_overfull_cells(*, context: CaptiveFledOverfullCells) -> Command:
+    # Says why, so the first man lost to full cells is also the moment the player learns there are cells
+    return CreatePlayerMonthLog(
+        title=f"{context.warrior} slipped away in the night: your cells hold {context.cell_places}.",
+        kind=PlayerMonthLog.KindChoices.KIND_CAPTIVE_FLED,
+        month=context.month,
+        faction=context.faction,
+    )
 
 
 @message_registry.register_event(event=FactionFyrdReserveReplenished)

@@ -125,6 +125,33 @@ def test_finish_month_view_keeps_an_unpaid_warriors_morale_down(logged_in_client
 
 
 @pytest.mark.django_db
+def test_finish_month_view_lets_the_man_the_cells_cannot_hold_go_unhealed(logged_in_client, current_savegame):
+    """
+    Flow test rather than a unit test, because what it pins is the ordering of two commands and
+    nothing but a real queue run has one.
+
+    A town without a hall holds one prisoner, so of two wounded captives one gets away. The flight is
+    declared before the warriors' month, so the man who fled is already out of the cells when the
+    captor's sanctuary picks whom to mend. Reverse the two and he is healed on his way out, with a
+    line about it in the log beside the line saying he is gone.
+    """
+    # The bulletin board restocks as part of the month and a quest needs somebody to be against
+    FactionFactory(savegame=current_savegame)
+    player_faction = current_savegame.player_faction
+    captive_list = WarriorFactory.create_batch(
+        2, faction=None, savegame=current_savegame, culture=player_faction.culture, current_health=5, max_health=20
+    )
+    player_faction.captured_warriors.add(*captive_list)
+
+    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+
+    assert response.status_code == 200
+    (fled_warrior,) = set(captive_list) - set(player_faction.captured_warriors.all())
+    fled_warrior.refresh_from_db()
+    assert fled_warrior.current_health == 5
+
+
+@pytest.mark.django_db
 def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_in_client, current_savegame):
     """
     Flow test rather than a unit test, because what it pins is when a ledger row lands and nothing
