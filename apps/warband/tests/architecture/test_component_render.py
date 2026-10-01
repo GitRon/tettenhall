@@ -24,6 +24,7 @@ from django.test import override_settings
 from apps.common.tests.html import render_component
 from apps.warband.calendar.months.summer import Eosturmonath
 from apps.warband.calendar.months.winter import Blotmonath
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.incident.incidents.base import IncidentOption
 from apps.warband.incident.services.pending_incident import OpenQuestion
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
@@ -32,7 +33,10 @@ from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.month.services.player_month_log import GroupedPlayerMonthLog
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.warband.skirmish.models import Warrior
+from apps.warband.skirmish.models.battle_history import BattleHistory
+from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.projections.payroll import Payroll
+from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.tests.architecture.components import components
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
@@ -83,6 +87,12 @@ def _open_question() -> OpenQuestion:
     return OpenQuestion(
         pending_incident=PendingIncidentFactory.build(id=1),
         options=(IncidentOption(key="give", label="Give", title="", body="", silver_change=-60, fyrd_change=1),),
+    )
+
+
+def _built_skirmish() -> Skirmish:
+    return SkirmishFactory.build(
+        id=1, attacking_faction=FactionFactory.build(id=1), defending_faction=FactionFactory.build(id=2)
     )
 
 
@@ -146,6 +156,45 @@ RENDER_ROWS = {
         (
             '<c-navigation.section-nav :sections="sections" :current="current" />',
             {"sections": NAV_SECTIONS, "current": "month"},
+        ),
+    ],
+    "skirmish.log-line": [
+        (
+            '<c-skirmish.log-line :log="log" :text="text" />',
+            {"log": BattleHistory(kind=BattleHistory.KindChoices.KIND_NARRATION, faction_id=1), "text": "A swing"},
+        ),
+        (
+            '<c-skirmish.log-line :log="log" :text="text" :player_faction_id="player_faction_id" />',
+            {
+                "log": BattleHistory(kind=BattleHistory.KindChoices.KIND_WARRIOR_KILLED, faction_id=1),
+                "text": "He falls",
+                "player_faction_id": 1,
+            },
+        ),
+    ],
+    "skirmish.faction-box": [
+        (
+            '<c-skirmish.faction-box :faction="faction" :warrior_list="warrior_list" :is_player="is_player"'
+            ' :skirmish="skirmish" :skirmish_is_decided="skirmish_is_decided" />',
+            {
+                "faction": FactionFactory.build(id=1),
+                "warrior_list": [],
+                "is_player": True,
+                "skirmish": _built_skirmish(),
+                "skirmish_is_decided": False,
+            },
+        ),
+    ],
+    "skirmish.skirmish-table": [
+        (
+            '<c-skirmish.skirmish-table :skirmish_list="skirmish_list" action_icon="fa-arrow-right"'
+            ' action_label="Continue the fight at" empty_text="Nothing" />',
+            {"skirmish_list": []},
+        ),
+        (
+            '<c-skirmish.skirmish-table :skirmish_list="skirmish_list" show_victor action_icon="fa-magnifying-glass"'
+            ' action_label="Read the report of" empty_text="Nothing" />',
+            {"skirmish_list": [_built_skirmish()]},
         ),
     ],
     "warrior.gauge": [

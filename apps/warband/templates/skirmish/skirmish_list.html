@@ -9,9 +9,11 @@
     {# true of that half. #}
     <h2>Holding the month</h2>
 
-    {% include 'skirmish/skirmish/components/skirmish_table.html' with skirmish_list=open_skirmish_list show_victor=False action_icon="fa-arrow-right" action_label="Continue the fight at" empty_text="No fight is holding the month." %}
+    <c-skirmish.skirmish-table :skirmish_list="open_skirmish_list" action_icon="fa-arrow-right"
+                               action_label="Continue the fight at" empty_text="No fight is holding the month." />
 
     <h2>Already fought</h2>
 
-    {% include 'skirmish/skirmish/components/skirmish_table.html' with skirmish_list=decided_skirmish_list show_victor=True action_icon="fa-magnifying-glass" action_label="Read the report of" empty_text="No skirmishes have been fought yet." %}
+    <c-skirmish.skirmish-table :skirmish_list="decided_skirmish_list" show_victor action_icon="fa-magnifying-glass"
+                               action_label="Read the report of" empty_text="No skirmishes have been fought yet." />
 {% endblock content %}
