@@ -1,4 +1,5 @@
 from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
     FactionFyrdReserveReplenished,
     FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
@@ -13,6 +14,7 @@ from apps.warband.faction.messages.events.warrior import TownMercenariesRestocke
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.handlers.events.faction import (
     handle_bulletin_board_quests_offered,
+    handle_captive_fled_overfull_cells,
     handle_faction_fyrd_reserve_replenished,
     handle_log_leader_raised_from_fyrd,
     handle_log_leader_succession,
@@ -373,4 +375,20 @@ def test_handle_log_leader_raised_from_fyrd_for_a_rival_whose_leader_was_taken()
         kind=PlayerMonthLog.KindChoices.KIND_LEADER_RAISED_FROM_FYRD,
         month=3,
         faction=player_faction,
+    )
+
+
+def test_handle_captive_fled_overfull_cells_says_who_got_away_and_why():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Wulfstan")
+
+    result = handle_captive_fled_overfull_cells(
+        context=CaptiveFledOverfullCells(faction=faction, warrior=warrior, cell_places=2, month=3)
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Wulfstan slipped away in the night: your cells hold 2.",
+        kind=PlayerMonthLog.KindChoices.KIND_CAPTIVE_FLED,
+        month=3,
+        faction=faction,
     )

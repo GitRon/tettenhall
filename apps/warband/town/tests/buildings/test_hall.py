@@ -43,20 +43,29 @@ def test_get_levels_matches_the_model_choices():
     assert len(Hall.get_levels()) == len(Town.HallChoices)
 
 
-def test_get_effects_names_the_income_the_men_it_wants_the_mercenary_slots_and_the_feast():
+def test_get_effects_names_the_income_the_men_it_wants_the_mercenary_slots_the_cells_and_the_feast():
     result = SmallHall.get_effects()
 
     assert result == (
         BuildingEffect(label="Monthly income", value="300 silver"),
         BuildingEffect(label="Men needed for full income", value="1"),
         BuildingEffect(label="Mercenaries in the pub", value="1"),
+        BuildingEffect(label="Prisoners the cells hold", value="2"),
         BuildingEffect(label="A feast mends a cut ceiling by", value="10%"),
         BuildingEffect(label="Feast per man", value="15 silver"),
     )
 
 
 def test_get_effects_says_a_town_without_a_hall_cannot_feast():
-    assert NoHall.get_effects()[3] == BuildingEffect(label="A feast mends a cut ceiling by", value="No feasts")
+    assert NoHall.get_effects()[4] == BuildingEffect(label="A feast mends a cut ceiling by", value="No feasts")
+
+
+def test_cell_places_start_at_one_and_grow_by_one_a_level():
+    """
+    Level 0 is a baseline, so a town without a hall still holds a man, and each level adds a single
+    place: the cells cap the stock of trained men a war band sits on, so the top hall is no prisoner farm.
+    """
+    assert [level.CELL_PLACES for level in Hall.get_levels()] == [1, 2, 3, 4]
 
 
 def test_can_feast_is_refused_a_town_without_a_hall():

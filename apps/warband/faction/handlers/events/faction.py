@@ -4,6 +4,7 @@ from queuebie.messages import Command
 from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     EarnMoneyFromBuildings,
+    LetCaptivesFleeOverfullCells,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
@@ -31,10 +32,10 @@ def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated
 # player and to his rivals alike, and the declaration order below is the order it happens in: queuebie
 # drains the commands one event raises in the order its handlers returned them.
 #
-# That order is load-bearing for exactly one thing: the warriors' own month comes after the wages, so
-# the morale reaction sees the "unpaid_months" the salary run wrote. That write is synchronous, inside
-# the salary command handler, which is why the order decides it - and there is a flow test on
-# FinishMonthView pinning it.
+# That order is load-bearing for two things. The warriors' own month comes after the wages, so the
+# morale reaction sees the "unpaid_months" the salary run wrote, and after the flight from overfull
+# cells, so nobody heals a man who got away. Both writes are synchronous, inside their command
+# handlers, which is why the order decides it - and there are flow tests on FinishMonthView pinning it.
 #
 # It decides nothing about the money. A salary run and an income each return an event, and the
 # "CreateTransaction" it becomes is queued behind this whole batch, so no ledger row for the month
@@ -56,6 +57,13 @@ def handle_pay_monthly_warrior_salaries_for_new_month(*, context: FactionMonthPr
 @message_registry.register_event(event=FactionMonthPrepared)
 def handle_earn_money_from_buildings_for_new_month(*, context: FactionMonthPrepared) -> Command:
     return EarnMoneyFromBuildings(faction=context.faction, month=context.current_month)
+
+
+# Before the warriors' month, and that order is load-bearing too: the flight is a synchronous write, so a
+# man who got away is already out of the cells when the captor's sanctuary picks who to heal
+@message_registry.register_event(event=FactionMonthPrepared)
+def handle_let_captives_flee_overfull_cells_for_new_month(*, context: FactionMonthPrepared) -> Command:
+    return LetCaptivesFleeOverfullCells(faction=context.faction, month=context.current_month)
 
 
 # Every faction's men get their month, not just the player's: otherwise a faction that survived a

@@ -10,6 +10,7 @@ from apps.warband.faction.handlers.commands.faction import (
     handle_create_factions_for_new_savegame,
     handle_defeat_faction_of_lost_leader,
     handle_earn_money_from_buildings,
+    handle_let_captives_flee_overfull_cells,
     handle_occupy_faction,
     handle_plan_faction_month,
     handle_prepare_faction_warriors_for_month,
@@ -20,12 +21,14 @@ from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     DefeatFactionOfLostLeader,
     EarnMoneyFromBuildings,
+    LetCaptivesFleeOverfullCells,
     OccupyFaction,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
 )
 from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
     FactionFyrdReserveReplenished,
     FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
@@ -956,3 +959,50 @@ def test_handle_plan_faction_month_raises_no_hall_for_a_rival_of_its_leader_alon
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
 
     assert result == [FactionMonthPlanned(faction=rival_faction, month=3)]
+
+
+def _hold_captives(*, faction: Faction, count: int) -> list[Warrior]:
+    captive_list = WarriorFactory.create_batch(count, faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.captured_warriors.add(*captive_list)
+
+    return captive_list
+
+
+@pytest.mark.django_db
+def test_handle_let_captives_flee_overfull_cells_lets_exactly_the_excess_go():
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_SMALL)
+    captive_list = _hold_captives(faction=faction, count=4)
+
+    result = handle_let_captives_flee_overfull_cells(context=LetCaptivesFleeOverfullCells(faction=faction, month=5))
+
+    fled_list = sorted(set(captive_list) - set(faction.captured_warriors.all()), key=lambda warrior: warrior.id)
+    assert sorted(result, key=lambda event: event.warrior.id) == [
+        CaptiveFledOverfullCells(faction=faction, warrior=warrior, cell_places=2, month=5) for warrior in fled_list
+    ]
+    assert len(fled_list) == 2
+
+
+@pytest.mark.django_db
+def test_handle_let_captives_flee_overfull_cells_keeps_cells_that_are_full_but_not_over():
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_SMALL)
+    _hold_captives(faction=faction, count=2)
+
+    result = handle_let_captives_flee_overfull_cells(context=LetCaptivesFleeOverfullCells(faction=faction, month=5))
+
+    assert result is None
+    assert faction.captured_warriors.count() == 2
+
+
+@pytest.mark.django_db
+def test_handle_let_captives_flee_overfull_cells_reports_nobody_already_gone():
+    """
+    A man recruited or sold in the same instant is out of the cells before the flight reaches him, and
+    the filtered delete coming back empty is what keeps him from being reported fled as well.
+    """
+    faction = FactionFactory(town__hall=Town.HallChoices.HALL_NONE)
+    _hold_captives(faction=faction, count=2)
+
+    with mock.patch.object(Faction.objects, "remove_captive", return_value=False):
+        result = handle_let_captives_flee_overfull_cells(context=LetCaptivesFleeOverfullCells(faction=faction, month=5))
+
+    assert result is None

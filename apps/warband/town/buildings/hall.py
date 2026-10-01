@@ -3,7 +3,8 @@ from apps.warband.town.buildings.base import Building, BuildingEffect
 
 class Hall(Building):
     """
-    Drives the monthly building income and how many mercenaries the pub holds.
+    Drives the monthly building income, how many mercenaries the pub holds and how many prisoners the
+    cells keep.
 
     Revenue grows by less than the costs do, so the largest hall never pays for itself out of income
     alone - what justifies it is the third mercenary slot.
@@ -21,6 +22,12 @@ class Hall(Building):
     The feast is priced per head, not per point mended: the whole roster sits down to eat, so the
     roster is what it costs. A man already whole is fed and charged for all the same, which is why the
     price is small - the silver is meant to go on a war band that has actually been hurt.
+
+    The cells are the hall's as well, because a lord kept the men he took under his own roof. A capture
+    is never refused for want of room - a man carried off the field senseless has no say in it - but
+    the places decide how many are still there when the month turns: the ones held out in the open
+    slip away over its nights. That caps the stock of trained men a war band can sit on, not how many
+    it takes in, which is why a level adds a single place.
     """
 
     BUILDING_NAME = "hall"
@@ -29,6 +36,7 @@ class Hall(Building):
     REVENUE_PER_ROUND = 0
     AVAILABLE_MERCENARIES = 0
     WARRIORS_FOR_FULL_REVENUE = 0
+    CELL_PLACES = 0
     # Zero is "this hall cannot feast", not "a feast that mends nothing"
     FEAST_RESTORED_SHARE = 0.0
     FEAST_PRICE_PER_HEAD = 15
@@ -45,6 +53,7 @@ class Hall(Building):
             BuildingEffect(label="Monthly income", value=f"{cls.REVENUE_PER_ROUND} silver"),
             BuildingEffect(label="Men needed for full income", value=str(cls.WARRIORS_FOR_FULL_REVENUE)),
             BuildingEffect(label="Mercenaries in the pub", value=str(cls.AVAILABLE_MERCENARIES)),
+            BuildingEffect(label="Prisoners the cells hold", value=str(cls.CELL_PLACES)),
             BuildingEffect(
                 label="A feast mends a cut ceiling by",
                 value=f"{round(cls.FEAST_RESTORED_SHARE * 100)}%" if cls.can_feast() else "No feasts",
@@ -87,6 +96,9 @@ class NoHall(Hall):
     REVENUE_PER_ROUND = 50
     AVAILABLE_MERCENARIES = 1
     WARRIORS_FOR_FULL_REVENUE = 0
+    # One, not none: level 0 is a baseline, and a single place keeps the one prisoner that matters
+    # most - a rival's captured leader - over the month without any building at all
+    CELL_PLACES = 1
 
     FEAST_RESTORED_SHARE = 0.0
 
@@ -97,6 +109,7 @@ class SmallHall(Hall):
     REVENUE_PER_ROUND = 300
     AVAILABLE_MERCENARIES = 1
     WARRIORS_FOR_FULL_REVENUE = 1
+    CELL_PLACES = 2
 
     FEAST_RESTORED_SHARE = 0.1
 
@@ -107,6 +120,7 @@ class MediumHall(Hall):
     REVENUE_PER_ROUND = 550
     AVAILABLE_MERCENARIES = 2
     WARRIORS_FOR_FULL_REVENUE = 2
+    CELL_PLACES = 3
 
     FEAST_RESTORED_SHARE = 0.2
 
@@ -117,6 +131,7 @@ class LargeHall(Hall):
     REVENUE_PER_ROUND = 750
     AVAILABLE_MERCENARIES = 3
     WARRIORS_FOR_FULL_REVENUE = 3
+    CELL_PLACES = 4
 
     FEAST_RESTORED_SHARE = 0.3
 
