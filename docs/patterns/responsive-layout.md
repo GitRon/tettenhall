@@ -49,19 +49,38 @@ Four rules follow from the default:
 - **No fixed width is ever unprefixed.** A `w-96` or a `min-w-*` without an `md:` in front of it is a
   horizontal scrollbar on a phone. Widths belong behind `md:`; the phone gets `w-full`.
 - **A grid starts at one column.** `grid grid-cols-1 md:grid-cols-3`, never `grid-cols-3` alone.
-- **A table gets a scroll container, not a narrower table.** `overflow-x-auto` on a wrapper is the
-  honest answer for a table with more than three columns — the table keeps its shape and the page body
-  stops scrolling sideways.
+- **A table has a portrait form**, and which one depends on its shape - see [tables](#tables).
 - **Type has a phone size too.** A display size is a width like any other: one word of 36px Cinzel caps
   is wider than a phone. The page title is set small in the base layer of `assets/css/tailwind.css` and
   grows at `md:`, and it may break inside a word - a heading that can hold a player-visible name
   cannot promise the name fits.
 
+## Tables
+
+Every table in the project is one of three shapes, and each shape has one answer on a phone.
+
+| Shape | Examples | On a phone |
+|---|---|---|
+| **A fact sheet**: label and value, or at most three short columns | a warrior's page, the attack form, current costs, the transactions ledger | The table as it is. It fits the screen, so there is nothing to change and no scroll box. |
+| **A list**: one row per thing, five to seven columns | rivals, savegames, skirmishes, training progress | `table-stack` on the `<table>`: each row becomes a record, each cell a line led by its column name. |
+| **A ledger**: a row per man, a dozen columns | the roster, the captives | `table-stack`, plus a grid on the row: the name across the top, short figures two to a line, gauges and gear one to a line. |
+
+`table-stack` lives in `assets/css/tailwind.css`. Below `md:` it hides the column heads (they are
+still read out) and prints each cell's `data-label` in front of it, so a cell is labelled by giving it
+the same word as its column head: `<td data-label="Culture">`. A cell that needs no lead - the name
+of the thing, its action - has no `data-label`. From `md:` up it does nothing.
+
+Its own rules sit under `:where()`, so a row or a cell styles itself with ordinary `max-md:` utilities
+on top of it - which is how the ledger lays its row out as a grid.
+
+A ledger is wider than a narrow desk too, so it keeps a scroll box there, with its `min-w-*` behind
+`md:`.
+
 ## When one column is not enough
 
-Some screens do not have a portrait form. A six-column ledger and the three-panel fight screen are the
-two in this project: stacked, the fight screen puts the battle report *between* the two warbands, so the
-panel read every round is the one scrolled past twice.
+Some screens do not have a portrait form. The three-panel fight screen is the one in this project:
+stacked, it puts the battle report *between* the two warbands, so the panel read every round is the
+one scrolled past twice.
 
 **That is a design decision, and a media query cannot make it.** The obligation in a migration or a new
 feature is "fits the viewport and works" — a scroll container, or a stack that is ugly but usable.

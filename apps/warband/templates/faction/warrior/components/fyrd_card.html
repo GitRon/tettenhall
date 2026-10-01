@@ -1,8 +1,5 @@
 <c-common.card id="fyrd-card" class="mb-5">
     {# The heading stands outside this element: it is the page's, and drafting a man swaps the box. #}
-    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
-    {# decides what a table should actually become at that width. #}
-    <div class="overflow-x-auto">
     <table>
         <tbody>
         <tr>
@@ -11,7 +8,6 @@
         </tr>
         </tbody>
     </table>
-    </div>
     {% if faction.fyrd_reserve %}
         <button hx-post="{% url 'warband:faction-draft-warrior-from-fyrd-view' faction.id %}"
                 hx-disabled-elt="this"

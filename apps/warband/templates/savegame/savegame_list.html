@@ -26,10 +26,8 @@
 
     <div>
         <div class="md:w-2/3">
-            {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
-            {# decides what a table should actually become at that width. #}
-            <div class="overflow-x-auto">
-            <table>
+            {# A record per savegame on a phone, a row on a desk - see docs/patterns/responsive-layout.md. #}
+            <table class="table-stack">
                 <thead>
                 <tr>
                     <th>Name</th>
@@ -48,14 +46,14 @@
                 {% for savegame in object_list %}
                     <tr>
                         <td>{{ savegame.name }}</td>
-                        <td>{{ savegame.player_faction.name }}</td>
-                        <td>{{ savegame.current_month }}</td>
+                        <td data-label="Player faction">{{ savegame.player_faction.name }}</td>
+                        <td data-label="Month">{{ savegame.current_month }}</td>
                         {# The one thing the row could not say: a finished game sat in the same shape #}
                         {# as a live one. "Load" stays on both - a finished savegame is still the only #}
                         {# route to its own history #}
-                        <td>{{ savegame.get_outcome_display }}</td>
-                        <td>{{ savegame.created_at|date:"d.m.Y H:i" }}</td>
-                        <td>{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
+                        <td data-label="Outcome">{{ savegame.get_outcome_display }}</td>
+                        <td data-label="Created at">{{ savegame.created_at|date:"d.m.Y H:i" }}</td>
+                        <td data-label="Last saved at">{{ savegame.lastmodified_at|date:"d.m.Y H:i" }}</td>
                         <td>
                             <button hx-post="{% url "warband:savegame-load-view" savegame.id %}"
                                     class="row-action">
@@ -70,7 +68,6 @@
                 {% endfor %}
                 </tbody>
             </table>
-            </div>
         </div>
     </div>
 {% endblock content %}
