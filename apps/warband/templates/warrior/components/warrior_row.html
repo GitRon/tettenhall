@@ -4,10 +4,14 @@
     tables instead, "faction/warrior/components/roster_table.html" and "captive_table.html", because
     those are the men he decides about and compares down a column.
 
-    What the row carries is what decides a month: level, health and morale, wage, the gear he stands in,
-    and whether he can fight. Everything else - culture, strength and dexterity, injuries, what a blade
-    rolls - is one click away on his own page, which the name leads to and which answers every relation
-    this row is rendered for.
+    What the row carries is what decides a month: level, renown, health and morale, wage, the gear he
+    stands in, and whether he can fight. Everything else - culture, strength and dexterity, injuries,
+    what a blade rolls - is one click away on his own page, which the name leads to and which answers
+    every relation this row is rendered for.
+
+    Renown is here because it decides who takes a leader's seat: on a rival's roster, who leads them once
+    their leader falls, and in a pub, where a man hired joins the player's own line of succession at the
+    place his renown gives him.
 
     What may be known is not this template's to decide: "knowledge" arrives from the list, and the gauge
     and the gear follow it - exact figures for his own men, a bucket for everybody else, and no gear at
@@ -27,6 +31,7 @@
     <div class="col-span-2 flex flex-col gap-y-1.5 md:col-span-1 md:col-start-2 md:row-start-2">
         <span class="flex flex-wrap gap-1.5 font-mono text-label uppercase tracking-label text-ink-muted">
             <span class="border border-rule px-1.5 py-0.5">Level <span class="text-ink">{{ warrior.level }}</span></span>
+            <span class="border border-rule px-1.5 py-0.5">Renown <span class="text-ink">{{ warrior.renown }}</span></span>
             <span class="border border-rule px-1.5 py-0.5">Health <span class="text-ink"><c-warrior.gauge :current="warrior.current_health" :maximum="warrior.max_health" :baseline="warrior.health_baseline" :knowledge="knowledge" /></span></span>
             <span class="border border-rule px-1.5 py-0.5">Morale <span class="text-ink"><c-warrior.gauge :current="warrior.current_morale" :maximum="warrior.max_morale" :peak="warrior.peak_max_morale" :baseline="warrior.morale_baseline" :knowledge="knowledge" /></span></span>
             <span class="border border-rule px-1.5 py-0.5" title="Monthly salary in silver">Wage <span class="text-ink">{{ warrior.monthly_salary }}</span></span>
