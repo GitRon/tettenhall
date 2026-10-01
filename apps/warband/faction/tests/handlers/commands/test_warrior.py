@@ -2,8 +2,6 @@ import pytest
 
 from apps.warband.faction.handlers.commands.warrior import (
     handle_add_warrior_to_pub,
-    handle_consider_fyrd_draft,
-    handle_consider_pub_hire,
     handle_draft_warrior_from_fyrd,
     handle_recruit_pub_mercenary,
     handle_restock_pub_mercenaries,
@@ -11,8 +9,6 @@ from apps.warband.faction.handlers.commands.warrior import (
 )
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
-    ConsiderFyrdDraft,
-    ConsiderPubHire,
     DraftWarriorFromFyrd,
     PayMonthlyWarriorSalaries,
     RecruitPubMercenary,
@@ -23,9 +19,6 @@ from apps.warband.faction.messages.events.faction import (
     MonthlyWarriorSalariesUnpaid,
 )
 from apps.warband.faction.messages.events.warrior import (
-    FyrdDraftApproved,
-    PubHiringConsidered,
-    PubMercenaryHireApproved,
     PubMercenarySlotOpened,
     TownMercenariesRestocked,
     WarriorRecruited,
@@ -214,176 +207,6 @@ def test_handle_add_warrior_to_pub_stamps_the_month_he_got_there():
 
     returning_veteran.refresh_from_db()
     assert returning_veteran.pub_arrival_month == 9
-
-
-@pytest.mark.django_db
-def test_handle_consider_fyrd_draft_approves_a_rival_that_can_afford_it():
-    rival_faction = FactionFactory(fyrd_reserve=2)
-    WarriorFactory(faction=rival_faction, monthly_salary=150)
-    TransactionFactory(faction=rival_faction, amount=1000)
-
-    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=rival_faction, month=3))
-
-    assert result == FyrdDraftApproved(faction=rival_faction, month=3)
-
-
-@pytest.mark.django_db
-def test_handle_consider_fyrd_draft_refuses_a_rival_that_cannot_afford_it():
-    """
-    A draft is free, so what it commits the faction to is the man's keep - which is why the purse has
-    to still cover the roster's wage bill once over rather than any purchase price.
-    """
-    rival_faction = FactionFactory(fyrd_reserve=2)
-    WarriorFactory(faction=rival_faction, monthly_salary=150)
-    TransactionFactory(faction=rival_faction, amount=100)
-
-    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=rival_faction, month=3))
-
-    assert result is None
-
-
-@pytest.mark.django_db
-def test_handle_consider_fyrd_draft_refuses_an_empty_fyrd():
-    rival_faction = FactionFactory(fyrd_reserve=0)
-    TransactionFactory(faction=rival_faction, amount=1000)
-
-    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=rival_faction, month=3))
-
-    assert result is None
-
-
-@pytest.mark.django_db
-def test_handle_consider_fyrd_draft_refuses_the_player():
-    """
-    The player's draft is a button on his fyrd card, and choosing when to press it is the point of
-    having one.
-    """
-    player_faction = FactionFactory(fyrd_reserve=2)
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
-    TransactionFactory(faction=player_faction, amount=1000)
-
-    result = handle_consider_fyrd_draft(context=ConsiderFyrdDraft(faction=player_faction, month=3))
-
-    assert result is None
-
-
-def _rival_with_pub(*, purse: int, salary_list: list[int], fyrd_reserve: int = 0) -> tuple[Faction, list[Warrior]]:
-    """
-    A rival with an empty roster, this much silver, and one mercenary on its shelf per salary.
-
-    A man who just arrived costs twice his wage - see [Warrior.hiring_price]. The fyrd is empty unless
-    asked for, because a rival with free men left in it hires nobody.
-    """
-    rival_faction = FactionFactory(fyrd_reserve=fyrd_reserve)
-    TransactionFactory(faction=rival_faction, amount=purse)
-    mercenary_list = [
-        WarriorFactory(
-            faction=None,
-            savegame=rival_faction.savegame,
-            culture=rival_faction.culture,
-            monthly_salary=salary,
-            is_pub_stock=True,
-        )
-        for salary in salary_list
-    ]
-    rival_faction.available_mercenaries.add(*mercenary_list)
-
-    return rival_faction, mercenary_list
-
-
-@pytest.mark.django_db
-def test_handle_consider_pub_hire_approves_a_man_a_rival_can_afford():
-    # 1000 less his price of 200 still covers his wage of 100
-    rival_faction, [mercenary] = _rival_with_pub(purse=1000, salary_list=[100])
-
-    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
-
-    assert result == [
-        PubMercenaryHireApproved(faction=rival_faction, warrior=mercenary, month=3),
-        PubHiringConsidered(faction=rival_faction, month=3),
-    ]
-
-
-@pytest.mark.django_db
-def test_handle_consider_pub_hire_passes_over_a_man_a_rival_cannot_afford():
-    """
-    250 pays his price of 200, but leaves 50 against the wage of 100 he would draw - so the purse would
-    not cover the wage bill once over, and the rival leaves him standing.
-    """
-    rival_faction, _ = _rival_with_pub(purse=250, salary_list=[100])
-
-    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
-
-    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
-
-
-@pytest.mark.django_db
-def test_handle_consider_pub_hire_takes_nobody_while_the_fyrd_has_men():
-    """
-    He is affordable, as in the approval above, but one free man still stands in the fyrd. The reserve
-    is the brake on a rival's growth, so the pub waits until it is empty.
-    """
-    rival_faction, _ = _rival_with_pub(purse=1000, salary_list=[100], fyrd_reserve=1)
-
-    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
-
-    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
-
-
-@pytest.mark.django_db
-def test_handle_consider_pub_hire_reads_the_fyrd_off_the_row():
-    """
-    The faction on the message still shows the empty fyrd it was loaded with, while the month's
-    replenishment has already put a man in it. The row is what counts.
-    """
-    rival_faction, _ = _rival_with_pub(purse=1000, salary_list=[100])
-    Faction.objects.filter(id=rival_faction.id).update(fyrd_reserve=1)
-
-    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
-
-    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
-
-
-@pytest.mark.django_db
-def test_handle_consider_pub_hire_buys_cheapest_first_out_of_a_purse_it_keeps_count_of():
-    """
-    The cheap man first: 500 less 200 leaves 300 against his wage of 100. What is left is then 300 with
-    a wage bill of 100, and the dearer man's 300 would leave nothing against 250 of wages. Re-reading
-    the ledger instead would still see 500 and take him too; taking the dearer man first would leave
-    the cheap one out.
-    """
-    rival_faction, [cheap_mercenary, _] = _rival_with_pub(purse=500, salary_list=[100, 150])
-
-    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
-
-    assert result == [
-        PubMercenaryHireApproved(faction=rival_faction, warrior=cheap_mercenary, month=3),
-        PubHiringConsidered(faction=rival_faction, month=3),
-    ]
-
-
-@pytest.mark.django_db
-def test_handle_consider_pub_hire_refuses_the_player():
-    """
-    Hiring is a button in the player's pub - but his restock hangs off this too, so the closing event
-    still comes out.
-    """
-    player_faction = _player_faction()
-    TransactionFactory(faction=player_faction, amount=1000)
-    player_faction.available_mercenaries.add(
-        WarriorFactory(
-            faction=None,
-            savegame=player_faction.savegame,
-            culture=player_faction.culture,
-            monthly_salary=100,
-            is_pub_stock=True,
-        )
-    )
-
-    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=player_faction, month=3))
-
-    assert result == [PubHiringConsidered(faction=player_faction, month=3)]
 
 
 @pytest.mark.django_db

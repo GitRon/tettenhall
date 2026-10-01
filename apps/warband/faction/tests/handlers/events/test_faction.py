@@ -1,9 +1,9 @@
 from apps.warband.faction.handlers.events.faction import (
-    handle_consider_fyrd_draft_for_new_month,
     handle_create_player_faction_for_new_savegame,
     handle_earn_money_from_buildings_for_new_month,
     handle_earn_monthly_faction_income_for_new_month,
     handle_pay_monthly_warrior_salaries_for_new_month,
+    handle_plan_faction_month_for_new_month,
     handle_prepare_faction_warriors_for_new_month,
     handle_replenish_fyrd_reserve_for_new_month,
 )
@@ -11,10 +11,11 @@ from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
+    PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
 )
-from apps.warband.faction.messages.commands.warrior import ConsiderFyrdDraft, PayMonthlyWarriorSalaries
+from apps.warband.faction.messages.commands.warrior import PayMonthlyWarriorSalaries
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
 from apps.warband.savegame.messages.events.savegame import NewSavegameCreated
@@ -84,12 +85,12 @@ def test_handle_earn_monthly_faction_income_for_new_month_maps_to_command():
     assert result == EarnMonthlyFactionIncome(faction=faction, month=7)
 
 
-def test_handle_consider_fyrd_draft_for_new_month_maps_to_command():
+def test_handle_plan_faction_month_for_new_month_maps_to_command():
     faction = FactionFactory.build()
 
-    result = handle_consider_fyrd_draft_for_new_month(context=FactionMonthPrepared(faction=faction, current_month=7))
+    result = handle_plan_faction_month_for_new_month(context=FactionMonthPrepared(faction=faction, current_month=7))
 
-    assert result == ConsiderFyrdDraft(faction=faction, month=7)
+    assert result == PlanFactionMonth(faction=faction, month=7)
 
 
 def test_handle_prepare_faction_warriors_for_new_month_maps_to_command():

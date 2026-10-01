@@ -4,7 +4,6 @@ from apps.warband.faction.handlers.events.warrior import (
     handle_add_dismissed_warrior_to_pub,
     handle_add_new_warrior_to_faction_pub,
     handle_add_warrior_who_walked_out_to_pub,
-    handle_consider_pub_hire_for_new_month,
     handle_draft_warrior_for_approved_fyrd_draft,
     handle_hand_out_gear_for_recruited_warrior,
     handle_recruit_mercenary_for_approved_pub_hire,
@@ -14,7 +13,6 @@ from apps.warband.faction.handlers.events.warrior import (
 from apps.warband.faction.messages.commands.item import HandOutFactionGear
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
-    ConsiderPubHire,
     DraftWarriorFromFyrd,
     RecruitPubMercenary,
     RestockTownMercenaries,
@@ -28,7 +26,6 @@ from apps.warband.faction.messages.events.warrior import (
 )
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.month.messages.events.month import FactionMonthPrepared
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.messages.events.warrior import (
@@ -124,7 +121,7 @@ def test_handle_add_warrior_who_walked_out_to_pub_ignores_a_rival():
 
 def test_handle_draft_warrior_for_approved_fyrd_draft_maps_to_command():
     """
-    Pure mapping: handle_consider_fyrd_draft weighed the whole decision, which is what lets a rival's
+    Pure mapping: handle_plan_faction_month weighed the whole decision, which is what lets a rival's
     monthly draft run through the same command the player's fyrd card dispatches.
     """
     faction = FactionFactory.build()
@@ -144,17 +141,9 @@ def test_handle_restock_mercenaries_in_pub_for_new_faction_maps_to_command():
     assert result == RestockTownMercenaries(faction=faction, month=1)
 
 
-def test_handle_consider_pub_hire_for_new_month_maps_to_command():
-    faction = FactionFactory.build()
-
-    result = handle_consider_pub_hire_for_new_month(context=FactionMonthPrepared(faction=faction, current_month=7))
-
-    assert result == ConsiderPubHire(faction=faction, month=7)
-
-
 def test_handle_recruit_mercenary_for_approved_pub_hire_maps_to_command():
     """
-    Pure mapping: handle_consider_pub_hire weighed the whole decision, which is what lets a rival hire
+    Pure mapping: handle_plan_faction_month weighed the whole decision, which is what lets a rival hire
     through the same command the player's pub dispatches.
     """
     faction = FactionFactory.build()

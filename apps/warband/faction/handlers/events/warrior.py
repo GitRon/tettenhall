@@ -5,7 +5,6 @@ from apps.warband.faction.messages.commands.faction import SetNewLeaderWarrior
 from apps.warband.faction.messages.commands.item import HandOutFactionGear
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
-    ConsiderPubHire,
     DraftWarriorFromFyrd,
     RecruitPubMercenary,
     RestockTownMercenaries,
@@ -17,7 +16,6 @@ from apps.warband.faction.messages.events.warrior import (
     PubMercenaryHireApproved,
     WarriorRecruited,
 )
-from apps.warband.month.messages.events.month import FactionMonthPrepared
 from apps.warband.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
     WarriorCreated,
@@ -100,15 +98,9 @@ def handle_restock_mercenaries_in_pub_for_new_faction(*, context: NewFactionCrea
     return RestockTownMercenaries(faction=context.faction, month=context.current_month)
 
 
-@message_registry.register_event(event=FactionMonthPrepared)
-def handle_consider_pub_hire_for_new_month(*, context: FactionMonthPrepared) -> Command:
-    # Every faction, because every faction's pub restocks behind this - see [handle_consider_pub_hire]
-    return ConsiderPubHire(faction=context.faction, month=context.current_month)
-
-
 @message_registry.register_event(event=PubMercenaryHireApproved)
 def handle_recruit_mercenary_for_approved_pub_hire(*, context: PubMercenaryHireApproved) -> Command:
-    # Pure mapping, because handle_consider_pub_hire already weighed the whole decision. That is what
+    # Pure mapping, because handle_plan_faction_month already weighed the whole decision. That is what
     # lets a rival hire through the same command the player's pub dispatches.
     return RecruitPubMercenary(warrior=context.warrior, faction=context.faction, month=context.month)
 
@@ -120,7 +112,7 @@ def handle_restock_mercenaries_in_pub_once_hiring_is_considered(*, context: PubH
 
 @message_registry.register_event(event=FyrdDraftApproved)
 def handle_draft_warrior_for_approved_fyrd_draft(*, context: FyrdDraftApproved) -> Command:
-    # Pure mapping, because handle_consider_fyrd_draft already weighed the whole decision. That is
+    # Pure mapping, because handle_plan_faction_month already weighed the whole decision. That is
     # what lets a rival's monthly draft run through the same command the player's fyrd card
     # dispatches instead of a second flow beside it.
     return DraftWarriorFromFyrd(faction=context.faction, month=context.month)

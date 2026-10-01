@@ -108,7 +108,7 @@ def handle_hand_out_faction_gear(*, context: HandOutFactionGear) -> list[Event]:
     """
     Which of a rival's items go on which of its men - see [plan_gear_handout] for who gets what.
 
-    Shaped like [handle_consider_pub_hire]: this decides and writes nothing, and each equip it settles
+    Shaped like [handle_plan_faction_month]: this decides and writes nothing, and each equip it settles
     on goes out as an approval that becomes the same "EquipItem" the player's own handout dispatches.
     The player is refused, because choosing who carries what is his to do.
 

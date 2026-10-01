@@ -41,32 +41,6 @@ class DraftWarriorFromFyrd(Command):
 
 
 @dataclass(kw_only=True)
-class ConsiderFyrdDraft(Command):
-    """
-    Asks whether this faction should call somebody up this month.
-
-    A command because the answer is a query - who it is, what is in the reserve and what is in the
-    purse - and the event handler on the monthly event may read none of those.
-    """
-
-    faction: Faction
-    month: int
-
-
-@dataclass(kw_only=True)
-class ConsiderPubHire(Command):
-    """
-    Asks which of the men standing in this faction's pub it takes on this month.
-
-    A command because the answer is a query - who it is, what is on the shelf and what is in the
-    purse - and the event handler on the monthly event may read none of those.
-    """
-
-    faction: Faction
-    month: int
-
-
-@dataclass(kw_only=True)
 class RecruitPubMercenary(Command):
     """
     Take a mercenary standing in a faction's pub onto its roster, for his price.
