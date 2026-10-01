@@ -77,7 +77,7 @@
 {# offering the same accidental way out - and a warrior's page belongs to whichever section his #}
 {# faction does, which the url does not say. #}
 {% block navigation %}
-    {% include 'navigation/components/section_nav.html' %}
+    <c-navigation.section-nav :sections="nav_sections" :current="current_nav_section" />
     {% include 'navigation/components/page_nav.html' %}
 {% endblock navigation %}
 

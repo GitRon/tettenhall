@@ -60,6 +60,9 @@ def _payroll(*, budget: int, unpaid_months: int = 0) -> Payroll:
     )
 
 
+NAV_SECTIONS = [{"key": "month", "label": "Month", "icon": "fa-calendar", "url": "/account/dashboard/"}]
+
+
 RENDER_ROWS = {
     "common.svg-icon": [
         ('<c-common.svg-icon icon_name="seax" />', {}),
@@ -85,6 +88,13 @@ RENDER_ROWS = {
         (
             '<c-finance.wage-bill-warning :payroll="payroll" show_finance_link />',
             {"payroll": _payroll(budget=0, unpaid_months=Warrior.UNPAID_MONTHS_UNTIL_WALKOUT)},
+        ),
+    ],
+    "navigation.section-nav": [
+        ('<c-navigation.section-nav :sections="sections" />', {"sections": NAV_SECTIONS}),
+        (
+            '<c-navigation.section-nav :sections="sections" :current="current" />',
+            {"sections": NAV_SECTIONS, "current": "month"},
         ),
     ],
     "warrior.gauge": [
