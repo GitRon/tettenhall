@@ -6,6 +6,7 @@ from queuebie.runner import handle_message
 from apps.common.domain.dice import DiceNotation, DiceRoll
 from apps.warband.finance.models.transaction import Transaction
 from apps.warband.item.models.item_type import ItemType
+from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
@@ -250,3 +251,36 @@ def test_a_man_the_first_blow_puts_down_does_not_strike_back(queuebie_registry):
     handle_message(_first_blow(skirmish=skirmish, attacker=attacker, defender=defender, damage=8))
 
     assert SkirmishBlow.objects.filter(attacker=defender).count() == 0
+
+
+@pytest.mark.django_db
+def test_a_rival_whose_whole_band_is_taken_comes_out_of_it_led_by_a_levy(queuebie_registry):
+    """
+    The chain from a lost defence to a rival still in the war, run for real: the win captures every man
+    lying on the field, each capture asks the defeat handler for a seat, the last one finds the roster
+    empty, the fyrd raises a levy, and the hand-out that hangs off his recruitment arms him out of the
+    stores. Four hops apart in the registry, and the capture order decides which of them sees whom.
+
+    The rival's leader and his one man are both down, so both are taken, and its fyrd has one man left.
+    """
+    skirmish = SkirmishFactory()
+    player_faction = skirmish.attacking_faction
+    player_faction.savegame.player_faction = player_faction
+    player_faction.savegame.save()
+    rival = skirmish.defending_faction
+    rival.fyrd_reserve = 1
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    comrade = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=player_faction))
+    skirmish.defending_warriors.add(rival.leader, comrade)
+    mail = ItemFactory(
+        savegame=rival.savegame,
+        owner=rival,
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR, base_value="6d6"),
+    )
+
+    handle_message(WinSkirmish(skirmish=skirmish, victorious_faction=player_faction, month=1))
+
+    rival.refresh_from_db()
+    assert (rival.is_defeated, rival.fyrd_reserve, rival.leader.faction, rival.leader.armor) == (False, 0, rival, mail)

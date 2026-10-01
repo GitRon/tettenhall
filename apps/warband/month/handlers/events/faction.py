@@ -3,6 +3,7 @@ from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
     FactionWasDefeated,
     MonthlyBuildingMoneyEarned,
@@ -110,6 +111,37 @@ def handle_log_leader_succession(*, context: FactionLeaderSucceeded) -> Command:
         title=title,
         body=body,
         kind=PlayerMonthLog.KindChoices.KIND_LEADER_SUCCEEDED,
+        month=context.month,
+        faction=context.player_faction,
+    )
+
+
+@message_registry.register_event(event=FactionLeaderRaisedFromFyrd)
+def handle_log_leader_raised_from_fyrd(*, context: FactionLeaderRaisedFromFyrd) -> Command:
+    """
+    Says who fell, and that the faction's fyrd has raised a levy in his place because nobody was left.
+
+    Its own line rather than the succession's, because the player has to read it differently: the
+    faction he beat ran out of men and was not knocked out, and the man he has to beat next is a levy
+    out of the fields rather than a veteran of its war band.
+    """
+    fate = "fell in the fighting" if context.leader_was_killed else "was taken prisoner"
+
+    # The instances rather than their ids, for the reason handle_log_rival_defeat gives
+    if context.faction == context.player_faction:
+        title = f"{context.fallen_leader} {fate}. The fyrd has raised {context.successor} to lead the war band."
+        body = "Nobody was left in the war band to follow, so the men of the land sent one of their own."
+    else:
+        title = f"{context.faction} has a new leader."
+        body = (
+            f"{context.fallen_leader} led them, and he {fate}. Nobody was left in their war band, so their "
+            f"fyrd has raised {context.successor} to lead them."
+        )
+
+    return CreatePlayerMonthLog(
+        title=title,
+        body=body,
+        kind=PlayerMonthLog.KindChoices.KIND_LEADER_RAISED_FROM_FYRD,
         month=context.month,
         faction=context.player_faction,
     )

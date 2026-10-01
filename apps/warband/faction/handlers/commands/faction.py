@@ -29,6 +29,7 @@ from apps.warband.faction.messages.commands.faction import (
 )
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
+    FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
     FactionMonthPlanned,
     FactionWasDefeated,
@@ -44,6 +45,7 @@ from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubMercenaryHireApproved,
     WarriorMonthPrepared,
+    WarriorRecruited,
 )
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
@@ -313,7 +315,7 @@ def handle_prepare_faction_warriors_for_month(*, context: PrepareFactionWarriors
 
 
 @message_registry.register_command(command=DefeatFactionOfLostLeader)
-def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) -> Event | None:
+def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) -> list[Event] | Event | None:
     """
     Seats a successor in the place of the leader this warrior was, or knocks his faction out when there
     is nobody to seat.
@@ -323,8 +325,15 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
     relation is the only remaining record of who led whom.
 
     The same rule for the player and his rivals: the man with the most renown on the roster leads
-    from now on, and only a faction with nobody left to lead is out of the game. An occupation is
-    the exception the command carries - the town is taken as well, and nobody is left to rally.
+    from now on. With nobody left on the roster, the fyrd raises one of its men to lead - a levy rolled
+    the way a draft rolls him, wage and all, taken out of the reserve - and only a faction whose roster
+    and reserve are both empty is out of the game. An occupation is the exception the command carries -
+    the town is taken as well, and nobody is left to rally.
+
+    The levy is raised mid-fight when the leader falls in one, but he is not one of its assigned
+    fighters: he takes no part in it, and is not taken at its end. Once it is over, he is the man
+    holding the town. "WarriorRecruited" comes with him so the hand-out arms him out of the stores, as
+    it arms every levy the moment he joins.
 
     The player's faction, the month and the fallen man are read here and put on the event, because
     the handlers announcing it run under strict mode's database blocker and could not.
@@ -359,6 +368,23 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
             leader_was_killed=leader_was_killed,
             month=savegame.current_month,
         )
+
+    if context.allow_succession and Faction.objects.draw_from_fyrd_reserve(faction=faction):
+        levy = FyrdWarriorGenerator(culture=faction.culture, faction=faction, savegame_id=faction.savegame_id).process()
+        faction.leader = levy
+        faction.save(update_fields=("leader",))
+
+        return [
+            FactionLeaderRaisedFromFyrd(
+                faction=faction,
+                player_faction=savegame.player_faction,
+                fallen_leader=context.warrior,
+                successor=levy,
+                leader_was_killed=leader_was_killed,
+                month=savegame.current_month,
+            ),
+            WarriorRecruited(faction=faction, warrior=levy, recruitment_price=0, month=savegame.current_month),
+        ]
 
     faction.is_defeated = True
     faction.save(update_fields=("is_defeated",))

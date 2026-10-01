@@ -77,7 +77,10 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
 - fights won and lost, and marches held back by the policy or by the purse;
 - how many men were drafted, hired and taken in from the cells, and how many towns were occupied;
 - how many items the player bought, and how many equips the hand-out made;
-- successions on either side, and the months rivals were knocked out;
+- successions on either side, and apart from them the leaders the fyrd raised when nobody was left on the
+  roster;
+- the months rivals were knocked out, and for each of them how many months it lasted after its first
+  leader fell;
 - what was built, as `[month, building, level]`;
 - how many items the rivals bought, read off their ledgers;
 - a `timeline` with one row per month: the player's living men, his silver, and each rival's living men

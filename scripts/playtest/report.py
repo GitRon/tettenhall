@@ -42,8 +42,13 @@ class GameReport:
     captives_recruited: int = 0
     player_successions: int = 0
     rival_successions: int = 0
+    # Seats the fyrd filled because nobody was left on the roster - counted apart from the successions
+    player_leaders_raised: int = 0
+    rival_leaders_raised: int = 0
     rival_items_bought: int = 0
     rival_defeat_months: list[int] = field(default_factory=list)
+    # For each rival knocked out, how many months it lasted after its first leader fell
+    rival_months_after_first_fall: list[int] = field(default_factory=list)
     # (month, building, new level)
     built: list[tuple[int, str, int]] = field(default_factory=list)
     timeline: list[MonthRecord] = field(default_factory=list)

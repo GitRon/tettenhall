@@ -76,6 +76,9 @@ class PlayerTurn:
         self.rng = rng
         self.report = report
         self.max_rounds = max_rounds
+        # Who was on the roster as the band set out - the steps before the march add men to it, so a
+        # successor raised by the fight is told apart against this rather than against last month's roster
+        self.roster_ids_at_march: frozenset[int] = frozenset()
 
     def play(self) -> str | None:
         """Plays the month and says why the game cannot go on, if it cannot."""
@@ -85,6 +88,9 @@ class PlayerTurn:
         self.buy_from_the_shop()
         self.hand_out_gear()
         self.build()
+        self.roster_ids_at_march = frozenset(
+            Warrior.objects.filter_faction(faction_id=self.faction.id).values_list("id", flat=True)
+        )
         stop_reason = self.march()
         if stop_reason is not None:
             return stop_reason
