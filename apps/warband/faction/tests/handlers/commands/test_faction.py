@@ -811,6 +811,21 @@ def test_handle_plan_faction_month_drafts_for_a_rival_whose_purse_covers_its_wag
 
 
 @pytest.mark.django_db
+def test_handle_plan_faction_month_drafts_nobody_for_a_rival_whose_roster_outweighs_its_purse():
+    """
+    The wage bill is the roster's, read off the same payroll the salary run bills from: 100 in the
+    purse against a man drawing 150 leaves no keep for another.
+    """
+    rival_faction = FactionFactory(fyrd_reserve=2)
+    WarriorFactory(faction=rival_faction, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=100)
+
+    result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
+
+    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
+
+
+@pytest.mark.django_db
 def test_handle_plan_faction_month_hires_for_a_rival_out_of_its_own_pub():
     """
     The decision comes back keyed by id, and the approval carries the man off the shelf rather than a
