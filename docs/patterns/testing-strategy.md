@@ -27,6 +27,7 @@ Three failure classes, three tools:
 | Flow | ~5–10% | Only where ordering or rollback matters. Doubles as the test for the action views |
 | View (read-only) | ~5% | One per view: status code, context, savegame scoping |
 | Registry | 8 rules | Discovery, dead commands, one handler per command, terminal events, attribute compatibility, handler placement, hop direction, no querysets on messages |
+| Component | per component | Contract and render over every component, plus one output test per behaviour - see [Components](#components) |
 
 ## Handler unit tests (the default)
 
@@ -72,7 +73,8 @@ and assembling context. Keep the tests equally thin — **one test per view**, v
   in a second savegame and assert it is *not* reachable. See [savegame scoping](savegame-scoping.md).
 - The UI is htmx-driven. Where a view sets `HX-Trigger`, assert the header is present — behaviour rides on
   it. Don't assert on the exact JSON payload.
-- **Never assert on rendered HTML**, with one exception. Status code, context and headers only —
+- **Never assert on rendered HTML**, with one exception here and a separate one for
+  [components](#components), which are not views. Status code, context and headers only —
   template assertions break on every markup change and catch nothing. The exception is a defect that
   exists *only* in the rendered output, which in practice means escaping: a value interpolated into a
   sink that then mis-parses it. Status and context are identical with the bug present and absent, so
@@ -80,6 +82,32 @@ and assembling context. Keep the tests equally thin — **one test per view**, v
   escaping, not the markup — the dangerous form is absent and the text still arrived. Name the defect
   in the docstring and say the rule is being set aside on purpose. This is not licence to assert that a
   page contains a heading.
+
+## Components
+
+A view's contract is its context, so its markup is incidental. A [template component](components.md) is
+the other way round: what it renders *is* its contract. Four ways a component breaks, four tools:
+
+| Failure | Example | Tool |
+|---|---|---|
+| **Wiring**: a call site names a component or parameter that does not exist | `<c-warrior.guage>`, `:curent=` | `test_component_contracts.py`, over every call site |
+| **Render**: the component reads a variable that is not there | a parameter renamed in the component but not at its callers | `test_component_render.py`, with an unresolved variable raising |
+| **Logic**: a calculation gives the wrong result | whether a ceiling sits below the peak | A unit test on the filter or property - never in the template |
+| **Output**: it renders, but says or does the wrong thing | a slot dropped, a wrong `hx-post`, an icon read out twice | An output test on the parsed render |
+
+**Output tests are the scoped exception.** One may render a component on its own and read its output,
+parsed with `apps/common/tests/html.py` - never string-matched. It may assert on:
+
+- **visible text**, including slot content arriving where the caller put it,
+- **behaviour attributes**: `href`, `hx-*`, `aria-*`, `disabled`, form `name` and `value`,
+- **which branch rendered**, e.g. the fuzzed word rather than the figures.
+
+Not on CSS classes, element structure or order, whitespace, or a snapshot. **If a pure styling pass can
+break the test, the test is wrong.** One output test per behaviour, not per component: one that only
+places a value in a styled box needs nothing beyond the render test.
+
+An output test lives at the component's mirror path:
+`apps/warband/templates/cotton/warrior/gauge.html` → `apps/warband/tests/templates/cotton/warrior/test_gauge.py`.
 
 ## Don't test
 

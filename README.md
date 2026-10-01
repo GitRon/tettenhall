@@ -42,6 +42,8 @@ inferring the conventions from nearby code.
   desk, and what to do with a screen that has no portrait form
 - [Visual identity](docs/patterns/visual-identity.md) — the eight colours, the three faces, what `blood`
   and `brass` are reserved for, and why an icon is a mask
+- [Template components](docs/patterns/components.md) — a reused template is a cotton component: where it
+  lives, how it declares its parameters, slots, and what keeps every call site honest
 - [Portraits](docs/patterns/portraits.md) — how a man's face is drawn, stacked and coloured, and how a new
   piece is placed
 

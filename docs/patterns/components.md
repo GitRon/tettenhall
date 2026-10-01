@@ -1,0 +1,92 @@
+# Template components
+
+**A template that is reused across pages is a component, not an include.** Components are
+[django-cotton](https://github.com/wrabit/django-cotton): an HTML-like tag at the call site, a
+template with its parameters declared at the top, and slots for markup the caller wraps.
+
+```html
+<c-common.svg-icon :icon_name="item.type.svg_image_name" size="xl" decorative />
+<c-common.box-header>{{ faction.name }}</c-common.box-header>
+<c-warrior.gauge :current="warrior.current_morale" :maximum="warrior.max_morale"
+                 :peak="warrior.peak_max_morale" :baseline="warrior.morale_baseline" :knowledge="knowledge" />
+```
+
+An include has no contract: what it expects is only visible by reading it, and a misspelt parameter
+renders as nothing. A component declares its parameters, and the tests below check every call site
+against the declaration.
+
+## Where a component lives
+
+`<app>/templates/cotton/<topic>/<name>.html`, at the app root like every other template - see
+[where code goes](app-layout.md). The tag is the path below `cotton/`: folders become dots and
+underscores become hyphens, so `apps/warband/templates/cotton/warrior/gauge.html` is `<c-warrior.gauge>`.
+
+**Always one topic folder.** Both apps share the one `cotton/` namespace, and the template loader takes
+the first app that has the file, so a second `cotton/svg_icon.html` in another app is shadowed without a
+word. The folder keeps the names apart, and the contract test fails on a name shipped twice.
+
+| Component | Lives in | For |
+|---|---|---|
+| `<c-common.svg-icon>` | `apps.common` | A drawing from the hand-drawn icon set - see [visual identity](visual-identity.md#the-icons) |
+| `<c-common.box-header>` | `apps.common` | A panel's heading, as the slot |
+| `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
+
+## Parameters
+
+Declared in `<c-vars>` on the component's first line:
+
+```html
+<c-vars icon_name size="" decorative=False />
+```
+
+- **A name without a value is required.** Every call site has to pass it.
+- **A name with a value is optional**, and the value is its default.
+- **Every parameter is declared**, including the optional ones. A component sees its caller's context,
+  the same as an include (see [context](#context)), so an undeclared name would quietly pick up whatever
+  the caller has under it. A declared default shadows that.
+
+At the call site, `:name="expression"` passes a value from the context, and `name="text"` passes the text.
+A bare `name` passes `True`, which is how a flag reads: `<c-common.svg-icon icon_name="silver" decorative />`.
+
+## Slots
+
+Markup between the tags arrives as `{{ slot }}`. A component that wraps the caller's content - a box, a
+card - takes it through the slot rather than through a parameter carrying markup. Named slots
+(`<c-slot name="footer">`) are for a component with more than one place to fill.
+
+## No logic in a component
+
+A component places values; it does not compute them. A comparison, a threshold, a percentage or a choice
+of icon goes into a template filter, a model property or a function next to the topic, with an ordinary
+unit test there. `<c-warrior.gauge>` asks `maximum|is_below_peak:peak` rather than comparing in the
+template.
+
+## Context
+
+Components run without context isolation. `COTTON_ENABLE_CONTEXT_ISOLATION` builds a fresh
+`RequestContext` per render, which re-runs every context processor - the game's five, which read the
+savegame, the balance and the roster, included - for every icon in every table row. Declaring every parameter is what makes sharing the context safe.
+
+## Configuration
+
+`apps/config/settings.py` installs `django_cotton.apps.SimpleAppConfig` and writes the loaders and the
+builtin out explicitly. The default app config rewrites `TEMPLATES` in its `ready()`, so the settings
+file would not say what runs. Both configs patch Django's template lexer so a template tag inside a
+component attribute survives; that is private Django API, and the render test below is what notices a
+Django upgrade breaking it.
+
+## Tests
+
+| Test | Holds |
+|---|---|
+| `apps/warband/tests/architecture/test_component_contracts.py` | Every tag names a component, every attribute passed is declared, every required one is passed, no name is shipped by two apps |
+| `apps/warband/tests/architecture/test_component_render.py` | Every component renders with its required parameters, with all of them, and once per data branch, with an unresolved variable raising |
+| Output tests next to the component's mirror path | What a component says and does - see [testing strategy](testing-strategy.md#components) |
+
+A new component gets a row in the render test's table - the test fails until it has one - and an output
+test per behaviour it has.
+
+## See also
+
+- [Testing strategy](testing-strategy.md#components) — what a component test may assert on
+- [Architecture tests](architecture-tests.md)
