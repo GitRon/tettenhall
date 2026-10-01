@@ -9,10 +9,9 @@ from apps.warband.faction.messages.commands.warrior import (
     RecruitPubMercenary,
     RestockTownMercenaries,
 )
-from apps.warband.faction.messages.events.faction import NewFactionCreated
+from apps.warband.faction.messages.events.faction import FactionMonthPlanned, NewFactionCreated
 from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
-    PubHiringConsidered,
     PubMercenaryHireApproved,
     WarriorRecruited,
 )
@@ -105,8 +104,8 @@ def handle_recruit_mercenary_for_approved_pub_hire(*, context: PubMercenaryHireA
     return RecruitPubMercenary(warrior=context.warrior, faction=context.faction, month=context.month)
 
 
-@message_registry.register_event(event=PubHiringConsidered)
-def handle_restock_mercenaries_in_pub_once_hiring_is_considered(*, context: PubHiringConsidered) -> Command:
+@message_registry.register_event(event=FactionMonthPlanned)
+def handle_restock_mercenaries_in_pub_once_month_is_planned(*, context: FactionMonthPlanned) -> Command:
     return RestockTownMercenaries(faction=context.faction, month=context.month)
 
 

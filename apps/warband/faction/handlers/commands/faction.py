@@ -8,7 +8,14 @@ from apps.warband.calendar.months import get_calendar_month
 from apps.warband.faction.domain.fyrd_reserve import FyrdReserve
 from apps.warband.faction.domain.occupation_spoils import OccupationSpoils
 from apps.warband.faction.domain.rival_income import RivalIncome
-from apps.warband.faction.domain.rival_policy import DraftFromFyrd, PubOffer, RivalMonthSnapshot, RivalPolicy
+from apps.warband.faction.domain.rival_policy import (
+    BuyFromShop,
+    DraftFromFyrd,
+    PubOffer,
+    RivalMonthSnapshot,
+    RivalPolicy,
+    ShopOffer,
+)
 from apps.warband.faction.messages.commands.faction import (
     ChangeFyrdReserve,
     CreateFactionsForNewSavegame,
@@ -24,6 +31,7 @@ from apps.warband.faction.messages.commands.faction import (
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionLeaderSucceeded,
+    FactionMonthPlanned,
     FactionWasDefeated,
     FactionWasOccupied,
     FyrdReserveChanged,
@@ -32,9 +40,9 @@ from apps.warband.faction.messages.events.faction import (
     NewFactionCreated,
     NewLeaderWarriorSet,
 )
+from apps.warband.faction.messages.events.item import ShopItemPurchaseApproved
 from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
-    PubHiringConsidered,
     PubMercenaryHireApproved,
     WarriorMonthPrepared,
 )
@@ -42,12 +50,14 @@ from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.faker import faker_for_locale
 from apps.warband.finance.models import Transaction
+from apps.warband.item.services.handout import SLOT_NAMES, get_handout_roster
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.payroll import Payroll
 from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL
 from apps.warband.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
 from apps.warband.town.models import Town
+from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
 # How many rivals a new savegame deals the player
 RIVAL_FACTIONS_MIN = 3
@@ -187,15 +197,17 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
     """
     Ask [RivalPolicy] what a rival does with its month, and announce each decision it takes.
 
-    The player is asked nothing: his draft is a button on the fyrd card and his hiring one in his pub,
-    and choosing when to press them is the point of having them. "PubHiringConsidered" still comes out
-    for him, because his restock hangs off it like every faction's.
+    The player is asked nothing: his draft is a button on the fyrd card, his hiring one in his pub and
+    his buying one in his shop, and choosing when to press them is the point of having them.
+    "FactionMonthPlanned" still comes out for him, because his restocks hang off it like every
+    faction's.
 
     Every decision becomes the event the player's own button leads to - "FyrdDraftApproved",
-    "PubMercenaryHireApproved" - so a rival drafts and hires through the same commands rather than a
-    second flow beside them. "PubHiringConsidered" comes last on purpose: the restock hangs off it and
-    clears the shelf with a row delete, and a man approved here is only taken off it once his
-    "RecruitPubMercenary" drains. The approvals are queued first, so their commands drain first.
+    "PubMercenaryHireApproved", "ShopItemPurchaseApproved" - so a rival drafts, hires and buys through
+    the same commands rather than a second flow beside them. "FactionMonthPlanned" comes last on
+    purpose: both restocks hang off it and clear their stock with a row delete, and what is approved
+    here only changes hands once its "RecruitPubMercenary" or "BuyItem" drains. The approvals are
+    queued first, so their commands drain first.
 
     The snapshot is read once, before anything is decided. The reserve comes off the row rather than
     the instance on the message, so it is the reserve as the month's replenishment left it, whoever
@@ -203,31 +215,47 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
     monthly handlers run in: a salary run and an income both return an *event*, and the ledger row it
     turns into is queued behind the whole batch.
     """
-    considered = PubHiringConsidered(faction=context.faction, month=context.month)
+    planned = FactionMonthPlanned(faction=context.faction, month=context.month)
 
     if context.faction.savegame.player_faction_id == context.faction.id:
-        return [considered]
+        return [planned]
 
     # Priced once per man, and before anything moves him - the price is partly made of his wait
     mercenary_by_id = {mercenary.id: mercenary for mercenary in context.faction.available_mercenaries.all()}
+    item_by_id = {item.id: item for item in context.faction.available_items.select_related("type")}
+    # The men the hand-out may arm, each with what his slots are worth - what a purchase is weighed against
+    handout_roster = get_handout_roster(faction=context.faction)
     snapshot = RivalMonthSnapshot(
         fyrd_reserve=Faction.objects.filter(id=context.faction.id).values_list("fyrd_reserve", flat=True).get(),
         purse=Transaction.objects.current_balance(faction_id=context.faction.id),
         # budget=0 on purpose: "total_amount" is the whole roster's wages either way, and handing it the
         # balance would read as though the comparison were self-satisfying
         wage_bill=Payroll.for_faction(faction=context.faction, budget=0).total_amount,
+        band_size=context.faction.get_all_living_warriors().count(),
+        draft_wage=FyrdWarriorGenerator.get_expected_monthly_salary(),
         pub_offer_list=[
             PubOffer(
                 warrior_id=mercenary.id, hiring_price=mercenary.hiring_price, monthly_salary=mercenary.monthly_salary
             )
             for mercenary in mercenary_by_id.values()
         ],
+        shop_offer_list=[
+            ShopOffer(item_id=item.id, price=item.price, slot=item.gear_slot, value=item.expectancy_value)
+            for item in item_by_id.values()
+        ],
+        held_gear_values={slot: [warrior.held_gear_values[slot] for warrior in handout_roster] for slot in SLOT_NAMES},
     )
 
     events: list[Event] = []
     for decision in RivalPolicy.decide(snapshot=snapshot):
         if isinstance(decision, DraftFromFyrd):
             events.append(FyrdDraftApproved(faction=context.faction, month=context.month))
+        elif isinstance(decision, BuyFromShop):
+            events.append(
+                ShopItemPurchaseApproved(
+                    faction=context.faction, item=item_by_id[decision.item_id], month=context.month
+                )
+            )
         else:
             events.append(
                 PubMercenaryHireApproved(
@@ -235,7 +263,7 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
                 )
             )
 
-    events.append(considered)
+    events.append(planned)
 
     return events
 

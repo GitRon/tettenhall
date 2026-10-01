@@ -79,20 +79,6 @@ class PubMercenaryHireApproved(Event):
 
 
 @dataclass(kw_only=True)
-class PubHiringConsidered(Event):
-    """
-    A faction has had its pick of the shelf that stood in its pub all month.
-
-    Raised for every faction, the player included, because it is what the monthly restock hangs off:
-    the restock clears the shelf with a row delete, so it has to wait until whatever this faction
-    chose to hire has been taken off it.
-    """
-
-    faction: Faction
-    month: int
-
-
-@dataclass(kw_only=True)
 class WarriorRecruited(Event):
     warrior: Warrior
     faction: Faction

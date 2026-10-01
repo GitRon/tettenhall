@@ -74,8 +74,9 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
 - how many men were drafted, hired and taken in from the cells, and how many towns were occupied;
 - successions on either side, and the months rivals were knocked out;
 - what was built, as `[month, building, level]`;
-- a `timeline` with one row per month: the player's living men, his silver, and each rival's living men,
-  sorted.
+- how many items the rivals bought, read off their ledgers;
+- a `timeline` with one row per month: the player's living men, his silver, and each rival's living men
+  and silver, each sorted on its own.
 
 The counts of what the player did are there on purpose. A step that never fires across a whole batch is
 how the harness shows it has fallen out of step with the views. The suite guards the same thing: it plays

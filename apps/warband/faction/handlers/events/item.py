@@ -7,9 +7,10 @@ from apps.warband.faction.messages.commands.item import (
     RemoveItemFromTownShop,
     RestockTownShopItems,
 )
-from apps.warband.faction.messages.events.faction import NewFactionCreated
+from apps.warband.faction.messages.events.faction import FactionMonthPlanned, NewFactionCreated
+from apps.warband.faction.messages.events.item import ShopItemPurchaseApproved
+from apps.warband.item.messages.commands.item import BuyItem
 from apps.warband.item.messages.events import item
-from apps.warband.month.messages.events.month import PlayerMonthPrepared
 
 
 @message_registry.register_event(event=item.ItemCreated)
@@ -31,9 +32,22 @@ def handle_remove_bought_item_from_shop(*, context: item.ItemBought) -> Command:
 
 
 @message_registry.register_event(event=NewFactionCreated)
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_restock_items_in_shop_for_new_month(*, context: PlayerMonthPrepared | NewFactionCreated) -> Command:
+def handle_stock_items_in_shop_for_new_faction(*, context: NewFactionCreated) -> Command:
     return RestockTownShopItems(faction=context.faction, month=context.current_month)
+
+
+@message_registry.register_event(event=FactionMonthPlanned)
+def handle_restock_items_in_shop_once_month_is_planned(*, context: FactionMonthPlanned) -> Command:
+    # Once the month's buying is done rather than when it opens, so a rival weighs the shelf that stood
+    # all month before it is replaced - the pub's restock hangs off the same event for the same reason
+    return RestockTownShopItems(faction=context.faction, month=context.month)
+
+
+@message_registry.register_event(event=ShopItemPurchaseApproved)
+def handle_buy_item_for_approved_shop_purchase(*, context: ShopItemPurchaseApproved) -> Command:
+    # Pure mapping, because handle_plan_faction_month already weighed the whole decision. That is what
+    # lets a rival buy through the same command the player's shop dispatches.
+    return BuyItem(buying_faction=context.faction, price=context.item.price, item=context.item, month=context.month)
 
 
 @message_registry.register_event(event=item.OwnershipChanged)
@@ -41,3 +55,9 @@ def handle_hand_out_gear_for_changed_ownership(*, context: item.OwnershipChanged
     # The spoils of a fight land in the victor's stores one item at a time, and whether any of them
     # beats what its men carry is the hand-out's question - which also refuses the player
     return HandOutFactionGear(faction=context.new_owner)
+
+
+@message_registry.register_event(event=item.ItemBought)
+def handle_hand_out_gear_for_bought_item(*, context: item.ItemBought) -> Command:
+    # A purchase lands in the stores like the spoils of a fight, and the hand-out refuses the player here too
+    return HandOutFactionGear(faction=context.buying_faction)

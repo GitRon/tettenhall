@@ -30,6 +30,7 @@ from apps.warband.faction.messages.commands.faction import (
 from apps.warband.faction.messages.events.faction import (
     FactionFyrdReserveReplenished,
     FactionLeaderSucceeded,
+    FactionMonthPlanned,
     FactionWasDefeated,
     FactionWasOccupied,
     FyrdReserveChanged,
@@ -37,9 +38,9 @@ from apps.warband.faction.messages.events.faction import (
     MonthlyFactionIncomeEarned,
     NewFactionCreated,
 )
+from apps.warband.faction.messages.events.item import ShopItemPurchaseApproved
 from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
-    PubHiringConsidered,
     PubMercenaryHireApproved,
     WarriorMonthPrepared,
 )
@@ -48,6 +49,9 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.item.models.item_type import ItemType
+from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -806,7 +810,7 @@ def test_handle_plan_faction_month_drafts_for_a_rival_whose_purse_covers_its_wag
 
     assert result == [
         FyrdDraftApproved(faction=rival_faction, month=3),
-        PubHiringConsidered(faction=rival_faction, month=3),
+        FactionMonthPlanned(faction=rival_faction, month=3),
     ]
 
 
@@ -822,7 +826,7 @@ def test_handle_plan_faction_month_drafts_nobody_for_a_rival_whose_roster_outwei
 
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
 
-    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
+    assert result == [FactionMonthPlanned(faction=rival_faction, month=3)]
 
 
 @pytest.mark.django_db
@@ -839,7 +843,7 @@ def test_handle_plan_faction_month_hires_for_a_rival_out_of_its_own_pub():
 
     assert result == [
         PubMercenaryHireApproved(faction=rival_faction, warrior=mercenary, month=3),
-        PubHiringConsidered(faction=rival_faction, month=3),
+        FactionMonthPlanned(faction=rival_faction, month=3),
     ]
 
 
@@ -847,17 +851,16 @@ def test_handle_plan_faction_month_hires_for_a_rival_out_of_its_own_pub():
 def test_handle_plan_faction_month_reads_the_fyrd_off_the_row():
     """
     The faction on the message still shows the empty fyrd it was loaded with, while the month's
-    replenishment has already put a man in it. The row is what counts, so the rival drafts him and
-    leaves its pub alone.
+    replenishment has already put a man in it. The row is what counts, so the rival drafts him.
     """
-    rival_faction, _ = _rival_with_pub(purse=1000, salary_list=[100])
+    rival_faction, _ = _rival_with_pub(purse=1000, salary_list=[])
     Faction.objects.filter(id=rival_faction.id).update(fyrd_reserve=1)
 
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
 
     assert result == [
         FyrdDraftApproved(faction=rival_faction, month=3),
-        PubHiringConsidered(faction=rival_faction, month=3),
+        FactionMonthPlanned(faction=rival_faction, month=3),
     ]
 
 
@@ -873,4 +876,30 @@ def test_handle_plan_faction_month_decides_nothing_for_the_player():
 
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=player_faction, month=3))
 
-    assert result == [PubHiringConsidered(faction=player_faction, month=3)]
+    assert result == [FactionMonthPlanned(faction=player_faction, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_plan_faction_month_buys_for_a_rival_off_its_own_shelf():
+    """
+    The rival's one man is bare-handed, so a 2d6 sword (7) lifts him over the fallback's 2 - the
+    purchase is weighed against the gear the snapshot read off the roster, and the approval carries
+    the item off the shelf.
+    """
+    rival_faction = FactionFactory(fyrd_reserve=0)
+    WarriorFactory(faction=rival_faction, monthly_salary=50)
+    TransactionFactory(faction=rival_faction, amount=1000)
+    sword = ItemFactory(
+        savegame=rival_faction.savegame,
+        owner=None,
+        price=60,
+        type=ItemTypeFactory(base_value="2d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+    )
+    rival_faction.available_items.add(sword)
+
+    result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
+
+    assert result == [
+        ShopItemPurchaseApproved(faction=rival_faction, item=sword, month=3),
+        FactionMonthPlanned(faction=rival_faction, month=3),
+    ]

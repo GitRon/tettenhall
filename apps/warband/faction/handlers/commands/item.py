@@ -51,8 +51,9 @@ def _draw_stall_functions(*, stall_count: int) -> list[ItemType.FunctionChoices]
 
 @message_registry.register_command(command=RestockTownShopItems)
 def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] | Event:
-    # Clean up previous stock
-    context.faction.available_items.all().delete()
+    # Clean up previous stock, all but what has just been bought: a purchase hands the item over in its
+    # own command, but takes it off the shelf an event later, which can be after this has run
+    context.faction.available_items.filter(owner__isnull=True).delete()
 
     message_list = []
 

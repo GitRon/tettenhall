@@ -77,6 +77,7 @@ def play_months(
             break
 
     report.outcome = savegame.get_outcome_display()
+    report.rival_items_bought = _count_rival_purchases(savegame=savegame)
     return report
 
 
@@ -122,4 +123,23 @@ def _record_month(*, savegame: Savegame, month: int) -> MonthRecord:
                 for rival in Faction.objects.rivals_in_play(player_faction=savegame.player_faction)
             )
         ),
+        rival_silver=tuple(
+            sorted(
+                Transaction.objects.current_balance(faction_id=rival.id)
+                for rival in Faction.objects.rivals_in_play(player_faction=savegame.player_faction)
+            )
+        ),
     )
+
+
+def _count_rival_purchases(*, savegame: Savegame) -> int:
+    """
+    How many items the rivals bought over the whole game, read off their ledgers.
+
+    The ledger is the one record a purchase leaves that loot does not: both end with the item owned,
+    and only a purchase is paid for, under the reason "handle_item_bought" writes.
+    """
+    return Transaction.objects.filter(
+        faction__in=Faction.objects.for_savegame(savegame_id=savegame.id).exclude(id=savegame.player_faction_id),
+        reason__endswith=" bought",
+    ).count()

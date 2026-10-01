@@ -133,7 +133,7 @@ because the purse check says nothing about whether the item is still on the shel
 
 Inside one drain the re-read cannot see a charge still queued behind it: the ledger row rides on an event
 and lands after the batch. That only matters where one drain spends twice, which is the month run's rival
-hires, and `RivalPolicy` keeps those inside the purse with a running total of its own.
+hires and purchases, and `RivalPolicy` keeps those inside the purse with a running total of its own.
 
 What stays in the view is input validation the game has no opinion about — the `BUILDINGS` whitelist on
 the building type from the URL, which answers `Http404` rather than a message.
