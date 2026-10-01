@@ -30,6 +30,7 @@ def test_play_savegame_plays_games_to_their_end(user, queuebie_registry):
 
     step_counts = {
         "drafted": sum(report.drafted for report in reports),
+        "sent on quests": sum(report.sent_on_quests for report in reports),
         "hired": sum(report.hired for report in reports),
         "items bought": sum(report.items_bought for report in reports),
         "items equipped": sum(report.items_equipped for report in reports),

@@ -1,22 +1,19 @@
 import typing
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from apps.warband.skirmish.managers.skirmish import SkirmishManager
 from apps.warband.skirmish.models.warrior import Warrior
 
 if typing.TYPE_CHECKING:
-    from apps.warband.faction.models.faction import Faction
-    from apps.warband.quest.models.quest_contract import QuestContract
+    pass
 
 
 class Skirmish(models.Model):
     name = models.CharField("Name", max_length=100)
     current_round = models.PositiveSmallIntegerField("Current round", default=1)
-    # The month the fight belongs to. Nothing recorded it before, and a cap on how often the player
-    # may march against the same rival has nowhere else to look: a quest contract knows its month,
-    # but an attack carries no contract
+    # The month the fight belongs to, which is what a cap on how often the player may march against
+    # the same rival reads
     month = models.PositiveSmallIntegerField("Month", default=1)
     # How much wall is still standing between the attackers and the defending faction. Set when the
     # fight is staged and worn down by every assault on it; nothing carries over, so the next march on
@@ -136,47 +133,3 @@ class Skirmish(models.Model):
         # rosters onto the one instance every message of the round carries, so this is asked of every
         # blow without a query
         return warrior in self.defending_warriors.all()
-
-    def quest_contract_or_none(self) -> QuestContract | None:
-        """
-        The contract this fight was fought for, or None when it is nobody's errand.
-
-        A reverse one-to-one, so asking is a query the first time. Ask it in a command handler and put
-        the answer on the message: an event handler that reads "skirmish.quest_contract" only works when
-        somebody upstream happened to fill Django's cache on that very instance.
-
-        The absence is caught as "ObjectDoesNotExist" rather than as "QuestContract.DoesNotExist",
-        which is what it is: naming the contract at runtime means importing it, and "QuestContract"
-        reaches back through "Warrior" into this very module.
-        """
-        try:
-            return self.quest_contract
-        except ObjectDoesNotExist:
-            return None
-
-    def quest_reward_for(self, *, victorious_faction: Faction) -> tuple[str | None, int]:
-        """
-        What this fight pays the side that won it out of the quest it was fought for: the name, and the purse.
-
-        Not every skirmish is somebody's errand - a march on a rival is nobody's - and whether this one
-        is belongs to the skirmish rather than to whoever asks. A quest only pays the faction that
-        signed the contract, so a rival who takes the field gets the name of what he interrupted and
-        none of its money; carrying the purse regardless of the outcome funded the man who beat you out
-        of your own quest.
-
-        Answered here rather than in the finance handler that hands the reward over, because reading the
-        contract's faction is a query and strict mode forbids one in an event handler.
-
-        The face value, whatever turned out on the day. The purse was already priced against the war
-        band the target could field when the quest was pinned to the board - see
-        "Quest._priced_for_expected_opposition" - so a thin turnout is a thin contract rather than a
-        fraction of a fat one, and the figure the player accepted is the figure he is paid.
-        """
-        quest_contract = self.quest_contract_or_none()
-        if quest_contract is None:
-            return None, 0
-
-        if quest_contract.faction_id != victorious_faction.pk:
-            return quest_contract.quest.name, 0
-
-        return quest_contract.quest.name, quest_contract.quest.loot

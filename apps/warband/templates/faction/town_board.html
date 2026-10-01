@@ -4,13 +4,43 @@
     <h1>Board</h1>
 
     {# One box for the whole board, a hairline between quests: a list is a card whose rows are its parts. #}
+    {# The facts are outlined tags in "rule": each is merely a fact, neither something that wants the player #}
+    {# nor a gain. A phone gets the title with the action beside it and the tags below across the whole #}
+    {# row; a desk gets one line. #}
     {% if quest_list %}
         <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-            {% for quest in quest_list %}
-                {% include 'quest/components/quest_row.html' with quest=quest %}
+            {% for board_quest in quest_list %}
+                <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-[15px] py-3 md:grid-cols-[minmax(0,1fr)_minmax(0,16rem)_auto] md:px-5">
+                    <span class="leading-snug">
+                        <span class="text-ink">{{ board_quest.quest.title }}</span>
+                        <span class="block text-sm text-ink-muted">{{ board_quest.quest.body }}</span>
+                    </span>
+                    <span class="col-span-2 row-start-2 flex flex-wrap gap-1.5 font-mono text-label uppercase tracking-label text-ink-muted md:col-span-1 md:col-start-2 md:row-start-1">
+                        <span class="border border-rule px-1.5 py-0.5">Men <span class="text-ink">{{ board_quest.entry.MIN_MEN }}–{{ board_quest.entry.MAX_MEN }}</span></span>
+                        <span class="border border-rule px-1.5 py-0.5">Wants <span class="text-ink">{{ board_quest.leans_on_label }}</span></span>
+                        {% if board_quest.entry.IS_ODD_JOB %}
+                            <span class="border border-rule px-1.5 py-0.5">Odd job</span>
+                        {% endif %}
+                    </span>
+                    <a class="row-action col-start-2 row-start-1 md:col-start-3"
+                       href="{% url 'warband:quest-accept-view' board_quest.quest.id %}">Send men</a>
+                </li>
             {% endfor %}
         </ul>
+        <p class="mt-2.5 text-sm leading-snug text-ink-muted">The board is redrawn when the month turns. Men sent are away until then.</p>
     {% else %}
         <p class="text-sm leading-snug text-ink-muted">Nothing is pinned to the board this month.</p>
+    {% endif %}
+
+    {% if away_list %}
+        <h2 class="mt-7">Away this month</h2>
+        <ul class="m-0 list-none border border-rule p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+            {% for quest_contract in away_list %}
+                <li class="px-[15px] py-3 md:px-5">
+                    <span class="text-ink">{{ quest_contract.title }}</span>
+                    <span class="block text-sm text-ink-muted">{{ quest_contract.assigned_warriors.all|join:", " }} come home when the month turns.</span>
+                </li>
+            {% endfor %}
+        </ul>
     {% endif %}
 {% endblock content %}

@@ -13,8 +13,8 @@ class FactionQuerySet(models.QuerySet):
         """
         Every faction of the savegame still taking part in the game, the player's included.
 
-        The one place deciding who is still in it: a defeated faction gets no month, is never picked
-        as a quest target, and cannot be knocked out twice.
+        The one place deciding who is still in it: a defeated faction gets no month, is never marched
+        on, and cannot be knocked out twice.
         """
         return self.for_savegame(savegame_id=savegame_id).filter(is_defeated=False)
 

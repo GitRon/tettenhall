@@ -20,6 +20,9 @@ from apps.warband.finance.models import Transaction
 from apps.warband.item.services.handout import annotate_held_gear_values, get_handout_roster
 from apps.warband.item.services.shop import annotate_stored_copy_counts
 from apps.warband.quest.models.quest import Quest
+from apps.warband.quest.models.quest_contract import QuestContract
+from apps.warband.quest.projections.board_quest import BoardQuest
+from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -738,20 +741,24 @@ class TownPubView(PlayerFactionAwareContextMixin, PlayerFactionMixin, generic.De
 
 
 class TownBoardView(PlayerFactionMixin, generic.DetailView):
-    """What is pinned to the board this month, and still open to be taken on."""
+    """The errands pinned to the board this month, and the men already away on one."""
 
     model = Faction
     template_name = "faction/town_board.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Asked through the same queryset QuestAcceptView resolves its quest with, so a card is only
-        # ever shown for a quest that can actually be taken on. Every row names the faction it marches
-        # on, so that comes along in the same query rather than in one per quest.
-        context["quest_list"] = (
-            Quest.objects.for_player_faction(faction_id=self.object.id)
-            .resolvable(month=self.object.savegame.current_month)
-            .select_related("target_faction")
+        month = self.object.savegame.current_month
+        # Asked through the same queryset QuestAcceptView resolves its quest with, so a row is only
+        # ever shown for a quest men can still be sent on
+        context["quest_list"] = [
+            BoardQuest(quest=quest, entry=QUESTS_BY_NAME[quest.quest])
+            for quest in Quest.objects.for_player_faction(faction_id=self.object.id).offered_in(month=month)
+        ]
+        context["away_list"] = (
+            QuestContract.objects.for_player_faction(faction_id=self.object.id)
+            .accepted_in(month=month)
+            .prefetch_related("assigned_warriors")
         )
         return context
 

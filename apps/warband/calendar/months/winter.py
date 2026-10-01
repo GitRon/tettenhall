@@ -13,8 +13,7 @@ class Winter(CalendarMonth):
     SEASON = "Winter"
 
     # A man's wage is half his recruitment price, whose base roll centres on 100, so about 50 silver a
-    # month. An easy quest pays 150-350 for a full band: five men marching cost 50, about a fifth of
-    # it - felt, not blocking
+    # month. Five men marching cost 50, one man's wage - felt, not blocking
     MARCH_COST_PER_WARRIOR = 10
     # The mean improvement is 15 a month against 100 per level. One winter of six months gives about
     # 135 progress instead of 90: an extra level every second winter

@@ -59,21 +59,6 @@
                     {% include 'account/components/month_openings.html' %}
                     {% include 'account/components/month_waiting.html' %}
                 {% endif %}
-
-                {% for active_quest in faction.active_quests.all %}
-                    <div class="mb-5 flex flex-col items-start gap-y-2.5 border border-rule bg-raised py-[15px] pl-[15px] pr-[29px] text-ink-muted md:flex-row md:items-center md:justify-between md:gap-x-5">
-                        <div><span class="text-ink">Active quest:</span> {{ active_quest }}</div>
-                        {# The skirmish is nullable (SET_NULL on delete), and reversing the url with #}
-                        {# no id raises. Outlined rather than filled: the fight is offered by the band #}
-                        {# at the top of the page, which is the one filled control this screen has. #}
-                        {% if active_quest.skirmish_id %}
-                            <a class="row-action"
-                               href="{% url 'warband:skirmish-fight-view' active_quest.skirmish_id %}">
-                                Fight skirmish
-                            </a>
-                        {% endif %}
-                    </div>
-                {% endfor %}
             </div>
 
             {# The brief. Three sections against one rule rather than three boxes, because nothing in #}

@@ -12,8 +12,8 @@ def handle_win_open_skirmishes_when_the_game_ends(*, context: SavegameEnded) -> 
     Decides the fight the game ended in, in favour of whichever side the outcome already favours.
 
     It goes through WinSkirmish like any other victory rather than just stamping a victor on the row,
-    so the loot, the prisoners, the experience and the quest contract all behave the way they would
-    have if the fight had run its course.
+    so the loot, the prisoners and the experience all behave the way they would have if the fight
+    had run its course.
 
     The skirmish itself only knows an attacking and a defending side, so which of them the outcome
     favours is a question for the savegame: the player faction sits on exactly one of them. Asking it

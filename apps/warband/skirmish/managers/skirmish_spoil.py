@@ -8,7 +8,7 @@ class SkirmishSpoilQuerySet(models.QuerySet):
 
 
 class SkirmishSpoilManager(manager.Manager):
-    def create_record(self, *, skirmish, faction, kind, item=None, warrior=None, amount=0, description=""):
+    def create_record(self, *, skirmish, faction, kind, item=None, warrior=None, amount=0):
         return self.create(
             skirmish=skirmish,
             faction=faction,
@@ -18,7 +18,6 @@ class SkirmishSpoilManager(manager.Manager):
             item_dice=f"{item.type.base_value}{item.get_modifier_as_string()}" if item else "",
             warrior=warrior,
             amount=amount,
-            description=description,
         )
 
 

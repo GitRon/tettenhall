@@ -158,18 +158,6 @@ class SkirmishReport:
     def silver_lost(self) -> int:
         return sum(spoil.amount for spoil in self._lost(kind=SkirmishSpoil.KindChoices.KIND_SILVER_LOOTED))
 
-    @property
-    def quest_reward(self) -> int:
-        return sum(spoil.amount for spoil in self._gained(kind=SkirmishSpoil.KindChoices.KIND_QUEST_REWARD))
-
-    @property
-    def quest_name(self) -> str:
-        return next((spoil.description for spoil in self._gained(kind=SkirmishSpoil.KindChoices.KIND_QUEST_REWARD)), "")
-
-    @property
-    def silver_won(self) -> int:
-        return self.silver_looted + self.quest_reward
-
     def _own_casualties_with_fate(self, *, fate: int) -> list:
         return [
             casualty
@@ -260,6 +248,6 @@ class SkirmishReport:
                 or self.own_routed
                 or self.prisoners_taken
             )
-            or (self.silver_won + self.silver_lost) > 0
+            or (self.silver_looted + self.silver_lost) > 0
             or (self.enemy_killed_count + self.enemy_downed_count) > 0
         )

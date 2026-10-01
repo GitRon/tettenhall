@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.warband.faction.models import Faction
-from apps.warband.quest.models import QuestContract
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -27,7 +26,6 @@ class FactionWasAttacked(Event):
 @dataclass(kw_only=True)
 class SkirmishCreated(Event):
     skirmish: Skirmish
-    quest_contract: QuestContract = None
 
 
 @dataclass(kw_only=True)
@@ -96,10 +94,4 @@ class SkirmishFinished(Event):
     incapacitated_warriors: list[Warrior]
     defeated_unconscious_warriors: list[Warrior]
     victorious_healthy_warriors: list[Warrior]
-    quest_name: str
-    quest_loot: int
-    # The contract the fight was fought for, resolved by the command handler: reading it off the
-    # skirmish is a query, which the event handlers closing it may not run. No default, so an emitter
-    # cannot forget it and leave a finished errand standing on the board as an active quest
-    quest_contract: QuestContract | None
     month: int

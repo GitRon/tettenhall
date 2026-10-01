@@ -126,7 +126,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
         raise RuntimeError(
             f"Culture {context.faction_culture_id} does not exist. "
             "Load the reference data with "
-            "'loaddata culture itemtype questtype injurytype traittype portraitpiece haircolour'."
+            "'loaddata culture itemtype injurytype traittype portraitpiece haircolour'."
         )
 
     # A rival dealt the player's own culture is named out of the same generator the player's war band

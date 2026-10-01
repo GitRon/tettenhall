@@ -100,7 +100,7 @@ class WarriorQuerySet(models.QuerySet):
 
     def filter_sworn_to_a_quest(self, *, month: int):
         """
-        The men who have already signed on to a quest in "month".
+        The men sent away on a quest in "month".
 
         One "EXISTS" about the warrior, which is what the exclusion below inherits. Spelled instead as
         a filter over the joined contracts it reads per through-row, and a warrior holding contracts in

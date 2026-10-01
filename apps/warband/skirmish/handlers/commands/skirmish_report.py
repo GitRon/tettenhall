@@ -25,7 +25,6 @@ def handle_record_skirmish_spoil(*, context: RecordSkirmishSpoil) -> Event:
         item=context.item,
         warrior=context.warrior,
         amount=context.amount,
-        description=context.description,
     )
 
     return SkirmishSpoilRecorded(spoil=spoil)

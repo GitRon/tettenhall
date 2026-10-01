@@ -23,7 +23,7 @@ class CalendarMonth:
     NAME = ""
     SEASON = ""
 
-    # Silver owed per warrior sent against a rival, a direct attack and an accepted quest alike
+    # Silver owed per warrior sent against a rival
     MARCH_COST_PER_WARRIOR = 0
     # Multiplies a warrior's monthly training improvement before it is rounded and floored at 1
     TRAINING_FACTOR = 1.0
