@@ -11,7 +11,7 @@
                     {# A mercenary for hire is held, not commanded: the pub names the gear it is charging for #}
                     {# and buckets everything else, which is the gamble it is selling. On a rival's town #}
                     {# square these are not the player's to hire and nothing about them is his to read. #}
-                    {% include 'warrior/components/warrior_row.html' with warrior=warrior knowledge=held_knowledge is_pub=True %}
+                    <c-warrior.row :warrior="warrior" :knowledge="held_knowledge" is_pub :is_player_faction="is_player_faction" />
                 {% endfor %}
             </ul>
         {% else %}

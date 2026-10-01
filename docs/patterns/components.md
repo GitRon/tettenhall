@@ -40,6 +40,10 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-skirmish.log-line>` | `apps.warband` | One line of a fight in either account; a casualty is set apart by whose loss it is (`casualty_side`) |
 | `<c-skirmish.faction-box>` | `apps.warband` | One war band's panel on the fight screen, with its kit toggle and the roster that refreshes every round |
 | `<c-skirmish.skirmish-table>` | `apps.warband` | A table of fights; `show_victor` adds the Victor column, and the row's control and the empty line are the caller's words |
+| `<c-warrior.attribute>` | `apps.warband` | One attribute, exact or bucketed against his baseline - see [warrior knowledge](warrior-knowledge.md) |
+| `<c-warrior.portrait>` | `apps.warband` | A man's stacked face, `card` or `full` crop, in the caller's `frame`; the silhouette when he has none - see [portraits](portraits.md) |
+| `<c-warrior.portrait-layer>` | `apps.warband` | One beard or hair layer of the portrait, placed and tinted |
+| `<c-warrior.row>` | `apps.warband` | One man as a row on a rival's roster, a rival's cells or a pub; `is_pub` adds the recruit control |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
 
 ## Parameters

@@ -14,7 +14,7 @@
             {% else %}
                 <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
                     {% for warrior in captive_list %}
-                        {% include 'warrior/components/warrior_row.html' with warrior=warrior knowledge=held_knowledge %}
+                        <c-warrior.row :warrior="warrior" :knowledge="held_knowledge" />
                     {% endfor %}
                 </ul>
             {% endif %}

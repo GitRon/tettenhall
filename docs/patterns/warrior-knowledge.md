@@ -54,7 +54,7 @@ filter itself:
 
 | Component | For |
 |---|---|
-| `warrior/components/warrior_attribute.html` | one attribute: `value`, `baseline`, `knowledge` |
+| `<c-warrior.attribute>` (`cotton/warrior/attribute.html`) | one attribute: `value`, `baseline`, `knowledge` |
 | `<c-warrior.gauge>` (`cotton/warrior/gauge.html`) | a current/maximum pair: `current`, `maximum`, `baseline`, `knowledge`, optionally `peak` |
 
 The gauge's fuzzed form buckets where the man stands *now* against the ceiling a typical man of his kind

@@ -1,3 +1,4 @@
+<c-vars warrior knowledge is_pub=False is_player_faction=False />
 {% comment %}
     One man, as a row: the lists that show somebody else's warriors side by side - a rival's roster, the
     captives a rival holds, the mercenaries in a pub. The player's own war band and his own cells are
@@ -25,7 +26,7 @@
     controls on the name's line. Set left explicitly: a rival's page centres the column it sits in.
 {% endcomment %}
 <li class="text-left grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-[15px] py-3 md:grid-cols-[40px_minmax(0,1fr)_auto] md:px-5">
-    {% include 'warrior/components/warrior_portrait.html' with warrior=warrior frame='border border-rule' %}
+    <c-warrior.portrait :warrior="warrior" frame="border border-rule" />
     <a class="min-w-0 leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.display_name }}</a>
 
     <div class="col-span-2 flex flex-col gap-y-1.5 md:col-span-1 md:col-start-2 md:row-start-2">
