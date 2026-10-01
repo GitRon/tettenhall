@@ -31,6 +31,7 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-common.box-header>` | `apps.common` | A panel's heading, as the slot |
 | `<c-common.card>` | `apps.common` | The card surface: the body as the slot, optional `header` and `footer` bands as named slots - see [visual identity](visual-identity.md#surface) |
 | `<c-finance.wage-bill-warning>` | `apps.warband` | The alert for a purse that cannot cover next month's wages, silent while it can; `show_finance_link` adds the way to the books |
+| `<c-navigation.section-nav>` | `apps.warband` | The four sections of the game, `current` marked; a page whose section the url does not say passes its own - see [navigation](navigation.md) |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
 
 ## Parameters

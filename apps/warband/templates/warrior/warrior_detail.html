@@ -4,7 +4,7 @@
 {# not the router's - his own men are the war band, a rival's are the rivals, and a mercenary #}
 {# standing in the pub is the town. #}
 {% block navigation %}
-    {% include 'navigation/components/section_nav.html' with current_nav_section=nav_section %}
+    <c-navigation.section-nav :sections="nav_sections" :current="nav_section" />
 {% endblock navigation %}
 
 {% block content %}
