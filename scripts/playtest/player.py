@@ -3,11 +3,15 @@ import random
 from django.db import transaction
 from queuebie.runner import handle_message
 
+from apps.warband.faction.domain.rival_policy import RivalMonthSnapshot, RivalPolicy
 from apps.warband.faction.messages.commands.faction import OccupyFaction
 from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.hiring import get_pub_hire_refusal
+from apps.warband.faction.services.purchase_snapshot import get_held_gear_values, get_shop_offers
 from apps.warband.finance.models import Transaction
+from apps.warband.item.messages.commands.item import BuyItem, EquipItem
+from apps.warband.item.services.handout import plan_gear_handout
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction, FinishRound, StartDuel
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -41,7 +45,8 @@ class PlayerTurn:
     One month of the player's, dispatched the way the views dispatch it.
 
     Each step asks the refusal a view asks before it sends the command that view sends, in the order a
-    player reaches them: the captives, the fyrd, the pub, the town, the march, the fight, the occupation.
+    player reaches them: the captives, the fyrd, the pub, the shop, the stores, the town, the march, the
+    fight, the occupation.
     A guard that protects silver, men or the month is asked again by the command handler, so a step that
     skipped one would dispatch into a no-op rather than play a game nobody can play. The rule that lives
     only in a form - who may march - is taken from the same "assess_roster" the attack form validates
@@ -77,6 +82,8 @@ class PlayerTurn:
         self.take_in_captives()
         self.draft_the_fyrd()
         self.hire_from_the_pub()
+        self.buy_from_the_shop()
+        self.hand_out_gear()
         self.build()
         stop_reason = self.march()
         if stop_reason is not None:
@@ -112,6 +119,49 @@ class PlayerTurn:
                 return
             handle_message(RecruitPubMercenary(warrior=mercenary, faction=self.faction, month=self.month))
             self.report.hired += 1
+
+    def buy_from_the_shop(self) -> None:
+        """
+        Buys off the shelf by the rule a rival buys by, so the two sides of a batch shop alike.
+
+        [RivalPolicy] is handed the shelf and the band's gear and nothing else - no fyrd, no pub, and a band
+        already at its target, so a man is never a candidate: the steps before have taken those. The purse
+        it weighs is what lies above SILVER_KEPT_BACK, against no wage bill, so a purchase is affordable
+        exactly when it leaves the silver this harness keeps back for every other spend.
+
+        The view's "get_purchase_refusal" is not asked: it refuses a price above the purse, and the
+        policy keeps a running purse that never lets one through. "handle_buy_item" re-reads the purse
+        all the same.
+        """
+        item_by_id = {item.id: item for item in self.faction.available_items.select_related("type")}
+        snapshot = RivalMonthSnapshot(
+            fyrd_reserve=0,
+            purse=self._balance() - SILVER_KEPT_BACK,
+            wage_bill=0,
+            band_size=RivalPolicy.TARGET_BAND_SIZE,
+            draft_wage=0,
+            pub_offer_list=[],
+            shop_offer_list=get_shop_offers(item_list=item_by_id.values()),
+            held_gear_values=get_held_gear_values(faction=self.faction),
+        )
+
+        # Every decision is a purchase, since a man was never a candidate
+        for decision in RivalPolicy.decide(snapshot=snapshot):
+            item = item_by_id[decision.item_id]
+            handle_message(BuyItem(price=item.price, item=item, buying_faction=self.faction, month=self.month))
+            self.report.items_bought += 1
+
+    def hand_out_gear(self) -> None:
+        """
+        Puts the best of what the faction holds on its best men, the way a rival's hand-out does - the
+        purchases just made and any spoils lying in the stores alike.
+
+        The view's "get_equip_refusal" is not asked: it refuses a man standing in an open fight, at either
+        end of the move, and "plan_gear_handout" leaves those men and what they hold out of its plan.
+        """
+        for warrior, item, slot in plan_gear_handout(faction=self.faction):
+            handle_message(EquipItem(warrior=warrior, item=item, slot=slot))
+            self.report.items_equipped += 1
 
     def build(self) -> None:
         town = self.faction.town

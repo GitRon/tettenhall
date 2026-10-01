@@ -1,7 +1,13 @@
 import pytest
 
+from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.item.models.item import Item
+from apps.warband.item.models.item_type import ItemType
+from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -104,6 +110,72 @@ def test_hire_from_the_pub_keeps_silver_back(player_savegame, rng, report, queue
     mercenary.refresh_from_db()
     assert mercenary.faction is None
     assert report.hired == 0
+
+
+def _sword(*, savegame: Savegame, owner: Faction | None = None, base_value: str = "2d6") -> Item:
+    return ItemFactory(
+        savegame=savegame,
+        owner=owner,
+        price=60,
+        type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON, base_value=base_value),
+    )
+
+
+@pytest.mark.django_db
+def test_buy_from_the_shop_buys_what_lifts_the_weakest_man(player_savegame, rng, report, queuebie_registry):
+    """The leader is bare-handed, so a 2d6 sword (7) lifts him over the fallback's 2."""
+    faction = player_savegame.player_faction
+    sword = _sword(savegame=player_savegame)
+    faction.available_items.add(sword)
+    TransactionFactory(faction=faction, amount=60 + 150)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).buy_from_the_shop()
+
+    sword.refresh_from_db()
+    assert sword.owner == faction
+    assert report.items_bought == 1
+
+
+@pytest.mark.django_db
+def test_buy_from_the_shop_keeps_silver_back(player_savegame, rng, report, queuebie_registry):
+    """He could pay for the sword, but not and still keep the 150 that carry the wage bill."""
+    faction = player_savegame.player_faction
+    sword = _sword(savegame=player_savegame)
+    faction.available_items.add(sword)
+    TransactionFactory(faction=faction, amount=60 + 149)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).buy_from_the_shop()
+
+    sword.refresh_from_db()
+    assert sword.owner is None
+    assert report.items_bought == 0
+
+
+@pytest.mark.django_db
+def test_buy_from_the_shop_buys_nothing_that_lifts_nobody(player_savegame, rng, report, queuebie_registry):
+    """A 1d2 club (1.5) is worse than the bare hands the leader already fights with (2)."""
+    faction = player_savegame.player_faction
+    club = _sword(savegame=player_savegame, base_value="1d2")
+    faction.available_items.add(club)
+    TransactionFactory(faction=faction, amount=10_000)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).buy_from_the_shop()
+
+    club.refresh_from_db()
+    assert club.owner is None
+    assert report.items_bought == 0
+
+
+@pytest.mark.django_db
+def test_hand_out_gear_puts_a_stored_item_on_the_man_it_lifts(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    sword = _sword(savegame=player_savegame, owner=faction)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).hand_out_gear()
+
+    faction.leader.refresh_from_db()
+    assert faction.leader.weapon == sword
+    assert report.items_equipped == 1
 
 
 @pytest.mark.django_db
