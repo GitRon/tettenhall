@@ -133,7 +133,7 @@ because the purse check says nothing about whether the item is still on the shel
 
 Inside one drain the re-read cannot see a charge still queued behind it: the ledger row rides on an event
 and lands after the batch. That only matters where one drain spends twice, which is the month run's rival
-hires, and `handle_consider_pub_hire` keeps those inside the purse with a running total of its own.
+hires, and `RivalPolicy` keeps those inside the purse with a running total of its own.
 
 What stays in the view is input validation the game has no opinion about — the `BUILDINGS` whitelist on
 the building type from the URL, which answers `Http404` rather than a message.
@@ -153,7 +153,7 @@ in timing, even when they sit side by side. Compare the two halves of the monthl
 FactionMonthPrepared (evt)
   ├─ handle_pay_monthly_warrior_salaries_for_new_month → PayMonthlyWarriorSalaries (cmd) ─┐
   ├─ handle_earn_monthly_faction_income_for_new_month  → EarnMonthlyFactionIncome (cmd) ──┤ one batch,
-  └─ handle_consider_fyrd_draft_for_new_month          → ConsiderFyrdDraft (cmd) ─────────┘ in order
+  └─ handle_plan_faction_month_for_new_month           → PlanFactionMonth (cmd) ──────────┘ in order
 
 PayMonthlyWarriorSalaries → handle_warrior_monthly_salaries
     writes warrior.unpaid_months          ← visible to the very next command
@@ -161,7 +161,7 @@ PayMonthlyWarriorSalaries → handle_warrior_monthly_salaries
       └─ CreateTransaction (cmd) → the ledger row, later still
 ```
 
-`handle_consider_fyrd_draft` runs last in that batch and still reads the balance the **month opened
+`handle_plan_faction_month` runs last in that batch and still reads the balance the **month opened
 with**, because the salary row does not exist yet. `unpaid_months`, written synchronously one command
 earlier, it does see — which is why the recovery sweeps genuinely depend on being declared after the
 salary run, and a flow test on `FinishMonthView` pins that.

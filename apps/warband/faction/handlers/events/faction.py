@@ -5,10 +5,11 @@ from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     EarnMoneyFromBuildings,
     EarnMonthlyFactionIncome,
+    PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
 )
-from apps.warband.faction.messages.commands.warrior import ConsiderFyrdDraft, PayMonthlyWarriorSalaries
+from apps.warband.faction.messages.commands.warrior import PayMonthlyWarriorSalaries
 from apps.warband.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
 from apps.warband.savegame.messages.events.savegame import NewSavegameCreated
 
@@ -64,9 +65,10 @@ def handle_prepare_faction_warriors_for_new_month(*, context: FactionMonthPrepar
     return PrepareFactionWarriorsForMonth(faction=context.faction, month=context.current_month)
 
 
+# Every faction, because every faction's pub restocks behind it - see [handle_plan_faction_month]
 @message_registry.register_event(event=FactionMonthPrepared)
-def handle_consider_fyrd_draft_for_new_month(*, context: FactionMonthPrepared) -> Command:
-    return ConsiderFyrdDraft(faction=context.faction, month=context.current_month)
+def handle_plan_faction_month_for_new_month(*, context: FactionMonthPrepared) -> Command:
+    return PlanFactionMonth(faction=context.faction, month=context.current_month)
 
 
 # The town economy is the thing a rival genuinely has no equivalent of, which is what

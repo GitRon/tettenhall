@@ -3,8 +3,6 @@ from queuebie.messages import Event
 
 from apps.warband.faction.messages.commands.warrior import (
     AddWarriorToPub,
-    ConsiderFyrdDraft,
-    ConsiderPubHire,
     DraftWarriorFromFyrd,
     PayMonthlyWarriorSalaries,
     RecruitPubMercenary,
@@ -15,9 +13,6 @@ from apps.warband.faction.messages.events.faction import (
     MonthlyWarriorSalariesUnpaid,
 )
 from apps.warband.faction.messages.events.warrior import (
-    FyrdDraftApproved,
-    PubHiringConsidered,
-    PubMercenaryHireApproved,
     PubMercenarySlotOpened,
     TownMercenariesRestocked,
     WarriorRecruited,
@@ -89,110 +84,6 @@ def handle_add_warrior_to_pub(*, context: AddWarriorToPub) -> list[Event] | Even
     Warrior.objects.set_pub_arrival(obj=context.warrior, month=context.month)
 
     return WarriorWasAddedToPub(pub_owner=context.pub_owner, warrior=context.warrior, month=context.month)
-
-
-@message_registry.register_command(command=ConsiderFyrdDraft)
-def handle_consider_fyrd_draft(*, context: ConsiderFyrdDraft) -> list[Event] | Event | None:
-    """
-    Whether this faction calls somebody up out of its fyrd this month.
-
-    A rival's only decision, and it is taken greedily: it drafts whenever the reserve and the purse
-    allow, because there is nothing else for it to spend on yet and anything cleverer would be faction
-    AI. The player is refused here - his draft is a button on the fyrd card, and choosing when to press
-    it is the point of having one.
-
-    "Can afford it" is a month of breathing room rather than the price of the man, because a draft is
-    free and what it commits the faction to is his keep. So the purse has to still cover the roster's
-    wage bill once over, read off the same [Payroll] the salary run bills from.
-
-    The purse being read is the one the month opened with, and that is not a matter of where this sits
-    among the monthly handlers. Nothing the month earns or spends reaches the ledger until every
-    command those handlers raised has run: a salary run and an income both return an *event*, and the
-    "CreateTransaction" it turns into is queued behind the whole batch. So every faction weighs the
-    same balance it started the month on, whichever order the handlers run in - which also means the
-    wage bill this compares against has been committed but not yet debited.
-
-    A faction with no roster passes trivially, which is how one that has been emptied out starts
-    rebuilding.
-
-    All three questions are queries, which is why this is a command handler at all: the event handler
-    on the monthly event may only raise this and let it decide.
-    """
-    if context.faction.savegame.player_faction_id == context.faction.id:
-        return None
-
-    if context.faction.fyrd_reserve <= 0:
-        return None
-
-    # budget=0 on purpose: "total_amount" is the whole roster's wages either way, and handing it the
-    # balance would read as though the comparison were self-satisfying. It also means a future
-    # "total_amount" that did respect the budget could not quietly turn this into "balance < balance",
-    # which is false for every faction and would draft on every reserve there is.
-    balance = Transaction.objects.current_balance(faction_id=context.faction.id)
-    if balance < Payroll.for_faction(faction=context.faction, budget=0).total_amount:
-        return None
-
-    return FyrdDraftApproved(faction=context.faction, month=context.month)
-
-
-@message_registry.register_command(command=ConsiderPubHire)
-def handle_consider_pub_hire(*, context: ConsiderPubHire) -> list[Event]:
-    """
-    Which of the men standing in this faction's pub it takes on this month.
-
-    Shaped like [handle_consider_fyrd_draft], and for the same reasons. The player is refused -
-    hiring is a button in his pub. A rival buys greedily, because anything cleverer is faction AI:
-    cheapest first, which fits the most men into the purse, for as long as the purse still covers the
-    wage bill once over after paying for him. Unlike a draft a hire has a price, so the price comes
-    out of the purse before the wages are weighed against it.
-
-    The purse is tracked here across the men it takes rather than re-read per man. The price of a
-    hire rides on "WarriorRecruited" and reaches the ledger only after the whole batch, so a second
-    read would still see the silver the first man was bought with.
-
-    The shelf is the one that stood in the pub all month, and "PubHiringConsidered" comes last on
-    purpose: the restock hangs off it and clears the shelf with a row delete, and a man approved here
-    is only taken off it once his "RecruitPubMercenary" drains. The approvals are queued first, so
-    their commands drain first, whatever order anything else runs in.
-
-    A rival with free men left in its fyrd hires nobody. The reserve, which refills by a few men a
-    month, is the brake #3 balanced a rival's growth on: "RivalIncome" pays more per man than he costs,
-    so a purse spent freely in the pub pays for the next hire and the war band compounds (#387). This
-    is a guard on that income, not a rule of its own - it goes once a rival lives on its town (#393).
-    The reserve is read off the row rather than the instance on the message, so the answer is the
-    reserve as the month's replenishment left it, whoever else holds the same faction.
-    """
-    considered = PubHiringConsidered(faction=context.faction, month=context.month)
-
-    if context.faction.savegame.player_faction_id == context.faction.id:
-        return [considered]
-
-    if Faction.objects.filter(id=context.faction.id).values_list("fyrd_reserve", flat=True).get() > 0:
-        return [considered]
-
-    purse = Transaction.objects.current_balance(faction_id=context.faction.id)
-    # budget=0 for the same reason handle_consider_fyrd_draft gives: "total_amount" is the whole
-    # roster's wages either way
-    wage_bill = Payroll.for_faction(faction=context.faction, budget=0).total_amount
-
-    # Priced once per man, and before anything moves him - the price is partly made of his wait
-    priced_mercenary_list = sorted(
-        ((mercenary.hiring_price, mercenary) for mercenary in context.faction.available_mercenaries.all()),
-        key=lambda priced: (priced[0], priced[1].id),
-    )
-
-    events = []
-    for hiring_price, mercenary in priced_mercenary_list:
-        if purse - hiring_price < wage_bill + mercenary.monthly_salary:
-            continue
-
-        purse -= hiring_price
-        wage_bill += mercenary.monthly_salary
-        events.append(PubMercenaryHireApproved(faction=context.faction, warrior=mercenary, month=context.month))
-
-    events.append(considered)
-
-    return events
 
 
 @message_registry.register_command(command=DraftWarriorFromFyrd)

@@ -122,7 +122,7 @@ holding that level's numbers:
   a rival's men fit to march — and `RivalIncome` carries why.
 - **A rival's income pays more per man than he costs**, so a purse spent freely in the pub would pay for
   the next hire and the war band would compound. Until a rival lives on its town (#393), its fyrd reserve
-  is the brake: `handle_consider_pub_hire` hires nobody while the reserve still has free men in it (#387).
+  is the brake: `RivalPolicy` hires nobody while the reserve still has free men in it (#387).
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
   bonus is the only thing making better gear — none of them has a second effect yet.
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's

@@ -22,6 +22,20 @@ class ReplenishFyrdReserve(Command):
 
 
 @dataclass(kw_only=True)
+class PlanFactionMonth(Command):
+    """
+    Asks what this faction does with its month - for a rival, what [RivalPolicy] decides.
+
+    Raised for every faction, the player included, because every pub restocks behind the event this
+    closes with. A command because the answer is a query - who it is, what is in the reserve, the purse
+    and the pub - and the event handler on the monthly event may read none of those.
+    """
+
+    faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
 class ChangeFyrdReserve(Command):
     """
     Move the fyrd reserve by a named amount, up or down.
