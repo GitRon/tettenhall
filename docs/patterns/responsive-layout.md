@@ -61,7 +61,7 @@ Every table in the project is one of three shapes, and each shape has one answer
 
 | Shape | Examples | On a phone |
 |---|---|---|
-| **A fact sheet**: label and value, two columns | a warrior's page, the attack form, current costs | The table as it is. Two columns fit the screen, so there is nothing to change and no scroll box. |
+| **A fact sheet**: label and value, or at most three short columns | a warrior's page, the attack form, current costs, the transactions ledger | The table as it is. It fits the screen, so there is nothing to change and no scroll box. |
 | **A list**: one row per thing, five to seven columns | rivals, savegames, skirmishes, training progress | `table-stack` on the `<table>`: each row becomes a record, each cell a line led by its column name. |
 | **A ledger**: a row per man, a dozen columns | the roster, the captives | `table-stack`, plus a grid on the row: the name across the top, short figures two to a line, gauges and gear one to a line. |
 
