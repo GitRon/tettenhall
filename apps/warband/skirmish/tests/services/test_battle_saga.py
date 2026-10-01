@@ -9,16 +9,24 @@ from apps.warband.skirmish.services import battle_saga
 from apps.warband.skirmish.services.battle_saga import saga_for_blow
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
-CHOICE = "apps.warband.skirmish.services.battle_saga.random.choice"
+CHOICE = "apps.warband.skirmish.services.battle_saga._WORDING.choice"
 
-ALL_PHRASINGS = [
+# The parts every thrown blow is assembled from. Both men of a pair strike each round, so these come round
+# twice a round, every round, and are the ones a long fight must not repeat.
+EVERY_ROUND_PHRASINGS = [
     *battle_saga.APPROACH.values(),
+    *battle_saga.COUNTER_APPROACH.values(),
+    battle_saga.OFF_BALANCE_COUNTER_APPROACH,
     *battle_saga.MEETING.values(),
     battle_saga.RESULT_MISSED,
     battle_saga.RESULT_ABSORBED,
     battle_saga.RESULT_GRAZE,
     battle_saga.RESULT_SOLID,
     battle_saga.RESULT_HEAVY,
+    battle_saga.UNOPPOSED_PREFIX,
+]
+
+OCCASIONAL_PHRASINGS = [
     *battle_saga.NOT_THROWN.values(),
     battle_saga.KILLED,
     battle_saga.INCAPACITATED,
@@ -33,22 +41,16 @@ ALL_PHRASINGS = [
     battle_saga.SKIRMISH_FINISHED,
 ]
 
-# The three parts every thrown blow is assembled from, and the stand-offs told whole in their place.
-# These are what a long fight repeats, so these are the ones that must not read as one sentence twice.
-BLOW_PHRASINGS = [
-    *battle_saga.APPROACH.values(),
-    *battle_saga.MEETING.values(),
-    battle_saga.RESULT_MISSED,
-    battle_saga.RESULT_ABSORBED,
-    battle_saga.RESULT_GRAZE,
-    battle_saga.RESULT_SOLID,
-    battle_saga.RESULT_HEAVY,
-    *battle_saga.NOT_THROWN.values(),
-]
+ALL_PHRASINGS = [*EVERY_ROUND_PHRASINGS, *OCCASIONAL_PHRASINGS]
 
 
-@pytest.mark.parametrize("phrasings", BLOW_PHRASINGS)
-def test_blow_phrasings_come_in_at_least_three_variants(phrasings):
+@pytest.mark.parametrize("phrasings", EVERY_ROUND_PHRASINGS)
+def test_every_round_phrasings_come_in_at_least_five_variants(phrasings):
+    assert len(set(phrasings)) >= 5
+
+
+@pytest.mark.parametrize("phrasings", OCCASIONAL_PHRASINGS)
+def test_occasional_phrasings_come_in_at_least_three_variants(phrasings):
     assert len(set(phrasings)) >= 3
 
 
@@ -67,6 +69,13 @@ def test_approach_words_exactly_the_actions_that_throw_a_blow():
         SkirmishActionChoices.RISKY_ATTACK,
         SkirmishActionChoices.FAST_ATTACK,
     }
+
+
+def test_counter_approach_words_exactly_the_actions_that_throw_a_blow():
+    """
+    Only a man whose order throws a blow swings back, so the strike-backs cover what "APPROACH" covers.
+    """
+    assert set(battle_saga.COUNTER_APPROACH) == set(battle_saga.APPROACH)
 
 
 def test_meeting_words_every_order_a_paired_defender_can_hold():
@@ -197,6 +206,54 @@ def test_saga_for_blow_says_nobody_was_left_to_face_him():
     )
 
 
+def test_saga_for_blow_tells_a_counter_as_a_strike_back():
+    with mock.patch(CHOICE, side_effect=lambda phrasings: phrasings[0]):
+        result = saga_for_blow(
+            attacker=WarriorFactory.build(name="Cuthred"),
+            attacker_action=SkirmishActionChoices.FAST_ATTACK,
+            defender=WarriorFactory.build(name="Beorn", max_health=20),
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            initiative=InitiativeChoices.INITIATIVE_COUNTER,
+            outcome=BlowOutcomeChoices.OUTCOME_HIT,
+            damage=2,
+        )
+
+    assert result == (
+        "Cuthred answers with a quick jab at Beorn; Beorn brings his own blade round to parry — the edge only "
+        "grazes him."
+    )
+
+
+def test_saga_for_blow_tells_a_counter_a_fast_attack_threw_off_balance():
+    with mock.patch(CHOICE, side_effect=lambda phrasings: phrasings[0]):
+        result = saga_for_blow(
+            attacker=WarriorFactory.build(name="Cuthred"),
+            attacker_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            defender=WarriorFactory.build(name="Beorn", max_health=20),
+            defender_action=SkirmishActionChoices.FAST_ATTACK,
+            initiative=InitiativeChoices.INITIATIVE_COUNTER,
+            outcome=BlowOutcomeChoices.OUTCOME_ABSORBED,
+            damage=0,
+        )
+
+    assert result == (
+        "Caught off-balance, Cuthred swings back weakly at Beorn; Beorn tries to dance clear — his mail turns the edge."
+    )
+
+
+def test_saga_for_blow_refuses_a_strike_back_it_has_no_wording_for():
+    with pytest.raises(RuntimeError, match=r"No saga wording for the strike-back of skirmish action 5\."):
+        saga_for_blow(
+            attacker=WarriorFactory.build(name="Cuthred"),
+            attacker_action=SkirmishActionChoices.FLEE,
+            defender=WarriorFactory.build(name="Beorn"),
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            initiative=InitiativeChoices.INITIATIVE_COUNTER,
+            outcome=BlowOutcomeChoices.OUTCOME_HIT,
+            damage=5,
+        )
+
+
 def test_saga_for_blow_draws_each_part_on_its_own():
     """
     The three parts are drawn separately, so twenty rounds of the same two orders still vary.
@@ -212,7 +269,9 @@ def test_saga_for_blow_draws_each_part_on_its_own():
             damage=5,
         )
 
-    assert result == "Beorn brings his blade down at Cuthred; Cuthred tries to turn it aside — it catches him squarely."
+    assert result == (
+        "Beorn comes on at Cuthred with a level stroke; Cuthred swings to meet it — he grunts as it strikes home."
+    )
 
 
 def test_saga_for_blow_refuses_an_action_it_has_no_wording_for():
