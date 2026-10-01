@@ -11,6 +11,8 @@ class MonthRecord:
     # Sorted rather than keyed by faction, so two runs of one seed compare equal whatever ids the
     # database handed out
     rival_men: tuple[int, ...]
+    # Sorted the same way, and on its own: it is read for whether any rival runs dry, not for which
+    rival_silver: tuple[int, ...]
 
 
 @dataclass(kw_only=True)
@@ -38,6 +40,7 @@ class GameReport:
     captives_recruited: int = 0
     player_successions: int = 0
     rival_successions: int = 0
+    rival_items_bought: int = 0
     rival_defeat_months: list[int] = field(default_factory=list)
     # (month, building, new level)
     built: list[tuple[int, str, int]] = field(default_factory=list)
