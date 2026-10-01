@@ -10,6 +10,7 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.models import Town
 from apps.warband.town.tests.factories.town import TownFactory
 
 
@@ -291,6 +292,41 @@ def test_shop_item_count_and_pub_mercenary_count_read_the_town_the_player_owns()
 
     assert standing.shop_item_count == 1
     assert standing.pub_mercenary_count == 1
+
+
+@pytest.mark.django_db
+def test_captives_over_cell_places_counts_the_men_the_month_will_lose():
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame, town__hall=Town.HallChoices.HALL_SMALL)
+    savegame.player_faction = player_faction
+    savegame.save()
+    player_faction.captured_warriors.add(
+        *WarriorFactory.create_batch(3, faction=None, savegame=savegame, culture=player_faction.culture)
+    )
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.captives_over_cell_places == 1
+    assert standing.cell_places == 2
+
+
+@pytest.mark.django_db
+def test_has_offers_open_is_true_with_only_captives_over_the_cells():
+    """
+    A man the cells cannot hold is gone when the month turns, which is the rule for a row here - unlike
+    the captives inside the places, who wait on the player for as long as he likes.
+    """
+    savegame = SavegameFactory(current_month=4)
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
+    savegame.player_faction = player_faction
+    savegame.save()
+    player_faction.captured_warriors.add(
+        *WarriorFactory.create_batch(2, faction=None, savegame=savegame, culture=player_faction.culture)
+    )
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert standing.has_offers_open is True
 
 
 @pytest.mark.django_db

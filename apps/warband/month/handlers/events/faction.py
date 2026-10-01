@@ -2,6 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
     FactionFyrdReserveReplenished,
     FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
@@ -14,6 +15,17 @@ from apps.warband.faction.messages.events.item import TownShopRestocked
 from apps.warband.faction.messages.events.warrior import TownMercenariesRestocked
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+
+
+@message_registry.register_event(event=CaptiveFledOverfullCells)
+def handle_captive_fled_overfull_cells(*, context: CaptiveFledOverfullCells) -> Command:
+    # Says why, so the first man lost to full cells is also the moment the player learns there are cells
+    return CreatePlayerMonthLog(
+        title=f"{context.warrior} slipped away in the night: your cells hold {context.cell_places}.",
+        kind=PlayerMonthLog.KindChoices.KIND_CAPTIVE_FLED,
+        month=context.month,
+        faction=context.faction,
+    )
 
 
 @message_registry.register_event(event=FactionFyrdReserveReplenished)
@@ -54,24 +66,33 @@ def handle_unpaid_warrior_salaries(*, context: MonthlyWarriorSalariesUnpaid) -> 
 
 
 @message_registry.register_event(event=FactionWasDefeated)
-def handle_log_rival_defeat(*, context: FactionWasDefeated) -> Command | None:
+def handle_log_faction_defeat(*, context: FactionWasDefeated) -> Command:
     """
-    Says that a rival is out of the game, and that the fight the player just won is what did it.
+    Says that a faction is out of the game, and which man's loss did it.
 
-    Until this line existed the knockout was invisible: the rival's row drops off the rivals list
-    because a defeated faction stops getting a month, and that vanishing was the whole of the
-    notification. It says who fell and which faction he led, because the causal link between the man
-    the player put down and the faction leaving the war is the part he cannot reconstruct - the
-    battle report names the prisoner and says nothing about what taking him ended.
+    For a rival, the knockout is otherwise invisible: its row drops off the rivals list because a
+    defeated faction stops getting a month. It says who fell and which faction he led, because the
+    causal link between the man the player put down and the faction leaving the war is the part he
+    cannot reconstruct - the battle report names the prisoner and says nothing about what taking him
+    ended.
 
-    Silent for the player's own faction: his war band running out of men ends the savegame, and the
-    line about that is already written against SavegameEnded. Two lines for the one faction would
-    compete.
+    For the player's own faction it is the cause, and the SavegameEnded line that follows is the
+    verdict. A leader can be seated and lost again in the same fight - the man who took over lying
+    senseless is taken with the rest when it is lost - and without this line the log goes from naming
+    him the leader straight to the war band being broken. The kind is the ending's own, because this
+    line is part of how the game ended.
     """
     # The instances rather than their ids: Django compares two unsaved rows by identity instead of
     # by a primary key they both lack, so this stays right for a handler called with built factions
     if context.faction == context.player_faction:
-        return None
+        fate = "fell in the fighting" if context.leader_was_killed else "was taken prisoner"
+
+        return CreatePlayerMonthLog(
+            title=f"{context.leader} {fate}, and nobody is left to lead the war band.",
+            kind=PlayerMonthLog.KindChoices.KIND_SAVEGAME_ENDED,
+            month=context.month,
+            faction=context.player_faction,
+        )
 
     if context.leader_was_killed:
         fate = f"{context.leader} led them, and he fell in the fighting."
@@ -98,7 +119,7 @@ def handle_log_leader_succession(*, context: FactionLeaderSucceeded) -> Command:
     """
     fate = "fell in the fighting" if context.leader_was_killed else "was taken prisoner"
 
-    # The instances rather than their ids, for the reason handle_log_rival_defeat gives
+    # The instances rather than their ids, for the reason handle_log_faction_defeat gives
     if context.faction == context.player_faction:
         title = f"{context.fallen_leader} {fate}. {context.successor} leads the war band now."
         body = "He had the most renown of the men left, and they follow him."
@@ -126,7 +147,7 @@ def handle_log_leader_raised_from_fyrd(*, context: FactionLeaderRaisedFromFyrd) 
     """
     fate = "fell in the fighting" if context.leader_was_killed else "was taken prisoner"
 
-    # The instances rather than their ids, for the reason handle_log_rival_defeat gives
+    # The instances rather than their ids, for the reason handle_log_faction_defeat gives
     if context.faction == context.player_faction:
         title = f"{context.fallen_leader} {fate}. The fyrd has raised {context.successor} to lead the war band."
         body = "Nobody was left in the war band to follow, so the men of the land sent one of their own."

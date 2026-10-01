@@ -21,6 +21,7 @@ from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     DefeatFactionOfLostLeader,
     EarnMoneyFromBuildings,
+    LetCaptivesFleeOverfullCells,
     OccupyFaction,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
@@ -28,6 +29,7 @@ from apps.warband.faction.messages.commands.faction import (
     SetNewLeaderWarrior,
 )
 from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
     FactionFyrdReserveReplenished,
     FactionLeaderRaisedFromFyrd,
     FactionLeaderSucceeded,
@@ -194,6 +196,35 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | N
         new_recruits=new_recruits,
         month=context.month,
     )
+
+
+@message_registry.register_command(command=LetCaptivesFleeOverfullCells)
+def handle_let_captives_flee_overfull_cells(*, context: LetCaptivesFleeOverfullCells) -> list[Event] | None:
+    """
+    The men there was no room for are gone by morning.
+
+    Picked at random, because the player had the whole month to choose: whoever he wanted to keep he
+    could have taken into the war band, and whoever he wanted silver for he could have sold. A captured
+    leader is drawn like anyone else - his faction fell the moment he was taken, so his flight changes
+    nothing about it.
+
+    The draw is ordered by id first, so a seeded game picks the same men every time it is replayed.
+    Each man leaves through the same filtered delete recruiting and selling use, and only a man that
+    delete actually removed is reported fled.
+    """
+    over_cell_places = context.faction.get_captives_over_cell_places()
+
+    if over_cell_places == 0:
+        return None
+
+    held_captives = list(context.faction.captured_warriors.order_by("id"))
+    cell_places = context.faction.town.get_cell_places()
+
+    return [
+        CaptiveFledOverfullCells(faction=context.faction, warrior=warrior, cell_places=cell_places, month=context.month)
+        for warrior in random.sample(held_captives, over_cell_places)
+        if Faction.objects.remove_captive(faction=context.faction, warrior=warrior)
+    ] or None
 
 
 def _get_hall_upgrade_offer(*, town: Town, savegame: Savegame) -> HallUpgradeOffer | None:

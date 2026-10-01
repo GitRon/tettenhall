@@ -54,7 +54,7 @@ filter itself:
 
 | Component | For |
 |---|---|
-| `warrior/components/warrior_attribute.html` | one attribute: `value`, `baseline`, `knowledge` |
+| `<c-warrior.attribute>` (`cotton/warrior/attribute.html`) | one attribute: `value`, `baseline`, `knowledge` |
 | `<c-warrior.gauge>` (`cotton/warrior/gauge.html`) | a current/maximum pair: `current`, `maximum`, `baseline`, `knowledge`, optionally `peak` |
 
 The gauge's fuzzed form buckets where the man stands *now* against the ceiling a typical man of his kind
@@ -96,7 +96,7 @@ Named here, because an unnamed exception is how the next seam opens.
   morale and gear, and that is deliberate: **a fight is scouting.** The player is standing across from
   the man, and a battle whose state he cannot read is not a battle he can make decisions in. Left
   ungated on purpose, which is the only thing separating it from an oversight. The gear sits behind one
-  disclosure per war band (`skirmish/faction/components/faction_box.html`), which is a matter of how
+  disclosure per war band (`<c-skirmish.faction-box>`), which is a matter of how
   often it is worth reading and not of what may be known: it is exact, unfuzzed and one click away.
 
 ## If a scouting action is ever added

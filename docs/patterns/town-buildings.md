@@ -46,7 +46,7 @@ holding that level's numbers:
 - **A number that differs per warrior or per item is a column, not a constant.** `Warrior.strength_baseline`
   is the archetype mean a man's strength is measured against, written by the generator that drew him: one
   constant on the attack service cannot sit on three archetype means at once.
-- **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots + how much a feast mends, weaponsmith →
+- **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots + how much a feast mends + cell places, weaponsmith →
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling, fortification →
   the `fortification_strength` a skirmish staged by a march on the town opens with (0 / 20 / 35 / 50). The
   fortification's defence bonus is not a lever: it is `SkirmishActionService.FORTIFICATION_DEFENSE_MULTIPLIER`,
@@ -98,6 +98,16 @@ holding that level's numbers:
   `handle_throw_feast` so a double-click is charged once. The mending goes through
   `ChangeWarriorMaxMorale(restores_toward_peak=True)`: every other raise of the ceiling moves the mark
   along with it, every cut leaves the mark standing.
+- **The cells are the hall's, and they are counted when the month turns** (#417). A level's `CELL_PLACES`
+  (1 / 2 / 3 / 4) is how many prisoners the town still holds once the month has turned. A capture is never
+  refused for want of room, so cells may stand over their places during a month; then
+  `handle_let_captives_flee_overfull_cells`, off `FactionMonthPrepared`, lets exactly the excess go, picked
+  at random from the held men ordered by id, so a seeded game replays. A fled man leaves the game the way an
+  enslaved one does, without the silver. It is declared before the warriors' month, so a man who got away is
+  not also healed by the sanctuary that held him. The cap limits the stock of trained men a war band sits
+  on, not how many it takes in: men taken this month can all be recruited this month. `Town.get_cell_places`
+  and `Faction.get_captives_over_cell_places` are the one count behind the flight, the Captives page and
+  the Month page row, for every faction alike.
 - **Every faction lives on its town.** The hall's revenue is the one income in the game, for the player
   and his rivals alike: `handle_earn_money_from_buildings` hangs off `FactionMonthPrepared`, and pays
   `Faction.get_monthly_income` for the men on the payroll. That is what makes a rival's strength

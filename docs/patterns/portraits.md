@@ -40,7 +40,7 @@ Hair colours are the one place outside the `@theme` block that names a colour, s
 
 ## Crops
 
-`warrior/components/warrior_portrait.html` takes `crop`:
+`<c-warrior.portrait>` takes `crop`, `card` unless the caller says otherwise:
 
 - `card` - head and neck in the 40px slot of every list. One crop box for all faces. At that size colour
   carries almost the whole signal and the face almost none.

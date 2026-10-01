@@ -26,7 +26,8 @@
     {# media query gets to decide - see docs/patterns/responsive-layout.md. #}
     <div class="grid grid-cols-1 items-stretch gap-7 md:grid-cols-3">
         <div>
-            {% include 'skirmish/faction/components/faction_box.html' with faction=attacking_faction warrior_list=skirmish.attacking_warriors.all is_player=attacker_is_player %}
+            <c-skirmish.faction-box :faction="attacking_faction" :warrior_list="skirmish.attacking_warriors.all" :is_player="attacker_is_player"
+                                 :skirmish="skirmish" :skirmish_is_decided="skirmish_is_decided" />
         </div>
         <div>
             <div class="box-border bg-raised p-6">
@@ -65,7 +66,8 @@
             </div>
         </div>
         <div>
-            {% include 'skirmish/faction/components/faction_box.html' with faction=defending_faction warrior_list=skirmish.defending_warriors.all is_player=defender_is_player %}
+            <c-skirmish.faction-box :faction="defending_faction" :warrior_list="skirmish.defending_warriors.all" :is_player="defender_is_player"
+                                 :skirmish="skirmish" :skirmish_is_decided="skirmish_is_decided" />
         </div>
     </div>
 {% endblock content %}

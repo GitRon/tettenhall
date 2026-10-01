@@ -16,7 +16,7 @@ def delete_quest_rows_without_a_new_meaning(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warband', '0030_the_fyrd_raises_a_leader'),
+        ('warband', '0031_a_full_cell_lets_a_captive_go'),
     ]
 
     operations = [
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='playermonthlog',
             name='kind',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Salaries unpaid'), (2, 'Warrior walked out'), (3, 'Salaries paid'), (4, 'Building income'), (5, 'Fyrd growth'), (6, 'Skill upgrade'), (7, 'Morale recovered'), (8, 'Wounds healed'), (10, 'Pub restocked'), (11, 'Shop restocked'), (12, 'Incident'), (13, 'Warrior dismissed'), (14, 'Morale lost over unpaid wages'), (15, 'Savegame ended'), (16, 'Rival defeated'), (17, 'Nickname earned'), (18, 'Warrior injured'), (19, 'Feast thrown'), (20, 'Warrior changed'), (21, 'Harvest'), (22, 'Leader succeeded'), (23, 'Leader raised from the fyrd'), (24, 'Quest returned')], verbose_name='Kind'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Salaries unpaid'), (2, 'Warrior walked out'), (3, 'Salaries paid'), (4, 'Building income'), (5, 'Fyrd growth'), (6, 'Skill upgrade'), (7, 'Morale recovered'), (8, 'Wounds healed'), (10, 'Pub restocked'), (11, 'Shop restocked'), (12, 'Incident'), (13, 'Warrior dismissed'), (14, 'Morale lost over unpaid wages'), (15, 'Savegame ended'), (16, 'Rival defeated'), (17, 'Nickname earned'), (18, 'Warrior injured'), (19, 'Feast thrown'), (20, 'Warrior changed'), (21, 'Harvest'), (22, 'Leader succeeded'), (23, 'Leader raised from the fyrd'), (24, 'Captive fled'), (25, 'Quest returned')], verbose_name='Kind'),
         ),
         migrations.CreateModel(
             name='Quest',

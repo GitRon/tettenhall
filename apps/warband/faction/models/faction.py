@@ -153,6 +153,15 @@ class Faction(models.Model):
         """
         return self.captured_warriors.select_related("weapon__type", "armor__type").with_portrait()
 
+    def get_captives_over_cell_places(self) -> int:
+        """
+        How many prisoners stand above what the town's cells hold, and so flee when the month turns.
+
+        Zero, never less, at or under the places. Asked by the month-end flight and by the pages that
+        warn about it beforehand, so the count the player is warned with is the count that goes.
+        """
+        return max(0, self.captured_warriors.count() - self.town.get_cell_places())
+
     def get_pub_stock(self) -> QuerySet:
         """
         The men standing in this faction's pub, with the gear the row names along for it, and the

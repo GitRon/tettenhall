@@ -47,3 +47,9 @@ def test_get_fortification_strength_is_the_wall_standing():
     town = TownFactory.build(fortification=Town.FortificationChoices.FORTIFICATION_LARGE)
 
     assert town.get_fortification_strength() == 50
+
+
+def test_get_cell_places_is_the_hall_standing():
+    town = TownFactory.build(hall=Town.HallChoices.HALL_MEDIUM)
+
+    assert town.get_cell_places() == 3

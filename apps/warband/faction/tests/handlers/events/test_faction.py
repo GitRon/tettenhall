@@ -1,6 +1,7 @@
 from apps.warband.faction.handlers.events.faction import (
     handle_create_player_faction_for_new_savegame,
     handle_earn_money_from_buildings_for_new_month,
+    handle_let_captives_flee_overfull_cells_for_new_month,
     handle_pay_monthly_warrior_salaries_for_new_month,
     handle_plan_faction_month_for_new_month,
     handle_prepare_faction_warriors_for_new_month,
@@ -10,6 +11,7 @@ from apps.warband.faction.handlers.events.faction import (
 from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     EarnMoneyFromBuildings,
+    LetCaptivesFleeOverfullCells,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
@@ -112,3 +114,13 @@ def test_handle_prepare_faction_warriors_for_new_month_maps_to_command():
     )
 
     assert result == PrepareFactionWarriorsForMonth(faction=faction, month=7)
+
+
+def test_handle_let_captives_flee_overfull_cells_for_new_month_maps_to_command():
+    faction = FactionFactory.build()
+
+    result = handle_let_captives_flee_overfull_cells_for_new_month(
+        context=FactionMonthPrepared(faction=faction, current_month=7)
+    )
+
+    assert result == LetCaptivesFleeOverfullCells(faction=faction, month=7)

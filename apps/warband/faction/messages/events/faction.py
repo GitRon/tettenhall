@@ -90,6 +90,20 @@ class FactionFyrdReserveReplenished(Event):
 
 
 @dataclass(kw_only=True)
+class CaptiveFledOverfullCells(Event):
+    """
+    One prisoner got away because the cells he was meant to be in were full.
+
+    The places ride along so the line can say why, without the log handler reading the town.
+    """
+
+    faction: Faction
+    warrior: Warrior
+    cell_places: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class FyrdReserveChanged(Event):
     """
     The reserve moved by something other than the monthly roll.
