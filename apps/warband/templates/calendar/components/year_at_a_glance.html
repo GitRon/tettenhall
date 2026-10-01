@@ -12,14 +12,14 @@
 {# month the other can see. #}
 <div class="mt-3 border-t border-rule pt-3">
     <div class="flex flex-col gap-y-2 md:hidden">
-        {% include 'calendar/components/calendar_month_effects.html' with heading="Next" calendar_month=year_at_a_glance.next.calendar_month %}
+        <c-calendar.month-effects heading="Next" :calendar_month="year_at_a_glance.next.calendar_month" />
 
         <details>
             <summary class="cursor-pointer font-mono text-label uppercase tracking-label text-ink-muted">The whole year</summary>
             <ol class="mt-3 flex list-none flex-col gap-y-3 p-0">
                 {% for calendar_month in year_at_a_glance.months %}
                     <li>
-                        {% include 'calendar/components/calendar_month_effects.html' with heading=None %}
+                        <c-calendar.month-effects :calendar_month="calendar_month" />
                     </li>
                 {% endfor %}
             </ol>
@@ -51,7 +51,7 @@
                 <div class="m-auto max-w-sm border border-rule-strong bg-ground p-[15px] text-ink-muted"
                      id="calendar-month-{{ forloop.counter }}"
                      popover>
-                    {% include 'calendar/components/calendar_month_effects.html' with heading=None %}
+                    <c-calendar.month-effects :calendar_month="calendar_month" />
                 </div>
             </li>
         {% endfor %}

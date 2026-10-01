@@ -30,6 +30,8 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-common.svg-icon>` | `apps.common` | A drawing from the hand-drawn icon set - see [visual identity](visual-identity.md#the-icons) |
 | `<c-common.box-header>` | `apps.common` | A panel's heading, as the slot |
 | `<c-common.card>` | `apps.common` | The card surface: the body as the slot, optional `header` and `footer` bands as named slots - see [visual identity](visual-identity.md#surface) |
+| `<c-calendar.month-effects>` | `apps.warband` | One month's name, season and the effects it has in force, with an optional `heading` before the name |
+| `<c-calendar.march-cost-row>` | `apps.warband` | The table row pricing a march in the month the form prices it with, on the attack and the quest page |
 | `<c-finance.wage-bill-warning>` | `apps.warband` | The alert for a purse that cannot cover next month's wages, silent while it can; `show_finance_link` adds the way to the books |
 | `<c-navigation.section-nav>` | `apps.warband` | The four sections of the game, `current` marked; a page whose section the url does not say passes its own - see [navigation](navigation.md) |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
