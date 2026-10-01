@@ -89,9 +89,13 @@ class Quest:
         Whether this quest can be offered to this faction at all: only when it has the men.
 
         Counted over the living roster rather than over the men free this month, because the quest is
-        offered as the month opens, before anyone has been sent anywhere.
+        offered as the month opens, before anyone has been sent anywhere. Never fewer than one: a
+        faction in play has its leader, and the first board is drawn on "NewFactionCreated", in the
+        same batch that writes his row and before it lands.
         """
-        return Warrior.objects.filter_faction(faction_id=faction.id).exclude_dead().count() >= cls.MIN_MEN
+        living_men = Warrior.objects.filter_faction(faction_id=faction.id).exclude_dead().count()
+
+        return max(living_men, 1) >= cls.MIN_MEN
 
     @classmethod
     def get_success_factor(cls, *, warriors: list[Warrior]) -> float:

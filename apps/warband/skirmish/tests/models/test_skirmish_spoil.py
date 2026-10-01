@@ -8,11 +8,11 @@ from apps.warband.skirmish.tests.factories.skirmish_spoil import SkirmishSpoilFa
 
 def test_str_names_the_kind_and_the_fight():
     spoil = SkirmishSpoilFactory.build(
-        kind=SkirmishSpoil.KindChoices.KIND_QUEST_REWARD,
+        kind=SkirmishSpoil.KindChoices.KIND_SILVER_LOOTED,
         skirmish=SkirmishFactory.build(name="Raid on Tamworth"),
     )
 
-    assert str(spoil) == "Quest reward (Raid on Tamworth)"
+    assert str(spoil) == "Silver looted (Raid on Tamworth)"
 
 
 @pytest.mark.django_db

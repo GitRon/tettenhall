@@ -6,6 +6,7 @@ from django.urls import reverse
 from apps.warband.account.tests.factories.user import UserFactory
 from apps.warband.faction.models import Culture, Faction
 from apps.warband.item.models.item import Item
+from apps.warband.quest.models.quest import Quest
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 
@@ -34,9 +35,6 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     with (
         # Draws the number of rival factions and the fyrd reserve of every faction
         mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3),
-        # Draws the number of bulletin board quests per faction. Shop items and pub mercenaries are
-        # not drawn at all any more - the market and the hall decide those.
-        mock.patch("apps.warband.faction.handlers.commands.faction.random.randrange", return_value=2),
     ):
         response = logged_in_client.post(
             reverse("warband:savegame-create-view"),
@@ -54,7 +52,8 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     assert savegame.player_faction.leader is not None
     # Three stalls in a town without a market of its own
     assert savegame.player_faction.available_items.count() == 3
-    assert savegame.player_faction.available_quests.count() == 2
+    # One odd job and one errand on the board. Which ones is drawn, how many is not
+    assert Quest.objects.filter(faction=savegame.player_faction).count() == 2
     # A weapon and a piece of armour in the player's stores, and nothing lying in a rival's
     stored_items = Item.objects.filter(
         savegame=savegame, owner__isnull=False, warrior_weapon__isnull=True, warrior_armor__isnull=True

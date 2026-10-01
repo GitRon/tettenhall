@@ -4,6 +4,7 @@ from apps.warband.faction.handlers.commands.warrior import (
     handle_add_warrior_to_pub,
     handle_draft_warrior_from_fyrd,
     handle_recruit_pub_mercenary,
+    handle_recruit_warrior_from_quest,
     handle_restock_pub_mercenaries,
     handle_warrior_monthly_salaries,
 )
@@ -12,6 +13,7 @@ from apps.warband.faction.messages.commands.warrior import (
     DraftWarriorFromFyrd,
     PayMonthlyWarriorSalaries,
     RecruitPubMercenary,
+    RecruitWarriorFromQuest,
     RestockTownMercenaries,
 )
 from apps.warband.faction.messages.events.faction import (
@@ -33,6 +35,7 @@ from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
+from apps.warband.warrior.services.generators.warrior.champion import ChampionWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
 
@@ -207,6 +210,20 @@ def test_handle_add_warrior_to_pub_stamps_the_month_he_got_there():
 
     returning_veteran.refresh_from_db()
     assert returning_veteran.pub_arrival_month == 9
+
+
+@pytest.mark.django_db
+def test_handle_recruit_warrior_from_quest():
+    """Onto the roster for nothing, drawn by the generator the quest named."""
+    faction = FactionFactory()
+
+    result = handle_recruit_warrior_from_quest(
+        context=RecruitWarriorFromQuest(faction=faction, generator_class=ChampionWarriorGenerator, month=3)
+    )
+
+    warrior = Warrior.objects.get(faction=faction)
+    assert result == WarriorRecruited(faction=faction, warrior=warrior, recruitment_price=0, month=3)
+    assert warrior.strength_baseline == ChampionWarriorGenerator.STATS_MU
 
 
 @pytest.mark.django_db

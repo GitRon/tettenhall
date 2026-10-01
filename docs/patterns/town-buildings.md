@@ -50,7 +50,7 @@ holding that level's numbers:
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling, fortification →
   the `fortification_strength` a skirmish staged by a march on the town opens with (0 / 20 / 35 / 50). The
   fortification's defence bonus is not a lever: it is `SkirmishActionService.FORTIFICATION_DEFENSE_MULTIPLIER`,
-  a constant of the mechanic. The quest path never reads a town — a quest fight's wall is the quest's own.
+  a constant of the mechanic.
 - **Level 0 is a baseline, not "no effect"**: a town without a hall still earns a little, and one without
   a market still holds three stalls. The `No…` class names describe the building, not the effect.
   **The fortification is the one exception**: a town without a wall is fought in the open, so

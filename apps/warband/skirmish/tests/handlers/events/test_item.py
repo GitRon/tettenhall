@@ -24,9 +24,6 @@ def test_handle_distribute_loot_hands_items_and_silver_of_every_incapacitated_wa
             incapacitated_warriors=[dead_enemy_warrior],
             defeated_unconscious_warriors=[],
             victorious_healthy_warriors=[],
-            quest_name="Raid",
-            quest_loot=250,
-            quest_contract=None,
             month=3,
         )
     )
@@ -52,9 +49,6 @@ def test_handle_distribute_loot_distributes_nothing_without_incapacitated_warrio
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[],
             victorious_healthy_warriors=[],
-            quest_name="Raid",
-            quest_loot=250,
-            quest_contract=None,
             month=3,
         )
     )

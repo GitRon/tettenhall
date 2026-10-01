@@ -6,9 +6,7 @@ from apps.warband.calendar.projections.year import YearAtAGlance
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
-from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.savegame.models.savegame import Savegame
-from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.training.tests.factories.training import TrainingFactory
 
@@ -176,8 +174,7 @@ def test_dashboard_view_lists_no_open_questions_without_a_player_faction(
 def test_dashboard_view_warns_about_a_wage_bill_it_cannot_pay(logged_in_client, current_savegame):
     """
     The warning lives in a branch of the template nothing else renders, and it reverses a url and
-    walks two lists inside it - the same shape that answered 500 in the quest case below. A test
-    without a shortfall renders none of it.
+    walks two lists inside it. A test without a shortfall renders none of it.
     """
     WarriorFactory(faction=current_savegame.player_faction, monthly_salary=150, unpaid_months=2)
 
@@ -185,31 +182,6 @@ def test_dashboard_view_warns_about_a_wage_bill_it_cannot_pay(logged_in_client, 
 
     assert response.status_code == 200
     assert response.context["wage_bill_payroll"].is_short is True
-
-
-@pytest.mark.django_db
-def test_dashboard_view_shows_an_active_quest_with_a_skirmish(logged_in_client, current_savegame):
-    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
-    quest_contract = QuestContractFactory(faction=current_savegame.player_faction, skirmish=skirmish)
-    current_savegame.player_faction.active_quests.add(quest_contract)
-
-    response = logged_in_client.get(reverse("warband:dashboard-view"))
-
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
-def test_dashboard_view_shows_an_active_quest_without_a_skirmish(logged_in_client, current_savegame):
-    """
-    QuestContract.skirmish is nullable and cleared on delete, and the template reverses the fight
-    url from it - with an empty id that raises NoReverseMatch, so the dashboard answered 500.
-    """
-    quest_contract = QuestContractFactory(faction=current_savegame.player_faction, skirmish=None)
-    current_savegame.player_faction.active_quests.add(quest_contract)
-
-    response = logged_in_client.get(reverse("warband:dashboard-view"))
-
-    assert response.status_code == 200
 
 
 @pytest.mark.django_db

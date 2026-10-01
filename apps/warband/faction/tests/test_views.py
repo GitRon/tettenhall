@@ -13,7 +13,10 @@ from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.quest.projections.board_quest import BoardQuest
+from apps.warband.quest.quests.harvest_hands import HarvestHands
 from apps.warband.quest.tests.factories.quest import QuestFactory
+from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -225,7 +228,7 @@ def test_faction_detail_view_says_when_the_rivals_own_war_band_is_committed(
 ):
     """
     The other side of "every warrior fights once a month". His war band is free - he has not marched -
-    but theirs is spoken for, which a quest accepted against them does as surely as a fight does.
+    but theirs is spoken for by the fight they are standing in.
     """
     rival_faction = FactionFactory(savegame=current_savegame)
     committed_defender = WarriorFactory(faction=rival_faction)
@@ -1310,10 +1313,8 @@ def test_recruit_pub_mercenary_view_keeps_him_through_the_monthly_restock(
     therefore deleted at the start of the next month, after he has been paid for and equipped.
     """
     TransactionFactory(faction=current_savegame.player_faction, amount=500)
-    # The month chain trains the current training and restocks the bulletin board, and a quest needs
-    # somebody to target
+    # The month chain trains the current training
     TrainingFactory(faction=current_savegame.player_faction)
-    FactionFactory(savegame=current_savegame)
     logged_in_client.post(reverse("warband:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
 
     response = logged_in_client.post(
@@ -1680,45 +1681,60 @@ def test_town_pub_view_reads_the_faction_off_the_savegame(logged_in_client, save
 
 
 @pytest.mark.django_db
-def test_town_board_view_offers_only_quests_that_can_still_be_taken_on(logged_in_client, current_savegame):
+def test_town_board_view_offers_only_this_month_s_quests(logged_in_client, current_savegame):
     """
-    Scoped the same way QuestAcceptView resolves its quest, so the card and the page it leads to
-    cannot disagree - the opposition is the target's own war band, and one the player has beaten inside
-    this month fields nobody.
+    Scoped the same way QuestAcceptView resolves its quest, so a row and the page its "Send men" link
+    leads to cannot disagree. Each offer comes with the catalogue entry that says what it asks for.
     """
-    fightable_quest = QuestFactory(target_faction__savegame=current_savegame)
-    WarriorFactory(faction=fightable_quest.target_faction)
-    flattened_quest = QuestFactory(target_faction__savegame=current_savegame)
-    WarriorFactory(faction=flattened_quest.target_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
-    current_savegame.player_faction.available_quests.add(fightable_quest, flattened_quest)
+    month = current_savegame.current_month
+    this_month_s_quest = QuestFactory(faction=current_savegame.player_faction, month=month)
+    QuestFactory(faction=current_savegame.player_faction, month=month + 1)
 
     response = logged_in_client.get(reverse("warband:town-board-view"))
 
     assert response.status_code == 200
-    assert list(response.context["quest_list"]) == [fightable_quest]
+    assert response.context["quest_list"] == [BoardQuest(quest=this_month_s_quest, entry=HarvestHands)]
 
 
 @pytest.mark.django_db
-def test_town_board_view_brings_the_target_faction_along(logged_in_client, current_savegame):
+def test_town_board_view_lists_the_men_away_this_month(logged_in_client, current_savegame):
+    month = current_savegame.current_month
+    away_contract = QuestContractFactory(
+        faction=current_savegame.player_faction,
+        accepted_in_month=month,
+        assigned_warriors=[WarriorFactory(faction=current_savegame.player_faction)],
+    )
+    QuestContractFactory(faction=current_savegame.player_faction, accepted_in_month=month + 1)
+
+    response = logged_in_client.get(reverse("warband:town-board-view"))
+
+    assert response.status_code == 200
+    assert list(response.context["away_list"]) == [away_contract]
+
+
+@pytest.mark.django_db
+def test_town_board_view_brings_the_men_away_along(logged_in_client, current_savegame):
     """
-    Every row names the faction the quest marches on, which is a query per quest if it is not joined.
-    Counted over the whole request, for the reason the roster's gear test gives.
+    Every row of the away list names the men sent, which is a query per contract if they are not
+    fetched together. Counted over the whole request, for the reason the roster's gear test gives.
     """
 
-    def pin_a_quest() -> None:
-        quest = QuestFactory(target_faction__savegame=current_savegame)
-        WarriorFactory(faction=quest.target_faction)
-        current_savegame.player_faction.available_quests.add(quest)
+    def send_men_away() -> None:
+        QuestContractFactory(
+            faction=current_savegame.player_faction,
+            accepted_in_month=current_savegame.current_month,
+            assigned_warriors=[WarriorFactory(faction=current_savegame.player_faction)],
+        )
 
     def count_queries() -> int:
         with CaptureQueriesContext(connection) as captured_queries:
             logged_in_client.get(reverse("warband:town-board-view"))
         return len(captured_queries)
 
-    pin_a_quest()
+    send_men_away()
     queries_for_one = count_queries()
-    pin_a_quest()
-    pin_a_quest()
+    send_men_away()
+    send_men_away()
 
     assert count_queries() == queries_for_one
 

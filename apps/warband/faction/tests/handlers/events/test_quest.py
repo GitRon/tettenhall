@@ -1,33 +1,45 @@
-from apps.warband.faction.handlers.events.quest import handle_offer_new_quests_on_bulletin_board
-from apps.warband.faction.messages.commands.quest import OfferNewQuestsOnBulletinBoard
-from apps.warband.faction.messages.events.faction import NewFactionCreated
+import pytest
+
+from apps.warband.faction.handlers.events.quest import handle_quest_warrior
+from apps.warband.faction.messages.commands.warrior import RecruitWarriorFromQuest
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.month.messages.events.month import PlayerMonthPrepared
-from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.quest.messages.events.quest_contract import QuestContractReturned
+from apps.warband.quest.quests.fetch_a_good_warrior import FetchAGoodWarrior
+from apps.warband.quest.quests.harvest_hands import HarvestHands
+from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.services.generators.warrior.champion import ChampionWarriorGenerator
 
 
-def test_handle_offer_new_quests_on_bulletin_board_maps_to_command():
-    """
-    Pure mapping handler: it only reads from the message, so built instances are enough and no
-    database is needed.
-    """
-    faction = FactionFactory.build()
-    context = PlayerMonthPrepared(faction=faction, savegame=SavegameFactory.build(), current_month=7)
+@pytest.mark.django_db
+def test_handle_quest_warrior_brings_the_man_home():
+    faction = FactionFactory()
 
-    result = handle_offer_new_quests_on_bulletin_board(context=context)
+    result = handle_quest_warrior(
+        context=QuestContractReturned(
+            faction=faction,
+            quest_contract=QuestContractFactory(faction=faction),
+            warriors=[WarriorFactory(faction=faction)],
+            outcome=FetchAGoodWarrior.OUTCOMES[0],
+            month=3,
+        )
+    )
 
-    assert result == OfferNewQuestsOnBulletinBoard(faction=faction, month=7)
+    assert result == RecruitWarriorFromQuest(faction=faction, generator_class=ChampionWarriorGenerator, month=3)
 
 
-def test_handle_offer_new_quests_on_bulletin_board_maps_a_created_faction_to_the_same_command():
-    """
-    The handler's second registration, which fires for every faction the bootstrap makes. Both
-    messages have to carry "faction" and "current_month" for it to read them, and one test per
-    registered message is what pins that.
-    """
-    faction = FactionFactory.build()
-    context = NewFactionCreated(faction=faction, current_month=7, is_player=True)
+@pytest.mark.django_db
+def test_handle_quest_warrior_for_an_outcome_bringing_nobody():
+    faction = FactionFactory()
 
-    result = handle_offer_new_quests_on_bulletin_board(context=context)
+    result = handle_quest_warrior(
+        context=QuestContractReturned(
+            faction=faction,
+            quest_contract=QuestContractFactory(faction=faction),
+            warriors=[WarriorFactory(faction=faction)],
+            outcome=HarvestHands.OUTCOMES[0],
+            month=3,
+        )
+    )
 
-    assert result == OfferNewQuestsOnBulletinBoard(faction=faction, month=7)
+    assert result is None

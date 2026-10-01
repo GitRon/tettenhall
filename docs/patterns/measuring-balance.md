@@ -45,16 +45,18 @@ refusal each view asks first (`scripts/playtest/player.py`):
    best men (`plan_gear_handout`);
 6. one building is raised: the first of hall, sanctuary, weaponsmith and marketplace that may be upgraded
    and still leaves the 150;
-7. the band marches on the rival with the fewest men on their feet, if the policy says so, and shrinks
+7. the month's odd job is sent the fewest men it takes, the weakest at its attribute first and never
+   the leader;
+8. the band marches on the rival with the fewest men on their feet, if the policy says so, and shrinks
    until the march is affordable;
-8. the fight is played out round by round;
-9. every town with nobody left to hold it is ridden into;
-10. the month is finished.
+9. the fight is played out round by round;
+10. every town with nobody left to hold it is ridden into;
+11. the month is finished.
 
 The player's men fight, shop and arm the way a rival's do: each one takes the action the game's own
 decision service picks for him, and the faction buys and hands out by the rivals' rules. The harness brings
-no judgement of its own to either, so a change to how the AI fights or spends moves both sides. It uses no
-quests, no Rally or Assault by choice and no feasts. A question that turns on one of those needs a policy
+no judgement of its own to either, so a change to how the AI fights or spends moves both sides. It sends men
+on no quest but the odd job, uses no Rally or Assault by choice and throws no feasts. A question that turns on one of those needs a policy
 that uses it.
 
 **Policies** differ only in when the band marches:
@@ -75,7 +77,8 @@ last case the reason goes into `stop_reason` instead of the loop:
 Each game in the JSON has its seed, its policy, its outcome and the number of months played. It also has:
 
 - fights won and lost, and marches held back by the policy or by the purse;
-- how many men were drafted, hired and taken in from the cells, and how many towns were occupied;
+- how many men were drafted, hired, taken in from the cells and sent on a quest, and how many towns were
+  occupied;
 - how many items the player bought, and how many equips the hand-out made;
 - successions on either side, and apart from them the leaders the fyrd raised when nobody was left on the
   roster;

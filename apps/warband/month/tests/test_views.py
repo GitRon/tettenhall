@@ -17,6 +17,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+from apps.warband.quest.models.quest import Quest
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -111,8 +112,6 @@ def test_finish_month_view_keeps_an_unpaid_warriors_morale_down(logged_in_client
     He starts below his maximum on purpose. At full morale the sweep would pass him over anyway and
     the test would hold whichever way round the two ran.
     """
-    # The bulletin board restocks as part of the month and a quest needs somebody to be against
-    FactionFactory(savegame=current_savegame)
     warrior = WarriorFactory(
         faction=current_savegame.player_faction, current_morale=10, max_morale=20, monthly_salary=500
     )
@@ -137,8 +136,6 @@ def test_finish_month_view_bills_the_wages_before_the_buildings_pay_out(logged_i
     today's silver, with the income funding the month after - and a change that let the income land
     early would silently turn every one of those warnings into a false alarm.
     """
-    # The bulletin board restocks as part of the month and a quest needs somebody to be against
-    FactionFactory(savegame=current_savegame)
     warrior = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=40)
 
     response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
@@ -346,37 +343,21 @@ def test_finish_month_view_without_an_active_savegame(logged_in_client):
 
 
 @pytest.mark.django_db
-def test_finish_month_view_still_offers_a_rival_the_player_fought_last_month(logged_in_client, current_savegame):
+def test_finish_month_view_pins_the_new_month_s_quests_to_the_board(logged_in_client, current_savegame):
     """
     Flow test, because what it pins is an ordering inside one queue run.
 
-    Quest targets are drawn through "attackable_targets", which now asks whether a faction has anybody
-    who is not already in a fight - and "every warrior fights once a month" reads that against a month.
-    "handle_prepare_month" increments and saves the month before it raises anything, so generation asks
-    about the new one and last month's fights are behind it. Were it to ask about the old month instead,
-    every rival the player had fought would drop off the board it is drawing, and this savegame's only
-    rival would leave it empty.
+    The board lists the offers of the month the savegame stands in. "handle_prepare_month" increments
+    and saves the month before it raises anything, so the offers drawn on the way are dated to the new
+    one. Were they dated to the month that ended, the board would stand empty all month.
     """
     TrainingFactory(faction=current_savegame.player_faction)
-    rival_faction = FactionFactory(savegame=current_savegame)
-    veteran_defender = WarriorFactory(faction=rival_faction, savegame=current_savegame)
-    # A fight that is over, in the month about to end
-    skirmish = SkirmishFactory(
-        attacking_faction=current_savegame.player_faction,
-        defending_faction=rival_faction,
-        victorious_faction=current_savegame.player_faction,
-        month=current_savegame.current_month,
-    )
-    skirmish.defending_warriors.add(veteran_defender)
+    WarriorFactory(faction=current_savegame.player_faction)
 
     response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
-    # A set because the board draws one to three cards: what matters is that the rival is on it at all,
-    # and that nothing else is - an empty board is what asking about the old month would have produced
-    assert set(current_savegame.player_faction.available_quests.values_list("target_faction", flat=True)) == {
-        rival_faction.id
-    }
+    assert set(Quest.objects.filter(faction=current_savegame.player_faction).values_list("month", flat=True)) == {2}
 
 
 def _pub_mercenary(*, faction, monthly_salary: int = 100) -> Warrior:
