@@ -22,6 +22,8 @@ from django.conf import settings
 from django.test import override_settings
 
 from apps.common.tests.html import render_component
+from apps.warband.calendar.months.summer import Eosturmonath
+from apps.warband.calendar.months.winter import Blotmonath
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.projections.payroll import Payroll
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -82,6 +84,17 @@ RENDER_ROWS = {
             '<c-common.card><c-slot name="header">Seax</c-slot> <c-slot name="footer">Buy</c-slot></c-common.card>',
             {},
         ),
+    ],
+    "calendar.month-effects": [
+        ('<c-calendar.month-effects :calendar_month="calendar_month" />', {"calendar_month": Eosturmonath}),
+        (
+            '<c-calendar.month-effects heading="Next" :calendar_month="calendar_month" />',
+            {"calendar_month": Blotmonath},
+        ),
+    ],
+    "calendar.march-cost-row": [
+        ('<c-calendar.march-cost-row :calendar_month="calendar_month" />', {"calendar_month": Eosturmonath}),
+        ('<c-calendar.march-cost-row :calendar_month="calendar_month" />', {"calendar_month": Blotmonath}),
     ],
     "finance.wage-bill-warning": [
         ('<c-finance.wage-bill-warning :payroll="payroll" />', {"payroll": _payroll(budget=0)}),

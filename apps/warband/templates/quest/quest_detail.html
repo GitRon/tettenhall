@@ -27,7 +27,7 @@
                 <td>Fortification</td>
                 <td>{{ object.fortification_strength }}</td>
             </tr>
-            {% include 'calendar/components/march_cost_row.html' with calendar_month=form.calendar_month %}
+            <c-calendar.march-cost-row :calendar_month="form.calendar_month" />
             <tr>
                 <td colspan="2">{% crispy form %}</td>
             </tr>
