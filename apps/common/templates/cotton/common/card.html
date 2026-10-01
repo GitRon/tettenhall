@@ -1,0 +1,19 @@
+<c-vars id="" class="" header="" footer="" />
+{# The one card surface: "ground" inside a 1px "rule-strong", with "rule" hairlines between its bands - #}
+{# see docs/patterns/visual-identity.md. Phone first: the padding halves below "md". #}
+{# "id" is for an htmx target that swaps the whole card; "class" carries the outer spacing and hooks #}
+{# such as "group", never a surface of its own. #}
+{# The header and footer are bands with a rule between them and the body. The footer holds the row #}
+{# actions, set right and wrapping. A band without content is left out, rule and all - "strip", because #}
+{# the line breaks between two named slots arrive as a default slot of their own. #}
+<div {% if id %}id="{{ id }}"{% endif %} class="box-border border border-rule-strong bg-ground text-ink-muted {{ class }}">
+    {% if header.strip %}
+        <div class="border-b border-rule px-[15px] py-[15px] md:px-[30px]">{{ header }}</div>
+    {% endif %}
+    {% if slot.strip %}
+        <div class="p-[15px] md:p-[30px]">{{ slot }}</div>
+    {% endif %}
+    {% if footer.strip %}
+        <div class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2.5 border-t border-rule px-[15px] py-[15px] md:px-[30px]">{{ footer }}</div>
+    {% endif %}
+</div>

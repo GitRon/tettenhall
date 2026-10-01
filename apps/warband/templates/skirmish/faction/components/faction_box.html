@@ -1,9 +1,8 @@
-{# A card is "ground" with a 1px rule around it - see docs/patterns/visual-identity.md. The report #}
-{# beside this one is the panel that separates by surface instead, because it is the one the screen is #}
-{# played through. #}
+{# A card, where the report beside this one is the panel that separates by surface instead, because it #}
+{# is the one the screen is played through - see docs/patterns/visual-identity.md. #}
 {# "group" is what the rows below read the kit control with. Each panel is its own group, so the two #}
 {# war bands on the screen carry a control each and neither reaches the other's men. #}
-<div class="group box-border border border-rule-strong bg-ground p-6">
+<c-common.card class="group">
     {# The name of the band and the one thing the panel can be asked for, on a row: the same shape the #}
     {# battle report beside this one gives its own header and the Fight! button. It wraps, so a long #}
     {# faction name on a phone pushes the control onto its own line rather than squeezing the name. #}
@@ -48,4 +47,4 @@
          hx-swap="innerHTML">
         {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=warrior_list is_player=is_player skirmish_is_decided=skirmish_is_decided %}
     </div>
-</div>
+</c-common.card>

@@ -7,7 +7,7 @@
 {# so seven rows are scanned in one pass. The sentence stays, it just stops being the thing the eye #}
 {# has to parse; the way out of the row is a control at its end rather than a link trailing the prose, #}
 {# which on a phone wrapped underneath and put every action at the bottom of its own row. #}
-<div class="mb-5 box-border border border-rule-strong bg-ground p-[15px] text-ink-muted md:p-[30px]">
+<c-common.card class="mb-5">
     <h3>Still open to you</h3>
     {% if not month_standing.has_offers_open %}
         <p class="m-0">
@@ -87,4 +87,4 @@
             {% endif %}
         </ul>
     {% endif %}
-</div>
+</c-common.card>

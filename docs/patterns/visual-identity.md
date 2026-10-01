@@ -95,7 +95,9 @@ set on `body`.
 - **Radius is 0.** The `--radius-*` scale is dropped, so `rounded-lg` is not a utility that exists.
 - **No shadows, no gradients, no glows, no texture images.** `--shadow-*` is dropped too.
 - **Separation comes from a 1px rule and space**, not from a box. A card is `bg-ground` with
-  `border border-rule-strong`; the hairlines inside it are `rule`.
+  `border border-rule-strong`; the hairlines inside it are `rule`. It is written once, as
+  `<c-common.card>` (see [template components](components.md)), with one padding: `15px` on a phone,
+  `30px` from `md` up.
 - **Status is a 1px outlined mono tag**, never a filled pill, and **only for the exception**: a man
   who can fight, a quest that is open, carries no tag, because a tag on five rows out of six is the
   loudest thing in the list while saying nothing. The word inside stays `ink` — the outline
