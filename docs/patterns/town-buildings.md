@@ -27,6 +27,8 @@ holding that level's numbers:
 
 ## Rules
 
+- **A changed balance number comes with a measurement.** Play a batch of seeded savegames before and after
+  the change and compare them, see [measuring balance](measuring-balance.md).
 - **Every number a building levers lives in `apps/warband/town/buildings/`** — the building costs and each
   building's effect. Don't hardcode a number in a handler that a building should own; the handler reads the
   constant. The upgrade page names the effects too, and reads them from the same place through
