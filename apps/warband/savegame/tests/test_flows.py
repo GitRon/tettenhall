@@ -3,6 +3,7 @@ from queuebie.runner import handle_message
 
 from apps.warband.faction.messages.commands.faction import DefeatFactionOfLostLeader
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
@@ -44,6 +45,30 @@ def test_losing_the_leader_ends_the_game_and_decides_the_open_fight(queuebie_reg
     assert savegame.outcome == Savegame.OutcomeChoices.OUTCOME_LOST
     skirmish.refresh_from_db()
     assert skirmish.victorious_faction == rival_faction
+
+
+@pytest.mark.django_db
+def test_losing_the_leader_logs_the_cause_before_the_broken_war_band(queuebie_registry):
+    """
+    The two lines are written by handlers on different events, one of them reached a step later
+    through the savegame ending, so only the real chain shows which lands first.
+    """
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
+    savegame.player_faction = player_faction
+    savegame.save()
+    FactionFactory(savegame=savegame)
+
+    leader = WarriorFactory(name="Reinfrith", faction=player_faction, savegame=savegame)
+    player_faction.leader = leader
+    player_faction.save()
+
+    handle_message(DefeatFactionOfLostLeader(warrior=leader))
+
+    assert list(PlayerMonthLog.objects.filter(faction=player_faction).values_list("title", flat=True)) == [
+        "Reinfrith was taken prisoner, and nobody is left to lead the war band.",
+        "The war band is broken.",
+    ]
 
 
 @pytest.mark.django_db
