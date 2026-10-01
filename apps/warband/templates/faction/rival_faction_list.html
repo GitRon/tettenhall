@@ -13,10 +13,8 @@
         <p class="text-sm leading-snug text-ink-muted">Your leader is in no condition to march.</p>
     {% endif %}
 
-    {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
-    {# decides what a table should actually become at that width. #}
-    <div class="overflow-x-auto">
-    <table>
+    {# A record per rival on a phone, a row on a desk - see docs/patterns/responsive-layout.md. #}
+    <table class="table-stack">
         <thead>
         <tr>
             <th>Name</th>
@@ -33,17 +31,17 @@
                 <td>
                     <a href="{% url 'warband:faction-detail-view' rival.id %}">{{ rival.name }}</a>
                 </td>
-                <td>{{ rival.culture.name }}</td>
-                <td>{{ rival.town_name }}</td>
+                <td data-label="Culture">{{ rival.culture.name }}</td>
+                <td data-label="Town">{{ rival.town_name }}</td>
                 {# A faction can be without a leader, and reversing the url with no id raises #}
-                <td>
+                <td data-label="Leader">
                     {% if rival.leader %}
                         <a href="{% url 'warband:warrior-detail-view' rival.leader.id %}">{{ rival.leader }}</a>
                     {% else %}
                         -
                     {% endif %}
                 </td>
-                <td>{{ rival.warrior_count }}</td>
+                <td data-label="Warriors">{{ rival.warrior_count }}</td>
                 <td>
                     {% if rival.can_be_attacked %}
                         <a href="{% url 'warband:faction-attack-view' rival.id %}"
@@ -66,5 +64,4 @@
         {% endfor %}
         </tbody>
     </table>
-    </div>
 {% endblock content %}

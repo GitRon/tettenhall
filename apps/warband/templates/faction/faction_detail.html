@@ -7,9 +7,6 @@
         <div>
             <c-common.card class="mb-5">
                 <h2>Details</h2>
-                {# The table scrolls inside its own box rather than dragging the page sideways on a phone. #64 #}
-                {# decides what a table should actually become at that width. #}
-                <div class="overflow-x-auto">
                 <table>
                     <tbody>
                     <tr>
@@ -33,7 +30,6 @@
                     </tr>
                     </tbody>
                 </table>
-                </div>
                 {% if can_be_attacked %}
                     <a href="{% url 'warband:faction-attack-view' object.id %}"
                        class="row-action">Attack this faction</a>
