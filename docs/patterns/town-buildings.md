@@ -113,16 +113,18 @@ holding that level's numbers:
 ## Known gaps
 
 - **NPC factions never build.** Nothing upgrades a rival's town, so every building effect is a
-  player-only power curve - apart from the pub, which every faction restocks off its own hall, so a rival
-  at `NoHall` gets its one mercenary a month. Construction proper is #68. The hall income is player-only to match: it hangs
+  player-only power curve - apart from the pub and the shop, which every faction restocks off its own hall,
+  marketplace and weaponsmith, so a rival at level 0 gets its one mercenary and its stalls of gear a month. Construction proper is #68. The hall income is player-only to match: it hangs
   off `PlayerMonthPrepared`, the event for the things a rival has no equivalent of, and a rival earns off
   its war band instead (`apps/warband/faction/domain/rival_income.py`). A rival sits at `NoHall` for good,
   so the town would pay it a flat 50 silver however large its war band grew, against a leader's salary of
   around 135. The two incomes also count different rosters on purpose — the player's men on the payroll,
   a rival's men fit to march — and `RivalIncome` carries why.
-- **A rival's income pays more per man than he costs**, so a purse spent freely in the pub would pay for
-  the next hire and the war band would compound. Until a rival lives on its town (#393), its fyrd reserve
-  is the brake: `RivalPolicy` hires nobody while the reserve still has free men in it (#387).
+- **A rival's income pays more per man than he costs**, so a purse spent freely on men would pay for the
+  next one and the war band would compound. Until a rival lives on its town (#393), `RivalPolicy` brakes
+  it twice: it hires nobody while the fyrd reserve still has free men in it (#387), which caps how fast
+  the band grows, and it takes no man at all once the band reaches `TARGET_BAND_SIZE`, which caps how far.
+  What the purse holds beyond that goes on gear.
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
   bonus is the only thing making better gear — none of them has a second effect yet.
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's

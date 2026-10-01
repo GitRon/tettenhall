@@ -8,7 +8,7 @@ from apps.warband.faction.handlers.events.warrior import (
     handle_hand_out_gear_for_recruited_warrior,
     handle_recruit_mercenary_for_approved_pub_hire,
     handle_restock_mercenaries_in_pub_for_new_faction,
-    handle_restock_mercenaries_in_pub_once_hiring_is_considered,
+    handle_restock_mercenaries_in_pub_once_month_is_planned,
 )
 from apps.warband.faction.messages.commands.item import HandOutFactionGear
 from apps.warband.faction.messages.commands.warrior import (
@@ -17,10 +17,9 @@ from apps.warband.faction.messages.commands.warrior import (
     RecruitPubMercenary,
     RestockTownMercenaries,
 )
-from apps.warband.faction.messages.events.faction import NewFactionCreated
+from apps.warband.faction.messages.events.faction import FactionMonthPlanned, NewFactionCreated
 from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
-    PubHiringConsidered,
     PubMercenaryHireApproved,
     WarriorRecruited,
 )
@@ -156,11 +155,11 @@ def test_handle_recruit_mercenary_for_approved_pub_hire_maps_to_command():
     assert result == RecruitPubMercenary(warrior=warrior, faction=faction, month=7)
 
 
-def test_handle_restock_mercenaries_in_pub_once_hiring_is_considered_maps_to_command():
+def test_handle_restock_mercenaries_in_pub_once_month_is_planned_maps_to_command():
     faction = FactionFactory.build()
 
-    result = handle_restock_mercenaries_in_pub_once_hiring_is_considered(
-        context=PubHiringConsidered(faction=faction, month=7)
+    result = handle_restock_mercenaries_in_pub_once_month_is_planned(
+        context=FactionMonthPlanned(faction=faction, month=7)
     )
 
     assert result == RestockTownMercenaries(faction=faction, month=7)

@@ -149,3 +149,17 @@ class FactionWasOccupied(Event):
     leader: Warrior
     plundered_silver: int
     month: int
+
+
+@dataclass(kw_only=True)
+class FactionMonthPlanned(Event):
+    """
+    A faction has had its pick of what stood in its pub and on its shelf all month.
+
+    Raised for every faction, the player included, because both monthly restocks hang off it: each
+    clears its stock with a row delete, so it has to wait until whatever this faction chose to hire or
+    buy has changed hands.
+    """
+
+    faction: Faction
+    month: int

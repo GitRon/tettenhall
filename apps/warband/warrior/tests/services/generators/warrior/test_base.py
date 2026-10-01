@@ -428,3 +428,11 @@ def test_process_gives_the_warrior_a_face_of_his_own():
 
     assert result.portrait_face is not None
     assert Warrior.objects.get(pk=result.pk).portrait_face == result.portrait_face
+
+
+def test_get_expected_monthly_salary_prices_the_archetype_means():
+    """
+    A levy of the fyrd's means - 5 strength, 5 dexterity, 20 health - prices at 1.5 times the base of
+    100, and draws half of that.
+    """
+    assert FyrdWarriorGenerator.get_expected_monthly_salary() == 75

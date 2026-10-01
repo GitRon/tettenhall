@@ -24,7 +24,7 @@ from apps.warband.faction.messages.events.item import (
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.handlers.commands.item import handle_sell_item
 from apps.warband.item.messages.commands.item import SellItem
-from apps.warband.item.models import ItemType
+from apps.warband.item.models import Item, ItemType
 from apps.warband.item.services.generators.item.mercenary import MercenaryItemGenerator
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
@@ -235,3 +235,19 @@ def test_handle_hand_out_faction_gear_leaves_the_player_to_arm_his_own_men():
     result = handle_hand_out_faction_gear(context=HandOutFactionGear(faction=warrior.faction))
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_keeps_an_item_just_bought_off_the_shelf():
+    """
+    A purchase hands the item over in its own command but takes it off the shelf an event later, after
+    the month's restock may already have run - which would otherwise delete what was just paid for.
+    """
+    faction = FactionFactory()
+    left_over = ItemFactory(savegame=faction.savegame, owner=None)
+    bought = ItemFactory(savegame=faction.savegame, owner=faction)
+    faction.available_items.add(left_over, bought)
+
+    handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    assert list(Item.objects.filter(id__in=[left_over.id, bought.id])) == [bought]

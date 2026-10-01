@@ -44,6 +44,9 @@ class BaseWarriorGenerator:
     PRICE_STATS_YARDSTICK = 10
     PRICE_HEALTH_YARDSTICK = 40
     MIN_RECRUITMENT_PRICE = 1
+    # The base price the attributes scale, rolled per man before they do
+    BASE_PRICE_MU = 100
+    BASE_PRICE_SIGMA = 50
 
     item_generator_class: type(BaseItemGenerator)
     chance_for_weapon = 1
@@ -71,6 +74,21 @@ class BaseWarriorGenerator:
         self.culture = culture
         self.faction = faction
         self.savegame_id = savegame_id
+
+    @classmethod
+    def get_expected_monthly_salary(cls) -> int:
+        """
+        The wage the average man of this archetype draws, before he is rolled.
+
+        Priced from the means through the same formula "process" prices a rolled man with, so a faction
+        weighing a man it has not drawn yet weighs the wage the dice centre on rather than a number kept
+        beside them.
+        """
+        expected_price = (
+            (2 * cls.STATS_MU) / cls.PRICE_STATS_YARDSTICK + cls.HEALTH_MU / cls.PRICE_HEALTH_YARDSTICK
+        ) * cls.BASE_PRICE_MU
+
+        return Warrior.salary_for(recruitment_price=round(expected_price))
 
     def roll_stat(self) -> int:
         """
@@ -131,7 +149,7 @@ class BaseWarriorGenerator:
 
         base_recruitment_price = 0
         while base_recruitment_price == 0:
-            base_recruitment_price = max(round(random.gauss(100, 50)), 0)
+            base_recruitment_price = max(round(random.gauss(self.BASE_PRICE_MU, self.BASE_PRICE_SIGMA)), 0)
         # Never below one: a man rolled at the floor of every attribute and at the thin end of the
         # base price truncates to nothing, and a price of nothing is a captive who sells for nothing
         recruitment_price = max(

@@ -46,6 +46,20 @@ class TownShopRestocked(Event):
 
 
 @dataclass(kw_only=True)
+class ShopItemPurchaseApproved(Event):
+    """
+    A rival has looked over its own shelf and decided to buy this item.
+
+    The whole decision was made before this was raised, so the handler has nothing left to weigh -
+    which is what lets a rival's purchase run through the same BuyItem the player's shop dispatches.
+    """
+
+    faction: Faction
+    item: Item
+    month: int
+
+
+@dataclass(kw_only=True)
 class GearHandoutApproved(Event):
     """
     One item a faction has decided to put in one man's slot.

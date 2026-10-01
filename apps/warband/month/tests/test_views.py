@@ -23,6 +23,7 @@ from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.training.models import Training
 from apps.warband.training.tests.factories.training import TrainingFactory
+from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
 
 @pytest.mark.django_db
@@ -539,13 +540,17 @@ def test_finish_month_view_arms_a_rivals_new_levy_out_of_its_stores(logged_in_cl
     """
     TrainingFactory(faction=current_savegame.player_faction)
     rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=1)
+    # Enough to keep the levy, whom a rival only calls up once it can pay him
+    TransactionFactory(faction=rival_faction, amount=100, month=1)
     mail = ItemFactory(
         savegame=current_savegame,
         owner=rival_faction,
         type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR, base_value="4d6"),
     )
 
-    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
+    # The levy brings no armour of his own, which could roll better than the mail on the dice
+    with mock.patch.object(FyrdWarriorGenerator, "chance_for_armor", 0):
+        response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
     assert Warrior.objects.get(faction=rival_faction).armor == mail
