@@ -1,3 +1,4 @@
+<c-vars item show_price=False />
 {% comment %}
     The figures an item carries wherever it is shown - the shop, the stores and on the man wearing
     it - in one place so that an axe reads the same in all of them.
@@ -14,12 +15,12 @@
     {% if show_price %}
         <span><span class="text-ink">{{ item.price }}</span> silver</span>
     {% endif %}
-    <span title="{% if item.is_weapon %}Damage{% else %}Protection{% endif %} roll">
-        {% if item.is_weapon %}Damage{% else %}Protection{% endif %} <span class="normal-case text-ink">{{ item.type.base_value }}{{ item.get_modifier_as_string }}</span>
+    <span title="{{ item.roll_name }} roll">
+        {{ item.roll_name }} <span class="normal-case text-ink">{{ item.type.base_value }}{{ item.get_modifier_as_string }}</span>
     </span>
     {# Trimmed, so a weapon averaging a whole number reads "5" rather than "5.0" - and reads the #}
     {# same here as it does on the option a warrior is equipped from #}
-    <span title="Expected {% if item.is_weapon %}damage{% else %}protection{% endif %} per roll">
+    <span title="Expected {{ item.roll_name|lower }} per roll">
         Average <span class="text-ink">{{ item.expectancy_value|floatformat }}</span>
     </span>
 </span>

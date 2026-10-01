@@ -54,6 +54,14 @@ class Item(models.Model):
         return self.type.function == ItemType.FunctionChoices.FUNCTION_ARMOR
 
     @property
+    def roll_name(self) -> str:
+        """
+        What the item's dice roll for, as the stats line labels them: a weapon's damage or a piece of
+        armour's protection.
+        """
+        return "Damage" if self.is_weapon else "Protection"
+
+    @property
     def gear_slot(self) -> str:
         """
         The field on Warrior this item fills, which is the name an equip has to be told.
