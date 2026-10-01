@@ -21,6 +21,7 @@ from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.models import Town
 from apps.warband.training.models import Training
 from apps.warband.training.tests.factories.training import TrainingFactory
 from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
@@ -154,10 +155,11 @@ def test_finish_month_view_moves_a_rivals_roster_and_purse(logged_in_client, cur
     rivals get a month at all lives only in the registry, and every guard deciding which faction gets
     which half of the bookkeeping sits a command handler away from the event that raised it.
 
-    The rival earns its own income - 50 of baseline plus 200 for the man it can field - pays him, and
-    calls another up out of its fyrd. The player's month log stays his own throughout, which is the
-    regression this keeps closed: every one of those steps emits a log line, and a savegame carries
-    three to five rivals whose lines would bury his.
+    The rival lives on its town the way the player does: the 50 a town without a hall pays, less the
+    150 its man draws. It raises a Small Hall for the man it has on the payroll, through the player's
+    own upgrade, and calls another man up out of its fyrd. The player's month log stays his own
+    throughout, which is the regression this keeps closed: every one of those steps emits a log line,
+    and a savegame carries three to five rivals whose lines would bury his.
     """
     TrainingFactory(faction=current_savegame.player_faction)
     rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=2)
@@ -167,9 +169,11 @@ def test_finish_month_view_moves_a_rivals_roster_and_purse(logged_in_client, cur
     response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
-    # Started on 1000, took 250 of income, paid 150 of wages, and the free draft wrote nothing
-    assert Transaction.objects.current_balance(faction_id=rival_faction.id) == 1100
+    # Started on 1000, took 50 from its town, paid 150 of wages and 600 for the hall; the draft is free
+    assert Transaction.objects.current_balance(faction_id=rival_faction.id) == 300
     assert Warrior.objects.filter(faction=rival_faction).count() == 2
+    rival_faction.town.refresh_from_db()
+    assert rival_faction.town.hall == Town.HallChoices.HALL_SMALL
 
 
 @pytest.mark.django_db
@@ -239,23 +243,6 @@ def test_finish_month_view_keeps_a_rivals_bookkeeping_out_of_the_players_log(log
 
     assert response.status_code == 200
     assert PlayerMonthLog.objects.filter(faction=rival_faction).exists() is False
-
-
-@pytest.mark.django_db
-def test_finish_month_view_pays_a_rival_nothing_for_a_hall_it_does_not_have(logged_in_client, current_savegame):
-    """
-    A rival's town is created at every default, so the hall would pay it 50 silver against a leader's
-    salary of around 150 - under water by month 10 and worse with every warrior it recruits. It earns
-    off its war band instead, and the two must not both land.
-    """
-    TrainingFactory(faction=current_savegame.player_faction)
-    rival_faction = FactionFactory(savegame=current_savegame, fyrd_reserve=0)
-    WarriorFactory(faction=rival_faction, savegame=current_savegame, monthly_salary=150)
-
-    response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
-
-    assert response.status_code == 200
-    assert Transaction.objects.filter(faction=rival_faction, reason__startswith="Building earnings").exists() is False
 
 
 @pytest.mark.django_db

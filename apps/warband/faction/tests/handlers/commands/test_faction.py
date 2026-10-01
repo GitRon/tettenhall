@@ -10,7 +10,6 @@ from apps.warband.faction.handlers.commands.faction import (
     handle_create_factions_for_new_savegame,
     handle_defeat_faction_of_lost_leader,
     handle_earn_money_from_buildings,
-    handle_earn_monthly_faction_income,
     handle_occupy_faction,
     handle_plan_faction_month,
     handle_prepare_faction_warriors_for_month,
@@ -21,7 +20,6 @@ from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     DefeatFactionOfLostLeader,
     EarnMoneyFromBuildings,
-    EarnMonthlyFactionIncome,
     OccupyFaction,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
@@ -36,8 +34,8 @@ from apps.warband.faction.messages.events.faction import (
     FactionWasOccupied,
     FyrdReserveChanged,
     MonthlyBuildingMoneyEarned,
-    MonthlyFactionIncomeEarned,
     NewFactionCreated,
+    TownBuildingUpgradeApproved,
 )
 from apps.warband.faction.messages.events.item import ShopItemPurchaseApproved
 from apps.warband.faction.messages.events.warrior import (
@@ -738,53 +736,6 @@ def test_handle_earn_money_from_buildings_without_a_hall():
 
 
 @pytest.mark.django_db
-def test_handle_earn_monthly_faction_income_scales_with_the_healthy_roster():
-    player_faction = FactionFactory()
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
-    rival_faction = FactionFactory(savegame=player_faction.savegame)
-    WarriorFactory(faction=rival_faction)
-    WarriorFactory(faction=rival_faction)
-
-    result = handle_earn_monthly_faction_income(context=EarnMonthlyFactionIncome(faction=rival_faction, month=3))
-
-    # 50 of baseline plus 200 for each of the two men it can field
-    assert result == MonthlyFactionIncomeEarned(faction=rival_faction, amount=450, month=3)
-
-
-@pytest.mark.django_db
-def test_handle_earn_monthly_faction_income_leaves_out_the_warriors_who_are_down():
-    """
-    A faction that cannot field a warrior should not be earning off him - while the wage bill covers
-    him all the same, which is the squeeze a beaten faction is under.
-    """
-    player_faction = FactionFactory()
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
-    rival_faction = FactionFactory(savegame=player_faction.savegame)
-    WarriorFactory(faction=rival_faction)
-    WarriorFactory(faction=rival_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
-
-    result = handle_earn_monthly_faction_income(context=EarnMonthlyFactionIncome(faction=rival_faction, month=3))
-
-    assert result.amount == 250
-
-
-@pytest.mark.django_db
-def test_handle_earn_monthly_faction_income_refuses_the_player():
-    """
-    The player has the buildings, so taking this as well would pay him twice for the same month.
-    """
-    player_faction = FactionFactory()
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
-
-    result = handle_earn_monthly_faction_income(context=EarnMonthlyFactionIncome(faction=player_faction, month=3))
-
-    assert result is None
-
-
-@pytest.mark.django_db
 def test_handle_occupy_faction_hands_over_the_leader_and_a_share_of_the_treasury():
     occupying_faction = FactionFactory()
     faction = FactionFactory(savegame=occupying_faction.savegame)
@@ -833,9 +784,10 @@ def _rival_with_pub(*, purse: int, salary_list: list[int], fyrd_reserve: int = 0
     A rival with an empty roster, this much silver, and one mercenary on its shelf per salary.
 
     A man who just arrived costs twice his wage - see [Warrior.hiring_price]. The fyrd is empty unless
-    asked for, because a rival with free men left in it hires nobody.
+    asked for, because a rival with free men left in it hires nobody. The hall is built to the top, so
+    raising it is not among the things the purse could go on.
     """
-    rival_faction = FactionFactory(fyrd_reserve=fyrd_reserve)
+    rival_faction = FactionFactory(fyrd_reserve=fyrd_reserve, town__hall=Town.HallChoices.HALL_LARGE)
     TransactionFactory(faction=rival_faction, amount=purse)
     mercenary_list = [
         WarriorFactory(
@@ -854,7 +806,7 @@ def _rival_with_pub(*, purse: int, salary_list: list[int], fyrd_reserve: int = 0
 
 @pytest.mark.django_db
 def test_handle_plan_faction_month_drafts_for_a_rival_whose_purse_covers_its_wages():
-    rival_faction = FactionFactory(fyrd_reserve=2)
+    rival_faction = FactionFactory(fyrd_reserve=2, town__hall=Town.HallChoices.HALL_LARGE)
     WarriorFactory(faction=rival_faction, monthly_salary=150)
     TransactionFactory(faction=rival_faction, amount=1000)
 
@@ -938,7 +890,7 @@ def test_handle_plan_faction_month_buys_for_a_rival_off_its_own_shelf():
     purchase is weighed against the gear the snapshot read off the roster, and the approval carries
     the item off the shelf.
     """
-    rival_faction = FactionFactory(fyrd_reserve=0)
+    rival_faction = FactionFactory(fyrd_reserve=0, town__hall=Town.HallChoices.HALL_LARGE)
     WarriorFactory(faction=rival_faction, monthly_salary=50)
     TransactionFactory(faction=rival_faction, amount=1000)
     sword = ItemFactory(
@@ -955,3 +907,37 @@ def test_handle_plan_faction_month_buys_for_a_rival_off_its_own_shelf():
         ShopItemPurchaseApproved(faction=rival_faction, item=sword, month=3),
         FactionMonthPlanned(faction=rival_faction, month=3),
     ]
+
+
+@pytest.mark.django_db
+def test_handle_plan_faction_month_raises_the_hall_of_a_rival_with_a_man_to_man_it():
+    """
+    The hall goes out with its level and price settled, and before the closing event - so the pub
+    restock that hangs off it already counts the slots of the bigger hall.
+    """
+    rival_faction = FactionFactory(fyrd_reserve=0)
+    WarriorFactory(faction=rival_faction, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=1000)
+
+    result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
+
+    assert result == [
+        TownBuildingUpgradeApproved(
+            faction=rival_faction, town=rival_faction.town, building_type="hall", new_level=1, costs=600, month=3
+        ),
+        FactionMonthPlanned(faction=rival_faction, month=3),
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_plan_faction_month_raises_no_hall_for_a_rival_that_built_this_month():
+    # The once-a-month rule is the player's own, asked through the same refusal his town page asks
+    rival_faction = FactionFactory(fyrd_reserve=0)
+    rival_faction.town.last_constructed_building_at = rival_faction.savegame.current_month
+    rival_faction.town.save()
+    WarriorFactory(faction=rival_faction, monthly_salary=150)
+    TransactionFactory(faction=rival_faction, amount=1000)
+
+    result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
+
+    assert result == [FactionMonthPlanned(faction=rival_faction, month=3)]

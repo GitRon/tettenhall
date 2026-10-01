@@ -4,14 +4,15 @@ from queuebie.messages import Command
 from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     EarnMoneyFromBuildings,
-    EarnMonthlyFactionIncome,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
 )
 from apps.warband.faction.messages.commands.warrior import PayMonthlyWarriorSalaries
-from apps.warband.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
+from apps.warband.faction.messages.events.faction import TownBuildingUpgradeApproved
+from apps.warband.month.messages.events.month import FactionMonthPrepared
 from apps.warband.savegame.messages.events.savegame import NewSavegameCreated
+from apps.warband.town.messages.commands.town import UpgradeTownBuilding
 
 
 @message_registry.register_event(event=NewSavegameCreated)
@@ -50,12 +51,11 @@ def handle_pay_monthly_warrior_salaries_for_new_month(*, context: FactionMonthPr
     return PayMonthlyWarriorSalaries(faction=context.faction, month=context.current_month)
 
 
-# A rival has no buildings, so it earns off its war band instead - and its town sits at every default,
-# which would pay it 50 silver against a leader's salary of around 135. The player's half of this is
-# the one handler here that stays on PlayerMonthPrepared, further down.
+# Every faction lives on its town, the player and his rivals alike: the hall pays for the men on the
+# payroll, and a rival builds its hall the way the player does - see [RivalPolicy]
 @message_registry.register_event(event=FactionMonthPrepared)
-def handle_earn_monthly_faction_income_for_new_month(*, context: FactionMonthPrepared) -> Command:
-    return EarnMonthlyFactionIncome(faction=context.faction, month=context.current_month)
+def handle_earn_money_from_buildings_for_new_month(*, context: FactionMonthPrepared) -> Command:
+    return EarnMoneyFromBuildings(faction=context.faction, month=context.current_month)
 
 
 # Every faction's men get their month, not just the player's: otherwise a faction that survived a
@@ -71,9 +71,15 @@ def handle_plan_faction_month_for_new_month(*, context: FactionMonthPrepared) ->
     return PlanFactionMonth(faction=context.faction, month=context.current_month)
 
 
-# The town economy is the thing a rival genuinely has no equivalent of, which is what
-# PlayerMonthPrepared is for - so being registered here is the whole of what keeps a rival off the
-# hall's revenue, with no guard needed in the command handler.
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_earn_money_from_buildings_for_new_month(*, context: PlayerMonthPrepared) -> Command:
-    return EarnMoneyFromBuildings(faction=context.faction, month=context.current_month)
+@message_registry.register_event(event=TownBuildingUpgradeApproved)
+def handle_upgrade_town_building_for_approved_upgrade(*, context: TownBuildingUpgradeApproved) -> Command:
+    # Pure mapping, because handle_plan_faction_month already weighed the whole decision. That is what
+    # lets a rival build through the same command the player's town page dispatches.
+    return UpgradeTownBuilding(
+        town=context.town,
+        faction=context.faction,
+        building_type=context.building_type,
+        new_level=context.new_level,
+        costs=context.costs,
+        month=context.month,
+    )

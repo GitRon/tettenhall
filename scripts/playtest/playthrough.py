@@ -152,22 +152,17 @@ def _count_successions(*, savegame: Savegame, before: dict[int, Standing], repor
 
 
 def _record_month(*, savegame: Savegame, month: int) -> MonthRecord:
+    rival_list = list(Faction.objects.rivals_in_play(player_faction=savegame.player_faction).select_related("town"))
+
     return MonthRecord(
         month=month,
         player_men=Warrior.objects.filter_faction(faction_id=savegame.player_faction_id).exclude_dead().count(),
         player_silver=Transaction.objects.current_balance(faction_id=savegame.player_faction_id),
         rival_men=tuple(
-            sorted(
-                Warrior.objects.filter_faction(faction_id=rival.id).exclude_dead().count()
-                for rival in Faction.objects.rivals_in_play(player_faction=savegame.player_faction)
-            )
+            sorted(Warrior.objects.filter_faction(faction_id=rival.id).exclude_dead().count() for rival in rival_list)
         ),
-        rival_silver=tuple(
-            sorted(
-                Transaction.objects.current_balance(faction_id=rival.id)
-                for rival in Faction.objects.rivals_in_play(player_faction=savegame.player_faction)
-            )
-        ),
+        rival_silver=tuple(sorted(Transaction.objects.current_balance(faction_id=rival.id) for rival in rival_list)),
+        rival_halls=tuple(sorted(rival.town.hall for rival in rival_list)),
     )
 
 

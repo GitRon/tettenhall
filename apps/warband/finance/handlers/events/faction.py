@@ -5,7 +5,6 @@ from apps.warband.faction.messages.events import warrior
 from apps.warband.faction.messages.events.faction import (
     FactionWasOccupied,
     MonthlyBuildingMoneyEarned,
-    MonthlyFactionIncomeEarned,
     MonthlyWarriorSalariesPaid,
     NewFactionCreated,
 )
@@ -61,16 +60,6 @@ def handle_building_money_earnings(*, context: MonthlyBuildingMoneyEarned) -> Co
         faction=context.faction,
         amount=context.amount,
         reason="Building earnings",
-        month=context.month,
-    )
-
-
-@message_registry.register_event(event=MonthlyFactionIncomeEarned)
-def handle_monthly_faction_income(*, context: MonthlyFactionIncomeEarned) -> Command:
-    return CreateTransaction(
-        faction=context.faction,
-        amount=context.amount,
-        reason="Faction income",
         month=context.month,
     )
 

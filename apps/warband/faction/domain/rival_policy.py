@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from apps.warband.town.buildings.hall import Hall
+
 
 @dataclass(frozen=True, kw_only=True)
 class PubOffer:
@@ -30,6 +32,18 @@ class ShopOffer:
 
 
 @dataclass(frozen=True, kw_only=True)
+class HallUpgradeOffer:
+    """
+    The next level of a rival's hall, offered only once "get_building_upgrade_refusal" has nothing
+    against it - so the top level, the once-a-month rule and the price are the player's own guards.
+    """
+
+    current_level: int
+    new_level: int
+    price: int
+
+
+@dataclass(frozen=True, kw_only=True)
 class RivalMonthSnapshot:
     """
     What a rival knows about itself when it decides its month.
@@ -41,6 +55,9 @@ class RivalMonthSnapshot:
     "held_gear_values" is what each man the hand-out may arm carries in each slot, one figure per man,
     an empty slot counting as the fallback's dice. "draft_wage" is what a levy the fyrd has not yet
     rolled is expected to draw.
+
+    "warriors_on_payroll" is the men drawing a wage, the count the hall pays its revenue against (see
+    [Hall.get_revenue_for_war_band]), and "hall_upgrade" the next level of the hall when it may be built.
     """
 
     fyrd_reserve: int
@@ -51,6 +68,8 @@ class RivalMonthSnapshot:
     pub_offer_list: list[PubOffer]
     shop_offer_list: list[ShopOffer] = field(default_factory=list)
     held_gear_values: dict[str, list[float]] = field(default_factory=dict)
+    warriors_on_payroll: int = 0
+    hall_upgrade: HallUpgradeOffer | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -68,7 +87,13 @@ class BuyFromShop:
     item_id: int
 
 
-type RivalDecision = DraftFromFyrd | HireFromPub | BuyFromShop
+@dataclass(frozen=True, kw_only=True)
+class UpgradeHall:
+    new_level: int
+    price: int
+
+
+type RivalDecision = DraftFromFyrd | HireFromPub | BuyFromShop | UpgradeHall
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -76,10 +101,16 @@ class _Candidate:
     decision: RivalDecision
     price: int
     added_wage: int
-    # Settles a tie on score: a draft before a hire before an item, then the lower id
+    # Settles a tie on score: a draft before a hire before an item before the hall, then the lower id
     order: tuple[int, int]
-    # The shelf entry behind a purchase, None for a man
+    # The shelf entry behind a purchase, None for anything else
     shop_offer: ShopOffer | None = None
+    # The level behind a hall upgrade, None for anything else
+    hall_offer: HallUpgradeOffer | None = None
+
+    @property
+    def is_man(self) -> bool:
+        return self.shop_offer is None and self.hall_offer is None
 
 
 class RivalPolicy:
@@ -118,6 +149,7 @@ class RivalPolicy:
     WAGE_HORIZON_MONTHS = 6
     MAN_WEIGHT = 1000
     ITEM_WEIGHT = 10
+    BUILDING_WEIGHT = 1
     MIN_SCORE = 0.1
 
     @classmethod
@@ -125,6 +157,7 @@ class RivalPolicy:
         purse = snapshot.purse
         wage_bill = snapshot.wage_bill
         band_size = snapshot.band_size
+        warriors_on_payroll = snapshot.warriors_on_payroll
         # Weakest first, so what a purchase replaces is always the head of the list
         held_gear_values = {slot: sorted(values) for slot, values in snapshot.held_gear_values.items()}
         candidate_list = cls._list_candidates(snapshot=snapshot)
@@ -132,7 +165,15 @@ class RivalPolicy:
 
         while True:
             scored_list = [
-                (cls._score(candidate=candidate, band_size=band_size, held_gear_values=held_gear_values), candidate)
+                (
+                    cls._score(
+                        candidate=candidate,
+                        band_size=band_size,
+                        warriors_on_payroll=warriors_on_payroll,
+                        held_gear_values=held_gear_values,
+                    ),
+                    candidate,
+                )
                 for candidate in candidate_list
                 if purse - candidate.price >= wage_bill + candidate.added_wage
             ]
@@ -146,9 +187,10 @@ class RivalPolicy:
             wage_bill += best.added_wage
             decision_list.append(best.decision)
 
-            if best.shop_offer is None:
+            if best.is_man:
                 band_size += 1
-            else:
+                warriors_on_payroll += 1
+            elif best.shop_offer is not None:
                 slot = best.shop_offer.slot
                 held_gear_values[slot] = sorted([*held_gear_values[slot][1:], best.shop_offer.value])
 
@@ -181,11 +223,31 @@ class RivalPolicy:
             )
             for offer in snapshot.shop_offer_list
         ]
+        if snapshot.hall_upgrade is not None:
+            candidate_list.append(
+                _Candidate(
+                    decision=UpgradeHall(new_level=snapshot.hall_upgrade.new_level, price=snapshot.hall_upgrade.price),
+                    price=snapshot.hall_upgrade.price,
+                    added_wage=0,
+                    order=(3, 0),
+                    hall_offer=snapshot.hall_upgrade,
+                )
+            )
 
         return candidate_list
 
     @classmethod
-    def _score(cls, *, candidate: _Candidate, band_size: int, held_gear_values: dict[str, list[float]]) -> float:
+    def _score(
+        cls,
+        *,
+        candidate: _Candidate,
+        band_size: int,
+        warriors_on_payroll: int,
+        held_gear_values: dict[str, list[float]],
+    ) -> float:
+        if candidate.hall_offer is not None:
+            return cls._score_hall(offer=candidate.hall_offer, warriors_on_payroll=warriors_on_payroll)
+
         if candidate.shop_offer is not None:
             held_values = held_gear_values.get(candidate.shop_offer.slot)
             # Nobody to carry it, or a price of nothing to weigh it against
@@ -203,3 +265,15 @@ class RivalPolicy:
             return float(cls.MAN_WEIGHT)
 
         return cls.MAN_WEIGHT / cost
+
+    @classmethod
+    def _score_hall(cls, *, offer: HallUpgradeOffer, warriors_on_payroll: int) -> float:
+        # What the bigger hall pays on top of the standing one, for the men on the payroll by now. Every
+        # level above the first is priced, so there is always a price to weigh it against
+        added_revenue = Hall.get_building_by_type(building_type=offer.new_level).get_revenue_for_war_band(
+            warriors_on_payroll=warriors_on_payroll
+        ) - Hall.get_building_by_type(building_type=offer.current_level).get_revenue_for_war_band(
+            warriors_on_payroll=warriors_on_payroll
+        )
+
+        return cls.BUILDING_WEIGHT * cls.WAGE_HORIZON_MONTHS * added_revenue / offer.price

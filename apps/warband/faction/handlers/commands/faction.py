@@ -7,20 +7,20 @@ from queuebie.messages import Event
 from apps.warband.calendar.months import get_calendar_month
 from apps.warband.faction.domain.fyrd_reserve import FyrdReserve
 from apps.warband.faction.domain.occupation_spoils import OccupationSpoils
-from apps.warband.faction.domain.rival_income import RivalIncome
 from apps.warband.faction.domain.rival_policy import (
     BuyFromShop,
     DraftFromFyrd,
+    HallUpgradeOffer,
     PubOffer,
     RivalMonthSnapshot,
     RivalPolicy,
+    UpgradeHall,
 )
 from apps.warband.faction.messages.commands.faction import (
     ChangeFyrdReserve,
     CreateFactionsForNewSavegame,
     DefeatFactionOfLostLeader,
     EarnMoneyFromBuildings,
-    EarnMonthlyFactionIncome,
     OccupyFaction,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
@@ -36,9 +36,9 @@ from apps.warband.faction.messages.events.faction import (
     FactionWasOccupied,
     FyrdReserveChanged,
     MonthlyBuildingMoneyEarned,
-    MonthlyFactionIncomeEarned,
     NewFactionCreated,
     NewLeaderWarriorSet,
+    TownBuildingUpgradeApproved,
 )
 from apps.warband.faction.messages.events.item import ShopItemPurchaseApproved
 from apps.warband.faction.messages.events.warrior import (
@@ -56,8 +56,10 @@ from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.payroll import Payroll
 from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL
+from apps.warband.town.buildings.hall import Hall
 from apps.warband.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
 from apps.warband.town.models import Town
+from apps.warband.town.services.building_upgrade import get_building_upgrade_refusal
 from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
 # How many rivals a new savegame deals the player
@@ -193,6 +195,20 @@ def handle_replenish_fyrd_reserve(*, context: ReplenishFyrdReserve) -> Event | N
     )
 
 
+def _get_hall_upgrade_offer(*, town: Town, savegame: Savegame) -> HallUpgradeOffer | None:
+    # Behind the refusal the player's town page asks, so a rival builds by the player's rules
+    if get_building_upgrade_refusal(town=town, building_type=Hall.BUILDING_NAME, current_savegame=savegame):
+        return None
+
+    new_level = town.hall + 1
+
+    return HallUpgradeOffer(
+        current_level=town.hall,
+        new_level=new_level,
+        price=Hall.get_building_by_type(building_type=new_level).BUILDING_COSTS,
+    )
+
+
 @message_registry.register_command(command=PlanFactionMonth)
 def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
     """
@@ -221,6 +237,8 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
     if context.faction.savegame.player_faction_id == context.faction.id:
         return [planned]
 
+    town = context.faction.town
+    hall_upgrade = _get_hall_upgrade_offer(town=town, savegame=context.faction.savegame)
     # Priced once per man, and before anything moves him - the price is partly made of his wait
     mercenary_by_id = {mercenary.id: mercenary for mercenary in context.faction.available_mercenaries.all()}
     item_by_id = {item.id: item for item in context.faction.available_items.select_related("type")}
@@ -240,6 +258,10 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
         ],
         shop_offer_list=get_shop_offers(item_list=item_by_id.values()),
         held_gear_values=get_held_gear_values(faction=context.faction),
+        warriors_on_payroll=Warrior.objects.filter_drawing_a_wage()
+        .filter_faction(faction_id=context.faction.id)
+        .count(),
+        hall_upgrade=hall_upgrade,
     )
 
     events: list[Event] = []
@@ -250,6 +272,17 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
             events.append(
                 ShopItemPurchaseApproved(
                     faction=context.faction, item=item_by_id[decision.item_id], month=context.month
+                )
+            )
+        elif isinstance(decision, UpgradeHall):
+            events.append(
+                TownBuildingUpgradeApproved(
+                    faction=context.faction,
+                    town=town,
+                    building_type=Hall.BUILDING_NAME,
+                    new_level=decision.new_level,
+                    costs=decision.price,
+                    month=context.month,
                 )
             )
         else:
@@ -436,44 +469,16 @@ def handle_set_new_leader_warrior(*, context: SetNewLeaderWarrior) -> list[Event
 @message_registry.register_command(command=EarnMoneyFromBuildings)
 def handle_earn_money_from_buildings(*, context: EarnMoneyFromBuildings) -> list[Event] | Event:
     """
-    The town's monthly payout, for the one faction that builds.
+    The town's monthly payout, which is what every faction lives on - the player and his rivals alike.
 
-    Never asked of a rival rather than refused for one: this hangs off PlayerMonthPrepared, the event
-    for the things a rival has no equivalent of. A rival's town is created at every default and would
-    collect NoHall's 50 silver against a leader's salary of around 135, whatever it fields - so
-    letting rivals build their way out of that would be handing them a second income. They earn off
-    their war band instead, see [RivalIncome].
+    One income for both sides is what makes a rival's strength readable off its town: the hall pays a
+    rival what it pays the player for the same men on the payroll, and a rival raises its hall through
+    [RivalPolicy] the way the player raises his.
 
     The figure is [Faction.get_monthly_income], which the cost card reads as well.
     """
     return MonthlyBuildingMoneyEarned(
         faction=context.faction,
         amount=context.faction.get_monthly_income(),
-        month=context.month,
-    )
-
-
-@message_registry.register_command(command=EarnMonthlyFactionIncome)
-def handle_earn_monthly_faction_income(*, context: EarnMonthlyFactionIncome) -> list[Event] | Event | None:
-    """
-    What a rival lives on, which is its war band rather than its town.
-
-    Refused for the player, unlike the town income above: this one hangs off FactionMonthPrepared,
-    which is raised for every faction and knows nothing about who they are, so the guard belongs here
-    where reading the savegame is allowed. He has the buildings, and taking both would pay him twice
-    for the same month.
-
-    Counted over the healthy alone, while the wage bill covers everybody who is not dead - a faction
-    that cannot field a warrior should not be earning off him. See [RivalIncome] for why the two
-    rosters differ on purpose.
-    """
-    if context.faction.savegame.player_faction_id == context.faction.id:
-        return None
-
-    healthy_warriors = Warrior.objects.filter_healthy().filter_faction(faction_id=context.faction.id).count()
-
-    return MonthlyFactionIncomeEarned(
-        faction=context.faction,
-        amount=RivalIncome.get_monthly_income(healthy_warriors=healthy_warriors),
         month=context.month,
     )

@@ -1,25 +1,27 @@
 from apps.warband.faction.handlers.events.faction import (
     handle_create_player_faction_for_new_savegame,
     handle_earn_money_from_buildings_for_new_month,
-    handle_earn_monthly_faction_income_for_new_month,
     handle_pay_monthly_warrior_salaries_for_new_month,
     handle_plan_faction_month_for_new_month,
     handle_prepare_faction_warriors_for_new_month,
     handle_replenish_fyrd_reserve_for_new_month,
+    handle_upgrade_town_building_for_approved_upgrade,
 )
 from apps.warband.faction.messages.commands.faction import (
     CreateFactionsForNewSavegame,
     EarnMoneyFromBuildings,
-    EarnMonthlyFactionIncome,
     PlanFactionMonth,
     PrepareFactionWarriorsForMonth,
     ReplenishFyrdReserve,
 )
 from apps.warband.faction.messages.commands.warrior import PayMonthlyWarriorSalaries
+from apps.warband.faction.messages.events.faction import TownBuildingUpgradeApproved
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.month.messages.events.month import FactionMonthPrepared, PlayerMonthPrepared
+from apps.warband.month.messages.events.month import FactionMonthPrepared
 from apps.warband.savegame.messages.events.savegame import NewSavegameCreated
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.town.messages.commands.town import UpgradeTownBuilding
+from apps.warband.town.tests.factories.town import TownFactory
 
 
 def test_handle_create_player_faction_for_new_savegame_maps_to_command():
@@ -64,25 +66,30 @@ def test_handle_pay_monthly_warrior_salaries_for_new_month_maps_to_command():
 
 def test_handle_earn_money_from_buildings_for_new_month_maps_to_command():
     """
-    On the player-only event: the town economy is the thing a rival has no equivalent of, and being
-    registered there is the whole of what keeps a rival off the hall's revenue.
+    On the event raised for every faction: a rival lives on its town the way the player does.
     """
     faction = FactionFactory.build()
-    context = PlayerMonthPrepared(faction=faction, savegame=SavegameFactory.build(), current_month=7)
 
-    result = handle_earn_money_from_buildings_for_new_month(context=context)
+    result = handle_earn_money_from_buildings_for_new_month(
+        context=FactionMonthPrepared(faction=faction, current_month=7)
+    )
 
     assert result == EarnMoneyFromBuildings(faction=faction, month=7)
 
 
-def test_handle_earn_monthly_faction_income_for_new_month_maps_to_command():
+def test_handle_upgrade_town_building_for_approved_upgrade_maps_to_command():
     faction = FactionFactory.build()
+    town = TownFactory.build(faction=faction)
 
-    result = handle_earn_monthly_faction_income_for_new_month(
-        context=FactionMonthPrepared(faction=faction, current_month=7)
+    result = handle_upgrade_town_building_for_approved_upgrade(
+        context=TownBuildingUpgradeApproved(
+            faction=faction, town=town, building_type="hall", new_level=1, costs=600, month=7
+        )
     )
 
-    assert result == EarnMonthlyFactionIncome(faction=faction, month=7)
+    assert result == UpgradeTownBuilding(
+        town=town, faction=faction, building_type="hall", new_level=1, costs=600, month=7
+    )
 
 
 def test_handle_plan_faction_month_for_new_month_maps_to_command():

@@ -1,7 +1,6 @@
 from apps.warband.faction.messages.events.faction import (
     FactionWasOccupied,
     MonthlyBuildingMoneyEarned,
-    MonthlyFactionIncomeEarned,
     MonthlyWarriorSalariesPaid,
     NewFactionCreated,
 )
@@ -10,7 +9,6 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.handlers.events.faction import (
     handle_building_money_earnings,
     handle_hand_out_starting_silver_for_new_factions,
-    handle_monthly_faction_income,
     handle_pay_warrior_salaries,
     handle_plunder_occupied_faction_treasury,
     handle_warrior_recruited,
@@ -74,17 +72,6 @@ def test_handle_hand_out_starting_silver_for_new_factions_credits_the_starting_p
     )
 
     assert result == CreateTransaction(faction=faction, amount=1000, reason="Starting silver", month=1)
-
-
-def test_handle_monthly_faction_income_credits_the_faction():
-    """
-    Its own line rather than the building one: a rival has no buildings to have earned it with.
-    """
-    faction = FactionFactory.build()
-
-    result = handle_monthly_faction_income(context=MonthlyFactionIncomeEarned(faction=faction, amount=450, month=3))
-
-    assert result == CreateTransaction(faction=faction, amount=450, reason="Faction income", month=3)
 
 
 def test_handle_plunder_occupied_faction_treasury_moves_the_silver_across():
