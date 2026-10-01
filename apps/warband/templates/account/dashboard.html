@@ -33,7 +33,7 @@
         {# month that decides the savegame redirects to this page, and "handle_log_savegame_ending" #}
         {# writes its line for exactly this screen - the battle history a finished savegame no longer #}
         {# routes to is not an answer. #}
-        {% include 'month/components/player_month_log_list.html' %}
+        <c-month.log-list :logs="player_month_logs" />
     {% else %}
         {# The state of the month and the control that ends it, above everything the month contains, #}
         {# with the year it sits in along its foot. It carries the page's heading, so there is no second #}
@@ -53,7 +53,7 @@
 
                 {# What the month just did to him, before what he may still do about it: the player #}
                 {# arrives on this page straight from finishing a month, and the news is why. #}
-                {% include 'month/components/player_month_log_list.html' %}
+                <c-month.log-list :logs="player_month_logs" :questions="open_questions" />
 
                 {% if month_standing %}
                     {% include 'account/components/month_openings.html' %}

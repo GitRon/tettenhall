@@ -33,6 +33,7 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-calendar.month-effects>` | `apps.warband` | One month's name, season and the effects it has in force, with an optional `heading` before the name |
 | `<c-calendar.march-cost-row>` | `apps.warband` | The table row pricing a march in the month the form prices it with, on the attack and the quest page |
 | `<c-finance.wage-bill-warning>` | `apps.warband` | The alert for a purse that cannot cover next month's wages, silent while it can; `show_finance_link` adds the way to the books |
+| `<c-month.log-list>` | `apps.warband` | One month's log at its four weights, with the open `questions` and their answers above it; a finished game passes no questions |
 | `<c-navigation.section-nav>` | `apps.warband` | The four sections of the game, `current` marked; a page whose section the url does not say passes its own - see [navigation](navigation.md) |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
 
