@@ -60,6 +60,7 @@ def test_town_upgrade_view_puts_the_effects_of_both_levels_next_to_each_other(lo
     assert _building(response, "hall")["effect_list"] == [
         {"label": "Monthly income", "current": "50 silver", "next": "300 silver"},
         {"label": "Men needed for full income", "current": "0", "next": "1"},
+        {"label": "Prisoners the cells hold", "current": "1", "next": "2"},
         {"label": "A feast mends a cut ceiling by", "current": "No feasts", "next": "10%"},
     ]
 
@@ -75,6 +76,7 @@ def test_town_upgrade_view_leaves_out_an_effect_the_next_level_does_not_move(log
     assert [effect["label"] for effect in _building(response, "hall")["effect_list"]] == [
         "Monthly income",
         "Men needed for full income",
+        "Prisoners the cells hold",
         "A feast mends a cut ceiling by",
     ]
 
@@ -95,6 +97,7 @@ def test_town_upgrade_view_keeps_every_effect_at_the_maximum_level(logged_in_cli
         {"label": "Monthly income", "current": "750 silver", "next": "750 silver"},
         {"label": "Men needed for full income", "current": "3", "next": "3"},
         {"label": "Mercenaries in the pub", "current": "3", "next": "3"},
+        {"label": "Prisoners the cells hold", "current": "4", "next": "4"},
         {"label": "A feast mends a cut ceiling by", "current": "30%", "next": "30%"},
         {"label": "Feast per man", "current": "15 silver", "next": "15 silver"},
     ]
