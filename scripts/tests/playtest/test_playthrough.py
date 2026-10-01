@@ -5,7 +5,7 @@ from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from scripts.playtest.playthrough import STOP_MONTH_BLOCKED, _count_successions, play_months, play_savegame
+from scripts.playtest.playthrough import STOP_MONTH_BLOCKED, Standing, _count_successions, play_months, play_savegame
 from scripts.playtest.policy import POLICIES, PlayerPolicy
 from scripts.playtest.report import GameReport
 
@@ -97,16 +97,45 @@ def test_play_months_stops_on_a_month_it_may_not_finish(player_savegame, rng, re
 def test_count_successions_counts_the_players_new_leader(player_savegame, report):
     faction = player_savegame.player_faction
     fallen_leader_id = faction.leader_id
-    faction.leader = WarriorFactory(faction=faction)
+    successor = WarriorFactory(faction=faction)
+    faction.leader = successor
     faction.save()
 
-    _count_successions(savegame=player_savegame, before={faction.id: (fallen_leader_id, False)}, report=report)
+    _count_successions(
+        savegame=player_savegame,
+        before={
+            faction.id: Standing(leader_id=fallen_leader_id, is_defeated=False, roster_ids=frozenset({successor.id}))
+        },
+        report=report,
+    )
 
-    assert (report.player_successions, report.rival_successions) == (1, 0)
+    assert (report.player_successions, report.player_leaders_raised) == (1, 0)
 
 
 @pytest.mark.django_db
 def test_count_successions_counts_a_rivals_new_leader(player_savegame, report):
+    rival = FactionFactory(savegame=player_savegame)
+    fallen_leader = WarriorFactory(faction=rival)
+    successor = WarriorFactory(faction=rival)
+    rival.leader = successor
+    rival.save()
+    faction = player_savegame.player_faction
+
+    _count_successions(
+        savegame=player_savegame,
+        before={
+            faction.id: Standing(leader_id=faction.leader_id, is_defeated=False),
+            rival.id: Standing(leader_id=fallen_leader.id, is_defeated=False, roster_ids=frozenset({successor.id})),
+        },
+        report=report,
+    )
+
+    assert (report.player_successions, report.rival_successions, report.rival_leaders_raised) == (0, 1, 0)
+
+
+@pytest.mark.django_db
+def test_count_successions_tells_a_leader_raised_from_the_fyrd_apart(player_savegame, report):
+    """The new leader was on nobody's roster before the month: the fyrd raised him, nobody succeeded."""
     rival = FactionFactory(savegame=player_savegame)
     fallen_leader = WarriorFactory(faction=rival)
     rival.leader = WarriorFactory(faction=rival)
@@ -115,11 +144,30 @@ def test_count_successions_counts_a_rivals_new_leader(player_savegame, report):
 
     _count_successions(
         savegame=player_savegame,
-        before={faction.id: (faction.leader_id, False), rival.id: (fallen_leader.id, False)},
+        before={
+            faction.id: Standing(leader_id=faction.leader_id, is_defeated=False),
+            rival.id: Standing(leader_id=fallen_leader.id, is_defeated=False, roster_ids=frozenset()),
+        },
         report=report,
     )
 
-    assert (report.player_successions, report.rival_successions) == (0, 1)
+    assert (report.rival_successions, report.rival_leaders_raised) == (0, 1)
+
+
+@pytest.mark.django_db
+def test_count_successions_tells_the_players_raised_leader_apart(player_savegame, report):
+    faction = player_savegame.player_faction
+    fallen_leader_id = faction.leader_id
+    faction.leader = WarriorFactory(faction=faction)
+    faction.save()
+
+    _count_successions(
+        savegame=player_savegame,
+        before={faction.id: Standing(leader_id=fallen_leader_id, is_defeated=False, roster_ids=frozenset())},
+        report=report,
+    )
+
+    assert (report.player_successions, report.player_leaders_raised) == (0, 1)
 
 
 @pytest.mark.django_db
@@ -131,11 +179,37 @@ def test_count_successions_records_a_rival_knocked_out(player_savegame, report):
 
     _count_successions(
         savegame=player_savegame,
-        before={faction.id: (faction.leader_id, False), rival.id: (WarriorFactory(faction=rival).id, False)},
+        before={
+            faction.id: Standing(leader_id=faction.leader_id, is_defeated=False),
+            rival.id: Standing(leader_id=WarriorFactory(faction=rival).id, is_defeated=False),
+        },
         report=report,
     )
 
-    assert (report.rival_defeat_months, report.rival_successions) == ([4], 0)
+    assert (report.rival_defeat_months, report.rival_successions, report.rival_months_after_first_fall) == (
+        [4],
+        0,
+        [0],
+    )
+
+
+@pytest.mark.django_db
+def test_count_successions_measures_a_rival_from_its_first_fall(player_savegame, report):
+    """It lost its first leader in month 2 and lasted until month 5: three months after the fall."""
+    rival = FactionFactory(savegame=player_savegame, is_defeated=True)
+    faction = player_savegame.player_faction
+    report.months_played = 5
+
+    _count_successions(
+        savegame=player_savegame,
+        before={
+            faction.id: Standing(leader_id=faction.leader_id, is_defeated=False),
+            rival.id: Standing(leader_id=WarriorFactory(faction=rival).id, is_defeated=False, first_fall_month=2),
+        },
+        report=report,
+    )
+
+    assert report.rival_months_after_first_fall == [3]
 
 
 @pytest.mark.django_db
@@ -144,8 +218,10 @@ def test_count_successions_returns_the_standings_now(player_savegame):
 
     result = _count_successions(
         savegame=player_savegame,
-        before={faction.id: (faction.leader_id, False)},
+        before={faction.id: Standing(leader_id=faction.leader_id, is_defeated=False)},
         report=GameReport(seed=1, policy="even"),
     )
 
-    assert result == {faction.id: (faction.leader_id, False)}
+    assert result == {
+        faction.id: Standing(leader_id=faction.leader_id, is_defeated=False, roster_ids=frozenset({faction.leader_id}))
+    }

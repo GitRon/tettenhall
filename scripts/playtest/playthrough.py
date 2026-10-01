@@ -1,4 +1,5 @@
 import random
+from dataclasses import dataclass, replace
 
 from django.contrib.auth.models import User
 from queuebie.runner import handle_message
@@ -57,7 +58,10 @@ def play_months(
     standings = _standings(savegame=savegame)
 
     while not savegame.is_over and report.months_played < month_cap:
-        stop_reason = PlayerTurn(savegame=savegame, policy=policy, rng=rng, report=report).play()
+        turn = PlayerTurn(savegame=savegame, policy=policy, rng=rng, report=report)
+        stop_reason = turn.play()
+        player_id = savegame.player_faction_id
+        standings[player_id] = replace(standings[player_id], roster_ids=turn.roster_ids_at_march)
         savegame = _reload(savegame=savegame)
 
         if stop_reason is None and not savegame.is_over:
@@ -85,29 +89,64 @@ def _reload(*, savegame: Savegame) -> Savegame:
     return Savegame.objects.select_related("player_faction").get(pk=savegame.pk)
 
 
-def _standings(*, savegame: Savegame) -> dict[int, tuple[int | None, bool]]:
+@dataclass(frozen=True, kw_only=True)
+class Standing:
+    """
+    Where one faction stood at the end of a month, as far as its seat is concerned.
+
+    The roster is kept so that a new leader can be told apart: a man who was on it is the next in line,
+    and a man who was not was raised from the fyrd. A rival's roster only moves in the month run, after
+    every fight, so last month's is the one to compare against. The player's moves in his own turn before
+    the march, so "play_months" swaps in the roster he set out with.
+    "first_fall_month" is the month the faction first lost a leader, carried forward once set.
+    """
+
+    leader_id: int | None
+    is_defeated: bool
+    roster_ids: frozenset[int] = frozenset()
+    first_fall_month: int | None = None
+
+
+def _standings(*, savegame: Savegame, before: dict[int, Standing] | None = None) -> dict[int, Standing]:
+    before = before or {}
     return {
-        faction.id: (faction.leader_id, faction.is_defeated)
+        faction.id: Standing(
+            leader_id=faction.leader_id,
+            is_defeated=faction.is_defeated,
+            roster_ids=frozenset(Warrior.objects.filter_faction(faction_id=faction.id).values_list("id", flat=True)),
+            first_fall_month=before[faction.id].first_fall_month if faction.id in before else None,
+        )
         for faction in Faction.objects.for_savegame(savegame_id=savegame.id)
     }
 
 
-def _count_successions(
-    *, savegame: Savegame, before: dict[int, tuple[int | None, bool]], report: GameReport
-) -> dict[int, tuple[int | None, bool]]:
-    """Counts the seats that changed hands and the rivals knocked out this month, and returns the new standings."""
-    after = _standings(savegame=savegame)
+def _count_successions(*, savegame: Savegame, before: dict[int, Standing], report: GameReport) -> dict[int, Standing]:
+    """
+    Counts the seats that changed hands, the leaders the fyrd raised and the rivals knocked out this month,
+    and returns the new standings.
+    """
+    after = _standings(savegame=savegame, before=before)
 
-    for faction_id, (leader_id, is_defeated) in after.items():
-        leader_before, was_defeated = before[faction_id]
+    for faction_id, standing in after.items():
+        previous = before[faction_id]
         is_player = faction_id == savegame.player_faction_id
-        if leader_id not in (leader_before, None) and not is_defeated:
-            if is_player:
+        leader_fell = standing.leader_id != previous.leader_id or (standing.is_defeated and not previous.is_defeated)
+        if leader_fell and standing.first_fall_month is None:
+            after[faction_id] = standing = replace(standing, first_fall_month=report.months_played)
+
+        if standing.leader_id not in (previous.leader_id, None) and not standing.is_defeated:
+            raised = standing.leader_id not in previous.roster_ids
+            if is_player and raised:
+                report.player_leaders_raised += 1
+            elif is_player:
                 report.player_successions += 1
+            elif raised:
+                report.rival_leaders_raised += 1
             else:
                 report.rival_successions += 1
-        if is_defeated and not was_defeated and not is_player:
+        if standing.is_defeated and not previous.is_defeated and not is_player:
             report.rival_defeat_months.append(report.months_played)
+            report.rival_months_after_first_fall.append(report.months_played - standing.first_fall_month)
 
     return after
 
