@@ -55,3 +55,15 @@ def test_gear_slot_names_the_slot_armour_goes_in():
     item = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR))
 
     assert item.gear_slot == "armor"
+
+
+def test_roll_name_of_a_weapon_is_its_damage():
+    item = ItemFactory.build(type=ItemTypeFactory.build(function=ItemType.FunctionChoices.FUNCTION_WEAPON))
+
+    assert item.roll_name == "Damage"
+
+
+def test_roll_name_of_armour_is_its_protection():
+    item = ItemFactory.build(type=ItemTypeFactory.build(function=ItemType.FunctionChoices.FUNCTION_ARMOR))
+
+    assert item.roll_name == "Protection"

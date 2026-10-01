@@ -27,6 +27,8 @@ from apps.warband.calendar.months.winter import Blotmonath
 from apps.warband.incident.incidents.base import IncidentOption
 from apps.warband.incident.services.pending_incident import OpenQuestion
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
+from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.month.services.player_month_log import GroupedPlayerMonthLog
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.warband.skirmish.models import Warrior
@@ -124,6 +126,13 @@ RENDER_ROWS = {
             '<c-finance.wage-bill-warning :payroll="payroll" show_finance_link />',
             {"payroll": _payroll(budget=0, unpaid_months=Warrior.UNPAID_MONTHS_UNTIL_WALKOUT)},
         ),
+    ],
+    "item.improves-nobody-tag": [
+        ("<c-item.improves-nobody-tag />", {}),
+    ],
+    "item.stats-meta": [
+        ('<c-item.stats-meta :item="item" />', {"item": ItemFactory.build(type=ItemTypeFactory.build())}),
+        ('<c-item.stats-meta :item="item" show_price />', {"item": ItemFactory.build(type=ItemTypeFactory.build())}),
     ],
     "month.log-list": [
         ('<c-month.log-list :logs="logs" />', {"logs": GroupedPlayerMonthLog()}),

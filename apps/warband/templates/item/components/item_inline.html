@@ -14,7 +14,7 @@
         {{ item.display_name }}
     </span>
     <span class="block text-sm leading-snug text-ink-muted">
-        {% include 'item/components/item_stats_meta.html' with item=item %}
+        <c-item.stats-meta :item="item" />
     </span>
 {% else %}
     <span>{{ empty_label|default:"-" }}</span>

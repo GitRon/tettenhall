@@ -12,12 +12,12 @@
                     {{ item.display_name }}
                 </h3>
                 {% if item|improves_nobody:roster %}
-                    {% include 'item/components/improves_nobody_tag.html' %}
+                    <c-item.improves-nobody-tag />
                 {% endif %}
                 {# No list price here: what an item cost is not what selling it pays, and the one #}
                 {# figure the stores decide on stands on the Sell button below #}
                 <p class="mt-0 text-sm leading-snug text-ink-muted">
-                    {% include 'item/components/item_stats_meta.html' with item=item %}
+                    <c-item.stats-meta :item="item" />
                 </p>
             </div>
         </div>

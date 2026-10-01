@@ -12,10 +12,10 @@
                     {{ item.display_name }}
                 </h3>
                 {% if item|improves_nobody:gear_roster %}
-                    {% include 'item/components/improves_nobody_tag.html' %}
+                    <c-item.improves-nobody-tag />
                 {% endif %}
                 <p class="mt-0 text-sm leading-snug text-ink-muted">
-                    {% include 'item/components/item_stats_meta.html' with item=item show_price=True %}
+                    <c-item.stats-meta :item="item" show_price />
                 </p>
                 {# So a second one is bought on purpose. The stores are a section away, and the #}
                 {# player standing at the stall cannot see what is already lying there. #}
