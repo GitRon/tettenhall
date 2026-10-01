@@ -268,13 +268,14 @@ def test_handle_consider_fyrd_draft_refuses_the_player():
     assert result is None
 
 
-def _rival_with_pub(*, purse: int, salary_list: list[int]) -> tuple[Faction, list[Warrior]]:
+def _rival_with_pub(*, purse: int, salary_list: list[int], fyrd_reserve: int = 0) -> tuple[Faction, list[Warrior]]:
     """
     A rival with an empty roster, this much silver, and one mercenary on its shelf per salary.
 
-    A man who just arrived costs twice his wage - see [Warrior.hiring_price].
+    A man who just arrived costs twice his wage - see [Warrior.hiring_price]. The fyrd is empty unless
+    asked for, because a rival with free men left in it hires nobody.
     """
-    rival_faction = FactionFactory()
+    rival_faction = FactionFactory(fyrd_reserve=fyrd_reserve)
     TransactionFactory(faction=rival_faction, amount=purse)
     mercenary_list = [
         WarriorFactory(
@@ -311,6 +312,33 @@ def test_handle_consider_pub_hire_passes_over_a_man_a_rival_cannot_afford():
     not cover the wage bill once over, and the rival leaves him standing.
     """
     rival_faction, _ = _rival_with_pub(purse=250, salary_list=[100])
+
+    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
+
+    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_consider_pub_hire_takes_nobody_while_the_fyrd_has_men():
+    """
+    He is affordable, as in the approval above, but one free man still stands in the fyrd. The reserve
+    is the brake on a rival's growth, so the pub waits until it is empty.
+    """
+    rival_faction, _ = _rival_with_pub(purse=1000, salary_list=[100], fyrd_reserve=1)
+
+    result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
+
+    assert result == [PubHiringConsidered(faction=rival_faction, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_consider_pub_hire_reads_the_fyrd_off_the_row():
+    """
+    The faction on the message still shows the empty fyrd it was loaded with, while the month's
+    replenishment has already put a man in it. The row is what counts.
+    """
+    rival_faction, _ = _rival_with_pub(purse=1000, salary_list=[100])
+    Faction.objects.filter(id=rival_faction.id).update(fyrd_reserve=1)
 
     result = handle_consider_pub_hire(context=ConsiderPubHire(faction=rival_faction, month=3))
 
