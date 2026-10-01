@@ -12,7 +12,7 @@
 {# the row has room for "Aethelbeorht the Wolfheart" - a name this game's own stock and epithet list #}
 {# will hand out - only at body size, and a name that wraps is the whole defect this row exists to fix. #}
 {# Nothing is lost from the document outline by it: the panel header above is a span too - see #}
-{# "common/components/box_header.html" - so this screen names its sections without heading elements #}
+{# "cotton/common/box_header.html" - so this screen names its sections without heading elements #}
 {# either way. #}
 {% load skirmish_actions %}
 <div class="flex flex-col gap-y-[9px] border-b border-rule py-[14px]">
@@ -76,8 +76,8 @@
         {# It is read by class rather than by ":checked" alone: a selected "<option>" answers ":checked" #}
         {# too, and the order below carries one on every player-side row. #}
         <div class="hidden flex-wrap items-center gap-x-4 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted group-has-[.kit-toggle:checked]:flex">
-            <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_weapon_or_fallback.type.svg_image_name %} {{ warrior.get_weapon_or_fallback }}</span>
-            <span class="whitespace-nowrap">{% include 'common/components/svg_icon.html' with icon_name=warrior.get_armor_or_fallback.type.svg_image_name %} {{ warrior.get_armor_or_fallback }}</span>
+            <span class="whitespace-nowrap"><c-common.svg-icon :icon_name="warrior.get_weapon_or_fallback.type.svg_image_name" decorative /> {{ warrior.get_weapon_or_fallback }}</span>
+            <span class="whitespace-nowrap"><c-common.svg-icon :icon_name="warrior.get_armor_or_fallback.type.svg_image_name" decorative /> {{ warrior.get_armor_or_fallback }}</span>
         </div>
 
         {# The order, and the condition on it is about the fight rather than the man: a warrior still on #}

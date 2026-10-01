@@ -37,7 +37,7 @@ with no error anywhere:
 |---|---|
 | `migrations/` | `<app>/migrations/` |
 | `models/__init__.py` | `<app>/models` — a model missing from it gets no table |
-| `templates/` | `<app>/templates/` — one subdirectory per topic, named after it, plus `base.html` |
+| `templates/` | `<app>/templates/` — one subdirectory per topic, named after it, plus `base.html`, plus `cotton/` for [components](components.md) |
 | `templatetags/` | `<app>/templatetags/` |
 | `management/commands/` | `<app>/management/commands/` |
 | `fixtures/` | `<app>/fixtures/` |

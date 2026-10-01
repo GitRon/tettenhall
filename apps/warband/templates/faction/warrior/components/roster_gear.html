@@ -7,7 +7,7 @@
 {% endcomment %}
 {% if item %}
     <div class="leading-snug text-ink">
-        {% include 'common/components/svg_icon.html' with icon_name=item.type.svg_image_name %}
+        <c-common.svg-icon :icon_name="item.type.svg_image_name" decorative />
         {{ item.display_name }}
     </div>
     <div class="mt-0.5 font-mono text-xs tabular-nums text-ink-muted"

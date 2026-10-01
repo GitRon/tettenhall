@@ -55,7 +55,7 @@ filter itself:
 | Component | For |
 |---|---|
 | `warrior/components/warrior_attribute.html` | one attribute: `value`, `baseline`, `knowledge` |
-| `warrior/components/warrior_gauge.html` | a current/maximum pair: `current`, `maximum`, `baseline`, `knowledge` |
+| `<c-warrior.gauge>` (`cotton/warrior/gauge.html`) | a current/maximum pair: `current`, `maximum`, `baseline`, `knowledge`, optionally `peak` |
 
 The gauge's fuzzed form buckets where the man stands *now* against the ceiling a typical man of his kind
 carries, so "Low" reads as somebody who has been hurt. Against his own maximum it would say nothing about

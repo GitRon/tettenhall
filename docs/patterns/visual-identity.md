@@ -154,7 +154,7 @@ which is the browser's look rather than the game's.
 ## The icons
 
 The hand-drawn set in `static/svg/icons/` is painted as a **mask**, not fetched as an image:
-`common/components/svg_icon.html` renders a span whose `background-color` is `currentColor` with the
+`<c-common.svg-icon>` (`cotton/common/svg_icon.html`) renders a span whose `background-color` is `currentColor` with the
 drawing punched out of it, so every icon takes the colour of the text beside it. See
 `static/css/icons.css`.
 

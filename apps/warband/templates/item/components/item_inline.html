@@ -10,7 +10,7 @@
 {% endcomment %}
 {% if item %}
     <span class="whitespace-nowrap">
-        {% include 'common/components/svg_icon.html' with icon_name=item.type.svg_image_name %}
+        <c-common.svg-icon :icon_name="item.type.svg_image_name" decorative />
         {{ item.display_name }}
     </span>
     <span class="block text-sm leading-snug text-ink-muted">

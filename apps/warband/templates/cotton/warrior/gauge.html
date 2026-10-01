@@ -1,4 +1,5 @@
-{% load obscurify %}
+<c-vars current maximum baseline knowledge peak=None />
+{% load gauge obscurify %}
 {% comment %}
     A warrior's health or morale: where he stands out of what he can hold, or one word for it - see
     docs/patterns/warrior-knowledge.md.
@@ -12,4 +13,4 @@
     the ceiling sits below it, so a whole man carries no third number and the one who was cut reads as
     down from what he was - the man a feast is for.
 {% endcomment %}
-{% if knowledge.numbers_are_exact %}{{ current }}/{{ maximum }}{% if peak and maximum < peak %} <span title="The highest his nerve has stood">(was {{ peak }})</span>{% endif %}{% else %}{{ current|obscurify:baseline }}{% endif %}
+{% if knowledge.numbers_are_exact %}{{ current }}/{{ maximum }}{% if maximum|is_below_peak:peak %} <span title="The highest his nerve has stood">(was {{ peak }})</span>{% endif %}{% else %}{{ current|obscurify:baseline }}{% endif %}

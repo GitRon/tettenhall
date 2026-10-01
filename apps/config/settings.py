@@ -41,6 +41,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "crispy_forms",
     "crispy_bootstrap5",
+    # The simple config rather than "django_cotton": the default one rewrites "TEMPLATES" in its
+    # "ready()", so the loaders below would not be the ones that run. This one only patches Django's
+    # template lexer so a template tag inside a component attribute survives - a private Django API,
+    # which is why the component render test in "apps/warband/tests/architecture/" exists.
+    # See docs/patterns/components.md.
+    "django_cotton.apps.SimpleAppConfig",
     # One domain app, plus satellites for domain-independent logic. A Django app is a unit of
     # persistence and Django configuration, not of code organisation, so the game's structure lives in
     # topic packages inside "apps.warband" rather than in an app per topic.
@@ -80,8 +86,21 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
-        "APP_DIRS": True,
+        # Written out rather than "APP_DIRS": the cotton loader has to run first, compiling a "<c-...>"
+        # tag into the template tags Django renders, and "APP_DIRS" cannot be combined with "loaders".
+        # Templates are still found in each app's "templates/" directory and nowhere else.
         "OPTIONS": {
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        "django_cotton.cotton_loader.Loader",
+                        "django.template.loaders.filesystem.Loader",
+                        "django.template.loaders.app_directories.Loader",
+                    ],
+                ),
+            ],
+            "builtins": ["django_cotton.templatetags.cotton"],
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",

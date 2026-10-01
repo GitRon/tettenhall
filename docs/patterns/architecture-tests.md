@@ -18,6 +18,8 @@ where an entry can go stale a test says so.
 | `test_faker_construction.py` | A `Faker` is only built by the faction topic's factory | below |
 | `test_record_managers.py` | A manager writes a record through `create_record()` | [Where code goes](app-layout.md#creating-a-record) |
 | `test_admin_imports.py` | Every topic `admin.py` is imported by the app root's | [Where code goes](app-layout.md#the-app-root-is-djangos-everything-else-is-yours) |
+| `test_component_contracts.py` | Every component call names a component, passes only what it declares and everything it requires | [Template components](components.md#tests) |
+| `test_component_render.py` | Every component renders on every branch without an unresolved variable | [Template components](components.md#tests) |
 
 ## Self-reloading htmx elements
 
