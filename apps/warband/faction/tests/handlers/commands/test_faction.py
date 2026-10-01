@@ -941,3 +941,18 @@ def test_handle_plan_faction_month_raises_no_hall_for_a_rival_that_built_this_mo
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
 
     assert result == [FactionMonthPlanned(faction=rival_faction, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_plan_faction_month_raises_no_hall_for_a_rival_of_its_leader_alone():
+    """
+    The hall pays for the men on the payroll, and the leader draws no wage - so a Small Hall over a
+    roster of him alone pays the 50 the town already earns, and is not worth its 600.
+    """
+    rival_faction = FactionFactory(fyrd_reserve=0)
+    WarriorFactory(faction=rival_faction, monthly_salary=0)
+    TransactionFactory(faction=rival_faction, amount=1000)
+
+    result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
+
+    assert result == [FactionMonthPlanned(faction=rival_faction, month=3)]
