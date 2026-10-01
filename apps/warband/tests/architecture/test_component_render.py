@@ -22,6 +22,9 @@ from django.conf import settings
 from django.test import override_settings
 
 from apps.common.tests.html import render_component
+from apps.warband.skirmish.models import Warrior
+from apps.warband.skirmish.projections.payroll import Payroll
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.tests.architecture.components import components
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 
@@ -46,6 +49,17 @@ def _raising_templates() -> list[dict]:
     return templates
 
 
+def _payroll(*, budget: int, unpaid_months: int = 0) -> Payroll:
+    return Payroll(
+        warrior_list=[
+            WarriorFactory.build(id=1, monthly_salary=30),
+            WarriorFactory.build(id=2, monthly_salary=40, unpaid_months=unpaid_months),
+        ],
+        budget=budget,
+        leader_id=1,
+    )
+
+
 RENDER_ROWS = {
     "common.svg-icon": [
         ('<c-common.svg-icon icon_name="seax" />', {}),
@@ -64,6 +78,13 @@ RENDER_ROWS = {
         (
             '<c-common.card><c-slot name="header">Seax</c-slot> <c-slot name="footer">Buy</c-slot></c-common.card>',
             {},
+        ),
+    ],
+    "finance.wage-bill-warning": [
+        ('<c-finance.wage-bill-warning :payroll="payroll" />', {"payroll": _payroll(budget=0)}),
+        (
+            '<c-finance.wage-bill-warning :payroll="payroll" show_finance_link />',
+            {"payroll": _payroll(budget=0, unpaid_months=Warrior.UNPAID_MONTHS_UNTIL_WALKOUT)},
         ),
     ],
     "warrior.gauge": [
