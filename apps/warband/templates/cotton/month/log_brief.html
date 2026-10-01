@@ -1,0 +1,33 @@
+<c-vars logs />
+{# The month's log that is read rather than acted on: what the player's own decisions produced, and #}
+{# the recovery sweeps tallied into a single sentence with the rows behind it. It sits in the brief, #}
+{# beside the decisions it reports on, so the top of the page is left to what wants an answer. #}
+{# Silent when neither has a line: a heading over nothing is a thing the player learns to skip. #}
+{% if logs.consequence or logs.upkeep %}
+    <section class="mb-5 flex flex-col gap-y-2 border-l border-rule pl-[15px]">
+        <h3 class="m-0 font-mono text-label uppercase tracking-label text-ink-muted">The month's work</h3>
+
+        {% if logs.consequence %}
+            {# The rule goes on every row after the first, so it separates two consequences rather #}
+            {# than sitting over the top of the set. #}
+            <ul class="m-0 list-none p-0 text-ink [&>li+li]:mt-2 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2">
+                {% for message in logs.consequence %}
+                    <li>
+                        <i class="fa-solid fa-scroll text-ink-muted"></i> {{ message.title }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if logs.upkeep %}
+            <details class="text-sm leading-snug text-ink-muted">
+                <summary class="cursor-pointer">{{ logs.upkeep_summary|join:" · " }}</summary>
+                <ul class="mt-0 list-none space-y-2.5 p-0">
+                    {% for message in logs.upkeep %}
+                        <li>{{ message.title }}</li>
+                    {% endfor %}
+                </ul>
+            </details>
+        {% endif %}
+    </section>
+{% endif %}

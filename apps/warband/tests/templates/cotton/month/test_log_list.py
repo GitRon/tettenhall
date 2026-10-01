@@ -83,14 +83,15 @@ def test_log_list_tells_a_chronicle_entry_with_its_body():
     assert result == "A comet It hangs over Mercia."
 
 
-def test_log_list_tallies_the_upkeep_into_its_summary():
+def test_log_list_leaves_consequences_and_upkeep_to_the_brief():
     logs = GroupedPlayerMonthLog(
+        consequence=[PlayerMonthLogFactory.build(title="Wages paid")],
         upkeep=[PlayerMonthLogFactory.build(title="Wulfstan mends")],
         upkeep_summary=["1 man mends"],
     )
 
     html = render_component(tag=LOG_LIST_TAG, context={"logs": logs, "questions": []})
 
-    result = parse(html).find("summary").get_text(strip=True)
+    result = _text(html)
 
-    assert result == "1 man mends"
+    assert result == ""
