@@ -119,9 +119,9 @@ def test_create_faction_gives_the_player_a_town_at_every_default():
 @pytest.mark.django_db
 def test_create_faction_gives_a_rival_a_chosen_sanctuary_and_wall():
     """
-    Nothing upgrades a rival's town, so the levels it is created with are the pace its wounded mend at
-    and the wall the player meets for the rest of the savegame. The other three buildings stay at 0 on
-    purpose.
+    A rival raises only its hall, so the levels it is created with are the pace its wounded mend at and
+    the wall the player meets for the rest of the savegame. The other three buildings stay at 0 on
+    purpose, and the hall starts where the player's does.
     """
     savegame = SavegameFactory(current_month=5)
 

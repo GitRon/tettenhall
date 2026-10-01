@@ -90,11 +90,12 @@ def _create_faction(*, name: str, town_name: str, culture_id: int, savegame: Sav
         savegame.player_faction = faction
         savegame.save()
     else:
-        # A rival is handed the two building levels that decide something for it. Nothing upgrades a
-        # rival's town, so the sanctuary it is created with is the pace its wounded mend at for the
-        # rest of the savegame, and the fortification is the wall the player meets at its gate - both
-        # want choosing rather than inheriting the level of a town that has built nothing. The other
-        # three stay at 0: their levers price or stock something only the player reaches.
+        # A rival is handed the two building levels that decide something for it. It raises only its
+        # hall, so the sanctuary it is created with is the pace its wounded mend at for the rest of the
+        # savegame, and the fortification is the wall the player meets at its gate - both want choosing
+        # rather than inheriting the level of a town that has built nothing. The hall starts at 0 like
+        # the player's, and [RivalPolicy] builds it up; the other two stay at 0, their levers pricing
+        # or stocking something only the player reaches.
         Town.objects.create(
             faction=faction,
             sanctuary=NPC_STARTING_SANCTUARY_LEVEL,
@@ -248,7 +249,9 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
         # budget=0 on purpose: "total_amount" is the whole roster's wages either way, and handing it the
         # balance would read as though the comparison were self-satisfying
         wage_bill=Payroll.for_faction(faction=context.faction, budget=0).total_amount,
-        band_size=context.faction.get_all_living_warriors().count(),
+        warriors_on_payroll=Warrior.objects.filter_drawing_a_wage()
+        .filter_faction(faction_id=context.faction.id)
+        .count(),
         draft_wage=FyrdWarriorGenerator.get_expected_monthly_salary(),
         pub_offer_list=[
             PubOffer(
@@ -258,9 +261,6 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
         ],
         shop_offer_list=get_shop_offers(item_list=item_by_id.values()),
         held_gear_values=get_held_gear_values(faction=context.faction),
-        warriors_on_payroll=Warrior.objects.filter_drawing_a_wage()
-        .filter_faction(faction_id=context.faction.id)
-        .count(),
         hall_upgrade=hall_upgrade,
     )
 

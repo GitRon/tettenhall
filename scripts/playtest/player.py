@@ -130,8 +130,8 @@ class PlayerTurn:
         """
         Buys off the shelf by the rule a rival buys by, so the two sides of a batch shop alike.
 
-        [RivalPolicy] is handed the shelf and the band's gear and nothing else - no fyrd, no pub, and a band
-        already at its target, so a man is never a candidate: the steps before have taken those. The purse
+        [RivalPolicy] is handed the shelf and the band's gear and nothing else - no fyrd, no pub and no hall,
+        so only an item is ever a candidate: the steps before have taken the rest. The purse
         it weighs is what lies above SILVER_KEPT_BACK, against no wage bill, so a purchase is affordable
         exactly when it leaves the silver this harness keeps back for every other spend.
 
@@ -144,7 +144,7 @@ class PlayerTurn:
             fyrd_reserve=0,
             purse=self._balance() - SILVER_KEPT_BACK,
             wage_bill=0,
-            band_size=RivalPolicy.TARGET_BAND_SIZE,
+            warriors_on_payroll=0,
             draft_wage=0,
             pub_offer_list=[],
             shop_offer_list=get_shop_offers(item_list=item_by_id.values()),

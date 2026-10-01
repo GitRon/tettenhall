@@ -16,7 +16,6 @@ def _snapshot(
     fyrd_reserve: int = 0,
     purse: int = 1000,
     wage_bill: int = 0,
-    band_size: int = 0,
     draft_wage: int = 75,
     pub_offer_list: list[PubOffer] | None = None,
     shop_offer_list: list[ShopOffer] | None = None,
@@ -28,7 +27,6 @@ def _snapshot(
         fyrd_reserve=fyrd_reserve,
         purse=purse,
         wage_bill=wage_bill,
-        band_size=band_size,
         draft_wage=draft_wage,
         pub_offer_list=pub_offer_list or [],
         shop_offer_list=shop_offer_list or [],
@@ -62,19 +60,19 @@ def test_decide_drafts_once_a_month_whatever_the_reserve_holds():
     assert RivalPolicy.decide(snapshot=_snapshot(fyrd_reserve=5)) == [DraftFromFyrd()]
 
 
-def test_decide_hires_nobody_while_the_fyrd_has_men():
+def test_decide_hires_beside_the_draft():
     """
-    He is affordable and the band is short of its target, but one free man still stands in the fyrd.
-    The reserve is the brake on how fast a rival grows, so the pub waits until it is empty.
+    The levy scores 1000 over six months of his 75, the mercenary 1000 over his 200 and six months of
+    100 - so the draft goes first, and the 1000 still keeps them both.
     """
     snapshot = _snapshot(fyrd_reserve=1, pub_offer_list=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)])
 
-    assert RivalPolicy.decide(snapshot=snapshot) == [DraftFromFyrd()]
+    assert RivalPolicy.decide(snapshot=snapshot) == [DraftFromFyrd(), HireFromPub(warrior_id=7)]
 
 
 def test_decide_hires_before_it_buys():
     """
-    A man short of the target scores 1000 over 800 (his price and six months' wage), above the sword's
+    A man scores 1000 over 800 (his price and six months' wage), above the sword's
     10 times 5 over 50 - so he is taken first, and the sword still fits in the purse he leaves.
     """
     snapshot = _snapshot(
@@ -84,28 +82,6 @@ def test_decide_hires_before_it_buys():
     )
 
     assert RivalPolicy.decide(snapshot=snapshot) == [HireFromPub(warrior_id=7), BuyFromShop(item_id=1)]
-
-
-def test_decide_takes_no_man_once_the_band_is_at_its_target():
-    snapshot = _snapshot(
-        fyrd_reserve=1,
-        band_size=RivalPolicy.TARGET_BAND_SIZE,
-        pub_offer_list=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)],
-    )
-
-    assert RivalPolicy.decide(snapshot=snapshot) == []
-
-
-def test_decide_stops_taking_men_when_the_band_reaches_its_target():
-    snapshot = _snapshot(
-        band_size=RivalPolicy.TARGET_BAND_SIZE - 1,
-        pub_offer_list=[
-            PubOffer(warrior_id=1, hiring_price=200, monthly_salary=100),
-            PubOffer(warrior_id=2, hiring_price=200, monthly_salary=100),
-        ],
-    )
-
-    assert RivalPolicy.decide(snapshot=snapshot) == [HireFromPub(warrior_id=1)]
 
 
 def test_decide_passes_over_a_man_the_purse_cannot_keep():

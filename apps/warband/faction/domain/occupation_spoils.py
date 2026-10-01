@@ -7,9 +7,9 @@ class OccupationSpoils:
     routed and took their kit with them, the same distinction "handle_faction_wins_skirmish" draws
     between a man left lying on the field and one who walked off it.
 
-    A share rather than a flat purse because a rival's treasury is a moving number now: it takes an
-    income of its own every month and pays for a roster it may no longer be able to field, so a purse
-    grows while the rival is winning and drains once he has been beaten. See [RivalIncome]. Half of
+    A share rather than a flat purse because a rival's treasury is a moving number: its town pays it
+    every month and it pays for a roster it may no longer be able to field, so a purse grows while the
+    rival is winning and drains once he has been beaten. Half of
     it makes the timing of the ride worth thinking about without turning one broken war band into the
     silver for the rest of the savegame.
 

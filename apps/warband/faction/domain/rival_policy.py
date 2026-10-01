@@ -63,12 +63,11 @@ class RivalMonthSnapshot:
     fyrd_reserve: int
     purse: int
     wage_bill: int
-    band_size: int
+    warriors_on_payroll: int
     draft_wage: int
     pub_offer_list: list[PubOffer]
     shop_offer_list: list[ShopOffer] = field(default_factory=list)
     held_gear_values: dict[str, list[float]] = field(default_factory=dict)
-    warriors_on_payroll: int = 0
     hall_upgrade: HallUpgradeOffer | None = None
 
 
@@ -122,20 +121,23 @@ class RivalPolicy:
     rival drafts, hires and buys through the player's commands rather than a second flow beside them.
 
     **One loop over everything the purse could go on.** Every candidate - the month's one fyrd draft,
-    each man in the pub, each item on the shelf - is scored as "weight * need / what it costs", the best
-    affordable one is taken, and the loop scores again on the purse, wage bill, band and gear that
-    purchase left behind. It stops when nothing scores above MIN_SCORE, and the rest stays in the purse.
-    Affordable means the purse still covers the wage bill once over after the purchase, the new man's
-    wage included: a man is paid every month, an item once.
+    each man in the pub, each item on the shelf, the next level of the hall - is scored as
+    "weight * need / what it costs", the best affordable one is taken, and the loop scores again on the
+    purse, wage bill, payroll and gear that purchase left behind. It stops when nothing scores above
+    MIN_SCORE, and the rest stays in the purse. Affordable means the purse still covers the wage bill
+    once over after the purchase, the new man's wage included: a man is paid every month, an item and a
+    building once.
 
-    - **A man** is needed while the band is below TARGET_BAND_SIZE and not at all once it is there.
-      What he costs is his price plus WAGE_HORIZON_MONTHS of his wage, so a hire is taken from the
-      cheapest up.
-    - **The pub is only a candidate once the fyrd reserve is empty**, a rule beside the score rather than
-      part of it. A rival's income pays more per man than he costs (see [RivalIncome]), so a purse spent
-      freely on men pays for the next one: with the pub open beside the draft, a rival grows by two men a
-      month instead of one, and over the same 40 seeded savegames the player won none of them against 17
-      with the reserve as the brake. TARGET_BAND_SIZE caps how far the band grows, and this caps how fast.
+    **The band is as large as the town carries.** A rival lives on its hall the way the player does, and
+    the hall pays a flat revenue for the men it asks for, so every man past them is a wage with no income
+    behind it. Nothing caps the band but that: the wage bill a man adds has to fit the purse, and the
+    purse is refilled by the town alone.
+
+    - **A man** is always needed. What he costs is his price plus WAGE_HORIZON_MONTHS of his wage, so a
+      levy is taken before a hire, and a hire from the cheapest up.
+    - **The hall** is worth the revenue its next level adds for the men on the payroll by then, over
+      WAGE_HORIZON_MONTHS. A man taken earlier in the same month counts: he is on the payroll when the
+      next month's revenue is paid.
     - **An item** is needed as far as it lifts the weakest man in its slot. The hand-out passes the best
       piece down the line, so buying it leaves the band holding the best of what it held plus the new
       one - the net gain is the new item over the weakest figure, and that figure is what it replaces.
@@ -145,7 +147,6 @@ class RivalPolicy:
     The constants are balance numbers, measured with the harness (see "measuring-balance.md").
     """
 
-    TARGET_BAND_SIZE = 12
     WAGE_HORIZON_MONTHS = 6
     MAN_WEIGHT = 1000
     ITEM_WEIGHT = 10
@@ -156,7 +157,6 @@ class RivalPolicy:
     def decide(cls, *, snapshot: RivalMonthSnapshot) -> list[RivalDecision]:
         purse = snapshot.purse
         wage_bill = snapshot.wage_bill
-        band_size = snapshot.band_size
         warriors_on_payroll = snapshot.warriors_on_payroll
         # Weakest first, so what a purchase replaces is always the head of the list
         held_gear_values = {slot: sorted(values) for slot, values in snapshot.held_gear_values.items()}
@@ -168,7 +168,6 @@ class RivalPolicy:
                 (
                     cls._score(
                         candidate=candidate,
-                        band_size=band_size,
                         warriors_on_payroll=warriors_on_payroll,
                         held_gear_values=held_gear_values,
                     ),
@@ -188,7 +187,6 @@ class RivalPolicy:
             decision_list.append(best.decision)
 
             if best.is_man:
-                band_size += 1
                 warriors_on_payroll += 1
             elif best.shop_offer is not None:
                 slot = best.shop_offer.slot
@@ -202,17 +200,15 @@ class RivalPolicy:
             if snapshot.fyrd_reserve > 0
             else []
         )
-        # The pub only once the reserve is empty - see the class docstring
-        if snapshot.fyrd_reserve == 0:
-            candidate_list += [
-                _Candidate(
-                    decision=HireFromPub(warrior_id=offer.warrior_id),
-                    price=offer.hiring_price,
-                    added_wage=offer.monthly_salary,
-                    order=(1, offer.warrior_id),
-                )
-                for offer in snapshot.pub_offer_list
-            ]
+        candidate_list += [
+            _Candidate(
+                decision=HireFromPub(warrior_id=offer.warrior_id),
+                price=offer.hiring_price,
+                added_wage=offer.monthly_salary,
+                order=(1, offer.warrior_id),
+            )
+            for offer in snapshot.pub_offer_list
+        ]
         candidate_list += [
             _Candidate(
                 decision=BuyFromShop(item_id=offer.item_id),
@@ -241,7 +237,6 @@ class RivalPolicy:
         cls,
         *,
         candidate: _Candidate,
-        band_size: int,
         warriors_on_payroll: int,
         held_gear_values: dict[str, list[float]],
     ) -> float:
@@ -255,9 +250,6 @@ class RivalPolicy:
                 return 0.0
 
             return cls.ITEM_WEIGHT * max(candidate.shop_offer.value - held_values[0], 0.0) / candidate.price
-
-        if band_size >= cls.TARGET_BAND_SIZE:
-            return 0.0
 
         cost = candidate.price + cls.WAGE_HORIZON_MONTHS * candidate.added_wage
         # A man with neither a price nor a wage costs nothing, and is worth the full weight
