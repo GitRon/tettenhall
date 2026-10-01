@@ -1,3 +1,5 @@
+<c-vars log text player_faction_id=None />
+{% load battle_log %}
 {# One line of a fight, in whichever account is rendering it: "text" is the Tally's message or the #}
 {# Saga's sentence for the same row, so both accounts mark the same casualties the same way. #}
 {# The lines where a man was taken out of the fight are the only ones marked. The swings and #}
@@ -6,9 +8,11 @@
 {# same news: his own in danger, theirs in success, and neither on a fight between two rivals #}
 {# he is only watching, where colouring a stranger's death as a gain would be a lie. #}
 {% if log.is_casualty %}
-    <div class="{% if not player_faction_id %}text-ink-muted{% elif log.faction_id == player_faction_id %}text-blood{% else %}text-ink{% endif %}">
+    {% with side=log|casualty_side:player_faction_id %}
+    <div class="{% if side == 'own' %}text-blood{% elif side == 'theirs' %}text-ink{% else %}text-ink-muted{% endif %}">
         <i class="fa-solid {{ log.icon }}"></i> <strong>{{ text }}</strong>
     </div>
+    {% endwith %}
 {% else %}
     <div>{{ text }}</div>
 {% endif %}

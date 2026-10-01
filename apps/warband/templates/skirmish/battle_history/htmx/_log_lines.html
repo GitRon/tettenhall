@@ -16,7 +16,7 @@
                 <div class="mb-2.5">
                     <div class="font-mono text-label uppercase tracking-label leading-snug text-ink-muted">Round {{ log_round.number }}</div>
                     {% for log in log_round.saga_line_list %}
-                        {% include 'skirmish/battle_history/components/log_line.html' with text=log.saga %}
+                        <c-skirmish.log-line :log="log" :text="log.saga" :player_faction_id="player_faction_id" />
                     {% endfor %}
                 </div>
             {% endif %}
@@ -29,7 +29,7 @@
         <div class="mb-2.5">
             <div class="font-mono text-label uppercase tracking-label leading-snug text-ink-muted">Round {{ log_round.number }}</div>
             {% for log in log_round.line_list %}
-                {% include 'skirmish/battle_history/components/log_line.html' with text=log.message %}
+                <c-skirmish.log-line :log="log" :text="log.message" :player_faction_id="player_faction_id" />
             {% endfor %}
         </div>
     {% endfor %}

@@ -37,6 +37,9 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-item.improves-nobody-tag>` | `apps.warband` | The tag on an item every man already matches or beats in its slot |
 | `<c-month.log-list>` | `apps.warband` | One month's log at its four weights, with the open `questions` and their answers above it; a finished game passes no questions |
 | `<c-navigation.section-nav>` | `apps.warband` | The four sections of the game, `current` marked; a page whose section the url does not say passes its own - see [navigation](navigation.md) |
+| `<c-skirmish.log-line>` | `apps.warband` | One line of a fight in either account; a casualty is set apart by whose loss it is (`casualty_side`) |
+| `<c-skirmish.faction-box>` | `apps.warband` | One war band's panel on the fight screen, with its kit toggle and the roster that refreshes every round |
+| `<c-skirmish.skirmish-table>` | `apps.warband` | A table of fights; `show_victor` adds the Victor column, and the row's control and the empty line are the caller's words |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
 
 ## Parameters
