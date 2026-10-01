@@ -64,14 +64,14 @@
                 <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
                     {% if report.quest_reward %}
                         <li>
-                            <span class="text-ink-muted">{% include 'common/components/svg_icon.html' with icon_name='silver' %}</span>
+                            <span class="text-ink-muted"><c-common.svg-icon icon_name="silver" decorative /></span>
                             {{ report.quest_reward }} silver for
                             {% if report.quest_name %}“{{ report.quest_name }}”{% else %}the contract{% endif %}
                         </li>
                     {% endif %}
                     {% if report.silver_looted %}
                         <li>
-                            <span class="text-ink-muted">{% include 'common/components/svg_icon.html' with icon_name='silver' %}</span>
+                            <span class="text-ink-muted"><c-common.svg-icon icon_name="silver" decorative /></span>
                             {{ report.silver_looted }} silver off the fallen
                         </li>
                     {% endif %}
@@ -85,7 +85,7 @@
                         <li>
                             {# The icon comes off the item's type, and the item may be gone by now #}
                             {% if spoil.item %}
-                                {% include 'common/components/svg_icon.html' with icon_name=spoil.item.type.svg_image_name %}
+                                <c-common.svg-icon :icon_name="spoil.item.type.svg_image_name" decorative />
                             {% endif %}
                             {{ spoil.name }}
                             <span class="text-sm leading-snug text-ink-muted">

@@ -5,7 +5,7 @@
  * element is a block of "currentColor" with the drawing punched out of it, so an icon takes the
  * colour of whatever it stands next to and follows it into a hover or a warning without the file
  * knowing anything about the palette. An "img" cannot do that - "currentColor" does not cross into a
- * document the browser fetched separately - which is why "svg_icon.html" renders a span.
+ * document the browser fetched separately - which is why the "svg-icon" component renders a span.
  *
  * The mask reads the source's alpha, so every opaque shape in the file is part of the glyph. That is
  * the reason none of these files carries a background rectangle any more: a full-bleed opaque shape

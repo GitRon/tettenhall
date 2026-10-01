@@ -42,8 +42,8 @@ DISINHERIT_SWAP_PATTERN = re.compile(r'hx-disinherit="[^"]*hx-swap')
 
 
 def _template_files() -> list[Path]:
-    # Every app ships its templates under its own "templates/" directory - "DIRS" is empty and
-    # "APP_DIRS" is on, so there is no second place for one to hide
+    # Every app ships its templates under its own "templates/" directory - "DIRS" is empty and the
+    # loaders read nothing but the app directories, so there is no second place for one to hide
     return sorted((Path(settings.BASE_DIR) / "apps").glob("**/templates/**/*.html"))
 
 

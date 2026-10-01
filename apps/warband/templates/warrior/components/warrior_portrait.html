@@ -25,5 +25,5 @@
     </span>
 {% else %}
     {# "xl" is three times the text it sits in, so 13px text is what fits it to the 40px slot #}
-    <span class="flex h-10 w-10 shrink-0 items-center justify-center text-[13px] text-ink-muted {{ frame }}">{% include 'common/components/svg_icon.html' with icon_name='swordman' size='xl' %}</span>
+    <span class="flex h-10 w-10 shrink-0 items-center justify-center text-[13px] text-ink-muted {{ frame }}"><c-common.svg-icon icon_name="swordman" size="xl" /></span>
 {% endif %}

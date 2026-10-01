@@ -8,7 +8,7 @@
     {# battle report beside this one gives its own header and the Fight! button. It wraps, so a long #}
     {# faction name on a phone pushes the control onto its own line rather than squeezing the name. #}
     <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-        {% include 'common/components/box_header.html' with title=faction.name %}
+        <c-common.box-header>{{ faction.name }}</c-common.box-header>
 
         {# What each man carries is fixed for the length of the fight, so it is worth one reading at the #}
         {# start and is furniture after that. This opens it on every row at once. #}
