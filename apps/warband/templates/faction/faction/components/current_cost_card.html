@@ -46,5 +46,5 @@
         {% endif %}
         </tbody>
     </table>
-    {% include 'finance/components/wage_bill_warning.html' %}
+    <c-finance.wage-bill-warning :payroll="wage_bill_payroll" />
 </c-common.card>

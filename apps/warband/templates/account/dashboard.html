@@ -49,7 +49,7 @@
                 {# The shortfall is the loudest thing on the page when there is one. The consequence #}
                 {# is three months away and every one of them starts here, so it goes above the #}
                 {# decisions that spend the silver rather than inside a card of figures below them. #}
-                {% include 'finance/components/wage_bill_warning.html' with show_finance_link=True %}
+                <c-finance.wage-bill-warning :payroll="wage_bill_payroll" show_finance_link />
 
                 {# What the month just did to him, before what he may still do about it: the player #}
                 {# arrives on this page straight from finishing a month, and the news is why. #}
