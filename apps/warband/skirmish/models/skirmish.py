@@ -22,6 +22,9 @@ class Skirmish(models.Model):
     # fight is staged and worn down by every assault on it; nothing carries over, so the next march on
     # the same faction meets it whole. Zero is an open field.
     fortification_strength = models.PositiveSmallIntegerField("Fortification strength", default=0)
+    # The wall as it stood when the fight was staged. Never worn down, so the round heading can say how
+    # much of it the assaults have taken rather than only how much is left.
+    starting_fortification_strength = models.PositiveSmallIntegerField("Starting fortification strength", default=0)
 
     # Named for the role each side plays in the fight. Which of them the player holds - if either - is
     # a question for the savegame, so nothing here has to be true of every skirmish ever created

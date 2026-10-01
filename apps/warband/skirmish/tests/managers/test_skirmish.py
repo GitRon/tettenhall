@@ -53,6 +53,16 @@ def test_batter_fortification_never_takes_more_than_is_left():
 
 
 @pytest.mark.django_db
+def test_batter_fortification_leaves_the_starting_wall_standing():
+    skirmish = SkirmishFactory(fortification_strength=20, starting_fortification_strength=20)
+
+    Skirmish.objects.batter_fortification(skirmish=skirmish, damage=7)
+
+    skirmish.refresh_from_db()
+    assert skirmish.starting_fortification_strength == 20
+
+
+@pytest.mark.django_db
 def test_under_way_besides_finds_another_started_fight():
     skirmish = SkirmishFactory()
     other_skirmish = SkirmishFactory(current_round=2)
