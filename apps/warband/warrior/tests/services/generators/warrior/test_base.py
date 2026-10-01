@@ -170,7 +170,7 @@ def test_process_prices_an_average_mercenary_against_the_shared_yardstick():
     The yardstick is this man's own means, so he is the one archetype whose price would be the same
     either way and this is not the test that would catch the normalisation coming back - the two
     either side of it are. What it pins is the scale itself: a professional fighting man at 150 a
-    month is what the hall's revenue and "RivalIncome" are read against, so moving the yardstick has
+    month is what the hall's revenue is read against, so moving the yardstick has
     to fail something and this is the something.
     """
     generator = MercenaryWarriorGenerator(

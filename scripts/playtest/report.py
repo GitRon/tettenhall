@@ -13,6 +13,8 @@ class MonthRecord:
     rival_men: tuple[int, ...]
     # Sorted the same way, and on its own: it is read for whether any rival runs dry, not for which
     rival_silver: tuple[int, ...]
+    # Sorted the same way: how far the rivals have built their halls, which is what their income is
+    rival_halls: tuple[int, ...]
 
 
 @dataclass(kw_only=True)

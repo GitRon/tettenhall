@@ -1,11 +1,13 @@
 from apps.warband.faction.domain.rival_policy import (
     BuyFromShop,
     DraftFromFyrd,
+    HallUpgradeOffer,
     HireFromPub,
     PubOffer,
     RivalMonthSnapshot,
     RivalPolicy,
     ShopOffer,
+    UpgradeHall,
 )
 
 
@@ -14,26 +16,32 @@ def _snapshot(
     fyrd_reserve: int = 0,
     purse: int = 1000,
     wage_bill: int = 0,
-    band_size: int = 0,
     draft_wage: int = 75,
     pub_offer_list: list[PubOffer] | None = None,
     shop_offer_list: list[ShopOffer] | None = None,
     held_gear_values: dict[str, list[float]] | None = None,
+    warriors_on_payroll: int = 0,
+    hall_upgrade: HallUpgradeOffer | None = None,
 ) -> RivalMonthSnapshot:
     return RivalMonthSnapshot(
         fyrd_reserve=fyrd_reserve,
         purse=purse,
         wage_bill=wage_bill,
-        band_size=band_size,
         draft_wage=draft_wage,
         pub_offer_list=pub_offer_list or [],
         shop_offer_list=shop_offer_list or [],
         held_gear_values=held_gear_values or {},
+        warriors_on_payroll=warriors_on_payroll,
+        hall_upgrade=hall_upgrade,
     )
 
 
 def _sword(*, item_id: int = 1, price: int = 50, value: float = 7) -> ShopOffer:
     return ShopOffer(item_id=item_id, price=price, slot="weapon", value=value)
+
+
+def _small_hall() -> HallUpgradeOffer:
+    return HallUpgradeOffer(current_level=0, new_level=1, price=600)
 
 
 def test_decide_drafts_while_the_purse_covers_the_wage_bill_with_the_levy_on_it():
@@ -52,19 +60,19 @@ def test_decide_drafts_once_a_month_whatever_the_reserve_holds():
     assert RivalPolicy.decide(snapshot=_snapshot(fyrd_reserve=5)) == [DraftFromFyrd()]
 
 
-def test_decide_hires_nobody_while_the_fyrd_has_men():
+def test_decide_hires_beside_the_draft():
     """
-    He is affordable and the band is short of its target, but one free man still stands in the fyrd.
-    The reserve is the brake on how fast a rival grows, so the pub waits until it is empty.
+    The levy scores 1000 over six months of his 75, the mercenary 1000 over his 200 and six months of
+    100 - so the draft goes first, and the 1000 still keeps them both.
     """
     snapshot = _snapshot(fyrd_reserve=1, pub_offer_list=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)])
 
-    assert RivalPolicy.decide(snapshot=snapshot) == [DraftFromFyrd()]
+    assert RivalPolicy.decide(snapshot=snapshot) == [DraftFromFyrd(), HireFromPub(warrior_id=7)]
 
 
 def test_decide_hires_before_it_buys():
     """
-    A man short of the target scores 1000 over 800 (his price and six months' wage), above the sword's
+    A man scores 1000 over 800 (his price and six months' wage), above the sword's
     10 times 5 over 50 - so he is taken first, and the sword still fits in the purse he leaves.
     """
     snapshot = _snapshot(
@@ -74,28 +82,6 @@ def test_decide_hires_before_it_buys():
     )
 
     assert RivalPolicy.decide(snapshot=snapshot) == [HireFromPub(warrior_id=7), BuyFromShop(item_id=1)]
-
-
-def test_decide_takes_no_man_once_the_band_is_at_its_target():
-    snapshot = _snapshot(
-        fyrd_reserve=1,
-        band_size=RivalPolicy.TARGET_BAND_SIZE,
-        pub_offer_list=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)],
-    )
-
-    assert RivalPolicy.decide(snapshot=snapshot) == []
-
-
-def test_decide_stops_taking_men_when_the_band_reaches_its_target():
-    snapshot = _snapshot(
-        band_size=RivalPolicy.TARGET_BAND_SIZE - 1,
-        pub_offer_list=[
-            PubOffer(warrior_id=1, hiring_price=200, monthly_salary=100),
-            PubOffer(warrior_id=2, hiring_price=200, monthly_salary=100),
-        ],
-    )
-
-    assert RivalPolicy.decide(snapshot=snapshot) == [HireFromPub(warrior_id=1)]
 
 
 def test_decide_passes_over_a_man_the_purse_cannot_keep():
@@ -188,5 +174,33 @@ def test_decide_buys_nothing_whose_gain_is_not_worth_its_price():
 
 def test_decide_keeps_the_wage_bill_covered_after_a_purchase():
     snapshot = _snapshot(purse=120, wage_bill=100, shop_offer_list=[_sword()], held_gear_values={"weapon": [2]})
+
+    assert RivalPolicy.decide(snapshot=snapshot) == []
+
+
+def test_decide_raises_the_hall_once_the_man_it_drafts_is_on_the_payroll():
+    """
+    With nobody on the payroll a Small Hall pays the 50 a town without one does, and is worth nothing.
+    The levy is taken first, and the hall he mans then pays 250 more a month: six months of that over
+    its 600 scores 2.5. The 400 left still covers his wage.
+    """
+    snapshot = _snapshot(fyrd_reserve=1, hall_upgrade=_small_hall())
+
+    assert RivalPolicy.decide(snapshot=snapshot) == [DraftFromFyrd(), UpgradeHall(new_level=1, price=600)]
+
+
+def test_decide_raises_the_hall_before_a_man_it_outscores():
+    # 2.5 for the hall, against 1000 over six months of a 75 wage for the levy - 2.2
+    snapshot = _snapshot(fyrd_reserve=1, warriors_on_payroll=1, hall_upgrade=_small_hall())
+
+    assert RivalPolicy.decide(snapshot=snapshot) == [UpgradeHall(new_level=1, price=600), DraftFromFyrd()]
+
+
+def test_decide_raises_no_hall_with_nobody_on_the_payroll_to_man_it():
+    assert RivalPolicy.decide(snapshot=_snapshot(hall_upgrade=_small_hall())) == []
+
+
+def test_decide_raises_no_hall_the_purse_cannot_keep_the_wages_after():
+    snapshot = _snapshot(purse=650, wage_bill=100, warriors_on_payroll=1, hall_upgrade=_small_hall())
 
     assert RivalPolicy.decide(snapshot=snapshot) == []

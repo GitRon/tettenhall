@@ -5,6 +5,7 @@ from queuebie.messages import Event
 from apps.warband.faction.models.faction import Faction
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.town.models import Town
 
 
 @dataclass(kw_only=True)
@@ -133,17 +134,20 @@ class MonthlyBuildingMoneyEarned(Event):
 
 
 @dataclass(kw_only=True)
-class MonthlyFactionIncomeEarned(Event):
+class TownBuildingUpgradeApproved(Event):
     """
-    A faction with no player behind it took its monthly income.
+    A rival has weighed its month and decided to raise the next level of one of its buildings.
 
-    Separate from MonthlyBuildingMoneyEarned rather than an amount passed through it: that one is
-    logged as "Buildings earned ... silver this month", and a rival has no buildings to have earned
-    it with.
+    The level and its price ride along settled, because the whole decision was made before this was
+    raised - which is what lets a rival build through the same UpgradeTownBuilding the player's town
+    page dispatches.
     """
 
     faction: Faction
-    amount: int
+    town: Town
+    building_type: str
+    new_level: int
+    costs: int
     month: int
 
 

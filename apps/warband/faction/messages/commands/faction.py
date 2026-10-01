@@ -57,12 +57,6 @@ class EarnMoneyFromBuildings(Command):
 
 
 @dataclass(kw_only=True)
-class EarnMonthlyFactionIncome(Command):
-    faction: Faction
-    month: int
-
-
-@dataclass(kw_only=True)
 class PrepareFactionWarriorsForMonth(Command):
     """
     Hand every man this faction is responsible for the month that has just turned.

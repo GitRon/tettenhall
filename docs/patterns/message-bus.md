@@ -152,7 +152,7 @@ in timing, even when they sit side by side. Compare the two halves of the monthl
 ```
 FactionMonthPrepared (evt)
   ├─ handle_pay_monthly_warrior_salaries_for_new_month → PayMonthlyWarriorSalaries (cmd) ─┐
-  ├─ handle_earn_monthly_faction_income_for_new_month  → EarnMonthlyFactionIncome (cmd) ──┤ one batch,
+  ├─ handle_earn_money_from_buildings_for_new_month    → EarnMoneyFromBuildings (cmd) ────┤ one batch,
   └─ handle_plan_faction_month_for_new_month           → PlanFactionMonth (cmd) ──────────┘ in order
 
 PayMonthlyWarriorSalaries → handle_warrior_monthly_salaries

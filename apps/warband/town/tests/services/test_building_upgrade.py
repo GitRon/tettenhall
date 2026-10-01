@@ -1,5 +1,6 @@
 import pytest
 
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.town.models import Town
 from apps.warband.town.services.building_upgrade import (
@@ -18,6 +19,23 @@ def test_get_building_upgrade_refusal_with_an_affordable_next_level(current_save
     result = get_building_upgrade_refusal(town=town, building_type="hall", current_savegame=current_savegame)
 
     assert result is None
+
+
+@pytest.mark.django_db
+def test_get_building_upgrade_refusal_weighs_a_rival_against_its_own_purse(current_savegame):
+    """
+    The player is rich and the rival is not, and the rival's town is the one asked about - so the
+    price is weighed against the rival's silver.
+    """
+    rival_faction = FactionFactory(savegame=current_savegame)
+    TransactionFactory(faction=current_savegame.player_faction, amount=5000)
+    TransactionFactory(faction=rival_faction, amount=599)
+
+    result = get_building_upgrade_refusal(
+        town=rival_faction.town, building_type="hall", current_savegame=current_savegame
+    )
+
+    assert result == UNAFFORDABLE_REFUSAL
 
 
 @pytest.mark.django_db

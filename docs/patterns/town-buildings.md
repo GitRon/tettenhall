@@ -98,13 +98,23 @@ holding that level's numbers:
   `handle_throw_feast` so a double-click is charged once. The mending goes through
   `ChangeWarriorMaxMorale(restores_toward_peak=True)`: every other raise of the ceiling moves the mark
   along with it, every cut leaves the mark standing.
-- **A rival's town is created at chosen levels, and stays there.** The player starts at every default;
-  a rival is handed the sanctuary level named by `NPC_STARTING_SANCTUARY_LEVEL`
-  (`apps/warband/town/buildings/sanctuary.py`), because the healing ceiling is the one lever that decides
-  something for a faction the player never reaches into. Its other three buildings stay at 0 — their
-  levers price or stock things only the player can use. The level is derived from `get_levels()` rather
-  than written as a number, and `handle_heal_injured_warrior` keeps a single lookup for every faction, so
-  nothing on the healing path knows what a rival is.
+- **Every faction lives on its town.** The hall's revenue is the one income in the game, for the player
+  and his rivals alike: `handle_earn_money_from_buildings` hangs off `FactionMonthPrepared`, and pays
+  `Faction.get_monthly_income` for the men on the payroll. That is what makes a rival's strength
+  readable off its town: its war band is as large as its hall carries.
+- **A rival builds its hall the way the player does.** `RivalPolicy` weighs the next hall level as one
+  more candidate in its month (the revenue it adds over `WAGE_HORIZON_MONTHS`, against its price), and
+  raises it through the player's own `UpgradeTownBuilding`, offered only when
+  `get_building_upgrade_refusal` has nothing against it. So the top level, the once-a-month rule and the
+  price hold for a rival exactly as for the player. A rival starts with no hall and the 1000 silver the
+  player starts with; in the harness every rival builds its Small Hall in month one.
+- **A rival's other buildings are created at chosen levels, and stay there.** A rival is handed the
+  sanctuary level named by `NPC_STARTING_SANCTUARY_LEVEL` (`apps/warband/town/buildings/sanctuary.py`)
+  and the wall named by `NPC_STARTING_FORTIFICATION_LEVEL`, because the healing ceiling and the wall are
+  the levers that decide something for a faction the player never reaches into. Its weaponsmith and
+  marketplace stay at 0 — their levers price or stock things only the player can use. The levels are
+  derived from `get_levels()` rather than written as numbers, and `handle_heal_injured_warrior` keeps a
+  single lookup for every faction, so nothing on the healing path knows what a rival is.
 - **A faction without a town breaks four separate flows** (month advance, item sale, shop restock,
   warrior healing), all with `Town.DoesNotExist`. Anything that creates factions outside
   `_create_faction` — a data migration, a fixture, a management command — has to create the
@@ -112,19 +122,13 @@ holding that level's numbers:
 
 ## Known gaps
 
-- **NPC factions never build.** Nothing upgrades a rival's town, so every building effect is a
-  player-only power curve - apart from the pub and the shop, which every faction restocks off its own hall,
-  marketplace and weaponsmith, so a rival at level 0 gets its one mercenary and its stalls of gear a month. Construction proper is #68. The hall income is player-only to match: it hangs
-  off `PlayerMonthPrepared`, the event for the things a rival has no equivalent of, and a rival earns off
-  its war band instead (`apps/warband/faction/domain/rival_income.py`). A rival sits at `NoHall` for good,
-  so the town would pay it a flat 50 silver however large its war band grew, against a leader's salary of
-  around 135. The two incomes also count different rosters on purpose — the player's men on the payroll,
-  a rival's men fit to march — and `RivalIncome` carries why.
-- **A rival's income pays more per man than he costs**, so a purse spent freely on men would pay for the
-  next one and the war band would compound. Until a rival lives on its town (#393), `RivalPolicy` brakes
-  it twice: it hires nobody while the fyrd reserve still has free men in it (#387), which caps how fast
-  the band grows, and it takes no man at all once the band reaches `TARGET_BAND_SIZE`, which caps how far.
-  What the purse holds beyond that goes on gear.
+- **A rival builds only its hall.** The sanctuary, fortification, weaponsmith and marketplace ladders stay
+  at their starting levels, so those effects are a player-only power curve - apart from the pub and the
+  shop, which every faction restocks off its own hall, marketplace and weaponsmith. The other four ladders
+  are #68.
+- **Nobody reaches a second building level.** A rival spends everything above its wage bill every month,
+  so its purse never holds the 1 400–2 100 a second level costs; the player is squeezed the same way. A
+  rival's hall stops at the Small Hall, and the player's town at its first rungs. #416.
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
   bonus is the only thing making better gear — none of them has a second effect yet.
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's

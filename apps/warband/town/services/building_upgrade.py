@@ -12,6 +12,9 @@ def get_building_upgrade_refusal(*, town: Town, building_type: str, current_save
     """
     Why this town may not raise the next level of "building_type", or None if it may.
 
+    Asked for the player's town by the upgrade page and for a rival's by [handle_plan_faction_month],
+    so a rival builds behind the same guards the player does.
+
     The order of the guards is a rule, not the order the conditions happened to be written in: the
     month is the one the player cannot do anything about until it is over, so a click that trips both
     the month and the price is told about the month. Naming the price instead sends him off to raise
@@ -34,7 +37,8 @@ def get_building_upgrade_refusal(*, town: Town, building_type: str, current_save
         return ALREADY_BUILT_THIS_MONTH_REFUSAL
 
     desired_building = building_class.get_building_by_type(building_type=current_building_level + 1)
-    current_silver_balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
+    # The purse of the faction holding the town, so a rival weighing its own hall is asked about its own
+    current_silver_balance = Transaction.objects.current_balance(faction_id=town.faction_id)
     if current_silver_balance < desired_building.BUILDING_COSTS:
         return UNAFFORDABLE_REFUSAL
 
