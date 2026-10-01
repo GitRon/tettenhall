@@ -69,7 +69,7 @@ def test_handle_log_warrior_takes_damage_logs_both_rolls():
     defender = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_takes_damage(
             context=WarriorTookDamage(
@@ -103,7 +103,7 @@ def test_handle_log_warrior_takes_damage_when_the_defence_outrolls_the_attack():
     defender = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_takes_damage(
             context=WarriorTookDamage(
@@ -133,7 +133,7 @@ def test_handle_log_warrior_defends_all_damage_names_both_rolls_when_the_armour_
     defender = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_defends_all_damage(
             context=WarriorDefendedAllDamage(
@@ -163,7 +163,7 @@ def test_handle_log_warrior_defends_all_damage_says_a_miss_is_a_miss():
     defender = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_defends_all_damage(
             context=WarriorDefendedAllDamage(
@@ -193,7 +193,7 @@ def test_handle_log_warrior_defends_all_damage_says_a_blow_was_never_thrown():
     defender = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_defends_all_damage(
             context=WarriorDefendedAllDamage(
@@ -284,6 +284,57 @@ def test_handle_log_attacker_defender_decided_names_the_missing_opponent():
     )
 
 
+def test_handle_log_attacker_defender_decided_does_not_strike_free_from_a_stance():
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Sigewine")
+    defender = WarriorFactory.build(name="Svenning")
+
+    result = handle_log_attacker_defender_decided(
+        context=AttackerDefenderDecided(
+            skirmish=skirmish,
+            round_number=1,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            defender=defender,
+            defender_action=SkirmishActionChoices.SIMPLE_ATTACK,
+            initiative=InitiativeChoices.INITIATIVE_UNOPPOSED,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Nobody is left to face Sigewine, but his order is Defensive stance, so he does not strike at "
+        "Svenning.",
+    )
+
+
+def test_handle_log_attacker_defender_decided_does_not_come_at_him_from_a_stance():
+    """
+    A tie of two men who both scored nothing on the roll hands the attack to the first, whose order may
+    throw nothing at all.
+    """
+    skirmish = SkirmishFactory.build()
+    attacker = WarriorFactory.build(name="Sigewine")
+    defender = WarriorFactory.build(name="Svenning")
+
+    result = handle_log_attacker_defender_decided(
+        context=AttackerDefenderDecided(
+            skirmish=skirmish,
+            round_number=1,
+            attacker=attacker,
+            attacker_action=SkirmishActionChoices.RALLY,
+            defender=defender,
+            defender_action=SkirmishActionChoices.DEFENSIVE_STANCE,
+            initiative=InitiativeChoices.INITIATIVE_WON_THE_ROLL,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish,
+        message="Sigewine's order is Rally the men, so he does not strike at Svenning.",
+    )
+
+
 def test_handle_log_attacker_defender_decided_raises_on_an_unworded_initiative():
     context = AttackerDefenderDecided(
         skirmish=SkirmishFactory.build(),
@@ -304,7 +355,7 @@ def test_handle_log_warrior_incapacitation_logs_the_knockout():
     warrior = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_incapacitation(
             context=WarriorWasIncapacitated(
@@ -326,7 +377,7 @@ def test_handle_log_warrior_death_logs_the_kill():
     warrior = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_death(
             context=WarriorWasKilled(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build(name="Beorn"))
@@ -361,7 +412,7 @@ def test_handle_log_skirmish_finished_logs_the_victor():
     skirmish = SkirmishFactory.build(victorious_faction=FactionFactory.build(name="Mercia"))
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_skirmish_finished(
             context=SkirmishFinished(
@@ -405,7 +456,7 @@ def test_handle_warrior_is_captured_logs_the_arrest():
     warrior = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_warrior_is_captured(
             context=WarriorWasCaptured(skirmish=skirmish, warrior=warrior, capturing_faction=FactionFactory.build())
@@ -457,7 +508,7 @@ def test_handle_log_leader_rallied_writes_one_line_for_the_order():
     leader = WarriorFactory.build(name="Offa")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_leader_rallied(
             context=LeaderRallied(
@@ -477,7 +528,7 @@ def test_handle_log_leader_rallied_by_the_last_man_standing():
     leader = WarriorFactory.build(name="Offa")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_leader_rallied(context=LeaderRallied(skirmish=skirmish, leader=leader, rallied_warriors=[]))
 
@@ -502,7 +553,7 @@ def test_handle_warrior_has_fled_logs_the_retreat():
     warrior = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior))
 
@@ -524,7 +575,7 @@ def test_handle_warrior_has_fled_names_the_right_cause_for_an_ordered_withdrawal
     warrior = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_warrior_has_fled(context=WarriorHasFled(skirmish=skirmish, warrior=warrior, was_ordered=True))
 
@@ -631,7 +682,7 @@ def test_handle_log_warrior_injury_names_the_mark_and_its_price():
     warrior = WarriorFactory.build(name="Cuthred")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_injury(
             context=WarriorWasInjured(
@@ -656,7 +707,7 @@ def test_handle_log_fortification_assaulted_says_what_is_left_standing():
     warrior = WarriorFactory.build(name="Offa")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_fortification_assaulted(
             context=FortificationAssaulted(
@@ -727,7 +778,7 @@ def test_handle_log_fortification_fell():
     warrior = WarriorFactory.build(name="Offa")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_fortification_fell(
             context=FortificationFell(skirmish=skirmish, round_number=1, warrior=warrior)
@@ -764,7 +815,7 @@ def test_handle_log_warrior_takes_damage_tells_a_counter_as_one():
     defender = WarriorFactory.build(name="Beorn")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_takes_damage(
             context=WarriorTookDamage(
@@ -784,7 +835,7 @@ def test_handle_log_warrior_takes_damage_tells_a_counter_as_one():
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Cuthred strikes back at 7 against Beorn's 2 defense, and 5 damage gets through.",
-        saga="Striking back, Cuthred cuts at Beorn; Beorn, winding up a great blow of his own, is caught open — "
+        saga="Cuthred answers with a cut at Beorn; Beorn, winding up a great blow of his own, is caught open — "
         "the blow lands hard.",
     )
 
@@ -795,7 +846,7 @@ def test_handle_log_warrior_defends_all_damage_tells_a_counter_a_fast_attack_thr
     defender = WarriorFactory.build(name="Beorn")
 
     with mock.patch(
-        "apps.warband.skirmish.services.battle_saga.random.choice", side_effect=lambda phrasings: phrasings[0]
+        "apps.warband.skirmish.services.battle_saga._WORDING.choice", side_effect=lambda phrasings: phrasings[0]
     ):
         result = handle_log_warrior_defends_all_damage(
             context=WarriorDefendedAllDamage(
@@ -815,8 +866,8 @@ def test_handle_log_warrior_defends_all_damage_tells_a_counter_a_fast_attack_thr
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Cuthred, caught off-balance, swings back weakly at Beorn and misses.",
-        saga="Caught off-balance and striking back weakly, Cuthred takes a huge swing at Beorn; Beorn tries to "
-        "dance clear — the blow goes wide.",
+        saga="Caught off-balance, Cuthred swings back weakly at Beorn; Beorn tries to dance clear — the blow goes "
+        "wide.",
     )
 
 

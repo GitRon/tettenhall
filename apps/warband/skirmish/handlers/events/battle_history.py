@@ -96,13 +96,25 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
     defender is what reads as a command the game ignored - he chose an attack, and no line accounted
     for it.
 
+    A man whose own order throws nothing - a stance, the wall, a rally - is not said to strike or to
+    come at anybody: he is the attacker only because the other man could not be, and the blow's own line
+    after this one says he threw nothing.
+
     Any other way to come to a blow raises rather than picking up a sentence nobody wrote for it. The
     counter never arrives here: it is raised off the first blow's result, not decided with the pair.
     """
     attack = SkirmishActionChoices(context.attacker_action).label
     defence = SkirmishActionChoices(context.defender_action).label
+    attacker_throws = get_service_by_skirmish_action(skirmish_action=context.attacker_action).THROWS_A_BLOW
 
-    if context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL and (
+    if context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL and not attacker_throws:
+        message = f"{context.attacker}'s order is {attack}, so he does not strike at {context.defender}."
+    elif context.initiative == InitiativeChoices.INITIATIVE_UNOPPOSED and not attacker_throws:
+        message = (
+            f"Nobody is left to face {context.attacker}, but his order is {attack}, so he does not strike "
+            f"at {context.defender}."
+        )
+    elif context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL and (
         get_service_by_skirmish_action(skirmish_action=context.defender_action).THROWS_A_BLOW
     ):
         message = (
