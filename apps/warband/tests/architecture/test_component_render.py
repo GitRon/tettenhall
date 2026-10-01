@@ -24,6 +24,11 @@ from django.test import override_settings
 from apps.common.tests.html import render_component
 from apps.warband.calendar.months.summer import Eosturmonath
 from apps.warband.calendar.months.winter import Blotmonath
+from apps.warband.incident.incidents.base import IncidentOption
+from apps.warband.incident.services.pending_incident import OpenQuestion
+from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
+from apps.warband.month.services.player_month_log import GroupedPlayerMonthLog
+from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.projections.payroll import Payroll
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -59,6 +64,23 @@ def _payroll(*, budget: int, unpaid_months: int = 0) -> Payroll:
         ],
         budget=budget,
         leader_id=1,
+    )
+
+
+def _full_month() -> GroupedPlayerMonthLog:
+    return GroupedPlayerMonthLog(
+        attention=[PlayerMonthLogFactory.build(title="Unpaid")],
+        chronicle=[PlayerMonthLogFactory.build(title="A comet", body="Over Mercia")],
+        consequence=[PlayerMonthLogFactory.build(title="Wages paid")],
+        upkeep=[PlayerMonthLogFactory.build(title="Wulfstan mends")],
+        upkeep_summary=["1 man mends"],
+    )
+
+
+def _open_question() -> OpenQuestion:
+    return OpenQuestion(
+        pending_incident=PendingIncidentFactory.build(id=1),
+        options=(IncidentOption(key="give", label="Give", title="", body="", silver_change=-60, fyrd_change=1),),
     )
 
 
@@ -101,6 +123,13 @@ RENDER_ROWS = {
         (
             '<c-finance.wage-bill-warning :payroll="payroll" show_finance_link />',
             {"payroll": _payroll(budget=0, unpaid_months=Warrior.UNPAID_MONTHS_UNTIL_WALKOUT)},
+        ),
+    ],
+    "month.log-list": [
+        ('<c-month.log-list :logs="logs" />', {"logs": GroupedPlayerMonthLog()}),
+        (
+            '<c-month.log-list :logs="logs" :questions="questions" />',
+            {"logs": _full_month(), "questions": [_open_question()]},
         ),
     ],
     "navigation.section-nav": [
