@@ -165,8 +165,20 @@ Two things follow, and both bite silently:
   arrives with that rectangle removed.
 - **The fill colour in the file is ignored.** There is no point setting one.
 
-Font Awesome covers the UI verbs and inherits `color` in the ordinary way. Which of the two sets owns
-which concept is not settled — see #64.
+**Which set an icon comes from depends on what it stands for.**
+
+- **A thing in the game's world is drawn by hand**: silver, a weapon, a shield, a mail shirt, a
+  warrior. These are what make the screen read as the tenth century, and a stock glyph gives them a
+  modern face - a dollar sack, a minted coin. A thing that has a drawing is always shown with it, so
+  silver is `silver` wherever an icon stands beside it.
+- **Font Awesome covers the UI verbs and states**: arrows, the row menu, search, a lock, a warning, a
+  calendar. They are the interface rather than the world, and Font Awesome draws them better than a
+  hand-made set would. It inherits `color` in the ordinary way.
+
+A game concept that has no drawing yet - health, morale, a fallen man, a warrior's level - keeps its
+Font Awesome glyph until one is drawn. A new drawing replaces every Font Awesome glyph standing for the
+same thing in the same change, so no concept ever has two faces at once. A file in the set that no
+template renders is deleted rather than kept for later.
 
 ## Where this does not reach
 
