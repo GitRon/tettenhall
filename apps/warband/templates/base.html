@@ -58,7 +58,14 @@
                 </summary>
                 <ul class="absolute right-0 top-full z-20 m-0 min-w-48 list-none bg-raised p-4 border border-rule">
                     <li><a class="text-sm text-ink-muted" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
-                    <li><a class="text-sm text-ink-muted" href="{% url 'warband:logout-view' %}">Logout</a></li>
+                    {# A form, not a link: logging out only answers a POST. The button sheds the base #}
+                    {# layer's outlined control so it reads as the link above it. #}
+                    <li>
+                        <form method="post" action="{% url 'warband:logout-view' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="border-0 bg-transparent p-0 font-body text-sm font-light normal-case tracking-normal text-ink-muted underline decoration-rule underline-offset-[0.2em] hover:bg-transparent hover:decoration-blood">Logout</button>
+                        </form>
+                    </li>
                 </ul>
             </details>
         {% endif %}

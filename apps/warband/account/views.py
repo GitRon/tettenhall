@@ -43,11 +43,18 @@ class LoginView(RequestInFormKwargsMixin, generic.FormView):
 
 
 class LogoutView(generic.RedirectView):
-    pattern_name = "warband:login-view"
+    """
+    Ends the session on a POST only. A GET is answered 405: anything that follows a link - another site's
+    image tag, a browser prefetch, a crawler - would otherwise log the player out, and CSRF protection
+    covers nothing but the unsafe methods.
+    """
 
-    def get(self, request, *args, **kwargs):
+    pattern_name = "warband:login-view"
+    http_method_names = ("post",)
+
+    def post(self, request, *args, **kwargs):
         logout(request)
-        return super().get(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
 
 class DashboardView(generic.TemplateView):

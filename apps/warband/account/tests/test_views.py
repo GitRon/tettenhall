@@ -89,10 +89,18 @@ def test_login_view_spends_one_attempt_at_a_time_on_an_unknown_email(client):
 
 @pytest.mark.django_db
 def test_logout_view_ends_the_session(logged_in_client):
-    response = logged_in_client.get(reverse("warband:logout-view"))
+    response = logged_in_client.post(reverse("warband:logout-view"))
 
     assert response.status_code == 302
     assert "_auth_user_id" not in logged_in_client.session
+
+
+@pytest.mark.django_db
+def test_logout_view_refuses_a_get(logged_in_client):
+    response = logged_in_client.get(reverse("warband:logout-view"))
+
+    assert response.status_code == 405
+    assert "_auth_user_id" in logged_in_client.session
 
 
 @pytest.mark.django_db
