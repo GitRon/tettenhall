@@ -78,3 +78,16 @@ def test_get_effects_says_the_burh_opens_the_town():
         f"{StormTheBurh.LOCALS_TURNOUT} men of the fyrd turn out to defend it",
         "Opens the town to be ridden into",
     )
+
+
+class UnpeopledHerds(LiftTheHerds):
+    """Herds nobody of the place turns out for, which no kind the game ships is."""
+
+    LOCALS_TURNOUT = 0
+
+
+def test_get_effects_names_nobody_turning_out_for_a_place_nobody_defends():
+    assert UnpeopledHerds.get_effects() == (
+        f"Drives off 20% of their silver, at most {LiftTheHerds.PURSE_CAP}",
+        "Leaves the town standing",
+    )
