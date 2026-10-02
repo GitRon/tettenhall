@@ -7,6 +7,7 @@ from apps.common import form_styles
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.warrior.forms.fields import WarriorMultipleChoiceField
 from apps.warband.warrior.forms.widgets import RosterCheckboxSelectMultiple
 from apps.warband.warrior.services.availability import assess_roster
 
@@ -18,7 +19,8 @@ class QuestAcceptForm(forms.Form):
     #: so this only has to name the shape of the situation rather than explain it.
     NOBODY_AVAILABLE = "None of your men can be sent on a quest this month."
 
-    assigned_warriors = forms.ModelMultipleChoiceField(queryset=Warrior.objects.none(), label="Men to send")
+    # Each man offered by his full name, so the player can see who he is sending
+    assigned_warriors = WarriorMultipleChoiceField(queryset=Warrior.objects.none(), label="Men to send")
 
     def __init__(self, *args, quest: Quest, month: int, **kwargs):
         self.helper = FormHelper()
@@ -64,7 +66,7 @@ class QuestAcceptForm(forms.Form):
         if unavailable:
             raise forms.ValidationError(
                 "%(names)s cannot be sent on a quest this month.",
-                params={"names": ", ".join(warrior.name for warrior in unavailable)},
+                params={"names": ", ".join(warrior.display_name for warrior in unavailable)},
             )
 
         if not self.entry.MIN_MEN <= len(assigned_warriors) <= self.entry.MAX_MEN:

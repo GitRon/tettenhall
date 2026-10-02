@@ -50,7 +50,7 @@ class Skirmish(models.Model):
     # faction's one fight a month has to stay spent under the man who takes his seat
     attacking_leader = models.ForeignKey(
         Warrior,
-        verbose_name="Attacking leader",
+        verbose_name=f"Attacking {Warrior.LEADER_TITLE}",
         related_name="led_skirmishes",
         on_delete=models.SET_NULL,
         null=True,

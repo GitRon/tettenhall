@@ -5,6 +5,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
 from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
@@ -106,6 +107,39 @@ def test_display_name_for_an_ordinary_man():
     warrior = WarriorFactory.build(name="Collum")
 
     assert warrior.display_name == "Collum"
+
+
+def test_display_name_puts_the_title_in_front_of_the_man_in_the_seat():
+    faction = FactionFactory.build(leader_id=7)
+    warrior = WarriorFactory.build(id=7, name="Uthred", faction=faction, nickname_state=NicknameStateChoices.STRENGTH)
+
+    assert warrior.display_name == f"{Warrior.LEADER_TITLE} Uthred {STRENGTH_NICKNAMES[0]}"
+
+
+def test_display_name_gives_no_title_to_a_man_beside_the_seat():
+    faction = FactionFactory.build(leader_id=7)
+    warrior = WarriorFactory.build(id=8, name="Wulf", faction=faction)
+
+    assert warrior.display_name == "Wulf"
+
+
+def test_display_name_gives_no_title_to_the_man_a_defeated_faction_lost():
+    """
+    A defeated faction's "leader" goes on naming the man it lost, and he leads nothing any more.
+    """
+    faction = FactionFactory.build(leader_id=7, is_defeated=True)
+    warrior = WarriorFactory.build(id=7, name="Uthred", faction=faction)
+
+    assert warrior.display_name == "Uthred"
+
+
+def test_display_name_gives_no_title_to_a_man_without_a_faction():
+    """
+    A captive: capture clears his own faction while his old one may still point at him.
+    """
+    warrior = WarriorFactory.build(id=7, name="Uthred", faction=None, savegame=None, culture=None)
+
+    assert warrior.display_name == "Uthred"
 
 
 def test_is_dead_for_a_killed_warrior():

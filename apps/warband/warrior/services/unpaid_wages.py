@@ -1,6 +1,6 @@
 from apps.warband.skirmish.models.warrior import Warrior
 
-LEADER_NOTE = "Unpaid, and your leader never walks"
+LEADER_NOTE = f"Unpaid, and your {Warrior.LEADER_TITLE} never walks"
 
 
 def get_unpaid_wages_note(*, warrior: Warrior, leader_id: int | None) -> str | None:

@@ -37,8 +37,8 @@ class PlayerMonthLog(models.Model):
         KIND_FEAST_THROWN = 19, "Feast thrown"
         KIND_WARRIOR_CHANGED = 20, "Warrior changed"
         KIND_HARVEST = 21, "Harvest"
-        KIND_LEADER_SUCCEEDED = 22, "Leader succeeded"
-        KIND_LEADER_RAISED_FROM_FYRD = 23, "Leader raised from the fyrd"
+        KIND_LEADER_SUCCEEDED = 22, "Ealdorman succeeded"
+        KIND_LEADER_RAISED_FROM_FYRD = 23, "Ealdorman raised from the fyrd"
         KIND_CAPTIVE_FLED = 24, "Captive fled"
         # One kind for every quest, for the reason an incident has one: the catalogue grows by a class
         KIND_QUEST_RETURNED = 25, "Quest returned"

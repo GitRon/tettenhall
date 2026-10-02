@@ -15,7 +15,7 @@ class Faction(models.Model):
     )
     leader = models.ForeignKey(
         "warband.Warrior",
-        verbose_name="Leader",
+        verbose_name=Warrior.LEADER_TITLE,
         related_name="leading_factions",
         on_delete=models.CASCADE,
         null=True,
@@ -88,7 +88,13 @@ class Faction(models.Model):
         if self.leader_id is None:
             return None
 
-        return Warrior.objects.filter_healthy().filter(id=self.leader_id).exclude_currently_busy(month=month).first()
+        return (
+            Warrior.objects.filter_healthy()
+            .filter(id=self.leader_id)
+            .exclude_currently_busy(month=month)
+            .select_related("faction")
+            .first()
+        )
 
     def has_marched_this_month(self, *, month: int) -> bool:
         """
@@ -134,12 +140,13 @@ class Faction(models.Model):
 
         The gear they hold comes along, because the one caller - the "Give to" picker on an unused
         item - names what each man has in the slot before the player displaces it. Reading that off
-        the card instead would be one query per option.
+        the card instead would be one query per option. The faction comes for the same reason: an
+        option names its man in full, and that asks whether he holds the seat.
         """
         return (
             Warrior.objects.exclude_dead()
             .filter_faction(faction_id=self.id)
-            .select_related("weapon__type", "armor__type")
+            .select_related("weapon__type", "armor__type", "faction")
         )
 
     def get_held_captives(self) -> QuerySet:
