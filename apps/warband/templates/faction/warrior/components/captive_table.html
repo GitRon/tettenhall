@@ -9,7 +9,8 @@
 
     Held rather than commanded: the numbers arrive fuzzed and the gear is named, as
     docs/patterns/warrior-knowledge.md has it for a prisoner, so the gauge draws the word and no bar.
-    The wage is public, and it is what recruiting him commits the player to every month after.
+    The wage is public, and it is the one recruiting him commits the player to every month after - a
+    leader draws nothing while he leads, and is put on a wage the moment he is taken on.
 
     A rival's cells keep the row, the way a rival's roster does - see "captured_warrior_list.html".
     A record per man on a phone and a box that scrolls on a narrow desk, for the reasons
@@ -65,7 +66,7 @@
                 <td class="align-middle max-md:col-span-2 md:py-3" data-label="Weapon"><c-warrior.roster-gear :item="warrior.weapon" /></td>
                 <td class="align-middle max-md:col-span-2 md:py-3" data-label="Armour"><c-warrior.roster-gear :item="warrior.armor" /></td>
                 <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Wage" title="Monthly salary in silver">
-                    {{ warrior.monthly_salary }}
+                    {{ warrior.wage_once_recruited }}
                 </td>
                 <td class="align-middle md:py-3">
                     {% if not warrior.is_healthy %}
