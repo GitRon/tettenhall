@@ -1,4 +1,3 @@
-import random
 from unittest import mock
 
 import pytest
@@ -50,6 +49,7 @@ from apps.warband.skirmish.messages.events.warrior import BlowWasNotStruck
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.warband.skirmish.raids.kinds import LiftTheHerds, StormTheBurh
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL, Palisade
@@ -191,21 +191,24 @@ def test_handle_attack_faction_meets_a_raid_in_the_shire_in_the_open():
 
 @pytest.mark.django_db
 def test_handle_attack_faction_meets_only_the_men_standing_where_the_raid_lands():
-    """Seed 1 puts the first and the third of three men at the herds, and the second at the burh."""
+    """The first and the third of three men are drawn to the herds, and the second to the burh."""
     attacking_faction = FactionFactory()
     target_faction = FactionFactory(savegame=attacking_faction.savegame)
     first, _second, third = WarriorFactory.create_batch(3, faction=target_faction)
-    random.seed(1)
 
-    result = handle_attack_faction(
-        context=AttackFaction(
-            attacking_faction=attacking_faction,
-            target_faction=target_faction,
-            assigned_warriors=[WarriorFactory(faction=attacking_faction)],
-            raid_kind=RaidKindChoices.LIFT_THE_HERDS,
-            month=3,
+    with mock.patch(
+        "apps.warband.skirmish.services.raid_defenders.random.choice",
+        side_effect=[LiftTheHerds, StormTheBurh, LiftTheHerds],
+    ):
+        result = handle_attack_faction(
+            context=AttackFaction(
+                attacking_faction=attacking_faction,
+                target_faction=target_faction,
+                assigned_warriors=[WarriorFactory(faction=attacking_faction)],
+                raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+                month=3,
+            )
         )
-    )
 
     assert result.defending_warriors == [first, third]
 

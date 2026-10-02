@@ -1,8 +1,8 @@
-import random
+from unittest import mock
 
 import pytest
 
-from apps.warband.skirmish.raids.kinds import LiftTheHerds, StormTheBurh
+from apps.warband.skirmish.raids.kinds import BurnTheVillage, LiftTheHerds, StormTheBurh
 from apps.warband.skirmish.services.raid_defenders import get_raid_defenders
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -20,19 +20,26 @@ def test_get_raid_defenders_finds_nobody_in_an_empty_muster():
 
 @pytest.mark.django_db
 def test_get_raid_defenders_meets_only_the_men_drawn_to_the_herds():
-    """Seed 1 draws the herds, the burh and the herds again for three men in id order."""
+    """The places are drawn over the muster in id order, whatever order it arrived in."""
     first, second, third = WarriorFactory.create_batch(3)
-    random.seed(1)
 
-    defenders = get_raid_defenders(raid_kind=LiftTheHerds, muster=[third, first, second])
+    with mock.patch(
+        "apps.warband.skirmish.services.raid_defenders.random.choice",
+        side_effect=[LiftTheHerds, StormTheBurh, LiftTheHerds],
+    ):
+        defenders = get_raid_defenders(raid_kind=LiftTheHerds, muster=[third, first, second])
 
     assert defenders == [first, third]
 
 
 @pytest.mark.django_db
 def test_get_raid_defenders_always_posts_one_man_where_the_raid_lands():
-    """Seed 0 draws the village for the one man, and he is put at the herds all the same."""
+    """The one man is drawn to the village, and he is put at the herds all the same."""
     lone_man = WarriorFactory()
-    random.seed(0)
 
-    assert get_raid_defenders(raid_kind=LiftTheHerds, muster=[lone_man]) == [lone_man]
+    with mock.patch(
+        "apps.warband.skirmish.services.raid_defenders.random.choice", side_effect=[BurnTheVillage, lone_man]
+    ):
+        defenders = get_raid_defenders(raid_kind=LiftTheHerds, muster=[lone_man])
+
+    assert defenders == [lone_man]
