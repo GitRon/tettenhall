@@ -19,13 +19,14 @@ removes them - and only them.
 ## Why the obvious checks do not work here
 
 PRs are **squash-merged**. The commits on a feature branch never reach `main` - one new commit does - so
-`git branch --merged`, `git merge-base --is-ancestor` and `git branch -d` all call every finished branch
-unmerged. A remote branch marked `[gone]` is no proof either: it says the branch was deleted on GitHub,
-not that every local commit went with it.
+`git branch --merged`, `git merge-base --is-ancestor <tip> github/main` and `git branch -d` all call every
+finished branch unmerged. A remote branch marked `[gone]` is no proof either: it says the branch was
+deleted on GitHub, not that every local commit went with it.
 
-The one test that holds: **the branch tip is exactly the head commit of a merged PR for that branch.**
-Then everything on the branch went into the squash. A tip that differs carries commits made after the
-merge, or never pushed, and stays.
+The one test that holds: **the branch tip is the head commit of a merged PR for that branch, or an
+ancestor of it.** Then everything on the branch went into the squash. An ancestor is the common case of
+commits added on GitHub before the merge - "Update branch", an accepted review suggestion - that were
+never pulled. A tip that is neither carries commits made after the merge, or never pushed, and stays.
 
 ## Phase 1 - gather
 
@@ -38,14 +39,34 @@ output.
 git fetch github --prune
 git worktree list --porcelain
 git for-each-ref refs/heads --format='%(refname:short) %(objectname) %(upstream:track)'
-gh pr list --state merged --limit 500 --json headRefName,headRefOid --jq '.[] | "\(.headRefName) \(.headRefOid)"'
-gh pr list --state open --json headRefName --jq '.[].headRefName'
-ls .claude/worktrees
+gh pr list --state merged --limit 500 --json number,headRefName,headRefOid --jq '.[] | "\(.headRefName) \(.headRefOid) #\(.number)"'
+gh pr list --state open --limit 500 --json headRefName --jq '.[].headRefName'
+ls <main>/.claude/worktrees
 ```
 
+`<main>` is the main checkout: the first `worktree` entry of `git worktree list --porcelain`. Every path
+in this skill is absolute and built from that output. A relative `.claude/worktrees/...` resolves against
+the current checkout, so a session running inside a worktree would look in its own folder - every
+removal fails with "is not a working tree" and the leftover-directory check comes back empty.
+
 Compare full SHAs, not abbreviations. A branch name can belong to several merged PRs (a reused
-`fix/playthrough-papercuts`, say) - the tip matching any of their heads is enough. Raise `--limit` if the
-oldest PR in the list is younger than the oldest branch.
+`fix/playthrough-papercuts`, say) - the tip passing against any of their heads is enough. Raise `--limit`
+if either list comes back with exactly 500 entries.
+
+A tip equal to a merged head needs no further command. For any other tip on a branch with a merged PR,
+run one plain command per candidate head:
+
+```bash
+git merge-base --is-ancestor <tip> <headRefOid>
+```
+
+Exit 0 passes, exit 1 fails. Exit 128 means the head commit is not in the local repository - it was
+added on GitHub and the remote branch is deleted. GitHub keeps the PR's ref, so fetch it and run the
+check again; if the fetch fails too, the branch stays:
+
+```bash
+git fetch github pull/<number>/head
+```
 
 ## Phase 2 - classify
 
@@ -53,23 +74,23 @@ Each worktree other than the main checkout falls into exactly one bucket:
 
 | Bucket | Test | Action |
 |---|---|---|
-| remove | branch tip equals a merged PR's head, and the branch has no open PR | `git worktree remove` |
+| remove | branch tip is a merged PR's head or an ancestor of it, and the branch has no open PR | `git worktree remove` |
 | remove | detached `HEAD` on a commit already in `main` (`git merge-base --is-ancestor <sha> github/main` exits 0) | `git worktree remove` |
 | keep: own session | the worktree this session runs in | report; it can only be removed from elsewhere |
-| keep: newer work | tip differs from every merged head, no merged PR, or an open PR | report with the reason |
+| keep: newer work | tip is neither a merged head nor an ancestor of one, no merged PR, or an open PR | report with the reason |
 
 Then the local branches, after the worktrees are gone - a branch checked out in a worktree cannot be
 deleted:
 
 | Bucket | Test | Action |
 |---|---|---|
-| delete | tip equals a merged PR's head, no open PR, not checked out anywhere | `git branch -D` |
+| delete | tip is a merged PR's head or an ancestor of it, no open PR, not checked out anywhere | `git branch -D` |
 | keep | `main`, the branch this session has checked out, anything else | report |
 
 `-D` and not `-d`, because of the squash: `-d` refuses every one of them. The tip test above is what
 makes `-D` safe here.
 
-Finally, directories under `.claude/worktrees/` that `git worktree list` does not know about. They are
+Finally, directories under `<main>/.claude/worktrees/` that `git worktree list` does not know about. They are
 leftovers git no longer tracks. List what is inside and **ask before deleting** - nothing has proved them
 safe.
 
@@ -80,7 +101,7 @@ On `--dry-run`, print the three tables and stop.
 One plain command per worktree, never `--force`:
 
 ```bash
-git worktree remove .claude/worktrees/<name>
+git worktree remove <path>     # absolute, from git worktree list --porcelain
 ```
 
 Without `--force`, git refuses a worktree with modified or untracked files, so uncommitted work survives
@@ -95,7 +116,7 @@ registrations whose directory is already gone.
 
 ## Phase 4 - report
 
-Confirm with `git worktree list` and `ls .claude/worktrees`, then say:
+Confirm with `git worktree list` and `ls <main>/.claude/worktrees`, then say:
 
 - how many worktrees and branches went, in one line - not the list
 - every worktree and branch kept, each with its reason
