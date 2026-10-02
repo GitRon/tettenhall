@@ -13,14 +13,36 @@ from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 
 
+class QuestLookupMixin:
+    """
+    Resolves the offer the player is answering.
+
+    A separate mixin purely for the ordering, the way "AttackTargetMixin" is. A "dispatch" written on
+    the view itself runs before every mixin the view inherits, so a decided savegame would get a 404
+    about an offer it no longer has instead of the notice that the game is over. Sitting behind
+    RunningSavegameRequiredMixin in the bases puts that guard first.
+    """
+
+    object = None
+    current_savegame: Savegame = None
+
+    def dispatch(self, request, *args, **kwargs):
+        # The savegame first: resolving the quest runs the scoped queryset, which needs the month
+        self.current_savegame = get_current_savegame_for_request(request=request)
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class QuestAcceptView(
-    RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.FormView
+    RunningSavegameRequiredMixin,
+    QuestLookupMixin,
+    PlayerFactionScopedQuerysetMixin,
+    SingleObjectMixin,
+    generic.FormView,
 ):
     model = Quest
     form_class = QuestAcceptForm
     template_name = "quest/quest_detail.html"
-    object = None
-    current_savegame: Savegame = None
 
     def get_queryset(self):
         # A logged-in user need not have a savegame yet, and there is no month to ask about then. The
@@ -31,12 +53,6 @@ class QuestAcceptView(
         # Only this month's offers. The board is redrawn when the month turns, and a stale tab must
         # not send men on an errand that was never offered for the month they would be away in
         return super().get_queryset().offered_in(month=self.current_savegame.current_month)
-
-    def dispatch(self, request, *args, **kwargs):
-        # The savegame first: resolving the quest runs the scoped queryset above, which needs the month
-        self.current_savegame = get_current_savegame_for_request(request=self.request)
-        self.object = self.get_object()
-        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
