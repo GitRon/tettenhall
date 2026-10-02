@@ -16,11 +16,19 @@
                 <td>Led by</td>
                 <td>{{ object.leader.display_name }}</td>
             </tr>
-            <tr>
-                {# Said at zero too: an open field is worth knowing before a march as much as a wall is #}
-                <td>Their fortification</td>
-                <td class="font-mono">{{ fortification_strength }}</td>
-            </tr>
+            {% for raid_kind, fortification_strength in raid_kind_list %}
+                <tr>
+                    <td>{{ raid_kind.get_label }}</td>
+                    <td>
+                        {# Said at zero too: an open field is worth knowing before a march as much as a wall is #}
+                        <span class="font-mono text-label tracking-label uppercase text-ink-muted">Wall</span>
+                        <span class="font-mono">{{ fortification_strength }}</span>
+                        {% for effect in raid_kind.get_effects %}
+                            <span class="block text-sm leading-snug text-ink-muted">{{ effect }}</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
             <tr>
                 {# Yours marches whether he is listed here or not, so say so rather than offer a choice #}
                 <td>Leading you</td>

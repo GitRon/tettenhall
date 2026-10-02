@@ -19,3 +19,7 @@ def test_will_march_prudent_marches_two_up():
 
 def test_will_march_prudent_stays_home_one_up():
     assert POLICIES["prudent"].will_march(band_size=5, defenders=4) is False
+
+
+def test_raids_when_outnumbered_only_for_the_raider():
+    assert [policy.name for policy in POLICIES.values() if policy.raids_when_outnumbered] == ["raider"]

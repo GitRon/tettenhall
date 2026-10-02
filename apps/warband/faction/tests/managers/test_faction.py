@@ -4,6 +4,7 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -95,6 +96,87 @@ def test_occupiable_by_returns_a_rival_nobody_healthy_is_left_to_hold(player_fac
     rival = FactionFactory(savegame=player_faction.savegame)
     rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     rival.save()
+
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
+
+    assert list(result) == [rival]
+
+
+@pytest.mark.django_db
+def test_occupiable_by_excludes_a_rival_beaten_in_a_raid_on_its_herds_this_month(player_faction):
+    """A raid that is not on the burh bleeds a rival without ending it."""
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    SkirmishFactory(
+        attacking_faction=player_faction,
+        defending_faction=rival,
+        victorious_faction=player_faction,
+        raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+        month=player_faction.savegame.current_month,
+    )
+
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
+
+    assert list(result) == []
+
+
+@pytest.mark.django_db
+def test_occupiable_by_returns_a_rival_beaten_on_its_burh_this_month(player_faction):
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    SkirmishFactory(
+        attacking_faction=player_faction,
+        defending_faction=rival,
+        victorious_faction=player_faction,
+        raid_kind=RaidKindChoices.STORM_THE_BURH,
+        month=player_faction.savegame.current_month,
+    )
+
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
+
+    assert list(result) == [rival]
+
+
+@pytest.mark.django_db
+def test_occupiable_by_returns_a_rival_whose_herds_were_raided_in_an_earlier_month(player_faction):
+    """
+    The raid bars the town for the month it was won in, not for good: a rival still left with nobody
+    standing a month on has to be finishable, or it could be neither attacked nor ridden into.
+    """
+    savegame = player_faction.savegame
+    savegame.current_month = 4
+    savegame.save()
+    rival = FactionFactory(savegame=savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    SkirmishFactory(
+        attacking_faction=player_faction,
+        defending_faction=rival,
+        victorious_faction=player_faction,
+        raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+        month=3,
+    )
+
+    result = Faction.objects.occupiable_by(savegame=savegame)
+
+    assert list(result) == [rival]
+
+
+@pytest.mark.django_db
+def test_occupiable_by_returns_a_rival_that_beat_off_a_raid_on_its_herds(player_faction):
+    """Only a raid the attackers won bars the town; a rival who beat it off is held by nobody all the same."""
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    SkirmishFactory(
+        attacking_faction=player_faction,
+        defending_faction=rival,
+        victorious_faction=rival,
+        raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+        month=player_faction.savegame.current_month,
+    )
 
     result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
 

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from queuebie.messages import Command
 
 from apps.warband.faction.models.faction import Faction
+from apps.warband.skirmish.choices.raid_kind import RaidKindTypeHint
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
@@ -14,6 +15,8 @@ class AttackFaction(Command):
     attacking_faction: Faction
     target_faction: Faction
     assigned_warriors: list[Warrior]
+    # A "RaidKindChoices" value: what the war band sets out to take
+    raid_kind: RaidKindTypeHint
     month: int
 
 
@@ -24,10 +27,25 @@ class CreateSkirmish(Command):
     faction_2: Faction
     warrior_list_1: list[Warrior]
     warrior_list_2: list[Warrior]
+    # A "RaidKindChoices" value, recorded on the skirmish so its end knows what a victory takes
+    raid_kind: RaidKindTypeHint
     month: int
     # The wall the second faction fights behind. Zero unless whoever stages the fight says otherwise,
     # which is an open field
     fortification_strength: int = 0
+
+
+@dataclass(kw_only=True)
+class TakeRaidYield(Command):
+    """
+    Take what a won raid set out for from the faction it was won against: its silver, its fyrd.
+
+    On top of the loot of the field, which every fight hands out whatever it was for. How much there is
+    to take is a question for the database, so it is answered by the handler rather than carried here.
+    """
+
+    skirmish: Skirmish
+    month: int
 
 
 @dataclass(kw_only=True)

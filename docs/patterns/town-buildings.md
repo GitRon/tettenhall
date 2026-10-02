@@ -48,7 +48,7 @@ holding that level's numbers:
   constant on the attack service cannot sit on three archetype means at once.
 - **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots + how much a feast mends + cell places, weaponsmith →
   shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling, fortification →
-  the `fortification_strength` a skirmish staged by a march on the town opens with (0 / 20 / 35 / 50). The
+  the `fortification_strength` an assault on the burh opens with (0 / 20 / 35 / 50); a [raid](raids.md) out in the shire meets no wall. The
   fortification's defence bonus is not a lever: it is `SkirmishActionService.FORTIFICATION_DEFENSE_MULTIPLIER`,
   a constant of the mechanic.
 - **Level 0 is a baseline, not "no effect"**: a town without a hall still earns a little, and one without

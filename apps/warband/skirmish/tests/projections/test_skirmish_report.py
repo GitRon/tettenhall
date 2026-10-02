@@ -219,6 +219,81 @@ def test_silver_lost_counts_the_purses_taken_from_the_faction_s_own_fallen():
 
 
 @pytest.mark.django_db
+def test_herd_silver_won_sums_what_the_faction_drove_off():
+    skirmish = SkirmishFactory()
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_HERDS_LIFTED,
+        amount=80,
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert (report.herd_silver_won, report.herd_silver_lost) == (80, 0)
+
+
+@pytest.mark.django_db
+def test_herd_silver_lost_sums_what_the_other_side_drove_off():
+    skirmish = SkirmishFactory()
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_HERDS_LIFTED,
+        amount=80,
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.defending_faction)
+
+    assert (report.herd_silver_won, report.herd_silver_lost) == (0, 80)
+
+
+@pytest.mark.django_db
+def test_fyrd_names_burned_counts_the_names_the_faction_struck_off():
+    skirmish = SkirmishFactory()
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_VILLAGE_BURNED,
+        amount=2,
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
+
+    assert (report.fyrd_names_burned, report.fyrd_names_lost) == (2, 0)
+
+
+@pytest.mark.django_db
+def test_fyrd_names_lost_counts_the_names_struck_off_the_faction():
+    skirmish = SkirmishFactory()
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_VILLAGE_BURNED,
+        amount=2,
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.defending_faction)
+
+    assert (report.fyrd_names_burned, report.fyrd_names_lost) == (0, 2)
+
+
+@pytest.mark.django_db
+def test_a_raid_that_took_only_the_herds_still_has_something_to_report():
+    skirmish = SkirmishFactory()
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.attacking_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_HERDS_LIFTED,
+        amount=80,
+    )
+
+    report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.defending_faction)
+
+    assert report.has_anything_to_report is True
+
+
+@pytest.mark.django_db
 def test_a_fight_that_yielded_nothing_says_so():
     skirmish = SkirmishFactory()
 

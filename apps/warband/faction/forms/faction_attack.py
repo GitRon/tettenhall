@@ -5,7 +5,9 @@ from django.db.models import QuerySet
 
 from apps.common import form_styles
 from apps.warband.calendar.months import get_calendar_month
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.raids import RAID_KINDS
 from apps.warband.skirmish.services.march import get_march_cost_refusal
 from apps.warband.warrior.forms.fields import WarriorMultipleChoiceField
 from apps.warband.warrior.forms.widgets import RosterCheckboxSelectMultiple
@@ -14,7 +16,7 @@ from apps.warband.warrior.services.availability import assess_roster
 
 class FactionAttackForm(forms.Form):
     """
-    Picks the war band the player marches with.
+    Picks the war band the player marches with, and what it sets out to take.
 
     The leader is deliberately not one of the choices: the story has him joining every attack, and a
     checkbox he could clear would be a promise the form cannot keep. He is added back in
@@ -37,6 +39,14 @@ class FactionAttackForm(forms.Form):
         required=False,
     )
 
+    raid_kind = forms.TypedChoiceField(
+        label="Raid",
+        choices=[(raid_kind.VALUE, raid_kind.get_label()) for raid_kind in RAID_KINDS],
+        coerce=int,
+        initial=RaidKindChoices.STORM_THE_BURH,
+        widget=forms.RadioSelect,
+    )
+
     def __init__(self, *args, **kwargs):
         self.leader = kwargs.pop("leader")
         self.month = kwargs.pop("month")
@@ -48,6 +58,7 @@ class FactionAttackForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = "post"
         self.helper.layout = Layout(
+            Div(Field("raid_kind")),
             Div(Field("assigned_warriors", template=self.ROSTER_FIELD_TEMPLATE)),
             Div(
                 Submit(

@@ -30,6 +30,8 @@ inferring the conventions from nearby code.
   quest or an attack, the one place they are worded, and why a picker draws him anyway
 - [Attribute modifiers](docs/patterns/attribute-modifiers.md) — how an injury, a trait or a piece of
   gear makes a man weaker, which readers see it, and what deliberately does not
+- [Raids](docs/patterns/raids.md) — the three things a march can set out to take, who defends each, and
+  which one opens the town
 - [Quests](docs/patterns/quests.md) — the errands a war band sends men on: the catalogue, the odd job
   that is always offered, how the men's attribute weighs the draw and what a quest can bring home
 - [Town buildings](docs/patterns/town-buildings.md) — building levels, costs and effects, and where a

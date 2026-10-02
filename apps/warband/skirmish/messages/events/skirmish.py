@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from queuebie.messages import Event
 
 from apps.warband.faction.models import Faction
+from apps.warband.skirmish.choices.raid_kind import RaidKindTypeHint
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -20,6 +21,8 @@ class FactionWasAttacked(Event):
     # The wall the defenders stand behind, read off the defending faction by the command handler that
     # raised this - for the same reason the rosters are
     fortification_strength: int
+    # A "RaidKindChoices" value: what the attackers set out to take
+    raid_kind: RaidKindTypeHint
     month: int
 
 
@@ -94,4 +97,24 @@ class SkirmishFinished(Event):
     incapacitated_warriors: list[Warrior]
     defeated_unconscious_warriors: list[Warrior]
     victorious_healthy_warriors: list[Warrior]
+    month: int
+
+
+@dataclass(kw_only=True)
+class HerdsLifted(Event):
+    skirmish: Skirmish
+    raiding_faction: Faction
+    raided_faction: Faction
+    # The silver the herds were worth, already clamped to what the raided purse held
+    amount: int
+    month: int
+
+
+@dataclass(kw_only=True)
+class VillageBurned(Event):
+    skirmish: Skirmish
+    raiding_faction: Faction
+    raided_faction: Faction
+    # The names struck off the raided fyrd reserve, already clamped to how many it held
+    fyrd_names: int
     month: int

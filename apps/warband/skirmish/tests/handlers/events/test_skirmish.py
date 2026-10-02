@@ -2,14 +2,26 @@ import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.handlers.events.skirmish import (
     handle_attacker_defender_decided,
     handle_create_skirmish_for_attack,
     handle_round_finished,
+    handle_take_raid_yield_after_victory,
 )
-from apps.warband.skirmish.messages.commands.skirmish import CreateSkirmish, WarriorAttacksWarrior, WinSkirmish
-from apps.warband.skirmish.messages.events.skirmish import AttackerDefenderDecided, FactionWasAttacked, RoundFinished
+from apps.warband.skirmish.messages.commands.skirmish import (
+    CreateSkirmish,
+    TakeRaidYield,
+    WarriorAttacksWarrior,
+    WinSkirmish,
+)
+from apps.warband.skirmish.messages.events.skirmish import (
+    AttackerDefenderDecided,
+    FactionWasAttacked,
+    RoundFinished,
+    SkirmishFinished,
+)
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
@@ -27,6 +39,7 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
             attacking_warriors=[attacker],
             defending_warriors=[defender],
             fortification_strength=20,
+            raid_kind=RaidKindChoices.STORM_THE_BURH,
             month=3,
         )
     )
@@ -37,6 +50,7 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
         faction_2=defending_faction,
         warrior_list_1=[attacker],
         warrior_list_2=[defender],
+        raid_kind=RaidKindChoices.STORM_THE_BURH,
         month=3,
         fortification_strength=20,
     )
@@ -86,5 +100,70 @@ def test_handle_round_finished_does_nothing_without_a_victor():
     skirmish = SkirmishFactory()
 
     result = handle_round_finished(context=RoundFinished(skirmish=skirmish, round_number=1, victor=None, month=3))
+
+    assert result is None
+
+
+def test_handle_take_raid_yield_after_victory_takes_what_a_won_raid_set_out_for():
+    attacking_faction = FactionFactory.build(id=1)
+    skirmish = SkirmishFactory.build(
+        attacking_faction=attacking_faction,
+        victorious_faction=attacking_faction,
+        raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+    )
+
+    result = handle_take_raid_yield_after_victory(
+        context=SkirmishFinished(
+            skirmish=skirmish,
+            incapacitated_warriors=[],
+            defeated_unconscious_warriors=[],
+            victorious_healthy_warriors=[],
+            month=5,
+        )
+    )
+
+    assert result == TakeRaidYield(skirmish=skirmish, month=5)
+
+
+def test_handle_take_raid_yield_after_victory_takes_nothing_for_a_lost_raid():
+    attacking_faction = FactionFactory.build(id=1)
+    defending_faction = FactionFactory.build(id=2)
+    skirmish = SkirmishFactory.build(
+        attacking_faction=attacking_faction,
+        defending_faction=defending_faction,
+        victorious_faction=defending_faction,
+        raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+    )
+
+    result = handle_take_raid_yield_after_victory(
+        context=SkirmishFinished(
+            skirmish=skirmish,
+            incapacitated_warriors=[],
+            defeated_unconscious_warriors=[],
+            victorious_healthy_warriors=[],
+            month=5,
+        )
+    )
+
+    assert result is None
+
+
+def test_handle_take_raid_yield_after_victory_takes_nothing_extra_on_the_burh():
+    attacking_faction = FactionFactory.build(id=1)
+    skirmish = SkirmishFactory.build(
+        attacking_faction=attacking_faction,
+        victorious_faction=attacking_faction,
+        raid_kind=RaidKindChoices.STORM_THE_BURH,
+    )
+
+    result = handle_take_raid_yield_after_victory(
+        context=SkirmishFinished(
+            skirmish=skirmish,
+            incapacitated_warriors=[],
+            defeated_unconscious_warriors=[],
+            victorious_healthy_warriors=[],
+            month=5,
+        )
+    )
 
     assert result is None

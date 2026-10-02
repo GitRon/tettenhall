@@ -364,3 +364,23 @@ def handle_warrior_dropped_silver(*, context: transaction.WarriorDroppedSilver) 
         skirmish=context.skirmish,
         message=f"{context.warrior} dropped {context.amount} silver.",
     )
+
+
+@message_registry.register_event(event=skirmish.HerdsLifted)
+def handle_log_herds_lifted(*, context: skirmish.HerdsLifted) -> Command:
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=(
+            f"{context.raiding_faction} drive off the herds of {context.raided_faction}, worth {context.amount} silver."
+        ),
+    )
+
+
+@message_registry.register_event(event=skirmish.VillageBurned)
+def handle_log_village_burned(*, context: skirmish.VillageBurned) -> Command:
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=(
+            f"The village of {context.raided_faction} burns, and {context.fyrd_names} names of its fyrd burn with it."
+        ),
+    )

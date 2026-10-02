@@ -69,6 +69,21 @@
                 </ul>
             {% endif %}
 
+            {% if report.herd_silver_won or report.fyrd_names_burned %}
+                <h4 class="mb-2.5">What the raid took</h4>
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
+                    {% if report.herd_silver_won %}
+                        <li>
+                            <span class="text-ink-muted"><c-common.svg-icon icon_name="silver" decorative /></span>
+                            {{ report.herd_silver_won }} silver in cattle driven off
+                        </li>
+                    {% endif %}
+                    {% if report.fyrd_names_burned %}
+                        <li>{{ report.fyrd_names_burned }} names struck off their fyrd</li>
+                    {% endif %}
+                </ul>
+            {% endif %}
+
             {% if report.items_won %}
                 <h4 class="mb-2.5">Gear taken</h4>
                 <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
@@ -112,6 +127,18 @@
                             {% endif %}
                         </li>
                     {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if report.herd_silver_lost or report.fyrd_names_lost %}
+                <h4 class="mb-2.5">What the raid took from you</h4>
+                <ul class="list-none p-0 [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
+                    {% if report.herd_silver_lost %}
+                        <li class="text-ink-muted">{{ report.herd_silver_lost }} silver in cattle</li>
+                    {% endif %}
+                    {% if report.fyrd_names_lost %}
+                        <li class="text-ink-muted">{{ report.fyrd_names_lost }} names off your fyrd</li>
+                    {% endif %}
                 </ul>
             {% endif %}
 

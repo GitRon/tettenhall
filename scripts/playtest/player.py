@@ -16,6 +16,7 @@ from apps.warband.quest.messages.commands.quest import AcceptQuest
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction, FinishRound, StartDuel
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
@@ -228,7 +229,12 @@ class PlayerTurn:
         return Warrior.objects.filter_faction(faction_id=faction.id).filter_healthy().count()
 
     def march(self) -> str | None:
-        """Marches on the rival with the fewest men on their feet, with everybody who may go."""
+        """
+        Marches on the rival with the fewest men on their feet, with everybody who may go.
+
+        It storms the burh when the policy's margin allows, and otherwise lifts the herds or stays home,
+        as the policy says.
+        """
         targets = list(Faction.objects.attackable_by(savegame=self.savegame))
         leader = self.faction.get_available_leader(month=self.month)
         if not targets or leader is None:
@@ -239,9 +245,13 @@ class PlayerTurn:
         roster = assess_roster(faction_id=self.faction.id, month=self.month, excluded_ids=(leader.id,))
         band = [leader, *Warrior.objects.filter(id__in=roster.available_ids).order_by("id")]
 
+        raid_kind = RaidKindChoices.STORM_THE_BURH
         if not self.policy.will_march(band_size=len(band), defenders=self._healthy_men_of(faction=target)):
-            self.report.marches_held_back += 1
-            return None
+            if not self.policy.raids_when_outnumbered:
+                self.report.marches_held_back += 1
+                return None
+            # Too few to storm the burh, so out to the pastures instead, where only some of them stand
+            raid_kind = RaidKindChoices.LIFT_THE_HERDS
 
         # The last men to join stay at home until the march is affordable. The leader always goes.
         while len(band) > 1 and get_march_cost_refusal(
@@ -254,9 +264,15 @@ class PlayerTurn:
 
         handle_message(
             AttackFaction(
-                attacking_faction=self.faction, target_faction=target, assigned_warriors=band, month=self.month
+                attacking_faction=self.faction,
+                target_faction=target,
+                assigned_warriors=band,
+                raid_kind=raid_kind,
+                month=self.month,
             )
         )
+        if raid_kind == RaidKindChoices.LIFT_THE_HERDS:
+            self.report.herd_raids += 1
         # Read back the way "FactionAttackView.get_success_url" reads it: a war band marches once a month
         skirmish = Skirmish.objects.filter(
             attacking_faction=self.faction, defending_faction=target, month=self.month

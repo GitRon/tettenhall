@@ -6,7 +6,7 @@ from apps.warband.skirmish.models.skirmish import Skirmish
 
 class SkirmishSpoil(models.Model):
     """
-    One thing a fight handed to a faction: a piece of gear or a purse.
+    One thing a fight handed to a faction: a piece of gear, a purse, or what a raid took.
 
     Recorded as the spoil lands rather than derived afterwards. Nothing else in the database can
     answer "what did this fight get me": an item knows its owner and not the fight that won it, a
@@ -17,6 +17,11 @@ class SkirmishSpoil(models.Model):
     class KindChoices(models.IntegerChoices):
         KIND_ITEM_TAKEN = 1, "Item taken"
         KIND_SILVER_LOOTED = 2, "Silver looted"
+        # What a raid took from the faction it was won against rather than off a man on the field, so
+        # these carry no warrior. The amount is silver for the herds and names off the fyrd for the
+        # village
+        KIND_HERDS_LIFTED = 3, "Herds lifted"
+        KIND_VILLAGE_BURNED = 4, "Village burned"
 
     skirmish = models.ForeignKey(Skirmish, verbose_name="Skirmish", on_delete=models.CASCADE)
     # The side that gained it, which is not always the victor: the winner's own dead are stripped

@@ -1,3 +1,4 @@
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.skirmish import Skirmish
 
 
@@ -7,6 +8,7 @@ class BaseSkirmishGenerator:
     warriors_faction_2: list
     month: int
     fortification_strength: int
+    raid_kind: int
 
     def __init__(
         self,
@@ -16,6 +18,7 @@ class BaseSkirmishGenerator:
         warriors_faction_2: list,
         month: int,
         fortification_strength: int = 0,
+        raid_kind: int = RaidKindChoices.STORM_THE_BURH,
     ) -> None:
         super().__init__()
 
@@ -24,6 +27,7 @@ class BaseSkirmishGenerator:
         self.warriors_faction_2 = warriors_faction_2
         self.month = month
         self.fortification_strength = fortification_strength
+        self.raid_kind = raid_kind
 
     def process(self) -> Skirmish:
         # Both sides are indexed for their faction below, so an empty one dies on an IndexError that
@@ -50,6 +54,7 @@ class BaseSkirmishGenerator:
             month=self.month,
             fortification_strength=self.fortification_strength,
             starting_fortification_strength=self.fortification_strength,
+            raid_kind=self.raid_kind,
         )
 
         skirmish.attacking_warriors.add(*self.warriors_faction_1)

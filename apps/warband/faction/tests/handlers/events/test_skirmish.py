@@ -1,6 +1,10 @@
-from apps.warband.faction.handlers.events.skirmish import handle_defeat_faction_of_a_lost_leader
-from apps.warband.faction.messages.commands.faction import DefeatFactionOfLostLeader
+from apps.warband.faction.handlers.events.skirmish import (
+    handle_defeat_faction_of_a_lost_leader,
+    handle_village_burned_thins_the_fyrd,
+)
+from apps.warband.faction.messages.commands.faction import ChangeFyrdReserve, DefeatFactionOfLostLeader
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.skirmish.messages.events.skirmish import VillageBurned
 from apps.warband.skirmish.messages.events.warrior import WarriorWasCaptured, WarriorWasKilled
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -43,3 +47,19 @@ def test_handle_defeat_faction_of_a_lost_leader_for_an_occupation_allows_no_succ
     )
 
     assert result == DefeatFactionOfLostLeader(warrior=warrior, allow_succession=False)
+
+
+def test_handle_village_burned_thins_the_fyrd_strikes_the_names_off_the_reserve():
+    raided_faction = FactionFactory.build()
+
+    result = handle_village_burned_thins_the_fyrd(
+        context=VillageBurned(
+            skirmish=SkirmishFactory.build(),
+            raiding_faction=FactionFactory.build(),
+            raided_faction=raided_faction,
+            fyrd_names=2,
+            month=4,
+        )
+    )
+
+    assert result == ChangeFyrdReserve(faction=raided_faction, change=-2, month=4)

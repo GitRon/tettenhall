@@ -3,6 +3,8 @@ import random
 from queuebie import message_registry
 from queuebie.messages import Command, Event
 
+from apps.warband.faction.models.faction import Faction
+from apps.warband.finance.models import Transaction
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands import skirmish
@@ -18,17 +20,21 @@ from apps.warband.skirmish.messages.events.skirmish import (
     FighterPairsMatched,
     FortificationAssaulted,
     FortificationFell,
+    HerdsLifted,
     RoundFinished,
     SkirmishCreated,
     SkirmishFinished,
+    VillageBurned,
 )
 from apps.warband.skirmish.messages.events.warrior import BlowWasNotStruck
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.warband.skirmish.raids import get_raid_kind
 from apps.warband.skirmish.services.actions.assault_fortification import AssaultFortificationService
 from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
 from apps.warband.skirmish.services.generators.skirmish.base import BaseSkirmishGenerator
+from apps.warband.skirmish.services.raid_defenders import get_raid_defenders
 from apps.warband.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
 
@@ -45,7 +51,10 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
     # has nobody healthy left to post, so it cannot be played out, and the month refuses to turn
     # while a skirmish is open. "attackable_targets" asks this same question, so a target that
     # reaches here has somebody to field.
-    defending_warriors = list(
+    #
+    # Of those, the raid meets only the men standing where it lands - see [get_raid_defenders]
+    raid_kind = get_raid_kind(value=context.raid_kind)
+    muster = list(
         Warrior.objects.filter_healthy()
         .filter_faction(faction_id=context.target_faction.id)
         .exclude_currently_busy(month=context.month)
@@ -55,10 +64,54 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
         attacking_faction=context.attacking_faction,
         defending_faction=context.target_faction,
         attacking_warriors=list(context.assigned_warriors),
-        defending_warriors=defending_warriors,
-        fortification_strength=context.target_faction.town.get_fortification_strength(),
+        defending_warriors=get_raid_defenders(raid_kind=raid_kind, muster=muster),
+        fortification_strength=raid_kind.get_fortification_strength(town=context.target_faction.town),
+        raid_kind=context.raid_kind,
         month=context.month,
     )
+
+
+@message_registry.register_command(command=skirmish.TakeRaidYield)
+def handle_take_raid_yield(*, context: skirmish.TakeRaidYield) -> list[Event]:
+    """
+    What the raid takes, measured against what the raided faction has at the moment the fight ends.
+
+    Read here rather than carried, because the purse is a sum over the ledger and the reserve a column
+    that the month moves - both are queries. Each yield is clamped to what there is, so a poor rival
+    pays what it has and an empty one raises nothing at all.
+    """
+    raid_kind = get_raid_kind(value=context.skirmish.raid_kind)
+    raiding_faction = context.skirmish.attacking_faction
+    raided_faction = context.skirmish.defending_faction
+    events = []
+
+    amount = raid_kind.get_purse_taken(balance=Transaction.objects.current_balance(faction_id=raided_faction.id))
+    if amount:
+        events.append(
+            HerdsLifted(
+                skirmish=context.skirmish,
+                raiding_faction=raiding_faction,
+                raided_faction=raided_faction,
+                amount=amount,
+                month=context.month,
+            )
+        )
+
+    fyrd_names = raid_kind.get_fyrd_names_burned(
+        fyrd_reserve=Faction.objects.filter(id=raided_faction.id).values_list("fyrd_reserve", flat=True).get()
+    )
+    if fyrd_names:
+        events.append(
+            VillageBurned(
+                skirmish=context.skirmish,
+                raiding_faction=raiding_faction,
+                raided_faction=raided_faction,
+                fyrd_names=fyrd_names,
+                month=context.month,
+            )
+        )
+
+    return events
 
 
 @message_registry.register_command(command=skirmish.CreateSkirmish)
@@ -72,6 +125,7 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
         warriors_faction_2=context.warrior_list_2,
         month=context.month,
         fortification_strength=context.fortification_strength,
+        raid_kind=context.raid_kind,
     )
     new_skirmish = skirmish_generator.process()
 

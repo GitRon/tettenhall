@@ -4,6 +4,7 @@ from apps.warband.faction.forms.faction_attack import FactionAttackForm
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.services.availability import REASON_SWORN_TO_A_QUEST
@@ -129,7 +130,9 @@ def test_get_assigned_warriors_always_includes_the_leader():
     leader = WarriorFactory(faction=faction)
     follower = WarriorFactory(faction=faction)
 
-    form = FactionAttackForm(data={"assigned_warriors": [follower.id]}, leader=leader, month=3)
+    form = FactionAttackForm(
+        data={"assigned_warriors": [follower.id], "raid_kind": RaidKindChoices.STORM_THE_BURH}, leader=leader, month=3
+    )
 
     assert form.is_valid() is True
     assert form.get_assigned_warriors() == [leader, follower]
@@ -144,7 +147,7 @@ def test_get_assigned_warriors_marches_the_leader_out_alone():
     faction = FactionFactory()
     leader = WarriorFactory(faction=faction)
 
-    form = FactionAttackForm(data={}, leader=leader, month=3)
+    form = FactionAttackForm(data={"raid_kind": RaidKindChoices.STORM_THE_BURH}, leader=leader, month=3)
 
     assert form.is_valid() is True
     assert form.get_assigned_warriors() == [leader]
@@ -158,7 +161,9 @@ def test_clean_refuses_a_winter_march_the_purse_cannot_pay():
     follower = WarriorFactory(faction=faction)
     TransactionFactory(faction=faction, amount=19)
 
-    form = FactionAttackForm(data={"assigned_warriors": [follower.id]}, leader=leader, month=7)
+    form = FactionAttackForm(
+        data={"assigned_warriors": [follower.id], "raid_kind": RaidKindChoices.STORM_THE_BURH}, leader=leader, month=7
+    )
 
     assert form.is_valid() is False
     assert form.non_field_errors() == ["Marching 2 men this month costs 20 silver, and you have 19."]
@@ -170,6 +175,27 @@ def test_clean_lets_a_winter_march_the_purse_can_pay():
     leader = WarriorFactory(faction=faction)
     TransactionFactory(faction=faction, amount=10)
 
-    form = FactionAttackForm(data={}, leader=leader, month=7)
+    form = FactionAttackForm(data={"raid_kind": RaidKindChoices.STORM_THE_BURH}, leader=leader, month=7)
 
     assert form.is_valid() is True
+
+
+@pytest.mark.django_db
+def test_clean_refuses_a_march_with_no_raid_kind():
+    """What the war band sets out to take decides the fight, so a post without one is not a march."""
+    leader = WarriorFactory()
+
+    form = FactionAttackForm(data={}, leader=leader, month=3)
+
+    assert form.is_valid() is False
+    assert list(form.errors) == ["raid_kind"]
+
+
+@pytest.mark.django_db
+def test_clean_raid_kind_hands_back_the_stored_value():
+    leader = WarriorFactory()
+
+    form = FactionAttackForm(data={"raid_kind": RaidKindChoices.LIFT_THE_HERDS}, leader=leader, month=3)
+
+    assert form.is_valid() is True
+    assert form.cleaned_data["raid_kind"] == RaidKindChoices.LIFT_THE_HERDS
