@@ -532,6 +532,14 @@ class Warrior(models.Model):
         """
         return self.monthly_salary * self.SEVERANCE_SALARY_MONTHS
 
+    @property
+    def wage_once_recruited(self) -> int:
+        """
+        What a captive draws once he is taken on: his own wage, or, for a man who draws none - a leader -
+        the wage the recruitment puts him on (see "handle_recruit_captured_warrior").
+        """
+        return self.monthly_salary or self.salary_for(recruitment_price=self.recruitment_price)
+
     @staticmethod
     def salary_for(*, recruitment_price: int) -> int:
         """

@@ -96,10 +96,6 @@ class SkirmishBlow(models.Model):
         return DiceNotation(dice_string=self.attack_dice, modifier=self.attack_modifier)
 
     @property
-    def defense_notation(self) -> DiceNotation:
-        return DiceNotation(dice_string=self.defense_dice, modifier=self.defense_modifier)
-
-    @property
     def attack_ceiling(self) -> int | None:
         """
         The highest the attack roll could have come to. What a roll is worth is measured against this
@@ -108,7 +104,3 @@ class SkirmishBlow(models.Model):
         notation = self.attack_notation
 
         return notation.best_possible_result if notation else None
-
-    @property
-    def defense_ceiling(self) -> int:
-        return self.defense_notation.best_possible_result

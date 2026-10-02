@@ -80,7 +80,3 @@ class DiceRoll:
 
     notation: DiceNotation
     result: int
-
-    @property
-    def is_maximum(self) -> bool:
-        return self.result == self.notation.best_possible_result

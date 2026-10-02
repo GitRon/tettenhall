@@ -30,8 +30,8 @@ class PlayerTownMixin(PlayerFactionScopedQuerysetMixin):
     Resolves the single town the current player owns.
 
     The URL carries no id, so the scoped queryset holds exactly that town - and nothing at all
-    before the player has an active savegame with a faction, which both views used to walk into and
-    answer with a server error.
+    before the player has an active savegame with a faction, which has to be a 404 rather than a
+    server error.
     """
 
     def get_object(self, queryset=None) -> Town:

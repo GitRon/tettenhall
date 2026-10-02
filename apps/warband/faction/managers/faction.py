@@ -204,9 +204,10 @@ class FactionManager(manager.Manager):
         Take a hired mercenary off the pub's shelf, and say whether he was still standing on it.
 
         Not cosmetic. "handle_restock_pub_mercenaries" clears the stock with
-        "available_mercenaries.all().delete()", which is a warrior queryset and deletes the rows
-        themselves - so a man left linked to the pub is deleted at the start of the next month, after
-        he has been paid for, equipped and marched. This is what keeps him out of that queryset.
+        "available_mercenaries.filter(is_pub_stock=True).delete()", which is a warrior queryset and
+        deletes the rows themselves. Hiring a man leaves his "is_pub_stock" as it was, so a stock man
+        still linked to the pub would match it and be deleted at the start of the next month, after he
+        has been paid for, equipped and marched. Unlinking him is what keeps him out of that queryset.
 
         A filtered delete on the link row for the same reason as [remove_captive]: the hire whose
         delete comes back empty is the second of two, and must not be charged.

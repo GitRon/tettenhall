@@ -12,6 +12,11 @@ class NewTrainingCreated(Event):
 
 
 @dataclass(kw_only=True)
+class TrainingRegimenChanged(Event):
+    training: Training
+
+
+@dataclass(kw_only=True)
 class WarriorUpgradedSkill(Event):
     warrior: Warrior
     training_category: int

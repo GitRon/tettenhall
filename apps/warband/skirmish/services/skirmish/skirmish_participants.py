@@ -9,9 +9,8 @@ class SkirmishParticipantBuilderService:
     Decides who fights this round and with what.
 
     The player commands one side; the other is the AI's, and its actions are decided here rather than
-    read off the request. They used to be posted: the enemy's card rendered the AI's decision into a
-    real select carrying the same field name as the player's own, and the Fight! button swept it up -
-    so setting every enemy to a defensive stance removed all incoming damage.
+    read off the request. Anything posted for the enemy is ignored: a value the player can post is a
+    value he can edit, and setting every enemy to a defensive stance would remove all incoming damage.
 
     The roster is the authority for *who* fights, not just the AI for *what* they do. Overriding only
     the action would leave a player able to omit an enemy warrior from the post and face fewer

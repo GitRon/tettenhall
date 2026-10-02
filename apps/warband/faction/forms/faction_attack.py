@@ -95,7 +95,7 @@ class FactionAttackForm(forms.Form):
         """
         Refuse a man the roster marked unavailable.
 
-        The queryset cannot do this any more: it has to hold the men who cannot march so the page can
+        The queryset cannot do this: it has to hold the men who cannot march so the page can
         draw them. "disabled" keeps the browser from submitting those boxes and does nothing about a
         hand-edited post, so the rule is performed here - against the same assessment the page was
         drawn from, rather than against a second query that could answer differently.

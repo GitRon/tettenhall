@@ -86,7 +86,7 @@ class CurrentSavegameMixin(ContextMixin):
     Adds the current savegame to the context.
 
     Inheriting from ContextMixin keeps "super().get_context_data()" resolvable even on a plain View,
-    which is the gotcha this mixin used to guard against with a try/except.
+    so no caller needs to guard it.
     """
 
     def get_context_data(self, **kwargs) -> dict:

@@ -61,8 +61,7 @@ def current_savegame(user) -> Savegame:
     setup rather than a bare savegame.
     """
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
 
     return savegame
 

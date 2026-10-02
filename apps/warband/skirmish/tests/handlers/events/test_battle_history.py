@@ -259,8 +259,8 @@ def test_handle_log_attacker_defender_decided_names_the_lost_roll():
 
     assert result == CreateBattleHistory(
         skirmish=skirmish,
-        message="Beorn is quicker than Cuthred and comes at him with a Risky attack, so Cuthred's "
-        "Defensive stance serves as his defence.",
+        message="Beorn is quicker than Cuthred and comes at him with a Risky attack, and Cuthred's order "
+        "is Defensive stance, so he meets it without a blow of his own.",
     )
 
 
@@ -284,7 +284,7 @@ def test_handle_log_attacker_defender_decided_names_the_missing_opponent():
     assert result == CreateBattleHistory(
         skirmish=skirmish,
         message="Nobody is left to face Beorn, so he strikes free at Cuthred with a Risky attack, and "
-        "Cuthred's Defensive stance serves as his defence.",
+        "Cuthred's order is Defensive stance, so he meets it without a blow of his own.",
     )
 
 

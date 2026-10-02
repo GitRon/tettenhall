@@ -90,20 +90,15 @@ Note that the registry keys handlers by `message.module_path()` **strings**
 `{"module": ..., "name": ...}` dicts rather than functions. Comparing classes against those keys silently
 passes and tests nothing.
 
-## Defects these tests found
+## What they catch that nothing else does
 
-Writing them surfaced three real defects, all since fixed. Each is now covered by one of these tests.
+- **A command whose handler is commented out.** The emitting handler still returns it, every unit test
+  of that handler passes, and at runtime the instruction goes nowhere.
+- **A command emitted with no handler anywhere.** Often a stale path: the work it asks for already
+  happens elsewhere, and implementing it literally would undo that work. The fix is to remove the
+  emission, not to add a handler.
+- **A handler registered for two messages that reads an attribute only one of them carries.** The
+  other message raises `AttributeError` and rolls the whole transaction back - from a code path that
+  looks unrelated.
 
-- **`DropWarriorItems`** — emitted by an event handler, but its command handler was commented out with a
-  TODO. Dead edge. The TODO was right that `handle_distribute_loot()` supersedes it, so the command, its
-  event and the emitting handler were removed.
-- **`AddQuestToBulletinBoard`** — emitted on `QuestAccepted`, no handler anywhere. The emitting handler was
-  named `handle_removed_accepted_quest_from_available_quests` but removed nothing;
-  `handle_accept_quest` already takes the quest off the board. Implementing it literally would have put the
-  just-accepted quest back on the board, so the stale path was removed.
-- **`NewFactionCreated.current_month`** — three handlers are registered for both `MonthPrepared` and
-  `NewFactionCreated` and read `context.current_month`, which only `MonthPrepared` carried. Creating a
-  faction raised `AttributeError` and rolled the whole transaction back. `NewFactionCreated` now carries
-  the month, taken from the savegame.
-
-The first two were unconsumed **commands**, which is why test 2 has no allowlist.
+An unconsumed command is always one of the first two, which is why test 2 has no allowlist.

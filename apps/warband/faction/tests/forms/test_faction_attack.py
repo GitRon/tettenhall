@@ -80,7 +80,7 @@ def test_assignable_warriors_leave_out_a_dead_man():
 def test_empty_help_text_stays_away_while_there_are_rows_to_draw():
     """
     A roster of men who cannot march is not an empty picker: every one of them carries his own
-    reason now, which is what the two deleted sentences used to approximate from a distance.
+    reason, which says more than any sentence about the roster as a whole could.
     """
     faction = FactionFactory()
     leader = WarriorFactory(faction=faction)
@@ -110,7 +110,7 @@ def test_empty_help_text_names_a_roster_of_one():
 def test_clean_assigned_warriors_refuses_a_man_who_cannot_march():
     """
     "disabled" keeps the browser from submitting the box and does nothing about a hand-edited post,
-    and the queryset cannot be the gate any more - it has to hold him so the page can draw him.
+    and the queryset cannot be the gate - it has to hold him so the page can draw him.
     """
     faction = FactionFactory()
     leader = WarriorFactory(faction=faction)

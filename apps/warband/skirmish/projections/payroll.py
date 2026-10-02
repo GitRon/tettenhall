@@ -24,9 +24,9 @@ class Payroll:
     Who a faction can pay out of the silver it has, and who it would have to leave short.
 
     Built once and read from two ends, which is the whole point of it existing: the salary run bills
-    from it when the month turns, and the cost card warns from it beforehand. The split used to sit
-    inside "handle_warrior_monthly_salaries", so a warning could only have been a second copy of the
-    rule - and a warning naming a different man than the month takes is worse than none.
+    from it when the month turns, and the cost card warns from it beforehand. Inside
+    "handle_warrior_monthly_salaries" a warning could only be a second copy of the rule - and a warning
+    naming a different man than the month takes is worse than none.
 
     Pure: it is handed a roster and a number and reads nothing itself. "for_faction" is the one place
     that touches the database.

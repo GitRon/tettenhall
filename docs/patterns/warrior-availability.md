@@ -82,7 +82,7 @@ Two things follow, and the second bites silently:
 
 - **The field's queryset holds the whole roster**, because an option that is not in it is an option
   that does not render.
-- **So the queryset is no longer what validates the post.** `disabled` keeps the browser from
+- **So the queryset is not what validates the post.** `disabled` keeps the browser from
   submitting a greyed box and does nothing at all about a hand-edited one. Every form using the widget
   owns a `clean_<field>` that rejects anything outside `available_ids`. The queryset still scopes to
   the faction, and that part is load-bearing as ever.

@@ -99,16 +99,16 @@ class WarriorForm(forms.ModelForm):
 
         # Everything of the right kind the faction owns, whether or not somebody is carrying it.
         #
-        # Offering only the spare ones is what forced a cascade to be walked in one order and never
-        # said so: moving a sword from the best man to the second meant re-equipping the best man
-        # first to release it, and a player who started at the second saw a list without the sword he
+        # Offering only the spare ones would force a cascade to be walked in one order without saying
+        # so: moving a sword from the best man to the second would mean re-equipping the best man first
+        # to release it, and a player who started at the second would see a list without the sword he
         # was trying to move and no way to learn why. Picking an item somebody holds is a swap, which
         # "EquipItem" settles - see the handler for why both rows have to be written together.
         #
         # What it does leave out is the gear on a man standing in a fight nobody has settled. A blow
         # is rolled off his slot while that fight is open, so the far end of a swap is the one item
-        # this list must not offer - and an option that could only ever be refused is the control
-        # this batch keeps removing rather than explaining. Both relations are narrowed, not just the
+        # this list must not offer - an option that could only ever be refused is a control to remove,
+        # not one to explain. Both relations are narrowed, not just the
         # one the slot fills: an item answers "who is wearing me" off whichever of the two it sits in.
         fighting_warrior_ids = Warrior.objects.filter_standing_in_an_open_fight().values("id")
         self.fields[htmx_field].queryset = (

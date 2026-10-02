@@ -10,8 +10,7 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 @pytest.mark.django_db
 def test_get_current_balance_sums_up_the_transactions_of_the_player_faction(rf, user):
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     TransactionFactory(faction=savegame.player_faction, amount=250)
     request = rf.get("/")
     request.user = user
@@ -22,8 +21,7 @@ def test_get_current_balance_sums_up_the_transactions_of_the_player_faction(rf, 
 @pytest.mark.django_db
 def test_get_current_balance_ignores_the_transactions_of_rival_factions(rf, user):
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     TransactionFactory(faction=savegame.player_faction, amount=250)
     TransactionFactory(faction=FactionFactory(savegame=savegame), amount=999)
     request = rf.get("/")
@@ -40,8 +38,7 @@ def test_get_current_balance_projects_the_wage_bill_against_the_purse(rf, user):
     hall pays out.
     """
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     TransactionFactory(faction=savegame.player_faction, amount=100)
     WarriorFactory(faction=savegame.player_faction, monthly_salary=150)
     request = rf.get("/")
@@ -56,8 +53,7 @@ def test_get_current_balance_projects_the_wage_bill_against_the_purse(rf, user):
 @pytest.mark.django_db
 def test_get_current_balance_projects_no_shortfall_while_the_wages_are_covered(rf, user):
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     TransactionFactory(faction=savegame.player_faction, amount=100)
     WarriorFactory(faction=savegame.player_faction, monthly_salary=40)
     request = rf.get("/")

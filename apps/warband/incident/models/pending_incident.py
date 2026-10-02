@@ -21,7 +21,7 @@ class PendingIncident(models.Model):
     faction = models.ForeignKey(Faction, verbose_name="Faction", on_delete=models.CASCADE)
     month = models.PositiveSmallIntegerField("Month")
     incident = models.CharField("Incident", max_length=50)
-    title = models.CharField("Title", max_length=100)
+    title = models.TextField("Title")
     body = models.TextField("Body", blank=True, default="")
     rival = models.ForeignKey(
         Faction,

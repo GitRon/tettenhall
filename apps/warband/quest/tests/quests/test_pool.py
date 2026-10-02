@@ -2,12 +2,12 @@
 The catalogue as a whole, read off the constants: what every entry has to be for the board to work.
 """
 
-from apps.warband.month.models.player_month_log import PlayerMonthLog
+from apps.warband.quest.models.quest import Quest as QuestOffer
 from apps.warband.quest.quests import QUESTS, QUESTS_BY_NAME
-from apps.warband.quest.quests.base import Quest, QuestOutcome
+from apps.warband.quest.quests.base import QuestOutcome
 from apps.warband.skirmish.models.warrior import Warrior
 
-TITLE_MAX_LENGTH = PlayerMonthLog._meta.get_field("title").max_length
+TITLE_MAX_LENGTH = QuestOffer._meta.get_field("title").max_length
 
 
 def _pays_something(outcome: QuestOutcome) -> bool:
@@ -37,14 +37,8 @@ def test_every_entry_leans_on_a_warrior_attribute():
     assert [quest.__name__ for quest in QUESTS if quest.LEANS_ON not in attribute_names] == []
 
 
-def test_every_title_fits_the_log_line():
-    titles = [quest.TITLE for quest in QUESTS] + [outcome.title for quest in QUESTS for outcome in quest.OUTCOMES]
-
-    assert [title for title in titles if len(title) > TITLE_MAX_LENGTH] == []
-
-
-def test_the_lapsed_line_fits_the_log_line():
-    assert len(Quest.LAPSED_TITLE) <= TITLE_MAX_LENGTH
+def test_every_title_fits_the_board():
+    assert [quest.__name__ for quest in QUESTS if len(quest.TITLE) > TITLE_MAX_LENGTH] == []
 
 
 def test_every_entry_can_succeed_and_can_fail():

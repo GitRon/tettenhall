@@ -109,3 +109,19 @@ def test_quest_accept_view_sends_the_player_home_on_a_finished_savegame(logged_i
 
     assert response.status_code == 302
     assert response.url == reverse("warband:dashboard-view")
+
+
+@pytest.mark.django_db
+def test_quest_accept_view_tells_a_finished_savegame_so_even_for_a_stale_offer(logged_in_client, current_savegame):
+    """
+    An offer from an earlier month is no longer found, and a game that is over has to say that it is
+    over rather than that the offer does not exist.
+    """
+    quest = QuestFactory(faction=current_savegame.player_faction, month=current_savegame.current_month - 1)
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    response = logged_in_client.get(reverse("warband:quest-accept-view", kwargs={"pk": quest.pk}))
+
+    assert response.status_code == 302
+    assert response.url == reverse("warband:dashboard-view")

@@ -10,9 +10,8 @@
 {% block content %}
     <h1>Warrior {{ object.display_name }} of {{ object.faction }}</h1>
 
-    {# Every anchor on this page used to belong to the navbar, so equipping a second man meant walking #}
-    {# back through the section nav and the roster for each one. The list he was read off, and the two #}
-    {# men standing either side of him in it. #}
+    {# The list he was read off, and the two men standing either side of him in it, so equipping a #}
+    {# second man does not mean walking back through the section nav and the roster for each one. #}
     {% if roster_url %}
         <div class="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2">
             <a class="font-mono text-label uppercase tracking-label text-ink-muted no-underline hover:text-ink" href="{{ roster_url }}">

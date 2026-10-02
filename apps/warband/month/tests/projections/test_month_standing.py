@@ -74,9 +74,7 @@ def test_open_skirmish_count_counts_the_fights_blocking_the_month():
     permanent warning on the page from the first battle onwards.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     SkirmishFactory(attacking_faction=player_faction)
     SkirmishFactory(attacking_faction=player_faction, victorious_faction=player_faction)
 
@@ -92,9 +90,7 @@ def test_open_skirmish_list_holds_the_fights_themselves():
     come back rather than a number that cannot be linked to.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     open_skirmish = SkirmishFactory(attacking_faction=player_faction)
     SkirmishFactory(attacking_faction=player_faction, victorious_faction=player_faction)
 
@@ -106,9 +102,7 @@ def test_open_skirmish_list_holds_the_fights_themselves():
 @pytest.mark.django_db
 def test_skirmish_to_enter_names_the_only_fight_there_is():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     open_skirmish = SkirmishFactory(attacking_faction=player_faction)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
@@ -123,9 +117,7 @@ def test_skirmish_to_enter_prefers_the_fight_already_under_way():
     an unstarted one here would send the player to a redirect.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     SkirmishFactory(attacking_faction=player_faction)
     started_skirmish = SkirmishFactory(attacking_faction=player_faction, current_round=3)
 
@@ -140,9 +132,7 @@ def test_skirmish_to_enter_is_none_while_several_fights_stand_unstarted():
     Which of them to walk into is a decision, and the list is the screen that asks it.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     SkirmishFactory(attacking_faction=player_faction)
     SkirmishFactory(attacking_faction=player_faction)
 
@@ -158,9 +148,7 @@ def test_quest_count_counts_only_this_month_s_offers():
     quest the board then does not show.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     QuestFactory(faction=player_faction, month=savegame.current_month)
     QuestFactory(faction=player_faction, month=savegame.current_month + 1)
 
@@ -176,11 +164,9 @@ def test_has_offers_open_is_false_with_only_a_rival_to_march_on():
     would say the same thing month after month. The Rivals page is where that is asked.
     """
     savegame = SavegameFactory(current_month=4)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4, is_player=True)
     player_faction.leader = WarriorFactory(faction=player_faction)
     player_faction.save()
-    savegame.player_faction = player_faction
-    savegame.save()
     WarriorFactory(faction=FactionFactory(savegame=savegame))
 
     standing = MonthStanding.for_savegame(savegame=savegame)
@@ -191,11 +177,9 @@ def test_has_offers_open_is_false_with_only_a_rival_to_march_on():
 @pytest.mark.django_db
 def test_occupiable_rival_list_names_the_towns_left_standing_empty():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     player_faction.leader = WarriorFactory(faction=player_faction)
     player_faction.save()
-    savegame.player_faction = player_faction
-    savegame.save()
     emptied_rival = FactionFactory(savegame=savegame, name="Hwicce")
     emptied_rival.leader = WarriorFactory(faction=emptied_rival, condition=Warrior.ConditionChoices.CONDITION_DEAD)
     emptied_rival.save()
@@ -208,9 +192,7 @@ def test_occupiable_rival_list_names_the_towns_left_standing_empty():
 @pytest.mark.django_db
 def test_can_build_is_false_once_a_building_has_been_raised_this_month():
     savegame = SavegameFactory(current_month=4)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
-    savegame.player_faction = player_faction
-    savegame.save()
+    FactionFactory(savegame=savegame, town__last_constructed_building_at=4, is_player=True)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -220,9 +202,7 @@ def test_can_build_is_false_once_a_building_has_been_raised_this_month():
 @pytest.mark.django_db
 def test_can_build_is_true_while_the_month_has_seen_no_building():
     savegame = SavegameFactory(current_month=4)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=3)
-    savegame.player_faction = player_faction
-    savegame.save()
+    FactionFactory(savegame=savegame, town__last_constructed_building_at=3, is_player=True)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -232,11 +212,9 @@ def test_can_build_is_true_while_the_month_has_seen_no_building():
 @pytest.mark.django_db
 def test_building_income_reads_the_hall_the_town_has_standing():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, town=None)
+    player_faction = FactionFactory(savegame=savegame, town=None, is_player=True)
     TownFactory(faction=player_faction, hall=1)
     WarriorFactory(faction=player_faction, monthly_salary=100)
-    savegame.player_faction = player_faction
-    savegame.save()
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -250,10 +228,8 @@ def test_building_income_pays_the_share_of_an_under_manned_hall():
     of it, and a page promising the full revenue would name a figure the month then does not pay.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, town=None)
+    player_faction = FactionFactory(savegame=savegame, town=None, is_player=True)
     TownFactory(faction=player_faction, hall=1)
-    savegame.player_faction = player_faction
-    savegame.save()
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -267,9 +243,7 @@ def test_building_income_is_nil_for_a_faction_that_has_no_town_yet():
     reaches - without it the first page a half-built savegame lands on answers 500.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, town=None)
-    savegame.player_faction = player_faction
-    savegame.save()
+    FactionFactory(savegame=savegame, town=None, is_player=True)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -280,9 +254,7 @@ def test_building_income_is_nil_for_a_faction_that_has_no_town_yet():
 @pytest.mark.django_db
 def test_shop_item_count_and_pub_mercenary_count_read_the_town_the_player_owns():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     player_faction.available_items.add(ItemFactory(savegame=savegame))
     player_faction.available_mercenaries.add(
         WarriorFactory(faction=None, savegame=savegame, culture=player_faction.culture)
@@ -297,9 +269,7 @@ def test_shop_item_count_and_pub_mercenary_count_read_the_town_the_player_owns()
 @pytest.mark.django_db
 def test_captives_over_cell_places_counts_the_men_the_month_will_lose():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, town__hall=Town.HallChoices.HALL_SMALL)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, town__hall=Town.HallChoices.HALL_SMALL, is_player=True)
     player_faction.captured_warriors.add(
         *WarriorFactory.create_batch(3, faction=None, savegame=savegame, culture=player_faction.culture)
     )
@@ -317,9 +287,7 @@ def test_has_offers_open_is_true_with_only_captives_over_the_cells():
     the captives inside the places, who wait on the player for as long as he likes.
     """
     savegame = SavegameFactory(current_month=4)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4, is_player=True)
     player_faction.captured_warriors.add(
         *WarriorFactory.create_batch(2, faction=None, savegame=savegame, culture=player_faction.culture)
     )
@@ -336,9 +304,7 @@ def test_has_offers_open_is_true_while_one_thing_still_expires():
     turns, so any of them alone earns the page its list.
     """
     savegame = SavegameFactory(current_month=4)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4, is_player=True)
     player_faction.available_mercenaries.add(
         WarriorFactory(faction=None, savegame=savegame, culture=player_faction.culture)
     )
@@ -355,9 +321,7 @@ def test_has_offers_open_is_false_on_a_month_with_nothing_left_in_it():
     an empty shop, an empty pub, a spent building slot and no rival anybody can be marched on.
     """
     savegame = SavegameFactory(current_month=4)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
-    savegame.player_faction = player_faction
-    savegame.save()
+    FactionFactory(savegame=savegame, town__last_constructed_building_at=4, is_player=True)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -372,9 +336,7 @@ def test_has_offers_open_is_false_on_a_month_held_only_by_a_fight():
     gets a sentence saying nothing else is left, not a list with one red row in it.
     """
     savegame = SavegameFactory(current_month=4)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4, is_player=True)
     SkirmishFactory(attacking_faction=player_faction)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
@@ -390,11 +352,9 @@ def test_has_offers_open_is_false_once_the_game_has_been_decided():
     month - which is what makes the view's own check about the panels and not about the rules.
     """
     savegame = SavegameFactory(current_month=4, outcome=Savegame.OutcomeChoices.OUTCOME_WON)
-    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4)
+    player_faction = FactionFactory(savegame=savegame, town__last_constructed_building_at=4, is_player=True)
     player_faction.leader = WarriorFactory(faction=player_faction)
     player_faction.save()
-    savegame.player_faction = player_faction
-    savegame.save()
     WarriorFactory(faction=FactionFactory(savegame=savegame))
 
     standing = MonthStanding.for_savegame(savegame=savegame)
@@ -409,9 +369,7 @@ def test_warband_counts_the_living_by_condition():
     a man in poor condition, and counting him would make the summary disagree with both.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     WarriorFactory(faction=player_faction)
     WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
@@ -430,9 +388,7 @@ def test_warband_counts_only_the_men_of_the_player_faction():
     men into the player's own summary.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     WarriorFactory(faction=player_faction)
     WarriorFactory(faction=FactionFactory(savegame=savegame))
 
@@ -444,13 +400,11 @@ def test_warband_counts_only_the_men_of_the_player_faction():
 @pytest.mark.django_db
 def test_warband_names_the_man_who_would_take_the_leader_s_seat():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     player_faction.leader = WarriorFactory(faction=player_faction)
     player_faction.save()
     WarriorFactory(faction=player_faction, renown=5)
     successor = WarriorFactory(faction=player_faction, renown=12)
-    savegame.player_faction = player_faction
-    savegame.save()
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -460,12 +414,10 @@ def test_warband_names_the_man_who_would_take_the_leader_s_seat():
 @pytest.mark.django_db
 def test_warband_leader_can_march_while_he_is_fit_and_free():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     leader = WarriorFactory(faction=player_faction)
     player_faction.leader = leader
     player_faction.save()
-    savegame.player_faction = player_faction
-    savegame.save()
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -480,13 +432,11 @@ def test_warband_leader_cannot_march_once_he_is_down():
     explains the missing Attack button.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     player_faction.leader = WarriorFactory(
         faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
     player_faction.save()
-    savegame.player_faction = player_faction
-    savegame.save()
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -500,13 +450,11 @@ def test_warband_has_marched_under_a_successor_who_stayed_at_home():
     the month has already spent.
     """
     savegame = SavegameFactory(current_month=3)
-    player_faction = FactionFactory(savegame=savegame)
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     fallen_leader = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
     SkirmishFactory(attacking_faction=player_faction, attacking_leader=fallen_leader, month=3)
     player_faction.leader = WarriorFactory(faction=player_faction)
     player_faction.save()
-    savegame.player_faction = player_faction
-    savegame.save()
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -516,9 +464,7 @@ def test_warband_has_marched_under_a_successor_who_stayed_at_home():
 @pytest.mark.django_db
 def test_warband_has_no_leader_before_one_is_appointed():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, leader=None)
-    savegame.player_faction = player_faction
-    savegame.save()
+    FactionFactory(savegame=savegame, leader=None, is_player=True)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
@@ -529,9 +475,7 @@ def test_warband_has_no_leader_before_one_is_appointed():
 @pytest.mark.django_db
 def test_waiting_reads_the_fyrd_and_the_captives_off_the_faction():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=7)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=7, is_player=True)
     player_faction.captured_warriors.add(
         WarriorFactory(faction=None, savegame=savegame, culture=player_faction.culture)
     )
@@ -545,9 +489,7 @@ def test_waiting_reads_the_fyrd_and_the_captives_off_the_faction():
 @pytest.mark.django_db
 def test_waiting_counts_the_upgrades_lying_in_the_stores():
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     WarriorFactory(faction=player_faction)
     ItemFactory(savegame=savegame, owner=player_faction, type=ItemTypeFactory(base_value="2d6"))
 
