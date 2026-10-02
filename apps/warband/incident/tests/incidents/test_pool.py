@@ -11,7 +11,6 @@ import pytest
 
 from apps.warband.calendar.months import YEAR
 from apps.warband.incident.incidents import INCIDENTS, QUIET_MONTH_WEIGHT
-from apps.warband.month.models.player_month_log import PlayerMonthLog
 
 
 def test_every_entry_is_drawn_in_some_month():
@@ -27,37 +26,6 @@ def test_every_entry_carries_a_weight():
     A weight of zero is an entry nobody can ever draw, which is a class kept in the pool by mistake.
     """
     assert [incident for incident in INCIDENTS if incident.WEIGHT <= 0] == []
-
-
-def test_every_title_fits_the_log_line():
-    """
-    The title lands in "PlayerMonthLog.title", which is capped, and most titles only reach their full
-    length once a name is filled in. Twenty letters is a long name for any culture the game rolls.
-    """
-    title_length = PlayerMonthLog._meta.get_field("title").max_length
-    long_name = "W" * 20
-
-    assert [
-        incident
-        for incident in INCIDENTS
-        if len(incident.TITLE.format(warrior=long_name, rival=long_name, item=long_name)) > title_length
-    ] == []
-
-
-def test_every_answer_fits_the_log_line():
-    """
-    An answer's title lands in the same capped column the question's would, with the same names
-    filled in.
-    """
-    title_length = PlayerMonthLog._meta.get_field("title").max_length
-    long_name = "W" * 20
-
-    assert [
-        option.key
-        for incident in INCIDENTS
-        for option in incident.OPTIONS
-        if len(option.title.format(warrior=long_name, rival=long_name, item=long_name)) > title_length
-    ] == []
 
 
 def test_every_question_declares_its_default_among_its_options():

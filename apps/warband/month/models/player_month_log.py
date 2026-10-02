@@ -113,7 +113,7 @@ class PlayerMonthLog(models.Model):
         ),
     }
 
-    title = models.CharField("Title", max_length=100)
+    title = models.TextField("Title")
     # The room a chronicle entry needs and no other kind has: a report sentence fits in the title,
     # the sentence that undercuts it does not. Empty for every other producer, so the log stays one
     # line wherever it always was
