@@ -52,8 +52,7 @@ def test_town_upgrade_view_names_the_level_it_offers_next(logged_in_client, curr
 @pytest.mark.django_db
 def test_town_upgrade_view_puts_the_effects_of_both_levels_next_to_each_other(logged_in_client, current_savegame):
     """
-    A price on its own says nothing about whether the building is worth it, and the top levels
-    deliberately are not on their effect alone.
+    A price on its own says nothing about whether the building is worth it to the player now.
     """
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 

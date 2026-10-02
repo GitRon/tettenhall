@@ -84,9 +84,9 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
                     "max_level": max_level,
                     "next_level_display": next_level_display,
                     "costs": next_building.BUILDING_COSTS,
-                    # What the money buys, level by level. The player is choosing between four prices
-                    # and the levels are deliberately not worth them on the numbers alone, so the
-                    # numbers are what the decision needs.
+                    # What the money buys, level by level. The player is choosing between four prices,
+                    # each paid for with months of men and gear he goes without, so the numbers are
+                    # what the decision needs.
                     #
                     # An effect the next level answers with the same value is left out, because a row
                     # reading "1 -> 1" prices a lever that is not moving and nothing says a level has
