@@ -33,13 +33,13 @@ def test_the_first_paid_level_of_every_family_is_within_the_opening_purse():
     assert max(first_paid_costs) == 600
 
 
-def test_the_step_to_the_second_paid_level_is_the_steepest_one():
+def test_the_second_paid_level_is_only_a_little_dearer_than_the_first():
     """
-    The opening purse buys one building and a decision about what to do next; everything above the
-    first level is saved for across several months.
+    A faction spends down to its wage bill every month, so a level is only reached by a few months of
+    holding back - the second is priced for that, and the third doubles it.
     """
     for family in BUILDINGS.values():
         _, first, second, third = family.get_levels()
 
-        assert second.BUILDING_COSTS / first.BUILDING_COSTS == 3.5
-        assert third.BUILDING_COSTS / second.BUILDING_COSTS == 2
+        assert first.BUILDING_COSTS < second.BUILDING_COSTS < 1.5 * first.BUILDING_COSTS
+        assert third.BUILDING_COSTS == 2 * second.BUILDING_COSTS

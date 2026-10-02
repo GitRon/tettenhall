@@ -41,10 +41,10 @@ class SmallWeaponsmith(Weaponsmith):
 class MediumWeaponsmith(Weaponsmith):
     QUALITY_BONUS = 2
 
-    BUILDING_COSTS = 1750
+    BUILDING_COSTS = 700
 
 
 class LargeWeaponsmith(Weaponsmith):
     QUALITY_BONUS = 3
 
-    BUILDING_COSTS = 3500
+    BUILDING_COSTS = 1400

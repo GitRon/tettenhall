@@ -46,13 +46,13 @@ class Palisade(Fortification):
 class Earthwork(Fortification):
     FORTIFICATION_STRENGTH = 35
 
-    BUILDING_COSTS = 1750
+    BUILDING_COSTS = 700
 
 
 class BurhWall(Fortification):
     FORTIFICATION_STRENGTH = 50
 
-    BUILDING_COSTS = 3500
+    BUILDING_COSTS = 1400
 
 
 # Where a faction the player did not create starts, and stays: nothing upgrades a rival's town, so this

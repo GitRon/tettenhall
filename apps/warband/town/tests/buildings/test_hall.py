@@ -78,7 +78,7 @@ def test_can_feast_in_any_hall_standing():
 
 def test_feast_restored_share_grows_with_the_hall():
     """
-    A bigger hall is a better repair - the reason to build the level income alone never pays for.
+    A bigger hall is a better repair as well as a bigger income.
     """
     shares = [level.FEAST_RESTORED_SHARE for level in Hall.get_levels()]
 

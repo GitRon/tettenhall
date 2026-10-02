@@ -65,11 +65,11 @@ class MediumMarketplace(Marketplace):
     SELL_PERCENTAGE = 70
     AVAILABLE_ITEMS = 6
 
-    BUILDING_COSTS = 1400
+    BUILDING_COSTS = 550
 
 
 class LargeMarketplace(Marketplace):
     SELL_PERCENTAGE = 85
     AVAILABLE_ITEMS = 8
 
-    BUILDING_COSTS = 2800
+    BUILDING_COSTS = 1100
