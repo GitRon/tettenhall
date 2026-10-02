@@ -1,0 +1,39 @@
+{% comment %}
+    The men the player decides about, one line per man, in columns he can compare down: his own war band
+    and his own cells. The rows are the slot, each a "<c-warrior.roster-row>".
+
+    A captive is a man he may be about to take into the roster, so he compares him by the same figures -
+    which is why the two share one table: a column added for one is a column the other gets.
+    Somebody else's men keep "<c-warrior.row>": the player knows too little about them to fill most of
+    these columns.
+
+    On a phone each man is a record - see docs/patterns/responsive-layout.md: the name across the top
+    with the row menu beside it, the short figures two to a line, the gauges and the gear one to a line.
+    On a desk narrower than the table it scrolls inside its own box rather than dragging the page
+    sideways. The box is positioned so that it contains the visually hidden column heads and the row
+    menu: an absolutely positioned element escapes an overflow box that is not its containing block,
+    and that one would widen the page.
+{% endcomment %}
+<div class="relative overflow-x-auto border border-rule-strong">
+    <table class="table-stack m-0 md:min-w-[70rem]">
+        <thead>
+        <tr>
+            <th class="pl-4">Man</th>
+            <th class="text-right">Lvl</th>
+            <th class="text-right">Renown</th>
+            <th>Str</th>
+            <th>Dex</th>
+            <th>Health</th>
+            <th>Morale</th>
+            <th>Weapon</th>
+            <th>Armour</th>
+            <th class="text-right">Wage</th>
+            <th>Status</th>
+            <th class="pr-4"><span class="sr-only">Actions</span></th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ slot }}
+        </tbody>
+    </table>
+</div>

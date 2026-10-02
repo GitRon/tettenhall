@@ -13,7 +13,13 @@
     {% endcomment %}
     {% if warrior_list %}
         {% if is_player_faction %}
-            {% include 'faction/warrior/components/roster_table.html' with warrior_list=warrior_list faction=faction knowledge=roster_knowledge %}
+            <c-warrior.roster-table>
+                {% for warrior in warrior_list %}
+                    <c-warrior.roster-row :warrior="warrior" :knowledge="roster_knowledge" :wage="warrior.monthly_salary" :unpaid_note="warrior.unpaid_wages_note">
+                        {% include 'faction/warrior/components/roster_row_menu.html' with warrior=warrior %}
+                    </c-warrior.roster-row>
+                {% endfor %}
+            </c-warrior.roster-table>
         {% else %}
             <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
                 {% for warrior in warrior_list %}

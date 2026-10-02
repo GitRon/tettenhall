@@ -1,0 +1,78 @@
+<c-vars warrior knowledge wage unpaid_note=None />
+{% comment %}
+    One man as a line of "<c-warrior.roster-table>". The row menu is the slot: what can be done to a man
+    of the war band and to a prisoner in the cells are different things.
+
+    What the line carries is what decides a month: level, renown, strength and dexterity, health and
+    morale, the gear he stands in, his wage, and whether he can fight. Everything else - culture,
+    injuries, experience - is on his own page, which the name leads to.
+
+    Renown is here because it decides who takes the leader's seat if he falls, and that is a question
+    asked down the column: how far behind the first man is the second. For a prisoner it is the figure
+    that decides where he would stand in that line once recruited, and a rival's fallen leader can carry
+    enough of it to go straight to the front.
+
+    Strength and dexterity are the stored figures, each against the strength baseline because the two
+    are drawn from one distribution. For a man the player does not yet command they are most of what
+    recruiting him would buy.
+
+    Health and morale follow "knowledge": a bar and the exact figure for his own men, the fuzzed word and
+    no bar for a prisoner - see "<c-warrior.roster-gauge>" and docs/patterns/warrior-knowledge.md.
+
+    "wage" is the caller's: what the man is paid, or what taking him on would put him on. The leader's
+    frame is the brightest rule, and "unpaid_note" says why a man's morale is stuck - the monthly sweep
+    skips a man carrying unpaid months, so he sits below his ceiling while every other warrior refills
+    for free, and without it the player reads the low figure and no cause.
+
+    The status cell is empty for a man who can fight. That is the normal state, and a tag on five rows
+    out of six would be the loudest thing in the table while saying nothing.
+{% endcomment %}
+<tr class="hover:bg-raised max-md:relative max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:px-4">
+    <td class="align-middle max-md:col-span-2 max-md:pr-10 md:py-3 md:pl-4">
+        <div class="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3">
+            {% if warrior.is_leader %}
+                <c-warrior.portrait :warrior="warrior" frame="border border-ink" />
+            {% else %}
+                <c-warrior.portrait :warrior="warrior" frame="border border-rule-strong" />
+            {% endif %}
+            <div class="min-w-0">
+                <a class="leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.name }}</a>
+                {% if warrior.nickname or warrior.is_leader %}
+                    <div class="text-[0.9375rem] leading-snug text-ink-muted">
+                        {{ warrior.nickname|default:"" }}{% if warrior.nickname and warrior.is_leader %} &middot; {% endif %}{% if warrior.is_leader %}Ealdorman{% endif %}
+                    </div>
+                {% endif %}
+                {% if unpaid_note %}
+                    <div class="text-sm leading-snug text-blood" title="A man who goes unpaid loses morale and cannot recover it">{{ unpaid_note }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+    <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Lvl">{{ warrior.level }}</td>
+    <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Renown">{{ warrior.renown }}</td>
+    <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3" data-label="Str">
+        <c-warrior.attribute :value="warrior.strength" :baseline="warrior.strength_baseline" :knowledge="knowledge" />
+    </td>
+    <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3" data-label="Dex">
+        <c-warrior.attribute :value="warrior.dexterity" :baseline="warrior.strength_baseline" :knowledge="knowledge" />
+    </td>
+    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Health">
+        <c-warrior.roster-gauge :current="warrior.current_health" :maximum="warrior.max_health" :baseline="warrior.health_baseline" :knowledge="knowledge" />
+    </td>
+    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Morale">
+        <c-warrior.roster-gauge :current="warrior.current_morale" :maximum="warrior.max_morale" :peak="warrior.peak_max_morale" :baseline="warrior.morale_baseline" :knowledge="knowledge" />
+    </td>
+    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Weapon"><c-warrior.roster-gear :item="warrior.weapon" /></td>
+    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Armour"><c-warrior.roster-gear :item="warrior.armor" /></td>
+    <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Wage" title="Monthly salary in silver">
+        {{ wage }}
+    </td>
+    <td class="align-middle md:py-3">
+        {% if not warrior.is_healthy %}
+            <span class="whitespace-nowrap border border-blood px-2 py-0.5 font-mono text-label font-medium uppercase tracking-label text-ink">{{ warrior.get_condition_display }}</span>
+        {% endif %}
+    </td>
+    <td class="align-middle max-md:absolute max-md:right-4 max-md:top-3 md:py-3 md:pr-4 md:text-right">
+        {{ slot }}
+    </td>
+</tr>
