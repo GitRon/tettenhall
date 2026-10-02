@@ -1084,6 +1084,25 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_defending_facti
 
 
 @pytest.mark.django_db
+def test_handle_faction_wins_skirmish_leaves_the_men_of_the_place_out_of_the_victory():
+    """They go home once it is over, so they do not grow from it into a log line nobody can be told."""
+    skirmish = SkirmishFactory()
+    skirmish.attacking_warriors.add(
+        WarriorFactory(faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
+    )
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    local = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(defender, local)
+    skirmish.local_warriors.add(local)
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.defending_faction, month=3)
+    )
+
+    assert result.victorious_healthy_warriors == [defender]
+
+
+@pytest.mark.django_db
 def test_handle_faction_wins_skirmish_refuses_a_skirmish_that_already_has_a_victor():
     """
     Killing the player's leader ends the savegame, which force-resolves the very fight it ended in -

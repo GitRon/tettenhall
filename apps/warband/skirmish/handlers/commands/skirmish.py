@@ -488,8 +488,12 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     defeated_unconscious_warriors = [warrior for warrior in defeated_warriors_on_the_field if warrior.is_unconscious]
 
     # Only the ones still standing when it was over share in the victory: a warrior who was knocked
-    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did
-    victorious_healthy_warriors = victorious_warriors.filter_healthy()
+    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did. Nor do
+    # the men of the place: they go home once it is over, and a man who has left the faction would grow
+    # into a nickname and a log line with no faction to tell it to
+    victorious_healthy_warriors = victorious_warriors.filter_healthy().exclude(
+        id__in=context.skirmish.local_warriors.all()
+    )
 
     # We need to evaluate the QS to avoid hitting the DB in the events
     return SkirmishFinished(
