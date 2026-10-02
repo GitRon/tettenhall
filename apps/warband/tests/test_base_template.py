@@ -43,8 +43,8 @@ def test_message_with_a_quote_travels_as_a_document_node():
 
     assert '"Pillage village"' not in content
     assert "&quot;Pillage village&quot;" in content
-    # No message reaches JavaScript as source any more. This is what would break first if the sink
-    # moved back into a literal.
+    # No message reaches JavaScript as source. This is what would break first if the sink moved
+    # into a literal.
     assert "UIkit.notification" not in content
 
 

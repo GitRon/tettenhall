@@ -374,7 +374,7 @@ def test_own_casualties_names_a_man_merely_knocked_out_on_the_winning_side():
 @pytest.mark.django_db
 def test_own_casualties_reports_a_man_who_fell_carrying_nothing():
     """
-    The case with no spoil row at all: no weapon, no armour and a zero purse. The panel used to
+    The case with no spoil row at all: no weapon, no armour and a zero purse. The panel must not
     print "the fight yielded nothing" over him.
     """
     skirmish = SkirmishFactory()

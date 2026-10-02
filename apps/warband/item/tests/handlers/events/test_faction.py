@@ -19,10 +19,10 @@ def test_handle_request_new_item_for_town_shop_maps_to_command():
     """
     Pure mapping, so an unsaved faction is enough.
 
-    The handler used to reach through "faction.savegame" here, which is a query whenever that
+    The handler must not reach through "faction.savegame" here, which is a query whenever that
     relation is not already cached - and strict mode forbids those in an event handler. What keeps
-    it from coming back is not this test but CreateItem no longer having a savegame field at all:
-    its handler derives one from "faction.savegame_id", so there was never anything to pass.
+    it that way is not this test but CreateItem having no savegame field at all: its handler derives
+    one from "faction.savegame_id", so there is nothing to pass.
     """
     faction = FactionFactory.build()
 

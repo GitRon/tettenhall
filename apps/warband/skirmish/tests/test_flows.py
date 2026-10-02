@@ -81,8 +81,8 @@ def test_a_level_up_is_logged_before_the_growth_it_caused(queuebie_registry):
     runs them in registration order, which is the order autodiscover() walked them: app configs, then
     os.listdir over handlers/events/. "battle_history.py" sorts before "warrior.py", so the level line
     is queued before the growth command and the log comes out right. Nothing enforces that ordering,
-    and #40 was this same bug in the other direction, with a rout logged before the morale loss that
-    caused it - so it is asserted here rather than trusted to a directory listing.
+    and the same slip the other way round logs a rout before the morale loss that caused it - so it
+    is asserted here rather than trusted to a directory listing.
 
     Four hundred points from nothing crosses two thresholds at once, which also proves the second
     level-up is not swallowed, and that the two growths are told apart: the queue is FIFO, so both
@@ -124,11 +124,11 @@ def test_a_knockout_marks_the_man_without_the_bus_reading_the_database(queuebie_
     (docs/patterns/strict-mode.md says so in as many words), so a relay that reaches for anything it
     was not handed passes every one of them and raises the first time a real man goes down.
 
-    It did. "reduce_current_health" refreshes the warrior from the database one handler earlier,
-    which drops his cached faction, so building the command with "warrior.faction" was a query in the
-    one place that may not make one - and the whole fight rolled back with "Database access is
-    disabled in this context." His faction is read in the command handler now, and this is the test
-    that says so.
+    "reduce_current_health" refreshes the warrior from the database one handler earlier, which drops
+    his cached faction, so building the command with "warrior.faction" would be a query in the one
+    place that may not make one - and the whole fight would roll back with "Database access is
+    disabled in this context." His faction is read in the command handler, and this is the test that
+    says so.
 
     Twenty-two points against twenty health leaves him two past nothing, inside the 50% band that
     tells a corpse from a captive. The roll is patched to land, because whether he keeps something is

@@ -332,9 +332,9 @@ def test_skirmish_finish_round_view_takes_the_sides_from_the_roster_not_the_post
     logged_in_client, current_savegame
 ):
     """
-    "faction_id" is client-supplied. Naming the player's faction for an enemy warrior used to put
-    that warrior into the player's line-up, where it attacked its own side; the rosters of the
-    skirmish decide instead, so the round runs as a normal two-sided one.
+    "faction_id" is client-supplied. Trusted, naming the player's faction for an enemy warrior would
+    put that warrior into the player's line-up to attack its own side; the rosters of the skirmish
+    decide instead, so the round runs as a normal two-sided one.
     """
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
@@ -413,7 +413,7 @@ def test_skirmish_finish_round_view_rejects_a_non_numeric_action(logged_in_clien
 def test_skirmish_finish_round_view_rejects_a_non_numeric_participant_index(logged_in_client, current_savegame):
     """
     The participant index is part of the field name, so it is request body too. Parsing happens
-    before the view validates anything, so a hand-crafted index used to raise instead of answering.
+    before the view validates anything, so a hand-crafted index has to be answered, not raised.
     """
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
@@ -474,8 +474,8 @@ def test_skirmish_finish_round_view_refuses_a_one_sided_round(logged_in_client, 
 @pytest.mark.django_db
 def test_skirmish_finish_round_view_refuses_an_action_that_is_not_one(logged_in_client, current_savegame):
     """
-    An unknown number used to pass the view and raise "Invalid attack action" deep in the damage
-    services - a 500 on input this view already means to refuse.
+    An unknown number has to stop at the view: past it, it raises "Invalid attack action" deep in
+    the damage services - a 500 on input this view already means to refuse.
     """
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
@@ -604,7 +604,7 @@ def test_skirmish_finish_round_view_brings_the_wall_down(logged_in_client, curre
 @pytest.mark.django_db
 def test_skirmish_finish_round_view_refuses_a_player_warrior_left_uncommanded(logged_in_client, current_savegame):
     """
-    The empty-side check no longer implies this: the enemy's side is built from the roster, so a
+    The empty-side check does not imply this: the enemy's side is built from the roster, so a
     player who leaves one of his own men out of the post would otherwise field him against nobody.
     """
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)

@@ -74,8 +74,8 @@ def test_a_quiet_month_is_the_likeliest_outcome():
 
 def test_silver_nets_out_negative():
     """
-    #45 gave insolvency teeth and #3 is about to make silver contested. A pool that pays out on
-    average flattens both, so the costs have to outweigh the windfalls.
+    Insolvency has teeth and silver is meant to be contested. A pool that pays out on average
+    flattens both, so the costs have to outweigh the windfalls.
     """
     # A question counts at the answer that is not its default - the one it was written to offer.
     # Counting the default instead would price every question as if it were always ignored

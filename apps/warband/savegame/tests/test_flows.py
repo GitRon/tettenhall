@@ -71,10 +71,10 @@ def test_losing_the_leader_logs_the_cause_before_the_broken_war_band(queuebie_re
 def test_a_warrior_in_two_open_fights_is_taken_prisoner_only_once(queuebie_registry):
     """
     Ending the game decides every unresolved skirmish in one pass, so a warrior standing on two
-    rosters is processed as a casualty twice. He used to end up in both victors' cells at once.
+    rosters is processed as a casualty twice. He still ends up in one victor's cells, not both.
 
-    A flow test rather than a unit test because that is the whole defect: the capture handler is
-    correct on its own and only misbehaves when the force-resolve above it calls it a second time.
+    A flow test rather than a unit test because that is the whole risk: the capture handler is
+    correct on its own and could only misbehave when the force-resolve above it calls it a second time.
     The fyrd is empty, so his fall ends the game rather than raising a levy in his place.
     """
     savegame = SavegameFactory()

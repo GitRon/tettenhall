@@ -57,8 +57,8 @@ def test_navigation_offers_no_pages_for_a_section_that_is_not_on_the_bar(user, s
     Town is dropped without a player faction, so its page nav must not be offering Buildings under a
     section nothing names.
 
-    Driven through the context processor rather than through a page, because there is no longer a
-    town page that renders in this state - every one of them reads the faction off the savegame and
+    Driven through the context processor rather than through a page, because no town page renders
+    in this state - every one of them reads the faction off the savegame and
     answers 404 when there is none, and "404.html" does not extend "base.html". The guard is what
     stands between that and the day one of them does render.
     """

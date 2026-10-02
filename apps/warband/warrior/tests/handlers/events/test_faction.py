@@ -92,8 +92,8 @@ def test_handle_heal_a_wounded_warrior_for_new_month_asks_for_the_mending():
 @pytest.mark.django_db
 def test_handle_heal_a_wounded_warrior_for_new_month_passes_over_a_man_at_full_health():
     """
-    The filter that used to be a queryset's. Asking the healing handler anyway would have it draw a
-    random number of points and discard every one of them.
+    The handler is the filter. Asking for the healing anyway would have it draw a random number of
+    points and discard every one of them.
     """
     faction = FactionFactory()
     unhurt_warrior = WarriorFactory(faction=faction, current_health=20, max_health=20)
@@ -189,8 +189,8 @@ def test_handle_replenish_a_warriors_morale_for_new_month_passes_over_an_unpaid_
 @pytest.mark.django_db
 def test_handle_replenish_a_warriors_morale_for_new_month_reaches_a_warrior_ordered_to_flee():
     """
-    The freeze #43 closed, reachable again through a deliberate retreat unless the withdrawal leaves a
-    man the way a rout does.
+    A man frozen in FLEEING for good is one deliberate retreat away unless the withdrawal leaves him
+    the way a rout does.
 
     This refill is the only road to "replenish_current_morale", which is the only thing that clears
     FLEEING. Only a man below his ceiling is taken, so a warrior merely charged a point off that

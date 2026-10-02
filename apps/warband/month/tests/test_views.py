@@ -53,9 +53,9 @@ def test_finish_month_view_lets_a_rival_faction_recover(logged_in_client, curren
     Flow test rather than a unit test on purpose: that the rivals are announced at all only exists in
     the registry, and strict mode's database blocker applies to nothing but a real queue run.
 
-    A warrior knocked unconscious in a battle keeps his condition and his health, and rivals used to
-    get no month at all - so a faction that survived one attack stayed crippled for the rest of the
-    game and could never be knocked out again. Healing lifts him above zero health, which is what
+    A warrior knocked unconscious in a battle keeps his condition and his health, so a rival given no
+    month of its own would stay crippled for the rest of the game after surviving one attack, and
+    could never be knocked out again. Healing lifts him above zero health, which is what
     turns the condition back to healthy, whatever the sanctuary rolls.
     """
     TrainingFactory(faction=current_savegame.player_faction)
@@ -82,7 +82,7 @@ def test_finish_month_view_logs_the_recovery_of_the_player_faction_only(logged_i
     registry, and the producers of these log lines are two handlers away from the one guarding them.
 
     Both warriors heal - recovery is faction-wide on purpose - but only one of them is bookkeeping
-    the player has any business reading. Rival lines used to outnumber his own, a savegame starting
+    the player has any business reading. Rival lines would outnumber his own, a savegame starting
     with three to five of them.
     """
     TrainingFactory(faction=current_savegame.player_faction)
@@ -182,7 +182,7 @@ def test_finish_month_view_moves_a_rivals_roster_and_purse(logged_in_client, cur
     The rival lives on its town the way the player does: the 50 a town without a hall pays, less the
     150 its man draws. It raises a Small Hall for the man it has on the payroll, through the player's
     own upgrade, and calls another man up out of its fyrd. The player's month log stays his own
-    throughout, which is the regression this keeps closed: every one of those steps emits a log line,
+    throughout, which is what this is here to hold: every one of those steps emits a log line,
     and a savegame carries three to five rivals whose lines would bury his.
     """
     TrainingFactory(faction=current_savegame.player_faction)

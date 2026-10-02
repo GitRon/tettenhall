@@ -467,8 +467,8 @@ def test_handle_warrior_monthly_salaries_pays_the_cheapest_warriors_first():
 @pytest.mark.django_db
 def test_handle_warrior_monthly_salaries_stays_silent_about_the_nothing_it_paid():
     """
-    An empty purse used to still announce "salaries of 0 silver paid", writing a zero transaction and
-    a log line that contradicts the shortfall printed directly under it.
+    An empty purse pays nothing and says nothing: a "salaries of 0 silver paid" line and a zero
+    transaction would contradict the shortfall printed directly under it.
     """
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, monthly_salary=50)

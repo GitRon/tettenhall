@@ -98,7 +98,8 @@ def test_handle_restock_shop_items_asks_the_mercenary_generator_for_every_stall(
 @pytest.mark.django_db
 def test_handle_restock_shop_items_stocks_as_many_items_as_the_market_has_stalls():
     """
-    The stock size used to be a dice roll between four and five, so no building had a say in it.
+    The stock size is the marketplace's to set, not a dice roll's, so the building the player paid
+    for is what he sees on the shelf.
     """
     faction = FactionFactory(town__marketplace=3)
 
