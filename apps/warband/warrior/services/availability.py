@@ -105,8 +105,8 @@ class RosterAssessment:
         """
         What a posted value is validated against.
 
-        The field's queryset cannot do that job any more: it has to hold the whole roster, because an
-        option missing from it is an option that does not render - and drawing the men who cannot go
+        The field's queryset cannot do that job: it has to hold the whole roster, because an option
+        missing from it is an option that does not render - and drawing the men who cannot go
         is the point. So the queryset scopes to the faction and this decides who may be picked.
         """
         return {a.warrior.id for a in self.assessed if a.is_available}

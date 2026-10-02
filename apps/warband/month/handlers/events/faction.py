@@ -113,8 +113,8 @@ def handle_log_leader_succession(*, context: FactionLeaderSucceeded) -> Command:
     """
     Says who fell and who leads now, for the player's own war band and for a rival alike.
 
-    The player's own line matters most: a fallen leader used to end his savegame, and now the game
-    goes on under a man he did not pick. A rival's matters because the man he just put down did not
+    The player's own line matters most: a fallen leader does not end his savegame, and the game goes
+    on under a man he did not pick. A rival's matters because the man he just put down did not
     knock that faction out, and the one he has to beat next is named here.
     """
     fate = "fell in the fighting" if context.leader_was_killed else "was taken prisoner"

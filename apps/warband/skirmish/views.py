@@ -206,9 +206,9 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         except KeyError, ValueError:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-        # The enemy's actions are decided here rather than read off the request: his card used to post
-        # the AI's choice back in a field the player could edit. The service takes the whole side, so
-        # leaving an enemy out of the post no longer leaves him out of the fight either.
+        # The enemy's actions are decided here rather than read off the request, so nothing the player
+        # posts can set them. The service takes the whole side, so leaving an enemy out of the post
+        # does not leave him out of the fight either.
         try:
             attacking_participants, defending_participants = SkirmishParticipantBuilderService(
                 skirmish=self.object,
@@ -221,14 +221,14 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # A side with nobody in it is not a fight, and the pairing handler picks a random opponent from
-        # each list - an empty one raises there. This used to prove both sides had been *posted*; now
-        # that only the player's side is, it proves both rosters actually field somebody healthy.
+        # each list - an empty one raises there. Only the player's side is posted, so this proves both
+        # rosters actually field somebody healthy.
         if len(attacking_participants) == 0 or len(defending_participants) == 0:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         # And the player has to have commanded every one of his own healthy warriors, which the check
-        # above no longer implies: leaving a man out of the post used to shrink the side, and would
-        # now silently field him against nobody.
+        # above does not imply: the side is the whole roster, so a man left out of the post would be
+        # fielded silently against nobody.
         if not self._player_commanded_his_whole_side(
             attacking_participants=attacking_participants, defending_participants=defending_participants
         ):

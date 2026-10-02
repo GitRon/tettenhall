@@ -242,8 +242,8 @@ exclude_also = [
 root_packages = ["apps"]
 
 # A satellite is domain-independent by definition, so the direction of dependency is the whole point
-# of splitting one out. Nothing enforced it before this contract existed, which is what let a
-# game-balance decision ("High"/"Low"/"Mediocre") and the navbar's resource bar sit in "common".
+# of splitting one out. Without this contract a game-balance decision ("High"/"Low"/"Mediocre") or
+# the navbar's resource bar slips into "common" and nothing says so.
 #
 # There are deliberately no contracts between the topic packages inside "apps.warband". They are
 # meant to be free to move on a Wednesday afternoon, and the boundary that does need enforcing -

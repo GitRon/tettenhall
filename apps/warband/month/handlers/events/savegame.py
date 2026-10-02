@@ -12,9 +12,8 @@ def handle_log_savegame_ending(*, context: SavegameEnded) -> Command:
     """
     Says what the banner cannot: not that the game is over, but how it ended.
 
-    The dashboard already carries the outcome, and until this line existed that was the whole of it -
-    a savegame that ended in a lost fight said "Lost" over an empty log, with the answer sitting in a
-    battle history the finished savegame no longer routes to.
+    The dashboard carries the outcome, and on its own that is a "Lost" over an empty log, with the
+    answer sitting in a battle history the finished savegame does not route to.
     """
     if context.outcome == Savegame.OutcomeChoices.OUTCOME_WON:
         title = "The last rival has fallen."

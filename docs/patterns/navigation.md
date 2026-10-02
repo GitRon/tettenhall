@@ -98,8 +98,8 @@ after it.
 - **An entry stays visible when there is nothing behind it this month.** The menu is a stable map;
   "what is open to me right now" is the Month page's job. A menu that changed shape every month would
   be a worse map than none.
-- **A label is a noun, never savegame data.** Two of the old seven entries read as a faction name and a
-  town name, so a player looking for the pub had to know it lived behind the name of his own town.
+- **A label is a noun, never savegame data.** An entry reading as a faction name or a town name means a
+  player looking for the pub has to know it lives behind the name of his own town.
 - **An eighth destination becomes a page inside a section, not a fifth tab.** That is what four buys.
   Estates (#2) joins Town or Warband when it exists.
 - **A page reachable from nowhere is a defect.** Every screen is either a section's landing page, a page
@@ -107,9 +107,8 @@ after it.
 - **A page is headed what the entry that leads to it says.** Month, Warband, Stores, Fyrd, Captives,
   Progress, Board, Shop, Pub, Buildings, Rivals, Skirmishes. A heading belongs to the page and never
   to a partial inside it: the shop's list and the pub's are htmx swap targets, so a heading in either
-  is a heading the first purchase replaces. Every page of the game used to name itself
-  differently from its own menu entry, so one wrong click was told apart from the right one by a
-  heading worded differently from the link that produced it.
+  is a heading the first purchase replaces. A page headed differently from its own menu entry
+  leaves the player unable to tell one wrong click from the right one.
 
 The labels are plain nouns. Whether the register becomes Old English — Fyrd, Burh — is #64's question;
 the structure holds either way.

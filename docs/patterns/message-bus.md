@@ -170,10 +170,9 @@ Two things follow:
 
 - **Declaration order buys you synchronous writes only.** Reordering handlers cannot change when a
   transaction, a log line or anything else routed through an event becomes visible.
-- **A comment claiming otherwise is not evidence.** Several in this codebase asserted that registration
-  order was what billed wages before income; the conclusion held and the stated reason did not. Read
-  the log the bus writes — see below — or `queuebie/runner.py`, which is 60 lines, rather than trusting
-  the nearest comment.
+- **A comment claiming otherwise is not evidence.** A comment saying registration order is what bills
+  wages before income can reach the right conclusion for the wrong reason. Read the log the bus writes
+  — see below — or `queuebie/runner.py`, which is 60 lines, rather than trusting the nearest comment.
 
 If a decision genuinely needs post-batch state, it cannot live in that batch. Move it behind the event
 whose handler writes what you need to read.

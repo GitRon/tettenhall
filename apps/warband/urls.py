@@ -14,9 +14,9 @@ from apps.warband.town.views.town_upgrade import ThrowFeastView, TownUpgradeView
 from apps.warband.training import views as training_views
 from apps.warband.warrior import views as warrior_views
 
-# One namespace for the whole game. The route prefixes below are the ones the twelve app-level
-# include() blocks used to supply, so every URL a player can hold keeps the path it had - the doubled
-# "faction/faction/" and "warrior/warrior/" segments included.
+# One namespace for the whole game. The route prefixes below stay exactly as they are, the doubled
+# "faction/faction/" and "warrior/warrior/" segments included, so every URL a player holds still
+# resolves.
 app_name = "warband"
 
 urlpatterns = [

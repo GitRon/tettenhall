@@ -64,9 +64,8 @@ def handle_create_player_month_log(*, context: CreatePlayerMonthLog) -> Event | 
 
 @message_registry.register_command(command=ClearPlayerMonthLog)
 def handle_clear_player_month_log(*, context: ClearPlayerMonthLog) -> Event:
-    # Wider than the player faction on purpose, even though handle_create_player_month_log no longer
-    # writes anything else: this is what sweeps up the rival rows a savegame accumulated before that
-    # guard existed
+    # Wider than the player faction on purpose, even though handle_create_player_month_log writes
+    # nothing else: an older savegame can still hold rival rows, and this is what sweeps them up
     PlayerMonthLog.objects.for_savegame(savegame_id=context.savegame.id).filter(
         month__lt=context.current_month
     ).delete()

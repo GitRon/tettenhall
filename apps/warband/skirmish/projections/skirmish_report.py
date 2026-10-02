@@ -268,8 +268,8 @@ class SkirmishReport:
 
         A won fight that took nothing off a poor enemy is a real outcome, and the panel says so in
         one sentence rather than showing three empty headings. A fight that cost a man is never one
-        of those, however bare his pockets were - which is the case that used to print "the fight
-        yielded nothing" over a dead warrior.
+        of those, however bare his pockets were - "the fight yielded nothing" is never printed over a
+        dead warrior.
         """
         return (
             bool(

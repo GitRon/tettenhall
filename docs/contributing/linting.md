@@ -22,8 +22,8 @@ not as a pre-commit hook — it builds the whole import graph, which is too slow
 Four contracts:
 
 - **No satellite may import `apps.warband`.** A satellite is domain-independent by definition, and
-  the direction of dependency is the entire reason for splitting one out. Nothing enforced this before,
-  which is how a game-balance decision and the navbar's resource bar came to live in `common`.
+  the direction of dependency is the entire reason for splitting one out. Without the contract, a
+  game-balance decision or the navbar's resource bar slips into `common` and nothing says so.
 - **No name provider may import `apps.common`.** `apps.faker_frisian`, `apps.faker_gaelic` and
   `apps.faker_old_english` are name providers and nothing else, which is what keeps each liftable
   into a library of its own.

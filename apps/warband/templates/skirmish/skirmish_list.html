@@ -3,10 +3,9 @@
 {% block content %}
     <h1>Skirmishes</h1>
 
-    {# Two tables rather than one. The distinction between a fight that still wants the player and #}
-    {# one that is over used to be drawn by a dash in the Victor column and by the choice of icon at #}
-    {# the end of the row; a heading says it in words, and it gives each half an empty state that is #}
-    {# true of that half. #}
+    {# Two tables rather than one. A heading says in words which fights still want the player and #}
+    {# which are over - a dash in the Victor column or the choice of icon would not - and it gives #}
+    {# each half an empty state that is true of that half. #}
     <h2>Holding the month</h2>
 
     <c-skirmish.skirmish-table :skirmish_list="open_skirmish_list" action_icon="fa-arrow-right"

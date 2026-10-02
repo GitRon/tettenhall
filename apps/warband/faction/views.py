@@ -300,8 +300,8 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
     Everybody the player is playing against, and whether he may march on them.
 
     The rival's own page already serves a rival as readily as the player's own, so this is the way in
-    rather than a second rendering of it: the Attack button lives over there, and until this page
-    existed it was reachable only by typing a faction id into the address bar.
+    rather than a second rendering of it: the Attack button lives over there, and without this page
+    it would be reachable only by typing a faction id into the address bar.
     """
 
     model = Faction
@@ -518,8 +518,8 @@ class AttackTargetMixin:
     Resolves the rival the player is marching against.
 
     A separate mixin purely for the ordering. A "dispatch" written on the view itself runs before
-    every mixin the view inherits, so resolving the target there answered a decided savegame with a
-    404 about a rival it could no longer offer - the game being over never got a word in.
+    every mixin the view inherits, so resolving the target there would answer a decided savegame with
+    a 404 about a rival it can no longer offer, and the game being over would never get a word in.
     Sitting behind RunningSavegameRequiredMixin in the bases puts that guard first, which is the
     difference between "not found" and a page telling the player why.
     """
