@@ -30,7 +30,6 @@ from apps.warband.training.tests.factories.training import TrainingFactory
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import LEADER_REFUSAL
 from apps.warband.warrior.services.portrait import draw_portrait
-from apps.warband.warrior.services.unpaid_wages import LEADER_NOTE
 
 
 @pytest.fixture
@@ -924,21 +923,6 @@ def test_faction_warrior_list_view_says_how_long_a_man_has_gone_unpaid(logged_in
 
     assert response.status_code == 200
     assert response.context["warrior_list"][0].unpaid_wages_note == "2 of 3 unpaid months"
-
-
-@pytest.mark.django_db
-def test_faction_warrior_list_view_gives_the_unpaid_leader_no_deadline(logged_in_client, current_savegame):
-    leader = WarriorFactory(faction=current_savegame.player_faction, monthly_salary=120, unpaid_months=2)
-    current_savegame.player_faction.leader = leader
-    current_savegame.player_faction.save()
-    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
-
-    response = logged_in_client.get(
-        reverse("warband:faction-warrior-list-htmx", kwargs={"pk": current_savegame.player_faction.id})
-    )
-
-    assert response.status_code == 200
-    assert response.context["warrior_list"][0].unpaid_wages_note == LEADER_NOTE
 
 
 @pytest.mark.django_db

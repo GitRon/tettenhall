@@ -253,7 +253,10 @@ def test_a_rival_whose_whole_band_is_taken_comes_out_of_it_led_by_a_levy(queuebi
         type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR, base_value="6d6"),
     )
 
-    handle_message(WinSkirmish(skirmish=skirmish, victorious_faction=player_faction, month=1))
+    # The levy comes from the fields empty-handed: a levy rolls his own gear one time in ten, and one
+    # who brought armour no worse than the mail keeps it, so the hand-out would have nothing to do
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.uniform", return_value=1.0):
+        handle_message(WinSkirmish(skirmish=skirmish, victorious_faction=player_faction, month=1))
 
     rival.refresh_from_db()
     assert (rival.is_defeated, rival.fyrd_reserve, rival.leader.faction, rival.leader.armor) == (False, 0, rival, mail)

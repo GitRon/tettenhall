@@ -4,7 +4,7 @@ from apps.warband.templatetags.purse import net_of_wages, signed
 
 
 def _payroll_of(*, wages: int) -> Payroll:
-    return Payroll(warrior_list=[Warrior(monthly_salary=wages)], budget=1000, leader_id=None)
+    return Payroll(warrior_list=[Warrior(monthly_salary=wages)], budget=1000)
 
 
 def test_net_of_wages_of_a_month_that_makes_silver():

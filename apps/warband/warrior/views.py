@@ -147,9 +147,7 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         # well as on the card, because the card links to this page and a page showing less about a man
         # than the tile clicked to reach it is what the gear rows above exist to correct.
         context["unpaid_wages_note"] = (
-            get_unpaid_wages_note(warrior=self.object, leader_id=player_faction.leader_id)
-            if context["is_player_faction"]
-            else None
+            get_unpaid_wages_note(warrior=self.object) if context["is_player_faction"] else None
         )
         self._add_roster_context(context=context, player_faction=player_faction)
         return context

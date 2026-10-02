@@ -24,12 +24,11 @@ def _short_payroll(*, unpaid_months: int = 0) -> Payroll:
             WarriorFactory.build(id=2, name="Wulfstan", monthly_salary=40, unpaid_months=unpaid_months),
         ],
         budget=0,
-        leader_id=1,
     )
 
 
 def test_wage_bill_warning_is_silent_while_the_wages_are_covered():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=100, leader_id=1)
+    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=100)
 
     html = render_component(tag=LINKED_WARNING_TAG, context={"payroll": payroll})
 
@@ -44,7 +43,7 @@ def test_wage_bill_warning_names_the_shortfall_and_every_unpaid_man():
     result = _text(html)
 
     assert "70 silver short of next month's wages" in result
-    assert "Leofric (30 silver, who never walks)" in result
+    assert f"Leofric (30 silver, 1 of {Warrior.UNPAID_MONTHS_UNTIL_WALKOUT} unpaid months)" in result
     assert f"Wulfstan (40 silver, 1 of {Warrior.UNPAID_MONTHS_UNTIL_WALKOUT} unpaid months)" in result
 
 
