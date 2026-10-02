@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.training.handlers.commands.training import handle_progress_warrior_training
@@ -37,6 +38,21 @@ def test_handle_progress_warrior_training_without_healthy_warriors():
     result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_progress_warrior_training_leaves_out_a_man_away_on_last_months_quest():
+    """The month on the command is the one beginning; he was away for the one before it."""
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
+    QuestContractFactory(faction=faction, accepted_in_month=5, assigned_warriors=[warrior])
+    TrainingFactory(faction=faction, category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    result = handle_progress_warrior_training(context=TrainWarriors(faction=faction, month=6))
+
+    assert result == []
+    warrior.refresh_from_db()
+    assert warrior.strength_progress == 40
 
 
 @pytest.mark.django_db

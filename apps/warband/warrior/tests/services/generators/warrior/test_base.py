@@ -7,6 +7,7 @@ from apps.warband.faction.models import Culture
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
+from apps.warband.warrior.services.generators.warrior.champion import ChampionWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
@@ -118,10 +119,10 @@ def test_roll_stat_keeps_a_roll_on_the_generator_minimum():
 # Every guarded draw a generator makes, as (mean, spread, lowest value kept)
 GUARDED_DRAWS = [
     pytest.param(generator.STATS_MU, generator.STATS_SIGMA, generator.STATS_MIN, id=f"{generator.__name__}-stats")
-    for generator in (FyrdWarriorGenerator, MercenaryWarriorGenerator, LeaderWarriorGenerator)
+    for generator in (FyrdWarriorGenerator, MercenaryWarriorGenerator, LeaderWarriorGenerator, ChampionWarriorGenerator)
 ] + [
     pytest.param(mu, sigma, 1, id=f"{generator.__name__}-{attribute}")
-    for generator in (FyrdWarriorGenerator, MercenaryWarriorGenerator, LeaderWarriorGenerator)
+    for generator in (FyrdWarriorGenerator, MercenaryWarriorGenerator, LeaderWarriorGenerator, ChampionWarriorGenerator)
     for attribute, mu, sigma in (
         ("health", generator.HEALTH_MU, generator.HEALTH_SIGMA),
         ("morale", generator.MORALE_MU, generator.MORALE_SIGMA),

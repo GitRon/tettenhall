@@ -403,9 +403,6 @@ def test_handle_capture_unconscious_warriors_captures_every_defeated_warrior():
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[unconscious_enemy_warrior],
             victorious_healthy_warriors=[],
-            quest_name="Raid",
-            quest_loot=250,
-            quest_contract=None,
             month=3,
         )
     )
@@ -429,9 +426,6 @@ def test_handle_capture_unconscious_warriors_captures_nobody_without_defeated_wa
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[],
             victorious_healthy_warriors=[],
-            quest_name="Raid",
-            quest_loot=250,
-            quest_contract=None,
             month=3,
         )
     )
@@ -450,9 +444,6 @@ def test_handle_experience_gain_after_battle_for_victor_rewards_every_surviving_
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[],
             victorious_healthy_warriors=[healthy_attacking_warrior],
-            quest_name="Raid",
-            quest_loot=250,
-            quest_contract=None,
             month=3,
         )
     )
@@ -470,9 +461,6 @@ def test_handle_experience_gain_after_battle_for_victor_rewards_nobody_without_s
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[],
             victorious_healthy_warriors=[],
-            quest_name="Raid",
-            quest_loot=250,
-            quest_contract=None,
             month=3,
         )
     )

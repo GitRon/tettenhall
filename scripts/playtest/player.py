@@ -12,6 +12,9 @@ from apps.warband.faction.services.purchase_snapshot import get_held_gear_values
 from apps.warband.finance.models import Transaction
 from apps.warband.item.messages.commands.item import BuyItem, EquipItem
 from apps.warband.item.services.handout import plan_gear_handout
+from apps.warband.quest.messages.commands.quest import AcceptQuest
+from apps.warband.quest.models.quest import Quest
+from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction, FinishRound, StartDuel
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -45,8 +48,8 @@ class PlayerTurn:
     One month of the player's, dispatched the way the views dispatch it.
 
     Each step asks the refusal a view asks before it sends the command that view sends, in the order a
-    player reaches them: the captives, the fyrd, the pub, the shop, the stores, the town, the march, the
-    fight, the occupation.
+    player reaches them: the captives, the fyrd, the pub, the shop, the stores, the town, the board, the
+    march, the fight, the occupation.
     A guard that protects silver, men or the month is asked again by the command handler, so a step that
     skipped one would dispatch into a no-op rather than play a game nobody can play. The rule that lives
     only in a form - who may march - is taken from the same "assess_roster" the attack form validates
@@ -88,6 +91,7 @@ class PlayerTurn:
         self.buy_from_the_shop()
         self.hand_out_gear()
         self.build()
+        self.send_men_on_the_odd_job()
         self.roster_ids_at_march = frozenset(
             Warrior.objects.filter_faction(faction_id=self.faction.id).values_list("id", flat=True)
         )
@@ -190,6 +194,34 @@ class PlayerTurn:
                 )
             )
             self.report.built.append((self.month, building_type, new_level))
+            return
+
+    def send_men_on_the_odd_job(self) -> None:
+        """
+        Sends the fewest men the month's odd job takes, the weakest at its attribute first.
+
+        The leader stays home, so the band can still march: the harness spends men on the board only
+        where it costs the march least. The men are those the accept form would offer.
+        """
+        leader_id = self.faction.leader_id
+        for quest in Quest.objects.for_player_faction(faction_id=self.faction.id).offered_in(month=self.month):
+            entry = QUESTS_BY_NAME[quest.quest]
+            if not entry.IS_ODD_JOB:
+                continue
+
+            roster = assess_roster(faction_id=self.faction.id, month=self.month, excluded_ids=(leader_id,))
+            candidates = sorted(
+                Warrior.objects.filter(id__in=roster.available_ids),
+                key=lambda warrior: (getattr(warrior, entry.LEANS_ON), warrior.id),
+            )
+            if len(candidates) < entry.MIN_MEN:
+                return
+
+            band = candidates[: entry.MIN_MEN]
+            handle_message(
+                AcceptQuest(accepting_faction=self.faction, quest=quest, assigned_warriors=band, month=self.month)
+            )
+            self.report.sent_on_quests += len(band)
             return
 
     def _healthy_men_of(self, *, faction: Faction) -> int:

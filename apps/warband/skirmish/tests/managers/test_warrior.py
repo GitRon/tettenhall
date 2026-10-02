@@ -1032,6 +1032,16 @@ def test_put_on_payroll_never_prices_a_wage_at_nothing():
 
 
 @pytest.mark.django_db
+def test_take_off_payroll():
+    warrior = WarriorFactory(monthly_salary=80, unpaid_months=2)
+
+    Warrior.objects.take_off_payroll(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert (warrior.monthly_salary, warrior.unpaid_months) == (0, 0)
+
+
+@pytest.mark.django_db
 def test_with_portrait_brings_the_five_pieces_of_a_face_along(django_assert_num_queries):
     """A list draws every man's face, and five foreign keys read one at a time are five queries per row."""
     warrior = WarriorFactory(**draw_portrait())

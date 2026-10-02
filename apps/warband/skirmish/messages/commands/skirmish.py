@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from queuebie.messages import Command
 
 from apps.warband.faction.models.faction import Faction
-from apps.warband.quest.models import QuestContract
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionTypeHint
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
@@ -26,7 +25,6 @@ class CreateSkirmish(Command):
     warrior_list_1: list[Warrior]
     warrior_list_2: list[Warrior]
     month: int
-    quest_contract: QuestContract = None
     # The wall the second faction fights behind. Zero unless whoever stages the fight says otherwise,
     # which is an open field
     fortification_strength: int = 0

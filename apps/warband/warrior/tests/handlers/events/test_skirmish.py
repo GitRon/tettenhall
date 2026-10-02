@@ -67,9 +67,6 @@ def test_handle_fight_may_change_a_man_relays_the_fight_and_its_month():
             incapacitated_warriors=[],
             defeated_unconscious_warriors=[],
             victorious_healthy_warriors=[],
-            quest_name="",
-            quest_loot=0,
-            quest_contract=None,
             month=4,
         )
     )

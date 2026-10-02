@@ -35,7 +35,7 @@ class BaseSkirmishGenerator:
             raise RuntimeError(f'Skirmish "{self.name}" has no warriors on the defending side.')
 
         attacking_faction = self.warriors_faction_1[0].faction
-        # A march always carries the leader, a quest only when the player sent him
+        # A march carries the leader whenever he is fit to go
         attacking_leader_id = (
             attacking_faction.leader_id
             if attacking_faction.leader_id in {warrior.id for warrior in self.warriors_faction_1}

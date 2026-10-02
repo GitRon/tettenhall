@@ -20,8 +20,6 @@ def handle_create_skirmish_for_attack(*, context: skirmish.FactionWasAttacked) -
         warrior_list_2=context.defending_warriors,
         month=context.month,
         fortification_strength=context.fortification_strength,
-        # An attack is nobody's errand, so there is no contract to pay out or to link
-        quest_contract=None,
     )
 
 

@@ -5,6 +5,7 @@ from queuebie.messages import Command
 from apps.warband.faction.models.faction import Faction
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGenerator
 
 
 @dataclass(kw_only=True)
@@ -37,6 +38,15 @@ class AddWarriorToPub(Command):
 @dataclass(kw_only=True)
 class DraftWarriorFromFyrd(Command):
     faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
+class RecruitWarriorFromQuest(Command):
+    """A man a quest brought home joins the roster, drawn by the generator the quest names."""
+
+    faction: Faction
+    generator_class: type[BaseWarriorGenerator]
     month: int
 
 

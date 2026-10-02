@@ -3,8 +3,6 @@ from unittest import mock
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.quest.models.quest import Quest
-from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.handlers.commands.skirmish import (
@@ -159,19 +157,19 @@ def test_handle_attack_faction_leaves_out_a_defender_already_in_a_fight():
 
 @pytest.mark.django_db
 def test_handle_create_skirmish_uses_the_given_opponents():
-    quest_contract = QuestContractFactory()
-    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
-    enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+    attacking_warrior = WarriorFactory(faction=attacking_faction)
+    enemy_warrior = WarriorFactory(faction=enemy_faction)
 
     result = handle_create_skirmish(
         context=CreateSkirmish(
             name="Ambush",
-            faction_1=quest_contract.faction,
-            faction_2=quest_contract.quest.target_faction,
+            faction_1=attacking_faction,
+            faction_2=enemy_faction,
             warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
             month=3,
-            quest_contract=quest_contract,
         )
     )
 
@@ -185,19 +183,19 @@ def test_handle_create_skirmish_records_the_month():
     A skirmish had nowhere to say which month it belongs to, and the cap on attacking the same rival
     twice has nothing else to go on.
     """
-    quest_contract = QuestContractFactory()
-    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
-    enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+    attacking_warrior = WarriorFactory(faction=attacking_faction)
+    enemy_warrior = WarriorFactory(faction=enemy_faction)
 
     result = handle_create_skirmish(
         context=CreateSkirmish(
             name="Ambush",
-            faction_1=quest_contract.faction,
-            faction_2=quest_contract.quest.target_faction,
+            faction_1=attacking_faction,
+            faction_2=enemy_faction,
             warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
             month=7,
-            quest_contract=quest_contract,
         )
     )
 
@@ -207,9 +205,8 @@ def test_handle_create_skirmish_records_the_month():
 @pytest.mark.django_db
 def test_handle_create_skirmish_refuses_an_empty_defending_side():
     """
-    Nobody is conjured to fill the gap any more, so a side that fields nobody is a fight that cannot
-    be staged. What keeps it unreachable is who may be targeted at all - "Quest.objects.resolvable()"
-    for an errand, "attackable_targets" for a march.
+    Nobody is conjured to fill the gap, so a side that fields nobody is a fight that cannot be staged.
+    What keeps it unreachable is who may be targeted at all - "attackable_targets" for a march.
     """
     attacking_faction = FactionFactory()
     enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
@@ -224,52 +221,8 @@ def test_handle_create_skirmish_refuses_an_empty_defending_side():
                 warrior_list_1=[attacking_warrior],
                 warrior_list_2=[],
                 month=3,
-                quest_contract=None,
             )
         )
-
-
-@pytest.mark.django_db
-def test_handle_create_skirmish_passes_the_quest_contract_on():
-    quest_contract = QuestContractFactory()
-    attacking_warrior = WarriorFactory(faction=quest_contract.faction)
-    enemy_warrior = WarriorFactory(faction=quest_contract.quest.target_faction)
-
-    result = handle_create_skirmish(
-        context=CreateSkirmish(
-            name="Ambush",
-            faction_1=quest_contract.faction,
-            faction_2=quest_contract.quest.target_faction,
-            warrior_list_1=[attacking_warrior],
-            warrior_list_2=[enemy_warrior],
-            month=3,
-            quest_contract=quest_contract,
-        )
-    )
-
-    assert result.quest_contract == quest_contract
-
-
-@pytest.mark.django_db
-def test_handle_create_skirmish_without_a_quest_contract():
-    attacking_faction = FactionFactory()
-    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
-    attacking_warrior = WarriorFactory(faction=attacking_faction)
-    enemy_warrior = WarriorFactory(faction=enemy_faction)
-
-    result = handle_create_skirmish(
-        context=CreateSkirmish(
-            name="Brawl",
-            faction_1=attacking_faction,
-            faction_2=enemy_faction,
-            warrior_list_1=[attacking_warrior],
-            warrior_list_2=[enemy_warrior],
-            month=3,
-            quest_contract=None,
-        )
-    )
-
-    assert result.quest_contract is None
 
 
 @pytest.mark.django_db
@@ -799,7 +752,6 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_attacking_facti
     one who fled is gone with his kit whichever side he was on.
     """
     skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
     dead_attacking_warrior = WarriorFactory(
         faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD
     )
@@ -825,9 +777,6 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_attacking_facti
         incapacitated_warriors=[dead_attacking_warrior, unconscious_enemy_warrior],
         defeated_unconscious_warriors=[unconscious_enemy_warrior],
         victorious_healthy_warriors=[healthy_attacking_warrior],
-        quest_name=quest_contract.quest.name,
-        quest_loot=250,
-        quest_contract=quest_contract,
         month=3,
     )
 
@@ -858,33 +807,6 @@ def test_handle_faction_wins_skirmish_leaves_out_a_victor_who_walked_off_the_fie
 
 
 @pytest.mark.django_db
-def test_handle_faction_wins_skirmish_pays_the_contract_whatever_turned_out():
-    """
-    Signed price, paid in full. The purse was priced against the war band the target could field when
-    the quest was pinned to the board, so a hard contract met by a single defender is a contract that
-    was written small - not a large one settled at a fraction.
-    """
-    skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(
-        faction=skirmish.attacking_faction,
-        skirmish=skirmish,
-        quest__loot=800,
-        quest__difficulty=Quest.DifficultyChoices.DIFFICULTY_HARD,
-        quest__expected_opposition=8,
-    )
-    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
-    skirmish.defending_warriors.add(
-        WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
-    )
-
-    result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
-    )
-
-    assert result.quest_loot == quest_contract.quest.loot
-
-
-@pytest.mark.django_db
 def test_handle_faction_wins_skirmish_does_not_loot_a_warband_that_fled():
     """
     A defeat is declared as soon as nobody on a side is healthy, so a warband can lose without
@@ -908,34 +830,16 @@ def test_handle_faction_wins_skirmish_does_not_loot_a_warband_that_fled():
 
 
 @pytest.mark.django_db
-def test_handle_faction_wins_skirmish_pays_no_quest_loot_to_a_rival_victor():
-    """
-    The reward is handed to whoever won further down the chain, so carrying it regardless of the
-    outcome credited the rival with the contract holder's own quest money.
-    """
-    skirmish = SkirmishFactory()
-    QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
-    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
-    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
-
-    result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.defending_faction, month=3)
-    )
-
-    assert result.quest_loot == 0
-
-
-@pytest.mark.django_db
 def test_handle_faction_wins_skirmish_loots_and_captures_for_the_defending_faction():
     """
-    The mirror image of the test above: the loot follows the victor, not the side that marched.
+    The mirror image of the attacking side winning: the loot follows the victor, not the side that
+    marched.
 
     Back when the two sides were named after the player rather than their role, this case took the
     winner's items from the loser's side and vice versa, so a losing player kept the gear of everyone
     who was merely knocked out.
     """
     skirmish = SkirmishFactory()
-    quest_contract = QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
     unconscious_attacking_warrior = WarriorFactory(
         faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
     )
@@ -955,35 +859,6 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_defending_facti
         incapacitated_warriors=[dead_enemy_warrior, unconscious_attacking_warrior],
         defeated_unconscious_warriors=[unconscious_attacking_warrior],
         victorious_healthy_warriors=[healthy_enemy_warrior],
-        quest_name=quest_contract.quest.name,
-        quest_loot=0,
-        # A rival who wins earns none of the purse, but the contract is still over and still travels
-        quest_contract=quest_contract,
-        month=3,
-    )
-
-
-@pytest.mark.django_db
-def test_handle_faction_wins_skirmish_without_a_quest_contract():
-    """
-    Not every skirmish belongs to a quest, so winning one without a contract has to work.
-    """
-    skirmish = SkirmishFactory()
-    healthy_attacking_warrior = WarriorFactory(faction=skirmish.attacking_faction)
-    skirmish.attacking_warriors.add(healthy_attacking_warrior)
-
-    result = handle_faction_wins_skirmish(
-        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.attacking_faction, month=3)
-    )
-
-    assert result == SkirmishFinished(
-        skirmish=skirmish,
-        incapacitated_warriors=[],
-        defeated_unconscious_warriors=[],
-        victorious_healthy_warriors=[healthy_attacking_warrior],
-        quest_name=None,
-        quest_loot=0,
-        quest_contract=None,
         month=3,
     )
 
@@ -993,10 +868,9 @@ def test_handle_faction_wins_skirmish_refuses_a_skirmish_that_already_has_a_vict
     """
     Killing the player's leader ends the savegame, which force-resolves the very fight it ended in -
     so the round still resolving that fight arrives behind a victory already paid out. Stopping here
-    is what keeps the loser from being stripped twice and the quest contract from paying twice.
+    is what keeps the loser from being stripped twice and the victor from being paid twice.
     """
     skirmish = SkirmishFactory()
-    QuestContractFactory(faction=skirmish.attacking_faction, skirmish=skirmish, quest__loot=250)
     skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
     Skirmish.objects.filter(pk=skirmish.pk).update(victorious_faction=skirmish.attacking_faction)
 

@@ -1,33 +1,21 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags obscurify %}
+{% load crispy_forms_tags %}
 
 {% block content %}
-    <h1>Quest</h1>
+    <h1>{{ object.title }}</h1>
+    <p class="text-ink-muted">{{ object.body }}</p>
 
     <div class="md:w-1/2">
         <table>
             <tbody>
             <tr>
-                <td>Name</td>
-                <td>{{ object.name }}</td>
+                <td>Men</td>
+                <td>{{ entry.MIN_MEN }}–{{ entry.MAX_MEN }}</td>
             </tr>
             <tr>
-                <td>Target faction</td>
-                <td>{{ object.target_faction }}</td>
+                <td>Away</td>
+                <td>Until the month turns</td>
             </tr>
-            <tr>
-                <td>Loot</td>
-                <td>{{ object.loot|obscurify:object.average_loot }}</td>
-            </tr>
-            <tr>
-                <td>Difficulty</td>
-                <td>{{ object.get_difficulty_display }}</td>
-            </tr>
-            <tr>
-                <td>Fortification</td>
-                <td>{{ object.fortification_strength }}</td>
-            </tr>
-            <c-calendar.march-cost-row :calendar_month="form.calendar_month" />
             <tr>
                 <td colspan="2">{% crispy form %}</td>
             </tr>

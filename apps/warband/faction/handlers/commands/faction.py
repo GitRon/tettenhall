@@ -128,7 +128,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
         raise RuntimeError(
             f"Culture {context.faction_culture_id} does not exist. "
             "Load the reference data with "
-            "'loaddata culture itemtype questtype injurytype traittype portraitpiece haircolour'."
+            "'loaddata culture itemtype injurytype traittype portraitpiece haircolour'."
         )
 
     # A rival dealt the player's own culture is named out of the same generator the player's war band
@@ -423,6 +423,7 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
     if successor is not None:
         faction.leader = successor
         faction.save(update_fields=("leader",))
+        successor = Warrior.objects.take_off_payroll(obj=successor)
 
         return FactionLeaderSucceeded(
             faction=faction,
@@ -437,6 +438,7 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
         levy = FyrdWarriorGenerator(culture=faction.culture, faction=faction, savegame_id=faction.savegame_id).process()
         faction.leader = levy
         faction.save(update_fields=("leader",))
+        levy = Warrior.objects.take_off_payroll(obj=levy)
 
         return [
             FactionLeaderRaisedFromFyrd(

@@ -4,13 +4,11 @@ from queuebie.messages import Command
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.quest.models.quest import Quest
-from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 
 
 @dataclass(kw_only=True)
-class CreateNewQuest(Command):
-    savegame: Savegame
+class OfferQuests(Command):
     faction: Faction
     month: int
 

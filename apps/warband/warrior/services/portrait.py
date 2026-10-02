@@ -26,7 +26,7 @@ def draw_portrait() -> dict:
         raise RuntimeError(
             "No portrait pieces or hair colours found. "
             "Load the reference data with "
-            "'loaddata culture itemtype questtype injurytype traittype portraitpiece haircolour'."
+            "'loaddata culture itemtype injurytype traittype portraitpiece haircolour'."
         )
 
     hairstyles = [*PortraitPiece.objects.of_kind(kind=PortraitKindChoices.KIND_HAIR), None]

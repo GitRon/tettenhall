@@ -1,8 +1,10 @@
-from apps.warband.quest.tests.factories.quest import QuestFactory
+import pytest
+
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 
 
-def test_str_returns_the_quest_name():
-    quest_contract = QuestContractFactory.build(quest=QuestFactory.build(name="Pillage village"))
+@pytest.mark.django_db
+def test_quest_contract_str():
+    quest_contract = QuestContractFactory(title="A thegn wants hands.")
 
-    assert str(quest_contract) == "Pillage village"
+    assert str(quest_contract) == "A thegn wants hands."

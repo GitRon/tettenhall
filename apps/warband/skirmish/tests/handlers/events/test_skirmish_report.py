@@ -14,7 +14,6 @@ from apps.warband.skirmish.handlers.events.skirmish_report import (
     handle_record_landed_blow,
     handle_record_looted_item,
     handle_record_looted_silver,
-    handle_record_quest_reward,
     handle_record_routed_warrior,
     handle_record_stopped_blow,
 )
@@ -25,7 +24,6 @@ from apps.warband.skirmish.messages.commands.skirmish_report import (
     RecordWarriorGrowth,
 )
 from apps.warband.skirmish.messages.events.item import ItemDroppedAsLoot
-from apps.warband.skirmish.messages.events.skirmish import SkirmishFinished
 from apps.warband.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.warband.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
@@ -89,51 +87,6 @@ def test_handle_record_looted_silver_carries_the_amount():
         warrior=warrior,
         amount=12,
     )
-
-
-def test_handle_record_quest_reward_names_the_quest():
-    skirmish = SkirmishFactory.build()
-    skirmish.victorious_faction = skirmish.attacking_faction
-
-    result = handle_record_quest_reward(
-        context=SkirmishFinished(
-            skirmish=skirmish,
-            incapacitated_warriors=[],
-            defeated_unconscious_warriors=[],
-            victorious_healthy_warriors=[],
-            quest_name="Silence the raiders",
-            quest_loot=400,
-            quest_contract=None,
-            month=3,
-        )
-    )
-
-    assert result == RecordSkirmishSpoil(
-        skirmish=skirmish,
-        faction=skirmish.attacking_faction,
-        kind=SkirmishSpoil.KindChoices.KIND_QUEST_REWARD,
-        amount=400,
-        description="Silence the raiders",
-    )
-
-
-def test_handle_record_quest_reward_stays_silent_when_nothing_was_paid():
-    skirmish = SkirmishFactory.build()
-
-    result = handle_record_quest_reward(
-        context=SkirmishFinished(
-            skirmish=skirmish,
-            incapacitated_warriors=[],
-            defeated_unconscious_warriors=[],
-            victorious_healthy_warriors=[],
-            quest_name=None,
-            quest_loot=0,
-            quest_contract=None,
-            month=3,
-        )
-    )
-
-    assert result is None
 
 
 def test_handle_record_gained_experience_maps_to_a_growth_command():

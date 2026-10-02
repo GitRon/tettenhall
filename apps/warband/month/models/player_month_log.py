@@ -22,7 +22,6 @@ class PlayerMonthLog(models.Model):
         KIND_SKILL_UPGRADE = 6, "Skill upgrade"
         KIND_MORALE_RECOVERED = 7, "Morale recovered"
         KIND_WOUNDS_HEALED = 8, "Wounds healed"
-        KIND_QUESTS_OFFERED = 9, "Quests offered"
         KIND_PUB_RESTOCKED = 10, "Pub restocked"
         KIND_SHOP_RESTOCKED = 11, "Shop restocked"
         # One kind for every incident rather than one per incident: adding an entry to the catalogue
@@ -41,6 +40,8 @@ class PlayerMonthLog(models.Model):
         KIND_LEADER_SUCCEEDED = 22, "Leader succeeded"
         KIND_LEADER_RAISED_FROM_FYRD = 23, "Leader raised from the fyrd"
         KIND_CAPTIVE_FLED = 24, "Captive fled"
+        # One kind for every quest, for the reason an incident has one: the catalogue grows by a class
+        KIND_QUEST_RETURNED = 25, "Quest returned"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -53,7 +54,6 @@ class PlayerMonthLog(models.Model):
         KindChoices.KIND_SKILL_UPGRADE: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_MORALE_RECOVERED: CategoryChoices.CATEGORY_UPKEEP,
         KindChoices.KIND_WOUNDS_HEALED: CategoryChoices.CATEGORY_UPKEEP,
-        KindChoices.KIND_QUESTS_OFFERED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_PUB_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_SHOP_RESTOCKED: CategoryChoices.CATEGORY_CONSEQUENCE,
         KindChoices.KIND_INCIDENT: CategoryChoices.CATEGORY_CHRONICLE,
@@ -96,6 +96,8 @@ class PlayerMonthLog(models.Model):
         # Attention, beside the man who walked out: a man lost that the player did not decide to lose,
         # and the same cells will cost him another next month unless he makes room
         KindChoices.KIND_CAPTIVE_FLED: CategoryChoices.CATEGORY_ATTENTION,
+        # A chronicle entry, like an incident: what the men came home with is a report and its undercut
+        KindChoices.KIND_QUEST_RETURNED: CategoryChoices.CATEGORY_CHRONICLE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

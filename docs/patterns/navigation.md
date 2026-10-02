@@ -8,9 +8,9 @@ fifth. This is normative: a link added to the shell without a section is a link 
 
 | Section | Lands on | Answers | Also holds |
 |---|---|---|---|
-| **Month** | the dashboard | "What happened, and what do I still have to decide?" | the month log, the wage-bill warning, the active quests, the training choice |
+| **Month** | the dashboard | "What happened, and what do I still have to decide?" | the month log, the wage-bill warning, the training choice |
 | **Warband** | the roster | "Who do I have, and what shape are they in?" | the stores, the fyrd, the captives, the progress table, a warrior's page |
-| **Town** | the board | "What can I turn silver into?" | the shop, the pub, the buildings, a quest's page |
+| **Town** | the board | "What can I turn silver into?" | the shop, the pub, the buildings, a quest's page, who is away on one |
 | **Rivals** | the rivals list | "Who do I march on, and the fight itself" | a rival's page, the attack, the skirmish list, the fight |
 
 The order is fixed and the entries never move. Four is the number a player holds in their head, and it
@@ -55,8 +55,8 @@ month, is last under Town.
 It comes off the current section's own page list, so a template never has to ask which section it is
 in. There are no breadcrumbs: two levels do not need a third way of saying where the player is.
 
-**The board is what the town lands on.** A quest decides who is spoken for and what the month is worth
-spending on, so it is the offer the other three are weighed against: a sword bought before the board is
+**The board is what the town lands on.** A quest decides who is spoken for this month and what the rest
+are free to do, so it is the offer the other three are weighed against: a sword bought before the board is
 read is a sword bought against nothing. The stalls and the pub come after it because they answer a
 question the board has already asked.
 
@@ -145,7 +145,7 @@ The Month page's left column is what the player decides; the right is what he re
 - A thing that could merely be done — a rival to march on — is on neither. It is true every month
   there is a rival, and a row that never changes is a row the player learns to skip. The Rivals page
   asks it.
-- **The purse** leads with the net a month, hall income less wages, signed. Quest rewards, loot and
+- **The purse** leads with the net a month, hall income less wages, signed. Quests, loot and
   sales are not a rate, so they are not in it, and the label says so.
 
 ## See also

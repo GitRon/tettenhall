@@ -1,12 +1,17 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.warband.faction.messages.commands.quest import OfferNewQuestsOnBulletinBoard
-from apps.warband.faction.messages.events.faction import NewFactionCreated
-from apps.warband.month.messages.events.month import PlayerMonthPrepared
+from apps.warband.faction.messages.commands.warrior import RecruitWarriorFromQuest
+from apps.warband.quest.messages.events.quest_contract import QuestContractReturned
 
 
-@message_registry.register_event(event=NewFactionCreated)
-@message_registry.register_event(event=PlayerMonthPrepared)
-def handle_offer_new_quests_on_bulletin_board(*, context: PlayerMonthPrepared | NewFactionCreated) -> Command:
-    return OfferNewQuestsOnBulletinBoard(faction=context.faction, month=context.current_month)
+@message_registry.register_event(event=QuestContractReturned)
+def handle_quest_warrior(*, context: QuestContractReturned) -> Command | None:
+    if context.outcome.warrior_generator_class is None:
+        return None
+
+    return RecruitWarriorFromQuest(
+        faction=context.faction,
+        generator_class=context.outcome.warrior_generator_class,
+        month=context.month,
+    )

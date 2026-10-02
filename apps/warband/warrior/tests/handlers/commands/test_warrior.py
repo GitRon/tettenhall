@@ -9,6 +9,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -25,6 +26,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_earn_traits_in_skirmish,
     handle_enslave_captured_warrior,
     handle_fade_idle_warrior_renown,
+    handle_grant_renown,
     handle_heal_injured_warrior,
     handle_inflict_injury,
     handle_punish_unpaid_warrior,
@@ -38,6 +40,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     EarnTraitsInSkirmish,
     EnslaveCapturedWarrior,
     FadeIdleWarriorRenown,
+    GrantRenown,
     HealInjuredWarrior,
     InflictInjury,
     PunishUnpaidWarrior,
@@ -52,6 +55,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
     WarriorRenownFaded,
+    WarriorRenownGranted,
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
     WarriorWasInjured,
@@ -102,6 +106,17 @@ def test_handle_replenish_warrior_morale_does_nothing_on_full_morale():
 
 
 @pytest.mark.django_db
+def test_handle_grant_renown():
+    warrior = WarriorFactory(renown=10)
+
+    result = handle_grant_renown(context=GrantRenown(warrior=warrior, faction=warrior.faction, renown=6, month=3))
+
+    assert result == WarriorRenownGranted(warrior=warrior, faction=warrior.faction, renown=6, month=3)
+    warrior.refresh_from_db()
+    assert warrior.renown == 16
+
+
+@pytest.mark.django_db
 def test_handle_fade_idle_warrior_renown_takes_a_quarter_off_a_man_who_did_not_fight():
     warrior = WarriorFactory(renown=40)
 
@@ -122,6 +137,21 @@ def test_handle_fade_idle_warrior_renown_spares_a_man_who_stood_in_last_months_f
     warrior = WarriorFactory(renown=40)
     skirmish = SkirmishFactory(attacking_faction=warrior.faction, month=2, victorious_faction=warrior.faction)
     skirmish.attacking_warriors.add(warrior)
+
+    result = handle_fade_idle_warrior_renown(
+        context=FadeIdleWarriorRenown(faction=warrior.faction, warrior=warrior, month=3)
+    )
+
+    assert result is None
+    warrior.refresh_from_db()
+    assert warrior.renown == 40
+
+
+@pytest.mark.django_db
+def test_handle_fade_idle_warrior_renown_spares_a_man_away_on_last_months_quest():
+    """The renown the quest pays him on this same month turn is not faded away again in it."""
+    warrior = WarriorFactory(renown=40)
+    QuestContractFactory(faction=warrior.faction, accepted_in_month=2, assigned_warriors=[warrior])
 
     result = handle_fade_idle_warrior_renown(
         context=FadeIdleWarriorRenown(faction=warrior.faction, warrior=warrior, month=3)

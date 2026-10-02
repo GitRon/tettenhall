@@ -39,7 +39,7 @@ class Haligmonath(Summer):
 
     NAME = "Haligmonath"
 
-    # Below the smallest quest purse (150 silver for an easy one), so it is a cushion before the
-    # winter rather than a substitute for marching
+    # About what three men bring home from a month of odd jobs, so it is a cushion before the winter
+    # rather than a substitute for sending anybody anywhere
     HARVEST_SILVER = 100
     FYRD_REPLENISHES = False

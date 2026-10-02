@@ -185,26 +185,19 @@ def test_items_lost_names_only_the_gear_taken_off_the_faction_s_own_men():
 
 
 @pytest.mark.django_db
-def test_the_purse_and_the_contract_are_counted_apart_and_summed():
+def test_silver_looted_sums_the_purses_the_faction_took():
     skirmish = SkirmishFactory()
-    SkirmishSpoilFactory(
+    SkirmishSpoilFactory.create_batch(
+        2,
         skirmish=skirmish,
         faction=skirmish.attacking_faction,
         kind=SkirmishSpoil.KindChoices.KIND_SILVER_LOOTED,
         amount=12,
     )
-    SkirmishSpoilFactory(
-        skirmish=skirmish,
-        faction=skirmish.attacking_faction,
-        kind=SkirmishSpoil.KindChoices.KIND_QUEST_REWARD,
-        amount=400,
-        description="Silence the raiders",
-    )
 
     report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
 
-    assert (report.silver_looted, report.quest_reward, report.silver_won) == (12, 400, 412)
-    assert report.quest_name == "Silence the raiders"
+    assert report.silver_looted == 24
 
 
 @pytest.mark.django_db
@@ -232,7 +225,6 @@ def test_a_fight_that_yielded_nothing_says_so():
     report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
 
     assert report.has_anything_to_report is False
-    assert report.quest_name == ""
 
 
 @pytest.mark.django_db
@@ -318,7 +310,7 @@ def test_own_casualties_reports_a_man_who_fell_carrying_nothing():
     report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
 
     assert report.has_anything_to_report is True
-    assert (report.items_won, report.items_lost, report.silver_won) == ([], [], 0)
+    assert (report.items_won, report.items_lost, report.silver_looted) == ([], [], 0)
 
 
 @pytest.mark.django_db

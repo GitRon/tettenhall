@@ -40,7 +40,7 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
     # their feet turn out: a warrior who is down does not defend his town, and an unhealthy side
     # would count as beaten before the first round.
     #
-    # And only the ones not already in a fight, the same rule the quest muster applies. A defender
+    # And only the ones not already in a fight. A defender
     # standing in two open skirmishes strands whichever is resolved second: the side that lost him
     # has nobody healthy left to post, so it cannot be played out, and the month refuses to turn
     # while a skirmish is open. "attackable_targets" asks this same question, so a target that
@@ -64,9 +64,8 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
 @message_registry.register_command(command=skirmish.CreateSkirmish)
 def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
     # Both rosters arrive resolved. Whom a faction fields is its own business and is answered by the
-    # command handler that raised the event leading here - handle_attack_faction for a march,
-    # handle_accept_quest for an errand - so there is exactly one answer to it and this only stages
-    # the fight.
+    # command handler that raised the event leading here - handle_attack_faction - so there is exactly
+    # one answer to it and this only stages the fight.
     skirmish_generator = BaseSkirmishGenerator(
         name=context.name,
         warriors_faction_1=context.warrior_list_1,
@@ -76,12 +75,7 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
     )
     new_skirmish = skirmish_generator.process()
 
-    # Linking the contract to the skirmish is the quest app's reaction to SkirmishCreated, see
-    # handle_link_quest_contract_to_its_skirmish - writing it here as well meant doing it twice
-    return SkirmishCreated(
-        skirmish=new_skirmish,
-        quest_contract=context.quest_contract,
-    )
+    return SkirmishCreated(skirmish=new_skirmish)
 
 
 def _withdrawing_and_remaining(
@@ -358,14 +352,11 @@ def handle_warrior_assaults_fortification(*, context: skirmish.WarriorAssaultsFo
 @message_registry.register_command(command=skirmish.WinSkirmish)
 def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event] | Event | None:
     # A fight is won once. The manager refuses a skirmish that already has a victor, and stopping here
-    # is what keeps the silver, the experience, the quest reward and the log line to a single helping:
+    # is what keeps the silver, the experience and the log line to a single helping:
     # the savegame ending force-resolves the very fight it ended in, so the round that ended it arrives
     # behind a victory that has already been paid out.
     if not Skirmish.objects.set_victor(skirmish=context.skirmish, victorious_faction=context.victorious_faction):
         return None
-
-    quest_name, quest_loot = context.skirmish.quest_reward_for(victorious_faction=context.victorious_faction)
-    quest_contract = context.skirmish.quest_contract_or_none()
 
     # Everything below is about the winner and the loser, so the two sides get sorted into those
     # roles exactly once - "attacking_warriors" and "defending_warriors" only coincide with them when
@@ -412,9 +403,6 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
         defeated_unconscious_warriors=defeated_unconscious_warriors,
         victorious_healthy_warriors=list(victorious_healthy_warriors),
         month=context.month,
-        quest_name=quest_name,
-        quest_loot=quest_loot,
-        quest_contract=quest_contract,
     )
 
 

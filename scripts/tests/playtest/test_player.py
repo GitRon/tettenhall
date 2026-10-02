@@ -7,6 +7,10 @@ from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
+from apps.warband.quest.models.quest_contract import QuestContract
+from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
+from apps.warband.quest.quests.harvest_hands import HarvestHands
+from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
@@ -208,6 +212,36 @@ def test_build_keeps_silver_back(player_savegame, rng, report, queuebie_registry
     PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).build()
 
     assert report.built == []
+
+
+@pytest.mark.django_db
+def test_send_men_on_the_odd_job_sends_the_weakest_man_it_takes(player_savegame, rng, report, queuebie_registry):
+    """The errand ahead of it on the board is passed over: the harness only ever takes the odd job."""
+    faction = player_savegame.player_faction
+    weak_warrior = WarriorFactory(faction=faction, strength=6)
+    WarriorFactory(faction=faction, strength=12)
+    QuestFactory(faction=faction, month=player_savegame.current_month, quest=DriveOffWolves.__name__)
+    QuestFactory(faction=faction, month=player_savegame.current_month, quest=HarvestHands.__name__)
+
+    PlayerTurn(
+        savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report
+    ).send_men_on_the_odd_job()
+
+    assert list(QuestContract.objects.get(faction=faction).assigned_warriors.all()) == [weak_warrior]
+    assert report.sent_on_quests == 1
+
+
+@pytest.mark.django_db
+def test_send_men_on_the_odd_job_keeps_the_leader_home(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    QuestFactory(faction=faction, month=player_savegame.current_month, quest=HarvestHands.__name__)
+
+    PlayerTurn(
+        savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report
+    ).send_men_on_the_odd_job()
+
+    assert QuestContract.objects.exists() is False
+    assert report.sent_on_quests == 0
 
 
 @pytest.mark.django_db

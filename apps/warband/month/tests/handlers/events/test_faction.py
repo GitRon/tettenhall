@@ -9,11 +9,9 @@ from apps.warband.faction.messages.events.faction import (
     MonthlyWarriorSalariesUnpaid,
 )
 from apps.warband.faction.messages.events.item import TownShopRestocked
-from apps.warband.faction.messages.events.quest import BulletinBoardQuestsOffered
 from apps.warband.faction.messages.events.warrior import TownMercenariesRestocked
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.month.handlers.events.faction import (
-    handle_bulletin_board_quests_offered,
     handle_captive_fled_overfull_cells,
     handle_faction_fyrd_reserve_replenished,
     handle_log_faction_defeat,
@@ -219,36 +217,6 @@ def test_handle_monthly_building_earnings_logs_the_earned_amount():
     assert result == CreatePlayerMonthLog(
         title="Buildings earned 300 silver this month.",
         kind=PlayerMonthLog.KindChoices.KIND_BUILDING_INCOME,
-        month=3,
-        faction=faction,
-    )
-
-
-def test_handle_bulletin_board_quests_offered_logs_the_new_quests():
-    faction = FactionFactory.build()
-
-    result = handle_bulletin_board_quests_offered(
-        context=BulletinBoardQuestsOffered(faction=faction, new_quests=3, month=3)
-    )
-
-    assert result == CreatePlayerMonthLog(
-        title="The bulletin board is offering 3 new quests.",
-        kind=PlayerMonthLog.KindChoices.KIND_QUESTS_OFFERED,
-        month=3,
-        faction=faction,
-    )
-
-
-def test_handle_bulletin_board_quests_offered_keeps_a_single_quest_singular():
-    faction = FactionFactory.build()
-
-    result = handle_bulletin_board_quests_offered(
-        context=BulletinBoardQuestsOffered(faction=faction, new_quests=1, month=3)
-    )
-
-    assert result == CreatePlayerMonthLog(
-        title="The bulletin board is offering 1 new quest.",
-        kind=PlayerMonthLog.KindChoices.KIND_QUESTS_OFFERED,
         month=3,
         faction=faction,
     )

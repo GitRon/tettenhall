@@ -10,9 +10,8 @@ def get_march_cost_refusal(*, faction_id: int, month: int, warrior_count: int) -
     """
     Why this faction may not send "warrior_count" men against a rival this month, or None if it may.
 
-    A direct attack and an accepted quest both ask it, because both muster the target's defenders and
-    are the same march. Weighed against the purse as it stands, the way a feast is: the march is paid
-    the moment it sets out.
+    Weighed against the purse as it stands, the way a feast is: the march is paid the moment it sets
+    out.
     """
     march_cost = get_calendar_month(month=month).get_march_cost(warrior_count=warrior_count)
     if not march_cost:

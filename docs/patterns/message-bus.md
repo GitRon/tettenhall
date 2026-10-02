@@ -38,7 +38,7 @@ A field is typed `list[...]`, never `QuerySet[...]`; the [registry tests](regist
 
 The same goes for relations. An event handler that needs a related object — the contract behind a
 skirmish, the men signed onto a contract — gets it as a field, filled by the command handler that raised
-the event (`SkirmishFinished.quest_contract`, `QuestAccepted.assigned_warriors`), rather than following
+the event (`QuestContractReturned.warriors`, `QuestAccepted.assigned_warriors`), rather than following
 the relation itself. [Strict mode](strict-mode.md#at-dispatch-time) says why.
 
 ## The golden rule

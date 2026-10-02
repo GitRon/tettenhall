@@ -29,7 +29,7 @@ a handler in that very module could share. Keep commands in a `messages/` direct
 
 The blocker patches the cursor, so it blocks **reads as well as writes**: any query inside an event
 handler fails. That includes the queries nobody wrote down: a queryset iterated, a reverse relation
-followed (`skirmish.quest_contract`), a `.all()` on a many-to-many. So messages carry lists, never
+followed (`warrior.quest_contracts`), a `.all()` on a many-to-many. So messages carry lists, never
 querysets, and whatever an event handler needs off a relation is resolved by the command handler that
 raised the event and put on it as a field — see [the message bus](message-bus.md#the-two-message-types).
 

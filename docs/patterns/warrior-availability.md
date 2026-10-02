@@ -50,7 +50,7 @@ Held as one ordered tuple of `(query, reason)` pairs in `_blocking_rules()`. Fir
 | Rule | The row reads |
 |---|---|
 | `filter_unfit()` | his condition — "Unconscious", "Fleeing" |
-| `filter_sworn_to_a_quest(month=…)` | "Already sworn to a quest this month" |
+| `filter_sworn_to_a_quest(month=…)` | "Away on a quest this month" |
 | `filter_committed_to_a_fight(month=…)` | "Committed to a fight this month" |
 
 The queries are `WarriorQuerySet` methods, and `exclude_currently_busy()` is the exclusion of the last

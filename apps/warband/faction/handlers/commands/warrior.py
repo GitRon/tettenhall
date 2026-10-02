@@ -6,6 +6,7 @@ from apps.warband.faction.messages.commands.warrior import (
     DraftWarriorFromFyrd,
     PayMonthlyWarriorSalaries,
     RecruitPubMercenary,
+    RecruitWarriorFromQuest,
     RestockTownMercenaries,
 )
 from apps.warband.faction.messages.events.faction import (
@@ -98,6 +99,22 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
         culture=context.faction.culture, faction=context.faction, savegame_id=context.faction.savegame_id
     )
     warrior = warrior_generator.process()
+
+    return WarriorRecruited(
+        faction=context.faction,
+        warrior=warrior,
+        recruitment_price=0,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=RecruitWarriorFromQuest)
+def handle_recruit_warrior_from_quest(*, context: RecruitWarriorFromQuest) -> Event:
+    # Straight onto the roster, for nothing: the quest was the price. His wage is billed from the next
+    # month on, like any man's who joins
+    warrior = context.generator_class(
+        culture=context.faction.culture, faction=context.faction, savegame_id=context.faction.savegame_id
+    ).process()
 
     return WarriorRecruited(
         faction=context.faction,

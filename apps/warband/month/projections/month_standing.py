@@ -36,7 +36,7 @@ class WarbandStanding:
     # attack to launch until the month turns.
     has_marched: bool
     # Whether he may march this month, which is the question the attack button asks. A war band
-    # whose leader is wounded, dead or already promised to a quest has no attack to launch at all,
+    # whose leader is wounded, dead or away on a quest has no attack to launch at all,
     # and today the player only learns that by opening a rival's page.
     leader_can_march: bool
 
@@ -179,7 +179,7 @@ class MonthStanding:
 
         return cls(
             open_skirmish_list=list(Skirmish.objects.for_savegame(savegame_id=savegame.id).unresolved()),
-            quest_count=Quest.objects.for_player_faction(faction_id=player_faction.id).resolvable(month=month).count(),
+            quest_count=Quest.objects.for_player_faction(faction_id=player_faction.id).offered_in(month=month).count(),
             occupiable_rival_list=list(Faction.objects.occupiable_by(savegame=savegame).order_by("name")),
             can_build=town is not None and town.last_constructed_building_at != month,
             shop_item_count=player_faction.available_items.count(),
