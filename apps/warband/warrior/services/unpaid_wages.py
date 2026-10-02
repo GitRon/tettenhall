@@ -1,9 +1,7 @@
 from apps.warband.skirmish.models.warrior import Warrior
 
-LEADER_NOTE = "Unpaid, and your leader never walks"
 
-
-def get_unpaid_wages_note(*, warrior: Warrior, leader_id: int | None) -> str | None:
+def get_unpaid_wages_note(*, warrior: Warrior) -> str | None:
     """
     What this man's wage arrears say about him, or None when there is nothing to say.
 
@@ -24,13 +22,8 @@ def get_unpaid_wages_note(*, warrior: Warrior, leader_id: int | None) -> str | N
     """
     # A prisoner and a mercenary on the pub's shelf carry whatever count they had when they left a
     # roster, and nobody owes either of them wages - so the faction is asked before the column is.
+    # The leader needs no case of his own: he draws no wage, so he is never owed any.
     if warrior.faction_id is None or warrior.unpaid_months == 0:
         return None
-
-    # The leader is told he is unpaid and given no deadline: he never walks, because losing him is
-    # what defeats the faction, so any number beside him would be a countdown that never arrives.
-    # The wage-bill warning makes the same distinction in the same words.
-    if warrior.id == leader_id:
-        return LEADER_NOTE
 
     return f"{warrior.unpaid_months} of {Warrior.UNPAID_MONTHS_UNTIL_WALKOUT} unpaid months"

@@ -71,7 +71,6 @@ def _payroll(*, budget: int, unpaid_months: int = 0) -> Payroll:
             WarriorFactory.build(id=2, monthly_salary=40, unpaid_months=unpaid_months),
         ],
         budget=budget,
-        leader_id=1,
     )
 
 

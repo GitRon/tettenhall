@@ -142,9 +142,7 @@ class RosterDismissalContextMixin(FactionRosterContextMixin):
             )
             for warrior in context["warrior_list"]:
                 warrior.dismissal_refusal = refusals.get(warrior.id)
-                # The leader is handed over rather than read off the warrior's own faction, which
-                # would be a query per card for a number the page already holds
-                warrior.unpaid_wages_note = get_unpaid_wages_note(warrior=warrior, leader_id=player_faction.leader_id)
+                warrior.unpaid_wages_note = get_unpaid_wages_note(warrior=warrior)
 
         return context
 
