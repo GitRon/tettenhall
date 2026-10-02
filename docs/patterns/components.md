@@ -32,6 +32,7 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-common.card>` | `apps.common` | The card surface: the body as the slot, optional `header` and `footer` bands as named slots - see [visual identity](visual-identity.md#surface) |
 | `<c-calendar.month-effects>` | `apps.warband` | One month's name, season and the effects it has in force, with an optional `heading` before the name |
 | `<c-calendar.march-cost-row>` | `apps.warband` | The table row pricing a march in the month the form prices it with, on the attack page |
+| `<c-faction.successor-line>` | `apps.warband` | Who takes the leader's seat if he falls, on the dashboard and the attack page; silent without a leader |
 | `<c-finance.wage-bill-warning>` | `apps.warband` | The alert for a purse that cannot cover next month's wages, silent while it can; `show_finance_link` adds the way to the books |
 | `<c-item.stats-meta>` | `apps.warband` | An item's roll and its average, the same in the shop, the stores and on the man; `show_price` adds the list price where it changes hands for it |
 | `<c-item.improves-nobody-tag>` | `apps.warband` | The tag on an item every man already matches or beats in its slot |
@@ -45,6 +46,8 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-warrior.portrait>` | `apps.warband` | A man's stacked face, `card` or `full` crop, in the caller's `frame`; the silhouette when he has none - see [portraits](portraits.md) |
 | `<c-warrior.portrait-layer>` | `apps.warband` | One beard or hair layer of the portrait, placed and tinted |
 | `<c-warrior.row>` | `apps.warband` | One man as a row on a rival's roster, a rival's cells or a pub; `is_pub` adds the recruit control |
+| `<c-warrior.roster-gauge>` | `apps.warband` | A gauge in the roster and captive tables: the bar against his own maximum beside `<c-warrior.gauge>`, the word alone where the numbers are fuzzed |
+| `<c-warrior.roster-gear>` | `apps.warband` | A weapon or armour cell in those tables, its roll and average under the name; a dash for an empty slot |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
 
 ## Parameters

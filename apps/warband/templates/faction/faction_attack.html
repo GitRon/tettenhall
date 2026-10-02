@@ -28,7 +28,7 @@
             </tr>
             <tr>
                 {# The risk the march takes, said where the leader is sent rather than after he fell #}
-                <td colspan="2">{% include 'faction/components/successor_line.html' with leader=form.leader successor=successor %}</td>
+                <td colspan="2"><c-faction.successor-line :leader="form.leader" :successor="successor" /></td>
             </tr>
             <c-calendar.march-cost-row :calendar_month="form.calendar_month" />
             <tr>

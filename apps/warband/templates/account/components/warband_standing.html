@@ -46,7 +46,7 @@
             march this month, so there is no attack to launch.
         {% endif %}
     </p>
-    {% include 'faction/components/successor_line.html' with leader=month_standing.warband.leader successor=month_standing.warband.successor %}
+    <c-faction.successor-line :leader="month_standing.warband.leader" :successor="month_standing.warband.successor" />
 
     <p class="m-0">
         <a href="{% url 'warband:warband-roster-view' %}">
