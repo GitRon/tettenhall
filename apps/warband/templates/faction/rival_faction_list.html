@@ -10,7 +10,7 @@
     {% elif has_marched_this_month %}
         <p class="text-sm leading-snug text-ink-muted">Your warriors have already fought this month.</p>
     {% elif leader_cannot_march %}
-        <p class="text-sm leading-snug text-ink-muted">Your leader is in no condition to march.</p>
+        <p class="text-sm leading-snug text-ink-muted">Your Ealdorman is in no condition to march.</p>
     {% endif %}
 
     {# A record per rival on a phone, a row on a desk - see docs/patterns/responsive-layout.md. #}
@@ -20,7 +20,8 @@
             <th>Name</th>
             <th>Culture</th>
             <th>Town</th>
-            <th>Leader</th>
+            {# The name below carries the title, so the head names the relation rather than the seat #}
+            <th>Led by</th>
             <th>Warriors</th>
             <th></th>
         </tr>
@@ -34,9 +35,9 @@
                 <td data-label="Culture">{{ rival.culture.name }}</td>
                 <td data-label="Town">{{ rival.town_name }}</td>
                 {# A faction can be without a leader, and reversing the url with no id raises #}
-                <td data-label="Leader">
+                <td data-label="Led by">
                     {% if rival.leader %}
-                        <a href="{% url 'warband:warrior-detail-view' rival.leader.id %}">{{ rival.leader }}</a>
+                        <a href="{% url 'warband:warrior-detail-view' rival.leader.id %}">{{ rival.leader.display_name }}</a>
                     {% else %}
                         -
                     {% endif %}

@@ -125,7 +125,7 @@ def handle_log_leader_succession(*, context: FactionLeaderSucceeded) -> Command:
         title = f"{context.fallen_leader} {fate}. {context.successor} leads the war band now."
         body = "He had the most renown of the men left, and they follow him."
     else:
-        title = f"{context.faction} has a new leader."
+        title = f"{context.faction} has a new Ealdorman."
         body = f"{context.fallen_leader} led them, and he {fate}. {context.successor} leads them now."
 
     return CreatePlayerMonthLog(
@@ -153,7 +153,7 @@ def handle_log_leader_raised_from_fyrd(*, context: FactionLeaderRaisedFromFyrd) 
         title = f"{context.fallen_leader} {fate}. The fyrd has raised {context.successor} to lead the war band."
         body = "Nobody was left in the war band to follow, so the men of the land sent one of their own."
     else:
-        title = f"{context.faction} has a new leader."
+        title = f"{context.faction} has a new Ealdorman."
         body = (
             f"{context.fallen_leader} led them, and he {fate}. Nobody was left in their war band, so their "
             f"fyrd has raised {context.successor} to lead them."

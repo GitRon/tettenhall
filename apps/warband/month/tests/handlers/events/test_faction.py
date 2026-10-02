@@ -348,7 +348,7 @@ def test_handle_log_leader_succession_for_a_rival_whose_leader_was_taken():
     )
 
     assert result == CreatePlayerMonthLog(
-        title="Kristinefoss has a new leader.",
+        title="Kristinefoss has a new Ealdorman.",
         body="Vincent led them, and he was taken prisoner. Beorn leads them now.",
         kind=PlayerMonthLog.KindChoices.KIND_LEADER_SUCCEEDED,
         month=3,
@@ -394,7 +394,7 @@ def test_handle_log_leader_raised_from_fyrd_for_a_rival_whose_leader_was_taken()
     )
 
     assert result == CreatePlayerMonthLog(
-        title="Kristinefoss has a new leader.",
+        title="Kristinefoss has a new Ealdorman.",
         body="Vincent led them, and he was taken prisoner. Nobody was left in their war band, so their fyrd "
         "has raised Beorn to lead them.",
         kind=PlayerMonthLog.KindChoices.KIND_LEADER_RAISED_FROM_FYRD,

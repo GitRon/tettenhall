@@ -59,7 +59,7 @@
                             <a class="leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.name }}</a>
                             {% if warrior.nickname or warrior.id == faction.leader_id %}
                                 <div class="text-[0.9375rem] leading-snug text-ink-muted">
-                                    {{ warrior.nickname|default:"" }}{% if warrior.nickname and warrior.id == faction.leader_id %} &middot; {% endif %}{% if warrior.id == faction.leader_id %}leader{% endif %}
+                                    {{ warrior.nickname|default:"" }}{% if warrior.nickname and warrior.id == faction.leader_id %} &middot; {% endif %}{% if warrior.id == faction.leader_id %}Ealdorman{% endif %}
                                 </div>
                             {% endif %}
                             {% comment %}

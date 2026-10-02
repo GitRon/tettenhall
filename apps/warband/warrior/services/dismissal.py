@@ -1,7 +1,7 @@
 from apps.warband.faction.models.faction import Faction
 from apps.warband.skirmish.models.warrior import Warrior
 
-LEADER_REFUSAL = "Your leader stays. Losing him is losing the war band."
+LEADER_REFUSAL = f"Your {Warrior.LEADER_TITLE} stays. Losing him is losing the war band."
 BUSY_REFUSAL = "He is spoken for this month. You can send him away once it is over."
 UNAFFORDABLE_REFUSAL = "You don't have the silver to pay him off."
 

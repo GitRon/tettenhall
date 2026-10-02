@@ -17,18 +17,18 @@
             Going unpaid:
             {# Nothing may break the line directly before the closing parenthesis: whitespace inside #}
             {# an "if" body is rendered, so a newline there reaches the player as "unpaid months )". #}
+            {# The leader's own name carries his title already, so his entry only says what sets him apart. #}
             {% for entry in payroll.unpaid_countdown_list %}
-                {{ entry.warrior }} ({{ entry.warrior.monthly_salary }} silver,
+                {{ entry.warrior.display_name }} ({{ entry.warrior.monthly_salary }} silver,
                 {% if entry.months_unpaid %}{{ entry.months_unpaid }} of
-                {{ payroll.months_until_walkout }} unpaid months{% else %}your leader,
-                who never walks{% endif %}){% if not forloop.last %}, {% endif %}
+                {{ payroll.months_until_walkout }} unpaid months{% else %}who never walks{% endif %}){% if not forloop.last %}, {% endif %}
             {% endfor %}
         </p>
         {% if payroll.warriors_about_to_walk_out %}
             <p class="m-0 font-bold">
                 Leaving the war band over it:
                 {% for warrior in payroll.warriors_about_to_walk_out %}
-                    {{ warrior }}{% if not forloop.last %}, {% endif %}
+                    {{ warrior.display_name }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
                 — {{ payroll.months_until_walkout }} months without wages and a man strips his
                 gear and walks.

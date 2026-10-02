@@ -116,9 +116,14 @@ class RosterAssessment:
         The same men as a queryset, which is what a "ModelMultipleChoiceField" takes.
 
         Ordered the same way the list is, so the rows the player reads and the options the field
-        holds are in one order.
+        holds are in one order. The faction comes along because an option names its man in full,
+        and that asks whether he holds its seat.
         """
-        return Warrior.objects.filter(id__in=[a.warrior.id for a in self.assessed]).order_by("name", "id")
+        return (
+            Warrior.objects.filter(id__in=[a.warrior.id for a in self.assessed])
+            .select_related("faction")
+            .order_by("name", "id")
+        )
 
 
 def assess_roster(*, faction_id: int, month: int, excluded_ids: Iterable[int] = ()) -> RosterAssessment:

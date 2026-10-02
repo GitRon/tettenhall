@@ -44,7 +44,7 @@ def test_wage_bill_warning_names_the_shortfall_and_every_unpaid_man():
     result = _text(html)
 
     assert "70 silver short of next month's wages" in result
-    assert "Leofric (30 silver, your leader, who never walks)" in result
+    assert "Leofric (30 silver, who never walks)" in result
     assert f"Wulfstan (40 silver, 1 of {Warrior.UNPAID_MONTHS_UNTIL_WALKOUT} unpaid months)" in result
 
 

@@ -458,6 +458,8 @@ class WarriorManager(manager.Manager):
         return list(
             self.exclude_dead()
             .filter(faction=faction)
+            # The wage bill names each man in full, which asks his faction whether he holds its seat
+            .select_related("faction")
             # By id as well, or two warriors on the same salary come back in whatever order the
             # database feels like and the tests below them flap
             .order_by("monthly_salary", "id")

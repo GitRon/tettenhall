@@ -38,8 +38,8 @@ class PlayerMonthLog(models.Model):
         KIND_FEAST_THROWN = 19, "Feast thrown"
         KIND_WARRIOR_CHANGED = 20, "Warrior changed"
         KIND_HARVEST = 21, "Harvest"
-        KIND_LEADER_SUCCEEDED = 22, "Leader succeeded"
-        KIND_LEADER_RAISED_FROM_FYRD = 23, "Leader raised from the fyrd"
+        KIND_LEADER_SUCCEEDED = 22, "Ealdorman succeeded"
+        KIND_LEADER_RAISED_FROM_FYRD = 23, "Ealdorman raised from the fyrd"
         KIND_CAPTIVE_FLED = 24, "Captive fled"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a

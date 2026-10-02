@@ -34,6 +34,23 @@ def test_assignable_warriors_offer_a_warrior_in_this_month_s_fight_with_his_reas
 
 
 @pytest.mark.django_db
+def test_assignable_warriors_offer_the_leader_by_his_title():
+    """
+    The player sees who he is sending: the option names the man in the seat as the Ealdorman.
+    """
+    savegame = SavegameFactory(current_month=2)
+    faction = FactionFactory(savegame=savegame)
+    leader = WarriorFactory(faction=faction, name="Uthred")
+    faction.leader = leader
+    faction.save(update_fields=("leader",))
+
+    quest = QuestFactory(target_faction__savegame=savegame)
+    form = QuestAcceptForm(quest_id=quest.id, player_faction_id=faction.id)
+
+    assert [label for _value, label in form.fields["assigned_warriors"].choices] == [f"{Warrior.LEADER_TITLE} Uthred"]
+
+
+@pytest.mark.django_db
 def test_assignable_warriors_leave_out_another_factions_warrior():
     """
     Widening the queryset to the whole war band is what lets the page draw the men who cannot go. The

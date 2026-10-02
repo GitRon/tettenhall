@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Layout, Submit
 from django import forms
@@ -10,6 +12,7 @@ from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.models.quest_contract import QuestContract
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.services.march import get_march_cost_refusal
+from apps.warband.warrior.forms.fields import WarriorMultipleChoiceField
 from apps.warband.warrior.forms.widgets import RosterCheckboxSelectMultiple
 from apps.warband.warrior.services.availability import assess_roster
 
@@ -24,6 +27,8 @@ class QuestAcceptForm(forms.ModelForm):
     class Meta:
         model = QuestContract
         fields = ("faction", "quest", "assigned_warriors")
+        # Each man offered by his full name, so the player can see who he is sending
+        field_classes: ClassVar[dict[str, type[forms.Field]]] = {"assigned_warriors": WarriorMultipleChoiceField}
 
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
@@ -102,7 +107,7 @@ class QuestAcceptForm(forms.ModelForm):
         if unavailable:
             raise forms.ValidationError(
                 "%(names)s cannot take a quest this month.",
-                params={"names": ", ".join(warrior.name for warrior in unavailable)},
+                params={"names": ", ".join(warrior.display_name for warrior in unavailable)},
             )
 
         return assigned_warriors

@@ -11,7 +11,7 @@
         {% if object.leader %}
             led by <a href="{% url "warband:warrior-detail-view" object.leader.id %}">{{ object.leader.display_name }}</a>
         {% else %}
-            leaderless
+            without an Ealdorman
         {% endif %}
     </p>
 
