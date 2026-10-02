@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.training.models.training import Training
 from apps.warband.training.tests.factories.training import TrainingFactory
 
@@ -91,5 +92,22 @@ def test_training_edit_view_without_a_player_faction(logged_in_client, savegame_
     )
 
     assert response.status_code == 404
+    training.refresh_from_db()
+    assert training.category == Training.TrainingCategory.WEAPON_MASTERY
+
+
+@pytest.mark.django_db
+def test_training_edit_view_refuses_a_decided_savegame(logged_in_client, current_savegame):
+    training = TrainingFactory(
+        faction=current_savegame.player_faction, category=Training.TrainingCategory.WEAPON_MASTERY
+    )
+    current_savegame.outcome = Savegame.OutcomeChoices.OUTCOME_LOST
+    current_savegame.save()
+
+    logged_in_client.post(
+        reverse("warband:training-edit-view", kwargs={"pk": training.id}),
+        data={"category": Training.TrainingCategory.SHIELD_WALL},
+    )
+
     training.refresh_from_db()
     assert training.category == Training.TrainingCategory.WEAPON_MASTERY

@@ -110,6 +110,9 @@ TERMINAL_MESSAGES: dict[str, str] = {
         "A new faction's regimen, read off its row when the training page renders. Nothing else holds a copy "
         "that would need telling."
     ),
+    "apps.warband.training.messages.events.training.TrainingRegimenChanged": (
+        "The month's drill reads the regimen off the row when it runs, so a change needs telling to nobody."
+    ),
 }
 
 

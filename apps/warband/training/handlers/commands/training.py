@@ -5,8 +5,12 @@ from queuebie.messages import Event
 
 from apps.warband.calendar.months import get_calendar_month
 from apps.warband.skirmish.models.warrior import Warrior
-from apps.warband.training.messages.commands.training import CreateNewTraining, TrainWarriors
-from apps.warband.training.messages.events.training import NewTrainingCreated, WarriorUpgradedSkill
+from apps.warband.training.messages.commands.training import ChangeTrainingRegimen, CreateNewTraining, TrainWarriors
+from apps.warband.training.messages.events.training import (
+    NewTrainingCreated,
+    TrainingRegimenChanged,
+    WarriorUpgradedSkill,
+)
 from apps.warband.training.models import Training
 
 
@@ -17,6 +21,14 @@ def handle_create_training_for_new_faction(*, context: CreateNewTraining) -> lis
     )
 
     return NewTrainingCreated(training=training)
+
+
+@message_registry.register_command(command=ChangeTrainingRegimen)
+def handle_change_training_regimen(*, context: ChangeTrainingRegimen) -> Event:
+    context.training.category = context.category
+    context.training.save(update_fields=["category"])
+
+    return TrainingRegimenChanged(training=context.training)
 
 
 @message_registry.register_command(command=TrainWarriors)
