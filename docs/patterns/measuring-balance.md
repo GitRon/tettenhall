@@ -65,12 +65,12 @@ policy says otherwise:
 | Policy | Marches when |
 |---|---|
 | `aggressive` | every month it can |
-| `even` | the band is at least as large as the target's healthy men |
-| `prudent` | the band is at least two larger |
-| `raider` | as `even` on the burh, and lifts the target's herds in a month `even` would stay home |
+| `even` | the band is at least as large as the target's healthy men and the burh's turnout of locals |
+| `prudent` | the band is at least two larger than the same |
+| `raider` | as `even` on the burh; otherwise lifts the herds when the band is at least as large as a third of the target's healthy men and the herdsmen |
 
-Only `raider` ever draws the [raid](raids.md) defenders at random, so the other three play every seed the
-same way they did before raid kinds existed.
+Each policy counts the people of the place the way the attack page shows them, so a march it makes is one a
+player reading that page would make. Only `raider` ever draws the [raid](raids.md) defenders at random.
 
 A game ends when it is won or lost, when it reaches `--months`, or when the harness cannot go on. In that
 last case the reason goes into `stop_reason` instead of the loop:
