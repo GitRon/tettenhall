@@ -7,6 +7,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.battle_history import (
@@ -17,6 +18,7 @@ from apps.warband.skirmish.handlers.events.battle_history import (
     handle_log_herds_lifted,
     handle_log_item_dropped,
     handle_log_leader_rallied,
+    handle_log_locals_went_home,
     handle_log_round_finished,
     handle_log_skirmish_finished,
     handle_log_village_burned,
@@ -41,6 +43,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
     FortificationAssaulted,
     FortificationFell,
     HerdsLifted,
+    LocalsWentHome,
     RoundFinished,
     SkirmishFinished,
     VillageBurned,
@@ -930,3 +933,13 @@ def test_handle_log_village_burned():
     assert result == CreateBattleHistory(
         skirmish=skirmish, message="The village of Wessex burns, and 2 names of its fyrd burn with it."
     )
+
+
+def test_handle_log_locals_went_home_names_the_people_of_the_place():
+    skirmish = SkirmishFactory.build(raid_kind=RaidKindChoices.LIFT_THE_HERDS)
+
+    result = handle_log_locals_went_home(
+        context=LocalsWentHome(skirmish=skirmish, warriors=[WarriorFactory.build()], month=4)
+    )
+
+    assert result == CreateBattleHistory(skirmish=skirmish, message="The herdsmen who still stand go home.")

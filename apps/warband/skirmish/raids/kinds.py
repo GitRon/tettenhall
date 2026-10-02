@@ -10,6 +10,9 @@ class LiftTheHerds(RaidKind):
     PURSE_SHARE = 0.2
     PURSE_CAP = 150
 
+    LOCALS_TURNOUT = 1
+    LOCALS_NAME = "herdsmen"
+
     @classmethod
     def get_skirmish_name(cls, *, target) -> str:
         return f"Raid on the herds of {target}"
@@ -25,6 +28,9 @@ class BurnTheVillage(RaidKind):
 
     FYRD_NAMES_BURNED = 2
 
+    LOCALS_TURNOUT = 2
+    LOCALS_NAME = "villagers"
+
     @classmethod
     def get_skirmish_name(cls, *, target) -> str:
         return f"Burning of the village of {target}"
@@ -37,3 +43,6 @@ class StormTheBurh(RaidKind):
 
     IS_FORTIFIED = True
     OPENS_TOWN = True
+
+    LOCALS_TURNOUT = 2
+    LOCALS_NAME = "men of the fyrd"

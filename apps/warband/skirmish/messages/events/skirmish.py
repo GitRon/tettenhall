@@ -17,7 +17,10 @@ class FactionWasAttacked(Event):
     # Both rosters arrive already resolved: whom the defender fields is a query, and the event
     # handler reacting to this is not allowed to run one
     attacking_warriors: list[Warrior]
+    # Every man on the defending side, the men of the place among them
     defending_warriors: list[Warrior]
+    # The men of the place who turned out, generated for this fight and sent home when it ends
+    local_warriors: list[Warrior]
     # The wall the defenders stand behind, read off the defending faction by the command handler that
     # raised this - for the same reason the rosters are
     fortification_strength: int
@@ -117,4 +120,11 @@ class VillageBurned(Event):
     raided_faction: Faction
     # The names struck off the raided fyrd reserve, already clamped to how many it held
     fyrd_names: int
+    month: int
+
+
+@dataclass(kw_only=True)
+class LocalsWentHome(Event):
+    skirmish: Skirmish
+    warriors: list[Warrior]
     month: int

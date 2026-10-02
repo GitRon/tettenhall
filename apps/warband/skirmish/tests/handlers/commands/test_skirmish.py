@@ -14,6 +14,7 @@ from apps.warband.skirmish.handlers.commands.skirmish import (
     handle_determine_attacker_and_defender,
     handle_faction_wins_skirmish,
     handle_finish_round,
+    handle_send_locals_home,
     handle_take_raid_yield,
     handle_warrior_assaults_fortification,
     handle_warrior_attacks_warrior,
@@ -23,6 +24,7 @@ from apps.warband.skirmish.messages.commands.skirmish import (
     CreateSkirmish,
     DetermineAttacker,
     FinishRound,
+    SendLocalsHome,
     StartDuel,
     TakeRaidYield,
     WarriorAssaultsFortification,
@@ -41,6 +43,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
     FortificationAssaulted,
     FortificationFell,
     HerdsLifted,
+    LocalsWentHome,
     RoundFinished,
     SkirmishFinished,
     VillageBurned,
@@ -49,7 +52,7 @@ from apps.warband.skirmish.messages.events.warrior import BlowWasNotStruck
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
-from apps.warband.skirmish.raids.kinds import LiftTheHerds, StormTheBurh
+from apps.warband.skirmish.raids.kinds import StormTheBurh
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL, Palisade
@@ -85,7 +88,8 @@ def test_handle_attack_faction_fields_the_targets_own_warriors():
         attacking_faction=attacking_faction,
         defending_faction=target_faction,
         attacking_warriors=[attacking_leader],
-        defending_warriors=[target_leader],
+        defending_warriors=[target_leader, *result.local_warriors],
+        local_warriors=result.local_warriors,
         fortification_strength=0,
         raid_kind=RaidKindChoices.STORM_THE_BURH,
         month=3,
@@ -138,7 +142,7 @@ def test_handle_attack_faction_leaves_the_targets_casualties_out_of_the_line_up(
         )
     )
 
-    assert result.defending_warriors == [healthy_defender]
+    assert result.defending_warriors == [healthy_defender, *result.local_warriors]
 
 
 @pytest.mark.django_db
@@ -164,7 +168,7 @@ def test_handle_attack_faction_leaves_out_a_defender_already_in_a_fight():
         )
     )
 
-    assert result.defending_warriors == [available_defender]
+    assert result.defending_warriors == [available_defender, *result.local_warriors]
 
 
 @pytest.mark.django_db
@@ -190,27 +194,26 @@ def test_handle_attack_faction_meets_a_raid_in_the_shire_in_the_open():
 
 
 @pytest.mark.django_db
-def test_handle_attack_faction_meets_only_the_men_standing_where_the_raid_lands():
-    """The first and the third of three men are drawn to the herds, and the second to the burh."""
+def test_handle_attack_faction_brings_out_the_people_of_the_place():
+    """The men of the place turn out for the defending faction and stand on its side of the fight."""
     attacking_faction = FactionFactory()
     target_faction = FactionFactory(savegame=attacking_faction.savegame)
-    first, _second, third = WarriorFactory.create_batch(3, faction=target_faction)
+    WarriorFactory(faction=target_faction)
 
-    with mock.patch(
-        "apps.warband.skirmish.services.raid_defenders.random.choice",
-        side_effect=[LiftTheHerds, StormTheBurh, LiftTheHerds],
-    ):
-        result = handle_attack_faction(
-            context=AttackFaction(
-                attacking_faction=attacking_faction,
-                target_faction=target_faction,
-                assigned_warriors=[WarriorFactory(faction=attacking_faction)],
-                raid_kind=RaidKindChoices.LIFT_THE_HERDS,
-                month=3,
-            )
+    result = handle_attack_faction(
+        context=AttackFaction(
+            attacking_faction=attacking_faction,
+            target_faction=target_faction,
+            assigned_warriors=[WarriorFactory(faction=attacking_faction)],
+            raid_kind=RaidKindChoices.STORM_THE_BURH,
+            month=3,
         )
+    )
 
-    assert result.defending_warriors == [first, third]
+    assert [(local.faction, local.monthly_salary) for local in result.local_warriors] == [
+        (target_faction, 0)
+    ] * StormTheBurh.LOCALS_TURNOUT
+    assert result.defending_warriors[-StormTheBurh.LOCALS_TURNOUT :] == result.local_warriors
 
 
 @pytest.mark.django_db
@@ -267,6 +270,85 @@ def test_handle_take_raid_yield_finds_no_fyrd_left_to_burn():
 
 
 @pytest.mark.django_db
+def test_handle_send_locals_home_releases_the_men_of_the_place_still_standing():
+    skirmish = SkirmishFactory()
+    local = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.local_warriors.add(local)
+
+    result = handle_send_locals_home(
+        context=SendLocalsHome(skirmish=skirmish, defeated_unconscious_warriors=[], month=4)
+    )
+
+    local.refresh_from_db()
+    assert result == LocalsWentHome(skirmish=skirmish, warriors=[local], month=4)
+    assert local.faction is None
+
+
+@pytest.mark.django_db
+def test_handle_send_locals_home_leaves_the_dead_where_they_fell():
+    skirmish = SkirmishFactory()
+    local = WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    skirmish.local_warriors.add(local)
+
+    result = handle_send_locals_home(
+        context=SendLocalsHome(skirmish=skirmish, defeated_unconscious_warriors=[], month=4)
+    )
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_send_locals_home_leaves_a_man_about_to_be_taken_to_the_victor():
+    """Capture is capture: he goes to the cells, whichever of the two commands drains first."""
+    skirmish = SkirmishFactory()
+    local = WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    skirmish.local_warriors.add(local)
+
+    result = handle_send_locals_home(
+        context=SendLocalsHome(skirmish=skirmish, defeated_unconscious_warriors=[local], month=4)
+    )
+
+    local.refresh_from_db()
+    assert result is None
+    assert local.faction == skirmish.defending_faction
+
+
+@pytest.mark.django_db
+def test_handle_send_locals_home_leaves_a_man_already_taken_alone():
+    skirmish = SkirmishFactory()
+    local = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.local_warriors.add(local)
+
+    result = handle_send_locals_home(
+        context=SendLocalsHome(skirmish=skirmish, defeated_unconscious_warriors=[], month=4)
+    )
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_create_skirmish_records_the_men_of_the_place():
+    attacking_faction = FactionFactory()
+    enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
+    local = WarriorFactory(faction=enemy_faction)
+
+    result = handle_create_skirmish(
+        context=CreateSkirmish(
+            name="Cattle raid",
+            faction_1=attacking_faction,
+            faction_2=enemy_faction,
+            warrior_list_1=[WarriorFactory(faction=attacking_faction)],
+            warrior_list_2=[local],
+            local_warriors=[local],
+            raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+            month=7,
+        )
+    )
+
+    assert list(result.skirmish.local_warriors.all()) == [local]
+
+
+@pytest.mark.django_db
 def test_handle_create_skirmish_uses_the_given_opponents():
     attacking_faction = FactionFactory()
     enemy_faction = FactionFactory(savegame=attacking_faction.savegame)
@@ -280,6 +362,7 @@ def test_handle_create_skirmish_uses_the_given_opponents():
             faction_2=enemy_faction,
             warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
+            local_warriors=[],
             raid_kind=RaidKindChoices.STORM_THE_BURH,
             month=3,
         )
@@ -307,6 +390,7 @@ def test_handle_create_skirmish_records_the_month():
             faction_2=enemy_faction,
             warrior_list_1=[attacking_warrior],
             warrior_list_2=[enemy_warrior],
+            local_warriors=[],
             raid_kind=RaidKindChoices.STORM_THE_BURH,
             month=7,
         )
@@ -327,6 +411,7 @@ def test_handle_create_skirmish_records_the_raid_kind():
             faction_2=enemy_faction,
             warrior_list_1=[WarriorFactory(faction=attacking_faction)],
             warrior_list_2=[WarriorFactory(faction=enemy_faction)],
+            local_warriors=[],
             raid_kind=RaidKindChoices.BURN_THE_VILLAGE,
             month=7,
         )
@@ -353,6 +438,7 @@ def test_handle_create_skirmish_refuses_an_empty_defending_side():
                 faction_2=enemy_faction,
                 warrior_list_1=[attacking_warrior],
                 warrior_list_2=[],
+                local_warriors=[],
                 raid_kind=RaidKindChoices.STORM_THE_BURH,
                 month=3,
             )
@@ -998,6 +1084,25 @@ def test_handle_faction_wins_skirmish_loots_and_captures_for_the_defending_facti
 
 
 @pytest.mark.django_db
+def test_handle_faction_wins_skirmish_leaves_the_men_of_the_place_out_of_the_victory():
+    """They go home once it is over, so they do not grow from it into a log line nobody can be told."""
+    skirmish = SkirmishFactory()
+    skirmish.attacking_warriors.add(
+        WarriorFactory(faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
+    )
+    defender = WarriorFactory(faction=skirmish.defending_faction)
+    local = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(defender, local)
+    skirmish.local_warriors.add(local)
+
+    result = handle_faction_wins_skirmish(
+        context=WinSkirmish(skirmish=skirmish, victorious_faction=skirmish.defending_faction, month=3)
+    )
+
+    assert result.victorious_healthy_warriors == [defender]
+
+
+@pytest.mark.django_db
 def test_handle_faction_wins_skirmish_refuses_a_skirmish_that_already_has_a_victor():
     """
     Killing the player's leader ends the savegame, which force-resolves the very fight it ended in -
@@ -1124,6 +1229,7 @@ def test_handle_create_skirmish_raises_the_wall_it_is_given():
             faction_2=defending_faction,
             warrior_list_1=[WarriorFactory(faction=attacking_faction)],
             warrior_list_2=[WarriorFactory(faction=defending_faction)],
+            local_warriors=[],
             raid_kind=RaidKindChoices.STORM_THE_BURH,
             month=3,
             fortification_strength=20,

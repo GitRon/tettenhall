@@ -1376,7 +1376,7 @@ def test_faction_attack_view_fights_the_rivals_own_war_band(
         f"Your war band marches on {rival_faction}."
     ]
     skirmish = Skirmish.objects.get(defending_faction=rival_faction)
-    assert list(skirmish.defending_warriors.all()) == [rival_leader]
+    assert list(skirmish.defending_warriors.exclude(id__in=skirmish.local_warriors.all())) == [rival_leader]
     assert list(skirmish.attacking_warriors.all()) == [player_faction_ready_to_march.leader, follower]
     assert skirmish.month == current_savegame.current_month
 

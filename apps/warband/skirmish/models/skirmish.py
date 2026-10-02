@@ -72,6 +72,15 @@ class Skirmish(models.Model):
         verbose_name="Defending warriors",
         related_name="defending_skirmishes",
     )
+    # The men of the place who turned out beside the defending war band - herdsmen, villagers, the fyrd
+    # of the burh. They stand on "defending_warriors" as well, because they fight; this says only who is
+    # sent home when it is over, and who may never take the seat of the faction they defended
+    local_warriors = models.ManyToManyField(
+        Warrior,
+        verbose_name="Local warriors",
+        related_name="local_skirmishes",
+        blank=True,
+    )
 
     objects = SkirmishManager()
 

@@ -35,6 +35,11 @@ class RaidKind:
     # How many names a won raid strikes off the rival's fyrd reserve
     FYRD_NAMES_BURNED = 0
 
+    # How many of the place's own people turn out to defend it beside the war band, and what they are
+    # called. They come out of no reserve, so a place is defended even once its fyrd is drafted empty
+    LOCALS_TURNOUT = 0
+    LOCALS_NAME = ""
+
     @classmethod
     def get_label(cls) -> str:
         return RaidKindChoices(cls.VALUE).label
@@ -67,11 +72,14 @@ class RaidKind:
     @classmethod
     def get_effects(cls) -> tuple[str, ...]:
         """
-        One line per thing a won raid of this kind does beyond the loot of the field, in display order.
+        One line for who turns out to meet a raid of this kind, then one per thing a won raid does beyond
+        the loot of the field, in display order.
 
         Read off the constants, so a kind whose numbers change describes itself.
         """
         effects = []
+        if cls.LOCALS_TURNOUT:
+            effects.append(f"{cls.LOCALS_TURNOUT} {cls.LOCALS_NAME} turn out to defend it")
         if cls.PURSE_SHARE:
             effects.append(f"Drives off {cls.PURSE_SHARE:.0%} of their silver, at most {cls.PURSE_CAP}")
         if cls.FYRD_NAMES_BURNED:

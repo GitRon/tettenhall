@@ -21,6 +21,7 @@ from apps.warband.skirmish.messages.events.skirmish import (
     FortificationAssaulted,
     FortificationFell,
     HerdsLifted,
+    LocalsWentHome,
     RoundFinished,
     SkirmishCreated,
     SkirmishFinished,
@@ -37,6 +38,7 @@ from apps.warband.skirmish.services.generators.skirmish.base import BaseSkirmish
 from apps.warband.skirmish.services.raid_defenders import get_raid_defenders
 from apps.warband.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
+from apps.warband.warrior.services.generators.warrior.local import LocalWarriorGenerator
 
 
 @message_registry.register_command(command=skirmish.AttackFaction)
@@ -52,19 +54,29 @@ def handle_attack_faction(*, context: skirmish.AttackFaction) -> list[Event] | E
     # while a skirmish is open. "attackable_targets" asks this same question, so a target that
     # reaches here has somebody to field.
     #
-    # Of those, the raid meets only the men standing where it lands - see [get_raid_defenders]
+    # Of those, the raid meets only the men standing where it lands - see [get_raid_defenders] - and
+    # beside them the people of the place, who turn out for this fight alone and are sent home after it
     raid_kind = get_raid_kind(value=context.raid_kind)
     muster = list(
         Warrior.objects.filter_healthy()
         .filter_faction(faction_id=context.target_faction.id)
         .exclude_currently_busy(month=context.month)
     )
+    local_warriors = [
+        LocalWarriorGenerator(
+            culture=context.target_faction.culture,
+            faction=context.target_faction,
+            savegame_id=context.target_faction.savegame_id,
+        ).process()
+        for _ in range(raid_kind.LOCALS_TURNOUT)
+    ]
 
     return FactionWasAttacked(
         attacking_faction=context.attacking_faction,
         defending_faction=context.target_faction,
         attacking_warriors=list(context.assigned_warriors),
-        defending_warriors=get_raid_defenders(raid_kind=raid_kind, muster=muster),
+        defending_warriors=[*get_raid_defenders(raid_kind=raid_kind, muster=muster), *local_warriors],
+        local_warriors=local_warriors,
         fortification_strength=raid_kind.get_fortification_strength(town=context.target_faction.town),
         raid_kind=context.raid_kind,
         month=context.month,
@@ -114,6 +126,34 @@ def handle_take_raid_yield(*, context: skirmish.TakeRaidYield) -> list[Event]:
     return events
 
 
+@message_registry.register_command(command=skirmish.SendLocalsHome)
+def handle_send_locals_home(*, context: skirmish.SendLocalsHome) -> Event | None:
+    """
+    The men of the place who are still on their feet - or lying senseless on the side that held the
+    field, or gone from it - leave the faction they turned out for, and take their gear home with them.
+
+    Released rather than deleted: the fight's blows, casualties and spoils point at them, and would go
+    with them. The dead stay where they fell, and the defeated men lying senseless are about to be taken
+    prisoner, which is told apart here from the fight's end rather than from whatever the capture has
+    already written - the two are drained in the same batch, in no order this may rely on.
+    """
+    about_to_be_captured_ids = {warrior.id for warrior in context.defeated_unconscious_warriors}
+    going_home = [
+        warrior
+        for warrior in context.skirmish.local_warriors.exclude_dead().filter(
+            faction_id=context.skirmish.defending_faction_id
+        )
+        if warrior.id not in about_to_be_captured_ids
+    ]
+    if not going_home:
+        return None
+
+    for warrior in going_home:
+        Warrior.objects.send_home(obj=warrior)
+
+    return LocalsWentHome(skirmish=context.skirmish, warriors=going_home, month=context.month)
+
+
 @message_registry.register_command(command=skirmish.CreateSkirmish)
 def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] | Event:
     # Both rosters arrive resolved. Whom a faction fields is its own business and is answered by the
@@ -126,6 +166,7 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
         month=context.month,
         fortification_strength=context.fortification_strength,
         raid_kind=context.raid_kind,
+        local_warriors=context.local_warriors,
     )
     new_skirmish = skirmish_generator.process()
 
@@ -447,8 +488,12 @@ def handle_faction_wins_skirmish(*, context: skirmish.WinSkirmish) -> list[Event
     defeated_unconscious_warriors = [warrior for warrior in defeated_warriors_on_the_field if warrior.is_unconscious]
 
     # Only the ones still standing when it was over share in the victory: a warrior who was knocked
-    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did
-    victorious_healthy_warriors = victorious_warriors.filter_healthy()
+    # out or lost his nerve did not see the fight through, and in a mutual wipeout nobody did. Nor do
+    # the men of the place: they go home once it is over, and a man who has left the faction would grow
+    # into a nickname and a log line with no faction to tell it to
+    victorious_healthy_warriors = victorious_warriors.filter_healthy().exclude(
+        id__in=context.skirmish.local_warriors.all()
+    )
 
     # We need to evaluate the QS to avoid hitting the DB in the events
     return SkirmishFinished(

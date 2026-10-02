@@ -27,11 +27,24 @@ class WarriorQuerySet(models.QuerySet):
         senseless is still somebody the others follow. A captive has no faction, so he is not asked.
         The order is the rule - the most renown, then the most experience, then the man who joined
         first - so the same roster always gives the same successor.
+
+        A man of the place who turned out to defend this faction is never asked: he is with it for one
+        fight and goes home once it is over, which would leave the seat to a man who is gone. The
+        non-null guard is the one "occupiable_by" needs, for the same SQL reason: a fight nobody turned
+        out for adds a NULL to the subquery, and "id NOT IN (..., NULL)" would empty the result.
         """
+        # Imported here because the skirmish model imports this module while being defined itself
+        from apps.warband.skirmish.models.skirmish import Skirmish
+
+        locals_of_this_faction = Skirmish.objects.filter(
+            defending_faction=faction, local_warriors__isnull=False
+        ).values("local_warriors")
+
         return (
             self.filter(faction=faction)
             .exclude_dead()
             .exclude(id=fallen_leader.id)
+            .exclude(id__in=locals_of_this_faction)
             .order_by("-renown", "-experience", "id")
         )
 
@@ -612,6 +625,22 @@ class WarriorManager(manager.Manager):
         obj.save(update_fields=("nickname_state",))
 
         return obj
+
+    def send_home(self, *, obj) -> Warrior:
+        """
+        Let a man of the place go home once the fight he turned out for is over, with his gear.
+
+        The opposite of [strip_equipment] on purpose: his sword was never the faction's to keep, so it
+        leaves its stores along with him instead of staying behind in them. Both he and it are left with
+        no faction, which is what keeps them off every roster and every shelf.
+        """
+        # Imported here because the item model reaches back into this package
+        from apps.warband.item.models.item import Item
+
+        obj.refresh_from_db()
+        Item.objects.filter(id__in=[item_id for item_id in (obj.weapon_id, obj.armor_id) if item_id]).update(owner=None)
+
+        return self.set_faction(obj=obj, faction=None)
 
     def set_faction(self, *, obj, faction) -> Warrior:
         """

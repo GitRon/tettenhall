@@ -20,6 +20,8 @@ from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction, FinishRound, StartDuel
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.raids import RAID_KINDS
+from apps.warband.skirmish.raids.kinds import LiftTheHerds, StormTheBurh
 from apps.warband.skirmish.services.march import get_march_cost_refusal
 from apps.warband.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
 from apps.warband.town.buildings import BUILDINGS
@@ -232,8 +234,8 @@ class PlayerTurn:
         """
         Marches on the rival with the fewest men on their feet, with everybody who may go.
 
-        It storms the burh when the policy's margin allows, and otherwise lifts the herds or stays home,
-        as the policy says.
+        It storms the burh when the policy's margin allows over the rival's men and the burh's fyrd, and
+        otherwise lifts the herds or stays home, as the policy says.
         """
         targets = list(Faction.objects.attackable_by(savegame=self.savegame))
         leader = self.faction.get_available_leader(month=self.month)
@@ -245,13 +247,19 @@ class PlayerTurn:
         roster = assess_roster(faction_id=self.faction.id, month=self.month, excluded_ids=(leader.id,))
         band = [leader, *Warrior.objects.filter(id__in=roster.available_ids).order_by("id")]
 
-        raid_kind = RaidKindChoices.STORM_THE_BURH
-        if not self.policy.will_march(band_size=len(band), defenders=self._healthy_men_of(faction=target)):
-            if not self.policy.raids_when_outnumbered:
-                self.report.marches_held_back += 1
-                return None
-            # Too few to storm the burh, so out to the pastures instead, where only some of them stand
+        # Counted the way the attack page shows a raid to the player: the rival's men who would stand there,
+        # and the people of the place who turn out beside them
+        healthy_men = self._healthy_men_of(faction=target)
+        if self.policy.will_march(band_size=len(band), defenders=healthy_men + StormTheBurh.LOCALS_TURNOUT):
+            raid_kind = RaidKindChoices.STORM_THE_BURH
+        elif self.policy.raids_when_outnumbered and self.policy.will_march(
+            band_size=len(band), defenders=healthy_men // len(RAID_KINDS) + LiftTheHerds.LOCALS_TURNOUT
+        ):
+            # Too few to storm the burh, so out to the pastures, where a share of them stands on average
             raid_kind = RaidKindChoices.LIFT_THE_HERDS
+        else:
+            self.report.marches_held_back += 1
+            return None
 
         # The last men to join stay at home until the march is affordable. The leader always goes.
         while len(band) > 1 and get_march_cost_refusal(
