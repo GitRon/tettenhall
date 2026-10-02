@@ -187,7 +187,8 @@ checkout. `node_modules` is missing too, but `content-server.sh` installs it in 
 failing.
 
 The worktree stays behind when the run ends. Phase 7 opens a PR, it does not merge one, and review
-comments need a checkout to be answered in.
+comments need a checkout to be answered in. [`/clean-worktrees`](../clean-worktrees/SKILL.md) removes it
+once the PR is merged.
 
 ### Then take the worktree's lock, and say who you are
 
