@@ -151,7 +151,8 @@ holding that level's numbers:
   `PRICE_STATS_YARDSTICK` and `PRICE_HEALTH_YARDSTICK`. Each grows with `LEVEL_UP_GROWTH` alongside his
   attributes. The leader is the one man off the bill entirely: `draws_a_wage` is false on his generator,
   because he is bought by nobody, cannot be dismissed and cannot walk out, so a price on him would answer
-  no decision the player ever makes. A faction opens with 1000 silver
+  no decision the player ever makes. A man who takes the seat — a successor off the roster, a levy raised
+  from the fyrd — goes off the bill with it (`WarriorManager.take_off_payroll`). A faction opens with 1000 silver
   (`STARTING_SILVER` in `apps/warband/finance/handlers/events/faction.py`) and the cheapest upgrade in the game is the marketplace's
   first paid level at 400, so a band of four mercenaries bills more every month than that building costs
   once. Buildings are what the player saves for; wages are what stops him.
