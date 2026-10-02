@@ -42,13 +42,13 @@ class SmallSanctuary(Sanctuary):
 class MediumSanctuary(Sanctuary):
     MAX_HEALING_POINTS = 28
 
-    BUILDING_COSTS = 1750
+    BUILDING_COSTS = 700
 
 
 class LargeSanctuary(Sanctuary):
     MAX_HEALING_POINTS = 40
 
-    BUILDING_COSTS = 3500
+    BUILDING_COSTS = 1400
 
 
 # Where a faction the player did not create starts, and stays: nothing upgrades a rival's town, so this

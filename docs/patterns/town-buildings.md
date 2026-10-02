@@ -62,15 +62,16 @@ holding that level's numbers:
   is its leader alone earns the baseline whatever it has built: the town is held by the men paid to hold
   it, and a hall bought in month one against no war band is not an annuity (#192). Every other building's
   lever is unconditional.
-- **Costs escalate faster than effects** (roughly ×3.5 then ×2), so the top level of a building is
-  deliberately a poor investment on its effect alone — the Large Hall is worth it for the third mercenary
-  slot, not the revenue.
-- **The first paid level is within the opening purse, and the step above it is the steepest in the game.**
-  400–600 against the 1000 silver a faction starts with, so the first building leaves enough behind to pay
-  a month's wages or hire a man; 1400–2100 for the second. The families keep their order and their
-  spread at every rung — marketplace cheapest, weaponsmith, sanctuary and fortification level with each
-  other, hall dearest — so the choice between them does not change
-  as the town grows.
+- **Every level is reachable within a campaign.** The first paid level is 400–600 against the 1000
+  silver a faction starts with, so the first building leaves enough behind to pay a month's wages or hire
+  a man. The second is only a little dearer (550–800), the third twice that (1100–1600). A faction spends
+  down to its wage bill every month, so a price is only ever reached by a few months of holding back -
+  the second rung is priced for a small band to save in three or four, which a steeper step would put
+  beyond the campaign altogether (#416). Every hall level pays for itself for the men it asks for: the
+  Great Hall in about three months, the High Hall in about eight.
+- **The families keep their order and their spread at every rung** — marketplace cheapest, weaponsmith,
+  sanctuary and fortification level with each other, hall dearest — so the choice between them does not
+  change as the town grows.
 - **Only one building per month**, guarded by `Town.last_constructed_building_at`. Months count from
   1, so **0 means "nothing built yet"** — a town created with the current month in that field cannot
   build for the rest of it, which is why a new town leaves the field at its default.
@@ -136,9 +137,11 @@ holding that level's numbers:
   at their starting levels, so those effects are a player-only power curve - apart from the pub and the
   shop, which every faction restocks off its own hall, marketplace and weaponsmith. The other four ladders
   are #68.
-- **Nobody reaches a second building level.** A rival spends everything above its wage bill every month,
-  so its purse never holds the 1 400–2 100 a second level costs; the player is squeezed the same way. A
-  rival's hall stops at the Small Hall, and the player's town at its first rungs. #416.
+- **A rival never saves, so its hall stops at the Small Hall.** `RivalPolicy` spends everything above its
+  wage bill every month, and its purse sits around 400 — below even the cheaper second rung. A man is
+  always the best thing to buy and every man is a wage, so a rule that holds silver back for the hall
+  starves the band it is meant to pay for; the harness showed either one or the other, never both. What
+  a rival needs is a mechanic that lets it save without that trade - #416.
 - **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
   bonus is the only thing making better gear — none of them has a second effect yet.
 - **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's

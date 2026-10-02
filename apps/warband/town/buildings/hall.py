@@ -6,8 +6,9 @@ class Hall(Building):
     Drives the monthly building income, how many mercenaries the pub holds and how many prisoners the
     cells keep.
 
-    Revenue grows by less than the costs do, so the largest hall never pays for itself out of income
-    alone - what justifies it is the third mercenary slot.
+    Every level pays for itself within a campaign, for the men it asks for: the Great Hall in about
+    three months, the High Hall in about eight. What a level costs is the months its war band goes
+    without the men and gear that silver would have bought, which is a choice a faction has to make.
 
     A level pays its revenue in full only to a faction keeping the men it asks for, and the men it
     asks for are the mercenary slots it opens: the hall that holds three is the hall that needs
@@ -16,8 +17,7 @@ class Hall(Building):
     It is also where the war band feasts, once a month and all of it at once. The level decides how
     much of a cut ceiling a feast gives back - a share of the ceiling a man holds now, mended toward
     the highest he ever held and never past it - and a town with no hall cannot feast at all. That
-    makes the larger halls the repair for a broken nerve as well as the income, which is the reason to
-    build the one income alone never pays for.
+    makes the larger halls the repair for a broken nerve as well as the income.
 
     The feast is priced per head, not per point mended: the whole roster sits down to eat, so the
     roster is what it costs. A man already whole is fed and charged for all the same, which is why the
@@ -124,7 +124,7 @@ class MediumHall(Hall):
 
     FEAST_RESTORED_SHARE = 0.2
 
-    BUILDING_COSTS = 2100
+    BUILDING_COSTS = 800
 
 
 class LargeHall(Hall):
@@ -135,4 +135,4 @@ class LargeHall(Hall):
 
     FEAST_RESTORED_SHARE = 0.3
 
-    BUILDING_COSTS = 4200
+    BUILDING_COSTS = 1600

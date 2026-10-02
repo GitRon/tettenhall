@@ -39,7 +39,7 @@ def test_town_upgrade_view_offers_the_costs_of_the_next_level(logged_in_client, 
 
     assert response.status_code == 200
     # A Mead Hall is standing, so the Great Hall is what the page offers next
-    assert _building(response, "hall")["costs"] == 2100
+    assert _building(response, "hall")["costs"] == 800
 
 
 @pytest.mark.django_db
@@ -189,7 +189,7 @@ def test_town_upgrade_view_keeps_naming_a_price_at_the_maximum_level(logged_in_c
 
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
-    assert _building(response, "hall")["costs"] == 4200
+    assert _building(response, "hall")["costs"] == 1600
 
 
 @pytest.mark.django_db
@@ -268,13 +268,13 @@ def test_upgrade_building_view_charges_the_costs_of_the_building_it_upgrades(log
     town = current_savegame.player_faction.town
     town.weaponsmith = Town.WeaponsmithChoices.WEAPONSMITH_MEDIUM
     town.save()
-    TransactionFactory(faction=current_savegame.player_faction, amount=3500)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1400)
 
     page = logged_in_client.get(reverse("warband:town-upgrade-view"))
     logged_in_client.post(reverse("warband:upgrade-building-view", kwargs={"building_type": "weaponsmith"}))
 
-    # A Master Forge costs 3500, so the advertised price is what leaves the purse
-    assert _building(page, "weaponsmith")["costs"] == 3500
+    # A Master Forge costs 1400, so the advertised price is what leaves the purse
+    assert _building(page, "weaponsmith")["costs"] == 1400
     assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == 0
 
 
