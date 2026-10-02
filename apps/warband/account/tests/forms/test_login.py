@@ -36,8 +36,8 @@ def test_clean_rejects_an_unknown_email():
 @pytest.mark.django_db
 def test_clean_rejects_an_email_shared_by_two_accounts():
     """
-    "User.email" carries no uniqueness constraint, so this used to raise MultipleObjectsReturned and
-    answer the login page with a 500.
+    "User.email" carries no uniqueness constraint, so two accounts can share one. The form has to
+    refuse the pair rather than raise MultipleObjectsReturned and answer the login page with a 500.
     """
     UserFactory(username="beorn", email="shared@tettenhall.test")
     UserFactory(username="cuthred", email="shared@tettenhall.test")

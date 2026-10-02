@@ -1,11 +1,11 @@
 """
 Where the architecture tests look for code.
 
-One helper rather than a copy per test module. The three that used to carry their own version
-disagreed on two things - glob depth, and whether ``__init__.py`` counts - which is how a view
-defined in a ``views/`` package came to be checked for savegame scoping and skipped by the
-finished-savegame guard. Both questions are settled here, once: the walk is recursive, and
-``__init__.py`` is always included, because a view nobody collects is a view nobody checks.
+One helper rather than a copy per test module, because copies drift apart on two things - glob
+depth, and whether ``__init__.py`` counts - and a view defined in a ``views/`` package can then be
+checked for savegame scoping and skipped by the finished-savegame guard. Both questions are
+settled here, once: the walk is recursive, and ``__init__.py`` is always included, because a view
+nobody collects is a view nobody checks.
 
 Handler discovery deliberately mirrors queuebie's own and reads the library's exclusion setting
 rather than restating it, so a test cannot drift from what the bus actually imports.

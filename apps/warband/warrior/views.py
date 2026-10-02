@@ -36,9 +36,9 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
     """
     One man, and the way back to the list he was read off.
 
-    The page carried no navigation of its own at all, so equipping a second warrior meant going
-    through the section nav and the roster again for every one of them. The roster link and the two
-    neighbours below are what make a roster walkable - see docs/patterns/navigation.md.
+    Equipping a whole war band is one man after another, and without a way on from here every one of
+    them would mean the section nav and the roster again. The roster link and the two neighbours below
+    are what make a roster walkable - see docs/patterns/navigation.md.
     """
 
     model = Warrior
@@ -109,8 +109,8 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         player_faction = current_savegame.player_faction if current_savegame else None
         # Seeing and changing are different rights, and a prisoner and a pub mercenary sit between
         # them: the player may read what they carry, but only his own men can be re-equipped - the
-        # update view resolves nobody else. Rendering the edit control for them would be exactly the
-        # control-that-can-only-fail this batch removed twice already.
+        # update view resolves nobody else. Rendering the edit control for them would offer a control
+        # that can only fail.
         context["is_player_faction"] = player_faction is not None and self.object.faction_id == player_faction.id
         # The same function the update view asks before it dispatches, so a control this page offers
         # and a save that view accepts cannot come apart - the shape the dismissal card already uses.

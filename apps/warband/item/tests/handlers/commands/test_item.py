@@ -38,8 +38,8 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 @pytest.mark.django_db
 def test_handle_sell_item_pays_out_the_share_the_market_fetches():
     """
-    Selling used to pay the full list price, which the item keeps and goes back on the shelf at - so
-    selling and buying the same item back was free.
+    Selling pays the market's share, not the full list price, which the item keeps and goes back on
+    the shelf at - otherwise selling and buying the same item back would be free.
     """
     # A trading post fetches 70% of the list price
     faction = FactionFactory(town__marketplace=2)

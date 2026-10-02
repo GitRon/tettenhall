@@ -271,6 +271,31 @@ RENDER_ROWS = {
             },
         ),
     ],
+    "warrior.roster-table": [
+        ("<c-warrior.roster-table><tr><td>Eadred</td></tr></c-warrior.roster-table>", {}),
+    ],
+    "warrior.roster-row": [
+        (
+            '<c-warrior.roster-row :warrior="warrior" :knowledge="knowledge" :wage="wage">Menu</c-warrior.roster-row>',
+            {"warrior": WarriorFactory.build(id=1), "knowledge": WarriorKnowledge.HELD, "wage": 30},
+        ),
+        (
+            '<c-warrior.roster-row :warrior="warrior" :knowledge="knowledge" :wage="wage" :unpaid_note="unpaid_note">'
+            "Menu</c-warrior.roster-row>",
+            {
+                "warrior": WarriorFactory.build(
+                    id=1,
+                    faction=FactionFactory.build(id=1, leader_id=1),
+                    condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS,
+                    weapon=ItemFactory.build(type=ItemTypeFactory.build()),
+                    armor=ItemFactory.build(type=ItemTypeFactory.build()),
+                ),
+                "knowledge": WarriorKnowledge.COMMANDED,
+                "wage": 30,
+                "unpaid_note": "Unpaid for 2 months",
+            },
+        ),
+    ],
     "warrior.roster-gauge": [
         (
             '<c-warrior.roster-gauge :current="current" :maximum="maximum" :baseline="baseline"'

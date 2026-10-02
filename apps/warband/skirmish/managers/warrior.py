@@ -461,8 +461,8 @@ class WarriorManager(manager.Manager):
         The dead draw nothing, and a captive is off the roster already because capture clears his
         faction. Handed over warrior by warrior rather than as a sum, because a faction that cannot
         pay the whole bill has to know who it did manage to pay - and the cost card has to know who
-        it would fail to pay. [Payroll] is what both of them ask; there used to be an aggregate
-        beside this for the card, and the two could answer differently.
+        it would fail to pay. [Payroll] is what both of them ask, so the two cannot answer
+        differently.
 
         The order is the rule: paying from the cheapest up fits the most men into whatever silver
         there is, and leaves the shortfall sitting on the dearest. Those are the veterans, the ones

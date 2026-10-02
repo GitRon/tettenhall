@@ -23,7 +23,6 @@ from apps.warband.faction.messages.events.warrior import (
     PubMercenaryHireApproved,
     WarriorRecruited,
 )
-from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -32,21 +31,6 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
 )
-
-
-def _player_faction() -> Faction:
-    """
-    A faction its own savegame points to as the player's.
-
-    Saved rather than built, because the pub gate compares "savegame.player_faction_id" against the
-    faction's id: two unsaved rows are both None and would pass a comparison that decides who may
-    stock the player's shelf.
-    """
-    faction = FactionFactory()
-    faction.savegame.player_faction = faction
-    faction.savegame.save()
-
-    return faction
 
 
 def test_handle_add_new_warrior_to_faction_pub_stocks_the_shelf():
@@ -89,7 +73,7 @@ def test_handle_add_warrior_who_walked_out_to_pub_is_not_stock():
     The restock empties its shelf with a row delete, so a veteran marked as stock would be destroyed
     at the start of the next month - and a war band that cannot pay its wages would lose him twice.
     """
-    faction = _player_faction()
+    faction = FactionFactory(is_player=True)
     warrior = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
 
     result = handle_add_warrior_who_walked_out_to_pub(
@@ -107,7 +91,7 @@ def test_handle_add_warrior_who_walked_out_to_pub_ignores_a_rival():
     Rivals go unpaid on the same rule, but whose shelf a rival's veteran stands on is #157's decision,
     and parking him in his old faction's pub would take it.
     """
-    player_faction = _player_faction()
+    player_faction = FactionFactory(is_player=True)
     rival = FactionFactory(savegame=player_faction.savegame)
     warrior = WarriorFactory(faction=None, savegame=rival.savegame, culture=rival.culture)
 

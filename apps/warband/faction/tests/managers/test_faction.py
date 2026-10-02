@@ -21,14 +21,9 @@ def player_faction() -> Faction:
     Wired onto its savegame as the player faction, and the month set on it, because "attackable_by"
     reads all three off the savegame - the faction, the month and whether the game is still running.
     """
-    faction = FactionFactory()
+    faction = FactionFactory(savegame__current_month=3, is_player=True)
     faction.leader = WarriorFactory(faction=faction)
     faction.save()
-
-    savegame = faction.savegame
-    savegame.player_faction = faction
-    savegame.current_month = 3
-    savegame.save()
 
     return faction
 

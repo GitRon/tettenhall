@@ -6,9 +6,12 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.training.handlers.commands.training import handle_progress_warrior_training
-from apps.warband.training.messages.commands.training import TrainWarriors
-from apps.warband.training.messages.events.training import WarriorUpgradedSkill
+from apps.warband.training.handlers.commands.training import (
+    handle_change_training_regimen,
+    handle_progress_warrior_training,
+)
+from apps.warband.training.messages.commands.training import ChangeTrainingRegimen, TrainWarriors
+from apps.warband.training.messages.events.training import TrainingRegimenChanged, WarriorUpgradedSkill
 from apps.warband.training.models import Training
 from apps.warband.training.tests.factories.training import TrainingFactory
 
@@ -58,8 +61,8 @@ def test_handle_progress_warrior_training_leaves_out_a_man_away_on_last_months_q
 @pytest.mark.django_db
 def test_handle_progress_warrior_training_moves_the_bar_on_the_lowest_possible_roll():
     """
-    The roll is floored at 1, so there is no longer a month in which a healthy warrior in training
-    gains nothing at all - which used to happen about one month in six and looked like a broken page.
+    The roll is floored at 1, so there is no month in which a healthy warrior in training gains
+    nothing at all. Unfloored, that would happen about one month in six and look like a broken page.
     """
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, strength=10, strength_progress=40)
@@ -215,3 +218,16 @@ def test_handle_progress_warrior_training_advances_faster_in_winter():
     assert result == []
     warrior.refresh_from_db()
     assert warrior.strength_progress == 70
+
+
+@pytest.mark.django_db
+def test_handle_change_training_regimen_stores_the_new_category():
+    training = TrainingFactory(category=Training.TrainingCategory.WEAPON_MASTERY)
+
+    result = handle_change_training_regimen(
+        context=ChangeTrainingRegimen(training=training, category=Training.TrainingCategory.SWIFTNESS)
+    )
+
+    assert result == TrainingRegimenChanged(training=training)
+    training.refresh_from_db()
+    assert training.category == Training.TrainingCategory.SWIFTNESS

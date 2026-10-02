@@ -2,10 +2,9 @@
 
 **A number the player has not earned is fuzzed. A thing he has not seen is absent.**
 
-That is the whole rule, and it is normative for every screen that shows a man. Four screens used to
-answer it separately, in three different ways, and three defects came out of the seams between them —
-each one a screen that had been fixed a week apart from the screen one click away from it. Nothing was
-wrong with any of the four answers; the rule they should all have been derived from was missing.
+That is the whole rule, and it is normative for every screen that shows a man. Screens that answer it
+separately drift apart, and the defects sit in the seams between them: a screen fixed a week apart from
+the screen one click away from it. Every screen derives its answer from the one rule below.
 
 ## The one question
 

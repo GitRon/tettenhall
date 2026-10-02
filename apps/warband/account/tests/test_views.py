@@ -54,8 +54,8 @@ def test_login_view_rejects_a_wrong_password(client):
 @pytest.mark.django_db
 def test_login_view_locks_the_account_after_three_failed_attempts(client):
     """
-    End to end through axes, since AXES_LOCKOUT_TEMPLATE used to point at a template that did not
-    exist - so the third attempt raised TemplateDoesNotExist and answered 500.
+    End to end through axes, because the lockout renders AXES_LOCKOUT_TEMPLATE: if that template
+    does not exist, the third attempt raises TemplateDoesNotExist and answers 500.
     """
     user = UserFactory(email="guthrum@danelaw.test")
     user.set_password("very-secret")

@@ -5,7 +5,7 @@
     {# takes its colour from the text around it. The file travels in a custom property because that is #}
     {# the one thing the stylesheet cannot know: it is the same rule for every icon and only #}
     {# the source differs. #}
-    {# An empty element needs the role and the label to keep the accessible name the alt used to carry - #}
+    {# An empty element needs the role and the label to carry the accessible name an img's alt would - #}
     {# unless the word it stands for is already beside it, where a name would only be read out twice: #}
     {# "silver 50 silver". That is what "decorative" is for. #}
     <span class="svg-icon {{ size }}" style="--svg-icon: url('{% static url %}')" {% if decorative %}aria-hidden="true"{% else %}role="img" aria-label="{{ icon_name }}"{% endif %}></span>

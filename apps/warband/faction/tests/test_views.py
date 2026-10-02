@@ -62,8 +62,7 @@ def savegame_whose_rival_is_the_older_faction(current_savegame) -> Savegame:
     Reachable rather than contrived - the savegame row exists before any faction does, which is what
     "savegame_without_player_faction" describes, and nothing says the player's own is written first.
     """
-    current_savegame.player_faction = FactionFactory(savegame=current_savegame)
-    current_savegame.save()
+    FactionFactory(savegame=current_savegame, is_player=True)
 
     return current_savegame
 
@@ -82,8 +81,8 @@ def test_faction_detail_view_shows_a_rival(logged_in_client, current_savegame):
 @pytest.mark.django_db
 def test_faction_detail_view_sends_the_players_own_faction_to_the_roster(logged_in_client, current_savegame):
     """
-    Every link to the player's own war band used to point here - a bookmark, a fight report, the
-    counter in the bar - and the war band is five pages of its own now.
+    A bookmark, a fight report or the counter in the bar can name the player's own faction here, and
+    his war band has five pages of its own, so this page hands him on to the roster.
     """
     response = logged_in_client.get(
         reverse("warband:faction-detail-view", kwargs={"pk": current_savegame.player_faction_id})
@@ -106,9 +105,8 @@ def test_faction_detail_view_hides_factions_of_other_savegames(logged_in_client,
 @pytest.mark.django_db
 def test_warband_roster_view_resolves_the_current_savegame_once(logged_in_client, current_savegame):
     """
-    Four context processors, the scoping mixin and the view itself all need the current savegame, and
-    they used to ask for it separately - six identical lookups to render one page. They go through the
-    request-scoped resolver now, so the page asks once.
+    Four context processors, the scoping mixin and the view itself all need the current savegame.
+    They share the request-scoped resolver, so the page asks once rather than six times.
     """
     with CaptureQueriesContext(connection) as captured_queries:
         response = logged_in_client.get(reverse("warband:warband-roster-view"))
@@ -201,9 +199,9 @@ def test_faction_detail_view_says_why_the_attack_is_gone_on_the_rival_he_marched
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):
     """
-    The page he is most likely to be looking at, and the one that went quiet: a real march puts the
-    target's defenders on the skirmish roster too, which takes the faction out of "attackable_targets"
-    and used to take the sentence with it.
+    The page he is most likely to be looking at: a real march puts the target's defenders on the
+    skirmish roster too, which takes the faction out of "attackable_targets" - and the sentence must
+    not go with it.
     """
     rival_faction = FactionFactory(savegame=current_savegame)
     rival_warrior = WarriorFactory(faction=rival_faction)
@@ -1502,9 +1500,8 @@ def test_faction_attack_view_sends_the_player_home_on_a_finished_savegame(
 ):
     """
     A decided savegame has to read as "this game is over", not as a 404 about a rival that is no
-    longer on offer. Resolving the target in the view's own dispatch used to answer first and hide
-    the guard entirely - a browser walkthrough found it, since both refusals look the same from a
-    test that only asserts "not 200".
+    longer on offer, so the ended-savegame guard has to answer before the target is resolved. Both
+    refusals look the same to a test that only asserts "not 200", hence the exact redirect here.
     """
     rival_faction = FactionFactory(savegame=current_savegame)
     WarriorFactory(faction=rival_faction)
@@ -1536,7 +1533,7 @@ def test_faction_attack_view_without_an_active_savegame(logged_in_client):
 @pytest.mark.django_db
 def test_monthly_cost_overview_sums_up_the_salaries(logged_in_client, current_savegame):
     """
-    The wage bill is not this view's own any more: it comes off "wage_bill_payroll", the projection
+    The wage bill is not this view's own: it comes off "wage_bill_payroll", the projection
     the salary run bills from, so the card and the month cannot disagree about the number.
     """
     WarriorFactory(faction=current_savegame.player_faction, monthly_salary=30)

@@ -81,10 +81,10 @@ def test_handle_replenish_warrior_morale_fills_up_to_the_maximum():
 @pytest.mark.django_db
 def test_handle_replenish_warrior_morale_rallies_a_warrior_who_was_ordered_to_flee():
     """
-    The other half of the #43 regression: the sweep has to reach a warrior who left the field on
-    purpose, and this has to hand him his nerve back and clear the condition once it does. Written
-    against a real withdrawal rather than a hand-built row, because what has to hold is that the two
-    agree - the retreat leaves exactly the state this handler knows how to undo.
+    The other half of keeping a man from freezing in FLEEING: the sweep has to reach a warrior who
+    left the field on purpose, and this has to hand him his nerve back and clear the condition once
+    it does. Written against a real withdrawal rather than a hand-built row, because what has to hold
+    is that the two agree - the retreat leaves exactly the state this handler knows how to undo.
     """
     warrior = WarriorFactory(current_morale=20, max_morale=20)
     Warrior.objects.withdraw_from_the_fight(obj=warrior, lost_max_morale=1)
@@ -737,10 +737,7 @@ def _shaken_in(*, skirmish, warrior) -> None:
 
 @pytest.mark.django_db
 def test_handle_earn_traits_in_skirmish_grants_the_players_man_his_trait():
-    skirmish = SkirmishFactory(month=6)
-    savegame = skirmish.attacking_faction.savegame
-    savegame.player_faction = skirmish.defending_faction
-    savegame.save()
+    skirmish = SkirmishFactory(month=6, defending_faction__is_player=True)
     warrior = WarriorFactory(faction=skirmish.defending_faction)
     skirmish.defending_warriors.add(warrior)
     _shaken_in(skirmish=skirmish, warrior=warrior)
@@ -772,10 +769,8 @@ def test_handle_earn_traits_in_skirmish_passes_over_the_dead_and_the_captured():
     The dead are past changing, and a man left lying on the field of a lost fight is being led away.
     A man knocked down on the winning side is neither, and is asked.
     """
-    skirmish = SkirmishFactory()
+    skirmish = SkirmishFactory(attacking_faction__is_player=True)
     player_faction = skirmish.attacking_faction
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
     dead = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
     captured = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     skirmish.attacking_warriors.add(dead, captured)
@@ -790,10 +785,8 @@ def test_handle_earn_traits_in_skirmish_passes_over_the_dead_and_the_captured():
 
 @pytest.mark.django_db
 def test_handle_earn_traits_in_skirmish_asks_a_man_knocked_down_on_the_winning_side():
-    skirmish = SkirmishFactory()
+    skirmish = SkirmishFactory(attacking_faction__is_player=True)
     player_faction = skirmish.attacking_faction
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
     warrior = WarriorFactory(faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
     skirmish.attacking_warriors.add(warrior)
     _shaken_in(skirmish=skirmish, warrior=warrior)
@@ -806,10 +799,8 @@ def test_handle_earn_traits_in_skirmish_asks_a_man_knocked_down_on_the_winning_s
 
 @pytest.mark.django_db
 def test_handle_earn_traits_in_skirmish_is_silent_for_a_man_the_fight_left_as_he_was():
-    skirmish = SkirmishFactory()
+    skirmish = SkirmishFactory(attacking_faction__is_player=True)
     player_faction = skirmish.attacking_faction
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
     skirmish.attacking_warriors.add(WarriorFactory(faction=player_faction))
 
     result = handle_earn_traits_in_skirmish(context=EarnTraitsInSkirmish(skirmish=skirmish, month=1))

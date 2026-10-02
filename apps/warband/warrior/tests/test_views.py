@@ -81,8 +81,8 @@ def test_warrior_weapon_update_view_equips_the_chosen_weapon(logged_in_client, c
 @pytest.mark.django_db
 def test_warrior_weapon_update_view_swaps_with_the_man_carrying_the_chosen_weapon(logged_in_client, current_savegame):
     """
-    Flow test: the real queue, so this is what says the cascade no longer has to be walked in one
-    order. Neither man had to be re-equipped first to release anything.
+    Flow test: the real queue, so this is what says the cascade does not have to be walked in one
+    order. Neither man has to be re-equipped first to release anything.
     """
     warrior = WarriorFactory(faction=current_savegame.player_faction)
     holder = WarriorFactory(faction=current_savegame.player_faction)
@@ -321,8 +321,8 @@ def test_warrior_recruit_captured_view_cannot_recruit_into_a_rival_faction(logge
 @pytest.mark.django_db
 def test_warrior_enslave_captured_view_cannot_enslave_a_rivals_captive(logged_in_client, current_savegame):
     """
-    The transaction is written for the faction holding the prisoner, so this used to pay a rival for
-    selling his own captive.
+    The transaction is written for the faction holding the prisoner, so letting this through would
+    pay a rival for selling his own captive.
     """
     rival_faction = FactionFactory(savegame=current_savegame)
     third_party = FactionFactory(savegame=current_savegame)
@@ -501,7 +501,7 @@ def test_warrior_detail_view_treats_a_rivals_warrior_as_a_rivals_man(logged_in_c
 @pytest.mark.django_db
 def test_warrior_detail_view_claims_the_players_own_warrior_for_the_war_band(logged_in_client, current_savegame):
     """
-    What membership still decides on its own, now that the knowledge rule has the numbers: which
+    What membership decides on its own, the knowledge rule having the numbers: which
     section of the game this man's page belongs to, and whether his wages are the player's to read.
     """
     warrior = WarriorFactory(faction=current_savegame.player_faction)
@@ -555,8 +555,8 @@ def test_warrior_detail_view_says_nothing_about_a_rivals_wage_troubles(logged_in
 @pytest.mark.django_db
 def test_warrior_weapon_update_view_rejects_an_unknown_attribute(logged_in_client, current_savegame):
     """
-    The attribute is a free URL segment, so a hand-typed one used to reach a RuntimeError in the
-    form and answer 500 where 404 belongs.
+    The attribute is a free URL segment, so a hand-typed one has to be answered with a 404 rather
+    than reach the form as a RuntimeError and a 500.
     """
     warrior = WarriorFactory(faction=current_savegame.player_faction)
 
@@ -830,7 +830,7 @@ def test_warrior_weapon_update_view_declines_to_take_a_weapon_off_a_man_in_an_op
     logged_in_client, current_savegame
 ):
     """
-    The far end of a swap, which the field's own list no longer offers - so a posted id is not a
+    The far end of a swap, which the field's own list does not offer - so a posted id is not a
     valid choice and the sword stays where it is.
     """
     warrior = WarriorFactory(faction=current_savegame.player_faction)

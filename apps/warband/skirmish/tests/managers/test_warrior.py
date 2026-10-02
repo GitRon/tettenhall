@@ -356,7 +356,7 @@ def test_withdraw_from_the_fight_never_lets_the_ceiling_reach_nothing():
     """
     The floor is load-bearing, not tidiness. At "max_morale = 0" the sweep refills a man to zero, and
     "replenish_current_morale" asks for more than zero before it clears the condition - so a warrior
-    whose ceiling ran out would be frozen FLEEING exactly as #43 described.
+    whose ceiling ran out would be frozen FLEEING for good.
     """
     warrior = WarriorFactory(current_morale=1, max_morale=1)
 

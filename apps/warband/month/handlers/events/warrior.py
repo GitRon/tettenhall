@@ -44,8 +44,8 @@ def handle_warrior_earned_nickname(*, context: WarriorEarnedNickname) -> Command
     """
     The one line that tells the player his man has a name now.
 
-    A name nobody is told about is a name nobody uses, and the epithet was silently moving before this
-    existed - so the moment it is settled is the moment to say so. It is said once per man for the
+    A name nobody is told about is a name nobody uses, and an epithet that settles unannounced moves
+    silently - so the moment it is settled is the moment to say so. It is said once per man for the
     whole savegame, which is what keeps it off the upkeep tally.
     """
     return CreatePlayerMonthLog(

@@ -82,8 +82,8 @@ def test_process_honours_the_action_posted_for_the_players_own_warrior():
 @pytest.mark.django_db
 def test_process_when_the_player_is_the_defending_side():
     """
-    The side split is what this story changes, and #21 exists because that distinction was got wrong
-    before - being the attacker does not mean being the player.
+    Being the attacker does not mean being the player, so the side split has to follow the player's
+    faction rather than the attacking role.
     """
     skirmish = SkirmishFactory()
     enemy = _fast_attacker(skirmish.attacking_faction)

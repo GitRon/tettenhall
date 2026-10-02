@@ -46,6 +46,8 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-warrior.portrait>` | `apps.warband` | A man's stacked face, `card` or `full` crop, in the caller's `frame`; the silhouette when he has none - see [portraits](portraits.md) |
 | `<c-warrior.portrait-layer>` | `apps.warband` | One beard or hair layer of the portrait, placed and tinted |
 | `<c-warrior.row>` | `apps.warband` | One man as a row on a rival's roster, a rival's cells or a pub; `is_pub` adds the recruit control |
+| `<c-warrior.roster-table>` | `apps.warband` | The table of the men the player decides about - his war band and his cells - with the rows as the slot |
+| `<c-warrior.roster-row>` | `apps.warband` | One man as a line of that table, at the caller's `knowledge` and `wage`; the row menu is the slot, `unpaid_note` the line under his name |
 | `<c-warrior.roster-gauge>` | `apps.warband` | A gauge in the roster and captive tables: the bar against his own maximum beside `<c-warrior.gauge>`, the word alone where the numbers are fuzzed |
 | `<c-warrior.roster-gear>` | `apps.warband` | A weapon or armour cell in those tables, its roll and average under the name; a dash for an empty slot |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |

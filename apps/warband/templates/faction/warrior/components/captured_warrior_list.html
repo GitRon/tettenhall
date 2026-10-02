@@ -34,7 +34,15 @@
             {# worth. His own cells are a table he decides from, like his roster; a rival's prisoners keep #}
             {# the row, since the player is owed neither their figures nor their gear. #}
             {% if is_player_faction %}
-                {% include 'faction/warrior/components/captive_table.html' with captive_list=captive_list faction=faction knowledge=held_knowledge %}
+                {# The wage is public, and it is the one recruiting him commits the player to every month #}
+                {# after - a leader draws nothing while he leads, and is put on a wage once he is taken on #}
+                <c-warrior.roster-table>
+                    {% for warrior in captive_list %}
+                        <c-warrior.roster-row :warrior="warrior" :knowledge="held_knowledge" :wage="warrior.wage_once_recruited">
+                            {% include 'faction/warrior/components/captive_row_menu.html' with warrior=warrior faction=faction %}
+                        </c-warrior.roster-row>
+                    {% endfor %}
+                </c-warrior.roster-table>
             {% else %}
                 <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
                     {% for warrior in captive_list %}
