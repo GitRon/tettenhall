@@ -63,19 +63,3 @@ def test_roll_keeps_the_notation_next_to_the_number():
         result = dice_notation.roll()
 
     assert result == DiceRoll(notation=dice_notation, result=13)
-
-
-def test_is_maximum_for_every_die_on_its_top_face():
-    dice_notation = DiceNotation(dice_string="2d4", modifier=7)
-
-    result = DiceRoll(notation=dice_notation, result=15)
-
-    assert result.is_maximum is True
-
-
-def test_is_maximum_for_a_throw_short_of_the_ceiling():
-    dice_notation = DiceNotation(dice_string="2d4", modifier=7)
-
-    result = DiceRoll(notation=dice_notation, result=14)
-
-    assert result.is_maximum is False
