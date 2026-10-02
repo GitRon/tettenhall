@@ -19,8 +19,10 @@ from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.raids.kinds import BurnTheVillage, LiftTheHerds, StormTheBurh
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL, Palisade
@@ -1321,7 +1323,7 @@ def test_faction_attack_view_shows_the_form(logged_in_client, current_savegame, 
 
 
 @pytest.mark.django_db
-def test_faction_attack_view_warns_of_the_wall_before_the_march(
+def test_faction_attack_view_names_the_wall_each_raid_meets_before_the_march(
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):
     rival_faction = FactionFactory(savegame=current_savegame, town__fortification=NPC_STARTING_FORTIFICATION_LEVEL)
@@ -1330,7 +1332,11 @@ def test_faction_attack_view_warns_of_the_wall_before_the_march(
     response = logged_in_client.get(reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
-    assert response.context["fortification_strength"] == Palisade.FORTIFICATION_STRENGTH
+    assert response.context["raid_kind_list"] == [
+        (LiftTheHerds, 0),
+        (BurnTheVillage, 0),
+        (StormTheBurh, Palisade.FORTIFICATION_STRENGTH),
+    ]
 
 
 @pytest.mark.django_db
@@ -1364,7 +1370,7 @@ def test_faction_attack_view_fights_the_rivals_own_war_band(
 
     response = logged_in_client.post(
         reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}),
-        data={"assigned_warriors": [follower.id]},
+        data={"assigned_warriors": [follower.id], "raid_kind": RaidKindChoices.STORM_THE_BURH},
     )
 
     assert response.status_code == 302
@@ -1375,6 +1381,24 @@ def test_faction_attack_view_fights_the_rivals_own_war_band(
     assert list(skirmish.defending_warriors.all()) == [rival_leader]
     assert list(skirmish.attacking_warriors.all()) == [player_faction_ready_to_march.leader, follower]
     assert skirmish.month == current_savegame.current_month
+
+
+@pytest.mark.django_db
+def test_faction_attack_view_marches_on_the_raid_the_player_chose(
+    logged_in_client, current_savegame, player_faction_ready_to_march, queuebie_registry
+):
+    """A raid on the herds is fought in the open, whatever wall the town has built."""
+    rival_faction = FactionFactory(savegame=current_savegame, town__fortification=NPC_STARTING_FORTIFICATION_LEVEL)
+    rival_faction.leader = WarriorFactory(faction=rival_faction)
+    rival_faction.save()
+
+    logged_in_client.post(
+        reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}),
+        data={"assigned_warriors": [], "raid_kind": RaidKindChoices.LIFT_THE_HERDS},
+    )
+
+    skirmish = Skirmish.objects.get(defending_faction=rival_faction)
+    assert (skirmish.raid_kind, skirmish.fortification_strength) == (RaidKindChoices.LIFT_THE_HERDS, 0)
 
 
 @pytest.mark.django_db
@@ -1391,7 +1415,7 @@ def test_faction_attack_view_lands_on_the_fight_it_started(
 
     response = logged_in_client.post(
         reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}),
-        data={"assigned_warriors": []},
+        data={"assigned_warriors": [], "raid_kind": RaidKindChoices.STORM_THE_BURH},
     )
 
     skirmish = Skirmish.objects.get(defending_faction=rival_faction)

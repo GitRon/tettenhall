@@ -59,13 +59,18 @@ no judgement of its own to either, so a change to how the AI fights or spends mo
 on no quest but the odd job, uses no Rally or Assault by choice and throws no feasts. A question that turns on one of those needs a policy
 that uses it.
 
-**Policies** differ only in when the band marches:
+**Policies** differ only in when the band marches, and on what. Every march storms the burh unless the
+policy says otherwise:
 
 | Policy | Marches when |
 |---|---|
 | `aggressive` | every month it can |
 | `even` | the band is at least as large as the target's healthy men |
 | `prudent` | the band is at least two larger |
+| `raider` | as `even` on the burh, and lifts the target's herds in a month `even` would stay home |
+
+Only `raider` ever draws the [raid](raids.md) defenders at random, so the other three play every seed the
+same way they did before raid kinds existed.
 
 A game ends when it is won or lost, when it reaches `--months`, or when the harness cannot go on. In that
 last case the reason goes into `stop_reason` instead of the loop:
@@ -76,7 +81,7 @@ last case the reason goes into `stop_reason` instead of the loop:
 
 Each game in the JSON has its seed, its policy, its outcome and the number of months played. It also has:
 
-- fights won and lost, and marches held back by the policy or by the purse;
+- fights won and lost, marches held back by the policy or by the purse, and raids on a rival's herds;
 - how many men were drafted, hired, taken in from the cells and sent on a quest, and how many towns were
   occupied;
 - how many items the player bought, and how many equips the hand-out made;

@@ -72,6 +72,12 @@ class FactionQuerySet(models.QuerySet):
         month for the rest of the savegame. Unreachable in ordinary play, where a fallen leader is
         either succeeded or takes his faction with him, so this is a guard rather than a rule the
         player will meet.
+
+        So is a rival whose band was beaten this month in a raid that does not open the town - on its
+        herds or its village. Such a raid bleeds a rival without ending it, so finishing one is a choice
+        made by storming the burh. It is an exclusion rather than a demand for a won burh assault: a
+        rival left with nobody healthy for any other reason stays occupiable, so no rival can be left
+        neither attackable nor occupiable. A beaten rival drafts or hires when the next month opens.
         """
         if savegame.is_over:
             return self.none()
@@ -93,10 +99,21 @@ class FactionQuerySet(models.QuerySet):
             Warrior.objects.filter_healthy().filter(faction__isnull=False).values("faction_id")
         )
 
+        # Imported here for the same reason as the warrior model above
+        from apps.warband.skirmish.models.skirmish import Skirmish
+        from apps.warband.skirmish.raids import RAID_KINDS
+
+        factions_beaten_in_a_raid_this_month = Skirmish.objects.filter(
+            month=savegame.current_month,
+            raid_kind__in=[raid_kind.VALUE for raid_kind in RAID_KINDS if not raid_kind.OPENS_TOWN],
+            victorious_faction_id=F("attacking_faction_id"),
+        ).values("defending_faction_id")
+
         return (
             self.rivals_in_play(player_faction=player_faction)
             .exclude(id__in=factions_with_a_healthy_warrior)
             .exclude(leader__isnull=True)
+            .exclude(id__in=factions_beaten_in_a_raid_this_month)
         )
 
     def attackable_targets(self, *, player_faction, month: int):

@@ -12,6 +12,7 @@ from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
 from apps.warband.quest.quests.harvest_hands import HarvestHands
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -281,6 +282,22 @@ def test_march_held_back_by_the_policy(player_savegame, rng, report):
 
     assert result is None
     assert report.marches_held_back == 1
+
+
+@pytest.mark.django_db
+def test_march_lifts_the_herds_when_the_policy_holds_it_back_from_the_burh(
+    player_savegame, rng, report, queuebie_registry
+):
+    """The rival has two men to the player's one, so "raider" goes after the herds instead of the burh."""
+    rival = FactionFactory(savegame=player_savegame)
+    rival.leader = WarriorFactory(faction=rival)
+    rival.save()
+    WarriorFactory(faction=rival)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["raider"], rng=rng, report=report).march()
+
+    assert Skirmish.objects.get().raid_kind == RaidKindChoices.LIFT_THE_HERDS
+    assert report.herd_raids == 1
 
 
 @pytest.mark.django_db

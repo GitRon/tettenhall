@@ -14,10 +14,12 @@ from apps.warband.skirmish.handlers.events.battle_history import (
     handle_log_blow_was_not_struck,
     handle_log_fortification_assaulted,
     handle_log_fortification_fell,
+    handle_log_herds_lifted,
     handle_log_item_dropped,
     handle_log_leader_rallied,
     handle_log_round_finished,
     handle_log_skirmish_finished,
+    handle_log_village_burned,
     handle_log_warrior_death,
     handle_log_warrior_defends_all_damage,
     handle_log_warrior_incapacitation,
@@ -38,8 +40,10 @@ from apps.warband.skirmish.messages.events.skirmish import (
     AttackerDefenderDecided,
     FortificationAssaulted,
     FortificationFell,
+    HerdsLifted,
     RoundFinished,
     SkirmishFinished,
+    VillageBurned,
 )
 from apps.warband.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.warband.skirmish.messages.events.warrior import (
@@ -889,4 +893,40 @@ def test_handle_log_attacker_defender_decided_says_the_slower_man_answers_after(
         skirmish=skirmish,
         message="Beorn is quicker than Cuthred and strikes first with a Fast attack, and Cuthred's "
         "Simple attack comes after it.",
+    )
+
+
+def test_handle_log_herds_lifted():
+    skirmish = SkirmishFactory.build()
+
+    result = handle_log_herds_lifted(
+        context=HerdsLifted(
+            skirmish=skirmish,
+            raiding_faction=FactionFactory.build(name="Mercia"),
+            raided_faction=FactionFactory.build(name="Wessex"),
+            amount=90,
+            month=4,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="Mercia drive off the herds of Wessex, worth 90 silver."
+    )
+
+
+def test_handle_log_village_burned():
+    skirmish = SkirmishFactory.build()
+
+    result = handle_log_village_burned(
+        context=VillageBurned(
+            skirmish=skirmish,
+            raiding_faction=FactionFactory.build(name="Mercia"),
+            raided_faction=FactionFactory.build(name="Wessex"),
+            fyrd_names=2,
+            month=4,
+        )
+    )
+
+    assert result == CreateBattleHistory(
+        skirmish=skirmish, message="The village of Wessex burns, and 2 names of its fyrd burn with it."
     )

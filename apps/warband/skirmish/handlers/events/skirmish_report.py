@@ -17,7 +17,7 @@ from apps.warband.skirmish.messages.commands.skirmish_report import (
     RecordSkirmishSpoil,
     RecordWarriorGrowth,
 )
-from apps.warband.skirmish.messages.events import item, transaction, warrior
+from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.warband.skirmish.models import SkirmishCasualty, SkirmishSpoil
 
 
@@ -163,4 +163,24 @@ def handle_record_stopped_blow(*, context: warrior.WarriorDefendedAllDamage) -> 
         defender_action=context.defender_action,
         defense=context.defense,
         outcome=context.outcome,
+    )
+
+
+@message_registry.register_event(event=skirmish.HerdsLifted)
+def handle_record_herds_lifted(*, context: skirmish.HerdsLifted) -> Command:
+    return RecordSkirmishSpoil(
+        skirmish=context.skirmish,
+        faction=context.raiding_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_HERDS_LIFTED,
+        amount=context.amount,
+    )
+
+
+@message_registry.register_event(event=skirmish.VillageBurned)
+def handle_record_village_burned(*, context: skirmish.VillageBurned) -> Command:
+    return RecordSkirmishSpoil(
+        skirmish=context.skirmish,
+        faction=context.raiding_faction,
+        kind=SkirmishSpoil.KindChoices.KIND_VILLAGE_BURNED,
+        amount=context.fyrd_names,
     )

@@ -33,6 +33,7 @@ from apps.warband.savegame.services.current_savegame import get_current_savegame
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.raids import RAID_KINDS
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
@@ -563,8 +564,11 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
-        # Said before the march, from the same answer the march itself is staged with
-        context["fortification_strength"] = self.object.town.get_fortification_strength()
+        # Said before the march, from the same answers the march itself is staged with: the wall each
+        # raid meets and what each one takes
+        context["raid_kind_list"] = [
+            (raid_kind, raid_kind.get_fortification_strength(town=self.object.town)) for raid_kind in RAID_KINDS
+        ]
         context["successor"] = self.current_savegame.player_faction.get_successor()
         return context
 
@@ -580,6 +584,7 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
                 # decided by the route that was allowed to be reached
                 target_faction=self.object,
                 assigned_warriors=form.get_assigned_warriors(),
+                raid_kind=form.cleaned_data["raid_kind"],
                 month=self.current_savegame.current_month,
             )
         )

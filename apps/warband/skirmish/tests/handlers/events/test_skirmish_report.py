@@ -1,4 +1,5 @@
 from apps.common.domain.dice import DiceNotation, DiceRoll
+from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
@@ -8,6 +9,7 @@ from apps.warband.skirmish.handlers.events.skirmish_report import (
     handle_record_captured_warrior,
     handle_record_gained_experience,
     handle_record_gained_level,
+    handle_record_herds_lifted,
     handle_record_improved_stats,
     handle_record_incapacitated_warrior,
     handle_record_killed_warrior,
@@ -16,6 +18,7 @@ from apps.warband.skirmish.handlers.events.skirmish_report import (
     handle_record_looted_silver,
     handle_record_routed_warrior,
     handle_record_stopped_blow,
+    handle_record_village_burned,
 )
 from apps.warband.skirmish.messages.commands.skirmish_report import (
     RecordSkirmishBlow,
@@ -24,6 +27,7 @@ from apps.warband.skirmish.messages.commands.skirmish_report import (
     RecordWarriorGrowth,
 )
 from apps.warband.skirmish.messages.events.item import ItemDroppedAsLoot
+from apps.warband.skirmish.messages.events.skirmish import HerdsLifted, VillageBurned
 from apps.warband.skirmish.messages.events.transaction import WarriorDroppedSilver
 from apps.warband.skirmish.messages.events.warrior import (
     WarriorDefendedAllDamage,
@@ -284,4 +288,42 @@ def test_handle_record_routed_warrior_records_the_rout():
         skirmish=skirmish,
         warrior=warrior,
         fate=SkirmishCasualty.FateChoices.FATE_FLED,
+    )
+
+
+def test_handle_record_herds_lifted_credits_the_raiders():
+    skirmish = SkirmishFactory.build()
+    raiding_faction = FactionFactory.build()
+
+    result = handle_record_herds_lifted(
+        context=HerdsLifted(
+            skirmish=skirmish,
+            raiding_faction=raiding_faction,
+            raided_faction=FactionFactory.build(),
+            amount=90,
+            month=4,
+        )
+    )
+
+    assert result == RecordSkirmishSpoil(
+        skirmish=skirmish, faction=raiding_faction, kind=SkirmishSpoil.KindChoices.KIND_HERDS_LIFTED, amount=90
+    )
+
+
+def test_handle_record_village_burned_credits_the_raiders_with_the_names():
+    skirmish = SkirmishFactory.build()
+    raiding_faction = FactionFactory.build()
+
+    result = handle_record_village_burned(
+        context=VillageBurned(
+            skirmish=skirmish,
+            raiding_faction=raiding_faction,
+            raided_faction=FactionFactory.build(),
+            fyrd_names=2,
+            month=4,
+        )
+    )
+
+    assert result == RecordSkirmishSpoil(
+        skirmish=skirmish, faction=raiding_faction, kind=SkirmishSpoil.KindChoices.KIND_VILLAGE_BURNED, amount=2
     )

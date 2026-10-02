@@ -4,7 +4,7 @@ from queuebie.messages import Command
 from apps.warband.calendar.months import get_calendar_month
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
 from apps.warband.skirmish.messages.events import transaction
-from apps.warband.skirmish.messages.events.skirmish import FactionWasAttacked
+from apps.warband.skirmish.messages.events.skirmish import FactionWasAttacked, HerdsLifted
 
 
 @message_registry.register_event(event=transaction.WarriorDroppedSilver)
@@ -35,3 +35,23 @@ def handle_pay_march_cost_for_attack(*, context: FactionWasAttacked) -> Command 
         reason=f"Winter march on {context.defending_faction}",
         month=context.month,
     )
+
+
+@message_registry.register_event(event=HerdsLifted)
+def handle_herds_lifted_change_hands(*, context: HerdsLifted) -> list[Command]:
+    # Two rows rather than one: the silver leaves one ledger and lands in the other, and each faction's
+    # purse is the sum of its own rows alone
+    return [
+        CreateTransaction(
+            faction=context.raiding_faction,
+            amount=context.amount,
+            reason=f"Herds lifted from {context.raided_faction}",
+            month=context.month,
+        ),
+        CreateTransaction(
+            faction=context.raided_faction,
+            amount=-context.amount,
+            reason=f"Herds lifted by {context.raiding_faction}",
+            month=context.month,
+        ),
+    ]

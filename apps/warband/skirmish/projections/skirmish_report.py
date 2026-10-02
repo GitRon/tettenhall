@@ -160,6 +160,36 @@ class SkirmishReport:
     def silver_lost(self) -> int:
         return sum(spoil.amount for spoil in self._lost(kind=SkirmishSpoil.KindChoices.KIND_SILVER_LOOTED))
 
+    def _raid_amount(self, *, kind: int, gained: bool) -> int:
+        """
+        What a raid took, from this faction's side: the amount it gained, or the amount the other side took
+        off it.
+
+        Apart from the loot because a raid's spoil is taken off the faction rather than off a man, so it
+        carries no warrior, and the roster test [_gained] and [_lost] sort by has nothing to read.
+        """
+        return sum(
+            spoil.amount
+            for spoil in self.spoil_list
+            if spoil.kind == kind and (spoil.faction_id == self.faction.id) is gained
+        )
+
+    @property
+    def herd_silver_won(self) -> int:
+        return self._raid_amount(kind=SkirmishSpoil.KindChoices.KIND_HERDS_LIFTED, gained=True)
+
+    @property
+    def herd_silver_lost(self) -> int:
+        return self._raid_amount(kind=SkirmishSpoil.KindChoices.KIND_HERDS_LIFTED, gained=False)
+
+    @property
+    def fyrd_names_burned(self) -> int:
+        return self._raid_amount(kind=SkirmishSpoil.KindChoices.KIND_VILLAGE_BURNED, gained=True)
+
+    @property
+    def fyrd_names_lost(self) -> int:
+        return self._raid_amount(kind=SkirmishSpoil.KindChoices.KIND_VILLAGE_BURNED, gained=False)
+
     def _own_casualties_with_fate(self, *, fate: int) -> list:
         return [
             casualty
@@ -251,5 +281,6 @@ class SkirmishReport:
                 or self.prisoners_taken
             )
             or (self.silver_looted + self.silver_lost) > 0
+            or (self.herd_silver_won + self.herd_silver_lost + self.fyrd_names_burned + self.fyrd_names_lost) > 0
             or (self.enemy_killed_count + self.enemy_downed_count) > 0
         )

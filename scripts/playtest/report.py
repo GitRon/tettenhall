@@ -35,6 +35,8 @@ class GameReport:
     fights_won: int = 0
     fights_lost: int = 0
     marches_held_back: int = 0
+    # Marches on a rival's herds rather than its burh
+    herd_raids: int = 0
     marches_unaffordable: int = 0
     occupations: int = 0
     drafted: int = 0

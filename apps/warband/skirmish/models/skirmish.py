@@ -2,6 +2,7 @@ import typing
 
 from django.db import models
 
+from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.managers.skirmish import SkirmishManager
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -22,6 +23,11 @@ class Skirmish(models.Model):
     # The wall as it stood when the fight was staged. Never worn down, so the round heading can say how
     # much of it the assaults have taken rather than only how much is left.
     starting_fortification_strength = models.PositiveSmallIntegerField("Starting fortification strength", default=0)
+    # What the attackers set out to take, which decides what a victory hands them on top of the loot of
+    # the field and whether it opens the town - see "apps.warband.skirmish.raids"
+    raid_kind = models.PositiveSmallIntegerField(
+        "Raid kind", choices=RaidKindChoices.choices, default=RaidKindChoices.STORM_THE_BURH
+    )
 
     # Named for the role each side plays in the fight. Which of them the player holds - if either - is
     # a question for the savegame, so nothing here has to be true of every skirmish ever created
