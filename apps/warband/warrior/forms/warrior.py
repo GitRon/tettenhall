@@ -118,11 +118,12 @@ class WarriorForm(forms.ModelForm):
             )
             .exclude(warrior_weapon__in=fighting_warrior_ids)
             .exclude(warrior_armor__in=fighting_warrior_ids)
-            .select_related("type", "warrior_weapon", "warrior_armor")
+            .select_related("type", "warrior_weapon__faction", "warrior_armor__faction")
         )
 
         # The option labels ask every item who is carrying it, and the reverse one-to-ones above are
-        # what keeps that to the one query the select already costs
+        # what keeps that to the one query the select already costs. The carrier's faction comes too,
+        # because naming him asks whether he holds its seat - see [Warrior.is_leader]
         self.fields[htmx_field].wearer = self.instance
 
     def _post_clean(self) -> None:

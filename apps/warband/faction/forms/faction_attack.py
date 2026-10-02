@@ -7,6 +7,7 @@ from apps.common import form_styles
 from apps.warband.calendar.months import get_calendar_month
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.services.march import get_march_cost_refusal
+from apps.warband.warrior.forms.fields import WarriorMultipleChoiceField
 from apps.warband.warrior.forms.widgets import RosterCheckboxSelectMultiple
 from apps.warband.warrior.services.availability import assess_roster
 
@@ -26,9 +27,9 @@ class FactionAttackForm(forms.Form):
     # Which rule is keeping each of the others at home is said on his own row now - see
     # [assess_roster], which is where that vocabulary lives for both forms that need it.
     EMPTY_NO_OTHERS = "You have nobody else on the roster."
-    EMPTY_TAIL = "Your leader marches alone."
+    EMPTY_TAIL = f"Your {Warrior.LEADER_TITLE} marches alone."
 
-    assigned_warriors = forms.ModelMultipleChoiceField(
+    assigned_warriors = WarriorMultipleChoiceField(
         queryset=Warrior.objects.none(),
         label="Assigned warriors",
         # The leader marches on his own if it comes to it - a lone attack is a bad idea, not an
@@ -94,7 +95,7 @@ class FactionAttackForm(forms.Form):
         if unavailable:
             raise forms.ValidationError(
                 "%(names)s cannot march this month.",
-                params={"names": ", ".join(warrior.name for warrior in unavailable)},
+                params={"names": ", ".join(warrior.display_name for warrior in unavailable)},
             )
 
         return assigned_warriors

@@ -8,9 +8,9 @@
 {% endcomment %}
 {% if leader %}
     <p class="m-0 text-sm leading-snug text-ink-muted">
-        Should <span class="text-ink">{{ leader }}</span> fall,
+        Should <span class="text-ink">{{ leader.display_name }}</span> fall,
         {% if successor %}
-            <span class="text-ink">{{ successor }}</span> leads.
+            <span class="text-ink">{{ successor.display_name }}</span> leads.
         {% else %}
             the war band is finished.
         {% endif %}

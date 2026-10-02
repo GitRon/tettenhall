@@ -18,7 +18,7 @@
                     {% for casualty in report.own_casualties %}
                         <li>
                             <i class="fa-solid fa-skull-crossbones text-blood"></i>
-                            {{ casualty.warrior }}
+                            {{ casualty.warrior.display_name }}
                             <span class="text-sm leading-snug text-ink-muted">· {{ casualty.get_fate_display|lower }}</span>
                         </li>
                     {% endfor %}
@@ -42,7 +42,7 @@
                     {% for casualty in report.prisoners_taken %}
                         <li>
                             <i class="fa-solid fa-lock text-ink-muted"></i>
-                            {{ casualty.warrior }} <span class="text-sm leading-snug text-ink-muted">· taken prisoner</span>
+                            {{ casualty.warrior.display_name }} <span class="text-sm leading-snug text-ink-muted">· taken prisoner</span>
                         </li>
                     {% endfor %}
                     {% if report.enemy_killed_count %}
@@ -99,7 +99,7 @@
                     {% for growth in report.growth_list %}
                         <li>
                             <i class="fa-solid fa-arrow-trend-up text-ink-muted"></i>
-                            {{ growth.warrior }}: {{ growth.gained_experience }} experience
+                            {{ growth.warrior.display_name }}: {{ growth.gained_experience }} experience
                             {% if growth.reached_level %}
                                 · reached level {{ growth.reached_level }}
                                 <span class="text-sm leading-snug text-ink-muted">
@@ -121,7 +121,7 @@
                     {% for spoil in report.items_lost %}
                         <li class="text-ink-muted">
                             {{ spoil.item_name }}
-                            {% if spoil.warrior %}<span class="text-sm leading-snug text-ink-muted">· off {{ spoil.warrior }}</span>{% endif %}
+                            {% if spoil.warrior %}<span class="text-sm leading-snug text-ink-muted">· off {{ spoil.warrior.display_name }}</span>{% endif %}
                         </li>
                     {% endfor %}
                     {% if report.silver_lost %}

@@ -12,8 +12,9 @@
                 <td>{{ object.name }}</td>
             </tr>
             <tr>
-                <td>Their leader</td>
-                <td>{{ object.leader }}</td>
+                {# The name carries the title, so the label names the relation rather than the seat #}
+                <td>Led by</td>
+                <td>{{ object.leader.display_name }}</td>
             </tr>
             <tr>
                 {# Said at zero too: an open field is worth knowing before a march as much as a wall is #}
@@ -22,8 +23,8 @@
             </tr>
             <tr>
                 {# Yours marches whether he is listed here or not, so say so rather than offer a choice #}
-                <td>Your leader</td>
-                <td>{{ form.leader }} (always joins)</td>
+                <td>Leading you</td>
+                <td>{{ form.leader.display_name }} (always joins)</td>
             </tr>
             <tr>
                 {# The risk the march takes, said where the leader is sent rather than after he fell #}
