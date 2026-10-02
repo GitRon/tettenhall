@@ -84,6 +84,21 @@ class AwardEarnedNickname(Command):
 
 
 @dataclass(kw_only=True)
+class GrantRenown(Command):
+    """
+    A flat amount of renown for one named man, earned outside a fight.
+
+    Separate from "IncreaseRenown", which works its amount out from the man who fell: here whoever
+    asks names the amount, so a quest or an incident can pay renown as a constant of its own.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    renown: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class FadeIdleWarriorRenown(Command):
     # The faction holding him, which for a captive is his captor, as on [WarriorMonthPrepared]
     faction: Faction

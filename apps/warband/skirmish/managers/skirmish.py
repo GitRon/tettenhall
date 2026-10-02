@@ -53,7 +53,7 @@ class SkirmishManager(manager.Manager):
         same fight: killing the player's leader ends the savegame, which force-resolves every open
         skirmish - including the one that round is still resolving. The two passes hold separate
         instances of the same row, so nothing in memory can see the other's write. Refusing the
-        second here is what keeps the loser from being stripped twice and the quest from paying
+        second here is what keeps the loser from being stripped twice and the loot from being paid
         twice.
         """
         updated = self.filter(pk=skirmish.pk, victorious_faction__isnull=True).update(

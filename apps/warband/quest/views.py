@@ -7,6 +7,7 @@ from queuebie.runner import handle_message
 from apps.warband.quest.forms.quest_accept import QuestAcceptForm
 from apps.warband.quest.messages.commands.quest import AcceptQuest
 from apps.warband.quest.models.quest import Quest
+from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
@@ -23,31 +24,30 @@ class QuestAcceptView(
 
     def get_queryset(self):
         # A logged-in user need not have a savegame yet, and there is no month to ask about then. The
-        # scoping mixin would narrow to nothing anyway, so this only has to avoid dereferencing it -
-        # the same guard FactionAttackView carries, for the same reason.
+        # scoping mixin would narrow to nothing anyway, so this only has to avoid dereferencing it.
         if self.current_savegame is None:
             return super().get_queryset().none()
 
-        # The board and this view are scoped the same way, so the "Accept" link and the page it leads
-        # to can never disagree about which quests can still be taken on
-        return super().get_queryset().resolvable(month=self.current_savegame.current_month)
+        # Only this month's offers. The board is redrawn when the month turns, and a stale tab must
+        # not send men on an errand that was never offered for the month they would be away in
+        return super().get_queryset().offered_in(month=self.current_savegame.current_month)
 
     def dispatch(self, request, *args, **kwargs):
-        # The savegame first: resolving the quest runs the scoped queryset above, which needs the
-        # month to ask whether the target can still field a defender
+        # The savegame first: resolving the quest runs the scoped queryset above, which needs the month
         self.current_savegame = get_current_savegame_for_request(request=self.request)
         self.object = self.get_object()
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["quest_id"] = self.object.id
-        kwargs["player_faction_id"] = self.current_savegame.player_faction_id
+        kwargs["quest"] = self.object
+        kwargs["month"] = self.current_savegame.current_month
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
+        context["entry"] = QUESTS_BY_NAME[self.object.quest]
         return context
 
     def form_valid(self, form):
@@ -56,8 +56,7 @@ class QuestAcceptView(
         handle_message(
             AcceptQuest(
                 accepting_faction=self.current_savegame.player_faction,
-                # The scoped object from the URL, not the posted field: the latter is a hidden
-                # input and naming someone else's quest in it must not accept that quest
+                # The scoped object from the URL: nothing posted names the quest
                 quest=self.object,
                 # The form cleans to a queryset, and messages carry lists
                 assigned_warriors=list(form.cleaned_data["assigned_warriors"]),
@@ -67,12 +66,10 @@ class QuestAcceptView(
 
         # A message rather than an "HX-Trigger": this form is a plain post and the response is a
         # redirect, so the browser navigates away and nothing is left to read a header
-        messages.add_message(self.request, messages.SUCCESS, f'You accepted the quest "{self.object}".')
+        messages.add_message(self.request, messages.SUCCESS, f"Your men set out: {self.object}")
 
         return response
 
     def get_success_url(self):
-        # Home rather than back to the board: the quest just taken is no longer pinned there, so the
-        # board is at best what is left over and at worst an empty page. The fight the contract set up
-        # is what waits on the player now, and the dashboard is where the month's open business is.
-        return reverse("warband:dashboard-view")
+        # Back to the board, which now names who is away and what is still on offer
+        return reverse("warband:town-board-view")

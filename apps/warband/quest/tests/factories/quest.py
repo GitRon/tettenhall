@@ -3,18 +3,17 @@ from factory.django import DjangoModelFactory
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.models.quest import Quest
+from apps.warband.quest.quests.harvest_hands import HarvestHands
 
 
 class QuestFactory(DjangoModelFactory):
     class Meta:
         model = Quest
 
-    name = factory.Sequence(lambda n: f"Quest {n}")
-    loot = 200
-    target_faction = factory.SubFactory(FactionFactory)
-    difficulty = Quest.DifficultyChoices.DIFFICULTY_EASY
-    # The top of the easy band the difficulty above carries, so a quest out of this factory is one
-    # written against a target that can field a full war band
-    expected_opposition = 5
-    # Open country, so the purse of a quest out of this factory is the difficulty's alone
-    fortification_strength = 0
+    faction = factory.SubFactory(FactionFactory)
+    month = 1
+    # The odd job, because it takes a single man: a quest out of this factory can be sent on by any
+    # faction with one warrior
+    quest = HarvestHands.__name__
+    title = HarvestHands.TITLE
+    body = HarvestHands.BODY

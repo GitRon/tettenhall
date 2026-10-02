@@ -1,34 +1,50 @@
 from queuebie import message_registry
 from queuebie.messages import Event
 
-from apps.warband.quest.messages.commands.quest_contract import (
-    AssignSkirmishToQuestContract,
-    RemoveQuestContractAsActiveQuest,
-)
-from apps.warband.quest.messages.events.quest_contract import (
-    QuestContractAsActiveQuestRemoved,
-    SkirmishToQuestContractAssigned,
-)
+from apps.warband.quest.messages.commands.quest_contract import BringQuestContractsHome
+from apps.warband.quest.messages.events.quest_contract import QuestContractLapsed, QuestContractReturned
+from apps.warband.quest.models.quest_contract import QuestContract
+from apps.warband.quest.quests import QUESTS_BY_NAME
 
 
-@message_registry.register_command(command=AssignSkirmishToQuestContract)
-def handle_assign_skirmish_to_quest_contract(*, context: AssignSkirmishToQuestContract) -> Event:
-    quest_contract = context.quest_contract
-    quest_contract.skirmish = context.skirmish
-    quest_contract.save()
+@message_registry.register_command(command=BringQuestContractsHome)
+def handle_bring_quest_contracts_home(*, context: BringQuestContractsHome) -> list[Event]:
+    """
+    Bring every errand the faction sent men on before this month home, and draw what each brought.
 
-    return SkirmishToQuestContractAssigned(quest_contract=quest_contract)
+    Asked of the men still on the roster when it lands, not of the men who set out: a man sent can be
+    gone by now, and only the ones who are still the faction's share in what came back. A quest whose
+    men are all gone lapses with a line of its own.
 
+    Runs as the month opens, ahead of the salary run, so a man who walks out unpaid this month comes
+    home first and leaves afterwards.
+    """
+    messages = []
 
-@message_registry.register_command(command=RemoveQuestContractAsActiveQuest)
-def handle_remove_quest_contract_as_active_quest(*, context: RemoveQuestContractAsActiveQuest) -> Event:
-    # The contract's own faction, asked here rather than carried on the command. The caller used to
-    # hand in the skirmish's attacking side, which is only the signatory because the faction that
-    # accepts a quest is also the one that marches: clearing the active quest of a faction that never
-    # signed it is a silent no-op, so the real holder kept a finished quest forever. Reading the
-    # relation is a query, which is why it happens in this command handler and not in the event
-    # handler that raises the command.
-    faction = context.quest_contract.faction
-    faction.active_quests.remove(context.quest_contract)
+    for quest_contract in QuestContract.objects.filter(faction=context.faction).still_away(month=context.month):
+        # The month turn that lands this write is the one that brings the men home; a second one
+        # overlapping it finds the contract resolved and leaves it alone
+        if not QuestContract.objects.mark_resolved(quest_contract=quest_contract, month=context.month):
+            continue
 
-    return QuestContractAsActiveQuestRemoved(quest_contract=context.quest_contract, faction=faction)
+        warriors = list(
+            quest_contract.assigned_warriors.filter(faction_id=context.faction.id).exclude_dead().order_by("id")
+        )
+
+        if not warriors:
+            messages.append(
+                QuestContractLapsed(faction=context.faction, quest_contract=quest_contract, month=context.month)
+            )
+            continue
+
+        messages.append(
+            QuestContractReturned(
+                faction=context.faction,
+                quest_contract=quest_contract,
+                warriors=warriors,
+                outcome=QUESTS_BY_NAME[quest_contract.quest].draw_outcome(warriors=warriors),
+                month=context.month,
+            )
+        )
+
+    return messages

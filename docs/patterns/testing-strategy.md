@@ -121,13 +121,13 @@ Both are taken from the existing suite and pass.
 
 ```python
 # Unit, no database: a pure mapping handler only reads from the message, so build() is enough
-def test_handle_offer_new_quests_on_bulletin_board_maps_to_command():
+def test_handle_offer_quests_for_new_month_maps_to_command():
     faction = FactionFactory.build()
     context = PlayerMonthPrepared(faction=faction, savegame=SavegameFactory.build(), current_month=7)
 
-    result = handle_offer_new_quests_on_bulletin_board(context=context)
+    result = handle_offer_quests_for_new_month(context=context)
 
-    assert result == OfferNewQuestsOnBulletinBoard(faction=faction, month=7)
+    assert result == OfferQuests(faction=faction, month=7)
 
 
 # Unit with database: a command handler that changes state, one test per branch

@@ -14,8 +14,8 @@ def get_warriors_in_an_open_fight(*, warrior_list: list[Warrior]) -> set[int]:
 
     "filter_standing_in_an_open_fight" and not "exclude_currently_busy", which is the broader rule
     dismissal answers from. The two now disagree about who is unavailable, and that is the decision
-    rather than an oversight: a pending quest contract points at a warrior who must not vanish out of
-    it, so dismissal has to refuse a man the day he signs on. A slot is only read while a blow is
+    rather than an oversight: a quest contract points at a warrior who must not vanish out of it,
+    so dismissal has to refuse a man the day he is sent. A slot is only read while a blow is
     being thrown, so arming before the rosters are fixed is the decision the gear economy is built on
     and a settled fight has no roll left to exploit.
     """

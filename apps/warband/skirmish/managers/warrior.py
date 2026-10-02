@@ -100,7 +100,7 @@ class WarriorQuerySet(models.QuerySet):
 
     def filter_sworn_to_a_quest(self, *, month: int):
         """
-        The men who have already signed on to a quest in "month".
+        The men sent away on a quest in "month".
 
         One "EXISTS" about the warrior, which is what the exclusion below inherits. Spelled instead as
         a filter over the joined contracts it reads per through-row, and a warrior holding contracts in
@@ -641,6 +641,23 @@ class WarriorManager(manager.Manager):
         obj.save(update_fields=("monthly_salary",))
 
         return obj.monthly_salary
+
+    def take_off_payroll(self, *, obj):
+        """
+        Stop paying a man who has taken the leader's seat, and wipe what he was owed.
+
+        The leader is the one man off the bill (`draws_a_wage` on his generator): he cannot be
+        dismissed and cannot walk out, so a wage on him answers no decision. A man who rises into the
+        seat - a successor off the roster, a levy raised from the fyrd - would otherwise keep the wage
+        he was hired at, and an unpaid leader never gets his nerve back, so a war band whose leader
+        routed in a lean month could never march again.
+        """
+        obj.refresh_from_db()
+        obj.monthly_salary = 0
+        obj.unpaid_months = 0
+        obj.save(update_fields=("monthly_salary", "unpaid_months"))
+
+        return obj
 
 
 WarriorManager = WarriorManager.from_queryset(WarriorQuerySet)

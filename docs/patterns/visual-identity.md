@@ -120,7 +120,7 @@ else is outlined.
 
 ### The row action
 
-Every other control that acts on one thing - *Accept* on a quest, *Buy*, *Sell*, *Recruit*, *Build*, the
+Every other control that acts on one thing - *Send men* on a quest, *Buy*, *Sell*, *Recruit*, *Build*, the
 Month page's way into each section - is the **row action**, the `row-action` utility in
 `assets/css/tailwind.css`: the mono label in `ink`, a `rule-strong` outline, the `raised` hover, one size.
 It sits at the right of its row or of its card's footer, as a control. Never as bare text, and never

@@ -3,7 +3,7 @@ from factory.django import DjangoModelFactory
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.models.quest_contract import QuestContract
-from apps.warband.quest.tests.factories.quest import QuestFactory
+from apps.warband.quest.quests.harvest_hands import HarvestHands
 
 
 class QuestContractFactory(DjangoModelFactory):
@@ -11,7 +11,12 @@ class QuestContractFactory(DjangoModelFactory):
         model = QuestContract
 
     faction = factory.SubFactory(FactionFactory)
-    # Keep the quest target inside the same savegame as the signing faction
-    quest = factory.SubFactory(QuestFactory, target_faction__savegame=factory.SelfAttribute("...faction.savegame"))
+    quest = HarvestHands.__name__
+    title = HarvestHands.TITLE
     accepted_in_month = 1
-    skirmish = None
+    resolved_in_month = None
+
+    @factory.post_generation
+    def assigned_warriors(self, create, extracted, **kwargs):
+        if create and extracted:
+            self.assigned_warriors.add(*extracted)

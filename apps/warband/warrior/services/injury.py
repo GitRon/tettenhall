@@ -58,7 +58,7 @@ class InjuryRollService:
             raise RuntimeError(
                 "No injury types exist. "
                 "Load the reference data with "
-                "'loaddata culture itemtype questtype injurytype traittype portraitpiece haircolour'."
+                "'loaddata culture itemtype injurytype traittype portraitpiece haircolour'."
             )
 
         return injury_type

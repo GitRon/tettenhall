@@ -1,43 +1,46 @@
+import pytest
+
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.finance.handlers.events.quest import handle_pay_march_cost_for_quest
+from apps.warband.finance.handlers.events.quest import handle_quest_silver
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
-from apps.warband.quest.messages.events.quest import QuestAccepted
-from apps.warband.quest.tests.factories.quest import QuestFactory
+from apps.warband.quest.messages.events.quest_contract import QuestContractReturned
+from apps.warband.quest.quests.harvest_hands import HarvestHands
+from apps.warband.quest.quests.kings_summons import KingsSummons
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
-def test_handle_pay_march_cost_for_quest_in_the_yule_month():
-    """Month 9 is Ærra Geola, where the winter march costs 15 a man."""
-    accepting_faction = FactionFactory.build()
-    target_faction = FactionFactory.build(name="Tamworth")
+@pytest.mark.django_db
+def test_handle_quest_silver_pays_every_man_who_came_home():
+    faction = FactionFactory()
+    warriors = WarriorFactory.create_batch(2, faction=faction)
+    outcome = HarvestHands.OUTCOMES[0]
 
-    result = handle_pay_march_cost_for_quest(
-        context=QuestAccepted(
-            accepting_faction=accepting_faction,
-            target_faction=target_faction,
-            quest=QuestFactory.build(),
-            quest_contract=QuestContractFactory.build(),
-            assigned_warriors=[WarriorFactory.build(), WarriorFactory.build()],
-            target_warriors=[WarriorFactory.build()],
-            month=9,
+    result = handle_quest_silver(
+        context=QuestContractReturned(
+            faction=faction,
+            quest_contract=QuestContractFactory(faction=faction),
+            warriors=warriors,
+            outcome=outcome,
+            month=3,
         )
     )
 
     assert result == CreateTransaction(
-        faction=accepting_faction, amount=-30, reason="Winter march on Tamworth", month=9
+        faction=faction, amount=outcome.silver_per_man * 2, reason=outcome.title, month=3
     )
 
 
-def test_handle_pay_march_cost_for_quest_in_summer():
-    result = handle_pay_march_cost_for_quest(
-        context=QuestAccepted(
-            accepting_faction=FactionFactory.build(),
-            target_faction=FactionFactory.build(),
-            quest=QuestFactory.build(),
-            quest_contract=QuestContractFactory.build(),
-            assigned_warriors=[WarriorFactory.build()],
-            target_warriors=[WarriorFactory.build()],
+@pytest.mark.django_db
+def test_handle_quest_silver_for_an_outcome_paying_none():
+    faction = FactionFactory()
+
+    result = handle_quest_silver(
+        context=QuestContractReturned(
+            faction=faction,
+            quest_contract=QuestContractFactory(faction=faction),
+            warriors=[WarriorFactory(faction=faction)],
+            outcome=KingsSummons.OUTCOMES[0],
             month=3,
         )
     )

@@ -43,10 +43,6 @@ _SHELF_CHANGED = (
     "One row of a pub or shop changing hands. The month log speaks for a restock as a whole "
     "(TownMercenariesRestocked, TownShopRestocked), and the pages read the relation when they render."
 )
-_CONTRACT_BOOKKEEPING = (
-    "Bookkeeping on a quest contract the skirmish drives. The reward and the report both hang off "
-    "SkirmishFinished, which carries the contract itself."
-)
 _INCIDENT_LEVER = (
     "One of the levers an incident pulls in somebody else's topic. It announces a change its own command "
     "handler has already made, and the incident wrote the player's line about it before it ran - a "
@@ -86,12 +82,22 @@ TERMINAL_MESSAGES: dict[str, str] = {
         "left to do with them."
     ),
     "apps.warband.month.messages.events.month.PlayerMonthLogCreated": _RECORD_WRITTEN,
-    "apps.warband.quest.messages.events.quest.NewQuestCreated": (
-        "The bulletin board speaks for the batch through BulletinBoardQuestsOffered; one quest being written "
-        "adds nothing to that."
+    "apps.warband.quest.messages.events.quest.QuestsOffered": (
+        "This month's offers live on their rows, and the board and the month standing read them from there "
+        "when they render. Nothing else holds a copy that would need telling."
     ),
-    "apps.warband.quest.messages.events.quest_contract.QuestContractAsActiveQuestRemoved": _CONTRACT_BOOKKEEPING,
-    "apps.warband.quest.messages.events.quest_contract.SkirmishToQuestContractAssigned": _CONTRACT_BOOKKEEPING,
+    "apps.warband.quest.messages.events.quest.QuestAccepted": (
+        "The contract is the whole of it: who is away is asked of the contract wherever a man's availability "
+        "is, and what the errand brings home is QuestContractReturned's when the month turns."
+    ),
+    "apps.warband.skirmish.messages.events.skirmish.SkirmishCreated": (
+        "A staged fight lives on its row. The march that staged it leads the player there, and the open "
+        "skirmishes are read off the rows when a page renders."
+    ),
+    "apps.warband.warrior.messages.events.warrior.WarriorRenownGranted": (
+        "The month log line the returning quest writes already says what it brought home, and renown is a "
+        "standing read off the warrior's column where it is shown."
+    ),
     "apps.warband.skirmish.messages.events.battle_history.BattleHistoryCreated": _RECORD_WRITTEN,
     "apps.warband.skirmish.messages.events.skirmish_report.SkirmishBlowRecorded": _RECORD_WRITTEN,
     "apps.warband.skirmish.messages.events.skirmish_report.SkirmishCasualtyRecorded": _RECORD_WRITTEN,

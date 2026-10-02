@@ -6,7 +6,7 @@ from apps.warband.finance.models import Transaction
 from apps.warband.incident.models import PendingIncident
 from apps.warband.item.models import Item, ItemType
 from apps.warband.month.models import PlayerMonthLog
-from apps.warband.quest.models import Quest, QuestContract, QuestType
+from apps.warband.quest.models import Quest, QuestContract
 from apps.warband.savegame.models import Savegame
 from apps.warband.skirmish.models import (
     BattleHistory,
@@ -35,7 +35,6 @@ __all__ = [
     "PortraitPiece",
     "Quest",
     "QuestContract",
-    "QuestType",
     "Savegame",
     "Skirmish",
     "SkirmishBlow",

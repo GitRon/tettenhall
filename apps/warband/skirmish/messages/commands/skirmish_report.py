@@ -18,7 +18,6 @@ class RecordSkirmishSpoil(Command):
     item: Item = None
     warrior: Warrior = None
     amount: int = 0
-    description: str = ""
 
 
 @dataclass(kw_only=True)

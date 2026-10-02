@@ -4,7 +4,6 @@ from django.db.models import QuerySet
 from apps.warband.faction.managers.faction import FactionManager
 from apps.warband.faction.models.culture import Culture
 from apps.warband.item.models import Item
-from apps.warband.quest.models import Quest
 from apps.warband.skirmish.models import Warrior
 
 
@@ -13,12 +12,6 @@ class Faction(models.Model):
     culture = models.ForeignKey(Culture, verbose_name="Culture", on_delete=models.CASCADE)
     fyrd_reserve = models.PositiveSmallIntegerField(
         "Fyrd reserve", default=0, help_text="Number of warriors draft-able from the fyrd"
-    )
-    active_quests = models.ManyToManyField(
-        "warband.QuestContract",
-        verbose_name="Active Quest",
-        blank=True,
-        help_text="There can only be one active quest at a time.",
     )
     leader = models.ForeignKey(
         "warband.Warrior",
@@ -45,9 +38,6 @@ class Faction(models.Model):
     )
     available_mercenaries = models.ManyToManyField(
         Warrior, verbose_name="Available mercenaries", related_name="available_pub_mercenaries", blank=True
-    )
-    available_quests = models.ManyToManyField(
-        Quest, verbose_name="Available quests", related_name="available_town_quests", blank=True
     )
 
     objects = FactionManager()
@@ -92,8 +82,8 @@ class Faction(models.Model):
         The faction's leader, if he is fit to march this month.
 
         "The leader always joins" is the one part of a war band the player does not get to compose,
-        so a leader who is wounded, dead or already promised to a quest is not a warrior to leave at
-        home - it means the faction has no attack to launch at all.
+        so a leader who is wounded, dead, away on a quest or already in a fight is not a warrior to
+        leave at home - it means the faction has no attack to launch at all.
         """
         if self.leader_id is None:
             return None
@@ -110,11 +100,9 @@ class Faction(models.Model):
         """
         Whether this faction's war band has already taken the field this month.
 
-        A war band marches once a month, and it is out whenever its leader went into a fight - every
-        attack, and a quest when he was sent on it. Asked of the fights rather than of the man leading
-        today: a leader who falls is succeeded mid-month, and the man who takes the seat may have stayed
-        at home and be busy with nothing. A quest fought without the leader leaves the march open, as it
-        leaves the leader free.
+        A war band marches once a month, and it is out whenever its leader went into a fight. Asked of
+        the fights rather than of the man leading today: a leader who falls is succeeded mid-month, and
+        the man who takes the seat may have stayed at home and be busy with nothing.
         """
         return self.attacking_skirmishes.filter(month=month, attacking_leader__isnull=False).exists()
 

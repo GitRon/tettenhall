@@ -28,8 +28,8 @@ def get_dismissal_refusals(
     warrior_id_list = [warrior.id for warrior in warrior_list]
 
     # One query for the whole roster. "exclude_currently_busy" is the game's existing definition of
-    # busy - signed on to a quest this month, or standing on the roster of a fight - and a man
-    # dismissed out of one of those leaves a skirmish pointing at a warrior with no faction.
+    # busy - away on a quest this month, or standing on the roster of a fight - and a man dismissed
+    # out of one of those leaves a contract or a skirmish pointing at a warrior with no faction.
     free_warrior_ids = set(
         Warrior.objects.filter(id__in=warrior_id_list).exclude_currently_busy(month=month).values_list("id", flat=True)
     )

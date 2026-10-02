@@ -18,7 +18,7 @@ A month's constants are the whole of what it does:
 
 | Constant | Read by |
 |---|---|
-| `MARCH_COST_PER_WARRIOR` | the attack and quest forms (refusal), and the finance handlers that pay a march |
+| `MARCH_COST_PER_WARRIOR` | the attack form (refusal), and the finance handler that pays a march |
 | `TRAINING_FACTOR` | `handle_progress_warrior_training`, applied before the rounding and the floor at 1 |
 | `HARVEST_SILVER` | the finance and month-log handlers on `FactionMonthPrepared` |
 | `FYRD_REPLENISHES` | `handle_replenish_fyrd_reserve` |
@@ -47,9 +47,9 @@ Everything the month does to a faction applies to every faction: the fyrd, train
 off `FactionMonthPrepared` or a per-faction command. The march cost is charged to whoever marches, which
 today is only the player — rivals marching, and paying for it, is #315.
 
-A march is a direct attack or an accepted quest; both muster the target's defenders and cost the same per
-man. The forms refuse a march the purse cannot pay (`get_march_cost_refusal`, weighed against the balance
-as it stands, the way a feast is), and the price is paid on `FactionWasAttacked` and `QuestAccepted`.
+A march is a direct attack on a rival; a quest musters nobody and is not one. The attack form refuses a
+march the purse cannot pay (`get_march_cost_refusal`, weighed against the balance as it stands, the way a
+feast is), and the price is paid on `FactionWasAttacked`.
 
 ## Incidents
 
@@ -58,5 +58,5 @@ An incident may declare the months it can be drawn in — see [month incidents](
 ## Display
 
 Months and seasons are labels, so they are set in `font-mono` wherever they are one — the resource bar,
-the year at a glance, the march row on the attack and quest pages. The month band's heading stays a
+the year at a glance, the march row on the attack page. The month band's heading stays a
 heading, in the display face. See [visual identity](visual-identity.md).

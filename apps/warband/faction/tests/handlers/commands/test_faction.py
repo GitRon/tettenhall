@@ -243,6 +243,28 @@ def test_handle_defeat_faction_of_lost_leader_seats_the_man_with_the_most_renown
 
 
 @pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_takes_the_successor_off_the_payroll():
+    """The leader is never paid: the man who takes the seat stops drawing the wage he was hired at."""
+    _, faction, leader = _rival_led_by_a_fallen_leader()
+    successor = WarriorFactory(faction=faction, savegame=faction.savegame, monthly_salary=80, unpaid_months=2)
+
+    handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    successor.refresh_from_db()
+    assert (successor.monthly_salary, successor.unpaid_months) == (0, 0)
+
+
+@pytest.mark.django_db
+def test_handle_defeat_faction_of_lost_leader_takes_the_levy_off_the_payroll():
+    _, faction, leader = _rival_led_by_a_fallen_leader(fyrd_reserve=1)
+
+    handle_defeat_faction_of_lost_leader(context=DefeatFactionOfLostLeader(warrior=leader))
+
+    faction.refresh_from_db()
+    assert faction.leader.monthly_salary == 0
+
+
+@pytest.mark.django_db
 def test_handle_defeat_faction_of_lost_leader_settles_a_tie_on_experience():
     _, faction, leader = _rival_led_by_a_fallen_leader()
     WarriorFactory(faction=faction, savegame=faction.savegame, renown=10, experience=100)

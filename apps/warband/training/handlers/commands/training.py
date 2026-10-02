@@ -4,6 +4,7 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.warband.calendar.months import get_calendar_month
+from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.training.messages.commands.training import CreateNewTraining, TrainWarriors
 from apps.warband.training.messages.events.training import NewTrainingCreated, WarriorUpgradedSkill
 from apps.warband.training.models import Training
@@ -31,11 +32,13 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
     # Winter drills indoors, so the whole war band advances faster in the same month
     improvement_factor = get_calendar_month(month=context.month).TRAINING_FACTOR
 
-    # Condition is the whole test, because standing in a fight is not a state a warrior can be in
-    # while this runs: the advance is refused outright when a skirmish is unresolved
-    # ("FinishMonthView"), and nothing the advance itself raises creates one -
-    # both paths into a skirmish are player clicks, accepting a quest and marching on a rival.
-    warriors_to_train = context.faction.warriors.filter_healthy()
+    # Standing in a fight is not a state a warrior can be in while this runs: the advance is refused
+    # outright when a skirmish is unresolved ("FinishMonthView"), and nothing the advance itself
+    # raises creates one - the one path into a skirmish is a player click, marching on a rival. A man
+    # who spent the month that ended away on a quest was not at the drill, so he is left out of it.
+    warriors_to_train = context.faction.warriors.filter_healthy().exclude(
+        id__in=Warrior.objects.filter_sworn_to_a_quest(month=context.month - 1).values("id")
+    )
 
     event_list = []
 

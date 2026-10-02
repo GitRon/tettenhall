@@ -41,7 +41,7 @@ class _BlockingRule:
     reason: Callable[[Warrior], str]
 
 
-REASON_SWORN_TO_A_QUEST = "Already sworn to a quest this month"
+REASON_SWORN_TO_A_QUEST = "Away on a quest this month"
 REASON_COMMITTED_TO_A_FIGHT = "Committed to a fight this month"
 
 

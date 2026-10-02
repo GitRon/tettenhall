@@ -1,22 +1,24 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.warband.calendar.months import get_calendar_month
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
-from apps.warband.quest.messages.events.quest import QuestAccepted
+from apps.warband.quest.messages.events.quest_contract import QuestContractReturned
 
 
-@message_registry.register_event(event=QuestAccepted)
-def handle_pay_march_cost_for_quest(*, context: QuestAccepted) -> Command | None:
-    # An accepted quest musters the target's defenders exactly as a direct attack does, so it is the
-    # same march and costs the same per man
-    march_cost = get_calendar_month(month=context.month).get_march_cost(warrior_count=len(context.assigned_warriors))
-    if not march_cost:
+@message_registry.register_event(event=QuestContractReturned)
+def handle_quest_silver(*, context: QuestContractReturned) -> Command | None:
+    """
+    What the errand paid, for every man who came home from it.
+
+    The chronicle line is the reason, the way an incident's is, so the ledger reads like the log.
+    """
+    amount = context.outcome.silver_per_man * len(context.warriors)
+    if amount == 0:
         return None
 
     return CreateTransaction(
-        faction=context.accepting_faction,
-        amount=-march_cost,
-        reason=f"Winter march on {context.target_faction}",
+        faction=context.faction,
+        amount=amount,
+        reason=context.outcome.title,
         month=context.month,
     )

@@ -152,21 +152,17 @@ def test_skirmish_to_enter_is_none_while_several_fights_stand_unstarted():
 
 
 @pytest.mark.django_db
-def test_quest_count_counts_only_the_quests_that_can_still_be_taken_on():
+def test_quest_count_counts_only_this_month_s_offers():
     """
-    Through the same queryset the town square offers cards from, so the dashboard cannot promise a
-    quest the board then refuses: a target with nobody left to defend it is no quest at all.
+    Through the same queryset the board lists its offers from, so the dashboard cannot promise a
+    quest the board then does not show.
     """
     savegame = SavegameFactory()
     player_faction = FactionFactory(savegame=savegame)
     savegame.player_faction = player_faction
     savegame.save()
-    defended_target = FactionFactory(savegame=savegame)
-    WarriorFactory(faction=defended_target)
-    player_faction.available_quests.add(
-        QuestFactory(target_faction=defended_target),
-        QuestFactory(target_faction=FactionFactory(savegame=savegame)),
-    )
+    QuestFactory(faction=player_faction, month=savegame.current_month)
+    QuestFactory(faction=player_faction, month=savegame.current_month + 1)
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 

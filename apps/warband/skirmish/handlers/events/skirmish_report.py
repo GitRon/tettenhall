@@ -17,7 +17,7 @@ from apps.warband.skirmish.messages.commands.skirmish_report import (
     RecordSkirmishSpoil,
     RecordWarriorGrowth,
 )
-from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
+from apps.warband.skirmish.messages.events import item, transaction, warrior
 from apps.warband.skirmish.models import SkirmishCasualty, SkirmishSpoil
 
 
@@ -40,26 +40,6 @@ def handle_record_looted_silver(*, context: transaction.WarriorDroppedSilver) ->
         kind=SkirmishSpoil.KindChoices.KIND_SILVER_LOOTED,
         warrior=context.warrior,
         amount=context.amount,
-    )
-
-
-@message_registry.register_event(event=skirmish.SkirmishFinished)
-def handle_record_quest_reward(*, context: skirmish.SkirmishFinished) -> Command | None:
-    """
-    The largest single reward a fight pays, and the one thing about it no relation carries.
-
-    Guarded on the same figure as the payout itself: a contract signed by the side that lost pays
-    nothing, and a fight with no contract behind it has nothing to report.
-    """
-    if context.quest_loot <= 0:
-        return None
-
-    return RecordSkirmishSpoil(
-        skirmish=context.skirmish,
-        faction=context.skirmish.victorious_faction,
-        kind=SkirmishSpoil.KindChoices.KIND_QUEST_REWARD,
-        amount=context.quest_loot,
-        description=context.quest_name,
     )
 
 
