@@ -35,7 +35,8 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-finance.wage-bill-warning>` | `apps.warband` | The alert for a purse that cannot cover next month's wages, silent while it can; `show_finance_link` adds the way to the books |
 | `<c-item.stats-meta>` | `apps.warband` | An item's roll and its average, the same in the shop, the stores and on the man; `show_price` adds the list price where it changes hands for it |
 | `<c-item.improves-nobody-tag>` | `apps.warband` | The tag on an item every man already matches or beats in its slot |
-| `<c-month.log-list>` | `apps.warband` | One month's log at its four weights, with the open `questions` and their answers above it; a finished game passes no questions |
+| `<c-month.log-list>` | `apps.warband` | What one month's log puts to the player - attention and chronicle - with the open `questions` and their answers above it; a finished game passes no questions |
+| `<c-month.log-brief>` | `apps.warband` | The rest of that month's log, read rather than acted on: the consequences and the tallied upkeep, silent when there are none |
 | `<c-navigation.section-nav>` | `apps.warband` | The four sections of the game, `current` marked; a page whose section the url does not say passes its own - see [navigation](navigation.md) |
 | `<c-skirmish.log-line>` | `apps.warband` | One line of a fight in either account; a casualty is set apart by whose loss it is (`casualty_side`) |
 | `<c-skirmish.faction-box>` | `apps.warband` | One war band's panel on the fight screen, with its kit toggle and the roster that refreshes every round |

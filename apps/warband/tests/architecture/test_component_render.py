@@ -164,6 +164,13 @@ RENDER_ROWS = {
             {"logs": _full_month(), "questions": [_open_question()]},
         ),
     ],
+    "month.log-brief": [
+        (
+            '<c-month.log-brief :logs="logs" />',
+            {"logs": GroupedPlayerMonthLog(consequence=[PlayerMonthLogFactory.build(title="Wages paid")])},
+        ),
+        ('<c-month.log-brief :logs="logs" />', {"logs": _full_month()}),
+    ],
     "navigation.section-nav": [
         ('<c-navigation.section-nav :sections="sections" />', {"sections": NAV_SECTIONS}),
         (

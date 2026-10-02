@@ -1,91 +1,68 @@
 <c-vars logs questions=None />
 {% load purse %}
-{# Four weights, one list. What the player must act on is a full-width alert, what happened to him #}
-{# without his asking is a chronicle entry with room for a second sentence, what his own decisions #}
-{# produced is a plain line, and the recovery sweeps - which write one row per warrior and would #}
-{# otherwise be most of the month - are tallied into a single sentence with the rows behind it. #}
-<div class="mb-5">
-    {# A question the world put to the player is attention too, and read from its own row rather than #}
-    {# from the log, which it outlives. Its answers take the place an acknowledge action would have. #}
-    {# A stopgap on purpose: how a question finally looks is #64's to decide, and it should replace #}
-    {# this card rather than build on it. #}
-    {% for question in questions %}
-        <div class="mb-5 bg-ground border border-blood p-[15px] text-ink">
-            <h4 class="m-0">
-                <i class="fa-solid fa-circle-question"></i> {{ question.pending_incident.title }}
-            </h4>
-            {% if question.pending_incident.body %}
-                <p class="mt-2.5 mb-0">{{ question.pending_incident.body }}</p>
-            {% endif %}
-            {# A fieldset, so that disabling it on the first click disables every option of the question: #}
-            {# a second option clicked while the first answer is on its way would otherwise be sent too #}
-            <fieldset class="mt-[15px] flex flex-wrap gap-2.5">
-                {% for option in question.options %}
-                    <button class="row-action"
-                            hx-post="{% url 'warband:pending-incident-answer-view' question.pending_incident.id %}"
-                            hx-vals='{"option": "{{ option.key }}"}'
-                            hx-disabled-elt="closest fieldset"
-                            type="button">
-                        {{ option.label }}
-                        {% if option.silver_change %}
-                            <span class="font-mono text-label tracking-label text-ink-muted">{{ option.silver_change|signed }} silver</span>
-                        {% endif %}
-                        {% if option.fyrd_change %}
-                            <span class="font-mono text-label tracking-label text-ink-muted">{{ option.fyrd_change|signed }} fyrd</span>
-                        {% endif %}
-                    </button>
-                {% endfor %}
-            </fieldset>
-        </div>
-    {% endfor %}
+{# What the month put in front of the player, loudest first. What he must act on is a full-width #}
+{# alert, and what happened to him without his asking is a chronicle entry with room for a second #}
+{# sentence. What his own decisions produced and the recovery sweeps are read rather than acted on, #}
+{# so they belong to the log brief, in the column beside the decisions. #}
+{# Silent when the month put nothing to him but brief lines, so the decisions below start level #}
+{# with the brief beside them rather than under an empty margin. #}
+{% if questions or logs.attention or logs.chronicle or logs.is_empty %}
+    <div class="mb-5">
+        {# A question the world put to the player is attention too, and read from its own row rather than #}
+        {# from the log, which it outlives. Its answers take the place an acknowledge action would have. #}
+        {# A stopgap on purpose: how a question finally looks is #64's to decide, and it should replace #}
+        {# this card rather than build on it. #}
+        {% for question in questions %}
+            <div class="mb-5 bg-ground border border-blood p-[15px] text-ink">
+                <h4 class="m-0">
+                    <i class="fa-solid fa-circle-question"></i> {{ question.pending_incident.title }}
+                </h4>
+                {% if question.pending_incident.body %}
+                    <p class="mt-2.5 mb-0">{{ question.pending_incident.body }}</p>
+                {% endif %}
+                {# A fieldset, so that disabling it on the first click disables every option of the question: #}
+                {# a second option clicked while the first answer is on its way would otherwise be sent too #}
+                <fieldset class="mt-[15px] flex flex-wrap gap-2.5">
+                    {% for option in question.options %}
+                        <button class="row-action"
+                                hx-post="{% url 'warband:pending-incident-answer-view' question.pending_incident.id %}"
+                                hx-vals='{"option": "{{ option.key }}"}'
+                                hx-disabled-elt="closest fieldset"
+                                type="button">
+                            {{ option.label }}
+                            {% if option.silver_change %}
+                                <span class="font-mono text-label tracking-label text-ink-muted">{{ option.silver_change|signed }} silver</span>
+                            {% endif %}
+                            {% if option.fyrd_change %}
+                                <span class="font-mono text-label tracking-label text-ink-muted">{{ option.fyrd_change|signed }} fyrd</span>
+                            {% endif %}
+                        </button>
+                    {% endfor %}
+                </fieldset>
+            </div>
+        {% endfor %}
 
-    {% for message in logs.attention %}
-        <div class="mb-5 bg-raised border border-blood py-[15px] pl-[15px] pr-[29px] text-blood">
-            <h4 class="m-0">
-                <i class="fa-solid fa-triangle-exclamation"></i> {{ message.title }}
-            </h4>
-        </div>
-    {% endfor %}
+        {% for message in logs.attention %}
+            <div class="mb-5 bg-raised border border-blood py-[15px] pl-[15px] pr-[29px] text-blood">
+                <h4 class="m-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ message.title }}
+                </h4>
+            </div>
+        {% endfor %}
 
-    {% for message in logs.chronicle %}
-        <div class="mb-2.5 box-border bg-raised p-5 text-ink border border-rule">
-            <h4 class="m-0">
-                <i class="fa-solid fa-feather"></i> {{ message.title }}
-            </h4>
-            {% if message.body %}
-                <p class="mt-2.5 mb-0">{{ message.body }}</p>
-            {% endif %}
-        </div>
-    {% endfor %}
+        {% for message in logs.chronicle %}
+            <div class="mb-2.5 box-border bg-raised p-5 text-ink border border-rule">
+                <h4 class="m-0">
+                    <i class="fa-solid fa-feather"></i> {{ message.title }}
+                </h4>
+                {% if message.body %}
+                    <p class="mt-2.5 mb-0">{{ message.body }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
 
-    {% if logs.consequence %}
-        {# The rule goes on every row after the first, so it separates two consequences rather than #}
-        {# sitting over the top of the set. It is carried by the lower row, between that row's margin #}
-        {# and its padding, which is what centres it in the gap instead of tucking it under the text #}
-        {# above. #}
-        {# In "ink": the month's news is why the player is on this page, so it is not the quietest #}
-        {# text on it. The icon stays muted - it is a marker, not the news. #}
-        <ul class="list-none p-0 text-ink [&>li+li]:mt-2.5 [&>li+li]:border-t [&>li+li]:border-t-rule [&>li+li]:pt-2.5">
-            {% for message in logs.consequence %}
-                <li>
-                    <i class="fa-solid fa-scroll text-ink-muted"></i> {{ message.title }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    {% if logs.upkeep %}
-        <details class="text-sm leading-snug text-ink-muted">
-            <summary class="cursor-pointer">{{ logs.upkeep_summary|join:" · " }}</summary>
-            <ul class="mt-0 list-none space-y-2.5 p-0">
-                {% for message in logs.upkeep %}
-                    <li>{{ message.title }}</li>
-                {% endfor %}
-            </ul>
-        </details>
-    {% endif %}
-
-    {% if logs.is_empty and not questions %}
-        <p class="text-sm leading-snug text-ink-muted">Nothing to report this month.</p>
-    {% endif %}
-</div>
+        {% if logs.is_empty and not questions %}
+            <p class="text-sm leading-snug text-ink-muted">Nothing to report this month.</p>
+        {% endif %}
+    </div>
+{% endif %}

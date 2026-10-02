@@ -34,6 +34,7 @@
         {# writes its line for exactly this screen - the battle history a finished savegame no longer #}
         {# routes to is not an answer. #}
         <c-month.log-list :logs="player_month_logs" />
+        <c-month.log-brief :logs="player_month_logs" />
     {% else %}
         {# The state of the month and the control that ends it, above everything the month contains, #}
         {# with the year it sits in along its foot. It carries the page's heading, so there is no second #}
@@ -51,8 +52,9 @@
                 {# decisions that spend the silver rather than inside a card of figures below them. #}
                 <c-finance.wage-bill-warning :payroll="wage_bill_payroll" show_finance_link />
 
-                {# What the month just did to him, before what he may still do about it: the player #}
-                {# arrives on this page straight from finishing a month, and the news is why. #}
+                {# What the month just put to him, before what he may still do about it: the player #}
+                {# arrives on this page straight from finishing a month, and the news is why. What his #}
+                {# own orders produced is news he already expects, so it is read in the brief instead. #}
                 <c-month.log-list :logs="player_month_logs" :questions="open_questions" />
 
                 {% if month_standing %}
@@ -61,9 +63,10 @@
                 {% endif %}
             </div>
 
-            {# The brief. Three sections against one rule rather than three boxes, because nothing in #}
-            {# here is a decision - it is what the decisions on the left are made against. #}
+            {# The brief. Sections against one rule rather than boxes, because nothing in here is a #}
+            {# decision - it is what the month did and what the decisions on the left are made against. #}
             <div class="md:col-span-1">
+                <c-month.log-brief :logs="player_month_logs" />
                 {% if month_standing %}
                     {% include 'finance/components/purse_brief.html' %}
                     {% include 'account/components/warband_standing.html' %}
