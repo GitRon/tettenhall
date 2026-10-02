@@ -18,7 +18,7 @@ def take_every_leader_off_the_payroll(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warband', '0032_quests_are_errands'),
+        ('warband', '0033_the_man_in_the_seat_is_the_ealdorman'),
     ]
 
     operations = [

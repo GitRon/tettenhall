@@ -96,6 +96,9 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
 
         context["attacking_faction"] = self.object.attacking_faction
         context["defending_faction"] = self.object.defending_faction
+        # The cards name each man in full, and that asks his faction whether he holds its seat
+        context["attacking_warrior_list"] = self.object.attacking_warriors.select_related("faction")
+        context["defending_warrior_list"] = self.object.defending_warriors.select_related("faction")
         context["attacker_is_player"] = self.object.attacking_faction_id == player_faction_id
         context["defender_is_player"] = self.object.defending_faction_id == player_faction_id
         context["occupiable_faction"] = self.get_occupiable_faction(skirmish=self.object)
@@ -378,10 +381,11 @@ class FactionWarriorListUpdateHtmxView(generic.TemplateView):
         )
 
         context = super().get_context_data(**kwargs)
+        # The cards name each man in full, and that asks his faction whether he holds its seat
         if faction.pk == skirmish.attacking_faction_id:
-            context["object_list"] = skirmish.attacking_warriors.all()
+            context["object_list"] = skirmish.attacking_warriors.select_related("faction")
         else:
-            context["object_list"] = skirmish.defending_warriors.all()
+            context["object_list"] = skirmish.defending_warriors.select_related("faction")
         # Which roster to show is the skirmish's business, but whether the human commands it is the
         # savegame's: being the attacker no longer means being the player
         context["is_player"] = faction.pk == current_savegame.player_faction_id

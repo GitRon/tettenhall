@@ -40,6 +40,10 @@ class Warrior(models.Model):
     # ceiling is floored for the same kind of reason, see "WarriorManager.MINIMUM_MAX_MORALE".
     MINIMUM_EFFECTIVE_ATTRIBUTE = 1
 
+    # What the man in a faction's seat is called, in front of his name and wherever a page speaks of
+    # the seat itself. One word for every faction and every culture.
+    LEADER_TITLE = "Ealdorman"
+
     # Reaching level N costs (N - 1) squared times XP_LEVEL_BASE - 100, 400, 900, 1600 - so every level takes
     # longer than the one before it and a veteran does not run away with it. Quadratic rather than
     # anything steeper because isqrt inverts it in one integer expression: no loop walking the
@@ -394,20 +398,42 @@ class Warrior(models.Model):
         return resolve_nickname(state=self.nickname_state, variant=self.nickname_variant)
 
     @property
+    def is_leader(self) -> bool:
+        """
+        Whether this man holds his faction's seat today.
+
+        Asked of his own faction, so a captive - whose faction capture has cleared - holds no seat even
+        while his old faction's "leader" still points at him. A defeated faction is the same: its row
+        keeps naming the man it lost, and he leads nothing any more.
+
+        Reads "faction", so a list that names its men by [display_name] brings the faction along with
+        them rather than paying a query per man.
+        """
+        faction = self.faction
+        # Asked of the seat rather than of the man, so an empty seat is nobody's - not the one of an
+        # unsaved man whose id is just as empty
+        if faction is None or faction.leader_id is None:
+            return False
+
+        return faction.leader_id == self.id and not faction.is_defeated
+
+    @property
     def display_name(self) -> str:
         """
-        The warrior as he is introduced to the player: his name, and the epithet he has earned.
+        The warrior as he is introduced to the player: the title of the seat he holds, his name, and
+        the epithet he has earned - "Ealdorman Uthred the Strong", "Wulf the Strong".
 
         Kept out of "__str__", which every generated user-facing string flows through - the twelve
         battle-history templates, the monthly player log, the reasons on finance transactions. Those
-        are all persisted as frozen strings, and a man who earns his epithet in month twenty would
-        otherwise be carrying it in rows written in month three. Whether the battle log adopts the
-        epithet is its own call; the pages that present a warrior as a person ask for him by this
-        name.
+        are all persisted as frozen strings, and a man who earns his epithet in month twenty, or takes
+        the seat in month thirty, would otherwise be carrying it in rows written in month three.
+        Whether the battle log adopts the full name is its own call; the pages that present a warrior
+        as a person ask for him by this name.
         """
+        name = f"{self.LEADER_TITLE} {self.name}" if self.is_leader else self.name
         nickname = self.nickname
 
-        return f"{self.name} {nickname}" if nickname else self.name
+        return f"{name} {nickname}" if nickname else name
 
     @property
     def is_dead(self) -> bool:

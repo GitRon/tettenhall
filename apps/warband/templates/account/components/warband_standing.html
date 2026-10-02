@@ -36,13 +36,13 @@
     {# footnote explaining the missing Attack button. #}
     <p class="m-0 text-sm leading-snug">
         {% if not month_standing.warband.leader %}
-            The war band has no leader.
+            The war band has no Ealdorman.
         {% elif month_standing.warband.has_marched %}
             Your warriors have already fought this month.
         {% elif month_standing.warband.leader_can_march %}
-            <span class="text-ink">{{ month_standing.warband.leader }}</span> is fit to march.
+            <span class="text-ink">{{ month_standing.warband.leader.display_name }}</span> is fit to march.
         {% else %}
-            <span class="text-ink">{{ month_standing.warband.leader }}</span> is in no condition to
+            <span class="text-ink">{{ month_standing.warband.leader.display_name }}</span> is in no condition to
             march this month, so there is no attack to launch.
         {% endif %}
     </p>

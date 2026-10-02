@@ -91,13 +91,14 @@ class FactionRosterContextMixin:
         context = super().get_context_data(**kwargs)
 
         # The row names the weapon and the armour a man stands in, and an item's name reads its type,
-        # so all four come along in the one query rather than in up to four per man.
+        # so all four come along in the one query rather than in up to four per man. The faction too:
+        # the row names the man in full, and that asks whether he holds its seat.
         #
         # By name, and the id only to break a tie between two men of the same one: the progress table
         # reads the same list, and a warrior's own page walks it with Previous and Next - so an
         # unordered roster would be three screens disagreeing about who comes after whom.
         context["warrior_list"] = list(
-            Warrior.objects.select_related("weapon__type", "armor__type")
+            Warrior.objects.select_related("weapon__type", "armor__type", "faction")
             .with_portrait()
             .exclude_dead()
             .filter_faction(faction_id=self.object.id)
@@ -326,8 +327,8 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
             # Both are read for every row, so without them the page that exists to answer the
             # per-rival questions in a fixed number of queries would spend two per rival on its own
             # columns. The leader is nullable, so this stays a left join and a leaderless faction
-            # still comes back.
-            .select_related("culture", "leader")
+            # still comes back. His own faction rides along because naming him by his title asks it.
+            .select_related("culture", "leader__faction")
             # The roster, and deliberately nothing finer: health, morale and gear are knowledge the
             # player has not earned without scouting. Counted in the same query rather than per card,
             # and the dead are left out of it the way the faction page leaves them off the roster.

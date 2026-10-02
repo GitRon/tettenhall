@@ -66,16 +66,18 @@ class SkirmishReport:
             faction=faction,
             spoil_list=list(
                 SkirmishSpoil.objects.for_skirmish(skirmish_id=skirmish.id).select_related(
-                    "item__type", "warrior", "faction"
+                    "item__type", "warrior__faction", "faction"
                 )
             ),
+            # Each man's own faction comes along, because the report names him in full and that asks
+            # whether he holds its seat - see [Warrior.is_leader]
             growth_list=list(
                 SkirmishWarriorGrowth.objects.for_skirmish(skirmish_id=skirmish.id)
                 .filter(faction_id=faction.id)
-                .select_related("warrior")
+                .select_related("warrior__faction")
             ),
             casualty_list=list(
-                SkirmishCasualty.objects.for_skirmish(skirmish_id=skirmish.id).select_related("warrior")
+                SkirmishCasualty.objects.for_skirmish(skirmish_id=skirmish.id).select_related("warrior__faction")
             ),
             own_warrior_ids=set(own_warriors.values_list("id", flat=True)),
             # Worn rather than merely owned, which is the comparison worth making: the sword that has

@@ -5,6 +5,7 @@ from apps.warband.quest.forms.quest_accept import QuestAcceptForm
 from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.services.availability import REASON_SWORN_TO_A_QUEST
 
@@ -20,6 +21,21 @@ def test_quest_accept_form_draws_a_man_away_on_another_quest_with_his_reason():
 
     assert list(form.fields["assigned_warriors"].queryset) == [away_warrior]
     assert form.roster.reasons_by_warrior_id == {away_warrior.id: REASON_SWORN_TO_A_QUEST}
+
+
+@pytest.mark.django_db
+def test_quest_accept_form_offers_the_leader_by_his_title():
+    """
+    The player sees who he is sending: the option names the man in the seat as the Ealdorman.
+    """
+    quest = QuestFactory(month=2)
+    leader = WarriorFactory(faction=quest.faction, name="Uthred")
+    quest.faction.leader = leader
+    quest.faction.save(update_fields=("leader",))
+
+    form = QuestAcceptForm(quest=quest, month=2)
+
+    assert [label for _value, label in form.fields["assigned_warriors"].choices] == [f"{Warrior.LEADER_TITLE} Uthred"]
 
 
 @pytest.mark.django_db
