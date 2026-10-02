@@ -11,8 +11,10 @@ def get_raid_defenders(*, raid_kind: type[RaidKind], muster: list[Warrior]) -> l
 
     The assault on the burh meets all of them: men fall back behind the wall. A raid out in the shire
     meets only the men who happen to be where it lands. Which place each man stands at is drawn when
-    the raid is staged, one place per man out of every raid kind's, and at least one of them always
-    stands where the raid falls, so every raid is a fight and no side is ever empty.
+    the raid is staged, one place per man out of every raid kind's. Where nobody of the war band stands,
+    the place's own people still turn out (see "RaidKind.LOCALS_TURNOUT"), so this may come back empty;
+    only a place nobody turns out for has one of the war band put there, so every raid is a fight and no
+    side is ever empty.
 
     The draw is a stand-in for a faction choosing where its men stand. It comes from the module-level
     "random", over the muster in id order, so a seeded game replays it.
@@ -22,7 +24,7 @@ def get_raid_defenders(*, raid_kind: type[RaidKind], muster: list[Warrior]) -> l
 
     ordered_muster = sorted(muster, key=lambda warrior: warrior.id)
     defenders = [warrior for warrior in ordered_muster if random.choice(RAID_KINDS) is raid_kind]
-    if not defenders:
+    if not defenders and not raid_kind.LOCALS_TURNOUT:
         defenders = [random.choice(ordered_muster)]
 
     return defenders

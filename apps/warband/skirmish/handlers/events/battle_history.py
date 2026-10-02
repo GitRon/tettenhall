@@ -7,6 +7,7 @@ from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands.battle_history import CreateBattleHistory
 from apps.warband.skirmish.messages.events import item, skirmish, transaction, warrior
 from apps.warband.skirmish.models import BattleHistory
+from apps.warband.skirmish.raids import get_raid_kind
 from apps.warband.skirmish.services import battle_saga
 from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish_action
 from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
@@ -383,4 +384,12 @@ def handle_log_village_burned(*, context: skirmish.VillageBurned) -> Command:
         message=(
             f"The village of {context.raided_faction} burns, and {context.fyrd_names} names of its fyrd burn with it."
         ),
+    )
+
+
+@message_registry.register_event(event=skirmish.LocalsWentHome)
+def handle_log_locals_went_home(*, context: skirmish.LocalsWentHome) -> Command:
+    return CreateBattleHistory(
+        skirmish=context.skirmish,
+        message=f"The {get_raid_kind(value=context.skirmish.raid_kind).LOCALS_NAME} who still stand go home.",
     )

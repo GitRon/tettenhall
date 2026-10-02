@@ -40,6 +40,7 @@ def test_handle_pay_march_cost_for_attack_in_winter():
             attacking_warriors=[WarriorFactory.build(), WarriorFactory.build()],
             defending_warriors=[WarriorFactory.build()],
             fortification_strength=0,
+            local_warriors=[],
             raid_kind=RaidKindChoices.STORM_THE_BURH,
             month=7,
         )
@@ -58,6 +59,7 @@ def test_handle_pay_march_cost_for_attack_in_summer():
             attacking_warriors=[WarriorFactory.build()],
             defending_warriors=[WarriorFactory.build()],
             fortification_strength=0,
+            local_warriors=[],
             raid_kind=RaidKindChoices.STORM_THE_BURH,
             month=3,
         )

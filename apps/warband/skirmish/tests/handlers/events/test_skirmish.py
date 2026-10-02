@@ -8,10 +8,12 @@ from apps.warband.skirmish.handlers.events.skirmish import (
     handle_attacker_defender_decided,
     handle_create_skirmish_for_attack,
     handle_round_finished,
+    handle_send_locals_home_after_the_fight,
     handle_take_raid_yield_after_victory,
 )
 from apps.warband.skirmish.messages.commands.skirmish import (
     CreateSkirmish,
+    SendLocalsHome,
     TakeRaidYield,
     WarriorAttacksWarrior,
     WinSkirmish,
@@ -39,6 +41,7 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
             attacking_warriors=[attacker],
             defending_warriors=[defender],
             fortification_strength=20,
+            local_warriors=[],
             raid_kind=RaidKindChoices.STORM_THE_BURH,
             month=3,
         )
@@ -50,6 +53,7 @@ def test_handle_create_skirmish_for_attack_maps_to_the_command():
         faction_2=defending_faction,
         warrior_list_1=[attacker],
         warrior_list_2=[defender],
+        local_warriors=[],
         raid_kind=RaidKindChoices.STORM_THE_BURH,
         month=3,
         fortification_strength=20,
@@ -167,3 +171,20 @@ def test_handle_take_raid_yield_after_victory_takes_nothing_extra_on_the_burh():
     )
 
     assert result is None
+
+
+def test_handle_send_locals_home_after_the_fight_maps_to_the_command():
+    skirmish = SkirmishFactory.build()
+    captured = WarriorFactory.build()
+
+    result = handle_send_locals_home_after_the_fight(
+        context=SkirmishFinished(
+            skirmish=skirmish,
+            incapacitated_warriors=[],
+            defeated_unconscious_warriors=[captured],
+            victorious_healthy_warriors=[],
+            month=5,
+        )
+    )
+
+    assert result == SendLocalsHome(skirmish=skirmish, defeated_unconscious_warriors=[captured], month=5)

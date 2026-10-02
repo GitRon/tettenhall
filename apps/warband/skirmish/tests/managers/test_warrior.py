@@ -1056,3 +1056,49 @@ def test_with_portrait_brings_the_five_pieces_of_a_face_along(django_assert_num_
             fetched.hair_colour,
             fetched.beard_colour,
         ]
+
+
+@pytest.mark.django_db
+def test_send_home_takes_his_gear_out_of_the_faction_with_him():
+    faction = FactionFactory()
+    weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
+    warrior = WarriorFactory(faction=faction, weapon=weapon)
+
+    Warrior.objects.send_home(obj=warrior)
+
+    weapon.refresh_from_db()
+    warrior.refresh_from_db()
+    assert (warrior.faction, warrior.weapon, weapon.owner) == (None, weapon, None)
+
+
+@pytest.mark.django_db
+def test_send_home_lets_a_man_without_gear_go():
+    warrior = WarriorFactory()
+
+    Warrior.objects.send_home(obj=warrior)
+
+    warrior.refresh_from_db()
+    assert warrior.faction is None
+
+
+@pytest.mark.django_db
+def test_successors_of_takes_the_man_with_the_most_renown():
+    faction = FactionFactory()
+    fallen_leader = WarriorFactory(faction=faction)
+    WarriorFactory(faction=faction, renown=5)
+    renowned = WarriorFactory(faction=faction, renown=20)
+
+    assert Warrior.objects.successors_of(faction=faction, fallen_leader=fallen_leader).first() == renowned
+
+
+@pytest.mark.django_db
+def test_successors_of_never_asks_a_man_who_turned_out_to_defend_the_place():
+    """He goes home once the fight is over, and would leave the seat empty behind him."""
+    faction = FactionFactory()
+    fallen_leader = WarriorFactory(faction=faction)
+    warrior = WarriorFactory(faction=faction, renown=5)
+    local = WarriorFactory(faction=faction, renown=20)
+    SkirmishFactory(defending_faction=faction).local_warriors.add(local)
+    SkirmishFactory(defending_faction=faction)
+
+    assert list(Warrior.objects.successors_of(faction=faction, fallen_leader=fallen_leader)) == [warrior]

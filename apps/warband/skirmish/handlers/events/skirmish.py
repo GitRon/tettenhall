@@ -3,6 +3,7 @@ from queuebie.messages import Command
 
 from apps.warband.skirmish.messages.commands.skirmish import (
     CreateSkirmish,
+    SendLocalsHome,
     TakeRaidYield,
     WarriorAttacksWarrior,
     WinSkirmish,
@@ -20,6 +21,7 @@ def handle_create_skirmish_for_attack(*, context: skirmish.FactionWasAttacked) -
         faction_2=context.defending_faction,
         warrior_list_1=context.attacking_warriors,
         warrior_list_2=context.defending_warriors,
+        local_warriors=context.local_warriors,
         raid_kind=context.raid_kind,
         month=context.month,
         fortification_strength=context.fortification_strength,
@@ -63,3 +65,14 @@ def handle_take_raid_yield_after_victory(*, context: skirmish.SkirmishFinished) 
         return None
 
     return TakeRaidYield(skirmish=context.skirmish, month=context.month)
+
+
+@message_registry.register_event(event=skirmish.SkirmishFinished)
+def handle_send_locals_home_after_the_fight(*, context: skirmish.SkirmishFinished) -> Command:
+    # Which of the skirmish's men are locals is the command handler's to read; it finds nobody for a
+    # fight nobody turned out for
+    return SendLocalsHome(
+        skirmish=context.skirmish,
+        defeated_unconscious_warriors=context.defeated_unconscious_warriors,
+        month=context.month,
+    )

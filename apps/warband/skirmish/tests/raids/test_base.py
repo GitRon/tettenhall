@@ -59,6 +59,7 @@ def test_get_skirmish_name_is_the_attack_on_the_town():
 
 def test_get_effects_names_the_share_of_the_purse():
     assert LiftTheHerds.get_effects() == (
+        f"{LiftTheHerds.LOCALS_TURNOUT} herdsmen turn out to defend it",
         f"Drives off 20% of their silver, at most {LiftTheHerds.PURSE_CAP}",
         "Leaves the town standing",
     )
@@ -66,10 +67,14 @@ def test_get_effects_names_the_share_of_the_purse():
 
 def test_get_effects_names_the_fyrd_burned():
     assert BurnTheVillage.get_effects() == (
+        f"{BurnTheVillage.LOCALS_TURNOUT} villagers turn out to defend it",
         f"Strikes {BurnTheVillage.FYRD_NAMES_BURNED} names off their fyrd",
         "Leaves the town standing",
     )
 
 
 def test_get_effects_says_the_burh_opens_the_town():
-    assert StormTheBurh.get_effects() == ("Opens the town to be ridden into",)
+    assert StormTheBurh.get_effects() == (
+        f"{StormTheBurh.LOCALS_TURNOUT} men of the fyrd turn out to defend it",
+        "Opens the town to be ridden into",
+    )

@@ -27,6 +27,9 @@ class CreateSkirmish(Command):
     faction_2: Faction
     warrior_list_1: list[Warrior]
     warrior_list_2: list[Warrior]
+    # The men of the place among "warrior_list_2", recorded on the skirmish so its end knows whom to
+    # send home
+    local_warriors: list[Warrior]
     # A "RaidKindChoices" value, recorded on the skirmish so its end knows what a victory takes
     raid_kind: RaidKindTypeHint
     month: int
@@ -45,6 +48,20 @@ class TakeRaidYield(Command):
     """
 
     skirmish: Skirmish
+    month: int
+
+
+@dataclass(kw_only=True)
+class SendLocalsHome(Command):
+    """
+    Release the men of the place who turned out for a fight and are still standing when it ends.
+
+    The dead stay where they fell and the men about to be taken are the victor's - both are told apart
+    from the fight's own end, which is why the men about to be captured travel with this.
+    """
+
+    skirmish: Skirmish
+    defeated_unconscious_warriors: list[Warrior]
     month: int
 
 

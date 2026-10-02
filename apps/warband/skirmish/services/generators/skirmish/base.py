@@ -9,6 +9,7 @@ class BaseSkirmishGenerator:
     month: int
     fortification_strength: int
     raid_kind: int
+    local_warriors: list
 
     def __init__(
         self,
@@ -19,6 +20,7 @@ class BaseSkirmishGenerator:
         month: int,
         fortification_strength: int = 0,
         raid_kind: int = RaidKindChoices.STORM_THE_BURH,
+        local_warriors: list | None = None,
     ) -> None:
         super().__init__()
 
@@ -28,6 +30,7 @@ class BaseSkirmishGenerator:
         self.month = month
         self.fortification_strength = fortification_strength
         self.raid_kind = raid_kind
+        self.local_warriors = local_warriors or []
 
     def process(self) -> Skirmish:
         # Both sides are indexed for their faction below, so an empty one dies on an IndexError that
@@ -59,5 +62,6 @@ class BaseSkirmishGenerator:
 
         skirmish.attacking_warriors.add(*self.warriors_faction_1)
         skirmish.defending_warriors.add(*self.warriors_faction_2)
+        skirmish.local_warriors.add(*self.local_warriors)
 
         return skirmish
