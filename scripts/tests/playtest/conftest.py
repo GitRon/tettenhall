@@ -19,11 +19,9 @@ def player_savegame(db) -> Savegame:
     asked for.
     """
     savegame = SavegameFactory()
-    faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
+    faction = FactionFactory(savegame=savegame, fyrd_reserve=0, is_player=True)
     faction.leader = WarriorFactory(faction=faction)
     faction.save()
-    savegame.player_faction = faction
-    savegame.save()
 
     return savegame
 

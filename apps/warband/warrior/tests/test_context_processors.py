@@ -9,8 +9,7 @@ from apps.warband.warrior.context_processors import get_current_amount_warriors
 @pytest.mark.django_db
 def test_get_current_amount_warriors_returns_the_living_warriors_of_the_player_faction(rf, user):
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     warrior = WarriorFactory(faction=savegame.player_faction)
     request = rf.get("/")
     request.user = user

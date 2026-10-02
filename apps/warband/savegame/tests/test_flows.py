@@ -25,9 +25,7 @@ def test_losing_the_leader_ends_the_game_and_decides_the_open_fight(queuebie_reg
     The fyrd is empty, so there is nobody left to raise in his place either.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0, is_player=True)
     rival_faction = FactionFactory(savegame=savegame)
 
     leader = WarriorFactory(faction=player_faction, savegame=savegame)
@@ -54,9 +52,7 @@ def test_losing_the_leader_logs_the_cause_before_the_broken_war_band(queuebie_re
     through the savegame ending, so only the real chain shows which lands first.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0, is_player=True)
     FactionFactory(savegame=savegame)
 
     leader = WarriorFactory(name="Reinfrith", faction=player_faction, savegame=savegame)
@@ -82,9 +78,7 @@ def test_a_warrior_in_two_open_fights_is_taken_prisoner_only_once(queuebie_regis
     The fyrd is empty, so his fall ends the game rather than raising a levy in his place.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, fyrd_reserve=0, is_player=True)
     first_rival = FactionFactory(savegame=savegame)
     second_rival = FactionFactory(savegame=savegame)
 
@@ -111,9 +105,7 @@ def test_a_warrior_in_two_open_fights_is_taken_prisoner_only_once(queuebie_regis
 @pytest.mark.django_db
 def test_losing_the_last_rival_wins_the_game(queuebie_registry):
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     # Nobody left in its fyrd either, so the rival is finished
     rival_faction = FactionFactory(savegame=savegame, fyrd_reserve=0)
 

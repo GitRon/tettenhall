@@ -21,3 +21,11 @@ class FactionFactory(DjangoModelFactory):
     # several handlers read faction.town. Referenced by path because the town factory points back here.
     # Pass town=None to skip it, or town__hall=... to set a building level.
     town = factory.RelatedFactory("apps.warband.town.tests.factories.town.TownFactory", factory_related_name="faction")
+
+    @factory.post_generation
+    def is_player(self, create, extracted, **kwargs):
+        # FactionFactory(is_player=True) makes it the player's faction of its savegame. The savegame
+        # cannot do this from its own side: its factory leaves player_faction empty, or the two recurse
+        if create and extracted:
+            self.savegame.player_faction = self
+            self.savegame.save()

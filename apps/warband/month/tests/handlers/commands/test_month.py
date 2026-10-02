@@ -12,8 +12,7 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 @pytest.mark.django_db
 def test_handle_prepare_month_advances_the_month():
     savegame = SavegameFactory(current_month=4)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
 
     result = handle_prepare_month(context=PrepareMonth(savegame=savegame, month=4))
 
@@ -46,8 +45,7 @@ def test_handle_prepare_month_announces_the_month_for_every_faction():
     without a second registration.
     """
     savegame = SavegameFactory(current_month=4)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     rival_faction = FactionFactory(savegame=savegame)
 
     result = handle_prepare_month(context=PrepareMonth(savegame=savegame, month=4))
@@ -89,8 +87,7 @@ def test_handle_prepare_month_without_a_player_faction():
 @pytest.mark.django_db
 def test_handle_create_player_month_log_writes_the_line():
     savegame = SavegameFactory()
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
 
     result = handle_create_player_month_log(
         context=CreatePlayerMonthLog(
@@ -113,8 +110,7 @@ def test_handle_create_player_month_log_derives_the_category_from_the_kind():
     reports.
     """
     savegame = SavegameFactory()
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
 
     handle_create_player_month_log(
         context=CreatePlayerMonthLog(
@@ -136,8 +132,7 @@ def test_handle_create_player_month_log_drops_the_line_of_a_rival_faction():
     producers are event handlers, where the traversal this does is blocked.
     """
     savegame = SavegameFactory()
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     rival_faction = FactionFactory(savegame=savegame)
 
     result = handle_create_player_month_log(

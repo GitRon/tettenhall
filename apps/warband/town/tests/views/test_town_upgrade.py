@@ -200,8 +200,7 @@ def test_town_upgrade_view_does_not_show_a_town_of_another_savegame(logged_in_cl
     # Created first, so an unscoped lookup picks this one
     FactionFactory()
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
 
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
@@ -386,8 +385,7 @@ def test_upgrade_building_view_does_not_upgrade_a_town_of_another_savegame(logge
     # Created first, so an unscoped lookup picks this one up instead of the player's
     foreign_faction = FactionFactory()
     savegame = SavegameFactory(created_by=user)
-    savegame.player_faction = FactionFactory(savegame=savegame)
-    savegame.save()
+    FactionFactory(savegame=savegame, is_player=True)
     TransactionFactory(faction=savegame.player_faction, amount=900)
 
     logged_in_client.post(reverse("warband:upgrade-building-view", kwargs={"building_type": "hall"}))

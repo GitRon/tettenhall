@@ -27,9 +27,7 @@ def test_a_savegame_deletes_together_with_everything_hanging_off_it():
     no factory sets up on its own.
     """
     savegame = SavegameFactory()
-    player_faction = FactionFactory(savegame=savegame)
-    savegame.player_faction = player_faction
-    savegame.save()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
     FactionFactory(savegame=savegame)
     WarriorFactory(faction=player_faction, savegame=savegame)
     PlayerMonthLogFactory(faction=player_faction)

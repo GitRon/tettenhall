@@ -227,9 +227,7 @@ def test_handle_hand_out_faction_gear_approves_an_upgrade_for_a_rival():
 
 @pytest.mark.django_db
 def test_handle_hand_out_faction_gear_leaves_the_player_to_arm_his_own_men():
-    warrior = WarriorFactory()
-    warrior.savegame.player_faction = warrior.faction
-    warrior.savegame.save()
+    warrior = WarriorFactory(faction__is_player=True)
     ItemFactory(savegame=warrior.savegame, owner=warrior.faction, type=ItemTypeFactory(base_value="2d6"))
 
     result = handle_hand_out_faction_gear(context=HandOutFactionGear(faction=warrior.faction))

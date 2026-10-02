@@ -153,10 +153,8 @@ def test_a_fight_that_shakes_a_man_changes_him_and_tells_the_player_so(queuebie_
     which men count is read in the command handler. Only a queue run proves the relay reads nothing,
     and that the event the handler ends in reaches the month log.
     """
-    skirmish = SkirmishFactory(month=3)
+    skirmish = SkirmishFactory(month=3, attacking_faction__is_player=True)
     player_faction = skirmish.attacking_faction
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
     warrior = WarriorFactory(faction=player_faction, name="Sven")
     skirmish.attacking_warriors.add(warrior)
     skirmish.defending_warriors.add(
@@ -236,10 +234,8 @@ def test_a_rival_whose_whole_band_is_taken_comes_out_of_it_led_by_a_levy(queuebi
 
     The rival's leader and his one man are both down, so both are taken, and its fyrd has one man left.
     """
-    skirmish = SkirmishFactory()
+    skirmish = SkirmishFactory(attacking_faction__is_player=True)
     player_faction = skirmish.attacking_faction
-    player_faction.savegame.player_faction = player_faction
-    player_faction.savegame.save()
     rival = skirmish.defending_faction
     rival.fyrd_reserve = 1
     rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)

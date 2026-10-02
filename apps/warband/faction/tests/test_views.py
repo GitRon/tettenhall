@@ -62,8 +62,7 @@ def savegame_whose_rival_is_the_older_faction(current_savegame) -> Savegame:
     Reachable rather than contrived - the savegame row exists before any faction does, which is what
     "savegame_without_player_faction" describes, and nothing says the player's own is written first.
     """
-    current_savegame.player_faction = FactionFactory(savegame=current_savegame)
-    current_savegame.save()
+    FactionFactory(savegame=current_savegame, is_player=True)
 
     return current_savegame
 
