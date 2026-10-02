@@ -97,8 +97,9 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
     for it.
 
     A man whose own order throws nothing - a stance, the wall, a rally - is not said to strike or to
-    come at anybody: he is the attacker only because the other man could not be, and the blow's own line
-    after this one says he threw nothing.
+    come at anybody: as the attacker he is first only because the other man could not be, and the blow's
+    own line after this one says he threw nothing. As the defender his order is named as an order, not
+    as a defence, because "his Rally the men serves as his defence" is not a sentence.
 
     Any other way to come to a blow raises rather than picking up a sentence nobody wrote for it. The
     counter never arrives here: it is raised off the first blow's result, not decided with the pair.
@@ -124,12 +125,12 @@ def handle_log_attacker_defender_decided(*, context: skirmish.AttackerDefenderDe
     elif context.initiative == InitiativeChoices.INITIATIVE_WON_THE_ROLL:
         message = (
             f"{context.attacker} is quicker than {context.defender} and comes at him with a {attack}, "
-            f"so {context.defender}'s {defence} serves as his defence."
+            f"and {context.defender}'s order is {defence}, so he meets it without a blow of his own."
         )
     elif context.initiative == InitiativeChoices.INITIATIVE_UNOPPOSED:
         message = (
             f"Nobody is left to face {context.attacker}, so he strikes free at {context.defender} with "
-            f"a {attack}, and {context.defender}'s {defence} serves as his defence."
+            f"a {attack}, and {context.defender}'s order is {defence}, so he meets it without a blow of his own."
         )
     else:
         raise RuntimeError(f"No battle log sentence for initiative {context.initiative}.")
