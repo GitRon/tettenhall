@@ -289,8 +289,8 @@ def test_march_lifts_the_herds_when_the_policy_holds_it_back_from_the_burh(
     player_savegame, rng, report, queuebie_registry
 ):
     """
-    Three men against two and the burh's three of the fyrd is too few for the burh, and enough for two
-    herdsmen with none of the rival's own men expected at the herds.
+    Three men against two and the burh's two of the fyrd is too few for the burh, and enough for the
+    herdsman with none of the rival's own men expected at the herds.
     """
     WarriorFactory.create_batch(2, faction=player_savegame.player_faction)
     rival = FactionFactory(savegame=player_savegame)
@@ -306,9 +306,11 @@ def test_march_lifts_the_herds_when_the_policy_holds_it_back_from_the_burh(
 
 @pytest.mark.django_db
 def test_march_held_back_from_the_herds_too_when_even_the_herdsmen_outnumber_the_band(player_savegame, rng, report):
+    """One man against the herdsman and the one of the rival's three men expected at the herds."""
     rival = FactionFactory(savegame=player_savegame)
     rival.leader = WarriorFactory(faction=rival)
     rival.save()
+    WarriorFactory.create_batch(2, faction=rival)
 
     result = PlayerTurn(savegame=player_savegame, policy=POLICIES["raider"], rng=rng, report=report).march()
 
@@ -318,7 +320,7 @@ def test_march_held_back_from_the_herds_too_when_even_the_herdsmen_outnumber_the
 
 @pytest.mark.django_db
 def test_march_held_back_from_a_burh_whose_fyrd_turns_out(player_savegame, rng, report):
-    """Two men outnumber the rival's one, and not the one with the burh's three of the fyrd beside him."""
+    """Two men outnumber the rival's one, and not the one with the burh's two of the fyrd beside him."""
     WarriorFactory(faction=player_savegame.player_faction)
     rival = FactionFactory(savegame=player_savegame)
     rival.leader = WarriorFactory(faction=rival)
