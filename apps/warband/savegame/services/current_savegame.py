@@ -12,7 +12,7 @@ def get_current_savegame_for_request(*, request: HttpRequest) -> Savegame | None
     The current savegame of the requesting user, resolved once per request.
 
     Every scoping mixin, most views and four context processors need this, and the context processors
-    alone run on every authenticated render - so a single page asks the same question seven or eight
+    alone run on every authenticated render - so a single page puts the same question seven or eight
     times. The answer cannot change within one request, so it is worth asking once.
 
     The cache lives on the request rather than on the view because the context processors have no view
