@@ -90,14 +90,26 @@ The player's alone: a rival is offered nothing, like the incidents.
   business.
 - **It pays no experience.** The experience and level-up chain records itself in a fight's battle
   history and report; a quest has neither.
-- **It has no fyrd or morale lever.** The incident levers are open to it, and no entry uses them yet.
+- **It has no fyrd, morale ceiling or lost-gear lever.** No entry of the catalogue needs one, and a lever
+  nothing pulls is a field and a handler the coverage gate has no case for. An entry that wants one adds
+  the field on `QuestOutcome` and the handler in the owning topic, the way an incident's levers are built.
+
+## What it is worth
+
+At its yardstick a band draws the outcomes as written, so an odd job's silver per man is its weighted
+mean: about 29 for the harvest (`(3 × 35 + 1 × 10) / 4`) and 35 for the merchant's road
+(`(3 × 45 + 1 × 5) / 4`). Against a Small Hall's 300 a month and a wage of 80–160 a man, one man sent pays
+back a fifth to a third of what he costs: the odd job softens a lean month, it does not carry one. The
+errands pay in kind - renown, a blade above the shelf, a man the pub does not sell - and the man fetched
+home draws a wage from the next month, which is what that errand costs.
 
 ## Tests that hold the catalogue
 
 `apps/warband/quest/tests/quests/test_pool.py` reads the constants: every entry weighs something, takes
 a band it can be sent, leans on a real attribute, can both succeed and fail, and every success brings
 something home - no lever is ever negative, so that is what makes a quest's expected value positive.
-Every odd job pays silver on every outcome, and every title fits the log line.
+Every odd job pays silver on every outcome and has a positive expected silver per man at its yardstick,
+and every title fits the log line.
 
 ## The register
 

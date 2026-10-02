@@ -101,5 +101,22 @@ def test_every_odd_job_pays_silver_on_every_outcome():
     assert unpaid == []
 
 
+def test_every_odd_job_has_a_positive_expected_silver_at_its_yardstick():
+    """
+    A band at its yardstick draws the outcomes as written, so the weighted mean of the silver is what
+    the odd job is worth to the man sent on it.
+    """
+    worthless = [
+        quest.__name__
+        for quest in QUESTS
+        if quest.IS_ODD_JOB
+        and sum(outcome.weight * outcome.silver_per_man for outcome in quest.OUTCOMES)
+        / sum(outcome.weight for outcome in quest.OUTCOMES)
+        <= 0
+    ]
+
+    assert worthless == []
+
+
 def test_the_catalogue_has_an_odd_job_and_an_errand():
     assert {quest.IS_ODD_JOB for quest in QUESTS} == {True, False}
