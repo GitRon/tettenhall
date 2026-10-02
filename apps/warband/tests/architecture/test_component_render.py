@@ -28,6 +28,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.incident.incidents.base import IncidentOption
 from apps.warband.incident.services.pending_incident import OpenQuestion
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
+from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.month.services.player_month_log import GroupedPlayerMonthLog
@@ -141,6 +142,16 @@ RENDER_ROWS = {
     "calendar.march-cost-row": [
         ('<c-calendar.march-cost-row :calendar_month="calendar_month" />', {"calendar_month": Eosturmonath}),
         ('<c-calendar.march-cost-row :calendar_month="calendar_month" />', {"calendar_month": Blotmonath}),
+    ],
+    "faction.successor-line": [
+        (
+            '<c-faction.successor-line :leader="leader" :successor="successor" />',
+            {"leader": WarriorFactory.build(), "successor": None},
+        ),
+        (
+            '<c-faction.successor-line :leader="leader" :successor="successor" />',
+            {"leader": WarriorFactory.build(), "successor": WarriorFactory.build()},
+        ),
     ],
     "finance.wage-bill-warning": [
         ('<c-finance.wage-bill-warning :payroll="payroll" />', {"payroll": _payroll(budget=0)}),
@@ -258,6 +269,31 @@ RENDER_ROWS = {
                 "knowledge": WarriorKnowledge.COMMANDED,
                 "is_player_faction": True,
             },
+        ),
+    ],
+    "warrior.roster-gauge": [
+        (
+            '<c-warrior.roster-gauge :current="current" :maximum="maximum" :baseline="baseline"'
+            ' :knowledge="knowledge" />',
+            {"current": 1, "maximum": 5, "baseline": 4, "knowledge": WarriorKnowledge.COMMANDED},
+        ),
+        (
+            '<c-warrior.roster-gauge :current="current" :maximum="maximum" :peak="peak" :baseline="baseline"'
+            ' :knowledge="knowledge" />',
+            {"current": 4, "maximum": 5, "peak": 9, "baseline": 4, "knowledge": WarriorKnowledge.COMMANDED},
+        ),
+        (
+            '<c-warrior.roster-gauge :current="current" :maximum="maximum" :baseline="baseline"'
+            ' :knowledge="knowledge" />',
+            {"current": 3, "maximum": 5, "baseline": 4, "knowledge": WarriorKnowledge.HELD},
+        ),
+    ],
+    "warrior.roster-gear": [
+        ('<c-warrior.roster-gear :item="item" />', {"item": None}),
+        ('<c-warrior.roster-gear :item="item" />', {"item": ItemFactory.build(type=ItemTypeFactory.build())}),
+        (
+            '<c-warrior.roster-gear :item="item" />',
+            {"item": ItemFactory.build(type=ItemTypeFactory.build(function=ItemType.FunctionChoices.FUNCTION_ARMOR))},
         ),
     ],
     "warrior.gauge": [
