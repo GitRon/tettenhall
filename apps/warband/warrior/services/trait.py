@@ -63,9 +63,10 @@ class TraitEarningService:
     MAX_TRAITS = 3
 
     # The thresholds, balance numbers owned by this mechanic - see docs/patterns/town-buildings.md.
-    # Both men of a pair strike every round, yet a man still takes only about two swings a fight: eight
-    # hits marks the one fight in thirty he stood at the heart of, not every long one he saw out
-    SHAKEN_HITS_TAKEN = 8
+    # A man takes about two swings a fight, and one who takes many more than that is mostly carried off
+    # senseless, which earns him nothing. Six hits he walked away from is a fight that marked him, rare
+    # enough that he is not marked for every long one he saw out
+    SHAKEN_HITS_TAKEN = 6
     CHARMED_SWINGS_SURVIVED = 3
     HEADTAKER_CEILING_ROLLS = 5
     SHIELD_WALL_BLOWS_ABSORBED = 10
