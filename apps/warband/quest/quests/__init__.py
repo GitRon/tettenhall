@@ -20,8 +20,8 @@ QUESTS: tuple[type[Quest], ...] = (
 # The offer and contract rows name their entry by class name, which is how they find it again
 QUESTS_BY_NAME: dict[str, type[Quest]] = {quest.__name__: quest for quest in QUESTS}
 
-# How many of each side of the catalogue a month offers. One odd job always - the errand a war band
+# How many of each side of the catalogue a month offers. One steady-work quest always - the errand a war band
 # that cannot pay its men can still send them on - and one of everything else beside it, so the
 # board is a choice rather than a notice
-ODD_JOBS_OFFERED = 1
+STEADY_WORK_OFFERED = 1
 ERRANDS_OFFERED = 1

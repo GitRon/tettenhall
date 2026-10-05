@@ -16,7 +16,7 @@ def _text(*, entry) -> str:
     return " ".join(parse(html).get_text(" ").split())
 
 
-def test_reward_tags_of_an_odd_job_name_its_silver_alone():
+def test_reward_tags_of_steady_work_name_its_silver_alone():
     result = _text(entry=MerchantGuard)
 
     assert result == "Silver 5\N{EN DASH}45 a man"

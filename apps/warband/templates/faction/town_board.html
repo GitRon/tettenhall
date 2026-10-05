@@ -19,8 +19,8 @@
                         <span class="border border-rule px-1.5 py-0.5">Men <span class="text-ink">{{ board_quest.entry.MIN_MEN }}–{{ board_quest.entry.MAX_MEN }}</span></span>
                         <span class="border border-rule px-1.5 py-0.5">Wants <span class="text-ink">{{ board_quest.leans_on_label }}</span></span>
                         <c-quest.reward-tags :board_quest="board_quest" />
-                        {% if board_quest.entry.IS_ODD_JOB %}
-                            {# The catalogue's odd job, named for what it is to the player: work that is always there and always pays something. #}
+                        {% if board_quest.entry.IS_STEADY_WORK %}
+                            {# Steady work says what it is in its title: there every month, and paying even on a bad draw. #}
                             <span class="border border-rule px-1.5 py-0.5"
                                   title="There is one every month. It pays something even when it goes badly.">Steady work</span>
                         {% endif %}

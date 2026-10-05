@@ -3,7 +3,7 @@ from apps.warband.quest.quests.base import Quest, QuestOutcome
 
 class HarvestHands(Quest):
     """
-    The odd job that is always there to be had: a thegn short of hands at the harvest.
+    Steady work that is always there to be had: a thegn short of hands at the harvest.
 
     Pays something whatever happens, because a field is reaped either way - the draw only decides how
     much of it the men are paid for. Leans on strength, the attribute a scythe asks for.
@@ -20,7 +20,7 @@ class HarvestHands(Quest):
     # Two middling men
     STAT_YARDSTICK = 16
 
-    IS_ODD_JOB = True
+    IS_STEADY_WORK = True
 
     OUTCOMES = (
         QuestOutcome(

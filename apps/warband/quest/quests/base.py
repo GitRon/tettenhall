@@ -48,10 +48,10 @@ class Quest:
     the outcomes it can come home with. Adding one to "apps/warband/quest/quests/__init__.py" is the
     whole of adding a quest.
 
-    **An odd job is the errand that is always on offer.** Every month offers one of them beside the
+    **Steady work is the errand that is always on offer.** Every month offers one of them beside the
     rest of the catalogue - harvest work, a merchant's road - so a war band that cannot pay its men
     always has something to send them on. It pays silver, little and reliably, and is never anything
-    but safe; the pool's tests hold every odd job to that.
+    but safe; the pool's tests hold all steady work to that.
     """
 
     # How likely this entry is against the other entries on its side of the offer
@@ -74,7 +74,7 @@ class Quest:
     # is good enough to make failure impossible
     MAX_SUCCESS_FACTOR = 3.0
 
-    IS_ODD_JOB = False
+    IS_STEADY_WORK = False
 
     OUTCOMES: tuple[QuestOutcome, ...] = ()
 

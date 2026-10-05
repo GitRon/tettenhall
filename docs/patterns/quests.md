@@ -52,7 +52,7 @@ An entry is a class in `apps/warband/quest/quests/` plus a line in `QUESTS`:
 | `MIN_MEN`, `MAX_MEN` | the band it takes, both inclusive; the accept form refuses anything else |
 | `LEANS_ON` | the warrior attribute the band is weighed on |
 | `STAT_YARDSTICK` | the band's summed attribute at which the outcomes are as likely as written |
-| `IS_ODD_JOB` | see below |
+| `IS_STEADY_WORK` | see below |
 | `OUTCOMES` | the ways it can come home, each a `QuestOutcome` |
 
 **Balance numbers live on the class**, the way a building's and an incident's do. Nothing a handler
@@ -73,17 +73,17 @@ Tests pin the draw (`random.choices`), not the dice.
 
 ## The offer
 
-Each month offers `ODD_JOBS_OFFERED` odd jobs and `ERRANDS_OFFERED` of everything else, drawn
+Each month offers `STEADY_WORK_OFFERED` steady-work quests and `ERRANDS_OFFERED` of everything else, drawn
 separately and without repeats, from the entries `is_possible` for the faction (it has `MIN_MEN` living
-men). Two draws rather than one pool, so the odd job is on the board every month whatever else is.
+men). Two draws rather than one pool, so steady work is on the board every month whatever else is.
 
-**An odd job is the errand a war band short of silver can always send men on.** Harvest work, a
-merchant's road. It pays silver on every outcome, little and reliably, and the pool's tests hold every
-odd job to that. It is what a broke month does instead of nothing; it is not meant to cover a wage
+**Steady work is the errand a war band short of silver can always send men on.** Harvest work, a
+merchant's road. It pays silver on every outcome, little and reliably, and the pool's tests hold all
+steady work to that. It is what a broke month does instead of nothing; it is not meant to cover a wage
 bill, which is why it pays a fraction of one man's wage per man.
 
-The board tags it **Steady work**, the player's word for it; "odd job" is the code's (`IS_ODD_JOB`).
-The tag carries a `title` saying it is there every month and pays even when it goes badly.
+The board tags it **Steady work**, with a `title` saying it is there every month and pays even when it
+goes badly.
 
 The player's alone: a rival is offered nothing, like the incidents.
 
@@ -99,10 +99,10 @@ The player's alone: a rival is offered nothing, like the incidents.
 
 ## What it is worth
 
-At its yardstick a band draws the outcomes as written, so an odd job's silver per man is its weighted
+At its yardstick a band draws the outcomes as written, so a steady-work quest's silver per man is its weighted
 mean: about 29 for the harvest (`(3 × 35 + 1 × 10) / 4`) and 35 for the merchant's road
 (`(3 × 45 + 1 × 5) / 4`). Against a Small Hall's 300 a month and a wage of 80–160 a man, one man sent pays
-back a fifth to a third of what he costs: the odd job softens a lean month, it does not carry one. The
+back a fifth to a third of what he costs: steady work softens a lean month, it does not carry one. The
 errands pay in kind - renown, a blade above the shelf, a man the pub does not sell - and the man fetched
 home draws a wage from the next month, which is what that errand costs.
 
@@ -111,7 +111,7 @@ home draws a wage from the next month, which is what that errand costs.
 `apps/warband/quest/tests/quests/test_pool.py` reads the constants: every entry weighs something, takes
 a band it can be sent, leans on a real attribute, can both succeed and fail, and every success brings
 something home - no lever is ever negative, so that is what makes a quest's expected value positive.
-Every odd job pays silver on every outcome and has a positive expected silver per man at its yardstick,
+All steady work pays silver on every outcome and has a positive expected silver per man at its yardstick,
 and every title fits the log line.
 
 ## The register
@@ -123,4 +123,4 @@ sentence of report, a body as one sentence that quietly undercuts it, no narrato
 
 - [Month incidents](month-incidents.md) — the pattern the catalogue follows
 - [Warrior availability](warrior-availability.md) — the rule that makes a man away
-- [Measuring balance](measuring-balance.md) — the harness sends men on the odd job
+- [Measuring balance](measuring-balance.md) — the harness sends men on the steady work

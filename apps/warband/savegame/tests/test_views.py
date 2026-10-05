@@ -52,7 +52,7 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     assert savegame.player_faction.leader is not None
     # Three stalls in a town without a market of its own
     assert savegame.player_faction.available_items.count() == 3
-    # One odd job and one errand on the board. Which ones is drawn, how many is not
+    # One steady-work quest and one errand on the board. Which ones is drawn, how many is not
     assert Quest.objects.filter(faction=savegame.player_faction).count() == 2
     # A weapon and a piece of armour in the player's stores, and nothing lying in a rival's
     stored_items = Item.objects.filter(

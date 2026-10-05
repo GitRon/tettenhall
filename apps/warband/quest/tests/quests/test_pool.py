@@ -82,12 +82,12 @@ def test_every_item_names_its_generator():
     assert incomplete == []
 
 
-def test_every_odd_job_pays_silver_on_every_outcome():
+def test_all_steady_work_pays_silver_on_every_outcome():
     """The errand that is always on offer is the one a war band short of silver can count on."""
     unpaid = [
         f"{quest.__name__}.{outcome.key}"
         for quest in QUESTS
-        if quest.IS_ODD_JOB
+        if quest.IS_STEADY_WORK
         for outcome in quest.OUTCOMES
         if outcome.silver_per_man <= 0
     ]
@@ -95,15 +95,15 @@ def test_every_odd_job_pays_silver_on_every_outcome():
     assert unpaid == []
 
 
-def test_every_odd_job_has_a_positive_expected_silver_at_its_yardstick():
+def test_all_steady_work_has_a_positive_expected_silver_at_its_yardstick():
     """
     A band at its yardstick draws the outcomes as written, so the weighted mean of the silver is what
-    the odd job is worth to the man sent on it.
+    steady work is worth to the man sent on it.
     """
     worthless = [
         quest.__name__
         for quest in QUESTS
-        if quest.IS_ODD_JOB
+        if quest.IS_STEADY_WORK
         and sum(outcome.weight * outcome.silver_per_man for outcome in quest.OUTCOMES)
         / sum(outcome.weight for outcome in quest.OUTCOMES)
         <= 0
@@ -112,5 +112,5 @@ def test_every_odd_job_has_a_positive_expected_silver_at_its_yardstick():
     assert worthless == []
 
 
-def test_the_catalogue_has_an_odd_job_and_an_errand():
-    assert {quest.IS_ODD_JOB for quest in QUESTS} == {True, False}
+def test_the_catalogue_has_steady_work_and_an_errand():
+    assert {quest.IS_STEADY_WORK for quest in QUESTS} == {True, False}
