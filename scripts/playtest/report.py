@@ -56,6 +56,9 @@ class GameReport:
     player_leaders_raised: int = 0
     rival_leaders_raised: int = 0
     rival_items_bought: int = 0
+    # Earned traits the player's men came out of their fights with, by hook. Only his men earn them, see
+    # [handle_earn_traits_in_skirmish]
+    traits_earned: dict[str, int] = field(default_factory=dict)
     rival_defeat_months: list[int] = field(default_factory=list)
     # For each rival knocked out, how many months it lasted after its first leader fell
     rival_months_after_first_fall: list[int] = field(default_factory=list)
