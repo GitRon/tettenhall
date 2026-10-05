@@ -7,6 +7,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.incident.tests.factories.pending_incident import PendingIncidentFactory
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.training.tests.factories.training import TrainingFactory
 
@@ -229,7 +230,15 @@ def test_dashboard_view_projects_what_is_still_open_this_month(logged_in_client,
     """
     The page the month begins on, so the panels are what it exists to carry. The income key rides
     along because the purse brief reads it.
+
+    A winter month and an undefended rival, so the lists the panels draw have something in them.
     """
+    current_savegame.current_month = 8
+    current_savegame.save()
+    rival = FactionFactory(savegame=current_savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+
     response = logged_in_client.get(reverse("warband:dashboard-view"))
 
     assert response.status_code == 200

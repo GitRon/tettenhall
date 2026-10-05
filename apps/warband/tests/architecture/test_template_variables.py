@@ -14,5 +14,5 @@ from django.template import Context, Template
 
 
 def test_an_unresolved_template_variable_fails_the_test():
-    with pytest.raises(pytest.fail.Exception, match=r"Undefined template variable 'warrior.avatar_url'"):
+    with pytest.raises(pytest.fail.Exception, match=r"Undefined template variable 'warrior\.avatar_url'"):
         Template("{{ warrior.avatar_url }}").render(Context({"warrior": object()}))
