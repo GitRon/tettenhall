@@ -12,6 +12,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
     WarriorWasInjured,
+    WarriorWoundsTended,
 )
 
 
@@ -34,6 +35,18 @@ def handle_warrior_health_healed(*, context: WarriorHealthHealed) -> Command:
     return CreatePlayerMonthLog(
         title=f"Warrior {context.warrior} healed {context.healed_points} HP.",
         kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_HEALED,
+        month=context.month,
+        faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=WarriorWoundsTended)
+def handle_warrior_wounds_tended(*, context: WarriorWoundsTended) -> Command:
+    return CreatePlayerMonthLog(
+        title=(
+            f"{context.warrior} was tended back to full health, {context.healed_points} HP for {context.costs} silver."
+        ),
+        kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_TENDED,
         month=context.month,
         faction=context.faction,
     )

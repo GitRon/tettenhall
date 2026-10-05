@@ -8,12 +8,15 @@ from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.models import Town
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.equipping import WEARER_REFUSAL
 from apps.warband.warrior.services.portrait import draw_portrait
+from apps.warband.warrior.services.tending import NO_SANCTUARY_REFUSAL
 
 
 @pytest.mark.django_db
@@ -865,3 +868,93 @@ def test_warrior_detail_view_replaces_the_gear_edit_with_a_reason_during_a_fight
 
     assert response.context["can_edit_gear"] is False
     assert response.context["gear_refusal"] == WEARER_REFUSAL
+
+
+def _build_sanctuary(current_savegame) -> None:
+    town = current_savegame.player_faction.town
+    town.sanctuary = Town.SanctuaryChoices.SANCTUARY_SMALL
+    town.save()
+
+
+@pytest.mark.django_db
+def test_warrior_tend_view_mends_him_and_bills_the_player(logged_in_client, current_savegame):
+    """
+    The whole chain, because the ledger and the month log hang off the event and both of those
+    handlers run behind the database blocker, which a direct handler call lifts.
+    """
+    _build_sanctuary(current_savegame)
+    warrior = WarriorFactory(faction=current_savegame.player_faction, current_health=10, max_health=40)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warband:warrior-tend-view", kwargs={"pk": warrior.id}))
+
+    assert response.headers["HX-Redirect"] == reverse("warband:warrior-detail-view", args=[warrior.id])
+    warrior.refresh_from_db()
+    assert warrior.current_health == 40
+    assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == 850
+    assert PlayerMonthLog.objects.filter(kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_TENDED).exists()
+
+
+@pytest.mark.django_db
+def test_warrior_tend_view_refuses_with_the_reason(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction, current_health=10, max_health=40)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warband:warrior-tend-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 204
+    assert json.loads(response.headers["HX-Trigger"]) == {"notification": NO_SANCTUARY_REFUSAL}
+
+
+@pytest.mark.django_db
+def test_warrior_tend_view_cannot_reach_a_rivals_man(logged_in_client, current_savegame):
+    """
+    Healing a rival's champion on the player's silver is what the savegame scope alone would allow.
+    """
+    _build_sanctuary(current_savegame)
+    rival = FactionFactory(savegame=current_savegame)
+    warrior = WarriorFactory(faction=rival, savegame=current_savegame, current_health=10, max_health=40)
+    TransactionFactory(faction=current_savegame.player_faction, amount=1000)
+
+    response = logged_in_client.post(reverse("warband:warrior-tend-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_prices_tending_a_wounded_man(logged_in_client, current_savegame):
+    _build_sanctuary(current_savegame)
+    warrior = WarriorFactory(faction=current_savegame.player_faction, current_health=10, max_health=40)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["tending"] == {"costs": 150, "refusal": None, "can_afford": False}
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_names_a_refusal_the_purse_cannot_settle(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction, current_health=10, max_health=40)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["tending"]["refusal"] == NO_SANCTUARY_REFUSAL
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_offers_no_tending_to_a_whole_man(logged_in_client, current_savegame):
+    _build_sanctuary(current_savegame)
+    warrior = WarriorFactory(faction=current_savegame.player_faction, current_health=40, max_health=40)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["tending"] is None
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_offers_no_tending_for_a_rivals_man(logged_in_client, current_savegame):
+    rival = FactionFactory(savegame=current_savegame)
+    warrior = WarriorFactory(faction=rival, savegame=current_savegame, current_health=10, max_health=40)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["tending"] is None

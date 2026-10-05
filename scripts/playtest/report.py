@@ -28,6 +28,8 @@ class GameReport:
 
     seed: int
     policy: str
+    # Whether the player paid his sanctuary to tend his wounded, see [PlayerTurn]
+    tending: bool = False
     outcome: str = ""
     months_played: int = 0
     # Why the harness stopped a game that was neither decided nor at the month cap
@@ -46,6 +48,8 @@ class GameReport:
     captives_recruited: int = 0
     # Men sent away on the month's steady work
     sent_on_quests: int = 0
+    # Men the sanctuary was paid to mend, which only a tending game does
+    warriors_tended: int = 0
     player_successions: int = 0
     rival_successions: int = 0
     # Seats the fyrd filled because nobody was left on the roster - counted apart from the successions

@@ -1,7 +1,7 @@
 import typing
 
 from django.db import models
-from django.db.models import Q, manager
+from django.db.models import Case, F, Q, Value, When, manager
 
 from apps.warband.item.models.item import Item
 
@@ -260,6 +260,42 @@ class WarriorManager(manager.Manager):
         obj.save(update_fields=("current_health", "condition"))
 
         return obj
+
+    def tend_wounds(self, *, obj, faction, month: int) -> int:
+        """
+        Mend a warrior to full health because his faction paid for it, once a month.
+
+        One conditional statement rather than a read, a decision and a save, for the reason
+        [release_from_roster] gives: two overlapping clicks both pass whatever the page checked, and
+        the loser matching no row is what keeps the faction from paying twice. Every rule that must
+        hold whatever the page showed lives in the statement - he is still on this roster and alive,
+        not tended this month, not standing in a fight nobody has played out, and still carrying the
+        wounds the price was quoted on.
+
+        An unconscious man wakes, the way the monthly healing wakes him the moment he is above
+        nothing. A fleeing one stays fleeing: a rout is his nerve, and wounds are all this mends.
+
+        Returns how many rows were tended, so a caller can tell the man who was mended from the click
+        that came too late.
+        """
+        conditions = obj.ConditionChoices
+
+        return (
+            self.filter(id=obj.id, faction=faction, current_health=obj.current_health)
+            .exclude(condition=conditions.CONDITION_DEAD)
+            .exclude(last_tended_at=month)
+            .exclude(id__in=self.filter_standing_in_an_open_fight().values("id"))
+            .update(
+                current_health=F("max_health"),
+                last_tended_at=month,
+                condition=Case(
+                    # A Q rather than a keyword, because "condition" is the name of When's own argument
+                    When(Q(condition=conditions.CONDITION_UNCONSCIOUS), then=Value(conditions.CONDITION_HEALTHY)),
+                    default=F("condition"),
+                    output_field=models.PositiveSmallIntegerField(),
+                ),
+            )
+        )
 
     def set_condition(self, *, obj, condition: int):
         obj.condition = condition

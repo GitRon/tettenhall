@@ -1,9 +1,9 @@
 from apps.warband.faction.tests.factories.faction import FactionFactory
-from apps.warband.finance.handlers.events.warrior import handle_pay_warrior_severance
+from apps.warband.finance.handlers.events.warrior import handle_pay_for_tending, handle_pay_warrior_severance
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.warrior.messages.events.warrior import WarriorWasDismissed
+from apps.warband.warrior.messages.events.warrior import WarriorWasDismissed, WarriorWoundsTended
 
 
 def test_handle_pay_warrior_severance_debits_what_he_is_owed():
@@ -36,3 +36,14 @@ def test_handle_pay_warrior_severance_writes_nothing_for_a_man_on_no_wage():
     )
 
     assert result is None
+
+
+def test_handle_pay_for_tending_debits_the_quoted_price():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Cuthbert", faction=faction)
+
+    result = handle_pay_for_tending(
+        context=WarriorWoundsTended(warrior=warrior, faction=faction, healed_points=30, costs=150, month=3)
+    )
+
+    assert result == CreateTransaction(faction=faction, amount=-150, reason="Wounds of Cuthbert tended", month=3)

@@ -204,6 +204,12 @@ class Warrior(models.Model):
     # "get_nickname"
     health_baseline = models.PositiveSmallIntegerField("Health baseline")
     health_spread = models.PositiveSmallIntegerField("Health spread")
+    # The month the player last paid his sanctuary to tend this man. Months count from 1, so 0 is
+    # "never tended" - the reading "Town.last_feast_at" gives its own zero. Once a month is enough:
+    # he fights once a month, so a second treatment could buy nothing.
+    last_tended_at = models.PositiveSmallIntegerField(
+        "Last tended at", help_text="Month his wounds were last tended for silver, 0 if never", default=0
+    )
 
     current_morale = models.SmallIntegerField("Current morale")
     max_morale = models.PositiveSmallIntegerField("Maximum morale")

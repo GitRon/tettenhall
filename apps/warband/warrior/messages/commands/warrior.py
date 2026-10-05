@@ -117,6 +117,24 @@ class HealInjuredWarrior(Command):
 
 
 @dataclass(kw_only=True)
+class TendWarriorWounds(Command):
+    """
+    Pay the sanctuary to mend one man to full health now, rather than wait out the months.
+
+    Its own command rather than a second [HealInjuredWarrior]: that one rolls against the monthly
+    ceiling and is the monthly healing line, where this one mends him whole and is a purchase.
+
+    The price rides along as quoted, the way [ThrowFeast] carries its costs: the handler re-checks
+    that his wounds are still the ones it was quoted on, so the ledger and the man always agree.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    costs: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class InflictInjury(Command):
     """
     Ask whether this beating left a lasting mark, and write it if it did.

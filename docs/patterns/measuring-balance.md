@@ -59,6 +59,14 @@ no judgement of its own to either, so a change to how the AI fights or spends mo
 on no quest but the steady work, uses no Rally or Assault by choice and throws no feasts. A question that turns on one of those needs a policy
 that uses it.
 
+**`--tending`** plays a player who pays his sanctuary to mend his wounded. The sanctuary goes first in the
+build order, and straight after the fyrd the men free to march are tended, the worst wounded first, each
+while the 150 stays back. It is opt-in because the default player never gets there: the pub and the shop
+spend him down to the 150 every month and he raises a sanctuary in a handful of games out of fifty, so
+tending would change nothing in a default batch, and putting it into every batch would move every
+baseline measured before it. A question about the price of tending compares tending batches at different
+prices against each other, so the build order they share drops out of the comparison.
+
 **Policies** differ only in when the band marches, and on what. Every march storms the burh unless the
 policy says otherwise:
 

@@ -8,6 +8,7 @@ from apps.warband.month.handlers.events.warrior import (
     handle_warrior_walked_out_over_unpaid_salary,
     handle_warrior_was_dismissed,
     handle_warrior_was_injured,
+    handle_warrior_wounds_tended,
 )
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
@@ -22,6 +23,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
     WarriorWasInjured,
+    WarriorWoundsTended,
 )
 
 
@@ -170,5 +172,21 @@ def test_handle_warrior_gained_trait_says_he_changed_without_saying_how():
         title="Sven came back from the fight a different man.",
         kind=PlayerMonthLog.KindChoices.KIND_WARRIOR_CHANGED,
         month=5,
+        faction=faction,
+    )
+
+
+def test_handle_warrior_wounds_tended_names_the_man_the_points_and_the_price():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Beorn", faction=faction)
+
+    result = handle_warrior_wounds_tended(
+        context=WarriorWoundsTended(warrior=warrior, faction=faction, healed_points=30, costs=150, month=3)
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Beorn was tended back to full health, 30 HP for 150 silver.",
+        kind=PlayerMonthLog.KindChoices.KIND_WOUNDS_TENDED,
+        month=3,
         faction=faction,
     )

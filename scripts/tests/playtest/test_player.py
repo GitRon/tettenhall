@@ -18,6 +18,7 @@ from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.buildings.hall import Hall
+from apps.warband.town.models import Town
 from scripts.playtest.player import STOP_FIGHT_STUCK, PlayerTurn
 from scripts.playtest.policy import POLICIES
 
@@ -243,6 +244,63 @@ def test_send_men_on_the_steady_work_keeps_the_leader_home(player_savegame, rng,
 
     assert QuestContract.objects.exists() is False
     assert report.sent_on_quests == 0
+
+
+@pytest.mark.django_db
+def test_build_raises_the_sanctuary_first_for_a_tending_player(player_savegame, rng, report, queuebie_registry):
+    TransactionFactory(faction=player_savegame.player_faction, amount=10_000)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report, tending=True).build()
+
+    assert report.built == [(1, "sanctuary", 1)]
+
+
+@pytest.mark.django_db
+def test_play_tends_the_wounded_only_for_a_tending_player(player_savegame, rng, report, queuebie_registry):
+    """
+    Before the pub and the shop, so the purse they spend down is still there to pay the sanctuary.
+    """
+    faction = player_savegame.player_faction
+    faction.town.sanctuary = Town.SanctuaryChoices.SANCTUARY_SMALL
+    faction.town.save()
+    WarriorFactory(faction=faction, current_health=10, max_health=40)
+    TransactionFactory(faction=faction, amount=300)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report, tending=True).play()
+
+    assert report.warriors_tended == 1
+
+
+@pytest.mark.django_db
+def test_tend_the_wounded_mends_every_man_the_purse_covers(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    faction.town.sanctuary = Town.SanctuaryChoices.SANCTUARY_SMALL
+    faction.town.save()
+    badly_hurt = WarriorFactory(faction=faction, current_health=10, max_health=40)
+    scratched = WarriorFactory(faction=faction, current_health=30, max_health=40)
+    TransactionFactory(faction=faction, amount=10_000)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).tend_the_wounded()
+
+    assert [Warrior.objects.get(id=w.id).current_health for w in (badly_hurt, scratched)] == [40, 40]
+    assert report.warriors_tended == 2
+
+
+@pytest.mark.django_db
+def test_tend_the_wounded_passes_over_a_man_too_dear_to_mend(player_savegame, rng, report, queuebie_registry):
+    """
+    Thirty points cost 150 and would eat into the 150 kept back; the ten behind him cost 50 and do not.
+    """
+    faction = player_savegame.player_faction
+    faction.town.sanctuary = Town.SanctuaryChoices.SANCTUARY_SMALL
+    faction.town.save()
+    badly_hurt = WarriorFactory(faction=faction, current_health=10, max_health=40)
+    scratched = WarriorFactory(faction=faction, current_health=30, max_health=40)
+    TransactionFactory(faction=faction, amount=200)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).tend_the_wounded()
+
+    assert [Warrior.objects.get(id=w.id).current_health for w in (badly_hurt, scratched)] == [10, 40]
 
 
 @pytest.mark.django_db

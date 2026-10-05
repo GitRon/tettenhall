@@ -6,6 +6,7 @@ from apps.warband.faction.handlers.commands.faction import _create_faction
 from apps.warband.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
@@ -32,6 +33,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_punish_unpaid_warrior,
     handle_recruit_captured_warrior,
     handle_replenish_warrior_morale,
+    handle_tend_warrior_wounds,
 )
 from apps.warband.warrior.messages.commands.warrior import (
     AwardEarnedNickname,
@@ -46,6 +48,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     PunishUnpaidWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
+    TendWarriorWounds,
 )
 from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
@@ -59,6 +62,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
     WarriorWasInjured,
+    WarriorWoundsTended,
 )
 from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.injury_type import InjuryType
@@ -806,3 +810,120 @@ def test_handle_earn_traits_in_skirmish_is_silent_for_a_man_the_fight_left_as_he
     result = handle_earn_traits_in_skirmish(context=EarnTraitsInSkirmish(skirmish=skirmish, month=1))
 
     assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_mends_a_wounded_man_to_full_health():
+    faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=150)
+    warrior = WarriorFactory(faction=faction, current_health=10, max_health=40)
+
+    result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=150, month=3))
+
+    assert result == WarriorWoundsTended(warrior=warrior, faction=faction, healed_points=30, costs=150, month=3)
+    warrior.refresh_from_db()
+    assert (warrior.current_health, warrior.last_tended_at) == (40, 3)
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_wakes_an_unconscious_man():
+    faction = FactionFactory()
+    warrior = WarriorFactory(
+        faction=faction, current_health=0, max_health=40, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+
+    handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
+
+    warrior.refresh_from_db()
+    assert (warrior.current_health, warrior.condition) == (40, Warrior.ConditionChoices.CONDITION_HEALTHY)
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_leaves_a_rout_to_his_nerve():
+    """
+    A rout is his morale, which the monthly refill mends. Tending buys back wounds and nothing else.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(
+        faction=faction, current_health=10, max_health=40, condition=Warrior.ConditionChoices.CONDITION_FLEEING
+    )
+
+    handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
+
+    warrior.refresh_from_db()
+    assert (warrior.current_health, warrior.condition) == (40, Warrior.ConditionChoices.CONDITION_FLEEING)
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_refuses_a_purse_spent_elsewhere():
+    faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=149)
+    warrior = WarriorFactory(faction=faction, current_health=10, max_health=40)
+
+    result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=150, month=3))
+
+    assert result is None
+    warrior.refresh_from_db()
+    assert warrior.current_health == 10
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_charges_a_double_click_once():
+    """
+    Both clicks pass the view's check on the same row, and only the conditional UPDATE tells them apart.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, current_health=10, max_health=40, last_tended_at=3)
+
+    result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_refuses_a_man_in_an_open_fight():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, current_health=10, max_health=40)
+    skirmish = SkirmishFactory(attacking_faction=faction, victorious_faction=None)
+    skirmish.defending_warriors.add(warrior)
+
+    result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_refuses_wounds_other_than_the_ones_priced():
+    """
+    The price was quoted on the health the page showed. A man whose health moved since is not sold
+    the old quote.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, current_health=10, max_health=40)
+    Warrior.objects.filter(id=warrior.id).update(current_health=5)
+
+    result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_refuses_a_man_of_another_faction():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=FactionFactory(), current_health=10, max_health=40)
+
+    result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_tend_warrior_wounds_refuses_the_dead():
+    faction = FactionFactory()
+    warrior = WarriorFactory(
+        faction=faction, current_health=0, max_health=40, condition=Warrior.ConditionChoices.CONDITION_DEAD
+    )
+
+    result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
+
+    assert result is None

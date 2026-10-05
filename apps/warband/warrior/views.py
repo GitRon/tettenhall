@@ -1,6 +1,7 @@
 import json
 from http import HTTPStatus
 
+from django.contrib import messages
 from django.db.models import QuerySet
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -8,6 +9,7 @@ from django.urls import reverse
 from django.views import generic
 from queuebie.runner import handle_message
 
+from apps.common.http import hx_redirect
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
 from apps.warband.item.messages.commands.item import EquipItem
@@ -26,9 +28,17 @@ from apps.warband.warrior.messages.commands.warrior import (
     DismissWarrior,
     EnslaveCapturedWarrior,
     RecruitCapturedWarrior,
+    TendWarriorWounds,
 )
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.equipping import get_equip_refusal
+from apps.warband.warrior.services.tending import (
+    DEAD_REFUSAL,
+    UNAFFORDABLE_REFUSAL,
+    UNWOUNDED_REFUSAL,
+    get_tending_price,
+    get_tending_refusal,
+)
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
@@ -149,8 +159,39 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         context["unpaid_wages_note"] = (
             get_unpaid_wages_note(warrior=self.object) if context["is_player_faction"] else None
         )
+        context["tending"] = (
+            self._get_tending_context(current_savegame=current_savegame) if context["is_player_faction"] else None
+        )
         self._add_roster_context(context=context, player_faction=player_faction)
         return context
+
+    def _get_tending_context(self, *, current_savegame: Savegame) -> dict | None:
+        """
+        What tending this man would cost, and why it may not be bought now - or None where there is
+        nothing to offer at all.
+
+        Off the refusal the tend view itself asks, so the button can never offer a treatment the click
+        would refuse. A dead man and a whole one get no control rather than a disabled one: a
+        "nothing to tend" on every healthy man in the war band would be noise, where a missing
+        sanctuary or a spent month is a price worth showing next to the wounds.
+        """
+        player_faction = current_savegame.player_faction
+        refusal = get_tending_refusal(
+            warrior=self.object,
+            faction=player_faction,
+            month=current_savegame.current_month,
+            balance=Transaction.objects.current_balance(faction_id=player_faction.id),
+        )
+        if refusal in (DEAD_REFUSAL, UNWOUNDED_REFUSAL):
+            return None
+
+        # A purse that falls short is priced on the button rather than told it is short, the way the feast
+        # and the buildings are: the number is what the player has to go and raise
+        return {
+            "costs": get_tending_price(warrior=self.object, town=player_faction.town),
+            "refusal": None if refusal == UNAFFORDABLE_REFUSAL else refusal,
+            "can_afford": refusal != UNAFFORDABLE_REFUSAL,
+        }
 
 
 class WarriorWeaponUpdateView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, generic.UpdateView):
@@ -299,6 +340,50 @@ class DismissWarriorView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerys
             }
         )
         return response
+
+
+class TendWarriorWoundsView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, generic.DetailView):
+    """
+    Pays the player's sanctuary to mend one of his men to full health now.
+
+    Only the player's own men, so the savegame is not scope enough: a rival's warriors are in it too,
+    and the id from the URL was all it would take to heal a rival's champion on the player's silver.
+    A captive has no faction, so he is out of reach the same way.
+    """
+
+    model = Warrior
+    http_method_names = ("post",)
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        obj = self.get_object()
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+        player_faction = current_savegame.player_faction
+
+        # The same function the page asks before it offers the control, so a refusal here means the
+        # page the player clicked from was stale rather than that the two disagree
+        refusal = get_tending_refusal(
+            warrior=obj,
+            faction=player_faction,
+            month=current_savegame.current_month,
+            balance=Transaction.objects.current_balance(faction_id=player_faction.id),
+        )
+        if refusal is not None:
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps({"notification": refusal})
+            return response
+
+        handle_message(
+            TendWarriorWounds(
+                warrior=obj,
+                faction=player_faction,
+                costs=get_tending_price(warrior=obj, town=player_faction.town),
+                month=current_savegame.current_month,
+            )
+        )
+        messages.add_message(request, messages.SUCCESS, f"{obj} was tended back to full health.")
+
+        # Back onto his own page, because the health, the condition and the purse all moved
+        return hx_redirect(url=reverse("warband:warrior-detail-view", args=[obj.id]))
 
 
 class CapturedWarriorActionMixin(SavegameScopedQuerysetMixin):

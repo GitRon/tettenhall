@@ -5,6 +5,7 @@ from queuebie.messages import Event
 
 from apps.warband.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.warband.faction.models.faction import Faction
+from apps.warband.finance.models import Transaction
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.sanctuary import Sanctuary
 from apps.warband.warrior.messages.commands.warrior import (
@@ -22,6 +23,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     PunishUnpaidWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
+    TendWarriorWounds,
 )
 from apps.warband.warrior.messages.events.warrior import (
     NewLeaderWarriorCreated,
@@ -37,6 +39,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorWalkedOutOverUnpaidSalary,
     WarriorWasDismissed,
     WarriorWasInjured,
+    WarriorWoundsTended,
 )
 from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.trait import Trait
@@ -341,6 +344,37 @@ def handle_heal_injured_warrior(*, context: HealInjuredWarrior) -> Event | None:
         warrior=context.warrior,
         faction=context.faction,
         healed_points=healed_hp,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=TendWarriorWounds)
+def handle_tend_warrior_wounds(*, context: TendWarriorWounds) -> Event | None:
+    """
+    Mend one man to full health because his faction paid the sanctuary to.
+
+    The second of two enforcement points, for the reason "handle_throw_feast" re-checks its own: a
+    double-clicked button passes "get_tending_refusal" twice, and only one of the two may be charged.
+    The purse is re-read first, then every rule about the man is the single statement
+    [tend_wounds] makes. Nothing here asks whether the faction is the player's, so the healing path
+    stays one lookup for everybody.
+    """
+    if Transaction.objects.current_balance(faction_id=context.faction.id) < context.costs:
+        return None
+
+    healed_points = context.warrior.max_health - context.warrior.current_health
+
+    if Warrior.objects.tend_wounds(obj=context.warrior, faction=context.faction, month=context.month) == 0:
+        return None
+
+    # The UPDATE went around the instance, and the instance is what travels on the event
+    context.warrior.refresh_from_db()
+
+    return WarriorWoundsTended(
+        warrior=context.warrior,
+        faction=context.faction,
+        healed_points=healed_points,
+        costs=context.costs,
         month=context.month,
     )
 

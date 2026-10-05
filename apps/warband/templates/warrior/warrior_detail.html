@@ -81,6 +81,27 @@
             <td>Health</td>
             <td><c-warrior.gauge :current="object.current_health" :maximum="object.max_health" :baseline="object.health_baseline" :knowledge="knowledge" /></td>
         </tr>
+        {% comment %}
+            Under the wounds it would mend, and priced on the button, so the player reads the bill
+            before he clicks. Only for his own wounded men: the view answers None for a whole man, a
+            dead one and everyone not under his banner, and a disabled button names any other refusal.
+        {% endcomment %}
+        {% if tending %}
+            <tr>
+                <td>Sanctuary</td>
+                <td>
+                    {% if tending.refusal %}
+                        <button class="row-action" disabled>{{ tending.refusal }}</button>
+                    {% elif not tending.can_afford %}
+                        <button class="row-action" disabled>Tending him costs {{ tending.costs }} silver</button>
+                    {% else %}
+                        <button hx-post="{% url 'warband:warrior-tend-view' object.id %}"
+                                hx-disabled-elt="this"
+                                class="row-action">Tend his wounds for {{ tending.costs }} silver</button>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endif %}
         <tr>
             <td>Morale</td>
             <td><c-warrior.gauge :current="object.current_morale" :maximum="object.max_morale" :peak="object.peak_max_morale" :baseline="object.morale_baseline" :knowledge="knowledge" /></td>
