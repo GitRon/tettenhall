@@ -37,8 +37,8 @@
             <span class="border border-rule px-1.5 py-0.5">Morale <span class="text-ink"><c-warrior.gauge :current="warrior.current_morale" :maximum="warrior.max_morale" :peak="warrior.peak_max_morale" :baseline="warrior.morale_baseline" :knowledge="knowledge" /></span></span>
             <span class="border border-rule px-1.5 py-0.5" title="Monthly salary in silver">Wage <span class="text-ink">{{ warrior.monthly_salary }}</span></span>
             {% if knowledge.gear_is_visible %}
-                <span class="border border-rule px-1.5 py-0.5">Weapon <span class="normal-case text-ink">{{ warrior.weapon.display_name|default:"empty-handed" }}</span></span>
-                <span class="border border-rule px-1.5 py-0.5">Armour <span class="normal-case text-ink">{{ warrior.armor.display_name|default:"unarmoured" }}</span></span>
+                <span class="border border-rule px-1.5 py-0.5">Weapon <span class="normal-case text-ink">{% if warrior.weapon %}{{ warrior.weapon.display_name }}{% else %}empty-handed{% endif %}</span></span>
+                <span class="border border-rule px-1.5 py-0.5">Armour <span class="normal-case text-ink">{% if warrior.armor %}{{ warrior.armor.display_name }}{% else %}unarmoured{% endif %}</span></span>
             {% endif %}
             {# A state, not a scale, and only the exception: a man who can fight is how things stand, and a #}
             {# tag saying so on every row would be the loudest thing in the list. #}

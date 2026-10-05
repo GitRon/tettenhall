@@ -72,9 +72,9 @@
                             <option value="{{ warrior.id|unlocalize }}">
                                 {{ warrior.display_name }} {{ warrior|gear_gain:item }}
                                 {% if item.is_weapon %}
-                                    ({{ warrior.weapon.display_name|default:"empty-handed" }})
+                                    ({% if warrior.weapon %}{{ warrior.weapon.display_name }}{% else %}empty-handed{% endif %})
                                 {% else %}
-                                    ({{ warrior.armor.display_name|default:"unarmoured" }})
+                                    ({% if warrior.armor %}{{ warrior.armor.display_name }}{% else %}unarmoured{% endif %})
                                 {% endif %}
                             </option>
                         {% endfor %}

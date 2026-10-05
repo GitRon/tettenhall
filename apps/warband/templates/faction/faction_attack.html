@@ -14,7 +14,7 @@
             <tr>
                 {# The name carries the title, so the label names the relation rather than the seat #}
                 <td>Led by</td>
-                <td>{{ object.leader.display_name }}</td>
+                <td>{% if object.leader %}{{ object.leader.display_name }}{% else %}-{% endif %}</td>
             </tr>
             {% for raid_kind, fortification_strength in raid_kind_list %}
                 <tr>

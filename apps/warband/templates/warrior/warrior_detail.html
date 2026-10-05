@@ -41,7 +41,7 @@
         </tr>
         <tr>
             <td>Faction</td>
-            <td>{{ object.faction.name|default:"—" }}</td>
+            <td>{% if object.faction %}{{ object.faction.name }}{% else %}—{% endif %}</td>
         </tr>
         <tr>
             <td>Culture</td>
