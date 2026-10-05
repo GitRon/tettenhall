@@ -22,6 +22,7 @@ from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.skirmish_blow import SkirmishBlowFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.models.injury import Injury
+from apps.warband.warrior.services.trait import TraitEarningService
 
 
 @pytest.mark.django_db
@@ -160,7 +161,12 @@ def test_a_fight_that_shakes_a_man_changes_him_and_tells_the_player_so(queuebie_
     skirmish.defending_warriors.add(
         WarriorFactory(faction=skirmish.defending_faction, condition=Warrior.ConditionChoices.CONDITION_FLEEING)
     )
-    SkirmishBlowFactory.create_batch(4, skirmish=skirmish, defender=warrior, outcome=BlowOutcomeChoices.OUTCOME_HIT)
+    SkirmishBlowFactory.create_batch(
+        TraitEarningService.SHAKEN_HITS_TAKEN,
+        skirmish=skirmish,
+        defender=warrior,
+        outcome=BlowOutcomeChoices.OUTCOME_HIT,
+    )
 
     handle_message(WinSkirmish(skirmish=skirmish, victorious_faction=player_faction, month=3))
 

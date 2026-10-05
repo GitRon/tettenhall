@@ -1,4 +1,5 @@
 import random
+from collections import Counter
 from dataclasses import dataclass, replace
 
 from django.contrib.auth.models import User
@@ -12,6 +13,8 @@ from apps.warband.savegame.messages.commands.savegame import CreateNewSavegame
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.warrior.models.trait import Trait
+from apps.warband.warrior.models.trait_type import TraitType
 from scripts.playtest.player import PlayerTurn
 from scripts.playtest.policy import PlayerPolicy
 from scripts.playtest.report import GameReport, MonthRecord
@@ -93,6 +96,7 @@ def play_months(
 
     report.outcome = savegame.get_outcome_display()
     report.rival_items_bought = _count_rival_purchases(savegame=savegame)
+    report.traits_earned = _count_earned_traits(savegame=savegame)
     return report
 
 
@@ -188,3 +192,17 @@ def _count_rival_purchases(*, savegame: Savegame) -> int:
         faction__in=Faction.objects.for_savegame(savegame_id=savegame.id).exclude(id=savegame.player_faction_id),
         reason__endswith=" bought",
     ).count()
+
+
+def _count_earned_traits(*, savegame: Savegame) -> dict[str, int]:
+    """
+    How many of each earned trait the savegame's men carry at its end, the fallen included.
+
+    Read off the whole savegame rather than the player's roster: a man of his who was taken prisoner or
+    killed keeps the trait he earned under the player's banner, and no rival ever earns one.
+    """
+    hooks = Trait.objects.filter(
+        warrior__savegame=savegame, type__source=TraitType.SourceChoices.SOURCE_EARNED
+    ).values_list("type__hook", flat=True)
+
+    return dict(sorted(Counter(hooks).items()))

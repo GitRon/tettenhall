@@ -5,7 +5,16 @@ from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from scripts.playtest.playthrough import STOP_MONTH_BLOCKED, Standing, _count_successions, play_months, play_savegame
+from apps.warband.warrior.models.trait_type import TraitType
+from apps.warband.warrior.tests.factories.trait import TraitFactory
+from scripts.playtest.playthrough import (
+    STOP_MONTH_BLOCKED,
+    Standing,
+    _count_earned_traits,
+    _count_successions,
+    play_months,
+    play_savegame,
+)
 from scripts.playtest.policy import POLICIES, PlayerPolicy
 from scripts.playtest.report import GameReport
 
@@ -240,3 +249,19 @@ def test_count_successions_returns_the_standings_now(player_savegame):
     assert result == {
         faction.id: Standing(leader_id=faction.leader_id, is_defeated=False, roster_ids=frozenset({faction.leader_id}))
     }
+
+
+@pytest.mark.django_db
+def test_count_earned_traits_counts_the_savegames_earned_traits_by_hook(player_savegame):
+    """An innate trait is not counted, and neither is an earned one in another savegame."""
+    leader = player_savegame.player_faction.leader
+    TraitFactory(warrior=leader, type=TraitType.objects.get(hook="shaken"))
+    TraitFactory(warrior=leader, type=TraitType.objects.get(hook="nimble"))
+    TraitFactory(
+        warrior=WarriorFactory(faction=player_savegame.player_faction), type=TraitType.objects.get(hook="shaken")
+    )
+    TraitFactory(warrior=WarriorFactory(), type=TraitType.objects.get(hook="headtaker"))
+
+    result = _count_earned_traits(savegame=player_savegame)
+
+    assert result == {"shaken": 2}

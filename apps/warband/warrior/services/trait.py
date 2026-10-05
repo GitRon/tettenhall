@@ -62,8 +62,11 @@ class TraitEarningService:
     # A man is a body type, a temper and a skill at most, never defined by everything at once
     MAX_TRAITS = 3
 
-    # The thresholds, balance numbers owned by this mechanic - see docs/patterns/town-buildings.md
-    SHAKEN_HITS_TAKEN = 4
+    # The thresholds, balance numbers owned by this mechanic - see docs/patterns/town-buildings.md.
+    # A man takes about two swings a fight, and one who takes many more than that is mostly carried off
+    # senseless, which earns him nothing. Six hits he walked away from is a fight that marked him, rare
+    # enough that he is not marked for every long one he saw out
+    SHAKEN_HITS_TAKEN = 6
     CHARMED_SWINGS_SURVIVED = 3
     HEADTAKER_CEILING_ROLLS = 5
     SHIELD_WALL_BLOWS_ABSORBED = 10

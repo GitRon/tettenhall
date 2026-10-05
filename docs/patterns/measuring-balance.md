@@ -99,6 +99,7 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
   leader fell;
 - what was built, as `[month, building, level]`;
 - how many items the rivals bought, read off their ledgers;
+- the earned traits the player's men carry at the end, by hook, as `traits_earned`;
 - a `timeline` with one row per month: the player's living men, his silver, and each rival's living men,
   silver and hall level, each sorted on its own.
 

@@ -46,7 +46,7 @@ Each source owns its own reference table; they share only the layer above.
 |---|---|---|
 | Permanent injuries | `InjuryType`, fixture-backed | shipped |
 | Innate and earned traits | `TraitType`, fixture-backed | shipped |
-| Item bonuses and drawbacks | `ItemType` | #23 |
+| Item bonuses and drawbacks | `ItemType` | #376 |
 
 **Do not merge the catalogues.** An injury entry is a name, an attribute and a magnitude; a trait needs
 all of that plus an exclusive-group key, a sign, a source and the hook an incident pool selects on — so
