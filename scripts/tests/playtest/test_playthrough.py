@@ -47,6 +47,20 @@ def test_play_savegame_plays_games_to_their_end(user, queuebie_registry):
 
 
 @pytest.mark.django_db
+def test_play_savegame_tends_the_wounded_for_a_tending_player(user, queuebie_registry):
+    """
+    The one step only a tending game takes, pinned the way the batch above pins the rest: a tend view
+    the harness has fallen out of step with shows up as a step that fires in none of them.
+    """
+    reports = [
+        play_savegame(seed=seed, policy=POLICIES["aggressive"], month_cap=60, user=user, tending=True)
+        for seed in range(4, 9)
+    ]
+
+    assert sum(report.warriors_tended for report in reports) > 0
+
+
+@pytest.mark.django_db
 def test_play_savegame_repeats_for_the_same_seed(user, queuebie_registry):
     first = play_savegame(seed=5, policy=POLICIES["even"], month_cap=3, user=user)
 

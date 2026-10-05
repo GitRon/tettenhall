@@ -31,8 +31,9 @@ from apps.warband.town.buildings.sanctuary import Sanctuary
 from apps.warband.town.buildings.weaponsmith import Weaponsmith
 from apps.warband.town.messages.commands.town import UpgradeTownBuilding
 from apps.warband.town.services.building_upgrade import get_building_upgrade_refusal
-from apps.warband.warrior.messages.commands.warrior import RecruitCapturedWarrior
+from apps.warband.warrior.messages.commands.warrior import RecruitCapturedWarrior, TendWarriorWounds
 from apps.warband.warrior.services.availability import assess_roster
+from apps.warband.warrior.services.tending import get_tending_price, get_tending_refusal
 from scripts.playtest.policy import PlayerPolicy
 from scripts.playtest.report import GameReport
 
@@ -40,6 +41,13 @@ from scripts.playtest.report import GameReport
 SILVER_KEPT_BACK = 150
 # Each month the first of these that may be upgraded, and leaves the silver above, is built
 BUILD_ORDER = (Hall.BUILDING_NAME, Sanctuary.BUILDING_NAME, Weaponsmith.BUILDING_NAME, Marketplace.BUILDING_NAME)
+# The same with the sanctuary first, for a player who tends his wounded: without it there is nothing to pay
+TENDING_BUILD_ORDER = (
+    Sanctuary.BUILDING_NAME,
+    Hall.BUILDING_NAME,
+    Weaponsmith.BUILDING_NAME,
+    Marketplace.BUILDING_NAME,
+)
 # A fight still undecided after this many rounds is one the harness cannot play out
 MAX_ROUNDS = 300
 
@@ -60,6 +68,11 @@ class PlayerTurn:
 
     The player's men fight the way the rival's do: each is given the action the game's own decision
     service picks for him. The harness adds no fighting judgement of its own.
+
+    "tending" plays a player who pays his sanctuary to mend his wounded: the sanctuary comes first in the
+    build order, and the wounded are tended straight after the fyrd, before the pub and the shop have
+    spent the purse down. Off by default, so a batch measures what it always measured; a question about
+    the price of tending switches it on for both of the batches it compares.
     """
 
     savegame: Savegame
@@ -74,6 +87,7 @@ class PlayerTurn:
         rng: random.Random,
         report: GameReport,
         max_rounds: int = MAX_ROUNDS,
+        tending: bool = False,
     ) -> None:
         self.savegame = savegame
         self.faction = savegame.player_faction
@@ -82,6 +96,7 @@ class PlayerTurn:
         self.rng = rng
         self.report = report
         self.max_rounds = max_rounds
+        self.tending = tending
         # Who was on the roster as the band set out - the steps before the march add men to it, so a
         # successor raised by the fight is told apart against this rather than against last month's roster
         self.roster_ids_at_march: frozenset[int] = frozenset()
@@ -90,6 +105,8 @@ class PlayerTurn:
         """Plays the month and says why the game cannot go on, if it cannot."""
         self.take_in_captives()
         self.draft_the_fyrd()
+        if self.tending:
+            self.tend_the_wounded()
         self.hire_from_the_pub()
         self.buy_from_the_shop()
         self.hand_out_gear()
@@ -179,7 +196,7 @@ class PlayerTurn:
     def build(self) -> None:
         town = self.faction.town
         town.refresh_from_db()
-        for building_type in BUILD_ORDER:
+        for building_type in TENDING_BUILD_ORDER if self.tending else BUILD_ORDER:
             if get_building_upgrade_refusal(town=town, building_type=building_type, current_savegame=self.savegame):
                 continue
             new_level = getattr(town, building_type) + 1
@@ -226,6 +243,29 @@ class PlayerTurn:
             )
             self.report.sent_on_quests += len(band)
             return
+
+    def tend_the_wounded(self) -> None:
+        """
+        Pays the sanctuary to mend the men who could march this month, the worst wounded first.
+
+        Only the men who are free to march - nobody has been sent on the odd job yet, and nobody who stands
+        in a fight already this month could fight again. Each is asked the refusal the tend view asks,
+        against the purse above SILVER_KEPT_BACK, so a man too dear to mend is passed over and a less
+        hurt one behind him may still be.
+        """
+        roster = assess_roster(faction_id=self.faction.id, month=self.month)
+        wounded = sorted(
+            Warrior.objects.filter(id__in=roster.available_ids),
+            key=lambda warrior: (warrior.current_health - warrior.max_health, warrior.id),
+        )
+        for warrior in wounded:
+            if get_tending_refusal(
+                warrior=warrior, faction=self.faction, month=self.month, balance=self._balance() - SILVER_KEPT_BACK
+            ):
+                continue
+            costs = get_tending_price(warrior=warrior, town=self.faction.town)
+            handle_message(TendWarriorWounds(warrior=warrior, faction=self.faction, costs=costs, month=self.month))
+            self.report.warriors_tended += 1
 
     def _healthy_men_of(self, *, faction: Faction) -> int:
         return Warrior.objects.filter_faction(faction_id=faction.id).filter_healthy().count()

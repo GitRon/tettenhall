@@ -23,6 +23,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1, help="Seed of the first game; each next game adds one")
     parser.add_argument("--policy", choices=sorted(POLICIES), default="aggressive", help="When the player marches")
     parser.add_argument("--months", type=int, default=24, help="Month cap per game (default 24)")
+    parser.add_argument(
+        "--tending", action="store_true", help="The player builds his sanctuary first and tends his wounded"
+    )
     parser.add_argument("--output", type=Path, required=True, help="Where the JSON report is written")
     return parser
 
@@ -52,7 +55,9 @@ def main(*, argv: list[str]) -> int:
     reports = []
 
     for seed in range(arguments.seed, arguments.seed + arguments.games):
-        report = play_savegame(seed=seed, policy=policy, month_cap=arguments.months, user=user)
+        report = play_savegame(
+            seed=seed, policy=policy, month_cap=arguments.months, user=user, tending=arguments.tending
+        )
         reports.append(report.as_dict())
         sys.stdout.write(summarise(report=report) + "\n")
         # After every game, so whatever ran before a crash is kept
