@@ -82,6 +82,9 @@ merchant's road. It pays silver on every outcome, little and reliably, and the p
 odd job to that. It is what a broke month does instead of nothing; it is not meant to cover a wage
 bill, which is why it pays a fraction of one man's wage per man.
 
+The board tags it **Steady work**, the player's word for it; "odd job" is the code's (`IS_ODD_JOB`).
+The tag carries a `title` saying it is there every month and pays even when it goes badly.
+
 The player's alone: a rival is offered nothing, like the incidents.
 
 ## What a quest does not do

@@ -20,7 +20,9 @@
                         <span class="border border-rule px-1.5 py-0.5">Wants <span class="text-ink">{{ board_quest.leans_on_label }}</span></span>
                         <c-quest.reward-tags :board_quest="board_quest" />
                         {% if board_quest.entry.IS_ODD_JOB %}
-                            <span class="border border-rule px-1.5 py-0.5">Odd job</span>
+                            {# The catalogue's odd job, named for what it is to the player: work that is always there and always pays something. #}
+                            <span class="border border-rule px-1.5 py-0.5"
+                                  title="There is one every month. It pays something even when it goes badly.">Steady work</span>
                         {% endif %}
                     </span>
                     <a class="row-action col-start-2 row-start-1 md:col-start-3"
