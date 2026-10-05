@@ -47,7 +47,7 @@ holding that level's numbers:
   is the archetype mean a man's strength is measured against, written by the generator that drew him: one
   constant on the attack service cannot sit on three archetype means at once.
 - **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots + how much a feast mends + cell places, weaponsmith →
-  shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling, fortification →
+  shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling + the price of tending a man, fortification →
   the `fortification_strength` an assault on the burh opens with (0 / 20 / 35 / 50); a [raid](raids.md) out in the shire meets no wall. The
   fortification's defence bonus is not a lever: it is `SkirmishActionService.FORTIFICATION_DEFENSE_MULTIPLIER`,
   a constant of the mechanic.
@@ -99,7 +99,19 @@ holding that level's numbers:
   `handle_throw_feast` so a double-click is charged once. The mending goes through
   `ChangeWarriorMaxMorale(restores_toward_peak=True)`: every other raise of the ceiling moves the mark
   along with it, every cut leaves the mark standing.
-- **The cells are the hall's, and they are counted when the month turns** (#417). A level's `CELL_PLACES`
+- **The sanctuary tends one man to full health for silver, once per man per month** (#440). A level's
+  `TENDING_PRICE_PER_POINT` is charged for every health point he is missing, cheaper with each level, so a
+  scratch costs little and a man carried off the field senseless costs most; `NoSanctuary` stands at 0
+  and cannot tend. A treatment mends him whole, so the monthly ceiling says nothing about a tended man -
+  the price is where the building keeps its say. An unconscious man wakes; a fleeing one stays fleeing,
+  because a rout is his nerve. Only men under the player's banner: a captive keeps mending month by month
+  at his captor's sanctuary, and a man standing in an open fight is refused, the way his gear is locked
+  to him. `Warrior.last_tended_at` guards the month the way `Town.last_feast_at` guards the feast - asked
+  by `get_tending_refusal` (`apps/warband/warrior/services/tending.py`) for the message, re-checked as a
+  conditional `UPDATE` in `WarriorManager.tend_wounds` so a double-click is charged once. It is its own
+  command, `TendWarriorWounds`, rather than a second `HealInjuredWarrior`: that one rolls against the
+  ceiling, and `handle_heal_injured_warrior` stays one lookup for every faction.
+ (#417). A level's `CELL_PLACES`
   (1 / 2 / 3 / 4) is how many prisoners the town still holds once the month has turned. A capture is never
   refused for want of room, so cells may stand over their places during a month; then
   `handle_let_captives_flee_overfull_cells`, off `FactionMonthPrepared`, lets exactly the excess go, picked

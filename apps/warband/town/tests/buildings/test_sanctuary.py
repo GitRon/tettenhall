@@ -50,10 +50,33 @@ def test_get_levels_matches_the_model_choices():
     assert len(Sanctuary.get_levels()) == len(Town.SanctuaryChoices)
 
 
-def test_get_effects_names_the_healing_ceiling():
+def test_get_effects_names_the_healing_ceiling_and_the_tending_price():
     result = SmallSanctuary.get_effects()
 
-    assert result == (BuildingEffect(label="Healed per month at most", value="16 health points"),)
+    assert result == (
+        BuildingEffect(label="Healed per month at most", value="16 health points"),
+        BuildingEffect(label="Tending a man to full health", value="5 silver per health point"),
+    )
+
+
+def test_get_effects_without_a_sanctuary_offers_no_tending():
+    result = NoSanctuary.get_effects()
+
+    assert result[1] == BuildingEffect(label="Tending a man to full health", value="No tending")
+
+
+def test_can_tend_without_a_sanctuary():
+    assert NoSanctuary.can_tend() is False
+
+
+@pytest.mark.parametrize(
+    ("sanctuary", "price"),
+    [(SmallSanctuary, 100), (MediumSanctuary, 80), (LargeSanctuary, 60)],
+)
+def test_get_tending_price_is_cheaper_with_each_level(sanctuary, price):
+    result = sanctuary.get_tending_price(missing_health=20)
+
+    assert result == price
 
 
 def test_npc_starting_sanctuary_level_is_the_shrine():

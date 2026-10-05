@@ -149,6 +149,22 @@ class WarriorHealthHealed(Event):
 
 
 @dataclass(kw_only=True)
+class WarriorWoundsTended(Event):
+    """
+    The player paid his sanctuary, and this man stands at full health again.
+
+    The points and the price are both on it, the way [WarriorWasDismissed] carries its severance: the
+    ledger row and the sentence the player reads have to name the same numbers.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    healed_points: int
+    costs: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class WarriorRenownGranted(Event):
     warrior: Warrior
     faction: Faction

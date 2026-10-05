@@ -157,6 +157,7 @@ urlpatterns = [
     ),
     # The warrior pk only: which roster he is sent away from is the player's, read off the savegame
     path("warrior/warrior/<int:pk>/dismiss", warrior_views.DismissWarriorView.as_view(), name="warrior-dismiss-view"),
+    path("warrior/warrior/<int:pk>/tend", warrior_views.TendWarriorWoundsView.as_view(), name="warrior-tend-view"),
     path(
         "warrior/warrior/<int:pk>/partial-update/<str:htmx_attribute>",
         warrior_views.WarriorWeaponUpdateView.as_view(),

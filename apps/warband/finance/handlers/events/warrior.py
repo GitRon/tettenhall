@@ -2,7 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
-from apps.warband.warrior.messages.events.warrior import WarriorWasDismissed
+from apps.warband.warrior.messages.events.warrior import WarriorWasDismissed, WarriorWoundsTended
 
 
 @message_registry.register_event(event=WarriorWasDismissed)
@@ -22,6 +22,16 @@ def handle_pay_warrior_severance(*, context: WarriorWasDismissed) -> Command | N
     return CreateTransaction(
         reason=f"Severance for {context.warrior}",
         amount=-context.severance_pay,
+        faction=context.faction,
+        month=context.month,
+    )
+
+
+@message_registry.register_event(event=WarriorWoundsTended)
+def handle_pay_for_tending(*, context: WarriorWoundsTended) -> Command:
+    return CreateTransaction(
+        reason=f"Wounds of {context.warrior} tended",
+        amount=-context.costs,
         faction=context.faction,
         month=context.month,
     )

@@ -42,6 +42,7 @@ class PlayerMonthLog(models.Model):
         KIND_CAPTIVE_FLED = 24, "Captive fled"
         # One kind for every quest, for the reason an incident has one: the catalogue grows by a class
         KIND_QUEST_RETURNED = 25, "Quest returned"
+        KIND_WOUNDS_TENDED = 26, "Wounds tended"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -98,6 +99,9 @@ class PlayerMonthLog(models.Model):
         KindChoices.KIND_CAPTIVE_FLED: CategoryChoices.CATEGORY_ATTENTION,
         # A chronicle entry, like an incident: what the men came home with is a report and its undercut
         KindChoices.KIND_QUEST_RETURNED: CategoryChoices.CATEGORY_CHRONICLE,
+        # A consequence beside the feast, and not upkeep beside the monthly healing: the player chose
+        # this man and paid for him, so the line names him rather than being counted into a tally
+        KindChoices.KIND_WOUNDS_TENDED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each
