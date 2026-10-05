@@ -62,13 +62,3 @@ def get_tending_refusal(*, warrior: Warrior, faction: Faction, month: int, balan
         return UNAFFORDABLE_REFUSAL
 
     return None
-
-
-def was_tended(*, warrior: Warrior, month: int) -> bool:
-    """
-    Whether this man's wounds were tended for silver in "month", read off the row.
-
-    What the tend view asks after it dispatches, so a request that lost its purse to another spend is
-    not told he was mended.
-    """
-    return Warrior.objects.filter(id=warrior.id, last_tended_at=month).exists()
