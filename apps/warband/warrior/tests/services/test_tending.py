@@ -16,6 +16,7 @@ from apps.warband.warrior.services.tending import (
     UNWOUNDED_REFUSAL,
     get_tending_price,
     get_tending_refusal,
+    was_tended,
 )
 
 
@@ -152,3 +153,10 @@ def test_get_tending_refusal_names_the_month_before_the_price():
     result = get_tending_refusal(warrior=warrior, faction=faction, month=3, balance=0)
 
     assert result == ALREADY_TENDED_THIS_MONTH_REFUSAL
+
+
+@pytest.mark.django_db
+def test_was_tended_reads_the_month_off_the_row():
+    warrior = WarriorFactory(last_tended_at=3)
+
+    assert (was_tended(warrior=warrior, month=3), was_tended(warrior=warrior, month=4)) == (True, False)

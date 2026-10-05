@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views import generic
 from queuebie.runner import handle_message
 
-from apps.common.http import hx_redirect
+from apps.common.http import STALE_PAGE_NOTICE, hx_redirect
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
 from apps.warband.item.messages.commands.item import EquipItem
@@ -32,12 +32,14 @@ from apps.warband.warrior.messages.commands.warrior import (
 )
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.equipping import get_equip_refusal
+from apps.warband.warrior.services.membership import is_on_roster, was_sold_from_cells
 from apps.warband.warrior.services.tending import (
     DEAD_REFUSAL,
     UNAFFORDABLE_REFUSAL,
     UNWOUNDED_REFUSAL,
     get_tending_price,
     get_tending_refusal,
+    was_tended,
 )
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
@@ -380,10 +382,42 @@ class TendWarriorWoundsView(RunningSavegameRequiredMixin, PlayerFactionScopedQue
                 month=current_savegame.current_month,
             )
         )
+
+        # The line describes the man as he now stands, not the click: a request whose silver another
+        # spend took first finds him untended and is told why, by the same refusal
+        if not was_tended(warrior=obj, month=current_savegame.current_month):
+            obj.refresh_from_db()
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "notification": get_tending_refusal(
+                        warrior=obj,
+                        faction=player_faction,
+                        month=current_savegame.current_month,
+                        balance=Transaction.objects.current_balance(faction_id=player_faction.id),
+                    )
+                    or STALE_PAGE_NOTICE
+                }
+            )
+            return response
+
         messages.add_message(request, messages.SUCCESS, f"{obj} was tended back to full health.")
 
         # Back onto his own page, because the health, the condition and the purse all moved
         return hx_redirect(url=reverse("warband:warrior-detail-view", args=[obj.id]))
+
+
+def _stale_captive_response() -> HttpResponse:
+    # The cells list reloads with it, because the man the player clicked is no longer where it showed him
+    response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+    response["HX-Trigger"] = json.dumps(
+        {
+            "notification": STALE_PAGE_NOTICE,
+            "loadFactionWarriorList": "-",
+            "loadFactionCapturedWarriorList": "-",
+        }
+    )
+    return response
 
 
 class CapturedWarriorActionMixin(SavegameScopedQuerysetMixin):
@@ -421,6 +455,10 @@ class WarriorRecruitCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
 
         handle_message(RecruitCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
 
+        # Where he ended up, not what was clicked: a captive sold by an overlapping request has not joined
+        if not is_on_roster(warrior=obj, faction=faction):
+            return _stale_captive_response()
+
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(
             {
@@ -444,6 +482,10 @@ class WarriorEnslaveCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
         handle_message(EnslaveCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
+
+        # The same question from the other side: a captive recruited by an overlapping request was not sold
+        if not was_sold_from_cells(warrior=obj, faction=faction):
+            return _stale_captive_response()
 
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(

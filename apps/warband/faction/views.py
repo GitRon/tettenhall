@@ -10,6 +10,7 @@ from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 from queuebie.runner import handle_message
 
+from apps.common.http import STALE_PAGE_NOTICE
 from apps.warband.faction.forms.faction_attack import FactionAttackForm
 from apps.warband.faction.messages.commands.faction import OccupyFaction
 from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
@@ -37,6 +38,7 @@ from apps.warband.skirmish.raids import RAID_KINDS
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
+from apps.warband.warrior.services.membership import is_on_roster
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
@@ -490,6 +492,21 @@ class RecruitPubMercenaryView(
                 month=current_savegame.current_month,
             )
         )
+
+        # The row below says he was hired, so it is only sent once he has been: a request whose silver
+        # another spend took first finds him still in the pub and is told why, by the same refusal
+        if not is_on_roster(warrior=obj, faction=current_savegame.player_faction):
+            response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "notification": get_pub_hire_refusal(
+                        faction=current_savegame.player_faction, hiring_price=hiring_price
+                    )
+                    or STALE_PAGE_NOTICE,
+                    "loadPubMercenaryList": "-",
+                }
+            )
+            return response
 
         # The body is the way on to the man, appended above the pub rather than swapped in place of
         # his card: the pub list reloads itself on "loadPubMercenaryList", which is what renders its

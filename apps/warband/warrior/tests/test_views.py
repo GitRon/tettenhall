@@ -1,8 +1,11 @@
 import json
+from unittest import mock
 
 import pytest
 from django.urls import reverse
 
+from apps.common.http import STALE_PAGE_NOTICE
+from apps.common.tests.race import passes_first_time
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
@@ -16,7 +19,9 @@ from apps.warband.town.models import Town
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.equipping import WEARER_REFUSAL
 from apps.warband.warrior.services.portrait import draw_portrait
-from apps.warband.warrior.services.tending import NO_SANCTUARY_REFUSAL
+from apps.warband.warrior.services.tending import NO_SANCTUARY_REFUSAL, get_tending_refusal
+from apps.warband.warrior.services.tending import UNAFFORDABLE_REFUSAL as UNAFFORDABLE_TENDING_REFUSAL
+from apps.warband.warrior.views import CapturedWarriorActionMixin
 
 
 @pytest.mark.django_db
@@ -958,3 +963,65 @@ def test_warrior_detail_view_offers_no_tending_for_a_rivals_man(logged_in_client
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
 
     assert response.context["tending"] is None
+
+
+@pytest.mark.django_db
+def test_warrior_tend_view_tells_the_loser_of_a_race_why_he_was_not_tended(logged_in_client, current_savegame):
+    """
+    The request passed its check before another spend took the silver, so the handler left him wounded.
+    See "passes_first_time" for the staging.
+    """
+    _build_sanctuary(current_savegame)
+    warrior = WarriorFactory(faction=current_savegame.player_faction, current_health=10, max_health=40)
+
+    with mock.patch(
+        "apps.warband.warrior.views.get_tending_refusal", side_effect=passes_first_time(get_tending_refusal)
+    ):
+        response = logged_in_client.post(reverse("warband:warrior-tend-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 204
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == UNAFFORDABLE_TENDING_REFUSAL
+
+
+@pytest.mark.django_db
+def test_warrior_recruit_captured_view_does_not_welcome_a_man_already_sold(logged_in_client, current_savegame):
+    """
+    An overlapping request sold him first. The captor check is what that request's page passed before
+    the sale, which one thread cannot interleave - so it is let through here, the way "passes_first_time"
+    lets a refusal through.
+    """
+    captive = WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+
+    with mock.patch.object(
+        CapturedWarriorActionMixin, "get_captor_faction", return_value=current_savegame.player_faction
+    ):
+        response = logged_in_client.post(
+            reverse(
+                "warband:warrior-recruit-captured-view",
+                kwargs={"pk": captive.id, "faction_id": current_savegame.player_faction.id},
+            )
+        )
+
+    assert response.status_code == 204
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE
+
+
+@pytest.mark.django_db
+def test_warrior_enslave_captured_view_does_not_sell_a_man_already_recruited(logged_in_client, current_savegame):
+    """
+    An overlapping request took him into the war band first, staged as the recruit test above stages it.
+    """
+    captive = WarriorFactory(faction=current_savegame.player_faction)
+
+    with mock.patch.object(
+        CapturedWarriorActionMixin, "get_captor_faction", return_value=current_savegame.player_faction
+    ):
+        response = logged_in_client.post(
+            reverse(
+                "warband:warrior-enslave-captured-view",
+                kwargs={"pk": captive.id, "faction_id": current_savegame.player_faction.id},
+            )
+        )
+
+    assert response.status_code == 204
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE

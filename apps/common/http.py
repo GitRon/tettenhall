@@ -1,5 +1,9 @@
 from django.http import HttpResponse
 
+# What a view says when its command did not go through and no refusal can name a reason any more: an
+# overlapping request changed the state first, so the page the click was made on is out of date
+STALE_PAGE_NOTICE = "That did not go through - something changed first. Have another look."
+
 
 def hx_redirect(*, url: str) -> HttpResponse:
     """

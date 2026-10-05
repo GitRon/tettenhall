@@ -32,3 +32,13 @@ def get_feast_refusal(*, town: Town, head_count: int, current_savegame: Savegame
         return UNAFFORDABLE_FEAST_REFUSAL
 
     return None
+
+
+def has_feasted(*, town: Town, month: int) -> bool:
+    """
+    Whether this town's war band has feasted in "month", read off the row rather than the instance.
+
+    What the feast view asks after it dispatches, so its line describes the table that was laid rather
+    than the click: a request that lost its feast to another spend of the same purse is told so instead.
+    """
+    return Town.objects.filter(pk=town.pk, last_feast_at=month).exists()

@@ -1,7 +1,10 @@
+from unittest import mock
+
 import pytest
 from django.contrib.messages import get_messages
 from django.urls import reverse
 
+from apps.common.tests.race import passes_first_time
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
@@ -10,6 +13,8 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
+from apps.warband.town.services.building_upgrade import UNAFFORDABLE_REFUSAL, get_building_upgrade_refusal
+from apps.warband.town.services.feast import UNAFFORDABLE_FEAST_REFUSAL, get_feast_refusal
 
 
 def _building(response, building_type: str) -> dict:
@@ -520,3 +525,41 @@ def test_throw_feast_view_refuses_a_second_feast_in_the_same_month(logged_in_cli
     assert Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id) == (
         balance_after_the_first
     )
+
+
+@pytest.mark.django_db
+def test_upgrade_building_view_tells_the_loser_of_a_race_why_nothing_was_built(logged_in_client, current_savegame):
+    """
+    The request passed its check before another spend took the silver, so the handler turned it down.
+    The line names the price rather than claiming a building - see "passes_first_time" for the staging.
+    """
+    with mock.patch(
+        "apps.warband.town.views.town_upgrade.get_building_upgrade_refusal",
+        side_effect=passes_first_time(get_building_upgrade_refusal),
+    ):
+        response = logged_in_client.post(reverse("warband:upgrade-building-view", kwargs={"building_type": "hall"}))
+
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [UNAFFORDABLE_REFUSAL]
+    town = Town.objects.get(faction=current_savegame.player_faction)
+    assert town.hall == Town.HallChoices.HALL_NONE
+
+
+@pytest.mark.django_db
+def test_throw_feast_view_tells_the_loser_of_a_race_why_nobody_ate(logged_in_client, current_savegame):
+    """
+    The request passed its check before another spend took the silver, so the handler turned it down.
+    """
+    town = current_savegame.player_faction.town
+    town.hall = Town.HallChoices.HALL_SMALL
+    town.save()
+    WarriorFactory(faction=current_savegame.player_faction)
+
+    with mock.patch(
+        "apps.warband.town.views.town_upgrade.get_feast_refusal",
+        side_effect=passes_first_time(get_feast_refusal),
+    ):
+        response = logged_in_client.post(reverse("warband:throw-feast-view"))
+
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [UNAFFORDABLE_FEAST_REFUSAL]
+    town.refresh_from_db()
+    assert town.last_feast_at == 0

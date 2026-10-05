@@ -7,6 +7,7 @@ from apps.warband.town.services.feast import (
     NO_HALL_REFUSAL,
     UNAFFORDABLE_FEAST_REFUSAL,
     get_feast_refusal,
+    has_feasted,
 )
 
 
@@ -72,3 +73,11 @@ def test_get_feast_refusal_names_the_month_before_the_price(current_savegame):
     result = get_feast_refusal(town=town, head_count=3, current_savegame=current_savegame)
 
     assert result == ALREADY_FEASTED_THIS_MONTH_REFUSAL
+
+
+@pytest.mark.django_db
+def test_has_feasted_reads_the_month_off_the_row(current_savegame):
+    town = current_savegame.player_faction.town
+    Town.objects.filter(pk=town.pk).update(last_feast_at=3)
+
+    assert (has_feasted(town=town, month=3), has_feasted(town=town, month=4)) == (True, False)
