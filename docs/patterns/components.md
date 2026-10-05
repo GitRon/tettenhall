@@ -39,6 +39,7 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-month.log-list>` | `apps.warband` | What one month's log puts to the player - attention and chronicle - with the open `questions` and their answers above it; a finished game passes no questions |
 | `<c-month.log-brief>` | `apps.warband` | The rest of that month's log, read rather than acted on: the consequences and the tallied upkeep, silent when there are none |
 | `<c-navigation.section-nav>` | `apps.warband` | The four sections of the game, `current` marked; a page whose section the url does not say passes its own - see [navigation](navigation.md) |
+| `<c-quest.reward-tags>` | `apps.warband` | What a quest can bring home - silver and renown as a range a man, the gear, a recruit - as fact tags, on the board and the page that sends men; the caller sets the mono row they wrap in |
 | `<c-skirmish.log-line>` | `apps.warband` | One line of a fight in either account; a casualty is set apart by whose loss it is (`casualty_side`) |
 | `<c-skirmish.faction-box>` | `apps.warband` | One war band's panel on the fight screen, with its kit toggle and the roster that refreshes every round |
 | `<c-skirmish.skirmish-table>` | `apps.warband` | A table of fights; `show_victor` adds the Victor column, and the row's control and the empty line are the caller's words |
