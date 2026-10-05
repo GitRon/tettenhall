@@ -8,6 +8,7 @@ from apps.warband.town.services.building_upgrade import (
     MAXIMUM_LEVEL_REFUSAL,
     UNAFFORDABLE_REFUSAL,
     get_building_upgrade_refusal,
+    has_raised,
 )
 
 
@@ -111,3 +112,14 @@ def test_get_building_upgrade_refusal_one_silver_short_of_the_palisade(current_s
     result = get_building_upgrade_refusal(town=town, building_type="fortification", current_savegame=current_savegame)
 
     assert result == UNAFFORDABLE_REFUSAL
+
+
+@pytest.mark.django_db
+def test_has_raised_reads_the_level_off_the_row(current_savegame):
+    town = current_savegame.player_faction.town
+    Town.objects.filter(pk=town.pk).update(hall=Town.HallChoices.HALL_SMALL)
+
+    assert (
+        has_raised(town=town, building_type="hall", level=Town.HallChoices.HALL_SMALL),
+        has_raised(town=town, building_type="hall", level=Town.HallChoices.HALL_MEDIUM),
+    ) == (True, False)

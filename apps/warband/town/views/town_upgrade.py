@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views import generic
 from queuebie.runner import handle_message
 
-from apps.common.http import hx_redirect
+from apps.common.http import STALE_PAGE_NOTICE, hx_redirect
 from apps.warband.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
@@ -16,12 +16,14 @@ from apps.warband.town.services.building_upgrade import (
     ALREADY_BUILT_THIS_MONTH_REFUSAL,
     UNAFFORDABLE_REFUSAL,
     get_building_upgrade_refusal,
+    has_raised,
 )
 from apps.warband.town.services.feast import (
     ALREADY_FEASTED_THIS_MONTH_REFUSAL,
     NO_HALL_REFUSAL,
     UNAFFORDABLE_FEAST_REFUSAL,
     get_feast_refusal,
+    has_feasted,
 )
 
 
@@ -169,6 +171,20 @@ class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic
                 month=current_savegame.current_month,
             )
         )
+
+        # The line describes the town as it now stands, not the click: a request that lost its silver or
+        # its month to an overlapping one finds the level unraised and is told why, by the same refusal
+        if not has_raised(town=town, building_type=building_type, level=new_level):
+            town.refresh_from_db()
+            messages.add_message(
+                request,
+                messages.WARNING,
+                get_building_upgrade_refusal(town=town, building_type=building_type, current_savegame=current_savegame)
+                or STALE_PAGE_NOTICE,
+            )
+
+            return hx_redirect(url=reverse("warband:town-upgrade-view"))
+
         messages.add_message(request, messages.SUCCESS, "Building upgraded.")
 
         return hx_redirect(url=reverse("warband:town-upgrade-view"))
@@ -204,6 +220,19 @@ class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.Deta
                 month=current_savegame.current_month,
             )
         )
+
+        # For the reason the building upgrade above gives
+        if not has_feasted(town=town, month=current_savegame.current_month):
+            town.refresh_from_db()
+            messages.add_message(
+                request,
+                messages.WARNING,
+                get_feast_refusal(town=town, head_count=len(warrior_list), current_savegame=current_savegame)
+                or STALE_PAGE_NOTICE,
+            )
+
+            return hx_redirect(url=reverse("warband:town-upgrade-view"))
+
         messages.add_message(request, messages.SUCCESS, "The war band feasted in the hall.")
 
         return hx_redirect(url=reverse("warband:town-upgrade-view"))

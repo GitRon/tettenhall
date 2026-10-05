@@ -1,4 +1,5 @@
 import json
+from unittest import mock
 
 import pytest
 from django.contrib.messages import get_messages
@@ -6,7 +7,10 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
+from apps.common.tests.race import passes_first_time
 from apps.warband.faction.models.faction import Faction
+from apps.warband.faction.services.hiring import UNAFFORDABLE_REFUSAL as UNAFFORDABLE_HIRE_REFUSAL
+from apps.warband.faction.services.hiring import get_pub_hire_refusal
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models.transaction import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
@@ -2064,3 +2068,20 @@ def test_faction_detail_view_brings_the_portraits_along(logged_in_client, curren
     warrior = response.context["warrior_list"][0]
     with django_assert_num_queries(0):
         assert warrior.portrait_face.image and warrior.hair_colour.hex
+
+
+@pytest.mark.django_db
+def test_recruit_pub_mercenary_view_tells_the_loser_of_a_race_why_he_was_not_hired(
+    logged_in_client, current_savegame, pub_mercenary, queuebie_registry
+):
+    """
+    The request passed its check before another spend took the silver, so the handler left him in the
+    pub. No "hired" row is sent - see "passes_first_time" for the staging.
+    """
+    with mock.patch(
+        "apps.warband.faction.views.get_pub_hire_refusal", side_effect=passes_first_time(get_pub_hire_refusal)
+    ):
+        response = logged_in_client.post(reverse("warband:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
+
+    assert response.status_code == 204
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == UNAFFORDABLE_HIRE_REFUSAL
