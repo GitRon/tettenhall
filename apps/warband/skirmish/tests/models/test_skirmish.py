@@ -42,6 +42,30 @@ def test_can_be_assaulted_by_is_refused_to_a_defender():
 
 
 @pytest.mark.django_db
+def test_can_be_fled_by_an_attacker():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(warrior)
+
+    assert skirmish.can_be_fled_by(warrior=warrior) is True
+
+
+@pytest.mark.django_db
+def test_can_be_fled_by_is_refused_to_a_defending_leader():
+    """
+    The leader is the one a flight would matter for, and he is refused like every other defender: his
+    town is occupied a click later, and the occupation takes him where he stands.
+    """
+    skirmish = SkirmishFactory()
+    leader = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_faction.leader = leader
+    skirmish.defending_faction.save()
+    skirmish.defending_warriors.add(leader)
+
+    assert skirmish.can_be_fled_by(warrior=leader) is False
+
+
+@pytest.mark.django_db
 def test_can_be_rallied_by_the_leader_of_the_attacking_side():
     skirmish = SkirmishFactory()
     leader = WarriorFactory(faction=skirmish.attacking_faction)

@@ -35,29 +35,32 @@ class ActionRequirement:
         return warrior.get_weapon_or_fallback().type.name in self.weapon_types
 
 
-# Never gated, and kept out of the table below so no entry there can gate them. A man with an empty
-# list could not be given an order at all, and fleeing is the one action that takes him off the
-# field: a player who cannot pick it cannot end a fight he is losing except by losing it.
-ALWAYS_OFFERED = frozenset({SkirmishActionChoices.SIMPLE_ATTACK, SkirmishActionChoices.FLEE})
+# Never gated, and kept out of the table below so no entry there can gate it: a man with an empty
+# list could not be given an order at all.
+ALWAYS_OFFERED = frozenset({SkirmishActionChoices.SIMPLE_ATTACK})
 
 # One action per level threshold, so a level-up adds something to the repertoire rather than only
-# to the numbers. The wall and the rally are not the man's to earn: whether they are open to him is
-# the fight's question - see "FIGHT_GATES".
+# to the numbers. The wall, the rally and flight are not the man's to earn: whether they are open to
+# him is the fight's question - see "FIGHT_GATES".
 ACTION_REQUIREMENTS: dict[int, ActionRequirement] = {
     SkirmishActionChoices.DEFENSIVE_STANCE: ActionRequirement(minimum_level=2),
     SkirmishActionChoices.FAST_ATTACK: ActionRequirement(minimum_level=3),
     SkirmishActionChoices.RISKY_ATTACK: ActionRequirement(minimum_level=4),
     SkirmishActionChoices.ASSAULT_FORTIFICATION: ActionRequirement(minimum_level=1),
     SkirmishActionChoices.RALLY: ActionRequirement(minimum_level=1),
+    SkirmishActionChoices.FLEE: ActionRequirement(minimum_level=1),
 }
 
 # Actions that depend on this fight and the man's place in it rather than on his level or gear: a
-# wall has to be standing in front of him, or he has to lead the side he is on.
+# wall has to be standing in front of him, he has to lead the side he is on, or his side has to be
+# the one that marched. Flight is the attacker's guarantee: every man who marched may break off, so
+# a player who attacks can end a fight he is losing other than by losing it.
 FIGHT_GATES: dict[int, Callable[[Skirmish, Warrior], bool]] = {
     SkirmishActionChoices.ASSAULT_FORTIFICATION: lambda skirmish, warrior: skirmish.can_be_assaulted_by(
         warrior=warrior
     ),
     SkirmishActionChoices.RALLY: lambda skirmish, warrior: skirmish.can_be_rallied_by(warrior=warrior),
+    SkirmishActionChoices.FLEE: lambda skirmish, warrior: skirmish.can_be_fled_by(warrior=warrior),
 }
 
 

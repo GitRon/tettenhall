@@ -121,6 +121,17 @@ class Skirmish(models.Model):
         """
         return self.is_fortified and warrior in self.attacking_warriors.all()
 
+    def can_be_fled_by(self, *, warrior: Warrior) -> bool:
+        """
+        Whether this man may break off and leave the field.
+
+        Only the side that marched. The attacker chose the fight and pays for a wrong call with morale
+        instead of with his band; the defender stands in the town he would run from, and an occupation
+        seizes its leader where he stands, so flight would be an option that only looks like one. The
+        side comes off the rosters, as in "can_be_assaulted_by".
+        """
+        return warrior in self.attacking_warriors.all()
+
     def can_be_rallied_by(self, *, warrior: Warrior) -> bool:
         """
         Whether this man may spend his round steadying his side.
