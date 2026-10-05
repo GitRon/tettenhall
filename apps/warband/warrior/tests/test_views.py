@@ -16,7 +16,7 @@ from apps.warband.town.models import Town
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.equipping import WEARER_REFUSAL
 from apps.warband.warrior.services.portrait import draw_portrait
-from apps.warband.warrior.services.tending import NO_SANCTUARY_REFUSAL, UNAFFORDABLE_REFUSAL
+from apps.warband.warrior.services.tending import NO_SANCTUARY_REFUSAL
 
 
 @pytest.mark.django_db
@@ -928,7 +928,16 @@ def test_warrior_detail_view_prices_tending_a_wounded_man(logged_in_client, curr
 
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
 
-    assert response.context["tending"] == {"costs": 150, "refusal": UNAFFORDABLE_REFUSAL}
+    assert response.context["tending"] == {"costs": 150, "refusal": None, "can_afford": False}
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_names_a_refusal_the_purse_cannot_settle(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction, current_health=10, max_health=40)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["tending"]["refusal"] == NO_SANCTUARY_REFUSAL
 
 
 @pytest.mark.django_db

@@ -55,14 +55,14 @@ def test_get_effects_names_the_healing_ceiling_and_the_tending_price():
 
     assert result == (
         BuildingEffect(label="Healed per month at most", value="16 health points"),
-        BuildingEffect(label="Tending a man to full health", value="5 silver per health point"),
+        BuildingEffect(label="Tending to full health, per point", value="5 silver"),
     )
 
 
 def test_get_effects_without_a_sanctuary_offers_no_tending():
     result = NoSanctuary.get_effects()
 
-    assert result[1] == BuildingEffect(label="Tending a man to full health", value="No tending")
+    assert result[1] == BuildingEffect(label="Tending to full health, per point", value="No tending")
 
 
 def test_can_tend_without_a_sanctuary():

@@ -34,9 +34,10 @@ class Sanctuary(Building):
         return (
             # A ceiling on the monthly roll rather than a promise, so the wording has to stay vague
             BuildingEffect(label="Healed per month at most", value=f"{cls.MAX_HEALING_POINTS} health points"),
+            # The unit in the label, so the value stays short enough to sit beside the next level's on a phone
             BuildingEffect(
-                label="Tending a man to full health",
-                value=f"{cls.TENDING_PRICE_PER_POINT} silver per health point" if cls.can_tend() else "No tending",
+                label="Tending to full health, per point",
+                value=f"{cls.TENDING_PRICE_PER_POINT} silver" if cls.can_tend() else "No tending",
             ),
         )
 

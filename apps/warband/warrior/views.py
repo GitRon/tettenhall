@@ -34,6 +34,7 @@ from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.equipping import get_equip_refusal
 from apps.warband.warrior.services.tending import (
     DEAD_REFUSAL,
+    UNAFFORDABLE_REFUSAL,
     UNWOUNDED_REFUSAL,
     get_tending_price,
     get_tending_refusal,
@@ -184,7 +185,13 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         if refusal in (DEAD_REFUSAL, UNWOUNDED_REFUSAL):
             return None
 
-        return {"costs": get_tending_price(warrior=self.object, town=player_faction.town), "refusal": refusal}
+        # A purse that falls short is priced on the button rather than told it is short, the way the feast
+        # and the buildings are: the number is what the player has to go and raise
+        return {
+            "costs": get_tending_price(warrior=self.object, town=player_faction.town),
+            "refusal": None if refusal == UNAFFORDABLE_REFUSAL else refusal,
+            "can_afford": refusal != UNAFFORDABLE_REFUSAL,
+        }
 
 
 class WarriorWeaponUpdateView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, generic.UpdateView):

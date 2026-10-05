@@ -92,6 +92,8 @@
                 <td>
                     {% if tending.refusal %}
                         <button class="row-action" disabled>{{ tending.refusal }}</button>
+                    {% elif not tending.can_afford %}
+                        <button class="row-action" disabled>Tending him costs {{ tending.costs }} silver</button>
                     {% else %}
                         <button hx-post="{% url 'warband:warrior-tend-view' object.id %}"
                                 hx-disabled-elt="this"
