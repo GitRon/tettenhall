@@ -122,6 +122,9 @@ class PlayerMonthLog(models.Model):
     # the sentence that undercuts it does not. Empty for every other producer, so the log stays one
     # line wherever it always was
     body = models.TextField("Body", blank=True, default="")
+    # Short mono tags set under a chronicle entry - what a quest brought home. Words rather than a
+    # column per resource, so a producer that wants a tag of its own costs no migration
+    tags = models.JSONField("Tags", blank=True, default=list)
     kind = models.PositiveSmallIntegerField("Kind", choices=KindChoices.choices)
     category = models.PositiveSmallIntegerField("Category", choices=CategoryChoices.choices)
     month = models.PositiveSmallIntegerField("Month")

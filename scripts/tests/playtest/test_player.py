@@ -217,8 +217,8 @@ def test_build_keeps_silver_back(player_savegame, rng, report, queuebie_registry
 
 
 @pytest.mark.django_db
-def test_send_men_on_the_odd_job_sends_the_weakest_man_it_takes(player_savegame, rng, report, queuebie_registry):
-    """The errand ahead of it on the board is passed over: the harness only ever takes the odd job."""
+def test_send_men_on_the_steady_work_sends_the_weakest_man_it_takes(player_savegame, rng, report, queuebie_registry):
+    """The errand ahead of it on the board is passed over: the harness only ever takes the steady work."""
     faction = player_savegame.player_faction
     weak_warrior = WarriorFactory(faction=faction, strength=6)
     WarriorFactory(faction=faction, strength=12)
@@ -227,20 +227,20 @@ def test_send_men_on_the_odd_job_sends_the_weakest_man_it_takes(player_savegame,
 
     PlayerTurn(
         savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report
-    ).send_men_on_the_odd_job()
+    ).send_men_on_the_steady_work()
 
     assert list(QuestContract.objects.get(faction=faction).assigned_warriors.all()) == [weak_warrior]
     assert report.sent_on_quests == 1
 
 
 @pytest.mark.django_db
-def test_send_men_on_the_odd_job_keeps_the_leader_home(player_savegame, rng, report, queuebie_registry):
+def test_send_men_on_the_steady_work_keeps_the_leader_home(player_savegame, rng, report, queuebie_registry):
     faction = player_savegame.player_faction
     QuestFactory(faction=faction, month=player_savegame.current_month, quest=HarvestHands.__name__)
 
     PlayerTurn(
         savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report
-    ).send_men_on_the_odd_job()
+    ).send_men_on_the_steady_work()
 
     assert QuestContract.objects.exists() is False
     assert report.sent_on_quests == 0

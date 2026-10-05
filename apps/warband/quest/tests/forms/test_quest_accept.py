@@ -3,6 +3,7 @@ import pytest
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.quest.forms.quest_accept import QuestAcceptForm
 from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
+from apps.warband.quest.quests.escort_thegns_daughter import EscortThegnsDaughter
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.skirmish.models.warrior import Warrior
@@ -21,6 +22,18 @@ def test_quest_accept_form_draws_a_man_away_on_another_quest_with_his_reason():
 
     assert list(form.fields["assigned_warriors"].queryset) == [away_warrior]
     assert form.roster.reasons_by_warrior_id == {away_warrior.id: REASON_SWORN_TO_A_QUEST}
+
+
+@pytest.mark.django_db
+def test_quest_accept_form_puts_the_attribute_the_quest_leans_on_beside_each_man():
+    """Escort the thegn's daughter leans on health, so each man is shown with his maximum health."""
+    quest = QuestFactory(month=2, quest=EscortThegnsDaughter.__name__)
+    warrior = WarriorFactory(faction=quest.faction, max_health=31)
+
+    form = QuestAcceptForm(quest=quest, month=2)
+
+    widget = form.fields["assigned_warriors"].widget
+    assert (widget.figure_label, widget.figures_by_warrior_id) == ("Maximum health", {warrior.id: 31})
 
 
 @pytest.mark.django_db

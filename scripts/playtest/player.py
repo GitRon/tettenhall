@@ -111,7 +111,7 @@ class PlayerTurn:
         self.buy_from_the_shop()
         self.hand_out_gear()
         self.build()
-        self.send_men_on_the_odd_job()
+        self.send_men_on_the_steady_work()
         self.roster_ids_at_march = frozenset(
             Warrior.objects.filter_faction(faction_id=self.faction.id).values_list("id", flat=True)
         )
@@ -216,9 +216,9 @@ class PlayerTurn:
             self.report.built.append((self.month, building_type, new_level))
             return
 
-    def send_men_on_the_odd_job(self) -> None:
+    def send_men_on_the_steady_work(self) -> None:
         """
-        Sends the fewest men the month's odd job takes, the weakest at its attribute first.
+        Sends the fewest men the month's steady work takes, the weakest at its attribute first.
 
         The leader stays home, so the band can still march: the harness spends men on the board only
         where it costs the march least. The men are those the accept form would offer.
@@ -226,7 +226,7 @@ class PlayerTurn:
         leader_id = self.faction.leader_id
         for quest in Quest.objects.for_player_faction(faction_id=self.faction.id).offered_in(month=self.month):
             entry = QUESTS_BY_NAME[quest.quest]
-            if not entry.IS_ODD_JOB:
+            if not entry.IS_STEADY_WORK:
                 continue
 
             roster = assess_roster(faction_id=self.faction.id, month=self.month, excluded_ids=(leader_id,))

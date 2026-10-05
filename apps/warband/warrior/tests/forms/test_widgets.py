@@ -35,3 +35,23 @@ def test_create_option_of_a_value_that_wraps_no_warrior():
     result = widget.create_option("assigned_warriors", "", "", selected=False, index=0)
 
     assert result["reason"] is None
+
+
+def test_create_option_carries_the_figure_the_form_wants_beside_him():
+    widget = RosterCheckboxSelectMultiple(figure_label="Strength", figures_by_warrior_id={7: 9})
+
+    result = widget.create_option(
+        "assigned_warriors", ModelChoiceIteratorValue(7, None), "Osric", selected=False, index=0
+    )
+
+    assert (result["figure_label"], result["figure"]) == ("Strength", 9)
+
+
+def test_create_option_without_figures_carries_none():
+    widget = RosterCheckboxSelectMultiple()
+
+    result = widget.create_option(
+        "assigned_warriors", ModelChoiceIteratorValue(7, None), "Osric", selected=False, index=0
+    )
+
+    assert result["figure"] is None

@@ -104,6 +104,24 @@ def test_handle_create_player_month_log_writes_the_line():
 
 
 @pytest.mark.django_db
+def test_handle_create_player_month_log_writes_the_tags():
+    savegame = SavegameFactory()
+    FactionFactory(savegame=savegame, is_player=True)
+
+    handle_create_player_month_log(
+        context=CreatePlayerMonthLog(
+            title="The thegn's barley was brought in by the war band.",
+            tags=["70 silver"],
+            kind=PlayerMonthLog.KindChoices.KIND_QUEST_RETURNED,
+            month=3,
+            faction=savegame.player_faction,
+        )
+    )
+
+    assert PlayerMonthLog.objects.get().tags == ["70 silver"]
+
+
+@pytest.mark.django_db
 def test_handle_create_player_month_log_derives_the_category_from_the_kind():
     """
     The producer names one thing, so a line cannot be filed under a weight that contradicts what it

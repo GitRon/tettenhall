@@ -38,6 +38,13 @@
                                 {{ option.label }}
                             </span>
 
+                            {# The number the form wants read beside him, word quiet and figure loud. #}
+                            {% if option.figure is not None %}
+                                <span class="font-mono text-label uppercase tracking-label text-ink-muted">
+                                    {{ option.figure_label }} <span class="text-ink">{{ option.figure }}</span>
+                                </span>
+                            {% endif %}
+
                             {# The reason is ink-muted and never ink-dim. It is the one thing on this #}
                             {# row the player is here to read, and ink-dim may not carry meaning. #}
                             {% if option.reason %}

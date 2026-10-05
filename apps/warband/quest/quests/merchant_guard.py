@@ -3,7 +3,7 @@ from apps.warband.quest.quests.base import Quest, QuestOutcome
 
 class MerchantGuard(Quest):
     """
-    The other odd job: walking a merchant's pack-train to the next market.
+    The other steady work: walking a merchant's pack-train to the next market.
 
     Better paid than the harvest and less certain of it. Leans on dexterity, the attribute a man
     watching a treeline needs.
@@ -20,7 +20,7 @@ class MerchantGuard(Quest):
     # Two middling men
     STAT_YARDSTICK = 16
 
-    IS_ODD_JOB = True
+    IS_STEADY_WORK = True
 
     OUTCOMES = (
         QuestOutcome(

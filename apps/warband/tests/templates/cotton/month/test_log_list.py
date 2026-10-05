@@ -83,6 +83,18 @@ def test_log_list_tells_a_chronicle_entry_with_its_body():
     assert result == "A comet It hangs over Mercia."
 
 
+def test_log_list_tells_what_a_chronicle_entry_brought_home():
+    logs = GroupedPlayerMonthLog(
+        chronicle=[PlayerMonthLogFactory.build(title="The barley is in", body="", tags=["70 silver", "Weapon"])]
+    )
+
+    html = render_component(tag=LOG_LIST_TAG, context={"logs": logs, "questions": []})
+
+    result = _text(html)
+
+    assert result == "The barley is in 70 silver Weapon"
+
+
 def test_log_list_leaves_consequences_and_upkeep_to_the_brief():
     logs = GroupedPlayerMonthLog(
         consequence=[PlayerMonthLogFactory.build(title="Wages paid")],

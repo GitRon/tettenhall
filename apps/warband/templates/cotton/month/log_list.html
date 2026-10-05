@@ -58,6 +58,14 @@
                 {% if message.body %}
                     <p class="mt-2.5 mb-0">{{ message.body }}</p>
                 {% endif %}
+                {# What the entry brought, in the voice an incident answer prices itself in. Wraps on a phone. #}
+                {% if message.tags %}
+                    <p class="mt-2.5 mb-0 flex flex-wrap gap-x-3 gap-y-1">
+                        {% for tag in message.tags %}
+                            <span class="font-mono text-label tracking-label text-ink-muted">{{ tag }}</span>
+                        {% endfor %}
+                    </p>
+                {% endif %}
             </div>
         {% endfor %}
 

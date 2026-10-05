@@ -4,6 +4,8 @@ from django.urls import reverse
 
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.models.quest_contract import QuestContract
+from apps.warband.quest.projections.board_quest import BoardQuest
+from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -35,7 +37,7 @@ def test_quest_accept_view_shows_the_quest(logged_in_client, current_savegame):
     response = logged_in_client.get(reverse("warband:quest-accept-view", kwargs={"pk": quest.pk}))
 
     assert response.status_code == 200
-    assert response.context["object"] == quest
+    assert response.context["board_quest"] == BoardQuest(quest=quest, entry=QUESTS_BY_NAME[quest.quest])
 
 
 @pytest.mark.django_db

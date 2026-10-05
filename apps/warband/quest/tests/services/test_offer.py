@@ -12,7 +12,7 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
 @pytest.mark.django_db
-def test_draw_quests_to_offer_draws_an_odd_job_and_an_errand():
+def test_draw_quests_to_offer_draws_steady_work_and_an_errand():
     faction = FactionFactory()
     WarriorFactory.create_batch(4, faction=faction)
 

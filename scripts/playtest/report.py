@@ -46,7 +46,7 @@ class GameReport:
     items_bought: int = 0
     items_equipped: int = 0
     captives_recruited: int = 0
-    # Men sent away on the month's odd job
+    # Men sent away on the month's steady work
     sent_on_quests: int = 0
     # Men the sanctuary was paid to mend, which only a tending game does
     warriors_tended: int = 0
