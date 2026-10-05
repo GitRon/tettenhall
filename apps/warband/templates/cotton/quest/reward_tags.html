@@ -1,0 +1,16 @@
+<c-vars board_quest />
+{# What a quest can bring home, as the outlined fact tags its men and its attribute sit in: each is #}
+{# merely a fact, so "rule" rather than "brass" - the payout is a draw, not a gain yet. The caller #}
+{# sets the mono label voice on the row the tags wrap in. A kind of reward no outcome brings has no tag. #}
+{% if board_quest.silver_per_man_label %}
+    <span class="border border-rule px-1.5 py-0.5">Silver <span class="text-ink">{{ board_quest.silver_per_man_label }}</span> a man</span>
+{% endif %}
+{% if board_quest.renown_per_man_label %}
+    <span class="border border-rule px-1.5 py-0.5">Renown <span class="text-ink">{{ board_quest.renown_per_man_label }}</span> a man</span>
+{% endif %}
+{% for item_label in board_quest.item_labels %}
+    <span class="border border-rule px-1.5 py-0.5"><span class="text-ink">{{ item_label }}</span></span>
+{% endfor %}
+{% if board_quest.brings_a_man %}
+    <span class="border border-rule px-1.5 py-0.5"><span class="text-ink">A man joins</span></span>
+{% endif %}

@@ -18,6 +18,7 @@
                     <span class="col-span-2 row-start-2 flex flex-wrap gap-1.5 font-mono text-label uppercase tracking-label text-ink-muted md:col-span-1 md:col-start-2 md:row-start-1">
                         <span class="border border-rule px-1.5 py-0.5">Men <span class="text-ink">{{ board_quest.entry.MIN_MEN }}–{{ board_quest.entry.MAX_MEN }}</span></span>
                         <span class="border border-rule px-1.5 py-0.5">Wants <span class="text-ink">{{ board_quest.leans_on_label }}</span></span>
+                        <c-quest.reward-tags :board_quest="board_quest" />
                         {% if board_quest.entry.IS_ODD_JOB %}
                             <span class="border border-rule px-1.5 py-0.5">Odd job</span>
                         {% endif %}

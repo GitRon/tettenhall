@@ -33,6 +33,11 @@ from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.month.services.player_month_log import GroupedPlayerMonthLog
 from apps.warband.month.tests.factories.player_month_log import PlayerMonthLogFactory
+from apps.warband.quest.projections.board_quest import BoardQuest
+from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
+from apps.warband.quest.quests.fetch_a_good_warrior import FetchAGoodWarrior
+from apps.warband.quest.quests.seek_a_good_blade import SeekAGoodBlade
+from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -78,7 +83,7 @@ def _payroll(*, budget: int, unpaid_months: int = 0) -> Payroll:
 def _full_month() -> GroupedPlayerMonthLog:
     return GroupedPlayerMonthLog(
         attention=[PlayerMonthLogFactory.build(title="Unpaid")],
-        chronicle=[PlayerMonthLogFactory.build(title="A comet", body="Over Mercia")],
+        chronicle=[PlayerMonthLogFactory.build(title="A comet", body="Over Mercia", tags=["90 silver"])],
         consequence=[PlayerMonthLogFactory.build(title="Wages paid")],
         upkeep=[PlayerMonthLogFactory.build(title="Wulfstan mends")],
         upkeep_summary=["1 man mends"],
@@ -166,6 +171,21 @@ RENDER_ROWS = {
     "item.stats-meta": [
         ('<c-item.stats-meta :item="item" />', {"item": ItemFactory.build(type=ItemTypeFactory.build())}),
         ('<c-item.stats-meta :item="item" show_price />', {"item": ItemFactory.build(type=ItemTypeFactory.build())}),
+    ],
+    "quest.reward-tags": [
+        # Every tag drawn, and none: a quest that brings a man and a blade, and one that pays nothing at all
+        (
+            '<c-quest.reward-tags :board_quest="board_quest" />',
+            {"board_quest": BoardQuest(quest=QuestFactory.build(), entry=FetchAGoodWarrior)},
+        ),
+        (
+            '<c-quest.reward-tags :board_quest="board_quest" />',
+            {"board_quest": BoardQuest(quest=QuestFactory.build(), entry=SeekAGoodBlade)},
+        ),
+        (
+            '<c-quest.reward-tags :board_quest="board_quest" />',
+            {"board_quest": BoardQuest(quest=QuestFactory.build(), entry=DriveOffWolves)},
+        ),
     ],
     "month.log-list": [
         ('<c-month.log-list :logs="logs" />', {"logs": GroupedPlayerMonthLog()}),

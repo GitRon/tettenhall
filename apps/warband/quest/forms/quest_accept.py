@@ -42,8 +42,15 @@ class QuestAcceptForm(forms.Form):
         # The widget before the queryset, not after: assigning a queryset is what hands a field's
         # choices to whatever widget it is holding at that moment, so a widget swapped in afterwards
         # renders no options at all.
+        # Each man with the attribute the quest weighs the band on, so the player can see who makes it
+        # likelier to go well while he chooses
         self.fields["assigned_warriors"].widget = RosterCheckboxSelectMultiple(
-            reasons_by_warrior_id=self.roster.reasons_by_warrior_id
+            reasons_by_warrior_id=self.roster.reasons_by_warrior_id,
+            figure_label=Warrior._meta.get_field(self.entry.LEANS_ON).verbose_name,
+            figures_by_warrior_id={
+                assessment.warrior.id: getattr(assessment.warrior, self.entry.LEANS_ON)
+                for assessment in self.roster.assessed
+            },
         )
         # The queryset holds everybody, because an option that is not in it is an option that does
         # not render. What it still does is scope to this faction, so no posted id can reach a

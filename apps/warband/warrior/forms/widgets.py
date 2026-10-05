@@ -13,9 +13,21 @@ class RosterCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     check every posted id against the assessment themselves.
     """
 
-    def __init__(self, *args, reasons_by_warrior_id: dict[int, str] | None = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        reasons_by_warrior_id: dict[int, str] | None = None,
+        figure_label: str = "",
+        figures_by_warrior_id: dict[int, int] | None = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.reasons_by_warrior_id = reasons_by_warrior_id or {}
+        # A number the form wants beside each man while the player picks - the attribute a quest
+        # leans on - and the word that names it. Passed in by the form, since only it knows which
+        # number matters; a form passing none draws the rows without one
+        self.figure_label = figure_label
+        self.figures_by_warrior_id = figures_by_warrior_id or {}
 
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None) -> dict:  # noqa: PBR001
         """
@@ -26,9 +38,12 @@ class RosterCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         """
         option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
 
-        reason = self.reasons_by_warrior_id.get(getattr(value, "value", None))
+        warrior_id = getattr(value, "value", None)
+        reason = self.reasons_by_warrior_id.get(warrior_id)
         if reason is not None:
             option["attrs"]["disabled"] = True
         option["reason"] = reason
+        option["figure"] = self.figures_by_warrior_id.get(warrior_id)
+        option["figure_label"] = self.figure_label
 
         return option

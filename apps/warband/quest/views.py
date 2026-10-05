@@ -7,6 +7,7 @@ from queuebie.runner import handle_message
 from apps.warband.quest.forms.quest_accept import QuestAcceptForm
 from apps.warband.quest.messages.commands.quest import AcceptQuest
 from apps.warband.quest.models.quest import Quest
+from apps.warband.quest.projections.board_quest import BoardQuest
 from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.savegame.mixins import PlayerFactionScopedQuerysetMixin, RunningSavegameRequiredMixin
 from apps.warband.savegame.models.savegame import Savegame
@@ -63,7 +64,9 @@ class QuestAcceptView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
-        context["entry"] = QUESTS_BY_NAME[self.object.quest]
+        # Read the way the board reads it, so the page the player sends men from says what the board
+        # said about the quest
+        context["board_quest"] = BoardQuest(quest=self.object, entry=QUESTS_BY_NAME[self.object.quest])
         return context
 
     def form_valid(self, form):

@@ -10,11 +10,26 @@
             <tbody>
             <tr>
                 <td>Men</td>
-                <td>{{ entry.MIN_MEN }}–{{ entry.MAX_MEN }}</td>
+                <td>{{ board_quest.entry.MIN_MEN }}–{{ board_quest.entry.MAX_MEN }}</td>
             </tr>
             <tr>
                 <td>Away</td>
                 <td>Until the month turns</td>
+            </tr>
+            <tr>
+                <td>Brings</td>
+                <td>
+                    <span class="flex flex-wrap gap-1.5 font-mono text-label uppercase tracking-label text-ink-muted">
+                        <c-quest.reward-tags :board_quest="board_quest" />
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td>Wants</td>
+                <td>
+                    {{ board_quest.leans_on_label }}
+                    <span class="block text-sm leading-snug text-ink-muted">{{ board_quest.leans_on_hint }}</span>
+                </td>
             </tr>
             <tr>
                 <td colspan="2">{% crispy form %}</td>
