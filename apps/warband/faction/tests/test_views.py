@@ -148,6 +148,9 @@ def test_faction_detail_view_treats_a_rivals_captives_as_a_rivals(logged_in_clie
     A man in somebody else's cells is somebody else's business, whoever he used to belong to.
     """
     rival_faction = FactionFactory(savegame=current_savegame)
+    rival_faction.captured_warriors.add(
+        WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    )
 
     response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
@@ -436,6 +439,10 @@ def test_warband_captives_view_holds_the_players_own_captives(logged_in_client, 
     A prisoner is held rather than commanded: his gear is the player's to read and his numbers are
     not, which is the level the pub already showed a mercenary at.
     """
+    current_savegame.player_faction.captured_warriors.add(
+        WarriorFactory(faction=None, savegame=current_savegame, culture=current_savegame.player_faction.culture)
+    )
+
     response = logged_in_client.get(reverse("warband:warband-captives-view"))
 
     assert response.status_code == 200
@@ -708,6 +715,7 @@ def test_faction_item_list_view_offers_the_men_an_item_may_be_handed_to(logged_i
     """
     free_warrior = WarriorFactory(faction=current_savegame.player_faction)
     fighting_warrior = WarriorFactory(faction=current_savegame.player_faction)
+    ItemFactory(owner=current_savegame.player_faction)
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction, victorious_faction=None)
     skirmish.attacking_warriors.add(fighting_warrior)
 

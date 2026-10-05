@@ -215,7 +215,7 @@ DJANGO_SETTINGS_MODULE = "apps.config.settings_test"
 python_files = ["test_*.py"]
 testpaths = ["apps", "scripts"]
 # A variable a template reads but cannot resolve fails the test instead of rendering as nothing
-django_fail_on_template_vars = true
+FAIL_INVALID_TEMPLATE_VARS = true
 
 [tool.coverage.run]
 # Branch coverage, not just statement coverage: an "if" counts as covered as soon as its body ran,
