@@ -12,6 +12,9 @@ from apps.warband.warrior.tests.factories.trait import TraitFactory
 from apps.warband.warrior.tests.factories.trait_type import TraitTypeFactory
 
 SHAKEN_HITS = TraitEarningService.SHAKEN_HITS_TAKEN
+CHARMED_SWINGS = TraitEarningService.CHARMED_SWINGS_SURVIVED
+HEADTAKER_ROLLS = TraitEarningService.HEADTAKER_CEILING_ROLLS
+SHIELD_WALL_BLOWS = TraitEarningService.SHIELD_WALL_BLOWS_ABSORBED
 
 
 def _shipped(hook: str) -> TraitType:
@@ -86,7 +89,9 @@ def test_earning_counts_only_this_fights_hits_for_shaken():
 def test_earning_grants_charmed_for_a_fight_of_swings_that_never_landed():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction)
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=2, outcome=BlowOutcomeChoices.OUTCOME_MISSED)
+    _blows_taken(
+        warrior=warrior, skirmish=skirmish, count=CHARMED_SWINGS - 1, outcome=BlowOutcomeChoices.OUTCOME_MISSED
+    )
     _blows_taken(warrior=warrior, skirmish=skirmish, count=1, outcome=BlowOutcomeChoices.OUTCOME_ABSORBED)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
@@ -98,7 +103,9 @@ def test_earning_grants_charmed_for_a_fight_of_swings_that_never_landed():
 def test_earning_does_not_count_a_blow_never_thrown_as_a_swing_survived():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction)
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=2, outcome=BlowOutcomeChoices.OUTCOME_MISSED)
+    _blows_taken(
+        warrior=warrior, skirmish=skirmish, count=CHARMED_SWINGS - 1, outcome=BlowOutcomeChoices.OUTCOME_MISSED
+    )
     _blows_taken(warrior=warrior, skirmish=skirmish, count=1, outcome=BlowOutcomeChoices.OUTCOME_NOT_THROWN)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
@@ -110,7 +117,7 @@ def test_earning_does_not_count_a_blow_never_thrown_as_a_swing_survived():
 def test_earning_withholds_charmed_from_a_man_who_was_hit_once():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction)
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=3, outcome=BlowOutcomeChoices.OUTCOME_MISSED)
+    _blows_taken(warrior=warrior, skirmish=skirmish, count=CHARMED_SWINGS, outcome=BlowOutcomeChoices.OUTCOME_MISSED)
     _blows_taken(warrior=warrior, skirmish=skirmish, count=1, outcome=BlowOutcomeChoices.OUTCOME_HIT)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
@@ -123,8 +130,8 @@ def test_earning_grants_headtaker_for_enough_ceiling_rolls_over_a_career():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction)
     # "2d6" with a modifier of one tops out at 13, spread over two fights to show the count is a career's
-    SkirmishBlowFactory.create_batch(3, skirmish=skirmish, attacker=warrior, attack_roll=13)
-    SkirmishBlowFactory.create_batch(2, attacker=warrior, attack_roll=13)
+    SkirmishBlowFactory.create_batch(HEADTAKER_ROLLS - 1, skirmish=skirmish, attacker=warrior, attack_roll=13)
+    SkirmishBlowFactory(attacker=warrior, attack_roll=13)
     SkirmishBlowFactory(skirmish=skirmish, attacker=warrior, attack_roll=12)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
@@ -136,7 +143,7 @@ def test_earning_grants_headtaker_for_enough_ceiling_rolls_over_a_career():
 def test_earning_skips_blows_with_no_die_thrown_for_headtaker():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction)
-    SkirmishBlowFactory.create_batch(4, skirmish=skirmish, attacker=warrior, attack_roll=13)
+    SkirmishBlowFactory.create_batch(HEADTAKER_ROLLS - 1, skirmish=skirmish, attacker=warrior, attack_roll=13)
     SkirmishBlowFactory(
         skirmish=skirmish,
         attacker=warrior,
@@ -157,9 +164,11 @@ def test_earning_grants_shield_wall_man_for_enough_blows_absorbed_over_a_career(
     warrior = WarriorFactory(faction=skirmish.defending_faction)
     # Split so that neither fight alone reaches the threshold, and so that this one also keeps him from
     # being charmed: a hit lands in it
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=5, outcome=BlowOutcomeChoices.OUTCOME_ABSORBED)
+    _blows_taken(
+        warrior=warrior, skirmish=skirmish, count=SHIELD_WALL_BLOWS - 1, outcome=BlowOutcomeChoices.OUTCOME_ABSORBED
+    )
     _blows_taken(warrior=warrior, skirmish=skirmish, count=1, outcome=BlowOutcomeChoices.OUTCOME_HIT)
-    _blows_taken(warrior=warrior, skirmish=SkirmishFactory(), count=5, outcome=BlowOutcomeChoices.OUTCOME_ABSORBED)
+    _blows_taken(warrior=warrior, skirmish=SkirmishFactory(), count=1, outcome=BlowOutcomeChoices.OUTCOME_ABSORBED)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
 
