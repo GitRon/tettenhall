@@ -67,9 +67,13 @@ class TraitEarningService:
     # senseless, which earns him nothing. Six hits he walked away from is a fight that marked him, rare
     # enough that he is not marked for every long one he saw out
     SHAKEN_HITS_TAKEN = 6
-    CHARMED_SWINGS_SURVIVED = 3
-    HEADTAKER_CEILING_ROLLS = 5
-    SHIELD_WALL_BLOWS_ABSORBED = 10
+    # The other three are set so that each turns up about as often as shaken does: a man who earns a
+    # trait is as likely to have been made by his fights as marked by them. Two swings is the fewest that
+    # still reads as "swung at over and over", and a man fights about three times in a campaign, so the
+    # career counts sit within a few fights' reach rather than a score of them
+    CHARMED_SWINGS_SURVIVED = 2
+    HEADTAKER_CEILING_ROLLS = 4
+    SHIELD_WALL_BLOWS_ABSORBED = 6
 
     warrior: Warrior
     skirmish: Skirmish
