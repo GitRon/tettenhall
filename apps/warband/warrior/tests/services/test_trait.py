@@ -11,6 +11,8 @@ from apps.warband.warrior.services.trait import InnateTraitDrawService, TraitEar
 from apps.warband.warrior.tests.factories.trait import TraitFactory
 from apps.warband.warrior.tests.factories.trait_type import TraitTypeFactory
 
+SHAKEN_HITS = TraitEarningService.SHAKEN_HITS_TAKEN
+
 
 def _shipped(hook: str) -> TraitType:
     return TraitType.objects.get(hook=hook)
@@ -59,7 +61,7 @@ def test_draw_gives_two_traits_of_different_groups_below_the_second_chance():
 def test_earning_grants_shaken_for_enough_hits_in_one_fight():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction)
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=4, outcome=BlowOutcomeChoices.OUTCOME_HIT)
+    _blows_taken(warrior=warrior, skirmish=skirmish, count=SHAKEN_HITS, outcome=BlowOutcomeChoices.OUTCOME_HIT)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
 
@@ -70,8 +72,10 @@ def test_earning_grants_shaken_for_enough_hits_in_one_fight():
 def test_earning_counts_only_this_fights_hits_for_shaken():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction)
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=3, outcome=BlowOutcomeChoices.OUTCOME_HIT)
-    _blows_taken(warrior=warrior, skirmish=SkirmishFactory(), count=3, outcome=BlowOutcomeChoices.OUTCOME_HIT)
+    _blows_taken(warrior=warrior, skirmish=skirmish, count=SHAKEN_HITS - 1, outcome=BlowOutcomeChoices.OUTCOME_HIT)
+    _blows_taken(
+        warrior=warrior, skirmish=SkirmishFactory(), count=SHAKEN_HITS - 1, outcome=BlowOutcomeChoices.OUTCOME_HIT
+    )
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
 
@@ -167,7 +171,7 @@ def test_earning_skips_a_trait_whose_group_the_man_already_has():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction)
     TraitFactory(warrior=warrior, type=_shipped("steady"))
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=4, outcome=BlowOutcomeChoices.OUTCOME_HIT)
+    _blows_taken(warrior=warrior, skirmish=skirmish, count=SHAKEN_HITS, outcome=BlowOutcomeChoices.OUTCOME_HIT)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
 
@@ -180,7 +184,7 @@ def test_earning_grants_nothing_past_the_cap():
     warrior = WarriorFactory(faction=skirmish.defending_faction)
     for hook in ("bull-necked", "nimble", "drunkard"):
         TraitFactory(warrior=warrior, type=_shipped(hook))
-    _blows_taken(warrior=warrior, skirmish=skirmish, count=4, outcome=BlowOutcomeChoices.OUTCOME_HIT)
+    _blows_taken(warrior=warrior, skirmish=skirmish, count=SHAKEN_HITS, outcome=BlowOutcomeChoices.OUTCOME_HIT)
 
     result = TraitEarningService(warrior=warrior, skirmish=skirmish).process()
 
