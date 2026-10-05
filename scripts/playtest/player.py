@@ -248,7 +248,7 @@ class PlayerTurn:
         """
         Pays the sanctuary to mend the men who could march this month, the worst wounded first.
 
-        Only the men who are free to march - nobody has been sent on the odd job yet, and nobody who stands
+        Only the men who are free to march - nobody has been sent on the steady work yet, and nobody who stands
         in a fight already this month could fight again. Each is asked the refusal the tend view asks,
         against the purse above SILVER_KEPT_BACK, so a man too dear to mend is passed over and a less
         hurt one behind him may still be.

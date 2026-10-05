@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warband', '0038_the_people_of_a_place_turn_out_to_defend_it'),
+        ('warband', '0039_a_chronicle_line_carries_tags'),
     ]
 
     operations = [
