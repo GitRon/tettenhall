@@ -14,6 +14,10 @@ from django.template.loader import render_to_string
 from django.test import override_settings
 from django.urls import reverse
 
+# The app always renders base.html inside a request, where the csrf context processor supplies the
+# token. The message tests render it on its own to read the toast sink, so they hand the token in.
+CSRF_TOKEN = {"csrf_token": "token"}
+
 
 @pytest.mark.django_db
 def test_dashboard_renders_without_a_player_faction(logged_in_client, savegame_without_player_faction):
@@ -38,7 +42,8 @@ def test_message_with_a_quote_travels_as_a_document_node():
     literal for it to end.
     """
     content = render_to_string(
-        "base.html", {"messages": [Message(messages.SUCCESS, 'You accepted the quest "Pillage village".')]}
+        "base.html",
+        {**CSRF_TOKEN, "messages": [Message(messages.SUCCESS, 'You accepted the quest "Pillage village".')]},
     )
 
     assert '"Pillage village"' not in content
@@ -53,7 +58,9 @@ def test_message_with_angle_brackets_reaches_the_toast_as_text():
     The same exception, for the markup half: the value sits in a document node, so a "<" that arrived
     unescaped would open a tag inside the template element and the toast would read whatever survived.
     """
-    content = render_to_string("base.html", {"messages": [Message(messages.SUCCESS, "A raid on <the moor>.")]})
+    content = render_to_string(
+        "base.html", {**CSRF_TOKEN, "messages": [Message(messages.SUCCESS, "A raid on <the moor>.")]}
+    )
 
     assert "<the moor>" not in content
     assert "&lt;the moor&gt;" in content
@@ -67,7 +74,7 @@ def test_message_level_tag_is_escaped_for_the_attribute_it_sits_in():
     MESSAGE_TAGS, so the vocabulary is fixed and harmless today - which is exactly why the escaping
     would be dropped by someone tidying up without anything failing.
     """
-    content = render_to_string("base.html", {"messages": [Message(messages.SUCCESS, "A quiet month.")]})
+    content = render_to_string("base.html", {**CSRF_TOKEN, "messages": [Message(messages.SUCCESS, "A quiet month.")]})
 
     assert 'onload="alert(1)"' not in content
     assert 'data-level="success&quot; onload=&quot;alert(1)"' in content

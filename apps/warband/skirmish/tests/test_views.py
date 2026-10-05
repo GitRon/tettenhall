@@ -4,12 +4,18 @@ import pytest
 from django.urls import reverse
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
+from apps.warband.skirmish.models.skirmish_casualty import SkirmishCasualty
+from apps.warband.skirmish.models.skirmish_spoil import SkirmishSpoil
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.warband.skirmish.tests.factories.skirmish_casualty import SkirmishCasualtyFactory
+from apps.warband.skirmish.tests.factories.skirmish_spoil import SkirmishSpoilFactory
+from apps.warband.skirmish.tests.factories.skirmish_warrior_growth import SkirmishWarriorGrowthFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
@@ -815,9 +821,33 @@ def test_battle_history_update_htmx_view_hides_history_of_another_savegame(logge
 
 @pytest.mark.django_db
 def test_battle_history_update_htmx_view_reports_a_fight_that_is_over(logged_in_client, current_savegame):
+    """
+    One of everything the report lists, and a line of saga, so every list the panel draws renders a row.
+    """
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
     skirmish.victorious_faction = current_savegame.player_faction
     skirmish.save()
+    own_warrior = WarriorFactory(faction=current_savegame.player_faction)
+    enemy_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(own_warrior)
+    skirmish.defending_warriors.add(enemy_warrior)
+    SkirmishCasualtyFactory(skirmish=skirmish, warrior=own_warrior)
+    SkirmishCasualtyFactory(skirmish=skirmish, warrior=enemy_warrior, fate=SkirmishCasualty.FateChoices.FATE_CAPTURED)
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        warrior=enemy_warrior,
+        kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN,
+        item=ItemFactory(owner=current_savegame.player_faction),
+    )
+    SkirmishSpoilFactory(
+        skirmish=skirmish,
+        faction=skirmish.defending_faction,
+        warrior=own_warrior,
+        kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN,
+        item=ItemFactory(owner=skirmish.defending_faction),
+    )
+    SkirmishWarriorGrowthFactory(skirmish=skirmish, warrior=own_warrior)
+    BattleHistoryFactory(skirmish=skirmish, saga="A blow lands.")
 
     response = logged_in_client.get(reverse("warband:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
 

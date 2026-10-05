@@ -82,6 +82,17 @@ and assembling context. Keep the tests equally thin — **one test per view**, v
   escaping, not the markup — the dangerous form is absent and the text still arrived. Name the defect
   in the docstring and say the rule is being set aside on purpose. This is not licence to assert that a
   page contains a heading.
+- **The template is checked by rendering it, not by reading it.** `FAIL_INVALID_TEMPLATE_VARS` in
+  `pyproject.toml` fails any test whose render reads a variable that does not resolve - which Django
+  would otherwise print as nothing, the way a renamed attribute looks on the page.
+  `test_template_variables.py` proves the switch is live, since pytest only warns about an ini key it
+  does not know. Two consequences:
+  - **An optional value is an `{% if %}`, not a lookup that fails.** `{{ object.faction.name|default:"—" }}`
+    on a man without a faction is an unresolved variable and fails; `{% if object.faction %}` around it
+    does not.
+  - **A list view's test carries at least one row.** Row markup renders only when there is a row, so a
+    test on an empty list checks nothing of it. The same goes for every list a panel draws: the battle
+    report's casualties, spoils and growth, the dashboard's undefended towns.
 
 ## Components
 

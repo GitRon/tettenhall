@@ -54,7 +54,7 @@
             {# hiding it here and repeating it there would mean two copies of the same two links. #}
             <details class="relative md:ml-auto" data-menu>
                 <summary class="cursor-pointer list-none font-mono text-label uppercase tracking-label text-ink-muted hover:text-ink">
-                    {{ current_savegame.player_faction|default:"No savegame" }} / {{ request.user }}
+                    {% if current_savegame.player_faction %}{{ current_savegame.player_faction }}{% else %}No savegame{% endif %} / {{ request.user }}
                 </summary>
                 <ul class="absolute right-0 top-full z-20 m-0 min-w-48 list-none bg-raised p-4 border border-rule">
                     <li><a class="text-sm text-ink-muted" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
