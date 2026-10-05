@@ -69,3 +69,32 @@ def test_create_record_leaves_the_body_empty_for_every_other_producer():
     )
 
     assert result.body == ""
+
+
+@pytest.mark.django_db
+def test_create_record_writes_the_tags_a_chronicle_entry_carries():
+    faction = FactionFactory()
+
+    result = PlayerMonthLog.objects.create_record(
+        title="The merchant reached Lundenwic with every bale he set out with.",
+        tags=["90 silver"],
+        kind=PlayerMonthLog.KindChoices.KIND_QUEST_RETURNED,
+        month=3,
+        faction_id=faction.id,
+    )
+
+    assert result.tags == ["90 silver"]
+
+
+@pytest.mark.django_db
+def test_create_record_leaves_the_tags_empty_for_every_other_producer():
+    faction = FactionFactory()
+
+    result = PlayerMonthLog.objects.create_record(
+        title="Monthly salaries of 300 silver paid.",
+        kind=PlayerMonthLog.KindChoices.KIND_SALARIES_PAID,
+        month=3,
+        faction_id=faction.id,
+    )
+
+    assert result.tags == []

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from queuebie.messages import Command
 
@@ -21,6 +21,8 @@ class CreatePlayerMonthLog(Command):
     faction: Faction
     # Only a chronicle entry has a second sentence to say, so every other producer leaves it alone
     body: str = ""
+    # The tags set under a chronicle entry, already worded by the producer
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass(kw_only=True)
