@@ -1416,8 +1416,8 @@ def test_faction_attack_view_lands_on_the_fight_it_started(
     logged_in_client, current_savegame, player_faction_ready_to_march, queuebie_registry
 ):
     """
-    A war band that has just marched wants the fight, not a table of every battle ever fought. The
-    skirmish is read back out of the database because the queue hands the view nothing.
+    A war band that has just marched wants the fight, not a table of every battle ever fought - the one
+    the march's own "SkirmishCreated" names.
     """
     rival_faction = FactionFactory(savegame=current_savegame)
     rival_faction.leader = WarriorFactory(faction=rival_faction)

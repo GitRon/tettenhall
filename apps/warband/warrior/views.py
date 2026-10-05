@@ -10,6 +10,7 @@ from django.views import generic
 from queuebie.runner import handle_message
 
 from apps.common.http import STALE_PAGE_NOTICE, hx_redirect
+from apps.warband.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
 from apps.warband.item.messages.commands.item import EquipItem
@@ -30,16 +31,15 @@ from apps.warband.warrior.messages.commands.warrior import (
     RecruitCapturedWarrior,
     TendWarriorWounds,
 )
+from apps.warband.warrior.messages.events.warrior import WarriorWoundsTended
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.equipping import get_equip_refusal
-from apps.warband.warrior.services.membership import is_on_roster, was_sold_from_cells
 from apps.warband.warrior.services.tending import (
     DEAD_REFUSAL,
     UNAFFORDABLE_REFUSAL,
     UNWOUNDED_REFUSAL,
     get_tending_price,
     get_tending_refusal,
-    was_tended,
 )
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
@@ -374,7 +374,7 @@ class TendWarriorWoundsView(RunningSavegameRequiredMixin, PlayerFactionScopedQue
             response["HX-Trigger"] = json.dumps({"notification": refusal})
             return response
 
-        handle_message(
+        handled = handle_message(
             TendWarriorWounds(
                 warrior=obj,
                 faction=player_faction,
@@ -383,9 +383,9 @@ class TendWarriorWoundsView(RunningSavegameRequiredMixin, PlayerFactionScopedQue
             )
         )
 
-        # The line describes the man as he now stands, not the click: a request whose silver another
-        # spend took first finds him untended and is told why, by the same refusal
-        if not was_tended(warrior=obj, month=current_savegame.current_month):
+        # The line claims what this request did, so it waits for the handler's event: a request whose
+        # silver another spend took first tended nobody and is told why, by the same refusal
+        if not any(isinstance(message, WarriorWoundsTended) for message in handled):
             obj.refresh_from_db()
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
             response["HX-Trigger"] = json.dumps(
@@ -453,10 +453,12 @@ class WarriorRecruitCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
         faction = self.get_captor_faction(warrior=obj)
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
-        handle_message(RecruitCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
+        handled = handle_message(
+            RecruitCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month)
+        )
 
-        # Where he ended up, not what was clicked: a captive sold by an overlapping request has not joined
-        if not is_on_roster(warrior=obj, faction=faction):
+        # Joined only if this request recruited him: a captive sold by an overlapping request has not
+        if not any(isinstance(message, WarriorRecruited) for message in handled):
             return _stale_captive_response()
 
         response = HttpResponse(status=HTTPStatus.OK)
@@ -481,10 +483,12 @@ class WarriorEnslaveCapturedView(RunningSavegameRequiredMixin, CapturedWarriorAc
         faction = self.get_captor_faction(warrior=obj)
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
-        handle_message(EnslaveCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month))
+        handled = handle_message(
+            EnslaveCapturedWarrior(faction=faction, warrior=obj, month=current_savegame.current_month)
+        )
 
         # The same question from the other side: a captive recruited by an overlapping request was not sold
-        if not was_sold_from_cells(warrior=obj, faction=faction):
+        if not any(isinstance(message, WarriorWasSoldIntoSlavery) for message in handled):
             return _stale_captive_response()
 
         response = HttpResponse(status=HTTPStatus.OK)

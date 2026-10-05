@@ -135,17 +135,19 @@ Inside one drain the re-read cannot see a charge still queued behind it: the led
 and lands after the batch. That only matters where one drain spends twice, which is the month run's rival
 hires and purchases, and `RivalPolicy` keeps those inside the purse with a running total of its own.
 
-**A view's success line describes the state it reads back, not the dispatch.** `handle_message()` returns
-nothing, so a view cannot see that its command handler returned `None`. A view whose handler can turn a
-request down therefore asks the row afterwards whether what its line is about to claim is true - `has_raised`,
-`has_feasted`, `was_tended`, `is_on_roster`, `was_sold_from_cells`, each beside the refusal it mirrors. If the
-row disagrees, the view answers the way its refusal does, with the refusal asked again for the reason, or
-`STALE_PAGE_NOTICE` where none is left to name. The question is "is it so now", not "did this request do it":
-an identical double-click still hears that the feast was laid, because it was. What the read-back catches is
-the conflicting race - two different spends of one purse, a captive recruited and sold at once. A view whose
-handler can only lose to an identical request (the fyrd draft, a quest) needs no read-back: its line is true
-either way. The test for the losing request stages the race with `apps/common/tests/race.py`, because one
-thread cannot interleave two requests.
+**A view's success line describes what its own request did.** `handle_message()` returns every message it
+handled, in the order they drained, so a view whose command handler can turn a request down looks for the
+event that handler raises on success - `TownBuildingUpgraded`, `FeastThrown`, `WarriorWoundsTended`,
+`WarriorRecruited`, `WarriorWasSoldIntoSlavery` - before it claims anything. If the event is missing, the
+handler returned `None`, and the view answers the way its refusal does: the refusal asked again for the
+reason, or `STALE_PAGE_NOTICE` where none is left to name. That covers the conflicting race - two different
+spends of one purse, a captive recruited and sold at once - and an identical double-click alike: the second
+click raised nothing, so it is not told the feast was laid. A view whose handler cannot turn a request down
+for a reason the player could act on (the fyrd draft, a quest) needs no check. The test for the losing
+request stages the race with `apps/common/tests/race.py`, because one thread cannot interleave two requests.
+
+The same list hands a view what the chain created: the march view takes its skirmish off `SkirmishCreated`
+rather than looking the row up afterwards.
 
 What stays in the view is input validation the game has no opinion about — the `BUILDINGS` whitelist on
 the building type from the URL, which answers `Http404` rather than a message.

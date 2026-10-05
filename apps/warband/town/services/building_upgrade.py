@@ -43,14 +43,3 @@ def get_building_upgrade_refusal(*, town: Town, building_type: str, current_save
         return UNAFFORDABLE_REFUSAL
 
     return None
-
-
-def has_raised(*, town: Town, building_type: str, level: int) -> bool:
-    """
-    Whether this town's "building_type" stands at "level" or above, read off the row.
-
-    What the upgrade view asks after it dispatches. An identical second click finds the level raised by
-    the first and is told the truth; a request that lost to another spend of the purse, or to another
-    building raised this month, finds it unraised and is told why.
-    """
-    return Town.objects.filter(pk=town.pk, **{f"{building_type}__gte": level}).exists()

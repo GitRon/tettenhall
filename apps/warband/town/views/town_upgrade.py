@@ -11,19 +11,18 @@ from apps.warband.savegame.services.current_savegame import get_current_savegame
 from apps.warband.town.buildings import BUILDINGS
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.town.messages.commands.town import ThrowFeast, UpgradeTownBuilding
+from apps.warband.town.messages.events.town import FeastThrown, TownBuildingUpgraded
 from apps.warband.town.models import Town
 from apps.warband.town.services.building_upgrade import (
     ALREADY_BUILT_THIS_MONTH_REFUSAL,
     UNAFFORDABLE_REFUSAL,
     get_building_upgrade_refusal,
-    has_raised,
 )
 from apps.warband.town.services.feast import (
     ALREADY_FEASTED_THIS_MONTH_REFUSAL,
     NO_HALL_REFUSAL,
     UNAFFORDABLE_FEAST_REFUSAL,
     get_feast_refusal,
-    has_feasted,
 )
 
 
@@ -161,7 +160,7 @@ class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic
         new_level = getattr(town, building_type) + 1
         desired_building = BUILDINGS[building_type].get_building_by_type(building_type=new_level)
 
-        handle_message(
+        handled = handle_message(
             UpgradeTownBuilding(
                 town=town,
                 faction=town.faction,
@@ -172,9 +171,9 @@ class UpgradeBuildingView(RunningSavegameRequiredMixin, PlayerTownMixin, generic
             )
         )
 
-        # The line describes the town as it now stands, not the click: a request that lost its silver or
-        # its month to an overlapping one finds the level unraised and is told why, by the same refusal
-        if not has_raised(town=town, building_type=building_type, level=new_level):
+        # The line claims what this request did, so it waits for the handler's event: a request that lost
+        # its silver or its month to an overlapping one raised nothing and is told why, by the same refusal
+        if not any(isinstance(message, TownBuildingUpgraded) for message in handled):
             town.refresh_from_db()
             messages.add_message(
                 request,
@@ -210,7 +209,7 @@ class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.Deta
 
         hall = Hall.get_building_by_type(building_type=town.hall)
 
-        handle_message(
+        handled = handle_message(
             ThrowFeast(
                 town=town,
                 faction=town.faction,
@@ -222,7 +221,7 @@ class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.Deta
         )
 
         # For the reason the building upgrade above gives
-        if not has_feasted(town=town, month=current_savegame.current_month):
+        if not any(isinstance(message, FeastThrown) for message in handled):
             town.refresh_from_db()
             messages.add_message(
                 request,

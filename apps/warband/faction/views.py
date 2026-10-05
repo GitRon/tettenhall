@@ -14,6 +14,7 @@ from apps.common.http import STALE_PAGE_NOTICE
 from apps.warband.faction.forms.faction_attack import FactionAttackForm
 from apps.warband.faction.messages.commands.faction import OccupyFaction
 from apps.warband.faction.messages.commands.warrior import DraftWarriorFromFyrd, RecruitPubMercenary
+from apps.warband.faction.messages.events.warrior import WarriorRecruited
 from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.attack_standing import AttackRefusal, get_attack_standing
 from apps.warband.faction.services.hiring import get_pub_hire_refusal
@@ -32,13 +33,12 @@ from apps.warband.savegame.mixins import (
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction
-from apps.warband.skirmish.models.skirmish import Skirmish
+from apps.warband.skirmish.messages.events.skirmish import SkirmishCreated
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.raids import RAID_KINDS
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
-from apps.warband.warrior.services.membership import is_on_roster
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
@@ -485,7 +485,7 @@ class RecruitPubMercenaryView(
             response["HX-Trigger"] = json.dumps({"notification": refusal})
             return response
 
-        handle_message(
+        handled = handle_message(
             RecruitPubMercenary(
                 warrior=obj,
                 faction=current_savegame.player_faction,
@@ -493,9 +493,9 @@ class RecruitPubMercenaryView(
             )
         )
 
-        # The row below says he was hired, so it is only sent once he has been: a request whose silver
-        # another spend took first finds him still in the pub and is told why, by the same refusal
-        if not is_on_roster(warrior=obj, faction=current_savegame.player_faction):
+        # The row below says he was hired, so it is only sent once this request hired him: one whose
+        # silver another spend took first left him in the pub and is told why, by the same refusal
+        if not any(isinstance(message, WarriorRecruited) for message in handled):
             response = HttpResponse(status=HTTPStatus.NO_CONTENT)
             response["HX-Trigger"] = json.dumps(
                 {
@@ -591,10 +591,9 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
 
     def form_valid(self, form):
         # The march before the response, because the response is the fight it creates:
-        # "super().form_valid" is what asks "get_success_url", and that reads the skirmish back out
-        # of the database. Dispatching afterwards would send the player to a row that did not exist
-        # when the redirect was built.
-        handle_message(
+        # "super().form_valid" is what asks "get_success_url", and that sends the player to the skirmish
+        # this march staged.
+        handled = handle_message(
             AttackFaction(
                 attacking_faction=self.current_savegame.player_faction,
                 # The scoped object from the URL, not a posted field: which rival is attacked is
@@ -605,6 +604,9 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
                 month=self.current_savegame.current_month,
             )
         )
+        # Unguarded against finding none, on purpose: "handle_create_skirmish_for_attack" stages the fight
+        # unconditionally, so a march that drained without error created exactly one
+        self.skirmish = next(message.skirmish for message in handled if isinstance(message, SkirmishCreated))
 
         # A message rather than an "HX-Trigger": this form is a plain post and the response is a
         # redirect, so the browser navigates away and nothing is left to read a header. The same
@@ -614,27 +616,8 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         return super().form_valid(form)
 
     def get_success_url(self):
-        """
-        The fight the march just started, not the list of every fight there has ever been.
-
-        Read back out of the database rather than handed over: "handle_message" drains the queue and
-        returns nothing, so the skirmish the chain created is not a value this view ever holds. The
-        three columns below name exactly one row - a war band marches once a month, whoever leads it
-        (see "Faction.has_marched_this_month"), so there cannot be a second march on the same rival in
-        the same month for this to pick the wrong one of.
-
-        Unguarded against finding nothing, on purpose. "handle_create_skirmish_for_attack" stages the
-        fight unconditionally, and the whole chain runs inside one transaction, so a march that
-        reached this line created a skirmish - and one that did not rolled back and never got here.
-        A fallback to the list would be a branch no test could reach.
-        """
-        skirmish = Skirmish.objects.filter(
-            attacking_faction=self.current_savegame.player_faction,
-            defending_faction=self.object,
-            month=self.current_savegame.current_month,
-        ).latest("id")
-
-        return reverse("warband:skirmish-fight-view", kwargs={"pk": skirmish.id})
+        # The fight the march just started, not the list of every fight there has ever been
+        return reverse("warband:skirmish-fight-view", kwargs={"pk": self.skirmish.id})
 
 
 class FactionOccupyView(RunningSavegameRequiredMixin, SingleObjectMixin, generic.View):
