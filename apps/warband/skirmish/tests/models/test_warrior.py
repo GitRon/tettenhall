@@ -664,6 +664,17 @@ def test_get_skirmish_actions_leaves_the_wall_out_for_a_defender():
 
 
 @pytest.mark.django_db
+def test_get_skirmish_actions_leaves_flight_out_for_a_defender():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.defending_faction, experience=0)
+    skirmish.defending_warriors.add(warrior)
+
+    result = warrior.get_skirmish_actions(skirmish=skirmish)
+
+    assert [action for action, _label in result] == [SkirmishActionChoices.SIMPLE_ATTACK]
+
+
+@pytest.mark.django_db
 def test_decide_skirmish_action_answers_for_this_fight():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(

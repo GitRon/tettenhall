@@ -54,9 +54,10 @@ def test_is_met_by_a_man_with_nothing_in_his_hands_reads_the_fallback():
 
 def test_always_offered_actions_carry_no_requirement():
     """
-    The two a man must always have are kept out of the table, so no entry there can take them away.
+    The one action a man must always have is kept out of the table, so no entry there can take it
+    away. Flight is not among them: it is the attacker's, and a fight gate decides it.
     """
-    assert {SkirmishActionChoices.SIMPLE_ATTACK, SkirmishActionChoices.FLEE} == ALWAYS_OFFERED
+    assert {SkirmishActionChoices.SIMPLE_ATTACK} == ALWAYS_OFFERED
     assert ALWAYS_OFFERED.isdisjoint(ACTION_REQUIREMENTS)
 
 

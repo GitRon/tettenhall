@@ -208,6 +208,27 @@ def test_process_refuses_an_action_the_warrior_is_not_offered():
 
 
 @pytest.mark.django_db
+def test_process_refuses_flight_posted_for_a_defender():
+    """
+    The player's select leaves flight out on the defending side, so a defender ordered to flee was typed
+    into the post - refused like any other action he was not offered.
+    """
+    skirmish = SkirmishFactory()
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    player_warrior = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.defending_warriors.add(player_warrior)
+
+    service = SkirmishParticipantBuilderService(
+        skirmish=skirmish,
+        participants=[(player_warrior.id, SkirmishActionChoices.FLEE)],
+        player_faction_id=skirmish.defending_faction_id,
+    )
+
+    with pytest.raises(UnofferedSkirmishActionError, match=f"Warrior {player_warrior.id} is not offered action 5"):
+        service.process()
+
+
+@pytest.mark.django_db
 def test_process_refuses_an_action_above_the_warriors_level():
     """
     A real choice, just not his yet: the select never offered it, so it can only have been typed
