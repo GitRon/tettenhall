@@ -16,6 +16,8 @@ class CreateItem(Command):
     item_function: int
     month: int
     quality_bonus: int = 0
+    # The bands to draw from instead of the generator's own pool - see BaseItemGenerator.__init__
+    item_tiers: frozenset[int] | None = None
 
 
 @dataclass(kw_only=True)

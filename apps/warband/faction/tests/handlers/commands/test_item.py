@@ -122,6 +122,31 @@ def test_handle_restock_shop_items_passes_the_quality_of_the_weaponsmith():
 
 
 @pytest.mark.django_db
+def test_handle_restock_shop_items_stocks_only_the_rustic_band_without_a_weaponsmith():
+    """
+    The fine band is something the forge unlocks, so a town without one sells what the fields can make.
+    """
+    faction = FactionFactory(town__weaponsmith=0)
+
+    result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    *item_requests, _ = result
+    assert {message.item_tiers for message in item_requests} == {frozenset({ItemType.TierChoices.TIER_RUSTIC})}
+
+
+@pytest.mark.django_db
+def test_handle_restock_shop_items_opens_the_fine_band_with_a_weaponsmith():
+    faction = FactionFactory(town__weaponsmith=1)
+
+    result = handle_restock_shop_items(context=RestockTownShopItems(faction=faction, month=3))
+
+    *item_requests, _ = result
+    assert {message.item_tiers for message in item_requests} == {
+        frozenset({ItemType.TierChoices.TIER_RUSTIC, ItemType.TierChoices.TIER_FINE})
+    }
+
+
+@pytest.mark.django_db
 def test_handle_restock_shop_items_announces_the_whole_shop_once():
     faction = FactionFactory(town__marketplace=1)
 

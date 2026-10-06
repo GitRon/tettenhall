@@ -343,6 +343,28 @@ def test_handle_create_item_puts_an_owned_item_in_its_owners_stores():
 
 
 @pytest.mark.django_db
+def test_handle_create_item_draws_from_the_bands_it_was_given():
+    """
+    The shop's bands are the weaponsmith's, not the borrowed generator's, so a levy's generator asked
+    for the fine band has to come back with a fine item.
+    """
+    faction = FactionFactory()
+
+    result = handle_create_item(
+        context=CreateItem(
+            owner=None,
+            faction=faction,
+            generator_class=FyrdItemGenerator,
+            item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+            month=1,
+            item_tiers=frozenset({ItemType.TierChoices.TIER_FINE}),
+        )
+    )
+
+    assert result.item.type.tier == ItemType.TierChoices.TIER_FINE
+
+
+@pytest.mark.django_db
 def test_handle_equip_item_reads_the_holder_off_the_rows_rather_than_the_message():
     """
     A rival's handout queues a line of equips, and an instance loaded before the first of them ran still

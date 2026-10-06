@@ -6,6 +6,7 @@ from apps.common.domain.dice import DiceNotation
 from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
+from apps.warband.item.services.generators.item.fyrd import FyrdItemGenerator
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 
@@ -77,7 +78,7 @@ def test_determine_condition_reads_the_armor_pool(armor_generator):
 @pytest.mark.django_db
 def test_get_queryset_for_type_without_a_pool_reaches_the_whole_table(item_generator):
     """
-    A generator declaring no band of its own is unrestricted, which is what the shop's wares rest on.
+    A generator declaring no band of its own is unrestricted.
     """
     result = item_generator._get_queryset_for_type()
 
@@ -97,6 +98,36 @@ def test_get_queryset_for_type_narrows_to_the_declared_pool(item_generator):
     result = item_generator._get_queryset_for_type()
 
     assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Spatha"]
+
+
+@pytest.mark.django_db
+def test_init_narrows_the_pool_for_one_draw():
+    """
+    The town shop borrows an archetype's distribution but the weaponsmith decides its bands, so a pool
+    passed in wins over the one the class declares - and only on this instance.
+    """
+    generator = FyrdItemGenerator(
+        faction=None,
+        item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+        savegame_id=SavegameFactory().id,
+        item_tiers=frozenset({ItemType.TierChoices.TIER_FINE}),
+    )
+
+    result = generator._get_queryset_for_type()
+
+    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Spatha"]
+    assert FyrdItemGenerator.item_tiers == frozenset({ItemType.TierChoices.TIER_RUSTIC})
+
+
+@pytest.mark.django_db
+def test_init_without_a_pool_keeps_the_class_pool():
+    generator = FyrdItemGenerator(
+        faction=None,
+        item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
+        savegame_id=SavegameFactory().id,
+    )
+
+    assert generator.item_tiers == frozenset({ItemType.TierChoices.TIER_RUSTIC})
 
 
 @pytest.mark.django_db
@@ -237,7 +268,7 @@ def test_process_prices_an_item_by_its_expected_damage():
     with mock.patch("apps.warband.item.services.generators.item.base.random.gauss", return_value=0):
         result = generator.process()
 
-    assert result.price == 100
+    assert result.price == 10 * BaseItemGenerator.PRICE_PER_EXPECTED_DAMAGE
 
 
 @pytest.mark.django_db
@@ -253,4 +284,4 @@ def test_process_prices_an_item_that_barely_threatens_anybody_at_the_floor():
     with mock.patch("apps.warband.item.services.generators.item.base.random.gauss", return_value=-20):
         result = generator.process()
 
-    assert result.price == 10
+    assert result.price == BaseItemGenerator.MINIMUM_EXPECTED_DAMAGE * BaseItemGenerator.PRICE_PER_EXPECTED_DAMAGE

@@ -23,6 +23,7 @@ def handle_create_item(*, context: item.CreateItem) -> list[Event] | Event:
         item_function=context.item_function,
         savegame_id=context.faction.savegame_id,
         quality_bonus=context.quality_bonus,
+        item_tiers=context.item_tiers,
     )
 
     new_item = generator.process()

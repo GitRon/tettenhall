@@ -15,6 +15,7 @@ class RequestNewItemForTownShop(Event):
     item_function: int
     month: int
     quality_bonus: int = 0
+    item_tiers: frozenset[int] | None = None
 
 
 @dataclass(kw_only=True)

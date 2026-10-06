@@ -33,6 +33,7 @@ def test_handle_request_new_item_for_town_shop_maps_to_command():
             item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
             month=3,
             quality_bonus=2,
+            item_tiers=frozenset({ItemType.TierChoices.TIER_FINE}),
         )
     )
 
@@ -43,6 +44,7 @@ def test_handle_request_new_item_for_town_shop_maps_to_command():
         item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
         month=3,
         quality_bonus=2,
+        item_tiers=frozenset({ItemType.TierChoices.TIER_FINE}),
     )
 
 

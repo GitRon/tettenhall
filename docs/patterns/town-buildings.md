@@ -39,15 +39,17 @@ holding that level's numbers:
   a registry of every number in the game.
 - **Which item types exist for whom is tuned in the `itemtype` fixture, through `tier`.** An item
   generator declares the bands it draws from (`BaseItemGenerator.item_tiers`) and the fixture decides which
-  types sit in each, so moving a weapon between a levy's reach and a leader's is a data edit. That is a
-  separate axis from the weaponsmith's `quality_bonus`, which sets an item's *quality* rather than which
-  types a warrior can draw at all. No building levers the pool, so it does not live under
-  `apps/warband/town/buildings/` despite the rule above.
+  types sit in each, so moving a weapon between a levy's reach and a leader's is a data edit. An
+  archetype's pool levers nothing, so it lives on the generator rather than under
+  `apps/warband/town/buildings/`. **The town shop is the exception:** it borrows the mercenary generator's
+  modifier distribution, but the bands it stocks are the weaponsmith level's `SHOP_ITEM_TIERS`, passed in
+  per draw (`BaseItemGenerator(item_tiers=...)`). A town without a forge sells the rustic band only; the
+  first paid level opens the fine band.
 - **A number that differs per warrior or per item is a column, not a constant.** `Warrior.strength_baseline`
   is the archetype mean a man's strength is measured against, written by the generator that drew him: one
   constant on the attack service cannot sit on three archetype means at once.
 - **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots + how much a feast mends + cell places, weaponsmith →
-  shop item quality, marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling + the price of tending a man, fortification →
+  shop item quality (which bands the shop stocks + the bonus on every modifier roll), marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling + the price of tending a man, fortification →
   the `fortification_strength` an assault on the burh opens with (0 / 20 / 35 / 50); a [raid](raids.md) out in the shire meets no wall. The
   fortification's defence bonus is not a lever: it is `SkirmishActionService.FORTIFICATION_DEFENSE_MULTIPLIER`,
   a constant of the mechanic.
@@ -154,10 +156,13 @@ holding that level's numbers:
   always the best thing to buy and every man is a wage, so a rule that holds silver back for the hall
   starves the band it is meant to pay for; the harness showed either one or the other, never both. What
   a rival needs is a mechanic that lets it save without that trade - #416.
-- **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith's quality
-  bonus is the only thing making better gear — none of them has a second effect yet.
-- **Item prices (~30–150 silver) are an order of magnitude below building costs**, so the marketplace's
-  resale ratio is worth little in silver. Its stock size is the real draw, which is why it is priced below
+- **Marketplace and sanctuary levels grant only their one lever each**, and the weaponsmith is the only
+  thing making better gear for sale — none of them has a second effect yet.
+- **A rival's shop sells the rustic band only**, because its weaponsmith stays at 0. Its kit grows with its
+  forge only once rival towns build beyond their hall (#68).
+- **Gear is priced at `PRICE_PER_EXPECTED_DAMAGE` (20) silver per point of expected damage**: about
+  50–130 for a rustic piece and 170–300 for a fine one, so a fine weapon costs about half a building rung.
+  The marketplace's resale share is still worth less than its stock size, which is why it is priced below
   the other buildings.
 - **The wage bill outweighs building costs early.** A warrior's salary is his recruitment price times
   `Warrior.SALARY_SHARE_OF_PRICE` (0.5), never below `MINIMUM_MONTHLY_SALARY`
