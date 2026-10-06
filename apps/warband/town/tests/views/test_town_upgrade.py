@@ -5,6 +5,7 @@ from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from apps.common.tests.race import passes_first_time
+from apps.warband.faction.models import Faction
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
@@ -15,6 +16,7 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
 from apps.warband.town.services.building_upgrade import UNAFFORDABLE_REFUSAL, get_building_upgrade_refusal
 from apps.warband.town.services.feast import UNAFFORDABLE_FEAST_REFUSAL, get_feast_refusal
+from apps.warband.town.services.geld import EMPTY_FYRD_REFUSAL, get_geld_refusal
 
 
 def _building(response, building_type: str) -> dict:
@@ -563,3 +565,103 @@ def test_throw_feast_view_tells_the_loser_of_a_race_why_nobody_ate(logged_in_cli
     assert [str(message) for message in get_messages(response.wsgi_request)] == [UNAFFORDABLE_FEAST_REFUSAL]
     town.refresh_from_db()
     assert town.last_feast_at == 0
+
+
+def _with_fyrd(current_savegame, *, fyrd_reserve: int) -> Faction:
+    faction = current_savegame.player_faction
+    faction.fyrd_reserve = fyrd_reserve
+    faction.save()
+
+    return faction
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_offers_a_geld_while_there_is_a_name_on_the_roll(logged_in_client, current_savegame):
+    _with_fyrd(current_savegame, fyrd_reserve=2)
+
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    assert response.context["geld"] == {
+        "silver": 80,
+        "fyrd_names": 1,
+        "fyrd_reserve": 2,
+        "has_gelded": False,
+        "can_geld": True,
+    }
+
+
+@pytest.mark.django_db
+def test_town_upgrade_view_says_the_geld_was_already_called(logged_in_client, current_savegame):
+    faction = _with_fyrd(current_savegame, fyrd_reserve=2)
+    faction.town.last_geld_at = current_savegame.current_month
+    faction.town.save()
+
+    response = logged_in_client.get(reverse("warband:town-upgrade-view"))
+
+    assert (response.context["geld"]["has_gelded"], response.context["geld"]["can_geld"]) == (True, False)
+
+
+@pytest.mark.django_db
+def test_call_geld_view_pays_the_silver_strikes_the_name_and_logs_it(logged_in_client, current_savegame):
+    """
+    Flow test through the whole chain: the month guard, the ledger, the roll and the log line.
+    """
+    faction = _with_fyrd(current_savegame, fyrd_reserve=2)
+    balance_before = Transaction.objects.current_balance(faction_id=faction.id)
+
+    response = logged_in_client.post(reverse("warband:call-geld-view"))
+
+    assert response.status_code == 200
+    faction.refresh_from_db()
+    faction.town.refresh_from_db()
+    assert (
+        Transaction.objects.current_balance(faction_id=faction.id) - balance_before,
+        faction.fyrd_reserve,
+        faction.town.last_geld_at,
+        PlayerMonthLog.objects.filter(faction=faction, kind=PlayerMonthLog.KindChoices.KIND_GELD_CALLED).count(),
+    ) == (80, 1, current_savegame.current_month, 1)
+
+
+@pytest.mark.django_db
+def test_call_geld_view_refuses_a_second_geld_in_the_same_month(logged_in_client, current_savegame):
+    faction = _with_fyrd(current_savegame, fyrd_reserve=2)
+    logged_in_client.post(reverse("warband:call-geld-view"))
+    balance_after_the_first = Transaction.objects.current_balance(faction_id=faction.id)
+
+    logged_in_client.post(reverse("warband:call-geld-view"))
+
+    faction.refresh_from_db()
+    assert (Transaction.objects.current_balance(faction_id=faction.id), faction.fyrd_reserve) == (
+        balance_after_the_first,
+        1,
+    )
+
+
+@pytest.mark.django_db
+def test_call_geld_view_refuses_with_nobody_on_the_roll(logged_in_client, current_savegame):
+    """
+    The button is disabled on the page, and a post that reaches the view anyway is refused there too.
+    """
+    _with_fyrd(current_savegame, fyrd_reserve=0)
+
+    response = logged_in_client.post(reverse("warband:call-geld-view"))
+
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [EMPTY_FYRD_REFUSAL]
+
+
+@pytest.mark.django_db
+def test_call_geld_view_tells_the_loser_of_a_race_why_the_village_paid_nothing(logged_in_client, current_savegame):
+    """
+    The request passed its check before a draft took the last name, so the handler turned it down.
+    """
+    faction = _with_fyrd(current_savegame, fyrd_reserve=0)
+
+    with mock.patch(
+        "apps.warband.town.views.town_upgrade.get_geld_refusal",
+        side_effect=passes_first_time(get_geld_refusal),
+    ):
+        response = logged_in_client.post(reverse("warband:call-geld-view"))
+
+    assert [str(message) for message in get_messages(response.wsgi_request)] == [EMPTY_FYRD_REFUSAL]
+    faction.town.refresh_from_db()
+    assert faction.town.last_geld_at == 0

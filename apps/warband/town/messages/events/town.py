@@ -30,3 +30,17 @@ class FeastThrown(Event):
     restored_share: float
     costs: int
     month: int
+
+
+@dataclass(kw_only=True)
+class GeldCalled(Event):
+    """
+    The village paid. The ledger takes the silver, the fyrd reserve gives up the names, and the month log
+    reads both halves of the trade.
+    """
+
+    town: Town
+    faction: Faction
+    silver: int
+    fyrd_names: int
+    month: int

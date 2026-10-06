@@ -43,6 +43,7 @@ class PlayerMonthLog(models.Model):
         # One kind for every quest, for the reason an incident has one: the catalogue grows by a class
         KIND_QUEST_RETURNED = 25, "Quest returned"
         KIND_WOUNDS_TENDED = 26, "Wounds tended"
+        KIND_GELD_CALLED = 27, "Geld called"
 
     # How loudly a kind is allowed to speak. Derived rather than passed alongside the kind, so a
     # producer names one thing and the two can never disagree about the same line.
@@ -102,6 +103,9 @@ class PlayerMonthLog(models.Model):
         # A consequence beside the feast, and not upkeep beside the monthly healing: the player chose
         # this man and paid for him, so the line names him rather than being counted into a tally
         KindChoices.KIND_WOUNDS_TENDED: CategoryChoices.CATEGORY_CONSEQUENCE,
+        # A consequence beside the feast: the player chose to tax his own village, and the line names
+        # both halves of the trade - the silver taken and the name struck off the fyrd roll
+        KindChoices.KIND_GELD_CALLED: CategoryChoices.CATEGORY_CONSEQUENCE,
     }
 
     # Upkeep is reported as one tallied sentence per kind rather than one line per warrior, so each

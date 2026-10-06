@@ -3,8 +3,12 @@
 {% block content %}
     <h1>Buildings</h1>
 
-    {# The feast is thrown in the hall, so it is priced on the page the hall is built from #}
-    <c-common.card class="mb-7">
+    {% comment %}
+        The town's two monthly levers side by side: the feast spends silver on the men, the geld takes it
+        from the village. The feast is thrown in the hall, so it is priced on the page the hall is built from.
+    {% endcomment %}
+    <div class="mb-7 grid grid-cols-1 gap-4 md:grid-cols-2">
+    <c-common.card>
         <c-slot name="header">
             <h3 class="mb-0 text-2xl leading-snug text-ink">Feast</h3>
             <p class="mt-0 text-sm leading-snug text-ink-muted">Once a month, for the whole war band</p>
@@ -35,6 +39,32 @@
             {% endif %}
         </c-slot>
     </c-common.card>
+
+    <c-common.card>
+        <c-slot name="header">
+            <h3 class="mb-0 text-2xl leading-snug text-ink">Geld</h3>
+            <p class="mt-0 text-sm leading-snug text-ink-muted">Once a month, paid by the village</p>
+        </c-slot>
+        <p class="mt-0">
+            The village pays silver now, and a household buys its son's name off the fyrd roll with it. A name
+            struck off is a man the fyrd can no longer send.
+        </p>
+        <p class="mb-0 font-mono text-label uppercase tracking-label text-ink">
+            +{{ geld.silver }} silver &middot; &minus;{{ geld.fyrd_names }} fyrd &middot; {{ geld.fyrd_reserve }} on the roll
+        </p>
+        <c-slot name="footer">
+            {% if geld.has_gelded %}
+                <button class="row-action" disabled>Already called a geld this month</button>
+            {% elif not geld.can_geld %}
+                <button class="row-action" disabled>Nobody left on the fyrd roll</button>
+            {% else %}
+                <button hx-post="{% url "warband:call-geld-view" %}"
+                        hx-disabled-elt="this"
+                        class="row-action">Call a geld for {{ geld.silver }} silver</button>
+            {% endif %}
+        </c-slot>
+    </c-common.card>
+    </div>
 
     {% comment %}
         One comparison rather than a card per building: the question this page answers is which building

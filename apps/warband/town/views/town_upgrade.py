@@ -10,8 +10,8 @@ from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 from apps.warband.town.buildings import BUILDINGS
 from apps.warband.town.buildings.hall import Hall
-from apps.warband.town.messages.commands.town import ThrowFeast, UpgradeTownBuilding
-from apps.warband.town.messages.events.town import FeastThrown, TownBuildingUpgraded
+from apps.warband.town.messages.commands.town import CallGeld, ThrowFeast, UpgradeTownBuilding
+from apps.warband.town.messages.events.town import FeastThrown, GeldCalled, TownBuildingUpgraded
 from apps.warband.town.models import Town
 from apps.warband.town.services.building_upgrade import (
     ALREADY_BUILT_THIS_MONTH_REFUSAL,
@@ -23,6 +23,12 @@ from apps.warband.town.services.feast import (
     NO_HALL_REFUSAL,
     UNAFFORDABLE_FEAST_REFUSAL,
     get_feast_refusal,
+)
+from apps.warband.town.services.geld import (
+    ALREADY_GELDED_THIS_MONTH_REFUSAL,
+    GELD_FYRD_NAMES,
+    GELD_SILVER,
+    get_geld_refusal,
 )
 
 
@@ -131,6 +137,21 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
             }
         )
 
+        # The geld beside the feast, with both halves of the trade named before the click: the silver it
+        # brings and the roll it is paid from. The card asks the refusal the geld itself asks
+        geld_refusal = get_geld_refusal(town=town, faction=town.faction, current_savegame=current_savegame)
+        context.update(
+            {
+                "geld": {
+                    "silver": GELD_SILVER,
+                    "fyrd_names": GELD_FYRD_NAMES,
+                    "fyrd_reserve": town.faction.fyrd_reserve,
+                    "has_gelded": geld_refusal == ALREADY_GELDED_THIS_MONTH_REFUSAL,
+                    "can_geld": geld_refusal is None,
+                }
+            }
+        )
+
         return context
 
 
@@ -233,5 +254,47 @@ class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.Deta
             return hx_redirect(url=reverse("warband:town-upgrade-view"))
 
         messages.add_message(request, messages.SUCCESS, "The war band feasted in the hall.")
+
+        return hx_redirect(url=reverse("warband:town-upgrade-view"))
+
+
+class CallGeldView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.DetailView):
+    model = Town
+    http_method_names = ("post",)
+
+    def post(self, request, *args, **kwargs):
+        town = self.get_object()
+        faction = town.faction
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+
+        refusal = get_geld_refusal(town=town, faction=faction, current_savegame=current_savegame)
+        if refusal is not None:
+            messages.add_message(request, messages.WARNING, refusal)
+
+            return hx_redirect(url=reverse("warband:town-upgrade-view"))
+
+        handled = handle_message(
+            CallGeld(
+                town=town,
+                faction=faction,
+                silver=GELD_SILVER,
+                fyrd_names=GELD_FYRD_NAMES,
+                month=current_savegame.current_month,
+            )
+        )
+
+        # For the reason the building upgrade above gives
+        if not any(isinstance(message, GeldCalled) for message in handled):
+            town.refresh_from_db()
+            faction.refresh_from_db()
+            messages.add_message(
+                request,
+                messages.WARNING,
+                get_geld_refusal(town=town, faction=faction, current_savegame=current_savegame) or STALE_PAGE_NOTICE,
+            )
+
+            return hx_redirect(url=reverse("warband:town-upgrade-view"))
+
+        messages.add_message(request, messages.SUCCESS, f"The village paid a geld of {GELD_SILVER} silver.")
 
         return hx_redirect(url=reverse("warband:town-upgrade-view"))

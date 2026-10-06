@@ -2,9 +2,13 @@ import pytest
 
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.town.handlers.commands.town import handle_throw_feast, handle_upgrade_town_building
-from apps.warband.town.messages.commands.town import ThrowFeast, UpgradeTownBuilding
-from apps.warband.town.messages.events.town import FeastThrown, TownBuildingUpgraded
+from apps.warband.town.handlers.commands.town import (
+    handle_call_geld,
+    handle_throw_feast,
+    handle_upgrade_town_building,
+)
+from apps.warband.town.messages.commands.town import CallGeld, ThrowFeast, UpgradeTownBuilding
+from apps.warband.town.messages.events.town import FeastThrown, GeldCalled, TownBuildingUpgraded
 from apps.warband.town.models import Town
 from apps.warband.town.tests.factories.town import TownFactory
 
@@ -181,3 +185,41 @@ def test_handle_throw_feast_lays_no_table_when_the_purse_no_longer_covers_it():
     assert result is None
     town.refresh_from_db()
     assert town.last_feast_at == 1
+
+
+@pytest.mark.django_db
+def test_handle_call_geld_records_the_month_and_passes_the_trade_on():
+    town = TownFactory(faction__fyrd_reserve=2)
+    context = CallGeld(town=town, faction=town.faction, silver=80, fyrd_names=1, month=4)
+
+    result = handle_call_geld(context=context)
+
+    assert result == GeldCalled(town=town, faction=town.faction, silver=80, fyrd_names=1, month=4)
+    town.refresh_from_db()
+    assert town.last_geld_at == 4
+
+
+@pytest.mark.django_db
+def test_handle_call_geld_ignores_a_second_geld_in_the_same_month():
+    """
+    Two overlapping clicks both pass the view's check. The UPDATE is what lets the village pay only once.
+    """
+    town = TownFactory(faction__fyrd_reserve=2, last_geld_at=4)
+
+    result = handle_call_geld(context=CallGeld(town=town, faction=town.faction, silver=80, fyrd_names=1, month=4))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_call_geld_takes_nothing_when_the_roll_has_since_been_emptied():
+    """
+    A draft in another tab took the last name after the view asked, so there is nothing left to pay with.
+    """
+    town = TownFactory(faction__fyrd_reserve=0, last_geld_at=1)
+
+    result = handle_call_geld(context=CallGeld(town=town, faction=town.faction, silver=80, fyrd_names=1, month=4))
+
+    assert result is None
+    town.refresh_from_db()
+    assert town.last_geld_at == 1

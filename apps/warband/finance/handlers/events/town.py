@@ -23,3 +23,13 @@ def handle_pay_for_feast(*, context: town.FeastThrown) -> Command:
         reason=f"Feast for {len(context.warrior_list)} {'man' if len(context.warrior_list) == 1 else 'men'}",
         month=context.month,
     )
+
+
+@message_registry.register_event(event=town.GeldCalled)
+def handle_receive_geld(*, context: town.GeldCalled) -> Command:
+    return CreateTransaction(
+        faction=context.faction,
+        amount=context.silver,
+        reason="Geld paid by the village",
+        month=context.month,
+    )
