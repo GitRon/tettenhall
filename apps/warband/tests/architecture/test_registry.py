@@ -65,7 +65,11 @@ TERMINAL_MESSAGES: dict[str, str] = {
     "apps.warband.faction.messages.events.warrior.WarriorWasAddedToPub": _SHELF_CHANGED,
     "apps.warband.faction.messages.events.item.ItemWasAddedToShop": _SHELF_CHANGED,
     "apps.warband.faction.messages.events.item.ItemWasRemovedFromShop": _SHELF_CHANGED,
-    "apps.warband.faction.messages.events.faction.FyrdReserveChanged": _INCIDENT_LEVER,
+    "apps.warband.faction.messages.events.faction.FyrdReserveChanged": (
+        "The reserve moves for somebody else's reason - an incident, a burned village, a geld - and the event "
+        "that asked for the change (IncidentOccurred, VillageBurned, GeldCalled) is the one the player's line "
+        "is written off. A consumer here would be a second line for one change, and one with no reason in it."
+    ),
     "apps.warband.item.messages.events.item.ItemWasLost": _INCIDENT_LEVER,
     "apps.warband.incident.messages.events.incident.IncidentAsked": (
         "A question waits on its pending row, and the dashboard reads it from there. What reaches the levers "
