@@ -22,12 +22,15 @@ class BaseItemGenerator:
     # What one point of expected damage costs, and the floor an item is priced against. Expectancy is
     # unbounded below - a modifier floored against a small die can leave a weapon barely able to
     # threaten anybody - and such a thing is worth the floor rather than nothing or a negative sum.
-    PRICE_PER_EXPECTED_DAMAGE = 10
+    # Set so that gear competes with the town's buildings for the same silver: a fine weapon costs about
+    # half a building rung, so arming the band is something a faction saves for rather than an
+    # afterthought it can buy out every month.
+    PRICE_PER_EXPECTED_DAMAGE = 20
     MINIMUM_EXPECTED_DAMAGE = 1
 
     # The bands of standing this generator draws from, across both functions: a warrior's weapon and his
     # armour say the same thing about where he came from. Left unset, the whole non-fallback table is in
-    # reach, which is what the shop wants and what a subclass declaring no pool of its own inherits.
+    # reach, which is what a subclass declaring no pool of its own inherits.
     item_tiers: frozenset[int] | None = None
 
     faction: Faction
@@ -36,7 +39,13 @@ class BaseItemGenerator:
     quality_bonus: int
 
     def __init__(
-        self, *, faction: Faction | None, item_function: int, savegame_id: int, quality_bonus: int = 0
+        self,
+        *,
+        faction: Faction | None,
+        item_function: int,
+        savegame_id: int,
+        quality_bonus: int = 0,
+        item_tiers: frozenset[int] | None = None,
     ) -> None:
         super().__init__()
 
@@ -46,6 +55,10 @@ class BaseItemGenerator:
         # Added to the modifier roll, so a better forge shifts an item up the condition ladder
         # instead of re-centring it: the condition thresholds stay on the generator's own mean
         self.quality_bonus = quality_bonus
+        # The town shop borrows an archetype's modifier distribution but not its pool: which bands it
+        # stocks is the weaponsmith's to say, so a caller may narrow or widen the pool for this one draw
+        if item_tiers is not None:
+            self.item_tiers = item_tiers
 
     @property
     def _modifier_distribution(self) -> tuple[int, int]:

@@ -61,10 +61,9 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
     marketplace = Marketplace.get_building_by_type(building_type=context.faction.town.marketplace)
     weaponsmith = Weaponsmith.get_building_by_type(building_type=context.faction.town.weaponsmith)
 
-    # The shop borrows the mercenary generator for its modifier distribution, and its wares are
-    # deliberately the whole table: the shop is where a player buys his way up, which is the axis the
-    # weaponsmith's quality bonus already works on. That holds only while the mercenary pool spans every
-    # tier - narrow it, and the shop needs a generator of its own rather than this one.
+    # The shop borrows the mercenary generator for its modifier distribution only. Which bands it stocks
+    # is the weaponsmith's: the shop is where a player buys his way up, and the forge is what opens the
+    # way, so its pool is passed in rather than inherited from the archetype
     for item_function in _draw_stall_functions(stall_count=marketplace.AVAILABLE_ITEMS):
         message_list.append(
             RequestNewItemForTownShop(
@@ -73,6 +72,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
                 item_function=item_function,
                 month=context.month,
                 quality_bonus=weaponsmith.QUALITY_BONUS,
+                item_tiers=weaponsmith.SHOP_ITEM_TIERS,
             )
         )
 

@@ -1,3 +1,5 @@
+import itertools
+
 import pytest
 
 from apps.warband.town.buildings.base import BuildingEffect
@@ -49,7 +51,24 @@ def test_get_levels_matches_the_model_choices():
     assert len(Weaponsmith.get_levels()) == len(Town.WeaponsmithChoices)
 
 
-def test_get_effects_names_the_quality_bonus():
+def test_get_effects_names_the_best_band_and_the_quality_bonus():
     result = SmallWeaponsmith.get_effects()
 
-    assert result == (BuildingEffect(label="Quality of the shop's wares", value="+1"),)
+    assert result == (
+        BuildingEffect(label="Best gear in the shop", value="Fine"),
+        BuildingEffect(label="Quality of the shop's wares", value="+1"),
+    )
+
+
+def test_get_effects_without_a_weaponsmith_names_the_rustic_band():
+    result = NoWeaponsmith.get_effects()
+
+    assert result[0] == BuildingEffect(label="Best gear in the shop", value="Rustic")
+
+
+def test_shop_item_tiers_never_narrow_up_the_ladder():
+    """
+    A forge that is raised and then stocks less than before would be a building the player pays to lose.
+    """
+    for lower, higher in itertools.pairwise(Weaponsmith.get_levels()):
+        assert lower.SHOP_ITEM_TIERS <= higher.SHOP_ITEM_TIERS
