@@ -61,6 +61,12 @@ class Town(models.Model):
         default=0,
     )
 
+    last_geld_at = models.PositiveSmallIntegerField(
+        # Months count from 1, so 0 is "never called" - the same reading as the two guards above
+        help_text="Month the last geld was called on the village, 0 if none was",
+        default=0,
+    )
+
     objects = TownManager()
 
     class Meta:

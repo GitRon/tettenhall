@@ -26,6 +26,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--tending", action="store_true", help="The player builds his sanctuary first and tends his wounded"
     )
+    parser.add_argument(
+        "--geld", action="store_true", help="The player calls a geld on his village whenever his purse runs low"
+    )
     parser.add_argument("--output", type=Path, required=True, help="Where the JSON report is written")
     return parser
 
@@ -56,7 +59,12 @@ def main(*, argv: list[str]) -> int:
 
     for seed in range(arguments.seed, arguments.seed + arguments.games):
         report = play_savegame(
-            seed=seed, policy=policy, month_cap=arguments.months, user=user, tending=arguments.tending
+            seed=seed,
+            policy=policy,
+            month_cap=arguments.months,
+            user=user,
+            tending=arguments.tending,
+            geld=arguments.geld,
         )
         reports.append(report.as_dict())
         sys.stdout.write(summarise(report=report) + "\n")

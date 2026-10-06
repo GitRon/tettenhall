@@ -3,7 +3,7 @@ from queuebie.messages import Command
 
 from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
-from apps.warband.town.messages.events.town import FeastThrown
+from apps.warband.town.messages.events.town import FeastThrown, GeldCalled
 
 
 @message_registry.register_event(event=FeastThrown)
@@ -25,6 +25,22 @@ def handle_feast_thrown(*, context: FeastThrown) -> Command:
     return CreatePlayerMonthLog(
         title=title,
         kind=PlayerMonthLog.KindChoices.KIND_FEAST_THROWN,
+        month=context.month,
+        faction=context.faction,
+    )
+
+
+@message_registry.register_event(event=GeldCalled)
+def handle_geld_called(*, context: GeldCalled) -> Command:
+    """
+    Both halves of the trade on one line, because the second is the one easy to forget: the silver shows
+    in the purse, a name struck off the roll only in the next draft that finds it gone.
+    """
+    names = f"{context.fyrd_names} {'name' if context.fyrd_names == 1 else 'names'}"
+
+    return CreatePlayerMonthLog(
+        title=f"The village paid a geld of {context.silver} silver for {names} off the fyrd roll.",
+        kind=PlayerMonthLog.KindChoices.KIND_GELD_CALLED,
         month=context.month,
         faction=context.faction,
     )

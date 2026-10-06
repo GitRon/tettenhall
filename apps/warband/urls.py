@@ -10,7 +10,7 @@ from apps.warband.month import views as month_views
 from apps.warband.quest import views as quest_views
 from apps.warband.savegame import views as savegame_views
 from apps.warband.skirmish import views as skirmish_views
-from apps.warband.town.views.town_upgrade import ThrowFeastView, TownUpgradeView, UpgradeBuildingView
+from apps.warband.town.views.town_upgrade import CallGeldView, ThrowFeastView, TownUpgradeView, UpgradeBuildingView
 from apps.warband.training import views as training_views
 from apps.warband.warrior import views as warrior_views
 
@@ -136,6 +136,7 @@ urlpatterns = [
     path("town/board", faction_views.TownBoardView.as_view(), name="town-board-view"),
     path("town/buildings", TownUpgradeView.as_view(), name="town-upgrade-view"),
     path("town/feast", ThrowFeastView.as_view(), name="throw-feast-view"),
+    path("town/geld", CallGeldView.as_view(), name="call-geld-view"),
     path(
         "town/building/upgrade/<str:building_type>",
         UpgradeBuildingView.as_view(),

@@ -29,8 +29,9 @@ from apps.warband.town.buildings.hall import Hall
 from apps.warband.town.buildings.marketplace import Marketplace
 from apps.warband.town.buildings.sanctuary import Sanctuary
 from apps.warband.town.buildings.weaponsmith import Weaponsmith
-from apps.warband.town.messages.commands.town import UpgradeTownBuilding
+from apps.warband.town.messages.commands.town import CallGeld, UpgradeTownBuilding
 from apps.warband.town.services.building_upgrade import get_building_upgrade_refusal
+from apps.warband.town.services.geld import GELD_FYRD_NAMES, GELD_SILVER, get_geld_refusal
 from apps.warband.warrior.messages.commands.warrior import RecruitCapturedWarrior, TendWarriorWounds
 from apps.warband.warrior.services.availability import assess_roster
 from apps.warband.warrior.services.tending import get_tending_price, get_tending_refusal
@@ -73,6 +74,10 @@ class PlayerTurn:
     build order, and the wounded are tended straight after the fyrd, before the pub and the shop have
     spent the purse down. Off by default, so a batch measures what it always measured; a question about
     the price of tending switches it on for both of the batches it compares.
+
+    "geld" plays a player who taxes his village when the purse runs low: before the fyrd is drafted, while
+    there is still a name on the roll to strike, a geld is called whenever the purse is below the silver
+    kept back. Off by default for the reason tending is.
     """
 
     savegame: Savegame
@@ -88,6 +93,7 @@ class PlayerTurn:
         report: GameReport,
         max_rounds: int = MAX_ROUNDS,
         tending: bool = False,
+        geld: bool = False,
     ) -> None:
         self.savegame = savegame
         self.faction = savegame.player_faction
@@ -97,6 +103,7 @@ class PlayerTurn:
         self.report = report
         self.max_rounds = max_rounds
         self.tending = tending
+        self.geld = geld
         # Who was on the roster as the band set out - the steps before the march add men to it, so a
         # successor raised by the fight is told apart against this rather than against last month's roster
         self.roster_ids_at_march: frozenset[int] = frozenset()
@@ -104,6 +111,8 @@ class PlayerTurn:
     def play(self) -> str | None:
         """Plays the month and says why the game cannot go on, if it cannot."""
         self.take_in_captives()
+        if self.geld:
+            self.call_a_geld()
         self.draft_the_fyrd()
         if self.tending:
             self.tend_the_wounded()
@@ -131,6 +140,29 @@ class PlayerTurn:
         for warrior in self.faction.captured_warriors.all():
             handle_message(RecruitCapturedWarrior(faction=self.faction, warrior=warrior, month=self.month))
             self.report.captives_recruited += 1
+
+    def call_a_geld(self) -> None:
+        """
+        Only while the purse is below what the player keeps back: a geld costs a man the draft would
+        have raised for free, so a player with silver to spare has no reason to sell one.
+        """
+        if self._balance() >= SILVER_KEPT_BACK:
+            return
+
+        self.faction.refresh_from_db()
+        if get_geld_refusal(town=self.faction.town, faction=self.faction, current_savegame=self.savegame) is not None:
+            return
+
+        handle_message(
+            CallGeld(
+                town=self.faction.town,
+                faction=self.faction,
+                silver=GELD_SILVER,
+                fyrd_names=GELD_FYRD_NAMES,
+                month=self.month,
+            )
+        )
+        self.report.gelds_called += 1
 
     def draft_the_fyrd(self) -> None:
         self.faction.refresh_from_db()

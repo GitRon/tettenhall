@@ -1,9 +1,10 @@
 from queuebie import message_registry
 from queuebie.messages import Event
 
+from apps.warband.faction.models import Faction
 from apps.warband.finance.models import Transaction
-from apps.warband.town.messages.commands.town import ThrowFeast, UpgradeTownBuilding
-from apps.warband.town.messages.events.town import FeastThrown, TownBuildingUpgraded
+from apps.warband.town.messages.commands.town import CallGeld, ThrowFeast, UpgradeTownBuilding
+from apps.warband.town.messages.events.town import FeastThrown, GeldCalled, TownBuildingUpgraded
 from apps.warband.town.models import Town
 
 
@@ -62,5 +63,32 @@ def handle_throw_feast(*, context: ThrowFeast) -> Event | None:
         warrior_list=context.warrior_list,
         restored_share=context.restored_share,
         costs=context.costs,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=CallGeld)
+def handle_call_geld(*, context: CallGeld) -> Event | None:
+    # The roll first, read rather than written, the way the purse is above: a draft in another tab may
+    # have emptied it after the view asked, and this request's write lock is what keeps one from doing so
+    # between this read and the strike. Without it the village would pay for a name it no longer has.
+    if not Faction.objects.filter(pk=context.faction.pk, fyrd_reserve__gte=context.fyrd_names).exists():
+        return None
+
+    # The once-a-month rule as one conditional UPDATE, for the reason the building upgrade above gives:
+    # a double-clicked button passes the view's check twice, and the village may only pay once
+    gelded_rows = (
+        Town.objects.filter(pk=context.town.pk).exclude(last_geld_at=context.month).update(last_geld_at=context.month)
+    )
+    if not gelded_rows:
+        return None
+
+    context.town.last_geld_at = context.month
+
+    return GeldCalled(
+        town=context.town,
+        faction=context.faction,
+        silver=context.silver,
+        fyrd_names=context.fyrd_names,
         month=context.month,
     )

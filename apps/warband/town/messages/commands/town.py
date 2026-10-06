@@ -33,3 +33,18 @@ class ThrowFeast(Command):
     restored_share: float
     costs: int
     month: int
+
+
+@dataclass(kw_only=True)
+class CallGeld(Command):
+    """
+    Tax the town's own village, once this month: "silver" now, for "fyrd_names" struck off the roll.
+
+    Both numbers are settled by the view off the service's constants, against the refusal it asked first.
+    """
+
+    town: Town
+    faction: Faction
+    silver: int
+    fyrd_names: int
+    month: int

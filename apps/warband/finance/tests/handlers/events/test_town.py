@@ -1,7 +1,11 @@
-from apps.warband.finance.handlers.events.town import handle_pay_building_costs_for_town_buildings, handle_pay_for_feast
+from apps.warband.finance.handlers.events.town import (
+    handle_pay_building_costs_for_town_buildings,
+    handle_pay_for_feast,
+    handle_receive_geld,
+)
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.town.messages.events.town import FeastThrown, TownBuildingUpgraded
+from apps.warband.town.messages.events.town import FeastThrown, GeldCalled, TownBuildingUpgraded
 from apps.warband.town.models import Town
 from apps.warband.town.tests.factories.town import TownFactory
 
@@ -57,3 +61,11 @@ def test_handle_pay_for_feast_words_a_table_of_one():
     result = handle_pay_for_feast(context=context)
 
     assert result.reason == "Feast for 1 man"
+
+
+def test_handle_receive_geld_pays_the_silver_into_the_purse():
+    town = TownFactory.build()
+
+    result = handle_receive_geld(context=GeldCalled(town=town, faction=town.faction, silver=80, fyrd_names=1, month=4))
+
+    assert result == CreateTransaction(faction=town.faction, amount=80, reason="Geld paid by the village", month=4)

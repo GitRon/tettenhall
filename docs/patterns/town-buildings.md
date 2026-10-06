@@ -111,6 +111,16 @@ holding that level's numbers:
   conditional `UPDATE` in `WarriorManager.tend_wounds` so a double-click is charged once. It is its own
   command, `TendWarriorWounds`, rather than a second `HealInjuredWarrior`: that one rolls against the
   ceiling, and `handle_heal_injured_warrior` stays one lookup for every faction.
+- **The village pays a geld when the player asks, once a month, for one name off the fyrd roll** (#421).
+  It is the town's one source of silver besides the hall, and it is no building's lever: `GELD_SILVER`
+  (80, the thegn's price in `ThegnBuysOutHisSons`) and `GELD_FYRD_NAMES` (1) are constants on
+  `apps/warband/town/services/geld.py`. Flat and unconditional on the buildings, so a broke month always
+  has one decision in it, and refused while the reserve is empty, so it is a lever that runs out: every
+  geld is a levy the next draft will not find, a man fewer to raise as leader when nobody is left on the
+  roster, and the village's own men paid away. `Town.last_geld_at` guards the month the way
+  `last_feast_at` does - asked by `get_geld_refusal` for the message, re-checked as a conditional `UPDATE`
+  in `handle_call_geld`, which also re-reads the reserve so a draft in another tab cannot leave the
+  village paying for a name it no longer has. Only the player calls one; a rival's purse is #405 and #416.
  (#417). A level's `CELL_PLACES`
   (1 / 2 / 3 / 4) is how many prisoners the town still holds once the month has turned. A capture is never
   refused for want of room, so cells may stand over their places during a month; then

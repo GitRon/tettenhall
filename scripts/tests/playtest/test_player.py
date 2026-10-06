@@ -492,3 +492,49 @@ def test_fight_stops_when_the_rounds_run_out(player_savegame, rng, report):
     ).fight(skirmish=skirmish)
 
     assert result == STOP_FIGHT_STUCK
+
+
+@pytest.mark.django_db
+def test_play_calls_a_geld_before_the_draft_only_for_a_geld_player(player_savegame, rng, report, queuebie_registry):
+    """
+    Before the draft, or the draft would have raised every name the village could pay with.
+    """
+    faction = player_savegame.player_faction
+    faction.fyrd_reserve = 2
+    faction.save()
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report, geld=True).play()
+
+    assert (report.gelds_called, report.drafted) == (1, 1)
+
+
+@pytest.mark.django_db
+def test_call_a_geld_leaves_the_village_alone_while_the_purse_holds_out(
+    player_savegame, rng, report, queuebie_registry
+):
+    faction = player_savegame.player_faction
+    faction.fyrd_reserve = 2
+    faction.save()
+    TransactionFactory(faction=faction, amount=150)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).call_a_geld()
+
+    assert report.gelds_called == 0
+
+
+@pytest.mark.django_db
+def test_call_a_geld_passes_over_a_refused_geld(player_savegame, rng, report, queuebie_registry):
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).call_a_geld()
+
+    assert report.gelds_called == 0
+
+
+@pytest.mark.django_db
+def test_play_leaves_the_village_alone_for_a_player_who_does_not_geld(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    faction.fyrd_reserve = 2
+    faction.save()
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).play()
+
+    assert (report.gelds_called, report.drafted) == (0, 2)
