@@ -67,6 +67,12 @@ tending would change nothing in a default batch, and putting it into every batch
 baseline measured before it. A question about the price of tending compares tending batches at different
 prices against each other, so the build order they share drops out of the comparison.
 
+**`--geld`** plays a player who taxes his village when the purse runs low. After the captives and before
+the draft - while there is still a name on the roll to pay with - he calls a geld whenever the purse is
+below the 150 he keeps back. Opt-in for the reason tending is: it moves silver and men in every month it
+fires, so switching it on by default would move every baseline. A question about the geld's price compares
+geld batches at different prices against each other and against a batch without it.
+
 **Policies** differ only in when the band marches, and on what. Every march storms the burh unless the
 policy says otherwise:
 
@@ -93,6 +99,7 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
 - how many men were drafted, hired, taken in from the cells and sent on a quest, and how many towns were
   occupied;
 - how many items the player bought, and how many equips the hand-out made;
+- how many men the sanctuary tended and how many gelds the village paid, in the batches that do either;
 - successions on either side, and apart from them the leaders the fyrd raised when nobody was left on the
   roster;
 - the months rivals were knocked out, and for each of them how many months it lasted after its first

@@ -30,6 +30,8 @@ class GameReport:
     policy: str
     # Whether the player paid his sanctuary to tend his wounded, see [PlayerTurn]
     tending: bool = False
+    # Whether the player called a geld on his village when his purse ran low, see [PlayerTurn]
+    geld: bool = False
     outcome: str = ""
     months_played: int = 0
     # Why the harness stopped a game that was neither decided nor at the month cap
@@ -50,6 +52,8 @@ class GameReport:
     sent_on_quests: int = 0
     # Men the sanctuary was paid to mend, which only a tending game does
     warriors_tended: int = 0
+    # Gelds the village paid, which only a geld game calls
+    gelds_called: int = 0
     player_successions: int = 0
     rival_successions: int = 0
     # Seats the fyrd filled because nobody was left on the roster - counted apart from the successions

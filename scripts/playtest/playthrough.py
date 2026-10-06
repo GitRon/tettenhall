@@ -22,7 +22,9 @@ from scripts.playtest.report import GameReport, MonthRecord
 STOP_MONTH_BLOCKED = "month blocked by an unresolved skirmish"
 
 
-def play_savegame(*, seed: int, policy: PlayerPolicy, month_cap: int, user: User, tending: bool = False) -> GameReport:
+def play_savegame(
+    *, seed: int, policy: PlayerPolicy, month_cap: int, user: User, tending: bool = False, geld: bool = False
+) -> GameReport:
     """
     Starts a savegame the way the new-game form does and plays it until it is decided or reaches the cap.
 
@@ -48,8 +50,9 @@ def play_savegame(*, seed: int, policy: PlayerPolicy, month_cap: int, user: User
         policy=policy,
         rng=rng,
         month_cap=month_cap,
-        report=GameReport(seed=seed, policy=policy.name, tending=tending),
+        report=GameReport(seed=seed, policy=policy.name, tending=tending, geld=geld),
         tending=tending,
+        geld=geld,
     )
 
 
@@ -61,6 +64,7 @@ def play_months(
     month_cap: int,
     report: GameReport,
     tending: bool = False,
+    geld: bool = False,
 ) -> GameReport:
     """
     Plays the player's month and then finishes it, as the End Month button does, until the game stops.
@@ -72,7 +76,7 @@ def play_months(
     standings = _standings(savegame=savegame)
 
     while not savegame.is_over and report.months_played < month_cap:
-        turn = PlayerTurn(savegame=savegame, policy=policy, rng=rng, report=report, tending=tending)
+        turn = PlayerTurn(savegame=savegame, policy=policy, rng=rng, report=report, tending=tending, geld=geld)
         stop_reason = turn.play()
         player_id = savegame.player_faction_id
         standings[player_id] = replace(standings[player_id], roster_ids=turn.roster_ids_at_march)
