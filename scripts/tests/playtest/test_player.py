@@ -527,3 +527,14 @@ def test_call_a_geld_passes_over_a_refused_geld(player_savegame, rng, report, qu
     PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report).call_a_geld()
 
     assert report.gelds_called == 0
+
+
+@pytest.mark.django_db
+def test_play_leaves_the_village_alone_for_a_player_who_does_not_geld(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    faction.fyrd_reserve = 2
+    faction.save()
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).play()
+
+    assert (report.gelds_called, report.drafted) == (0, 2)
