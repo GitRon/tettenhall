@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Fallen</h1>
+
+    {% comment %}
+        The Roll of the Fallen: one entry per man, the last to fall at the top. A list rather than a table,
+        because the saga line is a sentence and not a column - it would be the widest cell in every row.
+
+        The killer and the saga line are left out where the fight did not record them, which is every
+        death from before the game kept either. A man who led the war band when he fell carries the one
+        tag, as a fact rather than a warning: he is not something the player can act on any more.
+    {% endcomment %}
+    {% if fallen_list %}
+        <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+            {% for fallen in fallen_list %}
+                <li class="grid grid-cols-[40px_minmax(0,1fr)] gap-x-3 gap-y-2 px-[15px] py-3 md:px-5">
+                    <c-warrior.portrait :warrior="fallen.warrior" frame="border border-rule" />
+                    <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                        <a class="leading-snug" href="{% url 'warband:warrior-detail-view' fallen.warrior.id %}">{{ fallen.warrior.name }}</a>
+                        {% if fallen.fell_as_a_leader %}
+                            <span class="border border-rule px-1.5 py-0.5 font-mono text-label font-medium uppercase tracking-label text-ink">{{ fallen.warrior.LEADER_TITLE }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-span-2 flex flex-col gap-y-2 md:col-span-1 md:col-start-2">
+                        <span class="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-label uppercase tracking-label text-ink-muted">
+                            <i class="fa-solid fa-skull-crossbones" aria-hidden="true"></i>
+                            <span>Fell in <a class="normal-case" href="{% url 'warband:skirmish-fight-view' fallen.skirmish.id %}">{{ fallen.skirmish.name }}</a></span>
+                            <span>Month <span class="text-ink">{{ fallen.skirmish.month }}</span></span>
+                            {% if fallen.killed_by %}
+                                <span>Slain by <span class="normal-case text-ink">{{ fallen.killed_by.name }}</span> of <span class="normal-case text-ink">{{ fallen.killer_side.name }}</span></span>
+                            {% endif %}
+                            <span>XP <span class="text-ink">{{ fallen.warrior.experience }}</span></span>
+                            <span>Fights <span class="text-ink">{{ fallen.fights_stood_in }}</span></span>
+                        </span>
+                        {% if fallen.death_saga %}
+                            <p class="m-0 leading-normal text-ink-muted italic">{{ fallen.death_saga }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-sm leading-snug text-ink-muted">No man of yours has fallen yet.</p>
+    {% endif %}
+{% endblock content %}

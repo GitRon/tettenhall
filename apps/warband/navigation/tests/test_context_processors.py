@@ -73,7 +73,7 @@ def test_navigation_offers_no_pages_for_a_section_that_is_not_on_the_bar(user, s
 
 
 @pytest.mark.django_db
-def test_navigation_offers_the_five_pages_of_the_war_band(logged_in_client, current_savegame):
+def test_navigation_offers_the_six_pages_of_the_war_band(logged_in_client, current_savegame):
     """
     The landing page first, and the rest by how often a month makes the player open them.
     """
@@ -85,8 +85,9 @@ def test_navigation_offers_the_five_pages_of_the_war_band(logged_in_client, curr
         "Fyrd",
         "Captives",
         "Progress",
+        "Fallen",
     ]
-    assert [page["is_current"] for page in response.context["nav_pages"]] == [False, True, False, False, False]
+    assert [page["is_current"] for page in response.context["nav_pages"]] == [False, True, False, False, False, False]
 
 
 @pytest.mark.django_db

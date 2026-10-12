@@ -35,6 +35,7 @@ from apps.warband.savegame.services.current_savegame import get_current_savegame
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction
 from apps.warband.skirmish.messages.events.skirmish import SkirmishCreated
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.skirmish.projections.roll_of_the_fallen import RollOfTheFallen
 from apps.warband.skirmish.raids import RAID_KINDS
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
@@ -186,7 +187,7 @@ class PlayerFactionMixin(PlayerFactionScopedQuerysetMixin):
     before the player has an active savegame with a faction, which is a page with no subject rather
     than a server error. The same shape as "PlayerTownMixin".
 
-    Both of the sections that are the player's own stand on this: the war band's five pages, which
+    Both of the sections that are the player's own stand on this: the war band's six pages, which
     read his men and his gear, and the town's three, which read what his town is offering him this
     month. Whose faction it is, is one question however many pages ask it.
     """
@@ -208,7 +209,7 @@ class FactionDetailView(
     """
     A rival's page: who he has, what he owns, who he holds, and whether the player may march on him.
 
-    The player's own war band is five pages of its own, and this url is where every link to it used
+    The player's own war band is six pages of its own, and this url is where every link to it used
     to point - a bookmark, a fight report, the counter in the bar. Rather than answering those with a
     404 or with a second copy of the roster, the one id that is his own is sent to the page that now
     holds it.
@@ -295,6 +296,23 @@ class WarbandProgressView(FactionRosterContextMixin, PlayerFactionMixin, generic
     """
 
     template_name = "faction/warband_progress.html"
+
+
+class WarbandFallenView(PlayerFactionMixin, generic.DetailView):
+    """
+    The Roll of the Fallen: every man of the war band who was killed, and the fight he fell in.
+
+    The one page that still names a dead man. Every roster leaves him out from the day he dies, which
+    is right for a list of who can march and leaves a long campaign with no record of what it cost.
+    """
+
+    template_name = "faction/warband_fallen.html"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["fallen_list"] = RollOfTheFallen.for_faction(faction=self.object).fallen_list
+
+        return context
 
 
 class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
