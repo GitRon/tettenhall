@@ -15,7 +15,7 @@
     "model": "warband.itemtype",
     "pk": 2,
     "fields": {
-      "name": "Studded leather",
+      "name": "Leather jerkin",
       "function": 2,
       "base_value": "2d3",
       "svg_image_name": "leather-vest",
@@ -75,7 +75,7 @@
     "model": "warband.itemtype",
     "pk": 7,
     "fields": {
-      "name": "Battle axe",
+      "name": "Bearded axe",
       "function": 1,
       "base_value": "3d5",
       "svg_image_name": "bearded-axe",

@@ -18,7 +18,7 @@ def test_label_from_instance_names_a_weapon_by_its_average_damage():
     """
     warrior = WarriorFactory()
     weapon = ItemFactory(
-        type=ItemTypeFactory(name="Battle axe", base_value="1d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
+        type=ItemTypeFactory(name="Bearded axe", base_value="1d6", function=ItemType.FunctionChoices.FUNCTION_WEAPON),
         condition=Item.ConditionChoices.CONDITION_RUSTY,
         modifier=1,
         owner=warrior.faction,
@@ -27,16 +27,14 @@ def test_label_from_instance_names_a_weapon_by_its_average_damage():
 
     form = WarriorForm(instance=warrior, htmx_field="weapon")
 
-    assert form.fields["weapon"].label_from_instance(weapon) == "Rusty Battle axe (1d6+1) - 4.5 damage on average"
+    assert form.fields["weapon"].label_from_instance(weapon) == "Rusty Bearded axe (1d6+1) - 4.5 damage on average"
 
 
 @pytest.mark.django_db
 def test_label_from_instance_names_armour_by_its_average_protection():
     warrior = WarriorFactory()
     armor = ItemFactory(
-        type=ItemTypeFactory(
-            name="Studded leather", base_value="2d3", function=ItemType.FunctionChoices.FUNCTION_ARMOR
-        ),
+        type=ItemTypeFactory(name="Leather jerkin", base_value="2d3", function=ItemType.FunctionChoices.FUNCTION_ARMOR),
         owner=warrior.faction,
         savegame=warrior.savegame,
     )
@@ -45,7 +43,7 @@ def test_label_from_instance_names_armour_by_its_average_protection():
 
     assert (
         form.fields["armor"].label_from_instance(armor)
-        == "Traditional Studded leather (2d3+0) - 4 protection on average"
+        == "Traditional Leather jerkin (2d3+0) - 4 protection on average"
     )
 
 

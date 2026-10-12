@@ -9,6 +9,10 @@ project names an interface colour (the hair on a portrait is paint, see
 `bg-sky-100` or `text-white` does not compile at all. That is the enforcement, and it is deliberate —
 an element that inherits its colour still reads, where a hue nobody chose looks fine and is wrong.
 
+**The game is set around Tettenhall in 910, Saxons against Danes.** Gear, buildings and names are chosen for
+the tenth century: a Dane axe or a spectacle helm belongs, a Spangenhelm three centuries early does not,
+and nothing that comes from fantasy games rather than from a find does either.
+
 ## The colours
 
 | Token | Value | What it is for | On `ground` |

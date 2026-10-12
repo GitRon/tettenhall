@@ -15,9 +15,9 @@ FULL_BLEED_BACKGROUND = re.compile(r'd="M0 0h512v512H0z"|<rect[^>]*width="(100%|
 
 @pytest.mark.django_db
 def test_str_contains_name_and_function():
-    item_type = ItemTypeFactory(name="Battle axe", function=ItemType.FunctionChoices.FUNCTION_WEAPON)
+    item_type = ItemTypeFactory(name="Bearded axe", function=ItemType.FunctionChoices.FUNCTION_WEAPON)
 
-    assert str(item_type) == "Battle axe (Weapon)"
+    assert str(item_type) == "Bearded axe (Weapon)"
 
 
 @pytest.mark.django_db
