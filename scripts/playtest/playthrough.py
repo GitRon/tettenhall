@@ -13,6 +13,7 @@ from apps.warband.savegame.messages.commands.savegame import CreateNewSavegame
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
+from apps.warband.warrior.choices.nickname import DEED_NICKNAME_STATES, NicknameStateChoices
 from apps.warband.warrior.models.trait import Trait
 from apps.warband.warrior.models.trait_type import TraitType
 from scripts.playtest.player import PlayerTurn
@@ -102,6 +103,7 @@ def play_months(
     report.outcome = savegame.get_outcome_display()
     report.rival_items_bought = _count_rival_purchases(savegame=savegame)
     report.traits_earned = _count_earned_traits(savegame=savegame)
+    report.deeds_earned = _count_deed_epithets(savegame=savegame)
     return report
 
 
@@ -211,3 +213,17 @@ def _count_earned_traits(*, savegame: Savegame) -> dict[str, int]:
     ).values_list("type__hook", flat=True)
 
     return dict(sorted(Counter(hooks).items()))
+
+
+def _count_deed_epithets(*, savegame: Savegame) -> dict[str, int]:
+    """
+    How many men of the savegame carry each deed epithet at its end, the fallen included.
+
+    Every man rather than the player's alone, because a deed is any man's: the rate a rival's men are
+    named at is the same rule measured on more men.
+    """
+    states = Warrior.objects.filter(savegame=savegame, nickname_state__in=DEED_NICKNAME_STATES).values_list(
+        "nickname_state", flat=True
+    )
+
+    return dict(sorted(Counter(NicknameStateChoices(state).name.lower() for state in states).items()))

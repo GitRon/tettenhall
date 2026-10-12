@@ -35,6 +35,24 @@ MORALE_LOW_NICKNAMES = ("the Craven", "the Timid", "the Meek")
 RELIC_BEARER_NICKNAMES = ("the Believer", "the Relic-bearer", "the Blessed")
 # "Lord" rather than "king": the men a war band can kill are ealdormen and their heirs
 LORD_SLAYER_NICKNAMES = ("the Lordslayer", "the Lordbane")
+WALLBREAKER_NICKNAMES = ("the Wallbreaker", "the Ram")
+GIANTBANE_NICKNAMES = ("the Giantbane", "the Oakfeller")
+UNBROKEN_NICKNAMES = ("the Unbroken", "the Last Shield")
+OLD_WOLF_NICKNAMES = ("the Old Wolf", "the Grey")
+
+# The thresholds below are measured with "scripts/playtest" (its "deeds_earned"), not chosen by feel. A man
+# keeps the first deed he does, so each one is set by how often it fires against the others.
+#
+# How far above the man who put him down the fallen has to stand, in levels, before the blow is a deed.
+# Levels are compressed - nearly every man who fights is level one or two, and level four is a handful in
+# a hundred games - so a gap of one is an everyday blow and a gap of three almost never happens.
+GIANTBANE_LEVEL_GAP = 2
+# How many men the winning side has to have fielded before being the one left on his feet is a deed. A
+# pair whose other half ran is not a last stand.
+UNBROKEN_MIN_SIDE = 3
+# How many decided fights a man has to have stood in, this one included, before he is a veteran by name.
+# Most of a war band has seen two or three by the end of two years; eight is the long-serving few.
+OLD_WOLF_FIGHTS = 8
 
 # The wording a stored state is read back through. The state is what a warrior carries, so editing a
 # list here reaches every man already made - which is the whole reason the column holds the state and
@@ -53,6 +71,10 @@ NICKNAME_WORDINGS: dict[int, tuple[str, ...]] = {
     NicknameStateChoices.MORALE_AT_BOTTOM: MORALE_LOW_NICKNAMES,
     NicknameStateChoices.RELIC_BEARER: RELIC_BEARER_NICKNAMES,
     NicknameStateChoices.LORD_SLAYER: LORD_SLAYER_NICKNAMES,
+    NicknameStateChoices.WALLBREAKER: WALLBREAKER_NICKNAMES,
+    NicknameStateChoices.GIANTBANE: GIANTBANE_NICKNAMES,
+    NicknameStateChoices.UNBROKEN: UNBROKEN_NICKNAMES,
+    NicknameStateChoices.OLD_WOLF: OLD_WOLF_NICKNAMES,
 }
 
 # The stored variant is reduced modulo whichever wording list it lands in, so the bound has to be a
@@ -167,3 +189,11 @@ def resolve_nickname(*, state: int, variant: int) -> str:
     wordings = NICKNAME_WORDINGS[state]
 
     return wordings[variant % len(wordings)]
+
+
+def is_a_giant_felled(*, fallen_level: int, striker_level: int) -> bool:
+    """
+    Whether putting this man down is a deed for the man who did it: the fallen stood at least
+    [GIANTBANE_LEVEL_GAP] levels above him.
+    """
+    return fallen_level - striker_level >= GIANTBANE_LEVEL_GAP

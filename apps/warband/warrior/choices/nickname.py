@@ -36,9 +36,22 @@ class NicknameStateChoices(models.IntegerChoices):
     # [DEED_NICKNAME_STATES], not the number
     RELIC_BEARER = 101, "Carried the hall's relic"
     LORD_SLAYER = 102, "Killed a faction's leader in a fight"
+    WALLBREAKER = 103, "Brought down the walls he was storming"
+    GIANTBANE = 104, "Put down a man far above him"
+    UNBROKEN = 105, "The last man standing on a winning side"
+    OLD_WOLF = 106, "Came home from many fights"
 
 
 # The states a man is named for a deed. The one difference between the families that anything acts on:
 # an attribute epithet gives way to the first deed a man does, and a deed epithet gives way to nothing -
 # see [handle_award_deed_nickname]
-DEED_NICKNAME_STATES = frozenset({NicknameStateChoices.RELIC_BEARER, NicknameStateChoices.LORD_SLAYER})
+DEED_NICKNAME_STATES = frozenset(
+    {
+        NicknameStateChoices.RELIC_BEARER,
+        NicknameStateChoices.LORD_SLAYER,
+        NicknameStateChoices.WALLBREAKER,
+        NicknameStateChoices.GIANTBANE,
+        NicknameStateChoices.UNBROKEN,
+        NicknameStateChoices.OLD_WOLF,
+    }
+)

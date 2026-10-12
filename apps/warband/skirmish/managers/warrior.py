@@ -1,7 +1,7 @@
 import typing
 
 from django.db import models
-from django.db.models import Case, F, Q, Value, When, manager
+from django.db.models import Case, Count, F, Q, Value, When, manager
 
 from apps.warband.item.models.item import Item
 from apps.warband.warrior.choices.nickname import DEED_NICKNAME_STATES
@@ -19,6 +19,27 @@ class WarriorQuerySet(models.QuerySet):
 
     def exclude_dead(self):
         return self.exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
+
+    def annotate_decided_fights(self):
+        """
+        Each man with "decided_fights": how many fights he stood in that have a victor, on either side.
+
+        Two counts rather than one over a union, each distinct, because a man joined to both rosters
+        would otherwise multiply one count by the other. Called on a queryset that has not been filtered
+        through either roster, or Django reuses that join and counts the filtered fight alone.
+        """
+        return self.annotate(
+            decided_fights=Count(
+                "attacking_skirmishes",
+                filter=Q(attacking_skirmishes__victorious_faction__isnull=False),
+                distinct=True,
+            )
+            + Count(
+                "defending_skirmishes",
+                filter=Q(defending_skirmishes__victorious_faction__isnull=False),
+                distinct=True,
+            )
+        )
 
     def successors_of(self, *, faction, fallen_leader):
         """
