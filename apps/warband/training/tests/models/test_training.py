@@ -128,5 +128,5 @@ def test_a_faction_trains_by_a_single_regimen():
     """
     training = TrainingFactory(category=Training.TrainingCategory.WEAPON_MASTERY)
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(IntegrityError, match=r"UNIQUE constraint failed: warband_training\.faction_id"):
         TrainingFactory(faction=training.faction, category=Training.TrainingCategory.SWIFTNESS)

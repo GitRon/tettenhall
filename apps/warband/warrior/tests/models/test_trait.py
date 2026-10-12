@@ -28,7 +28,9 @@ def test_create_record_writes_the_row():
 def test_a_man_carries_a_kind_of_trait_once():
     trait = TraitFactory()
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(
+        IntegrityError, match=r"UNIQUE constraint failed: warband_trait\.warrior_id, warband_trait\.type_id"
+    ):
         Trait.objects.create_record(warrior=trait.warrior, trait_type=trait.type)
 
 

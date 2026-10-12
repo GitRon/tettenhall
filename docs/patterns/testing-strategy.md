@@ -21,11 +21,15 @@ Three failure classes, three tools:
 
 ## Levels
 
-| Level | Share | What |
+Behaviour is tested where it lives, so most tests are handler tests and a view test only covers what the
+view itself decides. There is no target share per level: a view with five branches of its own has five
+tests, and a view that only renders a queryset has one.
+
+| Level | How many | What |
 |---|---|---|
-| Handler unit | ~85% | Call the handler directly as a function |
-| Flow | ~5–10% | Only where ordering or rollback matters. Doubles as the test for the action views |
-| View (read-only) | ~5% | One per view: status code, context, savegame scoping |
+| Handler unit | 1–3 per handler | Call the handler directly as a function |
+| Flow | one per entry point that needs it | Only where ordering or rollback matters. Doubles as the test for the action views |
+| View | one, plus one per branch the view decides | Status code, context, savegame scoping |
 | Registry | 8 rules | Discovery, dead commands, one handler per command, terminal events, attribute compatibility, handler placement, hop direction, no querysets on messages |
 | Component | per component | Contract and render over every component, plus one output test per behaviour - see [Components](#components) |
 
@@ -49,7 +53,7 @@ Three failure classes, three tools:
 ## Flow tests (sparingly)
 
 - Do **not** count by paths — that explodes combinatorially. Count by entry points: one test per view that
-  kicks off the queue. There are **16 `handle_message()` call sites across 8 view modules**.
+  kicks off the queue, i.e. every `handle_message()` call site in a view.
 - Only write them where ordering or transaction behaviour genuinely matters.
 - Assert on the end state only. Intermediate steps are already unit-tested.
 - No mocking inside the chain — either a real flow or a unit test, nothing in between.
@@ -58,8 +62,9 @@ Three failure classes, three tools:
 ## View tests
 
 Views are thin: almost all are Django CBVs whose only logic is scoping a queryset to the current savegame
-and assembling context. Keep the tests equally thin — **one test per view**, via the test client, with
-`django_db`.
+and assembling context. Keep the tests equally thin — **one test per view**, plus one per branch the view
+itself decides (a refusal it answers with a message, a redirect it chooses), via the test client, with
+`django_db`. A branch that lives in a handler or a service is tested there, not through the view.
 
 - Every view sits behind `LoginRequiredMiddleware`, so use the logged-in client fixture. Don't add a
   "redirects when anonymous" test per view; that is framework behaviour, and one project-wide test for it
@@ -72,7 +77,8 @@ and assembling context. Keep the tests equally thin — **one test per view**, v
 - **Savegame scoping deserves its own test** wherever a view overrides `get_queryset()`. Create an object
   in a second savegame and assert it is *not* reachable. See [savegame scoping](savegame-scoping.md).
 - The UI is htmx-driven. Where a view sets `HX-Trigger`, assert the header is present — behaviour rides on
-  it. Don't assert on the exact JSON payload.
+  it. Don't assert on the exact JSON payload; assert the one key the test is about, and its value where the
+  value is what the view decided (`json.loads(response.headers["HX-Trigger"])["notification"] == ...`).
 - **Never assert on rendered HTML**, with one exception here and a separate one for
   [components](#components), which are not views. Status code, context and headers only —
   template assertions break on every markup change and catch nothing. The exception is a defect that

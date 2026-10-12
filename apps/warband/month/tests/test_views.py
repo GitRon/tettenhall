@@ -287,7 +287,7 @@ def test_finish_month_view_refuses_a_finished_savegame(logged_in_client, current
     )
 
     assert response.status_code == 204
-    assert json.loads(response["HX-Trigger"]) == {"notification": "This game is over. Start a new savegame to play on."}
+    assert json.loads(response["HX-Trigger"])["notification"] == "This game is over. Start a new savegame to play on."
     current_savegame.refresh_from_db()
     assert current_savegame.current_month == 1
 
@@ -299,9 +299,10 @@ def test_finish_month_view_keeps_the_month_open_while_a_skirmish_is_unresolved(l
     response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 204
-    assert json.loads(response["HX-Trigger"]) == {
-        "notification": "Please resolve all open skirmishes before you finish this month."
-    }
+    assert (
+        json.loads(response["HX-Trigger"])["notification"]
+        == "Please resolve all open skirmishes before you finish this month."
+    )
     current_savegame.refresh_from_db()
     assert current_savegame.current_month == 1
 

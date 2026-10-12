@@ -807,7 +807,7 @@ def test_warrior_weapon_update_view_refuses_a_man_standing_in_an_open_fight(logg
     )
 
     assert response.status_code == 204
-    assert json.loads(response["HX-Trigger"]) == {"notification": WEARER_REFUSAL}
+    assert json.loads(response["HX-Trigger"])["notification"] == WEARER_REFUSAL
 
 
 @pytest.mark.django_db
@@ -908,7 +908,7 @@ def test_warrior_tend_view_refuses_with_the_reason(logged_in_client, current_sav
     response = logged_in_client.post(reverse("warband:warrior-tend-view", kwargs={"pk": warrior.id}))
 
     assert response.status_code == 204
-    assert json.loads(response.headers["HX-Trigger"]) == {"notification": NO_SANCTUARY_REFUSAL}
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == NO_SANCTUARY_REFUSAL
 
 
 @pytest.mark.django_db
