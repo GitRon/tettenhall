@@ -19,7 +19,7 @@ def test_annotate_stored_copy_counts_counts_the_unused_items_of_the_same_type():
     ItemFactory(savegame=faction.savegame, owner=faction, type=ItemTypeFactory())
     on_the_stall = ItemFactory(savegame=faction.savegame, type=seax)
 
-    items, _ = annotate_stored_copy_counts(item_list=[on_the_stall], faction=faction)
+    items, _ = annotate_stored_copy_counts(items=[on_the_stall], faction=faction)
 
     assert items[0].stored_copy_count == 1
 
@@ -32,6 +32,6 @@ def test_annotate_stored_copy_counts_leaves_out_what_a_man_is_carrying():
     warrior.save()
     ItemFactory(savegame=faction.savegame, owner=faction)
 
-    _, stored_item_count = annotate_stored_copy_counts(item_list=[], faction=faction)
+    _, stored_item_count = annotate_stored_copy_counts(items=[], faction=faction)
 
     assert stored_item_count == 1

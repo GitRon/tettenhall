@@ -40,13 +40,13 @@ class SkirmishReport:
     faction: Faction
     # Every spoil of the fight, both sides. Which of them are gains and which are losses is this
     # projection's whole job, so it takes the lot rather than a pre-picked half
-    spoil_list: list
+    spoils: list
     # Already narrowed to the faction's own men: growth only ever reads as a gain, and the enemy
     # getting better at fighting is not something a report of your own battle tells you
-    growth_list: list
+    growths: list
     # Every man either side lost, for the same reason the spoils are taken whole: whose casualty a
     # fallen man is, and whether he is a loss or a prisoner gained, is this projection's job
-    casualty_list: list
+    casualties: list
     # Who this faction fielded, which is what says whose gear the other side walked off with. Read
     # from the rosters rather than from the warriors' own factions, because a man captured in this
     # very fight belongs to the side that beat him by the time the report is rendered
@@ -64,19 +64,19 @@ class SkirmishReport:
         return cls(
             skirmish=skirmish,
             faction=faction,
-            spoil_list=list(
+            spoils=list(
                 SkirmishSpoil.objects.for_skirmish(skirmish_id=skirmish.id).select_related(
                     "item__type", "warrior__faction", "faction"
                 )
             ),
             # Each man's own faction comes along, because the report names him in full and that asks
             # whether he holds its seat - see [Warrior.is_leader]
-            growth_list=list(
+            growths=list(
                 SkirmishWarriorGrowth.objects.for_skirmish(skirmish_id=skirmish.id)
                 .filter(faction_id=faction.id)
                 .select_related("warrior__faction")
             ),
-            casualty_list=list(
+            casualties=list(
                 SkirmishCasualty.objects.for_skirmish(skirmish_id=skirmish.id).select_related("warrior__faction")
             ),
             own_warrior_ids=set(own_warriors.values_list("id", flat=True)),
@@ -84,16 +84,16 @@ class SkirmishReport:
             # just been taken sits in the stash unworn, so it is measured against what one of the
             # faction's men is actually swinging instead of against itself
             best_worn_weapon_value=cls._best_expectancy_value(
-                item_list=Item.objects.filter(owner_id=faction.id, warrior_weapon__isnull=False).select_related("type")
+                items=Item.objects.filter(owner_id=faction.id, warrior_weapon__isnull=False).select_related("type")
             ),
             best_worn_armor_value=cls._best_expectancy_value(
-                item_list=Item.objects.filter(owner_id=faction.id, warrior_armor__isnull=False).select_related("type")
+                items=Item.objects.filter(owner_id=faction.id, warrior_armor__isnull=False).select_related("type")
             ),
         )
 
     @staticmethod
-    def _best_expectancy_value(*, item_list) -> float:
-        return max((item.expectancy_value for item in item_list), default=0.0)
+    def _best_expectancy_value(*, items) -> float:
+        return max((item.expectancy_value for item in items), default=0.0)
 
     @property
     def is_victory(self) -> bool:
@@ -111,7 +111,7 @@ class SkirmishReport:
         """
         return [
             spoil
-            for spoil in self.spoil_list
+            for spoil in self.spoils
             if spoil.kind == kind
             and spoil.faction_id == self.faction.id
             and spoil.warrior_id not in self.own_warrior_ids
@@ -120,7 +120,7 @@ class SkirmishReport:
     def _lost(self, *, kind: int) -> list:
         return [
             spoil
-            for spoil in self.spoil_list
+            for spoil in self.spoils
             if spoil.kind == kind and spoil.faction_id != self.faction.id and spoil.warrior_id in self.own_warrior_ids
         ]
 
@@ -170,7 +170,7 @@ class SkirmishReport:
         """
         return sum(
             spoil.amount
-            for spoil in self.spoil_list
+            for spoil in self.spoils
             if spoil.kind == kind and (spoil.faction_id == self.faction.id) is gained
         )
 
@@ -193,14 +193,14 @@ class SkirmishReport:
     def _own_casualties_with_fate(self, *, fate: int) -> list:
         return [
             casualty
-            for casualty in self.casualty_list
+            for casualty in self.casualties
             if casualty.fate == fate and casualty.warrior_id in self.own_warrior_ids
         ]
 
     def _enemy_casualties_with_fate(self, *, fate: int) -> list:
         return [
             casualty
-            for casualty in self.casualty_list
+            for casualty in self.casualties
             if casualty.fate == fate and casualty.warrior_id not in self.own_warrior_ids
         ]
 
@@ -220,7 +220,7 @@ class SkirmishReport:
         """
         return [
             casualty
-            for casualty in self.casualty_list
+            for casualty in self.casualties
             if casualty.warrior_id in self.own_warrior_ids and casualty.fate != SkirmishCasualty.FateChoices.FATE_FLED
         ]
 
@@ -275,7 +275,7 @@ class SkirmishReport:
             bool(
                 self.items_won
                 or self.items_lost
-                or self.growth_list
+                or self.growths
                 or self.own_casualties
                 or self.own_routed
                 or self.prisoners_taken

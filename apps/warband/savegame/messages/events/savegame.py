@@ -20,11 +20,11 @@ class NewSavegameCreated(Event):
 class SavegameEnded(Event):
     savegame: Savegame
     outcome: int
-    # Resolved by the command handler for the same reason "open_skirmish_list" is: the log line about
+    # Resolved by the command handler for the same reason "open_skirmishes" is: the log line about
     # the ending is written against the player's faction, and reaching it through the savegame is a
     # lazy query the consuming event handler is not allowed to make
     player_faction: Faction
     # Evaluated by the command handler: ending the game mid-fight leaves skirmishes with no victor, and
     # deciding them needs a query the consuming event handler is not allowed to make
-    open_skirmish_list: list[Skirmish]
+    open_skirmishes: list[Skirmish]
     month: int

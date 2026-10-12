@@ -514,7 +514,7 @@ class WarriorManager(manager.Manager):
             .order_by("monthly_salary", "id")
         )
 
-    def record_salaries_paid(self, *, warrior_list: list) -> list:
+    def record_salaries_paid(self, *, warriors: list) -> list:
         """
         Note that these warriors got their wages, which forgives however many months they went
         without.
@@ -527,23 +527,23 @@ class WarriorManager(manager.Manager):
         before the write is what keeps the objects handed to the events correct without reading them
         back.
         """
-        for warrior in warrior_list:
+        for warrior in warriors:
             warrior.unpaid_months = 0
 
-        self.bulk_update(warrior_list, ("unpaid_months",))
+        self.bulk_update(warriors, ("unpaid_months",))
 
-        return warrior_list
+        return warriors
 
-    def record_salaries_unpaid(self, *, warrior_list: list) -> list:
+    def record_salaries_unpaid(self, *, warriors: list) -> list:
         """
         Note another month these warriors went without their wages.
         """
-        for warrior in warrior_list:
+        for warrior in warriors:
             warrior.unpaid_months += 1
 
-        self.bulk_update(warrior_list, ("unpaid_months",))
+        self.bulk_update(warriors, ("unpaid_months",))
 
-        return warrior_list
+        return warriors
 
     def strip_equipment(self, *, obj):
         """

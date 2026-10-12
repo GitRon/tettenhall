@@ -7,10 +7,10 @@ from apps.warband.skirmish.messages.events.item import ItemDroppedAsLoot
 
 @message_registry.register_command(command=item.WarriorDropsLoot)
 def handle_warrior_drops_loot(*, context: item.WarriorDropsLoot) -> list[Event] | Event:
-    message_list = []
+    messages = []
 
     if context.warrior.weapon:
-        message_list.append(
+        messages.append(
             ItemDroppedAsLoot(
                 skirmish=context.skirmish,
                 warrior=context.warrior,
@@ -21,7 +21,7 @@ def handle_warrior_drops_loot(*, context: item.WarriorDropsLoot) -> list[Event] 
         )
 
     if context.warrior.armor:
-        message_list.append(
+        messages.append(
             ItemDroppedAsLoot(
                 skirmish=context.skirmish,
                 warrior=context.warrior,
@@ -31,4 +31,4 @@ def handle_warrior_drops_loot(*, context: item.WarriorDropsLoot) -> list[Event] 
             )
         )
 
-    return message_list
+    return messages

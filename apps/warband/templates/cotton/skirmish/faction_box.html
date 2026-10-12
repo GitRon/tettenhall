@@ -1,4 +1,4 @@
-<c-vars faction warrior_list is_player skirmish skirmish_is_decided />
+<c-vars faction warriors is_player skirmish skirmish_is_decided />
 {# A card, where the report beside this one is the panel that separates by surface instead, because it #}
 {# is the one the screen is played through - see docs/patterns/visual-identity.md. #}
 {# "group" is what the rows below read the kit control with. Each panel is its own group, so the two #}
@@ -46,6 +46,6 @@
          hx-trigger="updateFactionWarriorList from:body"
          hx-target="this"
          hx-swap="innerHTML">
-        {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=warrior_list is_player=is_player skirmish_is_decided=skirmish_is_decided %}
+        {% include 'skirmish/faction/htmx/_warrior_list.html' with object_list=warriors is_player=is_player skirmish_is_decided=skirmish_is_decided %}
     </div>
 </c-common.card>

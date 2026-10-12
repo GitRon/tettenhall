@@ -137,15 +137,15 @@ def test_finish_month_view_lets_the_man_the_cells_cannot_hold_go_unhealed(logged
     # The bulletin board restocks as part of the month and a quest needs somebody to be against
     FactionFactory(savegame=current_savegame)
     player_faction = current_savegame.player_faction
-    captive_list = WarriorFactory.create_batch(
+    captives = WarriorFactory.create_batch(
         2, faction=None, savegame=current_savegame, culture=player_faction.culture, current_health=5, max_health=20
     )
-    player_faction.captured_warriors.add(*captive_list)
+    player_faction.captured_warriors.add(*captives)
 
     response = logged_in_client.post(reverse("warband:finish-month-view"), data={"month": 1})
 
     assert response.status_code == 200
-    (fled_warrior,) = set(captive_list) - set(player_faction.captured_warriors.all())
+    (fled_warrior,) = set(captives) - set(player_faction.captured_warriors.all())
     fled_warrior.refresh_from_db()
     assert fled_warrior.current_health == 5
 

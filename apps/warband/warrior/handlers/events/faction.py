@@ -95,7 +95,7 @@ def handle_unpaid_warriors(*, context: MonthlyWarriorSalariesUnpaid) -> list[Com
     # do under strict mode
     return [
         PunishUnpaidWarrior(warrior=warrior, faction=context.faction, month=context.month)
-        for warrior in context.warrior_list
+        for warrior in context.warriors
     ]
 
 

@@ -30,7 +30,7 @@ def handle_prepare_month(*, context: PrepareMonth) -> list[Event] | None:
 
     # Every faction of the savegame gets its month, the player's included - what each of them
     # actually does with it is decided by which handlers subscribe, not by who they are
-    faction_list = Faction.objects.still_in_play(savegame_id=context.savegame.id)
+    factions = Faction.objects.still_in_play(savegame_id=context.savegame.id)
 
     return [
         PlayerMonthPrepared(
@@ -38,7 +38,7 @@ def handle_prepare_month(*, context: PrepareMonth) -> list[Event] | None:
             savegame=context.savegame,
             current_month=current_month,
         ),
-        *[FactionMonthPrepared(faction=faction, current_month=current_month) for faction in faction_list],
+        *[FactionMonthPrepared(faction=faction, current_month=current_month) for faction in factions],
     ]
 
 

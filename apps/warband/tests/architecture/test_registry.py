@@ -246,8 +246,8 @@ def test_autodiscovery_finds_every_handler(queuebie_registry):
     registered_handlers = {
         (definition["module"], definition["name"])
         for registry in (queuebie_registry.command_dict, queuebie_registry.event_dict)
-        for handler_list in registry.values()
-        for definition in handler_list
+        for handlers in registry.values()
+        for definition in handlers
     }
 
     assert _decorated_handlers() == registered_handlers
@@ -270,9 +270,9 @@ def test_commands_each_have_exactly_one_handler(queuebie_registry):
     docs - and nothing but this notices when a command starts behaving like one.
     """
     commands_with_several_handlers = {
-        message_path: sorted(f"{definition['module']}.{definition['name']}" for definition in handler_list)
-        for message_path, handler_list in queuebie_registry.command_dict.items()
-        if len(handler_list) > 1
+        message_path: sorted(f"{definition['module']}.{definition['name']}" for definition in handlers)
+        for message_path, handlers in queuebie_registry.command_dict.items()
+        if len(handlers) > 1
     }
 
     assert commands_with_several_handlers == {}
@@ -313,14 +313,14 @@ def _context_attribute_violations(*, registry) -> list[str]:
     violations = []
 
     for message_dict in (registry.command_dict, registry.event_dict):
-        for message_path, handler_list in message_dict.items():
+        for message_path, handlers in message_dict.items():
             message_class = _message_class_for(module_path=message_path)
             if not dataclasses.is_dataclass(message_class):
                 continue
 
             available_attributes = {field.name for field in dataclasses.fields(message_class)} | {"uuid"}
 
-            for definition in handler_list:
+            for definition in handlers:
                 handler_node = handler_nodes[(definition["module"], definition["name"])]
                 for attribute in sorted(_accessed_context_attributes(node=handler_node) - available_attributes):
                     violations.append(f"{definition['name']}() reads 'context.{attribute}', absent on {message_path}")
@@ -345,11 +345,11 @@ def _command_module_mismatches(*, registry) -> list[str]:
     """
     mismatches = []
 
-    for command_path, handler_list in registry.command_dict.items():
+    for command_path, handlers in registry.command_dict.items():
         command_module, class_name = command_path.rsplit(".", 1)
         domain = command_module.rsplit(".", 1)[-1]
 
-        for definition in handler_list:
+        for definition in handlers:
             if definition["module"].rsplit(".", 1)[-1] != domain:
                 mismatches.append(f"{class_name} is defined in {command_module} but handled in {definition['module']}")
 
@@ -383,8 +383,8 @@ def _event_module_mismatches(*, registry) -> list[str]:
     """
     origins_by_module: dict[str, set[str]] = {}
 
-    for event_path, handler_list in registry.event_dict.items():
-        for definition in handler_list:
+    for event_path, handlers in registry.event_dict.items():
+        for definition in handlers:
             origins_by_module.setdefault(definition["module"], set()).add(_topic_of(module_path=event_path))
 
     mismatches = []
@@ -526,8 +526,8 @@ def _wrong_direction_emissions(*, registry, allowlist: frozenset[str] = DIRECTIO
         (registry.command_dict, Command, "events"),
         (registry.event_dict, Event, "commands"),
     ):
-        for handler_list in message_dict.values():
-            for definition in handler_list:
+        for handlers in message_dict.values():
+            for definition in handlers:
                 handler_path = f"{definition['module']}.{definition['name']}"
                 if handler_path in allowlist:
                     continue

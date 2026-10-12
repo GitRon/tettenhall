@@ -833,7 +833,7 @@ def test_handle_replenish_fyrd_reserve_in_the_harvest_month():
     assert faction.fyrd_reserve == 3
 
 
-def _rival_with_pub(*, purse: int, salary_list: list[int], fyrd_reserve: int = 0) -> tuple[Faction, list[Warrior]]:
+def _rival_with_pub(*, purse: int, salaries: list[int], fyrd_reserve: int = 0) -> tuple[Faction, list[Warrior]]:
     """
     A rival with an empty roster, this much silver, and one mercenary on its shelf per salary.
 
@@ -843,7 +843,7 @@ def _rival_with_pub(*, purse: int, salary_list: list[int], fyrd_reserve: int = 0
     """
     rival_faction = FactionFactory(fyrd_reserve=fyrd_reserve, town__hall=Town.HallChoices.HALL_LARGE)
     TransactionFactory(faction=rival_faction, amount=purse)
-    mercenary_list = [
+    mercenaries = [
         WarriorFactory(
             faction=None,
             savegame=rival_faction.savegame,
@@ -851,11 +851,11 @@ def _rival_with_pub(*, purse: int, salary_list: list[int], fyrd_reserve: int = 0
             monthly_salary=salary,
             is_pub_stock=True,
         )
-        for salary in salary_list
+        for salary in salaries
     ]
-    rival_faction.available_mercenaries.add(*mercenary_list)
+    rival_faction.available_mercenaries.add(*mercenaries)
 
-    return rival_faction, mercenary_list
+    return rival_faction, mercenaries
 
 
 @pytest.mark.django_db
@@ -895,7 +895,7 @@ def test_handle_plan_faction_month_hires_for_a_rival_out_of_its_own_pub():
     event comes after him, so the restock it triggers cannot sweep him away first.
     """
     # 1000 less his price of 200 still covers his wage of 100
-    rival_faction, [mercenary] = _rival_with_pub(purse=1000, salary_list=[100])
+    rival_faction, [mercenary] = _rival_with_pub(purse=1000, salaries=[100])
 
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
 
@@ -911,7 +911,7 @@ def test_handle_plan_faction_month_reads_the_fyrd_off_the_row():
     The faction on the message still shows the empty fyrd it was loaded with, while the month's
     replenishment has already put a man in it. The row is what counts, so the rival drafts him.
     """
-    rival_faction, _ = _rival_with_pub(purse=1000, salary_list=[])
+    rival_faction, _ = _rival_with_pub(purse=1000, salaries=[])
     Faction.objects.filter(id=rival_faction.id).update(fyrd_reserve=1)
 
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
@@ -928,7 +928,7 @@ def test_handle_plan_faction_month_decides_nothing_for_the_player():
     His draft is a button on his fyrd card and his hiring one in his pub - but his restock hangs off
     this too, so the closing event still comes out.
     """
-    player_faction, _ = _rival_with_pub(purse=1000, salary_list=[100], fyrd_reserve=2)
+    player_faction, _ = _rival_with_pub(purse=1000, salaries=[100], fyrd_reserve=2)
     player_faction.savegame.player_faction = player_faction
     player_faction.savegame.save()
 
@@ -1013,24 +1013,24 @@ def test_handle_plan_faction_month_raises_no_hall_for_a_rival_of_its_leader_alon
 
 
 def _hold_captives(*, faction: Faction, count: int) -> list[Warrior]:
-    captive_list = WarriorFactory.create_batch(count, faction=None, savegame=faction.savegame, culture=faction.culture)
-    faction.captured_warriors.add(*captive_list)
+    captives = WarriorFactory.create_batch(count, faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.captured_warriors.add(*captives)
 
-    return captive_list
+    return captives
 
 
 @pytest.mark.django_db
 def test_handle_let_captives_flee_overfull_cells_lets_exactly_the_excess_go():
     faction = FactionFactory(town__hall=Town.HallChoices.HALL_SMALL)
-    captive_list = _hold_captives(faction=faction, count=4)
+    captives = _hold_captives(faction=faction, count=4)
 
     result = handle_let_captives_flee_overfull_cells(context=LetCaptivesFleeOverfullCells(faction=faction, month=5))
 
-    fled_list = sorted(set(captive_list) - set(faction.captured_warriors.all()), key=lambda warrior: warrior.id)
+    fled = sorted(set(captives) - set(faction.captured_warriors.all()), key=lambda warrior: warrior.id)
     assert sorted(result, key=lambda event: event.warrior.id) == [
-        CaptiveFledOverfullCells(faction=faction, warrior=warrior, cell_places=2, month=5) for warrior in fled_list
+        CaptiveFledOverfullCells(faction=faction, warrior=warrior, cell_places=2, month=5) for warrior in fled
     ]
-    assert len(fled_list) == 2
+    assert len(fled) == 2
 
 
 @pytest.mark.django_db

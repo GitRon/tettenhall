@@ -16,7 +16,7 @@
                 <td>Led by</td>
                 <td>{% if object.leader %}{{ object.leader.display_name }}{% else %}-{% endif %}</td>
             </tr>
-            {% for raid_kind, fortification_strength in raid_kind_list %}
+            {% for raid_kind, fortification_strength in raid_kinds %}
                 <tr>
                     <td>{{ raid_kind.get_label }}</td>
                     <td>

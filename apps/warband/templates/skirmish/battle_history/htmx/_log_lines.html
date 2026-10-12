@@ -7,15 +7,15 @@
 {# the order they were struck - see "BattleLog". #}
 {# The heading is the round's boundary line, which the grouping consumes rather than renders. #}
 <div class="group-data-[log-tab=tally]:hidden">
-    {% if battle_log.round_list and not battle_log.has_saga %}
+    {% if battle_log.rounds and not battle_log.has_saga %}
         <p class="text-ink-muted">This fight was fought before its saga was kept. Its account is in the Tally.</p>
     {% else %}
         {# A round the saga has nothing to tell of gets no heading of its own #}
-        {% for log_round in battle_log.round_list %}
-            {% if log_round.saga_line_list %}
+        {% for log_round in battle_log.rounds %}
+            {% if log_round.saga_lines %}
                 <div class="mb-2.5">
                     <div class="font-mono text-label uppercase tracking-label leading-snug text-ink-muted">Round {{ log_round.number }}</div>
-                    {% for log in log_round.saga_line_list %}
+                    {% for log in log_round.saga_lines %}
                         <c-skirmish.log-line :log="log" :text="log.saga" :player_faction_id="player_faction_id" />
                     {% endfor %}
                 </div>
@@ -25,10 +25,10 @@
 </div>
 
 <div class="hidden group-data-[log-tab=tally]:block">
-    {% for log_round in battle_log.round_list %}
+    {% for log_round in battle_log.rounds %}
         <div class="mb-2.5">
             <div class="font-mono text-label uppercase tracking-label leading-snug text-ink-muted">Round {{ log_round.number }}</div>
-            {% for log in log_round.line_list %}
+            {% for log in log_round.lines %}
                 <c-skirmish.log-line :log="log" :text="log.message" :player_faction_id="player_faction_id" />
             {% endfor %}
         </div>

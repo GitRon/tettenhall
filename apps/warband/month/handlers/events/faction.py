@@ -54,7 +54,7 @@ def handle_unpaid_warrior_salaries(*, context: MonthlyWarriorSalariesUnpaid) -> 
     # The one cost in the game the player never chose to take on, so it gets said plainly. One line
     # for the whole shortfall rather than one per man: the men who walk get their own lines, and the
     # ones who only lost heart are visible on the roster
-    unpaid_warriors = len(context.warrior_list)
+    unpaid_warriors = len(context.warriors)
 
     return CreatePlayerMonthLog(
         title=f"{context.missing_amount} silver short: "

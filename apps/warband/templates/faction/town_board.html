@@ -7,9 +7,9 @@
     {# The facts are outlined tags in "rule": each is merely a fact, neither something that wants the player #}
     {# nor a gain. A phone gets the title with the action beside it and the tags below across the whole #}
     {# row; a desk gets one line. #}
-    {% if quest_list %}
+    {% if quests %}
         <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-            {% for board_quest in quest_list %}
+            {% for board_quest in quests %}
                 <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-[15px] py-3 md:grid-cols-[minmax(0,1fr)_minmax(0,16rem)_auto] md:px-5">
                     <span class="leading-snug">
                         <span class="text-ink">{{ board_quest.quest.title }}</span>
@@ -35,10 +35,10 @@
         <p class="text-sm leading-snug text-ink-muted">Nothing is pinned to the board this month.</p>
     {% endif %}
 
-    {% if away_list %}
+    {% if away_contracts %}
         <h2 class="mt-7">Away this month</h2>
         <ul class="m-0 list-none border border-rule p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-            {% for quest_contract in away_list %}
+            {% for quest_contract in away_contracts %}
                 <li class="px-[15px] py-3 md:px-5">
                     <span class="text-ink">{{ quest_contract.title }}</span>
                     {% with men=quest_contract.assigned_warriors.all %}

@@ -139,7 +139,7 @@ class MonthlyWarriorSalariesUnpaid(Event):
 
     faction: Faction
     # The men who went without, already carrying their updated "unpaid_months"
-    warrior_list: list[Warrior]
+    warriors: list[Warrior]
     missing_amount: int
     month: int
 

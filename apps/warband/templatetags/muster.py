@@ -6,7 +6,7 @@ register = template.Library()
 
 
 @register.filter
-def still_up(warrior_list: list[Warrior]) -> int:
+def still_up(warriors: list[Warrior]) -> int:
     """
     How many of a band are still on their feet.
 
@@ -14,4 +14,4 @@ def still_up(warrior_list: list[Warrior]) -> int:
     evaluated its roster to render the rows, so counting in Python costs nothing and a second query
     would.
     """
-    return sum(1 for warrior in warrior_list if warrior.is_healthy)
+    return sum(1 for warrior in warriors if warrior.is_healthy)

@@ -22,7 +22,7 @@ def test_get_warriors_in_an_open_fight_finds_the_man_on_the_roster():
     skirmish = SkirmishFactory(attacking_faction=faction, victorious_faction=None)
     skirmish.attacking_warriors.add(fighting)
 
-    result = get_warriors_in_an_open_fight(warrior_list=[fighting, free])
+    result = get_warriors_in_an_open_fight(warriors=[fighting, free])
 
     assert result == {fighting.id}
 

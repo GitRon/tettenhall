@@ -60,7 +60,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
 
         context = super().get_context_data(**kwargs)
 
-        building_list = []
+        buildings = []
         for building_type, building_class in BUILDINGS.items():
             current_level = getattr(town, building_type)
             max_level = building_class.get_max_level()
@@ -82,7 +82,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
             level_display = town.get_building_level_display(building_type=building_type, level=current_level)
             next_level_display = town.get_building_level_display(building_type=building_type, level=next_level)
 
-            building_list.append(
+            buildings.append(
                 {
                     "building_type": building_type,
                     "label": building_class.BUILDING_LABEL,
@@ -101,7 +101,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
                     # describe: at the maximum level "next_building" is "current_building", every pair
                     # matches, and an unguarded filter would empty the card of the last level - which
                     # is the one level whose effects are the whole point of the card.
-                    "effect_list": [
+                    "effects": [
                         {"label": effect.label, "current": effect.value, "next": upgraded_effect.value}
                         for effect, upgraded_effect in zip(
                             current_building.get_effects(), next_building.get_effects(), strict=True
@@ -115,7 +115,7 @@ class TownUpgradeView(PlayerTownMixin, generic.DetailView):
                 }
             )
 
-        context.update({"building_list": building_list})
+        context.update({"buildings": buildings})
 
         # The feast sits on the same page as the hall it is thrown in, priced for the war band as it
         # stands, so the player reads the whole bill before he clicks rather than after. The card asks
@@ -220,9 +220,9 @@ class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.Deta
 
         # The table is laid for the war band as it stands at the click: the living men under this
         # banner. A captive has no banner, so he is off the list without anybody having to say so
-        warrior_list = list(town.faction.warriors.exclude_dead())
+        warriors = list(town.faction.warriors.exclude_dead())
 
-        refusal = get_feast_refusal(town=town, head_count=len(warrior_list), current_savegame=current_savegame)
+        refusal = get_feast_refusal(town=town, head_count=len(warriors), current_savegame=current_savegame)
         if refusal is not None:
             messages.add_message(request, messages.WARNING, refusal)
 
@@ -234,9 +234,9 @@ class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.Deta
             ThrowFeast(
                 town=town,
                 faction=town.faction,
-                warrior_list=warrior_list,
+                warriors=warriors,
                 restored_share=hall.FEAST_RESTORED_SHARE,
-                costs=hall.get_feast_price(head_count=len(warrior_list)),
+                costs=hall.get_feast_price(head_count=len(warriors)),
                 month=current_savegame.current_month,
             )
         )
@@ -247,7 +247,7 @@ class ThrowFeastView(RunningSavegameRequiredMixin, PlayerTownMixin, generic.Deta
             messages.add_message(
                 request,
                 messages.WARNING,
-                get_feast_refusal(town=town, head_count=len(warrior_list), current_savegame=current_savegame)
+                get_feast_refusal(town=town, head_count=len(warriors), current_savegame=current_savegame)
                 or STALE_PAGE_NOTICE,
             )
 

@@ -457,11 +457,11 @@ def test_handle_warrior_monthly_salaries_pays_the_cheapest_warriors_first():
 
     assert result == [
         MonthlyWarriorSalariesPaid(faction=faction, amount=250, month=3),
-        MonthlyWarriorSalariesUnpaid(faction=faction, warrior_list=[ealdorman], missing_amount=300, month=3),
+        MonthlyWarriorSalariesUnpaid(faction=faction, warriors=[ealdorman], missing_amount=300, month=3),
     ]
     levy.refresh_from_db()
     thegn.refresh_from_db()
-    assert (levy.unpaid_months, thegn.unpaid_months, result[1].warrior_list[0].unpaid_months) == (0, 0, 1)
+    assert (levy.unpaid_months, thegn.unpaid_months, result[1].warriors[0].unpaid_months) == (0, 0, 1)
 
 
 @pytest.mark.django_db
@@ -475,7 +475,7 @@ def test_handle_warrior_monthly_salaries_stays_silent_about_the_nothing_it_paid(
 
     result = handle_warrior_monthly_salaries(context=PayMonthlyWarriorSalaries(faction=faction, month=3))
 
-    assert result == [MonthlyWarriorSalariesUnpaid(faction=faction, warrior_list=[warrior], missing_amount=50, month=3)]
+    assert result == [MonthlyWarriorSalariesUnpaid(faction=faction, warriors=[warrior], missing_amount=50, month=3)]
     warrior.refresh_from_db()
     assert warrior.unpaid_months == 1
 

@@ -46,7 +46,7 @@ def test_deal_damage_announces_the_damage_getting_through(damage_service):
     result = damage_service._deal_damage(attack=attack, defense=defense)
 
     assert result == 5
-    assert damage_service.message_list == [
+    assert damage_service.messages == [
         WarriorTookDamage(
             skirmish=damage_service.skirmish,
             round_number=3,
@@ -69,7 +69,7 @@ def test_deal_damage_floors_a_blow_the_defence_outmatches(damage_service):
     result = damage_service._deal_damage(attack=attack, defense=defense)
 
     assert result == 3
-    assert damage_service.message_list == [
+    assert damage_service.messages == [
         WarriorTookDamage(
             skirmish=damage_service.skirmish,
             round_number=3,
@@ -99,7 +99,7 @@ def test_deal_damage_announces_a_fully_defended_attack(damage_service):
     result = damage_service._deal_damage(attack=attack, defense=defense)
 
     assert result == 0
-    assert damage_service.message_list == [
+    assert damage_service.messages == [
         WarriorDefendedAllDamage(
             skirmish=damage_service.skirmish,
             round_number=3,
@@ -128,7 +128,7 @@ def test_deal_damage_announces_an_attack_that_was_never_thrown(damage_service):
     result = damage_service._deal_damage(attack=attack, defense=defense)
 
     assert result == 0
-    assert damage_service.message_list == [
+    assert damage_service.messages == [
         WarriorDefendedAllDamage(
             skirmish=damage_service.skirmish,
             round_number=3,

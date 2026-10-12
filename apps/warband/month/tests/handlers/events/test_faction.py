@@ -82,7 +82,7 @@ def test_handle_unpaid_warrior_salaries_logs_the_shortfall():
     result = handle_unpaid_warrior_salaries(
         context=MonthlyWarriorSalariesUnpaid(
             faction=faction,
-            warrior_list=[WarriorFactory.build(), WarriorFactory.build()],
+            warriors=[WarriorFactory.build(), WarriorFactory.build()],
             missing_amount=150,
             month=3,
         )
@@ -101,7 +101,7 @@ def test_handle_unpaid_warrior_salaries_keeps_a_single_unpaid_warrior_singular()
 
     result = handle_unpaid_warrior_salaries(
         context=MonthlyWarriorSalariesUnpaid(
-            faction=faction, warrior_list=[WarriorFactory.build()], missing_amount=150, month=3
+            faction=faction, warriors=[WarriorFactory.build()], missing_amount=150, month=3
         )
     )
 

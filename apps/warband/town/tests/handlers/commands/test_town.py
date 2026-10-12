@@ -144,12 +144,12 @@ def test_handle_throw_feast_records_the_month_and_passes_the_table_on():
     town = TownFactory(hall=Town.HallChoices.HALL_SMALL)
     TransactionFactory(faction=town.faction, amount=15)
     warrior = WarriorFactory(faction=town.faction)
-    context = ThrowFeast(town=town, faction=town.faction, warrior_list=[warrior], restored_share=0.1, costs=15, month=4)
+    context = ThrowFeast(town=town, faction=town.faction, warriors=[warrior], restored_share=0.1, costs=15, month=4)
 
     result = handle_throw_feast(context=context)
 
     assert result == FeastThrown(
-        town=town, faction=town.faction, warrior_list=[warrior], restored_share=0.1, costs=15, month=4
+        town=town, faction=town.faction, warriors=[warrior], restored_share=0.1, costs=15, month=4
     )
     town.refresh_from_db()
     assert town.last_feast_at == 4
@@ -163,7 +163,7 @@ def test_handle_throw_feast_ignores_a_second_feast_in_the_same_month():
     town = TownFactory(hall=Town.HallChoices.HALL_SMALL, last_feast_at=4)
 
     result = handle_throw_feast(
-        context=ThrowFeast(town=town, faction=town.faction, warrior_list=[], restored_share=0.1, costs=0, month=4)
+        context=ThrowFeast(town=town, faction=town.faction, warriors=[], restored_share=0.1, costs=0, month=4)
     )
 
     assert result is None
@@ -179,7 +179,7 @@ def test_handle_throw_feast_lays_no_table_when_the_purse_no_longer_covers_it():
     TransactionFactory(faction=town.faction, amount=10)
 
     result = handle_throw_feast(
-        context=ThrowFeast(town=town, faction=town.faction, warrior_list=[], restored_share=0.1, costs=15, month=4)
+        context=ThrowFeast(town=town, faction=town.faction, warriors=[], restored_share=0.1, costs=15, month=4)
     )
 
     assert result is None

@@ -7,17 +7,15 @@ from apps.warband.town.models import Town
 from apps.warband.town.tests.factories.town import TownFactory
 
 
-def _feast(*, warrior_list: list, costs: int) -> FeastThrown:
+def _feast(*, warriors: list, costs: int) -> FeastThrown:
     town = TownFactory.build(hall=Town.HallChoices.HALL_MEDIUM)
-    return FeastThrown(
-        town=town, faction=town.faction, warrior_list=warrior_list, restored_share=0.2, costs=costs, month=5
-    )
+    return FeastThrown(town=town, faction=town.faction, warriors=warriors, restored_share=0.2, costs=costs, month=5)
 
 
 def test_handle_feast_thrown_names_the_bill_and_the_men_it_mended():
     cut = WarriorFactory.build(max_morale=15, peak_max_morale=20)
     whole = WarriorFactory.build(max_morale=20, peak_max_morale=20)
-    context = _feast(warrior_list=[cut, whole], costs=30)
+    context = _feast(warriors=[cut, whole], costs=30)
 
     result = handle_feast_thrown(context=context)
 
@@ -32,7 +30,7 @@ def test_handle_feast_thrown_names_the_bill_and_the_men_it_mended():
 def test_handle_feast_thrown_says_nothing_of_mending_when_nobody_needed_it():
     whole = WarriorFactory.build(max_morale=20, peak_max_morale=20)
 
-    result = handle_feast_thrown(context=_feast(warrior_list=[whole], costs=15))
+    result = handle_feast_thrown(context=_feast(warriors=[whole], costs=15))
 
     assert result.title == "A feast in the Great Hall fed 1 man for 15 silver."
 

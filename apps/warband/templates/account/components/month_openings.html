@@ -33,19 +33,19 @@
             {# A rival that may be marched on is not a row: it is true every month there is a rival #}
             {# and a fit leader, so it would say the same thing every month. An empty town is taken #}
             {# by whoever rides in first, which is an offer that does run out. #}
-            {% if month_standing.occupiable_rival_list %}
+            {% if month_standing.occupiable_rivals %}
                 <li class="flex items-center gap-x-3 border-b border-rule py-2.5 last:border-b-0">
-                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.occupiable_rival_list|length }}</span>
+                    <span class="w-[2.5ch] shrink-0 text-right font-mono text-xl tabular-nums text-ink">{{ month_standing.occupiable_rivals|length }}</span>
                     <span class="min-w-0 flex-1">
                         <span class="text-ink">
-                            town{{ month_standing.occupiable_rival_list|length|pluralize }}
-                            {{ month_standing.occupiable_rival_list|length|pluralize:"stands,stand" }} undefended
+                            town{{ month_standing.occupiable_rivals|length|pluralize }}
+                            {{ month_standing.occupiable_rivals|length|pluralize:"stands,stand" }} undefended
                         </span>
                         <span class="block text-sm leading-snug">
-                            {% for rival in month_standing.occupiable_rival_list %}
+                            {% for rival in month_standing.occupiable_rivals %}
                                 {{ rival.town_name }}{% if not forloop.last %}, {% endif %}
                             {% endfor %}
-                            — ride in and {{ month_standing.occupiable_rival_list|length|pluralize:"it is,they are" }} yours.
+                            — ride in and {{ month_standing.occupiable_rivals|length|pluralize:"it is,they are" }} yours.
                         </span>
                     </span>
                     <a class="row-action"

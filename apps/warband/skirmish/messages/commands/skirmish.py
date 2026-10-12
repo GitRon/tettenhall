@@ -25,9 +25,9 @@ class CreateSkirmish(Command):
     name: str
     faction_1: Faction
     faction_2: Faction
-    warrior_list_1: list[Warrior]
-    warrior_list_2: list[Warrior]
-    # The men of the place among "warrior_list_2", recorded on the skirmish so its end knows whom to
+    warriors_1: list[Warrior]
+    warriors_2: list[Warrior]
+    # The men of the place among "warriors_2", recorded on the skirmish so its end knows whom to
     # send home
     local_warriors: list[Warrior]
     # A "RaidKindChoices" value, recorded on the skirmish so its end knows what a victory takes

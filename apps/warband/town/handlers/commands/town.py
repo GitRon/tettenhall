@@ -60,7 +60,7 @@ def handle_throw_feast(*, context: ThrowFeast) -> Event | None:
     return FeastThrown(
         town=context.town,
         faction=context.faction,
-        warrior_list=context.warrior_list,
+        warriors=context.warriors,
         restored_share=context.restored_share,
         costs=context.costs,
         month=context.month,

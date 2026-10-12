@@ -55,7 +55,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
     # own command, but takes it off the shelf an event later, which can be after this has run
     context.faction.available_items.filter(owner__isnull=True).delete()
 
-    message_list = []
+    messages = []
 
     # The market decides how many stalls there are, the weaponsmith how good their wares
     marketplace = Marketplace.get_building_by_type(building_type=context.faction.town.marketplace)
@@ -65,7 +65,7 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
     # is the weaponsmith's: the shop is where a player buys his way up, and the forge is what opens the
     # way, so its pool is passed in rather than inherited from the archetype
     for item_function in _draw_stall_functions(stall_count=marketplace.AVAILABLE_ITEMS):
-        message_list.append(
+        messages.append(
             RequestNewItemForTownShop(
                 faction=context.faction,
                 generator_class=MercenaryItemGenerator,
@@ -78,11 +78,11 @@ def handle_restock_shop_items(*, context: RestockTownShopItems) -> list[Event] |
 
     # After the loop, and counting the whole shop rather than each item: the player wants to know
     # whether it is worth walking over, not that a stall was filled
-    message_list.append(
+    messages.append(
         TownShopRestocked(faction=context.faction, new_items=marketplace.AVAILABLE_ITEMS, month=context.month)
     )
 
-    return message_list
+    return messages
 
 
 # What the shop holds is the faction's "available_items" and nothing else - see ItemQuerySet.on_sale_at,

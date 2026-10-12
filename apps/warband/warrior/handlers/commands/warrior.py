@@ -264,7 +264,7 @@ def handle_earn_traits_in_skirmish(*, context: EarnTraitsInSkirmish) -> list[Eve
     if context.skirmish.victorious_faction_id != faction.id:
         warriors = warriors.exclude(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
 
-    message_list: list[Event] = []
+    messages: list[Event] = []
     for warrior in warriors:
         trait_type = TraitEarningService(warrior=warrior, skirmish=context.skirmish).process()
 
@@ -272,11 +272,11 @@ def handle_earn_traits_in_skirmish(*, context: EarnTraitsInSkirmish) -> list[Eve
             continue
 
         Trait.objects.create_record(warrior=warrior, trait_type=trait_type)
-        message_list.append(
+        messages.append(
             WarriorGainedTrait(skirmish=context.skirmish, warrior=warrior, faction=faction, month=context.month)
         )
 
-    return message_list
+    return messages
 
 
 @message_registry.register_command(command=GrantRenown)

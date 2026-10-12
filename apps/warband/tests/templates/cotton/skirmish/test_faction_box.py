@@ -5,7 +5,7 @@ from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 
 FACTION_BOX_TAG = (
-    '<c-skirmish.faction-box :faction="faction" :warrior_list="warrior_list" :is_player="is_player"'
+    '<c-skirmish.faction-box :faction="faction" :warriors="warriors" :is_player="is_player"'
     ' :skirmish="skirmish" :skirmish_is_decided="skirmish_is_decided" />'
 )
 
@@ -18,7 +18,7 @@ def test_faction_box_refreshes_its_own_side_of_this_fight():
         tag=FACTION_BOX_TAG,
         context={
             "faction": faction,
-            "warrior_list": [],
+            "warriors": [],
             "is_player": True,
             "skirmish": skirmish,
             "skirmish_is_decided": False,

@@ -3,9 +3,9 @@ from apps.warband.skirmish.projections.battle_log import BattleLog
 from apps.warband.skirmish.tests.factories.battle_history import BattleHistoryFactory
 
 
-def test_saga_line_list_keeps_only_the_lines_the_saga_tells_in_order():
+def test_saga_lines_keeps_only_the_lines_the_saga_tells_in_order():
     battle_log = BattleLog.from_lines(
-        line_list=[
+        lines=[
             BattleHistoryFactory.build(message="initiative", saga=""),
             BattleHistoryFactory.build(message="first blow", saga="Beorn cuts at Cuthred."),
             BattleHistoryFactory.build(message="morale", saga=""),
@@ -13,7 +13,7 @@ def test_saga_line_list_keeps_only_the_lines_the_saga_tells_in_order():
         ]
     )
 
-    assert [log.saga for log in battle_log.round_list[0].saga_line_list] == [
+    assert [log.saga for log in battle_log.rounds[0].saga_lines] == [
         "Beorn cuts at Cuthred.",
         "Cuthred ducks aside.",
     ]
@@ -21,7 +21,7 @@ def test_saga_line_list_keeps_only_the_lines_the_saga_tells_in_order():
 
 def test_has_saga_when_a_line_is_told():
     battle_log = BattleLog.from_lines(
-        line_list=[
+        lines=[
             BattleHistoryFactory.build(message="a blow", saga="Beorn cuts at Cuthred."),
             BattleHistoryFactory.build(kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED),
             BattleHistoryFactory.build(message="morale", saga=""),
@@ -33,7 +33,7 @@ def test_has_saga_when_a_line_is_told():
 
 def test_has_saga_not_for_a_fight_recorded_before_the_saga_was_kept():
     battle_log = BattleLog.from_lines(
-        line_list=[
+        lines=[
             BattleHistoryFactory.build(message="a blow", saga=""),
             BattleHistoryFactory.build(kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED),
         ]
@@ -48,7 +48,7 @@ def test_from_lines_stacks_the_rounds_newest_first():
     projection does. Both halves are asserted here because getting either one alone right is no use.
     """
     battle_log = BattleLog.from_lines(
-        line_list=[
+        lines=[
             BattleHistoryFactory.build(message="first blow"),
             BattleHistoryFactory.build(message="second blow"),
             BattleHistoryFactory.build(kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED),
@@ -57,8 +57,8 @@ def test_from_lines_stacks_the_rounds_newest_first():
         ]
     )
 
-    assert [log_round.number for log_round in battle_log.round_list] == [2, 1]
-    assert [log.message for log in battle_log.round_list[1].line_list] == ["first blow", "second blow"]
+    assert [log_round.number for log_round in battle_log.rounds] == [2, 1]
+    assert [log.message for log in battle_log.rounds[1].lines] == ["first blow", "second blow"]
 
 
 def test_from_lines_drops_the_boundary_line_it_cut_at():
@@ -67,13 +67,13 @@ def test_from_lines_drops_the_boundary_line_it_cut_at():
     is not rendered underneath it as well.
     """
     battle_log = BattleLog.from_lines(
-        line_list=[
+        lines=[
             BattleHistoryFactory.build(message="a blow"),
             BattleHistoryFactory.build(message="Round 1 finished.", kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED),
         ]
     )
 
-    assert [log.message for log in battle_log.round_list[0].line_list] == ["a blow"]
+    assert [log.message for log in battle_log.rounds[0].lines] == ["a blow"]
 
 
 def test_from_lines_folds_the_aftermath_into_the_round_that_ended_the_fight():
@@ -82,25 +82,25 @@ def test_from_lines_folds_the_aftermath_into_the_round_that_ended_the_fight():
     last "RoundFinished" - so they arrive after the final boundary and are not a round nobody fought.
     """
     battle_log = BattleLog.from_lines(
-        line_list=[
+        lines=[
             BattleHistoryFactory.build(message="a blow"),
             BattleHistoryFactory.build(kind=BattleHistory.KindChoices.KIND_ROUND_FINISHED),
             BattleHistoryFactory.build(message="Skirmish finished. Mercia won."),
         ]
     )
 
-    assert len(battle_log.round_list) == 1
-    assert [log.message for log in battle_log.round_list[0].line_list] == ["a blow", "Skirmish finished. Mercia won."]
+    assert len(battle_log.rounds) == 1
+    assert [log.message for log in battle_log.rounds[0].lines] == ["a blow", "Skirmish finished. Mercia won."]
 
 
 def test_from_lines_reads_a_log_with_no_boundary_yet_as_the_first_round():
-    battle_log = BattleLog.from_lines(line_list=[BattleHistoryFactory.build(message="a blow")])
+    battle_log = BattleLog.from_lines(lines=[BattleHistoryFactory.build(message="a blow")])
 
-    assert [log_round.number for log_round in battle_log.round_list] == [1]
-    assert [log.message for log in battle_log.round_list[0].line_list] == ["a blow"]
+    assert [log_round.number for log_round in battle_log.rounds] == [1]
+    assert [log.message for log in battle_log.rounds[0].lines] == ["a blow"]
 
 
 def test_from_lines_holds_no_round_for_a_fight_nobody_has_started():
-    battle_log = BattleLog.from_lines(line_list=[])
+    battle_log = BattleLog.from_lines(lines=[])
 
-    assert battle_log.round_list == []
+    assert battle_log.rounds == []

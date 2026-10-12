@@ -27,7 +27,7 @@
         </tr>
         </thead>
         <tbody>
-        {% for rival in rival_list %}
+        {% for rival in rivals %}
             <tr>
                 <td>
                     <a href="{% url 'warband:faction-detail-view' rival.id %}">{{ rival.name }}</a>

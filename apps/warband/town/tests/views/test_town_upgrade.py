@@ -23,9 +23,7 @@ def _building(response, building_type: str) -> dict:
     """
     The entry the page renders for one building.
     """
-    return next(
-        building for building in response.context["building_list"] if building["building_type"] == building_type
-    )
+    return next(building for building in response.context["buildings"] if building["building_type"] == building_type)
 
 
 @pytest.mark.django_db
@@ -63,7 +61,7 @@ def test_town_upgrade_view_puts_the_effects_of_both_levels_next_to_each_other(lo
     """
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
-    assert _building(response, "hall")["effect_list"] == [
+    assert _building(response, "hall")["effects"] == [
         {"label": "Monthly income", "current": "50 silver", "next": "300 silver"},
         {"label": "Men needed for full income", "current": "0", "next": "1"},
         {"label": "Prisoners the cells hold", "current": "1", "next": "2"},
@@ -79,7 +77,7 @@ def test_town_upgrade_view_leaves_out_an_effect_the_next_level_does_not_move(log
     """
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
-    assert [effect["label"] for effect in _building(response, "hall")["effect_list"]] == [
+    assert [effect["label"] for effect in _building(response, "hall")["effects"]] == [
         "Monthly income",
         "Men needed for full income",
         "Prisoners the cells hold",
@@ -99,7 +97,7 @@ def test_town_upgrade_view_keeps_every_effect_at_the_maximum_level(logged_in_cli
 
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
-    assert _building(response, "hall")["effect_list"] == [
+    assert _building(response, "hall")["effects"] == [
         {"label": "Monthly income", "current": "750 silver", "next": "750 silver"},
         {"label": "Men needed for full income", "current": "3", "next": "3"},
         {"label": "Mercenaries in the pub", "current": "3", "next": "3"},
@@ -153,7 +151,7 @@ def test_town_upgrade_view_names_the_month_before_the_price(logged_in_client, cu
 def test_town_upgrade_view_offers_every_building(logged_in_client, current_savegame):
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
-    assert [building["building_type"] for building in response.context["building_list"]] == [
+    assert [building["building_type"] for building in response.context["buildings"]] == [
         "hall",
         "weaponsmith",
         "marketplace",
@@ -178,7 +176,7 @@ def test_town_upgrade_view_keeps_the_wall_strength_at_the_maximum_level(logged_i
 
     response = logged_in_client.get(reverse("warband:town-upgrade-view"))
 
-    assert _building(response, "fortification")["effect_list"] == [
+    assert _building(response, "fortification")["effects"] == [
         {"label": "Wall strength when marched on", "current": "50 points", "next": "50 points"},
     ]
 

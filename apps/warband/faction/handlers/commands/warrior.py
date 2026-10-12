@@ -197,13 +197,13 @@ def handle_warrior_monthly_salaries(*, context: PayMonthlyWarriorSalaries) -> li
 
     # Two writes for the whole roster rather than two per man: this runs on the synchronous month
     # advance, and #3 is about to multiply it by every rival faction in the savegame
-    Warrior.objects.record_salaries_paid(warrior_list=payroll.paid_warrior_list)
-    Warrior.objects.record_salaries_unpaid(warrior_list=payroll.unpaid_warrior_list)
+    Warrior.objects.record_salaries_paid(warriors=payroll.paid_warriors)
+    Warrior.objects.record_salaries_unpaid(warriors=payroll.unpaid_warriors)
 
-    message_list = []
+    messages = []
 
     if payroll.paid_amount > 0:
-        message_list.append(
+        messages.append(
             MonthlyWarriorSalariesPaid(
                 faction=context.faction,
                 amount=payroll.paid_amount,
@@ -212,13 +212,13 @@ def handle_warrior_monthly_salaries(*, context: PayMonthlyWarriorSalaries) -> li
         )
 
     if payroll.is_short:
-        message_list.append(
+        messages.append(
             MonthlyWarriorSalariesUnpaid(
                 faction=context.faction,
-                warrior_list=payroll.unpaid_warrior_list,
+                warriors=payroll.unpaid_warriors,
                 missing_amount=payroll.missing_amount,
                 month=context.month,
             )
         )
 
-    return message_list
+    return messages

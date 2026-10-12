@@ -72,8 +72,8 @@ class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
         # Both are filtered off the list the scoping mixin already produced, so which savegame's
         # fights these are is decided once rather than once per table. Whether a fight is open is
         # the queryset's answer and not this view's: the same two methods draw the line everywhere.
-        context["open_skirmish_list"] = self.object_list.unresolved()
-        context["decided_skirmish_list"] = self.object_list.resolved().order_by("-id")
+        context["open_skirmishes"] = self.object_list.unresolved()
+        context["decided_skirmishes"] = self.object_list.resolved().order_by("-id")
 
         return context
 
@@ -97,8 +97,8 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
         context["attacking_faction"] = self.object.attacking_faction
         context["defending_faction"] = self.object.defending_faction
         # The cards name each man in full, and that asks his faction whether he holds its seat
-        context["attacking_warrior_list"] = self.object.attacking_warriors.select_related("faction")
-        context["defending_warrior_list"] = self.object.defending_warriors.select_related("faction")
+        context["attacking_warriors"] = self.object.attacking_warriors.select_related("faction")
+        context["defending_warriors"] = self.object.defending_warriors.select_related("faction")
         context["attacker_is_player"] = self.object.attacking_faction_id == player_faction_id
         context["defender_is_player"] = self.object.defending_faction_id == player_faction_id
         context["occupiable_faction"] = self.get_occupiable_faction(skirmish=self.object)
@@ -359,7 +359,7 @@ class BattleHistoryUpdateHtmxView(SavegameScopedQuerysetMixin, generic.ListView)
         context["player_faction_id"] = player_faction_id
         # Grouped from the list the scoped queryset already produced rather than from a read of its
         # own, which is what keeps the log reachable one way only
-        context["battle_log"] = BattleLog.from_lines(line_list=list(context["object_list"]))
+        context["battle_log"] = BattleLog.from_lines(lines=list(context["object_list"]))
         return context
 
 

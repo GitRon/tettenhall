@@ -161,8 +161,8 @@ def handle_create_skirmish(*, context: skirmish.CreateSkirmish) -> list[Event] |
     # one answer to it and this only stages the fight.
     skirmish_generator = BaseSkirmishGenerator(
         name=context.name,
-        warriors_faction_1=context.warrior_list_1,
-        warriors_faction_2=context.warrior_list_2,
+        warriors_faction_1=context.warriors_1,
+        warriors_faction_2=context.warriors_2,
         month=context.month,
         fortification_strength=context.fortification_strength,
         raid_kind=context.raid_kind,
@@ -238,14 +238,14 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
     withdrawals_2, participants_2 = _withdrawing_and_remaining(
         skirmish=context.skirmish, participants=context.skirmish_participants_2
     )
-    message_list = [*withdrawals_1, *withdrawals_2]
+    messages = [*withdrawals_1, *withdrawals_2]
 
     # A side the retreat emptied has nobody left to pair, and the matching below picks a random
     # opponent out of the other list - which raises on an empty one. Leaving with the orders alone is
     # the whole of this round: "handle_finish_round" counts healthy warriors, and a side that walked
     # off has none, so the fight is lost by the men who left it rather than by a special case here.
     if len(participants_1) == 0 or len(participants_2) == 0:
-        return message_list
+        return messages
 
     # Read once, here, and carried on every message the round produces. This is the handler that
     # starts the round, so "current_round" is the round being fought by definition rather than by
@@ -257,13 +257,13 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
     # each is resolved by its own command, one hop, where a blow at a man is three hops down from its
     # pairing. So a wall that falls this round no longer shields anybody from this round's blows, and
     # the log says the wall came down before it says who struck whom.
-    message_list.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_1))
-    message_list.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_2))
+    messages.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_1))
+    messages.extend(_assaults(skirmish=context.skirmish, round_number=round_number, participants=participants_2))
 
     # The rallies go out ahead of the pairings for the same reason, and behind the withdrawals, so the
     # men who walked off this round are already gone when the leader looks round for whom to steady
-    message_list.extend(_rallies(skirmish=context.skirmish, participants=participants_1))
-    message_list.extend(_rallies(skirmish=context.skirmish, participants=participants_2))
+    messages.extend(_rallies(skirmish=context.skirmish, participants=participants_1))
+    messages.extend(_rallies(skirmish=context.skirmish, participants=participants_2))
 
     # Determine larger group
     assign_fighter_pairs_service = AssignFighterPairsService()
@@ -287,7 +287,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
             # while two of his are never touched.
             participant_2 = skirmish_participants_2[index]
 
-            message_list.append(
+            messages.append(
                 FighterPairsMatched(
                     skirmish=context.skirmish,
                     round_number=round_number,
@@ -305,7 +305,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
             # anybody: his round is the order above, and there is no man for him to strike free at.
             # No exchange means nothing else records what he did, so his card would open the next
             # round on the default instead of on the order he keeps giving
-            message_list.append(
+            messages.append(
                 StoreLastUsedSkirmishAction(
                     skirmish=context.skirmish,
                     warrior=participant_1.warrior,
@@ -318,7 +318,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
             # repeat, because he is by definition a man more than there are opponents to go round.
             participant_2 = random.choice(skirmish_participants_2)
 
-            message_list.append(
+            messages.append(
                 AttackerDefenderDecided(
                     skirmish=context.skirmish,
                     round_number=round_number,
@@ -330,7 +330,7 @@ def handle_assign_fighter_pairs(*, context: skirmish.StartDuel) -> list[Command 
                 )
             )
 
-    return message_list
+    return messages
 
 
 @message_registry.register_command(command=skirmish.DetermineAttacker)
@@ -424,7 +424,7 @@ def handle_warrior_assaults_fortification(*, context: skirmish.WarriorAssaultsFo
 
     damage = Skirmish.objects.batter_fortification(skirmish=context.skirmish, damage=assault.value)
 
-    message_list: list[Event] = [
+    messages: list[Event] = [
         FortificationAssaulted(
             skirmish=context.skirmish,
             round_number=context.round_number,
@@ -437,11 +437,11 @@ def handle_warrior_assaults_fortification(*, context: skirmish.WarriorAssaultsFo
     # The fall is its own fact, and it happens once: to the swing that took the last of it, not to a
     # second man storming the same round what the first one already brought down
     if had_a_wall and not context.skirmish.is_fortified:
-        message_list.append(
+        messages.append(
             FortificationFell(skirmish=context.skirmish, round_number=context.round_number, warrior=context.warrior)
         )
 
-    return message_list
+    return messages
 
 
 @message_registry.register_command(command=skirmish.WinSkirmish)

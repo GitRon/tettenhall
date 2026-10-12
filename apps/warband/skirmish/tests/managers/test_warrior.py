@@ -778,7 +778,7 @@ def test_record_salaries_paid_forgives_the_months_they_went_without():
     first_warrior = WarriorFactory(unpaid_months=2)
     second_warrior = WarriorFactory(unpaid_months=1)
 
-    Warrior.objects.record_salaries_paid(warrior_list=[first_warrior, second_warrior])
+    Warrior.objects.record_salaries_paid(warriors=[first_warrior, second_warrior])
 
     first_warrior.refresh_from_db()
     second_warrior.refresh_from_db()
@@ -790,7 +790,7 @@ def test_record_salaries_unpaid_counts_another_month():
     first_warrior = WarriorFactory(unpaid_months=1)
     second_warrior = WarriorFactory(unpaid_months=0)
 
-    Warrior.objects.record_salaries_unpaid(warrior_list=[first_warrior, second_warrior])
+    Warrior.objects.record_salaries_unpaid(warriors=[first_warrior, second_warrior])
 
     first_warrior.refresh_from_db()
     second_warrior.refresh_from_db()
@@ -805,7 +805,7 @@ def test_record_salaries_unpaid_leaves_the_instances_carrying_the_new_count():
     """
     warrior = WarriorFactory(unpaid_months=2)
 
-    result = Warrior.objects.record_salaries_unpaid(warrior_list=[warrior])
+    result = Warrior.objects.record_salaries_unpaid(warriors=[warrior])
 
     assert result[0].unpaid_months == 3
 

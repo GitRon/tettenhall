@@ -6,9 +6,7 @@ BUSY_REFUSAL = "He is spoken for this month. You can send him away once it is ov
 UNAFFORDABLE_REFUSAL = "You don't have the silver to pay him off."
 
 
-def get_dismissal_refusals(
-    *, faction: Faction, warrior_list: list[Warrior], month: int, balance: int
-) -> dict[int, str]:
+def get_dismissal_refusals(*, faction: Faction, warriors: list[Warrior], month: int, balance: int) -> dict[int, str]:
     """
     Why each of these men may not be sent away, keyed by warrior id and holding only the ones who
     may not go.
@@ -25,18 +23,18 @@ def get_dismissal_refusals(
     price is the one he can go and raise silver for - so a man who is both busy and unaffordable is
     told about the month, and sent off to sell something only once that is no longer the reason.
     """
-    warrior_id_list = [warrior.id for warrior in warrior_list]
+    warrior_ids = [warrior.id for warrior in warriors]
 
     # One query for the whole roster. "exclude_currently_busy" is the game's existing definition of
     # busy - away on a quest this month, or standing on the roster of a fight - and a man dismissed
     # out of one of those leaves a contract or a skirmish pointing at a warrior with no faction.
     free_warrior_ids = set(
-        Warrior.objects.filter(id__in=warrior_id_list).exclude_currently_busy(month=month).values_list("id", flat=True)
+        Warrior.objects.filter(id__in=warrior_ids).exclude_currently_busy(month=month).values_list("id", flat=True)
     )
 
     refusals = {}
 
-    for warrior in warrior_list:
+    for warrior in warriors:
         if warrior.id == faction.leader_id:
             refusals[warrior.id] = LEADER_REFUSAL
         elif warrior.id not in free_warrior_ids:
