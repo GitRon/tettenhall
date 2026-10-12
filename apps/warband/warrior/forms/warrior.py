@@ -29,7 +29,7 @@ class ItemChoiceField(forms.ModelChoiceField):
         The item, its dice, what those dice average - and who has to give it up for this.
 
         "__str__" carries the name and the notation already, and the mean is what tells a rusty
-        battle axe from a traditional spear: "1d6+1" and "2d4" are two strings a player has to do
+        bearded axe from a traditional spear: "1d6+1" and "2d4" are two strings a player has to do
         arithmetic on. The item's own mean rather than this warrior's, so the options rank the way
         the shop's cards rank; what the man in front of us makes of it is on his page, next to the
         strength that scales it.

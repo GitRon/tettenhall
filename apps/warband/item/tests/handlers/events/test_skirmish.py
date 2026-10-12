@@ -17,7 +17,7 @@ def test_handle_looted_item_changes_ownership_maps_to_a_command():
             skirmish=SkirmishFactory.build(),
             warrior=warrior,
             item=item,
-            item_name="Superior Battle axe",
+            item_name="Superior Bearded axe",
             new_owner=new_owner,
         )
     )

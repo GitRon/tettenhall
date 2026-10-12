@@ -447,12 +447,12 @@ def test_handle_log_item_dropped_logs_the_item_name():
             skirmish=skirmish,
             warrior=warrior,
             item=ItemFactory.build(),
-            item_name="Superior Battle axe",
+            item_name="Superior Bearded axe",
             new_owner=FactionFactory.build(),
         )
     )
 
-    assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred dropped the item 'Superior Battle axe'")
+    assert result == CreateBattleHistory(skirmish=skirmish, message="Cuthred dropped the item 'Superior Bearded axe'")
 
 
 def test_handle_warrior_is_captured_logs_the_arrest():

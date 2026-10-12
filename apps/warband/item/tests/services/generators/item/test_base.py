@@ -83,7 +83,7 @@ def test_get_queryset_for_type_without_a_pool_reaches_the_whole_table(item_gener
     result = item_generator._get_queryset_for_type()
 
     assert sorted(result.values_list("name", flat=True)) == [
-        "Battle axe",
+        "Bearded axe",
         "Pitchfork",
         "Seax",
         "Spatha",
@@ -97,7 +97,7 @@ def test_get_queryset_for_type_narrows_to_the_declared_pool(item_generator):
 
     result = item_generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Spatha"]
+    assert sorted(result.values_list("name", flat=True)) == ["Bearded axe", "Spatha"]
 
 
 @pytest.mark.django_db
@@ -115,7 +115,7 @@ def test_init_narrows_the_pool_for_one_draw():
 
     result = generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Spatha"]
+    assert sorted(result.values_list("name", flat=True)) == ["Bearded axe", "Spatha"]
     assert FyrdItemGenerator.item_tiers == frozenset({ItemType.TierChoices.TIER_RUSTIC})
 
 

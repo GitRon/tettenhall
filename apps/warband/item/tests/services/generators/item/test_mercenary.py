@@ -20,7 +20,7 @@ def test_get_queryset_for_type_offers_every_weapon_but_the_fallback():
     result = generator._get_queryset_for_type()
 
     assert sorted(result.values_list("name", flat=True)) == [
-        "Battle axe",
+        "Bearded axe",
         "Pitchfork",
         "Seax",
         "Spatha",
@@ -38,4 +38,4 @@ def test_get_queryset_for_type_offers_every_armor_but_the_fallback():
 
     result = generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Chain mail", "Studded leather"]
+    assert sorted(result.values_list("name", flat=True)) == ["Chain mail", "Leather jerkin"]

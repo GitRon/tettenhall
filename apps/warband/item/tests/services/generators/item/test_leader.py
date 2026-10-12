@@ -22,7 +22,7 @@ def test_get_queryset_for_type_offers_weapons_of_both_bands():
 
     result = generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Battle axe", "Pitchfork", "Seax", "Spatha", "Spear"]
+    assert sorted(result.values_list("name", flat=True)) == ["Bearded axe", "Pitchfork", "Seax", "Spatha", "Spear"]
 
 
 @pytest.mark.django_db
@@ -35,7 +35,7 @@ def test_get_queryset_for_type_offers_armor_of_both_bands():
 
     result = generator._get_queryset_for_type()
 
-    assert sorted(result.values_list("name", flat=True)) == ["Chain mail", "Studded leather"]
+    assert sorted(result.values_list("name", flat=True)) == ["Chain mail", "Leather jerkin"]
 
 
 @pytest.mark.parametrize(
