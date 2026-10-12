@@ -196,6 +196,20 @@ class EarnTraitsInSkirmish(Command):
 
 
 @dataclass(kw_only=True)
+class EarnDeedsInSkirmish(Command):
+    """
+    Ask of the men who came out of this fight whether it named any of them: the last man standing on
+    the winning side, and the man who has now come home from enough fights.
+
+    One per fight, for the reason [EarnTraitsInSkirmish] is: who stood where, who is alive and how many
+    fights each man has seen are rows, and the producer is an event handler that may not read them.
+    """
+
+    skirmish: Skirmish
+    month: int
+
+
+@dataclass(kw_only=True)
 class RecruitCapturedWarrior(Command):
     warrior: Warrior
     faction: Faction

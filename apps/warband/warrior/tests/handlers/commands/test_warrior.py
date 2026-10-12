@@ -26,6 +26,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_change_warrior_max_morale,
     handle_create_new_leader_warrior,
     handle_dismiss_warrior,
+    handle_earn_deeds_in_skirmish,
     handle_earn_traits_in_skirmish,
     handle_enslave_captured_warrior,
     handle_fade_idle_warrior_renown,
@@ -43,6 +44,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     ChangeWarriorMaxMorale,
     CreateNewLeaderWarrior,
     DismissWarrior,
+    EarnDeedsInSkirmish,
     EarnTraitsInSkirmish,
     EnslaveCapturedWarrior,
     FadeIdleWarriorRenown,
@@ -73,8 +75,12 @@ from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.injury_type import InjuryType
 from apps.warband.warrior.services.nickname import (
     MORALE_FAR_NICKNAMES,
+    OLD_WOLF_FIGHTS,
+    OLD_WOLF_NICKNAMES,
     RELIC_BEARER_NICKNAMES,
     STRENGTH_NICKNAMES,
+    UNBROKEN_MIN_SIDE,
+    UNBROKEN_NICKNAMES,
 )
 from apps.warband.warrior.services.trait import TraitEarningService
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
@@ -819,6 +825,175 @@ def _shaken_in(*, skirmish, warrior) -> None:
         defender=warrior,
         outcome=BlowOutcomeChoices.OUTCOME_HIT,
     )
+
+
+def _won_by_the_attackers(*, attackers: list[Warrior], defenders: tuple[Warrior, ...] = ()) -> Skirmish:
+    """
+    A decided fight the attacking side won, with these men on its rosters, standing as they were left.
+    """
+    skirmish = SkirmishFactory(month=6)
+    skirmish.attacking_warriors.add(*attackers)
+    skirmish.defending_warriors.add(*defenders)
+    Skirmish.objects.set_victor(skirmish=skirmish, victorious_faction=skirmish.attacking_faction)
+    return skirmish
+
+
+def _fought_before(*, warrior: Warrior, fights: int) -> None:
+    for _ in range(fights):
+        _won_by_the_attackers(attackers=[warrior])
+
+
+def _down(*, faction) -> Warrior:
+    return WarriorFactory(faction=faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_names_the_last_man_standing():
+    faction = FactionFactory()
+    survivor = WarriorFactory(faction=faction, nickname_state=None, nickname_variant=0)
+    skirmish = _won_by_the_attackers(attackers=[survivor, _down(faction=faction), _down(faction=faction)])
+
+    result = handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == [
+        WarriorEarnedNickname(
+            warrior=survivor, faction=faction, nickname=UNBROKEN_NICKNAMES[0], previous_nickname=None, month=6
+        )
+    ]
+    survivor.refresh_from_db()
+    assert survivor.nickname_state == NicknameStateChoices.UNBROKEN
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_names_the_last_defender_standing():
+    """
+    The winning side is read off the victor, whichever roster it is.
+    """
+    skirmish = SkirmishFactory(month=6)
+    faction = skirmish.defending_faction
+    survivor = WarriorFactory(faction=faction, nickname_state=None)
+    skirmish.defending_warriors.add(survivor, _down(faction=faction), _down(faction=faction))
+    Skirmish.objects.set_victor(skirmish=skirmish, victorious_faction=faction)
+
+    handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    survivor.refresh_from_db()
+    assert survivor.nickname_state == NicknameStateChoices.UNBROKEN
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_passes_over_a_side_one_man_too_small():
+    """
+    One short of the side a last stand needs.
+    """
+    faction = FactionFactory()
+    survivor = WarriorFactory(faction=faction, nickname_state=None)
+    others = [_down(faction=faction) for _ in range(UNBROKEN_MIN_SIDE - 2)]
+    skirmish = _won_by_the_attackers(attackers=[survivor, *others])
+
+    result = handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_passes_over_a_side_with_two_men_standing():
+    faction = FactionFactory()
+    standing = [WarriorFactory(faction=faction, nickname_state=None) for _ in range(2)]
+    skirmish = _won_by_the_attackers(attackers=[*standing, _down(faction=faction)])
+
+    result = handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_names_a_veteran_at_his_numbered_fight():
+    """
+    Every decided fight he stood in counts, this one included, on either roster.
+    """
+    faction = FactionFactory()
+    veteran = WarriorFactory(faction=faction, nickname_state=None, nickname_variant=0)
+    _fought_before(warrior=veteran, fights=OLD_WOLF_FIGHTS - 2)
+    defended = SkirmishFactory()
+    defended.defending_warriors.add(veteran)
+    Skirmish.objects.set_victor(skirmish=defended, victorious_faction=defended.attacking_faction)
+    skirmish = _won_by_the_attackers(attackers=[veteran, WarriorFactory(faction=faction)])
+
+    result = handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == [
+        WarriorEarnedNickname(
+            warrior=veteran, faction=faction, nickname=OLD_WOLF_NICKNAMES[0], previous_nickname=None, month=6
+        )
+    ]
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_passes_over_a_man_one_fight_short():
+    """
+    A fight still open does not count: it has no victor yet, and he may not come home from it.
+    """
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction, nickname_state=None)
+    _fought_before(warrior=warrior, fights=OLD_WOLF_FIGHTS - 2)
+    SkirmishFactory().attacking_warriors.add(warrior)
+    skirmish = _won_by_the_attackers(attackers=[warrior, WarriorFactory(faction=faction)])
+
+    result = handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_names_a_veteran_who_stands_alone_for_the_stand():
+    """
+    Both in one fight, and he only gets one: the rarer.
+    """
+    faction = FactionFactory()
+    veteran = WarriorFactory(faction=faction, nickname_state=None)
+    _fought_before(warrior=veteran, fights=OLD_WOLF_FIGHTS)
+    skirmish = _won_by_the_attackers(attackers=[veteran, _down(faction=faction), _down(faction=faction)])
+
+    handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    veteran.refresh_from_db()
+    assert veteran.nickname_state == NicknameStateChoices.UNBROKEN
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_passes_over_the_dead_the_led_away_and_the_locals():
+    """
+    Veterans all three, and none of them is named: the dead are past it, the men left lying on the
+    losing side are being led away, and the locals go home.
+    """
+    skirmish = SkirmishFactory(month=6)
+    dead = WarriorFactory(faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    led_away = _down(faction=skirmish.defending_faction)
+    local = WarriorFactory(faction=skirmish.defending_faction)
+    for warrior in (dead, led_away, local):
+        _fought_before(warrior=warrior, fights=OLD_WOLF_FIGHTS)
+    skirmish.attacking_warriors.add(dead)
+    skirmish.defending_warriors.add(led_away, local)
+    skirmish.local_warriors.add(local)
+    Skirmish.objects.set_victor(skirmish=skirmish, victorious_faction=skirmish.attacking_faction)
+
+    result = handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == []
+
+
+@pytest.mark.django_db
+def test_handle_earn_deeds_in_skirmish_leaves_a_man_named_for_a_deed_alone():
+    faction = FactionFactory()
+    survivor = WarriorFactory(faction=faction, nickname_state=NicknameStateChoices.WALLBREAKER)
+    skirmish = _won_by_the_attackers(attackers=[survivor, _down(faction=faction), _down(faction=faction)])
+
+    result = handle_earn_deeds_in_skirmish(context=EarnDeedsInSkirmish(skirmish=skirmish, month=6))
+
+    assert result == []
+    survivor.refresh_from_db()
+    assert survivor.nickname_state == NicknameStateChoices.WALLBREAKER
 
 
 @pytest.mark.django_db

@@ -8,6 +8,7 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.sanctuary import Sanctuary
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.messages.commands.warrior import (
     AwardDeedNickname,
     AwardEarnedNickname,
@@ -15,6 +16,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
     CreateWarrior,
     DismissWarrior,
+    EarnDeedsInSkirmish,
     EarnTraitsInSkirmish,
     EnslaveCapturedWarrior,
     FadeIdleWarriorRenown,
@@ -46,7 +48,7 @@ from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.trait import Trait
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 from apps.warband.warrior.services.injury import InjuryRollService
-from apps.warband.warrior.services.nickname import draw_nickname_state
+from apps.warband.warrior.services.nickname import OLD_WOLF_FIGHTS, UNBROKEN_MIN_SIDE, draw_nickname_state
 from apps.warband.warrior.services.trait import TraitEarningService
 
 
@@ -229,19 +231,90 @@ def handle_award_deed_nickname(*, context: AwardDeedNickname) -> Event | None:
     fight carries is shared by every message of the round, and a full refresh drops the relations they
     are relying on having cached.
     """
-    context.warrior.refresh_from_db(fields=("nickname_state",))
-    previous_nickname = context.warrior.nickname
+    return _award_deed(warrior=context.warrior, nickname_state=context.nickname_state, month=context.month)
 
-    if Warrior.objects.set_deed_nickname_state(obj=context.warrior, nickname_state=context.nickname_state) == 0:
+
+def _award_deed(*, warrior: Warrior, nickname_state: int, month: int) -> Event | None:
+    """
+    Write a deed epithet under the first-deed-wins rule, and say so if it took. Shared by every handler
+    that names a man for a deed, so the rule is stated once - see [handle_award_deed_nickname].
+    """
+    warrior.refresh_from_db(fields=("nickname_state",))
+    previous_nickname = warrior.nickname
+
+    if Warrior.objects.set_deed_nickname_state(obj=warrior, nickname_state=nickname_state) == 0:
         return None
 
     return WarriorEarnedNickname(
-        warrior=context.warrior,
-        faction=context.warrior.faction,
-        nickname=context.warrior.nickname,
+        warrior=warrior,
+        faction=warrior.faction,
+        nickname=warrior.nickname,
         previous_nickname=previous_nickname,
-        month=context.month,
+        month=month,
     )
+
+
+@message_registry.register_command(command=EarnDeedsInSkirmish)
+def handle_earn_deeds_in_skirmish(*, context: EarnDeedsInSkirmish) -> list[Event]:
+    """
+    Names the last man standing on the winning side, and every man this fight made a veteran of.
+
+    **Who may be named**: men of either side, the way any epithet is any man's, who came out of it. Not
+    the dead, and not the men left lying on the losing side, who are being led away as prisoners - the
+    same men [handle_earn_traits_in_skirmish] passes over. Not the place's locals either: they turned out
+    for one fight and go home after it.
+
+    **The last man standing** is the one man still on his feet on the winning side, when that side
+    fielded at least [UNBROKEN_MIN_SIDE] - everybody else fled, felled or dead. Counted over the whole
+    side, locals included, because they fell beside him.
+
+    **A veteran** has stood in at least [OLD_WOLF_FIGHTS] decided fights, this one included. At least
+    rather than exactly, so a man who was already a veteran when the name came into the game is named
+    at his next fight rather than never.
+
+    A man who is both in one fight is named the Unbroken: it is the rarer of the two, and he only gets
+    one - see [handle_award_deed_nickname].
+    """
+    skirmish = context.skirmish
+    if skirmish.victorious_faction_id == skirmish.attacking_faction_id:
+        winning_side = skirmish.attacking_warriors.all()
+        losing_side = skirmish.defending_warriors.all()
+    else:
+        winning_side = skirmish.defending_warriors.all()
+        losing_side = skirmish.attacking_warriors.all()
+
+    still_standing = list(winning_side.filter_healthy())
+    last_man_standing = (
+        still_standing[0] if len(still_standing) == 1 and winning_side.count() >= UNBROKEN_MIN_SIDE else None
+    )
+
+    roster_ids = {*winning_side.values_list("id", flat=True)} | {*losing_side.values_list("id", flat=True)}
+    led_away_ids = losing_side.filter(condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS).values_list(
+        "id", flat=True
+    )
+    candidates = (
+        Warrior.objects.filter(id__in=roster_ids)
+        .exclude_dead()
+        .exclude(id__in=list(led_away_ids))
+        .exclude(local_skirmishes=skirmish)
+        .annotate_decided_fights()
+        .order_by("id")
+    )
+
+    messages: list[Event] = []
+    for warrior in candidates:
+        if warrior == last_man_standing:
+            nickname_state = NicknameStateChoices.UNBROKEN
+        elif warrior.decided_fights >= OLD_WOLF_FIGHTS:
+            nickname_state = NicknameStateChoices.OLD_WOLF
+        else:
+            continue
+
+        event = _award_deed(warrior=warrior, nickname_state=nickname_state, month=context.month)
+        if event is not None:
+            messages.append(event)
+
+    return messages
 
 
 @message_registry.register_command(command=InflictInjury)
