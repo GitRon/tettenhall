@@ -20,7 +20,7 @@ both places drifts. See [writing an issue](writing-issues.md) for what promoting
 ### Town
 
 * Trainingsplatz als Gebäude -> schnelleres Lernen
-    * Wäre der fünfte Hebel neben Halle, Weaponsmith, Marktplatz und Sanctuary, und der erste, der
+    * Wäre der sechste Hebel neben Halle, Weaponsmith, Marktplatz, Sanctuary und Fortification, und der erste, der
       auf das Training wirkt
 
 ## Konzeptionelles

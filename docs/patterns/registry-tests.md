@@ -64,7 +64,7 @@ the reason is gone, and the next handler in that module inherits the exemption b
 
 Return annotations are useless here: all handlers annotate abstractly (`-> Event`,
 `-> list[Event] | Event`, `-> Command`) and **zero** annotate concretely. Requiring concrete annotations
-would mean touching 114 signatures — and an annotation can lie, while the code cannot. The tests therefore
+would mean touching every handler signature — and an annotation can lie, while the code cannot. The tests therefore
 parse the **actual message instantiations** out of the syntax tree.
 
 One trap: the project mixes `from x import Command` with `from x import module` plus `module.Command`. A
