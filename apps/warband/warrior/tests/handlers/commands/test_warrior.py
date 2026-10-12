@@ -21,6 +21,7 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.handlers.commands.warrior import (
+    handle_award_deed_nickname,
     handle_award_earned_nickname,
     handle_change_warrior_max_morale,
     handle_create_new_leader_warrior,
@@ -37,6 +38,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_tend_warrior_wounds,
 )
 from apps.warband.warrior.messages.commands.warrior import (
+    AwardDeedNickname,
     AwardEarnedNickname,
     ChangeWarriorMaxMorale,
     CreateNewLeaderWarrior,
@@ -69,7 +71,11 @@ from apps.warband.warrior.messages.events.warrior import (
 )
 from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.injury_type import InjuryType
-from apps.warband.warrior.services.nickname import STRENGTH_NICKNAMES
+from apps.warband.warrior.services.nickname import (
+    MORALE_FAR_NICKNAMES,
+    RELIC_BEARER_NICKNAMES,
+    STRENGTH_NICKNAMES,
+)
 from apps.warband.warrior.services.trait import TraitEarningService
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
@@ -654,7 +660,7 @@ def test_handle_award_earned_nickname_names_a_man_who_has_just_become_exceptiona
     result = handle_award_earned_nickname(context=AwardEarnedNickname(warrior=warrior, month=3))
 
     assert result == WarriorEarnedNickname(
-        warrior=warrior, faction=warrior.faction, nickname=STRENGTH_NICKNAMES[0], month=3
+        warrior=warrior, faction=warrior.faction, nickname=STRENGTH_NICKNAMES[0], previous_nickname=None, month=3
     )
     warrior.refresh_from_db()
     assert warrior.nickname_state == NicknameStateChoices.STRENGTH
@@ -684,6 +690,79 @@ def test_handle_award_earned_nickname_leaves_an_ordinary_man_unnamed():
     assert result is None
     warrior.refresh_from_db()
     assert warrior.nickname_state is None
+
+
+@pytest.mark.django_db
+def test_handle_award_earned_nickname_asks_the_row_whether_he_is_still_unnamed():
+    """
+    The instance was put on the message before a deed named him, and still believes the slot is empty.
+    The row is what decides, or the drawn epithet would overwrite the one nothing may replace.
+    """
+    warrior = WarriorFactory(strength=20, nickname_state=NicknameStateChoices.RELIC_BEARER)
+    warrior.nickname_state = None
+
+    result = handle_award_earned_nickname(context=AwardEarnedNickname(warrior=warrior, month=3))
+
+    assert result is None
+    warrior.refresh_from_db()
+    assert warrior.nickname_state == NicknameStateChoices.RELIC_BEARER
+
+
+@pytest.mark.django_db
+def test_handle_award_deed_nickname_names_a_man_who_had_no_epithet():
+    warrior = WarriorFactory(nickname_state=None, nickname_variant=0)
+
+    result = handle_award_deed_nickname(
+        context=AwardDeedNickname(warrior=warrior, nickname_state=NicknameStateChoices.RELIC_BEARER, month=3)
+    )
+
+    assert result == WarriorEarnedNickname(
+        warrior=warrior, faction=warrior.faction, nickname=RELIC_BEARER_NICKNAMES[0], previous_nickname=None, month=3
+    )
+    warrior.refresh_from_db()
+    assert warrior.nickname_state == NicknameStateChoices.RELIC_BEARER
+
+
+@pytest.mark.django_db
+def test_handle_award_deed_nickname_replaces_an_epithet_he_rolled():
+    """
+    First deed wins: what he did outranks what he was drawn with. The instance on the command still
+    believes he is unnamed, the way one put on a message before a level-up named him would, and the
+    rename has to name the epithet the row holds.
+    """
+    warrior = WarriorFactory(nickname_state=NicknameStateChoices.MORALE_FAR, nickname_variant=0)
+    warrior.nickname_state = None
+
+    result = handle_award_deed_nickname(
+        context=AwardDeedNickname(warrior=warrior, nickname_state=NicknameStateChoices.RELIC_BEARER, month=3)
+    )
+
+    assert result == WarriorEarnedNickname(
+        warrior=warrior,
+        faction=warrior.faction,
+        nickname=RELIC_BEARER_NICKNAMES[0],
+        previous_nickname=MORALE_FAR_NICKNAMES[0],
+        month=3,
+    )
+    warrior.refresh_from_db()
+    assert warrior.nickname_state == NicknameStateChoices.RELIC_BEARER
+
+
+@pytest.mark.django_db
+def test_handle_award_deed_nickname_leaves_a_man_named_for_a_deed_alone():
+    """
+    Nothing overwrites a deed, a second deed included: with more than one source, a veteran's name
+    would otherwise churn with every one he does.
+    """
+    warrior = WarriorFactory(nickname_state=NicknameStateChoices.LORD_SLAYER)
+
+    result = handle_award_deed_nickname(
+        context=AwardDeedNickname(warrior=warrior, nickname_state=NicknameStateChoices.RELIC_BEARER, month=3)
+    )
+
+    assert result is None
+    warrior.refresh_from_db()
+    assert warrior.nickname_state == NicknameStateChoices.LORD_SLAYER
 
 
 @pytest.mark.django_db

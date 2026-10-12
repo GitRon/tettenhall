@@ -5,6 +5,7 @@ import pytest
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.incident.incidents.hall_relic import HallRelic
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 
 
 @pytest.mark.django_db
@@ -35,3 +36,14 @@ def test_resolve_names_the_man_it_was_given_to():
 
     assert result.title == "A relic came to the hall, and Wighelm was given it to carry."
     assert result.warrior == warrior
+
+
+@pytest.mark.django_db
+def test_resolve_names_him_for_carrying_it():
+    faction = FactionFactory()
+    warrior = WarriorFactory(faction=faction)
+
+    with mock.patch("apps.warband.incident.incidents.hall_relic.random.choice", return_value=warrior):
+        result = HallRelic.resolve(faction=faction)
+
+    assert result.nickname_state == NicknameStateChoices.RELIC_BEARER

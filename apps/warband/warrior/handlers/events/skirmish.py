@@ -2,8 +2,18 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.skirmish.messages.events.skirmish import SkirmishFinished
-from apps.warband.skirmish.messages.events.warrior import WarriorImprovedStats, WarriorWasIncapacitated
-from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, EarnTraitsInSkirmish, InflictInjury
+from apps.warband.skirmish.messages.events.warrior import (
+    WarriorImprovedStats,
+    WarriorWasIncapacitated,
+    WarriorWasKilled,
+)
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
+from apps.warband.warrior.messages.commands.warrior import (
+    AwardDeedNickname,
+    AwardEarnedNickname,
+    EarnTraitsInSkirmish,
+    InflictInjury,
+)
 
 
 @message_registry.register_event(event=WarriorImprovedStats)
@@ -17,6 +27,28 @@ def handle_level_up_earns_a_nickname(*, context: WarriorImprovedStats) -> Comman
     access on an instance the event carries, not a query.
     """
     return AwardEarnedNickname(warrior=context.warrior, month=context.skirmish.month)
+
+
+@message_registry.register_event(event=WarriorWasKilled)
+def handle_killing_a_leader_earns_a_nickname(*, context: WarriorWasKilled) -> Command | None:
+    """
+    The man whose blow killed a faction's leader is named for it.
+
+    Killed, not felled: a leader beaten senseless is led away or carried home, and the name is for the
+    blow that ended him. Read off the flag the blow was struck with, because by the time anything
+    reacts his faction may already have seated a successor - see [WarriorWasKilled].
+
+    Any man's blow, on either side of any fight, the way an attribute epithet is any man's: a rival's
+    man who did it is named on his own roster, and the player meets him that way.
+    """
+    if not context.fell_as_a_leader:
+        return None
+
+    return AwardDeedNickname(
+        warrior=context.by_warrior,
+        nickname_state=NicknameStateChoices.LORD_SLAYER,
+        month=context.skirmish.month,
+    )
 
 
 @message_registry.register_event(event=WarriorWasIncapacitated)

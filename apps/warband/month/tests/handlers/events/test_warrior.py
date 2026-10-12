@@ -126,11 +126,35 @@ def test_handle_warrior_earned_nickname_logs_what_he_is_called_now():
     warrior = WarriorFactory.build(name="Beorn", faction=faction)
 
     result = handle_warrior_earned_nickname(
-        context=WarriorEarnedNickname(warrior=warrior, faction=faction, nickname="the Bold", month=3)
+        context=WarriorEarnedNickname(
+            warrior=warrior, faction=faction, nickname="the Bold", previous_nickname=None, month=3
+        )
     )
 
     assert result == CreatePlayerMonthLog(
         title="Beorn is known as the Bold from now on.",
+        kind=PlayerMonthLog.KindChoices.KIND_NICKNAME_EARNED,
+        month=3,
+        faction=faction,
+    )
+
+
+def test_handle_warrior_earned_nickname_logs_a_rename_with_the_name_he_gives_up():
+    """
+    A deed replacing an attribute epithet is told as a rename, naming both: a name that changes without
+    the old one mentioned reads as the game forgetting what it called him.
+    """
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(name="Beorn", faction=faction)
+
+    result = handle_warrior_earned_nickname(
+        context=WarriorEarnedNickname(
+            warrior=warrior, faction=faction, nickname="the Believer", previous_nickname="the Fearless", month=3
+        )
+    )
+
+    assert result == CreatePlayerMonthLog(
+        title="Beorn is no longer the Fearless: he is known as the Believer from now on.",
         kind=PlayerMonthLog.KindChoices.KIND_NICKNAME_EARNED,
         month=3,
         faction=faction,

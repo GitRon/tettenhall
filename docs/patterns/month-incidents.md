@@ -40,8 +40,9 @@ to a positive integer column, where anything below one truncates to nothing.
 | Fyrd reserve | `fyrd_change` | `ChangeFyrdReserve` — `apps/warband/faction/handlers/events/incident.py` |
 | Morale ceiling | `max_morale_share` + `warrior` | `ChangeWarriorMaxMorale` — `apps/warband/warrior/handlers/events/incident.py` |
 | A piece of gear | `lost_item` | `LoseItem` — `apps/warband/item/handlers/events/incident.py` |
+| A deed epithet | `nickname_state` + `warrior` | `AwardDeedNickname` — `apps/warband/warrior/handlers/events/incident.py` |
 
-A lever left at its default is a lever the entry does not pull, and each of those four handlers
+A lever left at its default is a lever the entry does not pull, and each of those five handlers
 refuses an outcome that does not name its own.
 
 The log line is not one of them: `title` and `body` have no default to leave alone, so
@@ -69,6 +70,7 @@ PlayerMonthPrepared (evt)
                  ├─ finance: handle_incident_silver             → CreateTransaction
                  ├─ faction: handle_incident_fyrd_reserve       → ChangeFyrdReserve
                  ├─ warrior: handle_incident_max_morale         → ChangeWarriorMaxMorale
+                 ├─ warrior: handle_incident_deed_nickname      → AwardDeedNickname
                  └─ item:    handle_incident_lost_item          → LoseItem
 ```
 

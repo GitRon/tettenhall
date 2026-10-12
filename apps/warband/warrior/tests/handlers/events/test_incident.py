@@ -3,8 +3,9 @@ import pytest
 from apps.warband.incident.incidents.base import IncidentOutcome
 from apps.warband.incident.messages.events.incident import IncidentOccurred
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
-from apps.warband.warrior.handlers.events.incident import handle_incident_max_morale
-from apps.warband.warrior.messages.commands.warrior import ChangeWarriorMaxMorale
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
+from apps.warband.warrior.handlers.events.incident import handle_incident_deed_nickname, handle_incident_max_morale
+from apps.warband.warrior.messages.commands.warrior import AwardDeedNickname, ChangeWarriorMaxMorale
 
 
 @pytest.mark.django_db
@@ -27,5 +28,27 @@ def test_handle_incident_max_morale_for_an_incident_that_only_names_a_man():
     outcome = IncidentOutcome(title="Wighelm has lost his spear.", body="", warrior=warrior)
 
     result = handle_incident_max_morale(context=IncidentOccurred(faction=warrior.faction, month=3, outcome=outcome))
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_incident_deed_nickname_names_the_man_for_the_deed():
+    warrior = WarriorFactory()
+    outcome = IncidentOutcome(
+        title="A relic came.", body="", nickname_state=NicknameStateChoices.RELIC_BEARER, warrior=warrior
+    )
+
+    result = handle_incident_deed_nickname(context=IncidentOccurred(faction=warrior.faction, month=3, outcome=outcome))
+
+    assert result == AwardDeedNickname(warrior=warrior, nickname_state=NicknameStateChoices.RELIC_BEARER, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_incident_deed_nickname_for_an_incident_that_only_names_a_man():
+    warrior = WarriorFactory()
+    outcome = IncidentOutcome(title="Wighelm has lost his spear.", body="", warrior=warrior)
+
+    result = handle_incident_deed_nickname(context=IncidentOccurred(faction=warrior.faction, month=3, outcome=outcome))
 
     assert result is None
