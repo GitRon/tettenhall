@@ -105,6 +105,14 @@ set on `body`.
   better than what is there, `border-ink` when the thing it marks is whole and ready, `border-rule`
   when it is merely a fact. A figure that is good news takes `text-brass` rather than a tag.
 - **Hover moves the background to `raised`.** Not the text colour, and never the position.
+- **On the `raised` bar itself, hover answers with a `rule-strong` rule** - the section nav and the
+  account menu sit on a surface that is already `raised`, so the rule appears where the current
+  section's `ink` rule sits, and the word still keeps its colour.
+- **Where you are is `ink`, not `blood`.** The current section's rule is `ink`; the focus ring is the one
+  place `blood` is spent without something being wrong.
+- **A meaning is never only in a `title`.** Touch and keyboard players never see one, so a unit, a
+  roll's average or the reason behind a warning goes into words on the page - for a table column, once,
+  in its head (`WAGE / MONTH`).
 - **Except on the one filled control, which answers with its rule instead** — `hover:border-ink`, fill
   untouched. A filled button that drops to the dark ground on hover reads as the button leaving rather
   than as the pointer arriving, and it is the one thing on the screen that must not flicker.

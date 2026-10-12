@@ -1,14 +1,15 @@
-{# The second level, for the two sections that hold more than one page. Depth is the price of a top #}
-{# level that fits in a player's head, and only Town and Rivals pay it. #}
+{# The second level, for the sections that hold more than one page. Depth is the price of a top level #}
+{# that fits in a player's head. #}
 {#  #}
 {# Rendered from the current section's own page list, so a section with one page shows nothing and #}
 {# the markup never has to ask which section it is in. #}
 {% if nav_pages %}
     <nav aria-label="Pages" class="mt-4 px-4 lg:px-8">
-        <ul class="m-0 flex list-none flex-wrap gap-x-6 p-0">
+        <ul class="m-0 -ml-2 flex list-none flex-wrap gap-x-2 p-0">
             {% for page in nav_pages %}
                 <li>
-                    <a class="text-sm no-underline {% if page.is_current %}text-ink hover:text-ink{% else %}text-ink-muted hover:text-ink{% endif %}"
+                    {# Hover is the "raised" ground and never the word's colour, which says which page is current #}
+                    <a class="block px-2 py-1 no-underline hover:bg-raised {% if page.is_current %}text-ink{% else %}text-ink-muted{% endif %}"
                        href="{{ page.url }}"
                        {% if page.is_current %}aria-current="page"{% endif %}>
                         {{ page.label }}

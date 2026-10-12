@@ -4,7 +4,10 @@
     One gauge in a table of men: a bar for how full, the figure beside it for exactly how full.
 
     The bar is decorative - the figure carries the value - so it is hidden from assistive technology.
-    "blood" below a third of his own maximum. A whole percent is all a five-rem bar can show anyway.
+    Measured against his own maximum. A full bar is the normal state and is drawn quietly in
+    "ink-muted", so a healthy band reads calm; below full it is "ink", and below a third "blood",
+    because a man that close to dropping is something wrong. The hurt man is what the eye finds first.
+    A whole percent is all a five-rem bar can show anyway.
 
     Only where the numbers are exact. A bar drawn to scale gives away the very figure the fuzzed word
     stands in for, so a prisoner's gauge is the word alone - see docs/patterns/warrior-knowledge.md.
@@ -12,7 +15,7 @@
 <div class="flex items-center gap-x-2.5">
     {% if knowledge.numbers_are_exact %}
         <span aria-hidden="true" class="relative h-1 w-20 shrink-0 bg-rule-strong">
-            <span class="absolute inset-y-0 left-0 {% if current|is_below_a_third:maximum %}bg-blood{% else %}bg-ink{% endif %}" style="width: {{ current|gauge_percent:maximum }}%"></span>
+            <span class="absolute inset-y-0 left-0 {% if current|is_below_a_third:maximum %}bg-blood{% elif current|is_full:maximum %}bg-ink-muted{% else %}bg-ink{% endif %}" style="width: {{ current|gauge_percent:maximum }}%"></span>
         </span>
     {% endif %}
     <span class="whitespace-nowrap font-mono text-figure tabular-nums text-ink"><c-warrior.gauge :current="current" :maximum="maximum" :peak="peak" :baseline="baseline" :knowledge="knowledge" /></span>

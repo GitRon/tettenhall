@@ -34,6 +34,22 @@ def test_expectancy_value_averages_the_rolls():
     assert dice_notation.expectancy_value == 12
 
 
+def test_expected_result_counts_a_roll_below_the_floor_as_nothing():
+    """
+    Faces 1 to 3 of "1d4-3" all land at 0 and only the 4 lands at 1, so the average is a quarter -
+    not the -0.5 the unfloored arithmetic gives.
+    """
+    dice_notation = DiceNotation(dice_string="1d4", modifier=-3)
+
+    assert dice_notation.expected_result == 0.25
+
+
+def test_expected_result_matches_expectancy_when_the_floor_is_out_of_reach():
+    dice_notation = DiceNotation(dice_string="3d5", modifier=2)
+
+    assert dice_notation.expected_result == dice_notation.expectancy_value
+
+
 def test_best_possible_roll_ignores_the_modifier():
     dice_notation = DiceNotation(dice_string="3d5", modifier=-99)
 

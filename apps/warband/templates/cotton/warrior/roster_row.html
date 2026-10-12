@@ -22,7 +22,11 @@
     "wage" is the caller's: what the man is paid, or what taking him on would put him on. The leader's
     frame is the brightest rule, and "unpaid_note" says why a man's morale is stuck - the monthly sweep
     skips a man carrying unpaid months, so he sits below his ceiling while every other warrior refills
-    for free, and without it the player reads the low figure and no cause.
+    for free, and without it the player reads the low figure and no cause. The note says the
+    consequence in its own words rather than in a "title", which a touch or keyboard player never sees.
+
+    The two lines under the name are set at the body size like the name itself: what separates them
+    from it is "ink-muted", not a smaller face - see docs/patterns/visual-identity.md.
 
     The status cell is empty for a man who can fight. That is the normal state, and a tag on five rows
     out of six would be the loudest thing in the table while saying nothing.
@@ -38,22 +42,22 @@
             <div class="min-w-0">
                 <a class="leading-snug" href="{% url 'warband:warrior-detail-view' warrior.id %}">{{ warrior.name }}</a>
                 {% if warrior.nickname or warrior.is_leader %}
-                    <div class="text-[0.9375rem] leading-snug text-ink-muted">
+                    <div class="leading-snug text-ink-muted">
                         {{ warrior.nickname|default:"" }}{% if warrior.nickname and warrior.is_leader %} &middot; {% endif %}{% if warrior.is_leader %}Ealdorman{% endif %}
                     </div>
                 {% endif %}
                 {% if unpaid_note %}
-                    <div class="text-sm leading-snug text-blood" title="A man who goes unpaid loses morale and cannot recover it">{{ unpaid_note }}</div>
+                    <div class="leading-snug text-blood">{{ unpaid_note }}</div>
                 {% endif %}
             </div>
         </div>
     </td>
     <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Lvl">{{ warrior.level }}</td>
     <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Renown">{{ warrior.renown }}</td>
-    <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3" data-label="Str">
+    <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Str">
         <c-warrior.attribute :value="warrior.strength" :baseline="warrior.strength_baseline" :knowledge="knowledge" />
     </td>
-    <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3" data-label="Dex">
+    <td class="whitespace-nowrap align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Dex">
         <c-warrior.attribute :value="warrior.dexterity" :baseline="warrior.strength_baseline" :knowledge="knowledge" />
     </td>
     <td class="align-middle max-md:col-span-2 md:py-3" data-label="Health">
@@ -62,9 +66,9 @@
     <td class="align-middle max-md:col-span-2 md:py-3" data-label="Morale">
         <c-warrior.roster-gauge :current="warrior.current_morale" :maximum="warrior.max_morale" :peak="warrior.peak_max_morale" :baseline="warrior.morale_baseline" :knowledge="knowledge" />
     </td>
-    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Weapon"><c-warrior.roster-gear :item="warrior.weapon" /></td>
-    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Armour"><c-warrior.roster-gear :item="warrior.armor" /></td>
-    <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Wage" title="Monthly salary in silver">
+    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Weapon · roll · avg"><c-warrior.roster-gear :item="warrior.weapon" /></td>
+    <td class="align-middle max-md:col-span-2 md:py-3" data-label="Armour · roll · avg"><c-warrior.roster-gear :item="warrior.armor" /></td>
+    <td class="align-middle font-mono text-figure tabular-nums text-ink md:py-3 md:text-right" data-label="Wage / month">
         {{ wage }}
     </td>
     <td class="align-middle md:py-3">

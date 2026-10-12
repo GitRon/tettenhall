@@ -542,7 +542,7 @@ def test_warrior_detail_view_says_how_long_the_player_has_left_him_unpaid(logged
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
 
     assert response.status_code == 200
-    assert response.context["unpaid_wages_note"] == "2 of 3 unpaid months"
+    assert response.context["unpaid_wages_note"] == "2 of 3 unpaid months · morale will not recover"
 
 
 @pytest.mark.django_db

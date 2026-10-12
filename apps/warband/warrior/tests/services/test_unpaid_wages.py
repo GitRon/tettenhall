@@ -36,7 +36,7 @@ def test_get_unpaid_wages_note_counts_the_first_month():
 
     result = get_unpaid_wages_note(warrior=warrior)
 
-    assert result == "1 of 3 unpaid months"
+    assert result == "1 of 3 unpaid months · morale will not recover"
 
 
 @pytest.mark.django_db
@@ -45,4 +45,4 @@ def test_get_unpaid_wages_note_counts_the_last_month_before_he_walks():
 
     result = get_unpaid_wages_note(warrior=warrior)
 
-    assert result == "2 of 3 unpaid months"
+    assert result == "2 of 3 unpaid months · morale will not recover"

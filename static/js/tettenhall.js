@@ -31,7 +31,7 @@
      * for, at the moment an error toast is the reason the player wants it.
      */
     const HOST_CLASS = 'fixed bottom-24 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-y-2 px-4 md:bottom-4';
-    const TOAST_CLASS = 'w-full border bg-raised px-4 py-3 text-sm text-ink';
+    const TOAST_CLASS = 'w-full border bg-raised px-4 py-3 text-ink';
 
     /*
      * Django's level tags, plus the "success" and "error" this file raises itself.
@@ -51,16 +51,16 @@
 
     const LABEL_CLASS = 'mb-1 font-mono text-label uppercase tracking-label text-ink-muted';
 
-    let host = null;
-
-    const toastHost = () => {
-        if (!host) {
-            host = document.createElement('div');
-            host.className = HOST_CLASS;
-            document.body.appendChild(host);
-        }
-        return host;
-    };
+    /*
+     * In the page from the start rather than made with the first toast, and polite: a screen reader
+     * announces what is added to a live region it already knows about, and many of them say nothing
+     * for a region that arrives already holding its text. A warning or an error carries "alert" on
+     * itself, which is read out on arrival wherever it lands.
+     */
+    const host = document.createElement('div');
+    host.className = HOST_CLASS;
+    host.setAttribute('aria-live', 'polite');
+    document.body.appendChild(host);
 
     const toast = (text, level) => {
         if (!text) {
@@ -80,9 +80,11 @@
         body.textContent = text;
         element.appendChild(body);
         // A warning or an error interrupts; the rest is progress the player does not have to be
-        // pulled away from.
-        element.setAttribute('role', level === 'error' || level === 'warning' ? 'alert' : 'status');
-        toastHost().appendChild(element);
+        // pulled away from, and the polite host reads it out in its own time.
+        if (level === 'error' || level === 'warning') {
+            element.setAttribute('role', 'alert');
+        }
+        host.appendChild(element);
         window.setTimeout(() => element.remove(), TOAST_TIMEOUT);
     };
 
@@ -91,7 +93,9 @@
     document.body.addEventListener('htmx:beforeOnLoad', (event) => {
         const status = event.detail.xhr.status;
         if (500 <= status && status < 600) {
-            toast('An error has occurred.', 'error');
+            // Says what the player can do about it. Whether anything was written before the failure
+            // is not known here, so the page is where he looks.
+            toast('That did not go through. Reload the page to see where things stand.', 'error');
         }
     });
 
@@ -222,6 +226,19 @@
         if (menu && menu.matches(':popover-open')) {
             menu.hidePopover();
         }
+    });
+
+    /*
+     * A list that reloads itself swaps out the element the keyboard was on - the confirming Dismiss
+     * among them - and focus falls back to the top of the document, a score of presses away from
+     * where the player was. When that has happened, the swapped-in content hands it to its own
+     * "data-swap-focus", the list's heading, so the next Tab carries on from the list.
+     */
+    document.body.addEventListener('htmx:afterSettle', (event) => {
+        if (document.activeElement && document.activeElement !== document.body) {
+            return;
+        }
+        event.detail.elt.querySelector('[data-swap-focus]')?.focus();
     });
 
     // The battle log's Saga and Tally tabs. The choice is written onto the "group" around the log

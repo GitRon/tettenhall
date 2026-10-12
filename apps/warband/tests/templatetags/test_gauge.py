@@ -1,4 +1,4 @@
-from apps.warband.templatetags.gauge import gauge_percent, is_below_a_third, is_below_peak
+from apps.warband.templatetags.gauge import gauge_percent, is_below_a_third, is_below_peak, is_full
 
 
 def test_is_below_peak_ceiling_cut_below_the_peak():
@@ -45,5 +45,17 @@ def test_is_below_a_third_exactly_at_it():
 
 def test_is_below_a_third_above_it():
     result = is_below_a_third(4, 10)
+
+    assert result is False
+
+
+def test_is_full_at_the_maximum():
+    result = is_full(12, 12)
+
+    assert result is True
+
+
+def test_is_full_one_short():
+    result = is_full(11, 12)
 
     assert result is False

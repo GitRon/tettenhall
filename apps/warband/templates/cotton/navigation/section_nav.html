@@ -17,12 +17,17 @@
                 <li class="flex-1 md:flex-none">
                     {# "aria-current" is the marker a screen reader reads; the colour and the rule are #}
                     {# the same statement for everybody else. It is the shell's only highlight, and it #}
-                    {# marks a location rather than an action. #}
+                    {# marks a location rather than an action - so the rule is "ink", never "blood", #}
+                    {# which is kept for something being wrong. #}
+                    {#  #}
+                    {# The bar is "raised" already, so a hover cannot move the background there. It #}
+                    {# answers with a "rule-strong" rule where the current entry's rule sits instead, and #}
+                    {# the word keeps its colour. #}
                     {#  #}
                     {# The rule sits above the entry on a phone and below it on a desk, because the bar #}
                     {# itself has swapped ends: pinned to the bottom of the screen, a bottom border is #}
                     {# two pixels on the last row the screen has. #}
-                    <a class="flex flex-col items-center gap-y-1 border-t-2 py-2 font-mono text-label uppercase tracking-label no-underline md:flex-row md:gap-x-2 md:gap-y-0 md:border-b-2 md:border-t-0 md:py-3 {% if section.key == current %}border-blood text-ink hover:text-ink md:border-b-blood{% else %}border-transparent text-ink-muted hover:text-ink md:border-b-transparent{% endif %}"
+                    <a class="flex flex-col items-center gap-y-1 border-t-2 py-2 font-mono text-label uppercase tracking-label no-underline md:flex-row md:gap-x-2 md:gap-y-0 md:border-b-2 md:border-t-0 md:py-3 {% if section.key == current %}border-ink text-ink md:border-b-ink{% else %}border-transparent text-ink-muted hover:border-rule-strong md:border-b-transparent md:hover:border-b-rule-strong{% endif %}"
                        href="{{ section.url }}"
                        {% if section.key == current %}aria-current="page"{% endif %}>
                         <i aria-hidden="true" class="fa-solid {{ section.icon }}"></i>
