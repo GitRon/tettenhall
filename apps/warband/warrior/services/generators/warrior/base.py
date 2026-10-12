@@ -107,6 +107,9 @@ class BaseWarriorGenerator:
 
         return stat
 
+    def draw_name(self) -> str:
+        return draw_warrior_name(culture=self.culture, savegame_id=self.savegame_id)
+
     def process(self) -> Warrior:
         # Every roll is rounded to the integer its column holds, and rounded before the guard sees
         # it. The guards compare against zero, and a raw "random.gauss" float of 0.42 satisfies them
@@ -196,7 +199,7 @@ class BaseWarriorGenerator:
             armor = None
 
         warrior = Warrior.objects.create(
-            name=draw_warrior_name(culture=self.culture, savegame_id=self.savegame_id),
+            name=self.draw_name(),
             culture=self.culture,
             faction=self.faction,
             savegame_id=self.savegame_id,

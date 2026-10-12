@@ -22,3 +22,16 @@ class LeaderWarriorGenerator(BaseWarriorGenerator):
     # The player's own hand in the world rather than a hireling, so he is the one archetype off the
     # payroll - see "BaseWarriorGenerator.draws_a_wage"
     draws_a_wage = False
+
+    def __init__(self, *, name: str | None = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.name = name
+
+    def draw_name(self) -> str:
+        # The one man the player may name himself. A typed name is taken as it stands, without the
+        # living-names check a drawn one gets - see "handle_create_factions_for_new_savegame" for why
+        # nobody can hold it before him
+        if self.name is not None:
+            return self.name
+
+        return super().draw_name()

@@ -52,7 +52,7 @@ def test_handle_stock_starting_gear_for_player_faction_hands_the_player_a_poor_w
     faction = FactionFactory.build()
 
     result = handle_stock_starting_gear_for_player_faction(
-        context=NewFactionCreated(faction=faction, current_month=1, is_player=True)
+        context=NewFactionCreated(faction=faction, current_month=1, is_player=True, leader_name=None)
     )
 
     assert result == [
@@ -77,7 +77,7 @@ def test_handle_stock_starting_gear_for_player_faction_hands_the_player_a_poor_w
 
 def test_handle_stock_starting_gear_for_player_faction_leaves_a_rival_empty_handed():
     result = handle_stock_starting_gear_for_player_faction(
-        context=NewFactionCreated(faction=FactionFactory.build(), current_month=1, is_player=False)
+        context=NewFactionCreated(faction=FactionFactory.build(), current_month=1, is_player=False, leader_name=None)
     )
 
     assert result is None

@@ -30,6 +30,8 @@ class CreateNewLeaderWarrior(Command):
     # handler resolves them, where a query is allowed. "CreateWarrior" carries them already resolved
     # because the event its producer reacts to was given them by a command handler that could query.
     faction: Faction
+    # What the player named him, or None to draw him a name like any other warrior
+    name: str | None
 
 
 @dataclass(kw_only=True)

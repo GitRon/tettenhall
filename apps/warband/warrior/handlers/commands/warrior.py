@@ -488,7 +488,10 @@ def handle_create_new_warrior(*, context: CreateWarrior) -> list[Event] | Event:
 def handle_create_new_leader_warrior(*, context: CreateNewLeaderWarrior) -> list[Event] | Event:
     # Create warrior
     warrior_generator = LeaderWarriorGenerator(
-        culture=context.faction.culture, faction=context.faction, savegame_id=context.faction.savegame_id
+        culture=context.faction.culture,
+        faction=context.faction,
+        savegame_id=context.faction.savegame_id,
+        name=context.name,
     )
     warrior = warrior_generator.process()
 

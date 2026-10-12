@@ -12,6 +12,7 @@ class CreateFactionsForNewSavegame(Command):
     savegame: Savegame
     faction_name: str
     town_name: str
+    leader_name: str | None
     faction_culture_id: int
 
 

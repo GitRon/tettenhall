@@ -167,11 +167,16 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
             )
         )
 
+    # The player's faction leads the list, and that order is what lets his leader keep a typed name
+    # unchecked: the bus drains FIFO, so he is the first warrior the savegame has, and every man drawn
+    # after him - rival leaders included - is drawn against the living names, his among them
+    player_faction_id = context.savegame.player_faction_id
     return [
         NewFactionCreated(
             faction=faction,
             current_month=context.savegame.current_month,
-            is_player=faction.id == context.savegame.player_faction_id,
+            is_player=faction.id == player_faction_id,
+            leader_name=context.leader_name if faction.id == player_faction_id else None,
         )
         for faction in faction_list
     ]

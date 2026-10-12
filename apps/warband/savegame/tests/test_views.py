@@ -38,7 +38,12 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     ):
         response = logged_in_client.post(
             reverse("warband:savegame-create-view"),
-            data={"town_name": "Winchester", "faction_name": "Wessex", "faction_culture": culture.id},
+            data={
+                "town_name": "Winchester",
+                "faction_name": "Wessex",
+                "leader_name": "Cerdic",
+                "faction_culture": culture.id,
+            },
         )
 
     assert response.status_code == 302
@@ -49,7 +54,7 @@ def test_savegame_create_view_bootstraps_a_whole_game(logged_in_client, user):
     assert savegame.player_faction.culture == culture
     # The player faction plus the three drawn rivals
     assert Faction.objects.filter(savegame=savegame).count() == 4
-    assert savegame.player_faction.leader is not None
+    assert savegame.player_faction.leader.name == "Cerdic"
     # Three stalls in a town without a market of its own
     assert savegame.player_faction.available_items.count() == 3
     # One steady-work quest and one errand on the board. Which ones is drawn, how many is not

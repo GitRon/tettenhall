@@ -39,6 +39,7 @@ def play_savegame(
         CreateNewSavegame(
             town_name=f"Town {seed}",
             faction_name=f"Band {seed}",
+            leader_name=None,
             faction_culture_id=rng.choice(sorted(Culture.objects.values_list("id", flat=True))),
             created_by_id=user.id,
         )

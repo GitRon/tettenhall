@@ -23,6 +23,7 @@ from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.handlers.commands.warrior import (
     handle_award_earned_nickname,
     handle_change_warrior_max_morale,
+    handle_create_new_leader_warrior,
     handle_dismiss_warrior,
     handle_earn_traits_in_skirmish,
     handle_enslave_captured_warrior,
@@ -38,6 +39,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
 from apps.warband.warrior.messages.commands.warrior import (
     AwardEarnedNickname,
     ChangeWarriorMaxMorale,
+    CreateNewLeaderWarrior,
     DismissWarrior,
     EarnTraitsInSkirmish,
     EnslaveCapturedWarrior,
@@ -51,6 +53,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     TendWarriorWounds,
 )
 from apps.warband.warrior.messages.events.warrior import (
+    NewLeaderWarriorCreated,
     WarriorEarnedNickname,
     WarriorGainedTrait,
     WarriorHealthHealed,
@@ -927,3 +930,13 @@ def test_handle_tend_warrior_wounds_refuses_the_dead():
     result = handle_tend_warrior_wounds(context=TendWarriorWounds(warrior=warrior, faction=faction, costs=0, month=3))
 
     assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_create_new_leader_warrior_names_him_what_the_player_chose():
+    faction = FactionFactory()
+
+    result = handle_create_new_leader_warrior(context=CreateNewLeaderWarrior(faction=faction, name="Cerdic"))
+
+    assert result == NewLeaderWarriorCreated(faction=faction, warrior=Warrior.objects.get(faction=faction))
+    assert result.warrior.name == "Cerdic"
