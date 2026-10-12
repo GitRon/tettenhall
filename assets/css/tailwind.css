@@ -422,6 +422,45 @@
 }
 
 /*
+ * The filled control: the one thing a screen exists for - see "One filled element per screen" in
+ * docs/patterns/visual-identity.md. A utility for the same reason as the row action: it is written by
+ * crispy layouts through "apps/common/form_styles.py" and by hand in templates, and one definition is
+ * what keeps those from drifting apart.
+ *
+ * It answers the pointer with its rule, "ink", and leaves the fill alone: a filled button that drops to
+ * the dark ground on hover reads as the button leaving rather than the pointer arriving.
+ */
+@utility button-primary {
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 9px 30px;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: var(--tracking-label);
+    text-align: center;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-ground);
+    cursor: pointer;
+    background-color: var(--color-blood);
+    border: 1px solid var(--color-blood);
+
+    &:hover {
+        color: var(--color-ground);
+        background-color: var(--color-blood);
+        border-color: var(--color-ink);
+    }
+}
+
+/* The filled control inside a form row, where the medium size would outweigh the fields beside it */
+@utility button-primary-small {
+    @apply button-primary;
+    padding: 4px 15px;
+}
+
+/*
  * The row menu: what can be done to one line of a table, behind three dots at its end - see
  * "faction/warrior/components/roster_row_menu.html".
  *

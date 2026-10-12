@@ -32,24 +32,14 @@ FIELD_SPACING = "mb-5"
 #: A fieldset carries the browser's own margin, padding and border, and the layouts want none of them.
 FIELDSET = "m-0 border-0 p-0"
 
-_BUTTON = "box-border inline-block cursor-pointer border font-mono text-label uppercase tracking-label"
-_BUTTON_MEDIUM = f"{_BUTTON} px-[30px] py-[9px]"
-_BUTTON_SMALL = f"{_BUTTON} px-[15px] py-[4px]"
-
-# Every variant answers the pointer by moving its background. A button that does not answer reads as
-# disabled, and the palette has no second shade of anything to answer with.
-#
-# The filled treatment is the same string twice on purpose. There is one reserved colour, and a form
-# whose only button commits the player to something - signing in, taking a contract, marching on a
-# rival - is exactly what it is reserved for, whether or not the wording sounds dangerous. Both names
-# survive because the call sites read better for saying which they meant.
-_FILLED = "border-blood bg-blood text-ground hover:border-ink"
-_PRIMARY = _FILLED
-_DANGER = _FILLED
-
-BUTTON_PRIMARY = f"{_BUTTON_MEDIUM} {_PRIMARY}"
-BUTTON_PRIMARY_SMALL = f"{_BUTTON_SMALL} {_PRIMARY}"
-BUTTON_DANGER_SMALL = f"{_BUTTON_SMALL} {_DANGER}"
+# The filled treatment is the one reserved colour, and a form whose only button commits the player to
+# something - signing in, taking a contract, marching on a rival - is exactly what it is reserved for,
+# whether or not the wording sounds dangerous. "DANGER" is a name of its own because the call sites read
+# better for saying which they meant. The look is the "button-primary" utility in the stylesheet, which
+# the templates that draw the control by hand use as well.
+BUTTON_PRIMARY = "button-primary"
+BUTTON_PRIMARY_SMALL = "button-primary-small"
+BUTTON_DANGER_SMALL = BUTTON_PRIMARY_SMALL
 
 #: The outlined control beside a form's filled one is the row action every template uses, defined once in
 #: the stylesheet - see "The row action" in docs/patterns/visual-identity.md.

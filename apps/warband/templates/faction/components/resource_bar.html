@@ -24,7 +24,7 @@
         {# A savegame can be without a player faction, and there is no war band to walk into then - #}
         {# which is the same answer the section nav gives by dropping the entry entirely #}
         {% if current_savegame.player_faction_id %}
-            <a class="text-ink no-underline hover:text-ink-muted"
+            <a class="text-ink no-underline underline-offset-4 hover:underline hover:decoration-rule-strong"
                href="{% url 'warband:warband-roster-view' %}"
                title="Your war band">
                 <span class="text-label tracking-label text-ink-muted">Men</span> {{ faction_warriors.count }}
@@ -44,13 +44,13 @@
                 </a>
             </span>
         {% else %}
-            <a class="text-ink no-underline hover:text-ink-muted"
+            <a class="text-ink no-underline underline-offset-4 hover:underline hover:decoration-rule-strong"
                href="{% url 'warband:transaction-list-view' %}"
                title="The ledger">
                 <span class="text-label tracking-label text-ink-muted">Silver</span> {{ current_balance }}
             </a>
         {% endif %}
-        <a class="text-ink no-underline hover:text-ink-muted"
+        <a class="text-ink no-underline underline-offset-4 hover:underline hover:decoration-rule-strong"
            href="{% url 'warband:skirmish-list-view' %}"
            title="Skirmishes still open">
             <span class="text-label tracking-label text-ink-muted">Fights</span> {{ open_skirmishes.count }}
@@ -67,7 +67,7 @@
         {# aside wherever a "data-month-heading" is on screen. In CSS rather than in the view: this #}
         {# element is re-fetched by its own htmx view, whose request knows nothing of the page it #}
         {# lands on. #}
-        <a class="whitespace-nowrap text-label tracking-label text-ink no-underline hover:text-ink-muted in-[body:has([data-month-heading])]:hidden"
+        <a class="whitespace-nowrap text-label tracking-label text-ink no-underline underline-offset-4 hover:underline hover:decoration-rule-strong in-[body:has([data-month-heading])]:hidden"
            href="{% url 'warband:dashboard-view' %}"
            title="{{ current_savegame.current_date.label }}">
             <i class="fa-solid fa-calendar-days hidden md:inline"></i> {{ current_savegame.current_date.season_label }}
