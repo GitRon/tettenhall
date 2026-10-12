@@ -7,6 +7,9 @@
     <c-navigation.section-nav :sections="nav_sections" :current="nav_section" />
 {% endblock navigation %}
 
+{# The man's own name, since no page of the map is his and the bar's answer would be no name at all #}
+{% block title %}{{ object.display_name }} - {% endblock %}
+
 {% block content %}
     <h1>Warrior {{ object.display_name }} of {{ object.faction }}</h1>
 

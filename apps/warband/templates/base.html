@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Tettenhall - The Game</title>
+    {# Where the player is, then the game - so a row of tabs can be told apart by their first word #}
+    <title>{% block title %}{% if nav_title %}{{ nav_title }} - {% endif %}{% endblock %}Tettenhall</title>
     <link rel="icon" href="{% static 'svg/icons/crossed_swords.svg' %}" type="image/svg+xml">
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}">
     {# The three faces, self-hosted out of "node_modules", which is a static root - so they cost no #}
@@ -28,13 +29,18 @@
 {# The token travels as data rather than as a JavaScript literal, which is what lets the whole script #}
 {# below be a static file with no template rendering in it. #}
 <body data-csrf-token="{{ csrf_token }}">
+{# The first thing a keyboard reaches, and out of sight until it does: without it the bar and both #}
+{# navigation levels stand between every page load and the page, a score of presses on the roster. #}
+<a class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-raised focus:px-4 focus:py-2"
+   href="#main">Skip to content</a>
+<header>
 {# The bar carries what is true everywhere: the counters every decision is made against and the #}
 {# account menu. Where the player can go is the section nav below it - see #}
 {# docs/patterns/navigation.md, which is also where the month is finished: the control that ends it #}
 {# lives on the Month page, beside the sentence saying whether it can be pressed. #}
 <nav class="bg-raised" data-navbar>
     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 md:min-h-20 md:px-4 md:py-0 lg:px-8">
-        <a class="text-2xl text-ink no-underline hover:text-ink"
+        <a class="text-2xl text-ink no-underline"
            href="{% url 'warband:dashboard-view' %}">Tettenhall</a>
 
         {% if request.user.is_authenticated and current_savegame %}
@@ -53,19 +59,20 @@
             {# one element in one place in the document, and a dropdown works at both widths, so #}
             {# hiding it here and repeating it there would mean two copies of the same two links. #}
             <details class="relative md:ml-auto" data-menu>
-                <summary class="cursor-pointer list-none font-mono text-label uppercase tracking-label text-ink-muted hover:text-ink">
+                {# The bar is "raised" already, so hover answers with a rule under the words, which keep their colour #}
+                <summary class="cursor-pointer list-none border-b border-transparent font-mono text-label uppercase tracking-label text-ink-muted hover:border-rule-strong">
                     {% if current_savegame.player_faction %}{{ current_savegame.player_faction }}{% else %}No savegame{% endif %} / {{ request.user }}
                 </summary>
                 {# The panel opens from whichever end of the bar the toggle is on: the left gutter on a #}
                 {# phone, the right end on a desk. Anchored the other way, it hangs off the screen edge. #}
                 <ul class="absolute left-0 top-full z-20 m-0 w-max min-w-full max-w-[calc(100vw-2rem)] md:left-auto md:right-0 md:min-w-48 list-none bg-raised p-4 border border-rule">
-                    <li><a class="text-sm text-ink-muted" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
+                    <li><a class="text-ink-muted" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
                     {# A form, not a link: logging out only answers a POST. The button sheds the base #}
                     {# layer's outlined control so it reads as the link above it. #}
                     <li>
                         <form method="post" action="{% url 'warband:logout-view' %}">
                             {% csrf_token %}
-                            <button type="submit" class="border-0 bg-transparent p-0 font-body text-sm font-light normal-case tracking-normal text-ink-muted underline decoration-rule underline-offset-[0.2em] hover:bg-transparent hover:decoration-blood">Logout</button>
+                            <button type="submit" class="border-0 bg-transparent p-0 font-body text-[1.0625rem] font-light normal-case tracking-normal text-ink-muted underline decoration-rule underline-offset-[0.2em] hover:bg-transparent hover:decoration-blood">Logout</button>
                         </form>
                     </li>
                 </ul>
@@ -82,14 +89,15 @@
     <c-navigation.section-nav :sections="nav_sections" :current="current_nav_section" />
     {% include 'navigation/components/page_nav.html' %}
 {% endblock navigation %}
+</header>
 
 {# The section nav is pinned to the bottom of the screen below "md:", so it is out of flow and the #}
 {# last control on a page would sit under it. The floor is unconditional: it costs a phone screen #}
 {# some empty space where there is no bar - the login page, the fight - and the alternative is every #}
 {# page having to know whether the bar is there. #}
-<div class="px-4 pb-24 pt-4 md:pb-6 lg:px-8">
+<main class="px-4 pb-24 pt-4 md:pb-6 lg:px-8" id="main">
     {% block content %}{% endblock %}
-</div>
+</main>
 
 <div class="hidden" id="hidden-box"></div>
 

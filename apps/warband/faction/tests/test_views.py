@@ -934,7 +934,7 @@ def test_faction_warrior_list_view_says_how_long_a_man_has_gone_unpaid(logged_in
     )
 
     assert response.status_code == 200
-    assert response.context["warrior_list"][0].unpaid_wages_note == "2 of 3 unpaid months"
+    assert response.context["warrior_list"][0].unpaid_wages_note == "2 of 3 unpaid months · morale will not recover"
 
 
 @pytest.mark.django_db

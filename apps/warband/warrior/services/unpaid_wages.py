@@ -19,6 +19,9 @@ def get_unpaid_wages_note(*, warrior: Warrior) -> str | None:
     the player meets one wording in both places. Unlike that warning, this is the clock as it stands
     rather than a projection: it counts the months he has already gone without, not the one the next
     payroll would add.
+
+    The consequence rides on the same line rather than in a tooltip, because a touch or keyboard player
+    never sees a "title", and the count alone does not say why it matters.
     """
     # A prisoner and a mercenary on the pub's shelf carry whatever count they had when they left a
     # roster, and nobody owes either of them wages - so the faction is asked before the column is.
@@ -26,4 +29,4 @@ def get_unpaid_wages_note(*, warrior: Warrior) -> str | None:
     if warrior.faction_id is None or warrior.unpaid_months == 0:
         return None
 
-    return f"{warrior.unpaid_months} of {Warrior.UNPAID_MONTHS_UNTIL_WALKOUT} unpaid months"
+    return f"{warrior.unpaid_months} of {Warrior.UNPAID_MONTHS_UNTIL_WALKOUT} unpaid months · morale will not recover"

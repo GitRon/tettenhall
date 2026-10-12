@@ -37,6 +37,30 @@ class DiceNotation:
         return (self.rolls * (self.sides + 1) / 2) + self.modifier
 
     @property
+    def expected_result(self) -> float:
+        """
+        What "result" hands back on average, floor included.
+
+        The figure a player reads as a weapon's average. "expectancy_value" lets a deep modifier pull it
+        below zero - "1d4-3" averages -0.5 there - but no blow ever lands for less than nothing, so the
+        three faces that fall short count as 0 and the one that clears counts as 1: 0.25. The two only
+        differ when the floor can be reached; prices and the gear hand-out rank by "expectancy_value".
+
+        Counted exactly over every total the dice can show rather than estimated, which costs one pass
+        per die over at most "best_possible_roll" totals.
+        """
+        ways_to_reach = {0: 1}
+        for _ in range(self.rolls):
+            next_ways = {}
+            for total, ways in ways_to_reach.items():
+                for face in range(1, self.sides + 1):
+                    next_ways[total + face] = next_ways.get(total + face, 0) + ways
+            ways_to_reach = next_ways
+
+        outcomes = self.sides**self.rolls
+        return sum(max(total + self.modifier, 0) * ways for total, ways in ways_to_reach.items()) / outcomes
+
+    @property
     def best_possible_roll(self) -> int:
         """
         Every die showing its highest face, before the modifier.

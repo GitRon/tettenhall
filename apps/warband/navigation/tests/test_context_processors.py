@@ -121,3 +121,24 @@ def test_navigation_marks_nothing_when_no_url_was_resolved(user, current_savegam
 
     assert result["current_nav_section"] is None
     assert result["nav_pages"] == []
+
+
+@pytest.mark.django_db
+def test_navigation_titles_the_window_after_the_current_page(logged_in_client, current_savegame):
+    response = logged_in_client.get(reverse("warband:town-shop-view"))
+
+    assert response.context["nav_title"] == "Shop"
+
+
+@pytest.mark.django_db
+def test_navigation_titles_the_window_after_a_section_of_one_page(logged_in_client, current_savegame):
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.context["nav_title"] == "Month"
+
+
+@pytest.mark.django_db
+def test_navigation_titles_nothing_without_a_savegame(logged_in_client):
+    response = logged_in_client.get(reverse("warband:dashboard-view"))
+
+    assert response.context["nav_title"] is None
