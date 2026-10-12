@@ -72,7 +72,7 @@ def _raising_templates() -> list[dict]:
 
 def _payroll(*, budget: int, unpaid_months: int = 0) -> Payroll:
     return Payroll(
-        warrior_list=[
+        warriors=[
             WarriorFactory.build(id=1, monthly_salary=30),
             WarriorFactory.build(id=2, monthly_salary=40, unpaid_months=unpaid_months),
         ],
@@ -224,11 +224,11 @@ RENDER_ROWS = {
     ],
     "skirmish.faction-box": [
         (
-            '<c-skirmish.faction-box :faction="faction" :warrior_list="warrior_list" :is_player="is_player"'
+            '<c-skirmish.faction-box :faction="faction" :warriors="warriors" :is_player="is_player"'
             ' :skirmish="skirmish" :skirmish_is_decided="skirmish_is_decided" />',
             {
                 "faction": FactionFactory.build(id=1),
-                "warrior_list": [],
+                "warriors": [],
                 "is_player": True,
                 "skirmish": _built_skirmish(),
                 "skirmish_is_decided": False,
@@ -237,14 +237,14 @@ RENDER_ROWS = {
     ],
     "skirmish.skirmish-table": [
         (
-            '<c-skirmish.skirmish-table :skirmish_list="skirmish_list" action_icon="fa-arrow-right"'
+            '<c-skirmish.skirmish-table :skirmishes="skirmishes" action_icon="fa-arrow-right"'
             ' action_label="Continue the fight at" empty_text="Nothing" />',
-            {"skirmish_list": []},
+            {"skirmishes": []},
         ),
         (
-            '<c-skirmish.skirmish-table :skirmish_list="skirmish_list" show_victor action_icon="fa-magnifying-glass"'
+            '<c-skirmish.skirmish-table :skirmishes="skirmishes" show_victor action_icon="fa-magnifying-glass"'
             ' action_label="Read the report of" empty_text="Nothing" />',
-            {"skirmish_list": [_built_skirmish()]},
+            {"skirmishes": [_built_skirmish()]},
         ),
     ],
     "warrior.attribute": [

@@ -12,10 +12,10 @@
         player knows too little about them to fill most of those columns - see
         docs/patterns/warrior-knowledge.md.
     {% endcomment %}
-    {% if warrior_list %}
+    {% if warriors %}
         {% if is_player_faction %}
             <c-warrior.roster-table :wage_total="wage_bill_payroll.total_amount">
-                {% for warrior in warrior_list %}
+                {% for warrior in warriors %}
                     <c-warrior.roster-row :warrior="warrior" :knowledge="roster_knowledge" :wage="warrior.monthly_salary" :unpaid_note="warrior.unpaid_wages_note">
                         {% include 'faction/warrior/components/roster_row_menu.html' with warrior=warrior %}
                     </c-warrior.roster-row>
@@ -23,7 +23,7 @@
             </c-warrior.roster-table>
         {% else %}
             <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-                {% for warrior in warrior_list %}
+                {% for warrior in warriors %}
                     <c-warrior.row :warrior="warrior" :knowledge="roster_knowledge" />
                 {% endfor %}
             </ul>

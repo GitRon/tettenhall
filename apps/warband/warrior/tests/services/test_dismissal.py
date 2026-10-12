@@ -16,7 +16,7 @@ def test_get_dismissal_refusals_lets_a_free_warrior_go():
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, monthly_salary=120)
 
-    result = get_dismissal_refusals(faction=faction, warrior_list=[warrior], month=3, balance=1000)
+    result = get_dismissal_refusals(faction=faction, warriors=[warrior], month=3, balance=1000)
 
     assert result == {}
 
@@ -28,7 +28,7 @@ def test_get_dismissal_refusals_keeps_the_leader():
     faction.leader = leader
     faction.save()
 
-    result = get_dismissal_refusals(faction=faction, warrior_list=[leader], month=3, balance=1000)
+    result = get_dismissal_refusals(faction=faction, warriors=[leader], month=3, balance=1000)
 
     assert result == {leader.id: LEADER_REFUSAL}
 
@@ -44,7 +44,7 @@ def test_get_dismissal_refusals_keeps_a_warrior_signed_on_to_a_quest():
     quest_contract = QuestContractFactory(faction=faction, accepted_in_month=3)
     quest_contract.assigned_warriors.add(warrior)
 
-    result = get_dismissal_refusals(faction=faction, warrior_list=[warrior], month=3, balance=1000)
+    result = get_dismissal_refusals(faction=faction, warriors=[warrior], month=3, balance=1000)
 
     assert result == {warrior.id: BUSY_REFUSAL}
 
@@ -61,7 +61,7 @@ def test_get_dismissal_refusals_names_the_month_before_the_price():
     quest_contract = QuestContractFactory(faction=faction, accepted_in_month=3)
     quest_contract.assigned_warriors.add(warrior)
 
-    result = get_dismissal_refusals(faction=faction, warrior_list=[warrior], month=3, balance=0)
+    result = get_dismissal_refusals(faction=faction, warriors=[warrior], month=3, balance=0)
 
     assert result == {warrior.id: BUSY_REFUSAL}
 
@@ -71,7 +71,7 @@ def test_get_dismissal_refusals_on_a_purse_that_cannot_pay_him_off():
     faction = FactionFactory()
     warrior = WarriorFactory(faction=faction, monthly_salary=120)
 
-    result = get_dismissal_refusals(faction=faction, warrior_list=[warrior], month=3, balance=119)
+    result = get_dismissal_refusals(faction=faction, warriors=[warrior], month=3, balance=119)
 
     assert result == {warrior.id: UNAFFORDABLE_REFUSAL}
 
@@ -88,6 +88,6 @@ def test_get_dismissal_refusals_answers_a_whole_roster_at_once():
     faction.save()
     free_warrior = WarriorFactory(faction=faction, monthly_salary=120)
 
-    result = get_dismissal_refusals(faction=faction, warrior_list=[leader, free_warrior], month=3, balance=1000)
+    result = get_dismissal_refusals(faction=faction, warriors=[leader, free_warrior], month=3, balance=1000)
 
     assert result == {leader.id: LEADER_REFUSAL}

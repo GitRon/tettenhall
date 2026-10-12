@@ -23,7 +23,7 @@ def test_for_faction_names_the_fight_the_killer_and_the_death_line():
 
     result = RollOfTheFallen.for_faction(faction=skirmish.attacking_faction)
 
-    assert result.fallen_list == [
+    assert result.fallen_warriors == [
         FallenWarrior(
             warrior=casualty.warrior,
             skirmish=skirmish,
@@ -41,7 +41,7 @@ def test_for_faction_keeps_a_death_recorded_before_the_killer_and_the_line_were(
 
     result = RollOfTheFallen.for_faction(faction=casualty.warrior.faction)
 
-    assert (result.fallen_list[0].killed_by, result.fallen_list[0].death_saga) == (None, "")
+    assert (result.fallen_warriors[0].killed_by, result.fallen_warriors[0].death_saga) == (None, "")
 
 
 @pytest.mark.django_db
@@ -56,7 +56,7 @@ def test_for_faction_puts_the_last_man_to_fall_first_and_counts_his_fights():
 
     result = RollOfTheFallen.for_faction(faction=faction)
 
-    assert [(fallen.warrior, fallen.fights_stood_in) for fallen in result.fallen_list] == [
+    assert [(fallen.warrior, fallen.fights_stood_in) for fallen in result.fallen_warriors] == [
         (last.warrior, 2),
         (first.warrior, 0),
     ]
@@ -70,14 +70,14 @@ def test_for_faction_leaves_out_the_living_and_another_factions_dead():
 
     result = RollOfTheFallen.for_faction(faction=casualty.warrior.faction)
 
-    assert [fallen.warrior for fallen in result.fallen_list] == [casualty.warrior]
+    assert [fallen.warrior for fallen in result.fallen_warriors] == [casualty.warrior]
 
 
 @pytest.mark.django_db
 def test_killer_side_is_the_defender_when_he_fell_attacking():
     casualty = SkirmishCasualtyFactory()
 
-    fallen = RollOfTheFallen.for_faction(faction=casualty.skirmish.attacking_faction).fallen_list[0]
+    fallen = RollOfTheFallen.for_faction(faction=casualty.skirmish.attacking_faction).fallen_warriors[0]
 
     assert fallen.killer_side == casualty.skirmish.defending_faction
 
@@ -93,6 +93,6 @@ def test_killer_side_is_the_attacker_when_he_fell_defending():
     )
     SkirmishCasualtyFactory(skirmish=skirmish, warrior__faction=skirmish.defending_faction, killed_by=killer)
 
-    fallen = RollOfTheFallen.for_faction(faction=skirmish.defending_faction).fallen_list[0]
+    fallen = RollOfTheFallen.for_faction(faction=skirmish.defending_faction).fallen_warriors[0]
 
     assert fallen.killer_side == skirmish.attacking_faction

@@ -202,8 +202,8 @@ class PlayerTurn:
             wage_bill=0,
             warriors_on_payroll=0,
             draft_wage=0,
-            pub_offer_list=[],
-            shop_offer_list=get_shop_offers(item_list=item_by_id.values()),
+            pub_offers=[],
+            shop_offers=get_shop_offers(items=item_by_id.values()),
             held_gear_values=get_held_gear_values(faction=self.faction),
         )
 

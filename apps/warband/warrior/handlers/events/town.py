@@ -23,6 +23,6 @@ def handle_feast_mends_cut_ceilings(*, context: FeastThrown) -> list[Command]:
             month=context.month,
             restores_toward_peak=True,
         )
-        for warrior in context.warrior_list
+        for warrior in context.warriors
         if warrior.is_mended_by_a_feast
     ]

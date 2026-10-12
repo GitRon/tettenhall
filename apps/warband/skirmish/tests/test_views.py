@@ -38,8 +38,8 @@ def test_skirmish_list_view_lists_the_open_fights_oldest_first(logged_in_client,
     response = logged_in_client.get(reverse("warband:skirmish-list-view"))
 
     assert response.status_code == 200
-    assert response.context["open_skirmish_list"].ordered is True
-    assert list(response.context["open_skirmish_list"]) == [first_fight, second_fight]
+    assert response.context["open_skirmishes"].ordered is True
+    assert list(response.context["open_skirmishes"]) == [first_fight, second_fight]
 
 
 @pytest.mark.django_db
@@ -55,7 +55,7 @@ def test_skirmish_list_view_lists_the_decided_fights_newest_first(logged_in_clie
     response = logged_in_client.get(reverse("warband:skirmish-list-view"))
 
     assert response.status_code == 200
-    assert list(response.context["decided_skirmish_list"]) == [second_fight, first_fight]
+    assert list(response.context["decided_skirmishes"]) == [second_fight, first_fight]
 
 
 @pytest.mark.django_db
@@ -63,8 +63,8 @@ def test_skirmish_list_view_without_any_fights_leaves_both_lists_empty(logged_in
     response = logged_in_client.get(reverse("warband:skirmish-list-view"))
 
     assert response.status_code == 200
-    assert list(response.context["open_skirmish_list"]) == []
-    assert list(response.context["decided_skirmish_list"]) == []
+    assert list(response.context["open_skirmishes"]) == []
+    assert list(response.context["decided_skirmishes"]) == []
 
 
 @pytest.mark.django_db
@@ -75,8 +75,8 @@ def test_skirmish_list_view_with_only_decided_fights_leaves_the_open_list_empty(
 
     response = logged_in_client.get(reverse("warband:skirmish-list-view"))
 
-    assert list(response.context["open_skirmish_list"]) == []
-    assert list(response.context["decided_skirmish_list"]) == [decided_fight]
+    assert list(response.context["open_skirmishes"]) == []
+    assert list(response.context["decided_skirmishes"]) == [decided_fight]
 
 
 @pytest.mark.django_db
@@ -89,8 +89,8 @@ def test_skirmish_list_view_hides_a_skirmish_of_another_savegame(logged_in_clien
 
     response = logged_in_client.get(reverse("warband:skirmish-list-view"))
 
-    assert list(response.context["open_skirmish_list"]) == []
-    assert list(response.context["decided_skirmish_list"]) == []
+    assert list(response.context["open_skirmishes"]) == []
+    assert list(response.context["decided_skirmishes"]) == []
 
 
 @pytest.mark.django_db
@@ -803,7 +803,7 @@ def test_battle_history_update_htmx_view_groups_the_log_into_rounds(logged_in_cl
     response = logged_in_client.get(reverse("warband:battle-history-update-htmx", kwargs={"skirmish_id": skirmish.id}))
 
     assert response.status_code == 200
-    assert [log.message for log in response.context["battle_log"].round_list[0].line_list] == ["a blow"]
+    assert [log.message for log in response.context["battle_log"].rounds[0].lines] == ["a blow"]
 
 
 @pytest.mark.django_db

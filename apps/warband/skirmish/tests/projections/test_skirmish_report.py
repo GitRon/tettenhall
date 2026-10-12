@@ -62,7 +62,7 @@ def test_for_skirmish_reads_only_the_faction_s_own_growth():
 
     report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
 
-    assert report.growth_list == [own_growth]
+    assert report.growths == [own_growth]
 
 
 @pytest.mark.django_db

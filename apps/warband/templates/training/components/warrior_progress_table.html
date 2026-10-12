@@ -1,6 +1,6 @@
 {# Where each man stands on the four attributes a month of training moves. #}
 {#  #}
-{# Reads the same "warrior_list" the roster cards do, so the two can never describe different war #}
+{# Reads the same "warriors" the roster cards do, so the two can never describe different war #}
 {# bands. The choice that drives it is one faction-wide row, and that lives on the month's page. #}
 {# A record per man on a phone, a row on a desk - see docs/patterns/responsive-layout.md. #}
 <table class="table-stack">
@@ -14,7 +14,7 @@
     </tr>
     </thead>
     <tbody>
-    {% for warrior in warrior_list %}
+    {% for warrior in warriors %}
         <tr>
             <td>
                 {{ warrior.display_name }}

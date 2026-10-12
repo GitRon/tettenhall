@@ -95,11 +95,11 @@ class MonthStanding:
 
     # The fights themselves rather than how many there are, because the band above the openings does
     # not only warn about them - it offers the way in, and a way in needs the row it leads to.
-    open_skirmish_list: list
+    open_skirmishes: list
     quest_count: int
     # Named rather than counted, because "which town" is a fact the player can act on and a player
     # who has to click to find out has learned nothing
-    occupiable_rival_list: list
+    occupiable_rivals: list
     can_build: bool
     shop_item_count: int
     pub_mercenary_count: int
@@ -114,7 +114,7 @@ class MonthStanding:
     @property
     def open_skirmish_count(self) -> int:
         """How many fights are holding the month, which is what the band's sentence and its plural read."""
-        return len(self.open_skirmish_list)
+        return len(self.open_skirmishes)
 
     @property
     def skirmish_to_enter(self) -> Skirmish | None:
@@ -129,12 +129,12 @@ class MonthStanding:
         Failing that, a single open fight is not a choice either. Only several unstarted ones are,
         and that is the case the list exists for.
         """
-        started = [skirmish for skirmish in self.open_skirmish_list if skirmish.current_round > 1]
+        started = [skirmish for skirmish in self.open_skirmishes if skirmish.current_round > 1]
         if started:
             return started[0]
 
-        if len(self.open_skirmish_list) == 1:
-            return self.open_skirmish_list[0]
+        if len(self.open_skirmishes) == 1:
+            return self.open_skirmishes[0]
 
         return None
 
@@ -150,7 +150,7 @@ class MonthStanding:
         """
         return bool(
             self.quest_count
-            or self.occupiable_rival_list
+            or self.occupiable_rivals
             or self.can_build
             or self.shop_item_count
             or self.pub_mercenary_count
@@ -178,9 +178,9 @@ class MonthStanding:
         town = Town.objects.filter(faction_id=player_faction.id).first()
 
         return cls(
-            open_skirmish_list=list(Skirmish.objects.for_savegame(savegame_id=savegame.id).unresolved()),
+            open_skirmishes=list(Skirmish.objects.for_savegame(savegame_id=savegame.id).unresolved()),
             quest_count=Quest.objects.for_player_faction(faction_id=player_faction.id).offered_in(month=month).count(),
-            occupiable_rival_list=list(Faction.objects.occupiable_by(savegame=savegame).order_by("name")),
+            occupiable_rivals=list(Faction.objects.occupiable_by(savegame=savegame).order_by("name")),
             can_build=town is not None and town.last_constructed_building_at != month,
             shop_item_count=player_faction.available_items.count(),
             pub_mercenary_count=player_faction.available_mercenaries.count(),

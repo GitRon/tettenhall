@@ -26,7 +26,7 @@ class FeastThrown(Event):
 
     town: Town
     faction: Faction
-    warrior_list: list[Warrior]
+    warriors: list[Warrior]
     restored_share: float
     costs: int
     month: int

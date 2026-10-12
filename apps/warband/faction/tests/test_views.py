@@ -82,7 +82,7 @@ def test_faction_detail_view_shows_a_rival(logged_in_client, current_savegame):
     response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
-    assert list(response.context["warrior_list"]) == [warrior]
+    assert list(response.context["warriors"]) == [warrior]
 
 
 @pytest.mark.django_db
@@ -297,7 +297,7 @@ def test_warband_roster_view_shows_the_players_own_men(logged_in_client, current
     response = logged_in_client.get(reverse("warband:warband-roster-view"))
 
     assert response.status_code == 200
-    assert list(response.context["warrior_list"]) == [warrior]
+    assert list(response.context["warriors"]) == [warrior]
 
 
 @pytest.mark.django_db
@@ -379,7 +379,7 @@ def test_warband_roster_view_lists_the_roster_by_name(logged_in_client, current_
 
     response = logged_in_client.get(reverse("warband:warband-roster-view"))
 
-    assert list(response.context["warrior_list"]) == [aelfric, cenwulf]
+    assert list(response.context["warriors"]) == [aelfric, cenwulf]
 
 
 @pytest.mark.django_db
@@ -463,7 +463,7 @@ def test_warband_progress_view_lists_the_players_own_men(logged_in_client, saveg
     response = logged_in_client.get(reverse("warband:warband-progress-view"))
 
     assert response.status_code == 200
-    assert list(response.context["warrior_list"]) == [warrior]
+    assert list(response.context["warriors"]) == [warrior]
 
 
 @pytest.mark.django_db
@@ -476,8 +476,8 @@ def test_warband_progress_view_asks_nothing_about_dismissing_a_man(logged_in_cli
 
     response = logged_in_client.get(reverse("warband:warband-progress-view"))
 
-    assert not hasattr(response.context["warrior_list"][0], "dismissal_refusal")
-    assert warrior.id == response.context["warrior_list"][0].id
+    assert not hasattr(response.context["warriors"][0], "dismissal_refusal")
+    assert warrior.id == response.context["warriors"][0].id
 
 
 @pytest.mark.django_db
@@ -505,7 +505,7 @@ def test_warband_fallen_view_lists_the_players_own_dead(logged_in_client, curren
     response = logged_in_client.get(reverse("warband:warband-fallen-view"))
 
     assert response.status_code == 200
-    assert [fallen.warrior for fallen in response.context["fallen_list"]] == [warrior]
+    assert [fallen.warrior for fallen in response.context["fallen_warriors"]] == [warrior]
 
 
 @pytest.mark.django_db
@@ -515,7 +515,7 @@ def test_warband_fallen_view_has_nobody_on_it_before_anybody_dies(logged_in_clie
     response = logged_in_client.get(reverse("warband:warband-fallen-view"))
 
     assert response.status_code == 200
-    assert response.context["fallen_list"] == []
+    assert response.context["fallen_warriors"] == []
 
 
 @pytest.mark.django_db
@@ -526,8 +526,8 @@ def test_rival_faction_list_view_lists_the_rivals_with_their_roster(logged_in_cl
 
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
-    assert list(response.context["rival_list"]) == [rival_faction]
-    assert response.context["rival_list"][0].warrior_count == 1
+    assert list(response.context["rivals"]) == [rival_faction]
+    assert response.context["rivals"][0].warrior_count == 1
 
 
 @pytest.mark.django_db
@@ -540,7 +540,7 @@ def test_rival_faction_list_view_excludes_a_defeated_rival(logged_in_client, cur
 
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
-    assert list(response.context["rival_list"]) == []
+    assert list(response.context["rivals"]) == []
 
 
 @pytest.mark.django_db
@@ -550,7 +550,7 @@ def test_rival_faction_list_view_hides_factions_of_other_savegames(logged_in_cli
 
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
-    assert list(response.context["rival_list"]) == []
+    assert list(response.context["rivals"]) == []
 
 
 @pytest.mark.django_db
@@ -564,7 +564,7 @@ def test_rival_faction_list_view_without_a_player_faction(logged_in_client, save
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
     assert response.status_code == 200
-    assert list(response.context["rival_list"]) == []
+    assert list(response.context["rivals"]) == []
 
 
 @pytest.mark.django_db
@@ -576,7 +576,7 @@ def test_rival_faction_list_view_offers_an_attack_on_a_rival(
 
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
-    assert response.context["rival_list"][0].can_be_attacked is True
+    assert response.context["rivals"][0].can_be_attacked is True
 
 
 @pytest.mark.django_db
@@ -593,8 +593,8 @@ def test_rival_faction_list_view_says_when_a_rivals_own_war_band_is_committed(
 
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
-    assert response.context["rival_list"][0].can_be_attacked is False
-    assert response.context["rival_list"][0].their_war_band_is_committed is True
+    assert response.context["rivals"][0].can_be_attacked is False
+    assert response.context["rivals"][0].their_war_band_is_committed is True
 
 
 @pytest.mark.django_db
@@ -657,7 +657,7 @@ def test_rival_faction_list_view_offers_no_attack_once_the_game_is_over(
 
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
-    assert [rival.can_be_attacked for rival in response.context["rival_list"]] == [False]
+    assert [rival.can_be_attacked for rival in response.context["rivals"]] == [False]
 
 
 @pytest.mark.django_db
@@ -675,7 +675,7 @@ def test_rival_faction_list_view_does_not_blame_the_rivals_men_once_the_game_is_
 
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
-    assert [rival.their_war_band_is_committed for rival in response.context["rival_list"]] == [False]
+    assert [rival.their_war_band_is_committed for rival in response.context["rivals"]] == [False]
 
 
 @pytest.mark.django_db
@@ -863,7 +863,7 @@ def test_faction_warrior_list_view_shows_the_living_warriors(logged_in_client, c
     )
 
     assert response.status_code == 200
-    assert list(response.context["warrior_list"]) == [warrior]
+    assert list(response.context["warriors"]) == [warrior]
 
 
 @pytest.mark.django_db
@@ -929,7 +929,7 @@ def test_faction_warrior_list_view_offers_the_dismissal_of_a_free_warrior(logged
     )
 
     assert response.status_code == 200
-    assert response.context["warrior_list"][0].dismissal_refusal is None
+    assert response.context["warriors"][0].dismissal_refusal is None
 
 
 @pytest.mark.django_db
@@ -944,7 +944,7 @@ def test_faction_warrior_list_view_says_why_the_leader_may_not_be_dismissed(logg
     )
 
     assert response.status_code == 200
-    assert response.context["warrior_list"][0].dismissal_refusal == LEADER_REFUSAL
+    assert response.context["warriors"][0].dismissal_refusal == LEADER_REFUSAL
 
 
 @pytest.mark.django_db
@@ -958,7 +958,7 @@ def test_faction_warrior_list_view_asks_nothing_about_dismissing_a_rivals_men(lo
     response = logged_in_client.get(reverse("warband:faction-warrior-list-htmx", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
-    assert hasattr(response.context["warrior_list"][0], "dismissal_refusal") is False
+    assert hasattr(response.context["warriors"][0], "dismissal_refusal") is False
 
 
 @pytest.mark.django_db
@@ -975,7 +975,7 @@ def test_faction_warrior_list_view_says_how_long_a_man_has_gone_unpaid(logged_in
     )
 
     assert response.status_code == 200
-    assert response.context["warrior_list"][0].unpaid_wages_note == "2 of 3 unpaid months · morale will not recover"
+    assert response.context["warriors"][0].unpaid_wages_note == "2 of 3 unpaid months · morale will not recover"
 
 
 @pytest.mark.django_db
@@ -990,7 +990,7 @@ def test_faction_warrior_list_view_asks_nothing_about_a_rivals_wage_troubles(log
     response = logged_in_client.get(reverse("warband:faction-warrior-list-htmx", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
-    assert hasattr(response.context["warrior_list"][0], "unpaid_wages_note") is False
+    assert hasattr(response.context["warriors"][0], "unpaid_wages_note") is False
 
 
 @pytest.mark.django_db
@@ -1381,7 +1381,7 @@ def test_faction_attack_view_names_the_wall_each_raid_meets_before_the_march(
     response = logged_in_client.get(reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
-    assert response.context["raid_kind_list"] == [
+    assert response.context["raid_kinds"] == [
         (LiftTheHerds, 0),
         (BurnTheVillage, 0),
         (StormTheBurh, Palisade.FORTIFICATION_STRENGTH),
@@ -1749,7 +1749,7 @@ def test_town_board_view_offers_only_this_month_s_quests(logged_in_client, curre
     response = logged_in_client.get(reverse("warband:town-board-view"))
 
     assert response.status_code == 200
-    assert response.context["quest_list"] == [BoardQuest(quest=this_month_s_quest, entry=HarvestHands)]
+    assert response.context["quests"] == [BoardQuest(quest=this_month_s_quest, entry=HarvestHands)]
 
 
 @pytest.mark.django_db
@@ -1765,7 +1765,7 @@ def test_town_board_view_lists_the_men_away_this_month(logged_in_client, current
     response = logged_in_client.get(reverse("warband:town-board-view"))
 
     assert response.status_code == 200
-    assert list(response.context["away_list"]) == [away_contract]
+    assert list(response.context["away_contracts"]) == [away_contract]
 
 
 @pytest.mark.django_db
@@ -1817,7 +1817,7 @@ def test_faction_shop_item_list_view_shows_the_available_items(logged_in_client,
     )
 
     assert response.status_code == 200
-    assert list(response.context["item_list"]) == [shop_item]
+    assert list(response.context["items"]) == [shop_item]
 
 
 @pytest.mark.django_db
@@ -1985,7 +1985,7 @@ def test_rival_faction_list_view_offers_an_undefended_town(logged_in_client, cur
     response = logged_in_client.get(reverse("warband:rival-faction-list-view"))
 
     assert response.status_code == 200
-    assert [rival.can_be_occupied for rival in response.context["rival_list"]] == [True]
+    assert [rival.can_be_occupied for rival in response.context["rivals"]] == [True]
 
 
 @pytest.mark.django_db
@@ -2093,7 +2093,7 @@ def test_faction_detail_view_lists_a_rivals_roster_by_name(logged_in_client, cur
 
     response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
-    assert list(response.context["warrior_list"]) == [aelfric, cenwulf]
+    assert list(response.context["warriors"]) == [aelfric, cenwulf]
 
 
 @pytest.mark.django_db
@@ -2104,7 +2104,7 @@ def test_faction_detail_view_brings_the_portraits_along(logged_in_client, curren
 
     response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
-    warrior = response.context["warrior_list"][0]
+    warrior = response.context["warriors"][0]
     with django_assert_num_queries(0):
         assert warrior.portrait_face.image and warrior.hair_colour.hex
 

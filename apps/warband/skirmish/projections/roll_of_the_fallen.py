@@ -47,11 +47,11 @@ class RollOfTheFallen:
     which the warrior row does not.
     """
 
-    fallen_list: list[FallenWarrior]
+    fallen_warriors: list[FallenWarrior]
 
     @classmethod
     def for_faction(cls, *, faction: Faction) -> RollOfTheFallen:
-        casualty_list = list(
+        casualties = list(
             SkirmishCasualty.objects.killed_of_faction(faction_id=faction.id)
             .select_related(
                 "warrior__portrait_face",
@@ -76,12 +76,12 @@ class RollOfTheFallen:
             (line.skirmish_id, line.warrior_id): line.saga
             for line in BattleHistory.objects.filter(
                 kind=BattleHistory.KindChoices.KIND_WARRIOR_KILLED,
-                warrior_id__in=[casualty.warrior_id for casualty in casualty_list],
+                warrior_id__in=[casualty.warrior_id for casualty in casualties],
             )
         }
 
         return cls(
-            fallen_list=[
+            fallen_warriors=[
                 FallenWarrior(
                     warrior=casualty.warrior,
                     skirmish=casualty.skirmish,
@@ -90,6 +90,6 @@ class RollOfTheFallen:
                     death_saga=saga_by_death.get((casualty.skirmish_id, casualty.warrior_id), ""),
                     fights_stood_in=casualty.attacked_in + casualty.defended_in,
                 )
-                for casualty in casualty_list
+                for casualty in casualties
             ]
         )

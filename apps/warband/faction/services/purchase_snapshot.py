@@ -6,7 +6,7 @@ from apps.warband.item.models.item import Item
 from apps.warband.item.services.handout import SLOT_NAMES, get_handout_roster
 
 
-def get_shop_offers(*, item_list: Iterable[Item]) -> list[ShopOffer]:
+def get_shop_offers(*, items: Iterable[Item]) -> list[ShopOffer]:
     """
     The shelf as [RivalPolicy] weighs it: each item's price, the slot it fills and what it is worth there.
 
@@ -14,8 +14,7 @@ def get_shop_offers(*, item_list: Iterable[Item]) -> list[ShopOffer]:
     decision back into the item it names. The items want their "type" loaded - the value is read off it.
     """
     return [
-        ShopOffer(item_id=item.id, price=item.price, slot=item.gear_slot, value=item.expectancy_value)
-        for item in item_list
+        ShopOffer(item_id=item.id, price=item.price, slot=item.gear_slot, value=item.expectancy_value) for item in items
     ]
 
 

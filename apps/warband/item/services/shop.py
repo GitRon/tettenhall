@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from apps.warband.item.models.item import Item
 
 
-def annotate_stored_copy_counts(*, item_list: Iterable[Item], faction) -> tuple[list[Item], int]:
+def annotate_stored_copy_counts(*, items: Iterable[Item], faction) -> tuple[list[Item], int]:
     """
     Each item on the shelf with how many of its kind already lie unused in the faction's stores, and
     how many unused items the stores hold in all.
@@ -18,8 +18,8 @@ def annotate_stored_copy_counts(*, item_list: Iterable[Item], faction) -> tuple[
     """
     stored_type_counts = Counter(faction.get_all_unoccupied_items().values_list("type_id", flat=True))
 
-    items = list(item_list)
-    for item in items:
+    shelf = list(items)
+    for item in shelf:
         item.stored_copy_count = stored_type_counts[item.type_id]
 
-    return items, stored_type_counts.total()
+    return shelf, stored_type_counts.total()

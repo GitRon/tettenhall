@@ -280,10 +280,10 @@ def handle_counter_blow(
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
 def handle_capture_unconscious_warriors(*, context: skirmish.SkirmishFinished) -> list[Command]:
-    message_list = []
+    messages = []
 
     for captured_warrior in context.defeated_unconscious_warriors:
-        message_list.append(
+        messages.append(
             CaptureWarrior(
                 skirmish=context.skirmish,
                 warrior=captured_warrior,
@@ -291,15 +291,15 @@ def handle_capture_unconscious_warriors(*, context: skirmish.SkirmishFinished) -
             )
         )
 
-    return message_list
+    return messages
 
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
 def handle_experience_gain_after_battle_for_victor(*, context: skirmish.SkirmishFinished) -> list[Command]:
-    message_list = []
+    messages = []
 
     for victorious_warrior in context.victorious_healthy_warriors:
-        message_list.append(
+        messages.append(
             IncreaseExperience(
                 skirmish=context.skirmish,
                 warrior=victorious_warrior,
@@ -307,4 +307,4 @@ def handle_experience_gain_after_battle_for_victor(*, context: skirmish.Skirmish
             )
         )
 
-    return message_list
+    return messages

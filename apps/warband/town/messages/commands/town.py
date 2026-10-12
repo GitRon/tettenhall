@@ -22,14 +22,14 @@ class ThrowFeast(Command):
     """
     Sit the whole war band down in the hall, once this month.
 
-    "warrior_list" is every man fed and "costs" what feeding them comes to, both settled by the view
+    "warriors" is every man fed and "costs" what feeding them comes to, both settled by the view
     against the refusal it asked first. Unpaid men are on the list: they are fed and paid for, and it
     is the reaction mending the ceilings that leaves them out.
     """
 
     town: Town
     faction: Faction
-    warrior_list: list[Warrior]
+    warriors: list[Warrior]
     restored_share: float
     costs: int
     month: int

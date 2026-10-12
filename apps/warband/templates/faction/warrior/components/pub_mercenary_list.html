@@ -4,10 +4,10 @@
      hx-disinherit="hx-swap">
     {# Headed by the page, not here: this element is what the swap replaces, so a heading inside it #}
     {# is a heading that disappears the first time somebody is hired out of the list. #}
-    {% with mercenary_list=faction.get_pub_stock %}
-        {% if mercenary_list %}
+    {% with mercenaries=faction.get_pub_stock %}
+        {% if mercenaries %}
             <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-                {% for warrior in mercenary_list %}
+                {% for warrior in mercenaries %}
                     {# A mercenary for hire is held, not commanded: the pub names the gear it is charging for #}
                     {# and buckets everything else, which is the gamble it is selling. On a rival's town #}
                     {# square these are not the player's to hire and nothing about them is his to read. #}

@@ -17,7 +17,7 @@
             Going unpaid:
             {# Nothing may break the line directly before the closing parenthesis, or it reaches the #}
             {# player as "unpaid months )". #}
-            {% for entry in payroll.unpaid_countdown_list %}
+            {% for entry in payroll.unpaid_countdowns %}
                 {{ entry.warrior.display_name }} ({{ entry.warrior.monthly_salary }} silver, {{ entry.months_unpaid }} of
                 {{ payroll.months_until_walkout }} unpaid months){% if not forloop.last %}, {% endif %}
             {% endfor %}

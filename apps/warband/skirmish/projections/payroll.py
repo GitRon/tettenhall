@@ -35,11 +35,11 @@ class Payroll:
     # Cheapest man first, the way "get_payroll_for_faction" hands the roster over. The order is a
     # rule rather than a detail - it decides which man goes without - so this projection takes it as
     # given instead of sorting again and getting to disagree.
-    warrior_list: list
+    warriors: list
     budget: int
 
-    paid_warrior_list: list = field(init=False, default_factory=list)
-    unpaid_warrior_list: list = field(init=False, default_factory=list)
+    paid_warriors: list = field(init=False, default_factory=list)
+    unpaid_warriors: list = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
         paid_amount = 0
@@ -49,30 +49,30 @@ class Payroll:
         # "paid_amount <= spendable" true after every step, so a zero wage always passes
         spendable = max(self.budget, 0)
 
-        for warrior in self.warrior_list:
+        for warrior in self.warriors:
             # No early exit on the first man the purse cannot cover: the roster is sorted by salary,
             # so everybody after him costs at least as much and fails the same test anyway, and the
             # loop collects them all without a second branch to get wrong
             if paid_amount + warrior.monthly_salary <= spendable:
                 paid_amount += warrior.monthly_salary
-                self.paid_warrior_list.append(warrior)
+                self.paid_warriors.append(warrior)
             else:
-                self.unpaid_warrior_list.append(warrior)
+                self.unpaid_warriors.append(warrior)
 
     @classmethod
     def for_faction(cls, *, faction, budget: int) -> Payroll:
         return cls(
-            warrior_list=Warrior.objects.get_payroll_for_faction(faction=faction),
+            warriors=Warrior.objects.get_payroll_for_faction(faction=faction),
             budget=budget,
         )
 
     @property
     def paid_amount(self) -> int:
-        return sum(warrior.monthly_salary for warrior in self.paid_warrior_list)
+        return sum(warrior.monthly_salary for warrior in self.paid_warriors)
 
     @property
     def missing_amount(self) -> int:
-        return sum(warrior.monthly_salary for warrior in self.unpaid_warrior_list)
+        return sum(warrior.monthly_salary for warrior in self.unpaid_warriors)
 
     @property
     def total_amount(self) -> int:
@@ -91,7 +91,7 @@ class Payroll:
 
     @property
     def is_short(self) -> bool:
-        return len(self.unpaid_warrior_list) > 0
+        return len(self.unpaid_warriors) > 0
 
     @property
     def months_until_walkout(self) -> int:
@@ -102,7 +102,7 @@ class Payroll:
         return Warrior.UNPAID_MONTHS_UNTIL_WALKOUT
 
     @property
-    def unpaid_countdown_list(self) -> list[UnpaidWarriorCountdown]:
+    def unpaid_countdowns(self) -> list[UnpaidWarriorCountdown]:
         """
         Every unpaid man with the number of months his patience is down to, so the warning can say
         the same thing about him every month instead of only on the last one.
@@ -113,7 +113,7 @@ class Payroll:
         exactly when a warning is worth anything. The leader is never on it: he draws no wage, so
         there is nothing to leave him short of.
 
-        In "unpaid_warrior_list" order, which is the salary order the roster arrived in - the same
+        In "unpaid_warriors" order, which is the salary order the roster arrived in - the same
         order the month will fail to pay them in.
         """
         return [
@@ -121,7 +121,7 @@ class Payroll:
                 warrior=warrior,
                 months_unpaid=warrior.unpaid_months + 1,
             )
-            for warrior in self.unpaid_warrior_list
+            for warrior in self.unpaid_warriors
         ]
 
     @property
@@ -136,6 +136,6 @@ class Payroll:
         """
         return [
             entry.warrior
-            for entry in self.unpaid_countdown_list
+            for entry in self.unpaid_countdowns
             if entry.months_unpaid >= Warrior.UNPAID_MONTHS_UNTIL_WALKOUT
         ]

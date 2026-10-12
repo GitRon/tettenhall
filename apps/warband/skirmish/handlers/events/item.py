@@ -8,11 +8,11 @@ from apps.warband.skirmish.messages.events import skirmish
 
 @message_registry.register_event(event=skirmish.SkirmishFinished)
 def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Command]:
-    message_list = []
+    messages = []
 
     for warrior in context.incapacitated_warriors:
         # Reassign items
-        message_list.append(
+        messages.append(
             WarriorDropsLoot(
                 skirmish=context.skirmish,
                 warrior=warrior,
@@ -20,7 +20,7 @@ def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Comman
             )
         )
         # Give out money
-        message_list.append(
+        messages.append(
             WarriorDropsSilver(
                 skirmish=context.skirmish,
                 warrior=warrior,
@@ -29,4 +29,4 @@ def handle_distribute_loot(*, context: skirmish.SkirmishFinished) -> list[Comman
             )
         )
 
-    return message_list
+    return messages

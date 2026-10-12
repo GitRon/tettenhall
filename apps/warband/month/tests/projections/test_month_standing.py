@@ -84,7 +84,7 @@ def test_open_skirmish_count_counts_the_fights_blocking_the_month():
 
 
 @pytest.mark.django_db
-def test_open_skirmish_list_holds_the_fights_themselves():
+def test_open_skirmishes_holds_the_fights_themselves():
     """
     The band does not only warn about the fights, it offers the way into one, so the rows have to
     come back rather than a number that cannot be linked to.
@@ -96,7 +96,7 @@ def test_open_skirmish_list_holds_the_fights_themselves():
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
-    assert standing.open_skirmish_list == [open_skirmish]
+    assert standing.open_skirmishes == [open_skirmish]
 
 
 @pytest.mark.django_db
@@ -175,7 +175,7 @@ def test_has_offers_open_is_false_with_only_a_rival_to_march_on():
 
 
 @pytest.mark.django_db
-def test_occupiable_rival_list_names_the_towns_left_standing_empty():
+def test_occupiable_rivals_names_the_towns_left_standing_empty():
     savegame = SavegameFactory()
     player_faction = FactionFactory(savegame=savegame, is_player=True)
     player_faction.leader = WarriorFactory(faction=player_faction)
@@ -186,7 +186,7 @@ def test_occupiable_rival_list_names_the_towns_left_standing_empty():
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
-    assert standing.occupiable_rival_list == [emptied_rival]
+    assert standing.occupiable_rivals == [emptied_rival]
 
 
 @pytest.mark.django_db

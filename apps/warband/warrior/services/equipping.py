@@ -5,7 +5,7 @@ WEARER_REFUSAL = "He is in a fight nobody has settled. He fights on with what he
 HOLDER_REFUSAL = "{name} is in a fight nobody has settled. What he marched out with stays on him."
 
 
-def get_warriors_in_an_open_fight(*, warrior_list: list[Warrior]) -> set[int]:
+def get_warriors_in_an_open_fight(*, warriors: list[Warrior]) -> set[int]:
     """
     Which of these men are standing on the roster of a fight nobody has played out, by id.
 
@@ -20,7 +20,7 @@ def get_warriors_in_an_open_fight(*, warrior_list: list[Warrior]) -> set[int]:
     and a settled fight has no roll left to exploit.
     """
     return set(
-        Warrior.objects.filter(id__in=[warrior.id for warrior in warrior_list])
+        Warrior.objects.filter(id__in=[warrior.id for warrior in warriors])
         .filter_standing_in_an_open_fight()
         .values_list("id", flat=True)
     )
@@ -43,7 +43,7 @@ def get_equip_refusal(*, warrior: Warrior, item: Item | None) -> str | None:
     the wearer's own verdict and nothing more.
     """
     holder = item.worn_by if item else None
-    fighting_ids = get_warriors_in_an_open_fight(warrior_list=[warrior, *([holder] if holder else [])])
+    fighting_ids = get_warriors_in_an_open_fight(warriors=[warrior, *([holder] if holder else [])])
 
     if warrior.id in fighting_ids:
         return WEARER_REFUSAL
@@ -68,7 +68,7 @@ def get_unequip_refusal(*, item: Item) -> str | None:
     if holder is None:
         return None
 
-    if holder.id in get_warriors_in_an_open_fight(warrior_list=[holder]):
+    if holder.id in get_warriors_in_an_open_fight(warriors=[holder]):
         return HOLDER_REFUSAL.format(name=holder.display_name)
 
     return None

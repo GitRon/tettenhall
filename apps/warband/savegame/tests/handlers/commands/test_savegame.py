@@ -21,7 +21,7 @@ def test_handle_determine_savegame_outcome_is_lost_without_the_player():
         savegame=savegame,
         outcome=Savegame.OutcomeChoices.OUTCOME_LOST,
         player_faction=savegame.player_faction,
-        open_skirmish_list=[],
+        open_skirmishes=[],
         month=savegame.current_month,
     )
     savegame.refresh_from_db()
@@ -78,7 +78,7 @@ def test_handle_determine_savegame_outcome_carries_the_unresolved_skirmish():
 
     result = handle_determine_savegame_outcome(context=DetermineSavegameOutcome(savegame=savegame))
 
-    assert result.open_skirmish_list == [skirmish]
+    assert result.open_skirmishes == [skirmish]
 
 
 @pytest.mark.django_db

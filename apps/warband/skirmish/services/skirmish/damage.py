@@ -28,7 +28,7 @@ class SkirmishDamageService:
 
     skirmish: Skirmish
     round_number: int
-    message_list: list[Event]
+    messages: list[Event]
 
     attacker: Warrior
     attack_action: SkirmishActionTypeHint
@@ -51,7 +51,7 @@ class SkirmishDamageService:
     ):
         self.skirmish = skirmish
         self.round_number = round_number
-        self.message_list = []
+        self.messages = []
 
         self.attacker = attacker
         self.attack_action = attacker_action
@@ -75,7 +75,7 @@ class SkirmishDamageService:
         damage = max(attack.value - defense.value, round(attack.value * self.MINIMUM_DAMAGE_SHARE))
 
         if damage > 0:
-            self.message_list.append(
+            self.messages.append(
                 WarriorTookDamage(
                     skirmish=self.skirmish,
                     round_number=self.round_number,
@@ -90,7 +90,7 @@ class SkirmishDamageService:
                 )
             )
         else:
-            self.message_list.append(
+            self.messages.append(
                 WarriorDefendedAllDamage(
                     skirmish=self.skirmish,
                     round_number=self.round_number,
@@ -133,4 +133,4 @@ class SkirmishDamageService:
             )
         self._deal_damage(attack=attack, defense=defense)
 
-        return self.message_list
+        return self.messages

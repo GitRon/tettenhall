@@ -78,9 +78,7 @@ def test_handle_unpaid_warriors_asks_for_one_punishment_per_man():
     ealdorman = WarriorFactory(faction=faction)
 
     result = handle_unpaid_warriors(
-        context=MonthlyWarriorSalariesUnpaid(
-            faction=faction, warrior_list=[thegn, ealdorman], missing_amount=500, month=3
-        )
+        context=MonthlyWarriorSalariesUnpaid(faction=faction, warriors=[thegn, ealdorman], missing_amount=500, month=3)
     )
 
     assert result == [

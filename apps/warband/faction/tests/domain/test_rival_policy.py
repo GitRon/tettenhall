@@ -17,8 +17,8 @@ def _snapshot(
     purse: int = 1000,
     wage_bill: int = 0,
     draft_wage: int = 75,
-    pub_offer_list: list[PubOffer] | None = None,
-    shop_offer_list: list[ShopOffer] | None = None,
+    pub_offers: list[PubOffer] | None = None,
+    shop_offers: list[ShopOffer] | None = None,
     held_gear_values: dict[str, list[float]] | None = None,
     warriors_on_payroll: int = 0,
     hall_upgrade: HallUpgradeOffer | None = None,
@@ -28,8 +28,8 @@ def _snapshot(
         purse=purse,
         wage_bill=wage_bill,
         draft_wage=draft_wage,
-        pub_offer_list=pub_offer_list or [],
-        shop_offer_list=shop_offer_list or [],
+        pub_offers=pub_offers or [],
+        shop_offers=shop_offers or [],
         held_gear_values=held_gear_values or {},
         warriors_on_payroll=warriors_on_payroll,
         hall_upgrade=hall_upgrade,
@@ -65,7 +65,7 @@ def test_decide_hires_beside_the_draft():
     The levy scores 1000 over six months of his 75, the mercenary 1000 over his 200 and six months of
     100 - so the draft goes first, and the 1000 still keeps them both.
     """
-    snapshot = _snapshot(fyrd_reserve=1, pub_offer_list=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)])
+    snapshot = _snapshot(fyrd_reserve=1, pub_offers=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)])
 
     assert RivalPolicy.decide(snapshot=snapshot) == [DraftFromFyrd(), HireFromPub(warrior_id=7)]
 
@@ -76,8 +76,8 @@ def test_decide_hires_before_it_buys():
     10 times 5 over 50 - so he is taken first, and the sword still fits in the purse he leaves.
     """
     snapshot = _snapshot(
-        pub_offer_list=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)],
-        shop_offer_list=[_sword()],
+        pub_offers=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)],
+        shop_offers=[_sword()],
         held_gear_values={"weapon": [2]},
     )
 
@@ -89,7 +89,7 @@ def test_decide_passes_over_a_man_the_purse_cannot_keep():
     250 pays his price of 200, but leaves 50 against the wage of 100 he would draw - so the purse would
     not cover the wage bill once over, and the rival leaves him standing.
     """
-    snapshot = _snapshot(purse=250, pub_offer_list=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)])
+    snapshot = _snapshot(purse=250, pub_offers=[PubOffer(warrior_id=7, hiring_price=200, monthly_salary=100)])
 
     assert RivalPolicy.decide(snapshot=snapshot) == []
 
@@ -103,7 +103,7 @@ def test_decide_hires_cheapest_first_out_of_a_purse_it_keeps_count_of():
     """
     snapshot = _snapshot(
         purse=500,
-        pub_offer_list=[
+        pub_offers=[
             PubOffer(warrior_id=1, hiring_price=300, monthly_salary=150),
             PubOffer(warrior_id=2, hiring_price=200, monthly_salary=100),
         ],
@@ -115,7 +115,7 @@ def test_decide_hires_cheapest_first_out_of_a_purse_it_keeps_count_of():
 def test_decide_breaks_a_tie_on_price_by_the_man_who_came_first():
     snapshot = _snapshot(
         purse=500,
-        pub_offer_list=[
+        pub_offers=[
             PubOffer(warrior_id=9, hiring_price=200, monthly_salary=100),
             PubOffer(warrior_id=4, hiring_price=200, monthly_salary=100),
         ],
@@ -125,19 +125,19 @@ def test_decide_breaks_a_tie_on_price_by_the_man_who_came_first():
 
 
 def test_decide_takes_a_man_who_costs_nothing_at_all():
-    snapshot = _snapshot(purse=0, pub_offer_list=[PubOffer(warrior_id=3, hiring_price=0, monthly_salary=0)])
+    snapshot = _snapshot(purse=0, pub_offers=[PubOffer(warrior_id=3, hiring_price=0, monthly_salary=0)])
 
     assert RivalPolicy.decide(snapshot=snapshot) == [HireFromPub(warrior_id=3)]
 
 
 def test_decide_buys_an_item_that_lifts_the_weakest_man():
-    snapshot = _snapshot(shop_offer_list=[_sword()], held_gear_values={"weapon": [7, 2]})
+    snapshot = _snapshot(shop_offers=[_sword()], held_gear_values={"weapon": [7, 2]})
 
     assert RivalPolicy.decide(snapshot=snapshot) == [BuyFromShop(item_id=1)]
 
 
 def test_decide_buys_nothing_that_lifts_nobody():
-    snapshot = _snapshot(shop_offer_list=[_sword(value=5)], held_gear_values={"weapon": [7, 5]})
+    snapshot = _snapshot(shop_offers=[_sword(value=5)], held_gear_values={"weapon": [7, 5]})
 
     assert RivalPolicy.decide(snapshot=snapshot) == []
 
@@ -148,7 +148,7 @@ def test_decide_weighs_a_second_item_against_what_the_first_left_behind():
     holds the 7 and so does everybody else - there is nobody left for it to lift.
     """
     snapshot = _snapshot(
-        shop_offer_list=[_sword(item_id=1, value=7), _sword(item_id=2, value=5)],
+        shop_offers=[_sword(item_id=1, value=7), _sword(item_id=2, value=5)],
         held_gear_values={"weapon": [7, 2]},
     )
 
@@ -156,24 +156,24 @@ def test_decide_weighs_a_second_item_against_what_the_first_left_behind():
 
 
 def test_decide_buys_nothing_for_a_band_with_nobody_to_carry_it():
-    assert RivalPolicy.decide(snapshot=_snapshot(shop_offer_list=[_sword()])) == []
+    assert RivalPolicy.decide(snapshot=_snapshot(shop_offers=[_sword()])) == []
 
 
 def test_decide_buys_nothing_offered_at_no_price():
-    snapshot = _snapshot(shop_offer_list=[_sword(price=0)], held_gear_values={"weapon": [2]})
+    snapshot = _snapshot(shop_offers=[_sword(price=0)], held_gear_values={"weapon": [2]})
 
     assert RivalPolicy.decide(snapshot=snapshot) == []
 
 
 def test_decide_buys_nothing_whose_gain_is_not_worth_its_price():
     # Half a point over the weakest man, for 100 silver, scores 0.05 - below MIN_SCORE
-    snapshot = _snapshot(shop_offer_list=[_sword(price=100, value=2.5)], held_gear_values={"weapon": [2]})
+    snapshot = _snapshot(shop_offers=[_sword(price=100, value=2.5)], held_gear_values={"weapon": [2]})
 
     assert RivalPolicy.decide(snapshot=snapshot) == []
 
 
 def test_decide_keeps_the_wage_bill_covered_after_a_purchase():
-    snapshot = _snapshot(purse=120, wage_bill=100, shop_offer_list=[_sword()], held_gear_values={"weapon": [2]})
+    snapshot = _snapshot(purse=120, wage_bill=100, shop_offers=[_sword()], held_gear_values={"weapon": [2]})
 
     assert RivalPolicy.decide(snapshot=snapshot) == []
 

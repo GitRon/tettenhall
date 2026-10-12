@@ -13,14 +13,14 @@ class BattleLogRound:
     """
 
     number: int
-    line_list: list[BattleHistory]
+    lines: list[BattleHistory]
 
     @property
-    def saga_line_list(self) -> list[BattleHistory]:
+    def saga_lines(self) -> list[BattleHistory]:
         """
         The round as the Saga tells it: only the lines that carry a saga sentence, in the same order.
         """
-        return [line for line in self.line_list if line.saga]
+        return [line for line in self.lines if line.saga]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -38,7 +38,7 @@ class BattleLog:
     exists to prevent.
     """
 
-    round_list: list[BattleLogRound]
+    rounds: list[BattleLogRound]
 
     @property
     def has_saga(self) -> bool:
@@ -48,10 +48,10 @@ class BattleLog:
         A fight that has lines and none of them told is one recorded before the saga was kept, and its
         Saga tab says so instead of standing empty.
         """
-        return any(log_round.saga_line_list for log_round in self.round_list)
+        return any(log_round.saga_lines for log_round in self.rounds)
 
     @classmethod
-    def from_lines(cls, *, line_list: list[BattleHistory]) -> BattleLog:
+    def from_lines(cls, *, lines: list[BattleHistory]) -> BattleLog:
         """
         Cuts a fight's lines, in the order they were written, into rounds.
 
@@ -65,27 +65,25 @@ class BattleLog:
         one writes exactly one boundary. A log with no boundary in it yet is round one - the same
         rule, counted from a fight that has not closed a round.
         """
-        block_list: list[list[BattleHistory]] = []
+        blocks: list[list[BattleHistory]] = []
         current_block: list[BattleHistory] = []
 
-        for line in line_list:
+        for line in lines:
             if line.is_round_boundary:
                 # Dropped rather than kept: the whole of what it says is the number the heading over
                 # the block already carries, and "Round 3" above "Round 3 finished." is noise in the
                 # panel this stacking exists to make readable.
-                block_list.append(current_block)
+                blocks.append(current_block)
                 current_block = []
             else:
                 current_block.append(line)
 
         if current_block:
-            if block_list:
-                block_list[-1] += current_block
+            if blocks:
+                blocks[-1] += current_block
             else:
-                block_list.append(current_block)
+                blocks.append(current_block)
 
         return cls(
-            round_list=[
-                BattleLogRound(number=number, line_list=block) for number, block in enumerate(block_list, start=1)
-            ][::-1]
+            rounds=[BattleLogRound(number=number, lines=block) for number, block in enumerate(blocks, start=1)][::-1]
         )

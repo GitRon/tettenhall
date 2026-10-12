@@ -101,7 +101,7 @@ class FactionRosterContextMixin:
         # By name, and the id only to break a tie between two men of the same one: the progress table
         # reads the same list, and a warrior's own page walks it with Previous and Next - so an
         # unordered roster would be three screens disagreeing about who comes after whom.
-        context["warrior_list"] = list(
+        context["warriors"] = list(
             Warrior.objects.select_related("weapon__type", "armor__type", "faction")
             .with_portrait()
             .exclude_dead()
@@ -141,11 +141,11 @@ class RosterDismissalContextMixin(FactionRosterContextMixin):
             player_faction = self.current_savegame.player_faction
             refusals = get_dismissal_refusals(
                 faction=player_faction,
-                warrior_list=context["warrior_list"],
+                warriors=context["warriors"],
                 month=self.current_savegame.current_month,
                 balance=Transaction.objects.current_balance(faction_id=self.current_savegame.player_faction_id),
             )
-            for warrior in context["warrior_list"]:
+            for warrior in context["warriors"]:
                 warrior.dismissal_refusal = refusals.get(warrior.id)
                 warrior.unpaid_wages_note = get_unpaid_wages_note(warrior=warrior)
 
@@ -310,7 +310,7 @@ class WarbandFallenView(PlayerFactionMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        context["fallen_list"] = RollOfTheFallen.for_faction(faction=self.object).fallen_list
+        context["fallen_warriors"] = RollOfTheFallen.for_faction(faction=self.object).fallen_warriors
 
         return context
 
@@ -326,7 +326,7 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
 
     model = Faction
     template_name = "faction/rival_faction_list.html"
-    context_object_name = "rival_list"
+    context_object_name = "rivals"
     current_savegame: Savegame = None
 
     def setup(self, request, *args, **kwargs) -> None:
@@ -376,14 +376,14 @@ class RivalFactionListView(SavegameScopedQuerysetMixin, generic.ListView):
 
         # Evaluated into a list, because the template iterating the queryset again would re-run it and
         # lose these answers
-        rival_list = list(context[self.context_object_name])
-        for rival in rival_list:
+        rivals = list(context[self.context_object_name])
+        for rival in rivals:
             rival.can_be_attacked = rival.id in attack_standing.attackable_rival_ids
             rival.can_be_occupied = rival.id in occupiable_rival_ids
             rival.their_war_band_is_committed = (
                 attack_standing.refusals.get(rival.id) == AttackRefusal.WAR_BAND_IS_COMMITTED
             )
-        context[self.context_object_name] = rival_list
+        context[self.context_object_name] = rivals
 
         # The first of the facts about the player, and the one that outranks the other two: a
         # decided savegame is why no war band of his is marching, and the month it happens to be in
@@ -601,7 +601,7 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         context["object"] = self.object
         # Said before the march, from the same answers the march itself is staged with: the wall each
         # raid meets and what each one takes
-        context["raid_kind_list"] = [
+        context["raid_kinds"] = [
             (raid_kind, raid_kind.get_fortification_strength(town=self.object.town)) for raid_kind in RAID_KINDS
         ]
         context["successor"] = self.current_savegame.player_faction.get_successor()
@@ -725,8 +725,8 @@ class ShopShelfContextMixin:
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        context["item_list"], context["stored_item_count"] = annotate_stored_copy_counts(
-            item_list=self.object.available_items.select_related("type"), faction=self.object
+        context["items"], context["stored_item_count"] = annotate_stored_copy_counts(
+            items=self.object.available_items.select_related("type"), faction=self.object
         )
         # Every living man rather than the handout roster: a man standing in an open fight cannot be
         # handed gear today, but he is back next month and the sword is bought for the band, not for
@@ -773,11 +773,11 @@ class TownBoardView(PlayerFactionMixin, generic.DetailView):
         month = self.object.savegame.current_month
         # Asked through the same queryset QuestAcceptView resolves its quest with, so a row is only
         # ever shown for a quest men can still be sent on
-        context["quest_list"] = [
+        context["quests"] = [
             BoardQuest(quest=quest, entry=QUESTS_BY_NAME[quest.quest])
             for quest in Quest.objects.for_player_faction(faction_id=self.object.id).offered_in(month=month)
         ]
-        context["away_list"] = (
+        context["away_contracts"] = (
             QuestContract.objects.for_player_faction(faction_id=self.object.id)
             .accepted_in(month=month)
             .prefetch_related("assigned_warriors")

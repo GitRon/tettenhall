@@ -310,7 +310,7 @@ class DismissWarriorView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerys
         # page the player clicked from was stale rather than that the two disagree
         refusal = get_dismissal_refusals(
             faction=player_faction,
-            warrior_list=[obj],
+            warriors=[obj],
             month=current_savegame.current_month,
             balance=Transaction.objects.current_balance(faction_id=player_faction.id),
         ).get(obj.id)

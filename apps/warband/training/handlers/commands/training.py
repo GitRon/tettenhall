@@ -52,7 +52,7 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
         id__in=Warrior.objects.filter_sworn_to_a_quest(month=context.month - 1).values("id")
     )
 
-    event_list = []
+    events = []
 
     for warrior in warriors_to_train:
         attribute, improvement = training.get_random_attribute_and_improvement_for_category(
@@ -78,7 +78,7 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
             # Reset progress bar after upgrade
             setattr(warrior, attribute_progress_name, 0)
 
-            event_list.append(
+            events.append(
                 WarriorUpgradedSkill(
                     warrior=warrior,
                     training_category=training_category,
@@ -95,4 +95,4 @@ def handle_progress_warrior_training(*, context: TrainWarriors) -> list[Event] |
         # still holds from before
         warrior.save(update_fields=updated_fields)
 
-    return event_list
+    return events

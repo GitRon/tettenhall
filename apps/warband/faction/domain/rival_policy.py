@@ -65,8 +65,8 @@ class RivalMonthSnapshot:
     wage_bill: int
     warriors_on_payroll: int
     draft_wage: int
-    pub_offer_list: list[PubOffer]
-    shop_offer_list: list[ShopOffer] = field(default_factory=list)
+    pub_offers: list[PubOffer]
+    shop_offers: list[ShopOffer] = field(default_factory=list)
     held_gear_values: dict[str, list[float]] = field(default_factory=dict)
     hall_upgrade: HallUpgradeOffer | None = None
 
@@ -160,11 +160,11 @@ class RivalPolicy:
         warriors_on_payroll = snapshot.warriors_on_payroll
         # Weakest first, so what a purchase replaces is always the head of the list
         held_gear_values = {slot: sorted(values) for slot, values in snapshot.held_gear_values.items()}
-        candidate_list = cls._list_candidates(snapshot=snapshot)
-        decision_list: list[RivalDecision] = []
+        candidates = cls._list_candidates(snapshot=snapshot)
+        decisions: list[RivalDecision] = []
 
         while True:
-            scored_list = [
+            scored = [
                 (
                     cls._score(
                         candidate=candidate,
@@ -173,18 +173,18 @@ class RivalPolicy:
                     ),
                     candidate,
                 )
-                for candidate in candidate_list
+                for candidate in candidates
                 if purse - candidate.price >= wage_bill + candidate.added_wage
             ]
-            scored_list = [(score, candidate) for score, candidate in scored_list if score > cls.MIN_SCORE]
-            if not scored_list:
-                return decision_list
+            scored = [(score, candidate) for score, candidate in scored if score > cls.MIN_SCORE]
+            if not scored:
+                return decisions
 
-            _best_score, best = min(scored_list, key=lambda pair: (-pair[0], pair[1].order))
-            candidate_list.remove(best)
+            _best_score, best = min(scored, key=lambda pair: (-pair[0], pair[1].order))
+            candidates.remove(best)
             purse -= best.price
             wage_bill += best.added_wage
-            decision_list.append(best.decision)
+            decisions.append(best.decision)
 
             if best.is_man:
                 warriors_on_payroll += 1
@@ -195,21 +195,21 @@ class RivalPolicy:
     @staticmethod
     def _list_candidates(*, snapshot: RivalMonthSnapshot) -> list[_Candidate]:
         # One draft a month at most, whatever the reserve holds: the reserve is mustered a man at a time
-        candidate_list = (
+        candidates = (
             [_Candidate(decision=DraftFromFyrd(), price=0, added_wage=snapshot.draft_wage, order=(0, 0))]
             if snapshot.fyrd_reserve > 0
             else []
         )
-        candidate_list += [
+        candidates += [
             _Candidate(
                 decision=HireFromPub(warrior_id=offer.warrior_id),
                 price=offer.hiring_price,
                 added_wage=offer.monthly_salary,
                 order=(1, offer.warrior_id),
             )
-            for offer in snapshot.pub_offer_list
+            for offer in snapshot.pub_offers
         ]
-        candidate_list += [
+        candidates += [
             _Candidate(
                 decision=BuyFromShop(item_id=offer.item_id),
                 price=offer.price,
@@ -217,10 +217,10 @@ class RivalPolicy:
                 order=(2, offer.item_id),
                 shop_offer=offer,
             )
-            for offer in snapshot.shop_offer_list
+            for offer in snapshot.shop_offers
         ]
         if snapshot.hall_upgrade is not None:
-            candidate_list.append(
+            candidates.append(
                 _Candidate(
                     decision=UpgradeHall(new_level=snapshot.hall_upgrade.new_level, price=snapshot.hall_upgrade.price),
                     price=snapshot.hall_upgrade.price,
@@ -230,7 +230,7 @@ class RivalPolicy:
                 )
             )
 
-        return candidate_list
+        return candidates
 
     @classmethod
     def _score(

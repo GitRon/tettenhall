@@ -22,16 +22,16 @@ def handle_win_open_skirmishes_when_the_game_ends(*, context: SavegameEnded) -> 
     strict mode forbids here.
     """
     player_won = context.outcome == Savegame.OutcomeChoices.OUTCOME_WON
-    message_list = []
+    messages = []
 
-    for skirmish in context.open_skirmish_list:
+    for skirmish in context.open_skirmishes:
         # Asked as "is the player the attacker" rather than the other way round on purpose: a savegame
         # with no player faction yet, or - once AI factions fight each other - a skirmish the player is
         # not in at all, must not come out as "the player marched". Those land on the defending side,
         # which is wrong for nobody today, because every skirmish that exists is one the player started
         player_attacks = skirmish.attacking_faction_id == context.savegame.player_faction_id
 
-        message_list.append(
+        messages.append(
             WinSkirmish(
                 skirmish=skirmish,
                 victorious_faction=(
@@ -41,4 +41,4 @@ def handle_win_open_skirmishes_when_the_game_ends(*, context: SavegameEnded) -> 
             )
         )
 
-    return message_list
+    return messages

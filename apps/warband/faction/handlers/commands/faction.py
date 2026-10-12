@@ -142,7 +142,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
 
     # The player's own faction first, because it is the one the savegame is pointed at and every
     # rival is drawn against a world he is already in
-    faction_list = [
+    factions = [
         _create_faction(
             name=context.faction_name,
             town_name=context.town_name,
@@ -157,7 +157,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
         # A rival is named in the culture on its own row, because that is the culture its warriors are
         # generated from - naming it from anything else puts a Norse town in front of a Frisian war band.
         faker = faker_for_locale(locale=rival_culture.locale)
-        faction_list.append(
+        factions.append(
             _create_faction(
                 name=faker.city(),
                 town_name=faker.city(),
@@ -178,7 +178,7 @@ def handle_create_factions_for_new_savegame(*, context: CreateFactionsForNewSave
             is_player=faction.id == player_faction_id,
             leader_name=context.leader_name if faction.id == player_faction_id else None,
         )
-        for faction in faction_list
+        for faction in factions
     ]
 
 
@@ -289,13 +289,13 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
         .filter_faction(faction_id=context.faction.id)
         .count(),
         draft_wage=FyrdWarriorGenerator.get_expected_monthly_salary(),
-        pub_offer_list=[
+        pub_offers=[
             PubOffer(
                 warrior_id=mercenary.id, hiring_price=mercenary.hiring_price, monthly_salary=mercenary.monthly_salary
             )
             for mercenary in mercenary_by_id.values()
         ],
-        shop_offer_list=get_shop_offers(item_list=item_by_id.values()),
+        shop_offers=get_shop_offers(items=item_by_id.values()),
         held_gear_values=get_held_gear_values(faction=context.faction),
         hall_upgrade=hall_upgrade,
     )
@@ -374,13 +374,11 @@ def handle_prepare_faction_warriors_for_month(*, context: PrepareFactionWarriors
     this command is declared after it, which is why the warriors are loaded here rather than earlier -
     and why there is a flow test on FinishMonthView pinning the outcome.
     """
-    warrior_list = Warrior.objects.filter(
+    warriors = Warrior.objects.filter(
         Q(faction=context.faction) | Q(id__in=context.faction.captured_warriors.all())
     ).exclude_dead()
 
-    return [
-        WarriorMonthPrepared(faction=context.faction, warrior=warrior, month=context.month) for warrior in warrior_list
-    ]
+    return [WarriorMonthPrepared(faction=context.faction, warrior=warrior, month=context.month) for warrior in warriors]
 
 
 @message_registry.register_command(command=DefeatFactionOfLostLeader)

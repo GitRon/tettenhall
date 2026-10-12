@@ -70,7 +70,7 @@ itself decides (a refusal it answers with a message, a redirect it chooses), via
   "redirects when anonymous" test per view; that is framework behaviour, and one project-wide test for it
   is enough.
 - **Read views** (`DetailView`, `ListView`, `TemplateView`): assert the status code plus the one context
-  key the view exists to provide, e.g. `assert response.context["warrior_list"] == [...]`.
+  key the view exists to provide, e.g. `assert response.context["warriors"] == [...]`.
 - **Action views** (POST-only, calling `handle_message()`): these *are* the flow tests above. Assert the
   status code and the end state. Never mock `handle_message()` — that removes the only thing the test is
   for.

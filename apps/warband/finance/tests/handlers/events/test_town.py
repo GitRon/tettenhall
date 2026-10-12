@@ -36,7 +36,7 @@ def test_handle_pay_for_feast_charges_the_whole_table_once():
     context = FeastThrown(
         town=town,
         faction=town.faction,
-        warrior_list=WarriorFactory.build_batch(3),
+        warriors=WarriorFactory.build_batch(3),
         restored_share=0.1,
         costs=45,
         month=4,
@@ -52,7 +52,7 @@ def test_handle_pay_for_feast_words_a_table_of_one():
     context = FeastThrown(
         town=town,
         faction=town.faction,
-        warrior_list=[WarriorFactory.build()],
+        warriors=[WarriorFactory.build()],
         restored_share=0.1,
         costs=15,
         month=4,

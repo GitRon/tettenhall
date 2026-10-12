@@ -15,7 +15,7 @@ def test_handle_log_savegame_ending_narrates_a_defeat():
             savegame=SavegameFactory.build(),
             outcome=Savegame.OutcomeChoices.OUTCOME_LOST,
             player_faction=faction,
-            open_skirmish_list=[],
+            open_skirmishes=[],
             month=3,
         )
     )
@@ -37,7 +37,7 @@ def test_handle_log_savegame_ending_narrates_a_victory():
             savegame=SavegameFactory.build(),
             outcome=Savegame.OutcomeChoices.OUTCOME_WON,
             player_faction=faction,
-            open_skirmish_list=[],
+            open_skirmishes=[],
             month=3,
         )
     )

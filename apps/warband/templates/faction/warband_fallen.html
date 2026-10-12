@@ -11,9 +11,9 @@
         death from before the game kept either. A man who led the war band when he fell carries the one
         tag, as a fact rather than a warning: he is not something the player can act on any more.
     {% endcomment %}
-    {% if fallen_list %}
+    {% if fallen_warriors %}
         <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
-            {% for fallen in fallen_list %}
+            {% for fallen in fallen_warriors %}
                 <li class="grid grid-cols-[40px_minmax(0,1fr)] gap-x-3 gap-y-2 px-[15px] py-3 md:px-5">
                     <c-warrior.portrait :warrior="fallen.warrior" frame="border border-rule" />
                     <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">

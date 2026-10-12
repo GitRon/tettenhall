@@ -6,11 +6,11 @@ from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 
 OPEN_TABLE_TAG = (
-    '<c-skirmish.skirmish-table :skirmish_list="skirmish_list" action_icon="fa-arrow-right"'
+    '<c-skirmish.skirmish-table :skirmishes="skirmishes" action_icon="fa-arrow-right"'
     ' action_label="Continue the fight at" empty_text="No fight is holding the month." />'
 )
 DECIDED_TABLE_TAG = (
-    '<c-skirmish.skirmish-table :skirmish_list="skirmish_list" show_victor action_icon="fa-magnifying-glass"'
+    '<c-skirmish.skirmish-table :skirmishes="skirmishes" show_victor action_icon="fa-magnifying-glass"'
     ' action_label="Read the report of" empty_text="No skirmishes have been fought yet." />'
 )
 
@@ -25,7 +25,7 @@ def _skirmish() -> Skirmish:
 
 
 def test_skirmish_table_names_no_victor_for_an_open_fight():
-    html = render_component(tag=OPEN_TABLE_TAG, context={"skirmish_list": [_skirmish()]})
+    html = render_component(tag=OPEN_TABLE_TAG, context={"skirmishes": [_skirmish()]})
 
     result = [header.get_text(strip=True) for header in parse(html).find_all("th")]
 
@@ -33,7 +33,7 @@ def test_skirmish_table_names_no_victor_for_an_open_fight():
 
 
 def test_skirmish_table_names_the_victor_of_a_decided_fight():
-    html = render_component(tag=DECIDED_TABLE_TAG, context={"skirmish_list": [_skirmish()]})
+    html = render_component(tag=DECIDED_TABLE_TAG, context={"skirmishes": [_skirmish()]})
 
     result = [header.get_text(strip=True) for header in parse(html).find_all("th")]
 
@@ -41,7 +41,7 @@ def test_skirmish_table_names_the_victor_of_a_decided_fight():
 
 
 def test_skirmish_table_links_each_fight_by_name():
-    html = render_component(tag=OPEN_TABLE_TAG, context={"skirmish_list": [_skirmish()]})
+    html = render_component(tag=OPEN_TABLE_TAG, context={"skirmishes": [_skirmish()]})
 
     link = parse(html).find("a")
     result = (link["href"], link["aria-label"])
@@ -50,7 +50,7 @@ def test_skirmish_table_links_each_fight_by_name():
 
 
 def test_skirmish_table_says_so_when_it_is_empty_across_every_column():
-    html = render_component(tag=DECIDED_TABLE_TAG, context={"skirmish_list": []})
+    html = render_component(tag=DECIDED_TABLE_TAG, context={"skirmishes": []})
 
     cell = parse(html).find("tbody").find("td")
     result = (cell.get_text(strip=True), cell["colspan"])
@@ -59,7 +59,7 @@ def test_skirmish_table_says_so_when_it_is_empty_across_every_column():
 
 
 def test_skirmish_table_empty_row_spans_the_narrower_table():
-    html = render_component(tag=OPEN_TABLE_TAG, context={"skirmish_list": []})
+    html = render_component(tag=OPEN_TABLE_TAG, context={"skirmishes": []})
 
     result = parse(html).find("tbody").find("td")["colspan"]
 

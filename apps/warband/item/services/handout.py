@@ -107,16 +107,14 @@ def plan_gear_handout(*, faction) -> list[tuple[Warrior, Item, str]]:
     ends on.
     """
     roster = get_handout_roster(faction=faction)
-    stored_item_list = list(faction.get_all_unoccupied_items().select_related("type"))
+    stored_items = list(faction.get_all_unoccupied_items().select_related("type"))
     fallback_values = get_fallback_values()
 
-    equip_list = []
+    equips = []
     for slot in SLOT_NAMES:
         holding = {warrior.id: getattr(warrior, slot) for warrior in roster}
         holder_ids = {item.id: warrior_id for warrior_id, item in holding.items() if item}
-        pool = [item for item in stored_item_list if item.gear_slot == slot] + [
-            item for item in holding.values() if item
-        ]
+        pool = [item for item in stored_items if item.gear_slot == slot] + [item for item in holding.values() if item]
         settled_item_ids = set()
 
         for warrior in rank_for_slot(roster=roster, leader_id=faction.leader_id, slot=slot):
@@ -137,12 +135,12 @@ def plan_gear_handout(*, faction) -> list[tuple[Warrior, Item, str]]:
                     holding[previous_holder_id] = held_item
                 if held_item:
                     holder_ids[held_item.id] = previous_holder_id
-                equip_list.append((warrior, best_item, slot))
+                equips.append((warrior, best_item, slot))
 
             if holding[warrior.id]:
                 settled_item_ids.add(holding[warrior.id].id)
 
-    return equip_list
+    return equips
 
 
 def count_stored_upgrades(*, faction) -> int:

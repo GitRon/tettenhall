@@ -5,16 +5,14 @@ from apps.warband.warrior.handlers.events.town import handle_feast_mends_cut_cei
 from apps.warband.warrior.messages.commands.warrior import ChangeWarriorMaxMorale
 
 
-def _feast(*, warrior_list: list) -> FeastThrown:
+def _feast(*, warriors: list) -> FeastThrown:
     town = TownFactory.build()
-    return FeastThrown(
-        town=town, faction=town.faction, warrior_list=warrior_list, restored_share=0.2, costs=45, month=5
-    )
+    return FeastThrown(town=town, faction=town.faction, warriors=warriors, restored_share=0.2, costs=45, month=5)
 
 
 def test_handle_feast_mends_cut_ceilings_asks_for_a_repair_for_a_man_carrying_a_cut():
     cut = WarriorFactory.build(max_morale=15, peak_max_morale=20)
-    context = _feast(warrior_list=[cut])
+    context = _feast(warriors=[cut])
 
     result = handle_feast_mends_cut_ceilings(context=context)
 
@@ -31,6 +29,6 @@ def test_handle_feast_mends_cut_ceilings_passes_over_a_whole_man_and_an_unpaid_o
     whole = WarriorFactory.build(max_morale=20, peak_max_morale=20)
     unpaid = WarriorFactory.build(max_morale=15, peak_max_morale=20, unpaid_months=1)
 
-    result = handle_feast_mends_cut_ceilings(context=_feast(warrior_list=[whole, unpaid]))
+    result = handle_feast_mends_cut_ceilings(context=_feast(warriors=[whole, unpaid]))
 
     assert result == []

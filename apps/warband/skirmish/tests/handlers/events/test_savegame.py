@@ -18,7 +18,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_gives_a_won_game_to_the_p
             savegame=SavegameFactory.build(player_faction=skirmish.attacking_faction),
             outcome=Savegame.OutcomeChoices.OUTCOME_WON,
             player_faction=skirmish.attacking_faction,
-            open_skirmish_list=[skirmish],
+            open_skirmishes=[skirmish],
             month=3,
         )
     )
@@ -35,7 +35,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_gives_a_lost_game_to_the_
             savegame=SavegameFactory.build(player_faction=skirmish.attacking_faction),
             outcome=Savegame.OutcomeChoices.OUTCOME_LOST,
             player_faction=skirmish.attacking_faction,
-            open_skirmish_list=[skirmish],
+            open_skirmishes=[skirmish],
             month=3,
         )
     )
@@ -58,7 +58,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_gives_a_won_game_to_the_d
             savegame=SavegameFactory.build(player_faction=skirmish.defending_faction),
             outcome=Savegame.OutcomeChoices.OUTCOME_WON,
             player_faction=skirmish.defending_faction,
-            open_skirmish_list=[skirmish],
+            open_skirmishes=[skirmish],
             month=3,
         )
     )
@@ -72,7 +72,7 @@ def test_handle_win_open_skirmishes_when_the_game_ends_without_an_open_fight():
             savegame=SavegameFactory.build(),
             outcome=Savegame.OutcomeChoices.OUTCOME_WON,
             player_faction=FactionFactory.build(),
-            open_skirmish_list=[],
+            open_skirmishes=[],
             month=3,
         )
     )

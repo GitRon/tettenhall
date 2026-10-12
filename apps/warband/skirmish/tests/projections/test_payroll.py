@@ -5,72 +5,72 @@ from apps.warband.skirmish.projections.payroll import Payroll
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 
 
-def test_paid_warrior_list_holds_the_whole_roster_when_the_purse_covers_it():
+def test_paid_warriors_holds_the_whole_roster_when_the_purse_covers_it():
     payroll = Payroll(
-        warrior_list=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
+        warriors=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
         budget=100,
     )
 
-    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1, 2]
-    assert payroll.unpaid_warrior_list == []
+    assert [warrior.id for warrior in payroll.paid_warriors] == [1, 2]
+    assert payroll.unpaid_warriors == []
 
 
-def test_paid_warrior_list_stops_where_the_silver_does():
+def test_paid_warriors_stops_where_the_silver_does():
     """
     The dearest man is the one left short, because the roster arrives cheapest first - so this is
     also the assertion that the projection does not sort it again.
     """
     payroll = Payroll(
-        warrior_list=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
+        warriors=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
         budget=50,
     )
 
-    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1]
-    assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [2]
+    assert [warrior.id for warrior in payroll.paid_warriors] == [1]
+    assert [warrior.id for warrior in payroll.unpaid_warriors] == [2]
 
 
-def test_paid_warrior_list_covers_a_man_who_draws_no_wage_and_still_leaves_the_next_one_short():
+def test_paid_warriors_covers_a_man_who_draws_no_wage_and_still_leaves_the_next_one_short():
     """
     Both sides of the budget test with a leader's zero in the list. Nothing is spent on him, so a
     purse that could not cover the man behind him still cannot - a wage of zero always satisfies the
     test and would otherwise be able to carry the unpaid arm out of reach of every assertion here.
     """
     payroll = Payroll(
-        warrior_list=[WarriorFactory.build(id=1, monthly_salary=0), WarriorFactory.build(id=2, monthly_salary=40)],
+        warriors=[WarriorFactory.build(id=1, monthly_salary=0), WarriorFactory.build(id=2, monthly_salary=40)],
         budget=30,
     )
 
-    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1]
-    assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [2]
+    assert [warrior.id for warrior in payroll.paid_warriors] == [1]
+    assert [warrior.id for warrior in payroll.unpaid_warriors] == [2]
 
 
-def test_paid_warrior_list_covers_a_man_who_draws_no_wage_out_of_a_purse_in_the_red():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=0)], budget=-10)
+def test_paid_warriors_covers_a_man_who_draws_no_wage_out_of_a_purse_in_the_red():
+    payroll = Payroll(warriors=[WarriorFactory.build(id=1, monthly_salary=0)], budget=-10)
 
-    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1]
-    assert payroll.unpaid_warrior_list == []
+    assert [warrior.id for warrior in payroll.paid_warriors] == [1]
+    assert payroll.unpaid_warriors == []
 
 
-def test_paid_warrior_list_leaves_every_waged_man_short_out_of_a_purse_in_the_red():
+def test_paid_warriors_leaves_every_waged_man_short_out_of_a_purse_in_the_red():
     payroll = Payroll(
-        warrior_list=[WarriorFactory.build(id=1, monthly_salary=0), WarriorFactory.build(id=2, monthly_salary=40)],
+        warriors=[WarriorFactory.build(id=1, monthly_salary=0), WarriorFactory.build(id=2, monthly_salary=40)],
         budget=-10,
     )
 
-    assert [warrior.id for warrior in payroll.paid_warrior_list] == [1]
-    assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [2]
+    assert [warrior.id for warrior in payroll.paid_warriors] == [1]
+    assert [warrior.id for warrior in payroll.unpaid_warriors] == [2]
 
 
-def test_paid_warrior_list_is_empty_on_an_empty_purse():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=0)
+def test_paid_warriors_is_empty_on_an_empty_purse():
+    payroll = Payroll(warriors=[WarriorFactory.build(id=1, monthly_salary=30)], budget=0)
 
-    assert payroll.paid_warrior_list == []
-    assert [warrior.id for warrior in payroll.unpaid_warrior_list] == [1]
+    assert payroll.paid_warriors == []
+    assert [warrior.id for warrior in payroll.unpaid_warriors] == [1]
 
 
 def test_amounts_split_the_wage_bill():
     payroll = Payroll(
-        warrior_list=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
+        warriors=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
         budget=50,
     )
 
@@ -79,52 +79,52 @@ def test_amounts_split_the_wage_bill():
 
 
 def test_remaining_amount_is_what_the_purse_keeps():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=100)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=1, monthly_salary=30)], budget=100)
 
     assert payroll.remaining_amount == 70
 
 
 def test_is_short_when_a_warrior_goes_unpaid():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=0)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=1, monthly_salary=30)], budget=0)
 
     assert payroll.is_short is True
 
 
 def test_is_short_stays_false_while_the_wages_are_covered():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=30)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=1, monthly_salary=30)], budget=30)
 
     assert payroll.is_short is False
 
 
 def test_months_until_walkout_names_the_number_the_punishment_reads():
-    payroll = Payroll(warrior_list=[], budget=0)
+    payroll = Payroll(warriors=[], budget=0)
 
     assert payroll.months_until_walkout == 3
 
 
-def test_unpaid_countdown_list_counts_the_month_being_projected():
+def test_unpaid_countdowns_counts_the_month_being_projected():
     """
     One month already gone without, so the month being projected is his second - the number
     handle_punish_unpaid_warrior will read once the salary run has recorded this month's failure.
     """
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=1)], budget=0)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=1)], budget=0)
 
-    assert [(entry.warrior.id, entry.months_unpaid) for entry in payroll.unpaid_countdown_list] == [(2, 2)]
-
-
-def test_unpaid_countdown_list_starts_a_man_who_has_never_gone_without_at_one():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=0)], budget=0)
-
-    assert [entry.months_unpaid for entry in payroll.unpaid_countdown_list] == [1]
+    assert [(entry.warrior.id, entry.months_unpaid) for entry in payroll.unpaid_countdowns] == [(2, 2)]
 
 
-def test_unpaid_countdown_list_ignores_a_warrior_who_is_getting_paid():
+def test_unpaid_countdowns_starts_a_man_who_has_never_gone_without_at_one():
+    payroll = Payroll(warriors=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=0)], budget=0)
+
+    assert [entry.months_unpaid for entry in payroll.unpaid_countdowns] == [1]
+
+
+def test_unpaid_countdowns_ignores_a_warrior_who_is_getting_paid():
     payroll = Payroll(
-        warrior_list=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
+        warriors=[WarriorFactory.build(id=1, monthly_salary=30), WarriorFactory.build(id=2, monthly_salary=40)],
         budget=30,
     )
 
-    assert [entry.warrior.id for entry in payroll.unpaid_countdown_list] == [2]
+    assert [entry.warrior.id for entry in payroll.unpaid_countdowns] == [2]
 
 
 def test_warriors_about_to_walk_out_names_the_man_on_his_last_month():
@@ -132,19 +132,19 @@ def test_warriors_about_to_walk_out_names_the_man_on_his_last_month():
     Two months already gone without, so the month being projected is the third - which is what
     handle_punish_unpaid_warrior acts on, since the salary run has recorded the failure by then.
     """
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=2)], budget=0)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=2)], budget=0)
 
     assert [warrior.id for warrior in payroll.warriors_about_to_walk_out] == [2]
 
 
 def test_warriors_about_to_walk_out_leaves_out_a_warrior_with_months_to_go():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=1)], budget=0)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=1)], budget=0)
 
     assert payroll.warriors_about_to_walk_out == []
 
 
 def test_warriors_about_to_walk_out_ignores_a_warrior_who_is_getting_paid():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=2)], budget=30)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=2, monthly_salary=30, unpaid_months=2)], budget=30)
 
     assert payroll.warriors_about_to_walk_out == []
 

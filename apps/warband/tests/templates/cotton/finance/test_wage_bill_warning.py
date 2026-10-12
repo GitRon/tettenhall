@@ -19,7 +19,7 @@ def _text(html: str) -> str:
 
 def _short_payroll(*, unpaid_months: int = 0) -> Payroll:
     return Payroll(
-        warrior_list=[
+        warriors=[
             WarriorFactory.build(id=1, name="Leofric", monthly_salary=30),
             WarriorFactory.build(id=2, name="Wulfstan", monthly_salary=40, unpaid_months=unpaid_months),
         ],
@@ -28,7 +28,7 @@ def _short_payroll(*, unpaid_months: int = 0) -> Payroll:
 
 
 def test_wage_bill_warning_is_silent_while_the_wages_are_covered():
-    payroll = Payroll(warrior_list=[WarriorFactory.build(id=1, monthly_salary=30)], budget=100)
+    payroll = Payroll(warriors=[WarriorFactory.build(id=1, monthly_salary=30)], budget=100)
 
     html = render_component(tag=LINKED_WARNING_TAG, context={"payroll": payroll})
 

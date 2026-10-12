@@ -42,13 +42,13 @@ def handle_reduce_morale_of_remaining_warriors(*, context: warrior.ReduceMoraleO
     queryset one either way.
     """
     if context.warrior.faction_id == context.skirmish.attacking_faction_id:
-        comrade_list = context.skirmish.attacking_warriors.all()
+        comrades = context.skirmish.attacking_warriors.all()
     else:
-        comrade_list = context.skirmish.defending_warriors.all()
+        comrades = context.skirmish.defending_warriors.all()
 
     return [
         WarriorSawComradeFall(skirmish=context.skirmish, warrior=comrade, fallen_warrior=context.warrior)
-        for comrade in comrade_list
+        for comrade in comrades
         if comrade != context.warrior
     ]
 
@@ -134,7 +134,7 @@ def handle_warrior_is_captured(*, context: warrior.CaptureWarrior) -> list[Event
 
 @message_registry.register_command(command=ReduceHealth)
 def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
-    message_list = []
+    messages = []
 
     context.warrior = Warrior.objects.reduce_current_health(obj=context.warrior, damage=context.lost_health)
 
@@ -144,7 +144,7 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
 
         if context.warrior.current_health < context.warrior.max_health * -Warrior.DEATH_OVERKILL_SHARE:
             condition = Warrior.ConditionChoices.CONDITION_DEAD
-            message_list.append(
+            messages.append(
                 WarriorWasKilled(
                     skirmish=context.skirmish,
                     warrior=context.warrior,
@@ -154,7 +154,7 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
             )
         else:
             condition = Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
-            message_list.append(
+            messages.append(
                 WarriorWasIncapacitated(
                     skirmish=context.skirmish,
                     warrior=context.warrior,
@@ -170,23 +170,23 @@ def handle_reduce_warrior_health(*, context: ReduceHealth) -> list[Event]:
         # is floored in the same write rather than left negative for every later reader to trip over
         Warrior.objects.put_out_of_the_fight(obj=context.warrior, condition=condition)
 
-    return message_list
+    return messages
 
 
 @message_registry.register_command(command=warrior.ReduceMorale)
 def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event] | Event:
-    message_list = []
+    messages = []
 
     # Only health warriors lose morale
     if context.warrior.condition != Warrior.ConditionChoices.CONDITION_HEALTHY:
-        return message_list
+        return messages
 
     context.warrior = Warrior.objects.reduce_morale(obj=context.warrior, lost_morale=context.lost_morale)
 
     # The loss comes first, because the battle log is written in the order the events arrive and a
     # warrior who flees before losing the morale that made him flee reads backwards
     if context.lost_morale > 0:
-        message_list.append(
+        messages.append(
             WarriorLostMorale(
                 skirmish=context.skirmish,
                 warrior=context.warrior,
@@ -199,14 +199,14 @@ def handle_warrior_losing_morale(*, context: warrior.ReduceMorale) -> list[Event
             obj=context.warrior, condition=Warrior.ConditionChoices.CONDITION_FLEEING
         )
 
-        message_list.append(
+        messages.append(
             WarriorHasFled(
                 skirmish=context.skirmish,
                 warrior=context.warrior,
             )
         )
 
-    return message_list
+    return messages
 
 
 @message_registry.register_command(command=warrior.WithdrawFromSkirmish)
@@ -291,7 +291,7 @@ def handle_warrior_increasing_experience(*, context: warrior.IncreaseExperience)
 
     previous_level = Warrior.level_for(experience=context.warrior.experience - context.increased_experience)
 
-    message_list = [
+    messages = [
         WarriorGainedExperience(
             skirmish=context.skirmish,
             warrior=context.warrior,
@@ -300,7 +300,7 @@ def handle_warrior_increasing_experience(*, context: warrior.IncreaseExperience)
     ]
 
     for level in range(previous_level + 1, context.warrior.level + 1):
-        message_list.append(
+        messages.append(
             WarriorGainedLevel(
                 skirmish=context.skirmish,
                 warrior=context.warrior,
@@ -308,7 +308,7 @@ def handle_warrior_increasing_experience(*, context: warrior.IncreaseExperience)
             )
         )
 
-    return message_list
+    return messages
 
 
 @message_registry.register_command(command=warrior.IncreaseRenown)
