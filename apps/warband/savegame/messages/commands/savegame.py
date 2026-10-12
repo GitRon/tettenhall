@@ -9,6 +9,8 @@ from apps.warband.savegame.models.savegame import Savegame
 class CreateNewSavegame(Command):
     faction_name: str
     town_name: str
+    # What the player called his leader, or None to have one drawn from his culture's names
+    leader_name: str | None
     faction_culture_id: int
     created_by_id: int
 

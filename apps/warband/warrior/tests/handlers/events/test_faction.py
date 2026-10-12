@@ -1,6 +1,6 @@
 import pytest
 
-from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid
+from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid, NewFactionCreated
 from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened, WarriorMonthPrepared
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
@@ -8,6 +8,7 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.handlers.events.faction import (
+    handle_create_leader_for_new_faction,
     handle_fade_an_idle_warriors_renown_for_new_month,
     handle_heal_a_wounded_warrior_for_new_month,
     handle_pub_mercenary_slot_opened,
@@ -15,6 +16,7 @@ from apps.warband.warrior.handlers.events.faction import (
     handle_unpaid_warriors,
 )
 from apps.warband.warrior.messages.commands.warrior import (
+    CreateNewLeaderWarrior,
     CreateWarrior,
     FadeIdleWarriorRenown,
     HealInjuredWarrior,
@@ -22,6 +24,16 @@ from apps.warband.warrior.messages.commands.warrior import (
     ReplenishWarriorMorale,
 )
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
+
+
+def test_handle_create_leader_for_new_faction_carries_the_players_name_for_him():
+    faction = FactionFactory.build()
+
+    result = handle_create_leader_for_new_faction(
+        context=NewFactionCreated(faction=faction, current_month=1, is_player=True, leader_name="Cerdic")
+    )
+
+    assert result == CreateNewLeaderWarrior(faction=faction, name="Cerdic")
 
 
 def test_handle_pub_mercenary_slot_opened_carries_the_pub_owner_along():

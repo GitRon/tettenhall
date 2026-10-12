@@ -35,12 +35,12 @@ def test_handle_create_player_faction_for_new_savegame_maps_to_command():
 
     result = handle_create_player_faction_for_new_savegame(
         context=NewSavegameCreated(
-            savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=7
+            savegame=savegame, faction_name="Wessex", town_name="Winchester", leader_name="Cerdic", faction_culture_id=7
         )
     )
 
     assert result == CreateFactionsForNewSavegame(
-        savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=7
+        savegame=savegame, faction_name="Wessex", town_name="Winchester", leader_name="Cerdic", faction_culture_id=7
     )
 
 

@@ -16,11 +16,15 @@ class NewFactionCreated(Event):
     "is_player" rides along because some of that hand is the player's alone, and every consumer is an
     event handler under strict mode's database blocker: comparing against "savegame.player_faction_id"
     would be a query, or a read of whichever relation happened to be cached.
+
+    "leader_name" is the player's to give and so None on every rival, and on the player's own faction
+    when he left it to his people. Only the handler raising the faction's leader reads it.
     """
 
     faction: Faction
     current_month: int
     is_player: bool
+    leader_name: str | None
 
 
 @dataclass(kw_only=True)

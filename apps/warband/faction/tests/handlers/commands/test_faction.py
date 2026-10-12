@@ -533,12 +533,19 @@ def test_handle_create_factions_for_new_savegame_starts_with_the_player_faction(
     with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3):
         result = handle_create_factions_for_new_savegame(
             context=CreateFactionsForNewSavegame(
-                savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=culture.id
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                leader_name=None,
+                faction_culture_id=culture.id,
             )
         )
 
     assert result[0] == NewFactionCreated(
-        faction=Faction.objects.get(name="Wessex"), current_month=savegame.current_month, is_player=True
+        faction=Faction.objects.get(name="Wessex"),
+        current_month=savegame.current_month,
+        is_player=True,
+        leader_name=None,
     )
     savegame.refresh_from_db()
     assert savegame.player_faction == result[0].faction
@@ -552,11 +559,37 @@ def test_handle_create_factions_for_new_savegame_announces_no_rival_as_the_playe
     with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3):
         result = handle_create_factions_for_new_savegame(
             context=CreateFactionsForNewSavegame(
-                savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=culture.id
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                leader_name=None,
+                faction_culture_id=culture.id,
             )
         )
 
     assert [event.is_player for event in result] == [True, False, False, False]
+
+
+@pytest.mark.django_db
+def test_handle_create_factions_for_new_savegame_hands_the_leader_name_to_the_player_alone():
+    """
+    The name is the player's to give his own leader, so every rival's leader is still drawn.
+    """
+    savegame = SavegameFactory()
+    culture = CultureFactory()
+
+    with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3):
+        result = handle_create_factions_for_new_savegame(
+            context=CreateFactionsForNewSavegame(
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                leader_name="Cerdic",
+                faction_culture_id=culture.id,
+            )
+        )
+
+    assert [event.leader_name for event in result] == ["Cerdic", None, None, None]
 
 
 @pytest.mark.django_db
@@ -567,7 +600,11 @@ def test_handle_create_factions_for_new_savegame_adds_the_drawn_number_of_rival_
     with mock.patch("apps.warband.faction.handlers.commands.faction.random.randint", return_value=3):
         result = handle_create_factions_for_new_savegame(
             context=CreateFactionsForNewSavegame(
-                savegame=savegame, faction_name="Wessex", town_name="Winchester", faction_culture_id=culture.id
+                savegame=savegame,
+                faction_name="Wessex",
+                town_name="Winchester",
+                leader_name=None,
+                faction_culture_id=culture.id,
             )
         )
 
@@ -610,6 +647,7 @@ def test_handle_create_factions_for_new_savegame_names_each_rival_in_its_own_cul
                 savegame=savegame,
                 faction_name="Wessex",
                 town_name="Winchester",
+                leader_name=None,
                 faction_culture_id=CultureFactory(locale="da_DK").id,
             )
         )
@@ -643,6 +681,7 @@ def test_handle_create_factions_for_new_savegame_never_deals_a_rival_the_players
                 savegame=savegame,
                 faction_name="Wessex",
                 town_name="Winchester",
+                leader_name=None,
                 faction_culture_id=player_culture.id,
             )
         )
@@ -670,6 +709,7 @@ def test_handle_create_factions_for_new_savegame_falls_back_to_the_only_culture_
                 savegame=savegame,
                 faction_name="Wessex",
                 town_name="Winchester",
+                leader_name=None,
                 faction_culture_id=only_culture.id,
             )
         )
@@ -696,6 +736,7 @@ def test_handle_create_factions_for_new_savegame_without_the_culture():
                 savegame=savegame,
                 faction_name="Wessex",
                 town_name="Winchester",
+                leader_name=None,
                 faction_culture_id=missing_culture_id,
             )
         )

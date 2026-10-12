@@ -31,6 +31,8 @@ class SavegameCreateView(CurrentSavegameMixin, generic.FormView):
             CreateNewSavegame(
                 town_name=form.cleaned_data["town_name"],
                 faction_name=form.cleaned_data["faction_name"],
+                # An empty field cleans to "", and the chain reads None as "draw him a name"
+                leader_name=form.cleaned_data["leader_name"] or None,
                 faction_culture_id=form.cleaned_data["faction_culture"].id,
                 created_by_id=self.request.user.id,
             ),

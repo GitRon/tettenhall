@@ -24,6 +24,7 @@ def handle_create_player_faction_for_new_savegame(*, context: NewSavegameCreated
         savegame=context.savegame,
         faction_name=context.faction_name,
         town_name=context.town_name,
+        leader_name=context.leader_name,
         faction_culture_id=context.faction_culture_id,
     )
 

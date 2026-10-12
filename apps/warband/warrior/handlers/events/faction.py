@@ -15,7 +15,7 @@ from apps.warband.warrior.messages.commands.warrior import (
 
 @message_registry.register_event(event=NewFactionCreated)
 def handle_create_leader_for_new_faction(*, context: NewFactionCreated) -> Command:
-    return CreateNewLeaderWarrior(faction=context.faction)
+    return CreateNewLeaderWarrior(faction=context.faction, name=context.leader_name)
 
 
 @message_registry.register_event(event=WarriorMonthPrepared)

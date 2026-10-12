@@ -11,7 +11,7 @@ def test_handle_offer_quests_for_new_faction_of_the_player():
     faction = FactionFactory()
 
     result = handle_offer_quests_for_new_faction(
-        context=NewFactionCreated(faction=faction, current_month=1, is_player=True)
+        context=NewFactionCreated(faction=faction, current_month=1, is_player=True, leader_name=None)
     )
 
     assert result == OfferQuests(faction=faction, month=1)
@@ -22,7 +22,7 @@ def test_handle_offer_quests_for_new_faction_of_a_rival():
     faction = FactionFactory()
 
     result = handle_offer_quests_for_new_faction(
-        context=NewFactionCreated(faction=faction, current_month=1, is_player=False)
+        context=NewFactionCreated(faction=faction, current_month=1, is_player=False, leader_name=None)
     )
 
     assert result is None

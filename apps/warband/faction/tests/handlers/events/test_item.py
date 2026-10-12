@@ -52,7 +52,7 @@ def test_handle_stock_items_in_shop_for_new_faction_maps_to_command():
     faction = FactionFactory.build()
 
     result = handle_stock_items_in_shop_for_new_faction(
-        context=NewFactionCreated(faction=faction, current_month=1, is_player=False)
+        context=NewFactionCreated(faction=faction, current_month=1, is_player=False, leader_name=None)
     )
 
     assert result == RestockTownShopItems(faction=faction, month=1)

@@ -68,7 +68,7 @@ def test_handle_hand_out_starting_silver_for_new_factions_credits_the_starting_p
     faction = FactionFactory.build()
 
     result = handle_hand_out_starting_silver_for_new_factions(
-        context=NewFactionCreated(faction=faction, current_month=1, is_player=True)
+        context=NewFactionCreated(faction=faction, current_month=1, is_player=True, leader_name=None)
     )
 
     assert result == CreateTransaction(faction=faction, amount=1000, reason="Starting silver", month=1)
