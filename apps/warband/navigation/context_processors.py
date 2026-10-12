@@ -8,6 +8,10 @@ def navigation(request) -> dict:  # noqa: PBR001
     """
     The four sections, the pages of whichever one the player is standing in, and which of them to mark.
 
+    "nav_title" is the name of where the player is, for the window title: the current page's label, or
+    the section's where the section is one page or the view is not one of its pages. A tab strip of
+    identical titles is a list of tabs nobody can tell apart, and the bar already knows the answer.
+
     Computed here rather than written out in "base.html" because two of the four mean nothing before
     the player has a faction, and a savegame can exist before its faction does - so the bar is not the
     same list on every page, and it is on every authenticated page.
@@ -16,7 +20,7 @@ def navigation(request) -> dict:  # noqa: PBR001
     # Before a savegame is loaded there is no month to lay out, and the only screens are the login
     # page and the savegame list, both of which carry their own way on.
     if not current_savegame:
-        return {"nav_sections": [], "nav_pages": []}
+        return {"nav_sections": [], "nav_pages": [], "nav_title": None}
 
     player_faction_id = current_savegame.player_faction_id
     # A page can be rendered with no url resolved behind it - the error handlers and
@@ -58,8 +62,17 @@ def navigation(request) -> dict:  # noqa: PBR001
         else []
     )
 
+    current_page = next((page for page in pages if page["is_current"]), None)
+    if current_page:
+        nav_title = current_page["label"]
+    elif current_section:
+        nav_title = current_section.label
+    else:
+        nav_title = None
+
     return {
         "nav_sections": sections,
         "nav_pages": pages,
         "current_nav_section": current_section_key,
+        "nav_title": nav_title,
     }
