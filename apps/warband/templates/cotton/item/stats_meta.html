@@ -19,8 +19,9 @@
         {{ item.roll_name }} <span class="normal-case text-ink">{{ item.type.base_value }}{{ item.get_modifier_as_string }}</span>
     </span>
     {# Trimmed, so a weapon averaging a whole number reads "5" rather than "5.0" - and reads the #}
-    {# same here as it does on the option a warrior is equipped from #}
+    {# same here as it does on the roster. What a blow actually lands for on average, so a roll that #}
+    {# can fall below nothing counts those throws as nothing - see "DiceNotation.expected_result". #}
     <span title="Expected {{ item.roll_name|lower }} per roll">
-        Average <span class="text-ink">{{ item.expectancy_value|floatformat }}</span>
+        Average <span class="text-ink">{{ item.expected_result|floatformat }}</span>
     </span>
 </span>

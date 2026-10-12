@@ -88,5 +88,13 @@ class Item(models.Model):
     def expectancy_value(self) -> float:
         return DiceNotation(dice_string=self.type.base_value, modifier=self.modifier).expectancy_value
 
+    @property
+    def expected_result(self) -> float:
+        """
+        The average a player is shown - see "DiceNotation.expected_result" for why it is not
+        "expectancy_value".
+        """
+        return DiceNotation(dice_string=self.type.base_value, modifier=self.modifier).expected_result
+
     def get_modifier_as_string(self) -> str:
         return f"+{self.modifier}" if self.modifier >= 0 else f"{self.modifier}"
