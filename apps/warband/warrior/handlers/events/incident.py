@@ -2,7 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.incident.messages.events.incident import IncidentOccurred
-from apps.warband.warrior.messages.commands.warrior import ChangeWarriorMaxMorale
+from apps.warband.warrior.messages.commands.warrior import AwardDeedNickname, ChangeWarriorMaxMorale
 
 
 @message_registry.register_event(event=IncidentOccurred)
@@ -20,5 +20,23 @@ def handle_incident_max_morale(*, context: IncidentOccurred) -> Command | None:
         warrior=context.outcome.warrior,
         faction=context.faction,
         share=context.outcome.max_morale_share,
+        month=context.month,
+    )
+
+
+@message_registry.register_event(event=IncidentOccurred)
+def handle_incident_deed_nickname(*, context: IncidentOccurred) -> Command | None:
+    """
+    One man named for what the incident made him do or carry.
+
+    Keyed on the state rather than on the warrior, for the reason the ceiling handler above is keyed on
+    its share: most entries that name a man do not name him for it.
+    """
+    if context.outcome.nickname_state is None:
+        return None
+
+    return AwardDeedNickname(
+        warrior=context.outcome.warrior,
+        nickname_state=context.outcome.nickname_state,
         month=context.month,
     )

@@ -181,8 +181,9 @@ class Warrior(models.Model):
     # What this man is named for, and which of the several wordings phrases it. Both are drawn once
     # and kept: an epithet is a fact about who he was, so nothing that moves an attribute afterwards -
     # a level, a training course, a prisoner's oath, a bad night at the ford - may rename him. Null
-    # for an ordinary man, and null is the only state the ratchet may fill: see
-    # [handle_award_earned_nickname].
+    # for an ordinary man, and null is the only state the attribute ratchet may fill: see
+    # [handle_award_earned_nickname]. The one rename is a deed, which replaces an attribute epithet
+    # once and is never replaced itself: see [handle_award_deed_nickname].
     #
     # The state rather than the resolved string, so the wording lists stay editable and reach men
     # already made. The variant is on the row rather than derived from his id, because the wording has

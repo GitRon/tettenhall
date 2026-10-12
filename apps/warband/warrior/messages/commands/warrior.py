@@ -86,6 +86,22 @@ class AwardEarnedNickname(Command):
 
 
 @dataclass(kw_only=True)
+class AwardDeedNickname(Command):
+    """
+    Name a man for something he just did, rather than for how his attributes stand.
+
+    Its own command rather than a state carried on [AwardEarnedNickname]: that one asks what four
+    numbers make of him, which a deed is not among, and the two give way to different things. The
+    state is named by whoever saw the deed, and the faction is left off for the reason it is left off
+    the other one.
+    """
+
+    warrior: Warrior
+    nickname_state: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class GrantRenown(Command):
     """
     A flat amount of renown for one named man, earned outside a fight.

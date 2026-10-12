@@ -1,13 +1,24 @@
 from apps.warband.skirmish.messages.events.skirmish import SkirmishFinished
-from apps.warband.skirmish.messages.events.warrior import WarriorImprovedStats, WarriorWasIncapacitated
+from apps.warband.skirmish.messages.events.warrior import (
+    WarriorImprovedStats,
+    WarriorWasIncapacitated,
+    WarriorWasKilled,
+)
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.handlers.events.skirmish import (
     handle_beating_may_leave_a_mark,
     handle_fight_may_change_a_man,
+    handle_killing_a_leader_earns_a_nickname,
     handle_level_up_earns_a_nickname,
 )
-from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, EarnTraitsInSkirmish, InflictInjury
+from apps.warband.warrior.messages.commands.warrior import (
+    AwardDeedNickname,
+    AwardEarnedNickname,
+    EarnTraitsInSkirmish,
+    InflictInjury,
+)
 
 
 def test_handle_level_up_earns_a_nickname_takes_the_month_off_the_fight():
@@ -72,3 +83,32 @@ def test_handle_fight_may_change_a_man_relays_the_fight_and_its_month():
     )
 
     assert result == EarnTraitsInSkirmish(skirmish=skirmish, month=4)
+
+
+def test_handle_killing_a_leader_earns_a_nickname_names_the_man_who_struck_the_blow():
+    """
+    The killer, not the fallen: the name is for the blow, and the month comes off the fight the way
+    the level-up award takes it.
+    """
+    leader = WarriorFactory.build()
+    killer = WarriorFactory.build()
+    skirmish = SkirmishFactory.build(month=7)
+
+    result = handle_killing_a_leader_earns_a_nickname(
+        context=WarriorWasKilled(skirmish=skirmish, warrior=leader, by_warrior=killer, fell_as_a_leader=True)
+    )
+
+    assert result == AwardDeedNickname(warrior=killer, nickname_state=NicknameStateChoices.LORD_SLAYER, month=7)
+
+
+def test_handle_killing_a_leader_earns_a_nickname_for_an_ordinary_death():
+    result = handle_killing_a_leader_earns_a_nickname(
+        context=WarriorWasKilled(
+            skirmish=SkirmishFactory.build(),
+            warrior=WarriorFactory.build(),
+            by_warrior=WarriorFactory.build(),
+            fell_as_a_leader=False,
+        )
+    )
+
+    assert result is None

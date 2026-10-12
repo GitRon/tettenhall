@@ -2,6 +2,7 @@ import random
 
 from apps.warband.faction.models.faction import Faction
 from apps.warband.incident.incidents.base import Incident, IncidentOutcome, roster
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 
 
 class HallRelic(Incident):
@@ -16,6 +17,11 @@ class HallRelic(Incident):
     Weighted level with [DevilAtTheFord] and carrying the same share, so the ceiling nets out flat
     across a savegame. It is close to a one-way ratchet - "max_morale" otherwise only moves on a
     level-up - so a drift either way accumulates over fifty months with nothing to correct it.
+
+    The man who carries it is named for carrying it. The raised ceiling may carry him across a morale
+    threshold in the same month, and the deed is what he ends up called: its award is queued beside the
+    ceiling change, ahead of the event that asks about the threshold, so the attribute award finds the
+    slot already full.
     """
 
     WEIGHT = 3
@@ -24,6 +30,7 @@ class HallRelic(Incident):
     BODY = "The priest who sold it named three saints it might belong to, and would not be pressed on which."
 
     MAX_MORALE_SHARE = 0.2
+    NICKNAME_STATE = NicknameStateChoices.RELIC_BEARER
 
     @classmethod
     def is_possible(cls, *, faction: Faction) -> bool:
@@ -37,5 +44,6 @@ class HallRelic(Incident):
             title=cls.TITLE.format(warrior=warrior),
             body=cls.BODY,
             max_morale_share=cls.MAX_MORALE_SHARE,
+            nickname_state=cls.NICKNAME_STATE,
             warrior=warrior,
         )

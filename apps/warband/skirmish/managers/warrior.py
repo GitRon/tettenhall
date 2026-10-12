@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Case, F, Q, Value, When, manager
 
 from apps.warband.item.models.item import Item
+from apps.warband.warrior.choices.nickname import DEED_NICKNAME_STATES
 
 if typing.TYPE_CHECKING:
     from apps.warband.skirmish.models.warrior import Warrior
@@ -649,18 +650,42 @@ class WarriorManager(manager.Manager):
 
         return obj
 
-    def set_nickname_state(self, *, obj, nickname_state) -> Warrior:
+    def set_nickname_state(self, *, obj, nickname_state) -> int:
         """
-        Write the epithet a warrior has just earned.
+        Write the epithet a warrior has just earned, if he is still unnamed, and say how many rows that
+        wrote.
 
         No "refresh_from_db" first, unlike its neighbours here: the state was drawn from the very
         attributes on this instance, and re-reading the row would decide it against one set of numbers
-        and store it beside another.
+        and store it beside another. The empty slot is asked of the row instead, in the write: an
+        instance put on a message before a deed named him still believes he is unnamed, and saving it
+        would overwrite the one epithet nothing may replace.
         """
-        obj.nickname_state = nickname_state
-        obj.save(update_fields=("nickname_state",))
+        updated = self.filter(id=obj.id, nickname_state__isnull=True).update(nickname_state=nickname_state)
 
-        return obj
+        if updated:
+            obj.nickname_state = nickname_state
+
+        return updated
+
+    def set_deed_nickname_state(self, *, obj, nickname_state) -> int:
+        """
+        Name a man for a deed, unless he is named for one already, and say how many rows that wrote.
+
+        The guard is the write: a man named for a deed keeps it, and a conditional UPDATE refuses him
+        whatever the instance carried in believes he is called. The instance is brought in line
+        afterwards, because it is what travels on the event.
+        """
+        updated = (
+            self.filter(id=obj.id)
+            .exclude(nickname_state__in=DEED_NICKNAME_STATES)
+            .update(nickname_state=nickname_state)
+        )
+
+        if updated:
+            obj.nickname_state = nickname_state
+
+        return updated
 
     def send_home(self, *, obj) -> Warrior:
         """

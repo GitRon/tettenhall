@@ -31,6 +31,11 @@ STATS_LOW_NICKNAMES = ("the Weak", "the Feeble", "the Reed")
 HEALTH_LOW_NICKNAMES = ("the Frail", "the Sickly", "the Wisp")
 MORALE_LOW_NICKNAMES = ("the Craven", "the Timid", "the Meek")
 
+# A deed's wordings name the deed, not a quality: what the player watched him do
+RELIC_BEARER_NICKNAMES = ("the Believer", "the Relic-bearer", "the Blessed")
+# "Lord" rather than "king": the men a war band can kill are ealdormen and their heirs
+LORD_SLAYER_NICKNAMES = ("the Lordslayer", "the Lordbane")
+
 # The wording a stored state is read back through. The state is what a warrior carries, so editing a
 # list here reaches every man already made - which is the whole reason the column holds the state and
 # not the string.
@@ -46,6 +51,8 @@ NICKNAME_WORDINGS: dict[int, tuple[str, ...]] = {
     NicknameStateChoices.STATS_AT_BOTTOM: STATS_LOW_NICKNAMES,
     NicknameStateChoices.HEALTH_AT_BOTTOM: HEALTH_LOW_NICKNAMES,
     NicknameStateChoices.MORALE_AT_BOTTOM: MORALE_LOW_NICKNAMES,
+    NicknameStateChoices.RELIC_BEARER: RELIC_BEARER_NICKNAMES,
+    NicknameStateChoices.LORD_SLAYER: LORD_SLAYER_NICKNAMES,
 }
 
 # The stored variant is reduced modulo whichever wording list it lands in, so the bound has to be a

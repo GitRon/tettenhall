@@ -9,6 +9,7 @@ from apps.warband.finance.models import Transaction
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.sanctuary import Sanctuary
 from apps.warband.warrior.messages.commands.warrior import (
+    AwardDeedNickname,
     AwardEarnedNickname,
     ChangeWarriorMaxMorale,
     CreateNewLeaderWarrior,
@@ -180,10 +181,13 @@ def handle_award_earned_nickname(*, context: AwardEarnedNickname) -> Event | Non
     """
     Name a man the war band has just watched become exceptional, once and for good.
 
-    A ratchet, and the only thing that ever writes the column after generation. It fills an empty slot
-    and never touches a full one: a man already named keeps what he has whichever attribute he later
-    reaches furthest on, and a man who was named for the wrong reasons keeps that too. Renaming is the
-    defect this exists to stop, and a flattering rename is still a rename.
+    A ratchet. It fills an empty slot and never touches a full one: a man already named keeps what he
+    has whichever attribute he later reaches furthest on, and a man who was named for the wrong reasons
+    keeps that too. A number moving is no reason to rename anybody, and a flattering rename is still a
+    rename.
+
+    The one thing that may replace an epithet is a deed, once - see [handle_award_deed_nickname]. A
+    man named for a deed has a full slot as well, so nothing here ever replaces one.
 
     Nothing guards against naming him downward, because nothing can: this is raised where an attribute
     went *up*, and every unflattering state is a floor or a bottom that going up only ever leaves.
@@ -196,12 +200,46 @@ def handle_award_earned_nickname(*, context: AwardEarnedNickname) -> Event | Non
     if nickname_state is None:
         return None
 
-    Warrior.objects.set_nickname_state(obj=context.warrior, nickname_state=nickname_state)
+    if Warrior.objects.set_nickname_state(obj=context.warrior, nickname_state=nickname_state) == 0:
+        return None
 
     return WarriorEarnedNickname(
         warrior=context.warrior,
         faction=context.warrior.faction,
         nickname=context.warrior.nickname,
+        previous_nickname=None,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=AwardDeedNickname)
+def handle_award_deed_nickname(*, context: AwardDeedNickname) -> Event | None:
+    """
+    Name a man for what he did, over whatever he was named for before - unless that was a deed too.
+
+    **First deed wins.** A man named for a roll gives way to the first thing he actually does, and from
+    then on he is settled. A name may change only when the player is told why, and only once: the
+    rename arrives as an event with its own line in the month log, which is a story beat rather than
+    the silent drift [handle_award_earned_nickname] exists to stop. Bounding it at one deed is what
+    keeps it from becoming a licence - with more than one deed in the game, a veteran's name would
+    otherwise churn with every one he does.
+
+    His epithet is read back first, because the instance may have been put on a message before anything
+    named him, and the line has to name the one he is giving up. That column alone: the instance a
+    fight carries is shared by every message of the round, and a full refresh drops the relations they
+    are relying on having cached.
+    """
+    context.warrior.refresh_from_db(fields=("nickname_state",))
+    previous_nickname = context.warrior.nickname
+
+    if Warrior.objects.set_deed_nickname_state(obj=context.warrior, nickname_state=context.nickname_state) == 0:
+        return None
+
+    return WarriorEarnedNickname(
+        warrior=context.warrior,
+        faction=context.warrior.faction,
+        nickname=context.warrior.nickname,
+        previous_nickname=previous_nickname,
         month=context.month,
     )
 

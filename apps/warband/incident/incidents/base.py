@@ -20,7 +20,8 @@ class IncidentOutcome:
 
     A lever left at its default is a lever this incident does not pull. "warrior" carries the man
     "max_morale_share" moves, which is also the man the title names: outside a skirmish nobody
-    watches morale, so an unnamed change is invisible.
+    watches morale, so an unnamed change is invisible. It is also the man "nickname_state" names for
+    what the incident made him do or carry.
     """
 
     title: str
@@ -28,6 +29,7 @@ class IncidentOutcome:
     silver_change: int = 0
     fyrd_change: int = 0
     max_morale_share: float = 0.0
+    nickname_state: int | None = None
     warrior: Warrior | None = None
     lost_item: Item | None = None
 

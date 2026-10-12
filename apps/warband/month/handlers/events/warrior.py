@@ -58,11 +58,23 @@ def handle_warrior_earned_nickname(*, context: WarriorEarnedNickname) -> Command
     The one line that tells the player his man has a name now.
 
     A name nobody is told about is a name nobody uses, and an epithet that settles unannounced moves
-    silently - so the moment it is settled is the moment to say so. It is said once per man for the
-    whole savegame, which is what keeps it off the upkeep tally.
+    silently - so the moment it is settled is the moment to say so. It is said at most twice per man
+    for the whole savegame, which is what keeps it off the upkeep tally.
+
+    The second time is a man renamed for a deed, and he is told in a sentence of his own, naming what
+    he gives up: a name that changes without the old one being mentioned reads as the game forgetting
+    what it called him - see [handle_award_deed_nickname].
     """
+    if context.previous_nickname is not None:
+        title = (
+            f"{context.warrior} is no longer {context.previous_nickname}: "
+            f"he is known as {context.nickname} from now on."
+        )
+    else:
+        title = f"{context.warrior} is known as {context.nickname} from now on."
+
     return CreatePlayerMonthLog(
-        title=f"{context.warrior} is known as {context.nickname} from now on.",
+        title=title,
         kind=PlayerMonthLog.KindChoices.KIND_NICKNAME_EARNED,
         month=context.month,
         faction=context.faction,
