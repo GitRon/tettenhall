@@ -63,7 +63,9 @@
                 <summary class="cursor-pointer list-none border-b border-transparent font-mono text-label uppercase tracking-label text-ink-muted hover:border-rule-strong">
                     {% if current_savegame.player_faction %}{{ current_savegame.player_faction }}{% else %}No savegame{% endif %} / {{ request.user }}
                 </summary>
-                <ul class="absolute right-0 top-full z-20 m-0 min-w-48 list-none bg-raised p-4 border border-rule">
+                {# The panel opens from whichever end of the bar the toggle is on: the left gutter on a #}
+                {# phone, the right end on a desk. Anchored the other way, it hangs off the screen edge. #}
+                <ul class="absolute left-0 top-full z-20 m-0 w-max min-w-full max-w-[calc(100vw-2rem)] md:left-auto md:right-0 md:min-w-48 list-none bg-raised p-4 border border-rule">
                     <li><a class="text-ink-muted" href="{% url 'warband:savegame-list-view' %}">Savegames</a></li>
                     {# A form, not a link: logging out only answers a POST. The button sheds the base #}
                     {# layer's outlined control so it reads as the link above it. #}
