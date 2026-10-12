@@ -31,3 +31,12 @@ def is_below_a_third(current: int, maximum: int) -> bool:  # noqa: PBR001
     and the roster's bar turns to blood.
     """
     return current * 3 < maximum
+
+
+@register.filter
+def is_full(current: int, maximum: int) -> bool:  # noqa: PBR001
+    """
+    Whether a gauge stands at its maximum - the normal state, which the roster's bar draws quietly so
+    that the man below it is the one the eye finds.
+    """
+    return current >= maximum

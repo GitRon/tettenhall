@@ -68,6 +68,6 @@ def test_roster_row_says_why_his_morale_is_stuck():
 def test_roster_row_shows_the_wage_it_is_given():
     html = _render(warrior=_warrior(), wage=45)
 
-    result = _cell(html, label="Wage")
+    result = _cell(html, label="Wage / month")
 
     assert result == "45"

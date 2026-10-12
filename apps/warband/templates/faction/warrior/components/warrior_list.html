@@ -2,7 +2,8 @@
      hx-trigger="loadFactionWarriorList from:body"
      hx-swap="outerHTML"
      hx-disinherit="hx-swap">
-    <h2>Warriors</h2>
+    {# Focusable from script only: where the keyboard lands once a dismissal has swapped the list #}
+    <h2 tabindex="-1" data-swap-focus>Warriors</h2>
     {# The list sits inside the swap target rather than being it, so a reload keeps the element's own #}
     {# classes. A war band that has lost every man draws no empty box. #}
     {% comment %}
@@ -13,7 +14,7 @@
     {% endcomment %}
     {% if warrior_list %}
         {% if is_player_faction %}
-            <c-warrior.roster-table>
+            <c-warrior.roster-table :wage_total="wage_bill_payroll.total_amount">
                 {% for warrior in warrior_list %}
                     <c-warrior.roster-row :warrior="warrior" :knowledge="roster_knowledge" :wage="warrior.monthly_salary" :unpaid_note="warrior.unpaid_wages_note">
                         {% include 'faction/warrior/components/roster_row_menu.html' with warrior=warrior %}

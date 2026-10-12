@@ -1,3 +1,4 @@
+<c-vars label="Warriors" wage_total=None />
 {% comment %}
     The men the player decides about, one line per man, in columns he can compare down: his own war band
     and his own cells. The rows are the slot, each a "<c-warrior.roster-row>".
@@ -13,27 +14,45 @@
     sideways. The box is positioned so that it contains the visually hidden column heads and the row
     menu: an absolutely positioned element escapes an overflow box that is not its containing block,
     and that one would widen the page.
+
+    A column head says what its figures mean - the wage's period, the gear's roll and average - once
+    for the whole column, because a "title" on every cell is a meaning a touch or keyboard player never
+    sees. "label" names the table for assistive technology, which has no heading inside it to go by.
+
+    "wage_total" is the month's wage bill, summed under the wage column, because this is the page the
+    player decides whom to cut on and the bill is the number the month turns on. Only the war band
+    passes it: a prisoner's wage is what taking him on would cost, and a total of men nobody has
+    recruited yet is no bill at all.
 {% endcomment %}
 <div class="relative overflow-x-auto border border-rule-strong">
-    <table class="table-stack m-0 md:min-w-[70rem]">
+    <table class="table-stack m-0 md:min-w-[70rem]" aria-label="{{ label }}">
         <thead>
         <tr>
-            <th class="pl-4">Man</th>
-            <th class="text-right">Lvl</th>
-            <th class="text-right">Renown</th>
-            <th>Str</th>
-            <th>Dex</th>
-            <th>Health</th>
-            <th>Morale</th>
-            <th>Weapon</th>
-            <th>Armour</th>
-            <th class="text-right">Wage</th>
-            <th>Status</th>
-            <th class="pr-4"><span class="sr-only">Actions</span></th>
+            <th class="pl-4" scope="col">Man</th>
+            <th class="text-right" scope="col">Lvl</th>
+            <th class="text-right" scope="col">Renown</th>
+            <th class="text-right" scope="col">Str</th>
+            <th class="text-right" scope="col">Dex</th>
+            <th scope="col">Health</th>
+            <th scope="col">Morale</th>
+            <th scope="col">Weapon &middot; roll &middot; avg</th>
+            <th scope="col">Armour &middot; roll &middot; avg</th>
+            <th class="text-right" scope="col">Wage / month</th>
+            <th scope="col">Status</th>
+            <th class="pr-4" scope="col"><span class="sr-only">Actions</span></th>
         </tr>
         </thead>
         <tbody>
         {{ slot }}
         </tbody>
+        {% if wage_total is not None %}
+            <tfoot class="max-md:block">
+            <tr class="max-md:flex max-md:items-baseline max-md:justify-between max-md:px-4">
+                <th class="text-right max-md:p-0" colspan="9" scope="row">Wage bill / month</th>
+                <td class="font-mono text-figure tabular-nums text-ink md:text-right max-md:p-0">{{ wage_total }}</td>
+                <td class="max-md:hidden" colspan="2"></td>
+            </tr>
+            </tfoot>
+        {% endif %}
     </table>
 </div>
