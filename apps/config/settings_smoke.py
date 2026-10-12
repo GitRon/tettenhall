@@ -9,7 +9,7 @@ database, pointed at a throwaway file so a smoke run cannot touch the developmen
 import os
 from pathlib import Path
 
-from apps.config.settings import *  # noqa: F403
+from apps.config.settings import *
 from apps.config.settings import BASE_DIR, DATABASES
 
 # Every run directory gets its own database, so the path comes from the environment rather than

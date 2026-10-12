@@ -189,8 +189,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 
 # Axes config
-def axes_cooloff_time(request) -> datetime.timedelta:  # noqa: PBR001
-    # Ruff:E731 prevents assignment of lambda expression -> function required
+def axes_cooloff_time(request) -> datetime.timedelta:
     return datetime.timedelta(0, LOGIN_TIMEDELTA)
 
 
@@ -203,8 +202,14 @@ AXES_USERNAME_FORM_FIELD = "username"
 AXES_CLEANUP_DAYS = 30
 # Block by Username only (i.e.: Same user different IP is still blocked, but different user same IP is not)
 AXES_LOCKOUT_PARAMETERS = ["username"]
+
+
 # Disable logging the IP-Address of failed login attempts by returning None for attempts to get the IP
-AXES_CLIENT_IP_CALLABLE = lambda x: None  # noqa: E731
+def axes_client_ip(request) -> None:
+    return None
+
+
+AXES_CLIENT_IP_CALLABLE = axes_client_ip
 # Mask user-sensitive parameters in logging stream
 AXES_SENSITIVE_PARAMETERS = ["username", "ip_address"]
 # axes.W006 asks for "ip_address" in AXES_LOCKOUT_PARAMETERS. AXES_CLIENT_IP_CALLABLE hands axes

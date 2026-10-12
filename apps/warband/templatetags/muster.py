@@ -6,7 +6,7 @@ register = template.Library()
 
 
 @register.filter
-def still_up(warrior_list: list[Warrior]) -> int:  # noqa: PBR001 - a filter is called positionally
+def still_up(warrior_list: list[Warrior]) -> int:
     """
     How many of a band are still on their feet.
 

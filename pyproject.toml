@@ -57,7 +57,6 @@ lint.select = [
     "PERF",    # Perflint
     "PGH",     # No all-purpose "# noqa" and eval validation
     "UP",      # PyUpgrade
-    "PLR2004", # Magic numbers
     "BLE",     # Checks for except clauses that catch all exceptions
     "ANN401",  # Checks that function arguments are annotated with a more specific type than Any
     "TRY",     # Clean try/except
@@ -69,7 +68,6 @@ lint.ignore = [
     'A003',     # Django attributes shadow python builtins
     'DJ001',    # Django model text-based fields shouldn't be nullable
     'TRY003',   # Avoid specifying long messages outside the exception class
-    'PLR2004',  # Magic value used in comparison, consider replacing "x" with a constant variable
     'ERA001',   # Found commented-out code
     'PERF401',  # Use a list comprehension to create a transformed list
     'SIM108',   # Use ternary operator
@@ -102,7 +100,6 @@ lint.fixable = [
     "PERF",    # Perflint
     "PGH",     # No all-purpose "# noqa" and eval validation
     "UP",      # PyUpgrade
-    "PLR2004", # Magic numbers
     "BLE",     # Checks for except clauses that catch all exceptions
     "ANN401",  # Checks that function arguments are annotated with a more specific type than Any
     "TRY",     # Clean try/except
@@ -155,9 +152,19 @@ target-version = "py314"
   "F401",
 ]
 
-"**/tests/**/test_*.py" = [
-  # Allow boolean positional params in tests (for assertIs())
-  "FBT003",
+# Settings modules for a single environment extend the base settings wholesale
+"apps/config/settings_*.py" = [
+  "F403",
+]
+
+# Imported for the admin registrations they make, see the module docstring
+"apps/warband/admin.py" = [
+  "F401",
+]
+
+# The CLI reaches the models, so it is only importable once "django.setup()" has run
+"scripts/playtest/__main__.py" = [
+  "E402",
 ]
 
 [tool.boa-restrictor]
@@ -192,7 +199,35 @@ exclude = [
 "*/mixins.py" = [
     "PBR001",
 ]
+# Django calls a context processor with the request, positionally
+"*/context_processors.py" = [
+    "PBR001",
+]
 "*/context_processors/*.py" = [
+    "PBR001",
+]
+# Django calls a template filter or simple tag with its arguments positionally
+"*/templatetags/*.py" = [
+    "PBR001",
+]
+# Forms, fields and widgets override Django's hooks ("label_from_instance", "create_option", "__init__")
+"*/forms/*.py" = [
+    "PBR001",
+]
+# Django calls a field validator with the value, positionally
+"*/validators.py" = [
+    "PBR001",
+]
+# Django calls "add_arguments" with the parser, positionally
+"*/management/commands/*.py" = [
+    "PBR001",
+]
+# django-axes calls the callables named in the settings with the request, positionally
+"apps/config/settings.py" = [
+    "PBR001",
+]
+# "SimpleHTTPRequestHandler.translate_path" is the signature http.server calls
+"tools/portrait_alignment/serve.py" = [
     "PBR001",
 ]
 "*/managers/*.py" = [

@@ -29,7 +29,7 @@ class RosterCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         self.figure_label = figure_label
         self.figures_by_warrior_id = figures_by_warrior_id or {}
 
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None) -> dict:  # noqa: PBR001
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None) -> dict:
         """
         Hang the verdict on the option, so the field template can draw it next to the man.
 

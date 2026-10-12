@@ -24,7 +24,7 @@ class ItemChoiceField(forms.ModelChoiceField):
     #: Set by the form, because the field is built before there is an instance to ask.
     wearer: Warrior | None = None
 
-    def label_from_instance(self, obj: Item) -> str:  # noqa: PBR001
+    def label_from_instance(self, obj: Item) -> str:
         """
         The item, its dice, what those dice average - and who has to give it up for this.
 

@@ -64,10 +64,26 @@ in step.
 
 `pyproject.toml` carries the exceptions rather than scattering `noqa` comments through the code:
 
-- `**/__init__.py` may hold seemingly unused imports (`F401`).
-- Views, admin, context processors and managers are exempt from boa-restrictor's keyword-only argument
-  rules (`PBR001`/`PBR002`) — framework signatures are positional.
-- `conftest.py` and everything under `*/tests/*` are exempt from `PBR001`, because pytest injects
-  fixtures as positional arguments and keyword-only signatures are therefore impossible.
+- **Ruff**
+  - `**/__init__.py` may hold seemingly unused imports (`F401`), and so may `apps/warband/admin.py`,
+    which imports the topic admins for their registrations.
+  - `apps/config/settings_*.py` star-import the base settings (`F403`).
+  - `scripts/playtest/__main__.py` imports after `django.setup()` (`E402`).
+- **boa-restrictor**: wherever a framework calls our code, the signature is the framework's, and it
+  passes arguments positionally.
+  - Views (`*/views.py`, `*/views/*.py`) and `*/admin.py` are exempt from `PBR001` and `PBR002`.
+  - Everything else below is exempt from `PBR001` only:
+    - `*/mixins.py`
+    - context processors (`*/context_processors.py`, `*/context_processors/*.py`)
+    - template tags and filters (`*/templatetags/*.py`)
+    - forms, fields and widgets (`*/forms/*.py`)
+    - validators (`*/validators.py`)
+    - management commands (`*/management/commands/*.py`)
+    - migrations (`*/migrations/*.py`)
+    - `apps/config/settings.py`, for the django-axes callables
+    - `tools/portrait_alignment/serve.py`, for the `http.server` hook
+  - `*/managers/*.py` are exempt from `PBR002`.
+  - `conftest.py` and everything under `*/tests/*` are exempt from `PBR001`, because pytest injects
+    fixtures as positional arguments, so keyword-only signatures are impossible.
 
 Add an exception here with a comment saying why, rather than silencing a rule inline.

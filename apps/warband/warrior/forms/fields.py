@@ -14,5 +14,5 @@ class WarriorMultipleChoiceField(forms.ModelMultipleChoiceField):
     along with the men - see [Warrior.is_leader].
     """
 
-    def label_from_instance(self, obj: Warrior) -> str:  # noqa: PBR001
+    def label_from_instance(self, obj: Warrior) -> str:
         return obj.display_name

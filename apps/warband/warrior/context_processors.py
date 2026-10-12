@@ -3,7 +3,7 @@ from apps.warband.savegame.services.current_savegame import get_current_savegame
 from apps.warband.skirmish.models import Warrior
 
 
-def get_current_amount_warriors(request) -> dict:  # noqa: PBR001
+def get_current_amount_warriors(request) -> dict:
     if not request.user.is_authenticated:
         return {}
 

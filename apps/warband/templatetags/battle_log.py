@@ -6,7 +6,7 @@ register = template.Library()
 
 
 @register.filter
-def casualty_side(log: BattleHistory, player_faction_id: int | None) -> str:  # noqa: PBR001 - a filter is called positionally
+def casualty_side(log: BattleHistory, player_faction_id: int | None) -> str:
     """
     Whose loss a casualty line reports, as the player reads it: "own" when one of his men went down,
     "theirs" when he felled one of the enemy's, and "watched" in a fight between two rivals.

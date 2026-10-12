@@ -3,7 +3,7 @@ from apps.warband.savegame.services.current_savegame import get_current_savegame
 from apps.warband.skirmish.models import Skirmish
 
 
-def get_open_skirmishes(request) -> dict:  # noqa: PBR001
+def get_open_skirmishes(request) -> dict:
     if not request.user.is_authenticated:
         return {}
 

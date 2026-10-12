@@ -14,7 +14,7 @@ class LoginForm(forms.Form):
     email = forms.CharField(label="Email address", max_length=120)
     password = forms.CharField(label="Password", widget=forms.PasswordInput)
 
-    def __init__(self, request=None, *args, **kwargs):  # noqa: PBR001
+    def __init__(self, request=None, *args, **kwargs):
         self.request = request
 
         self.helper = FormHelper()

@@ -4,7 +4,7 @@ from apps.warband.navigation.sections import SECTIONS, get_section_key
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 
 
-def navigation(request) -> dict:  # noqa: PBR001
+def navigation(request) -> dict:
     """
     The four sections, the pages of whichever one the player is standing in, and which of them to mark.
 

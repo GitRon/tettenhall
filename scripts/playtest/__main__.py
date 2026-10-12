@@ -17,6 +17,6 @@ django.setup()
 logging.disable(logging.INFO)
 
 # Only importable once Django is set up, because it reaches the models
-from scripts.playtest.cli import main  # noqa: E402
+from scripts.playtest.cli import main
 
 sys.exit(main(argv=sys.argv[1:]))
