@@ -43,14 +43,15 @@ Three sections hold more than one page, and those three carry a page nav under t
 
 | Section | Pages |
 |---|---|
-| **Warband** | Warband, Stores, Fyrd, Captives, Progress |
+| **Warband** | Warband, Stores, Fyrd, Captives, Progress, Fallen |
 | **Town** | Board, Shop, Pub, Buildings |
 | **Rivals** | Rivals, Skirmishes |
 
 Month is one page and shows nothing. The landing page comes first because that is what the section
 entry leads to; the rest are ordered by how often a month makes the player open them, which is why
-Progress — a reference table nobody acts on — is last, and Buildings, which may be raised once a
-month, is last under Town.
+Progress — a reference table nobody acts on — comes after the pages a month acts on, Fallen — the
+Roll of the Fallen, a record nothing is done with — after that, and Buildings, which may be raised
+once a month, is last under Town.
 
 It comes off the current section's own page list, so a template never has to ask which section it is
 in. There are no breadcrumbs: two levels do not need a third way of saying where the player is.
@@ -105,7 +106,7 @@ after it.
 - **A page reachable from nowhere is a defect.** Every screen is either a section's landing page, a page
   on a section's page nav, or linked from a page that is.
 - **A page is headed what the entry that leads to it says.** Month, Warband, Stores, Fyrd, Captives,
-  Progress, Board, Shop, Pub, Buildings, Rivals, Skirmishes. A heading belongs to the page and never
+  Progress, Fallen, Board, Shop, Pub, Buildings, Rivals, Skirmishes. A heading belongs to the page and never
   to a partial inside it: the shop's list and the pub's are htmx swap targets, so a heading in either
   is a heading the first purchase replaces. A page headed differently from its own menu entry
   leaves the player unable to tell one wrong click from the right one.

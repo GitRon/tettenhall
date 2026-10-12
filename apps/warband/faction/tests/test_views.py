@@ -24,10 +24,13 @@ from apps.warband.quest.tests.factories.quest_contract import QuestContractFacto
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
+from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.raids.kinds import BurnTheVillage, LiftTheHerds, StormTheBurh
+from apps.warband.skirmish.tests.factories.battle_history import BattleHistoryFactory
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.warband.skirmish.tests.factories.skirmish_casualty import SkirmishCasualtyFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.buildings.fortification import NPC_STARTING_FORTIFICATION_LEVEL, Palisade
 from apps.warband.town.buildings.hall import MediumHall
@@ -475,6 +478,44 @@ def test_warband_progress_view_asks_nothing_about_dismissing_a_man(logged_in_cli
 
     assert not hasattr(response.context["warrior_list"][0], "dismissal_refusal")
     assert warrior.id == response.context["warrior_list"][0].id
+
+
+@pytest.mark.django_db
+def test_warband_fallen_view_lists_the_players_own_dead(logged_in_client, current_savegame):
+    """
+    Every part of a row drawn at once - the face, the killer, the leader's tag and the death line - so
+    the render checks each of them. Another savegame's dead stand beside them and stay out.
+    """
+    player_faction = current_savegame.player_faction
+    skirmish = SkirmishFactory(attacking_faction=player_faction, defending_faction__savegame=current_savegame)
+    warrior = WarriorFactory(
+        faction=player_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD, **draw_portrait()
+    )
+    SkirmishCasualtyFactory(
+        skirmish=skirmish,
+        warrior=warrior,
+        killed_by=WarriorFactory(faction=skirmish.defending_faction),
+        fell_as_a_leader=True,
+    )
+    BattleHistoryFactory(
+        skirmish=skirmish, kind=BattleHistory.KindChoices.KIND_WARRIOR_KILLED, warrior=warrior, saga="He falls."
+    )
+    SkirmishCasualtyFactory()
+
+    response = logged_in_client.get(reverse("warband:warband-fallen-view"))
+
+    assert response.status_code == 200
+    assert [fallen.warrior for fallen in response.context["fallen_list"]] == [warrior]
+
+
+@pytest.mark.django_db
+def test_warband_fallen_view_has_nobody_on_it_before_anybody_dies(logged_in_client, current_savegame):
+    WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.get(reverse("warband:warband-fallen-view"))
+
+    assert response.status_code == 200
+    assert response.context["fallen_list"] == []
 
 
 @pytest.mark.django_db

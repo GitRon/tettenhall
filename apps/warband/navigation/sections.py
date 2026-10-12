@@ -55,6 +55,7 @@ SECTIONS: tuple[Section, ...] = (
             Page(label="Fyrd", url_name="warband:warband-fyrd-view"),
             Page(label="Captives", url_name="warband:warband-captives-view"),
             Page(label="Progress", url_name="warband:warband-progress-view"),
+            Page(label="Fallen", url_name="warband:warband-fallen-view"),
         ),
     ),
     Section(
@@ -96,6 +97,7 @@ SECTION_KEY_BY_URL_NAME: dict[str, str] = {
     "warband-fyrd-view": "warband",
     "warband-captives-view": "warband",
     "warband-progress-view": "warband",
+    "warband-fallen-view": "warband",
     "town-shop-view": "town",
     "town-pub-view": "town",
     "town-board-view": "town",

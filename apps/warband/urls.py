@@ -52,6 +52,7 @@ urlpatterns = [
     path("faction/warband/fyrd", faction_views.WarbandFyrdView.as_view(), name="warband-fyrd-view"),
     path("faction/warband/captives", faction_views.WarbandCaptivesView.as_view(), name="warband-captives-view"),
     path("faction/warband/progress", faction_views.WarbandProgressView.as_view(), name="warband-progress-view"),
+    path("faction/warband/fallen", faction_views.WarbandFallenView.as_view(), name="warband-fallen-view"),
     # Above the detail route for readability only - "rivals" is not an int, so the two cannot collide
     path("faction/faction/rivals", faction_views.RivalFactionListView.as_view(), name="rival-faction-list-view"),
     path("faction/faction/<int:pk>", faction_views.FactionDetailView.as_view(), name="faction-detail-view"),

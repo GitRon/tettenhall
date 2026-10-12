@@ -56,6 +56,8 @@ def handle_record_skirmish_casualty(*, context: RecordSkirmishCasualty) -> Event
         skirmish=context.skirmish,
         warrior=context.warrior,
         fate=context.fate,
+        killed_by=context.killed_by,
+        fell_as_a_leader=context.fell_as_a_leader,
     )
 
     return SkirmishCasualtyRecorded(casualty=casualty)

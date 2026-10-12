@@ -52,18 +52,27 @@ def test_handle_record_skirmish_spoil_writes_the_row():
 
 
 @pytest.mark.django_db
-def test_handle_record_skirmish_casualty_writes_the_fate():
+def test_handle_record_skirmish_casualty_writes_the_fate_and_the_killer():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.defending_faction)
+    killer = WarriorFactory(faction=skirmish.attacking_faction)
 
     result = handle_record_skirmish_casualty(
         context=RecordSkirmishCasualty(
-            skirmish=skirmish, warrior=warrior, fate=SkirmishCasualty.FateChoices.FATE_KILLED
+            skirmish=skirmish,
+            warrior=warrior,
+            fate=SkirmishCasualty.FateChoices.FATE_KILLED,
+            killed_by=killer,
+            fell_as_a_leader=True,
         )
     )
 
     assert result == SkirmishCasualtyRecorded(casualty=SkirmishCasualty.objects.get())
-    assert SkirmishCasualty.objects.get().fate == SkirmishCasualty.FateChoices.FATE_KILLED
+    assert SkirmishCasualty.objects.values_list("fate", "killed_by", "fell_as_a_leader").get() == (
+        SkirmishCasualty.FateChoices.FATE_KILLED,
+        killer.id,
+        True,
+    )
 
 
 @pytest.mark.django_db

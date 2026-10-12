@@ -37,7 +37,7 @@ def test_handle_create_battle_history_carries_the_kind_and_the_man_to_the_row():
     )
 
     record = BattleHistory.objects.get()
-    assert record.kind == BattleHistory.KindChoices.KIND_WARRIOR_KILLED
+    assert (record.kind, record.warrior) == (BattleHistory.KindChoices.KIND_WARRIOR_KILLED, warrior)
     assert record.faction == skirmish.attacking_faction
 
 

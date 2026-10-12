@@ -80,6 +80,8 @@ def handle_record_killed_warrior(*, context: warrior.WarriorWasKilled) -> Comman
         skirmish=context.skirmish,
         warrior=context.warrior,
         fate=SkirmishCasualty.FateChoices.FATE_KILLED,
+        killed_by=context.by_warrior,
+        fell_as_a_leader=context.fell_as_a_leader,
     )
 
 
