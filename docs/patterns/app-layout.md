@@ -97,18 +97,21 @@ apps/warband/<topic>/handlers/events/<domain>.py     # functions handling Events
 
 ## Business logic is not only in handlers
 
-Roughly 45% of the logic sits outside `handlers/`, so don't treat it as the whole story:
+More of the logic sits outside `handlers/` than in it, so don't treat them as the whole story. Inside a
+topic package:
 
-| Layer | LOC |
+| Package | Holds |
 |---|---|
-| `handlers/` | 1930 |
-| `services/` | 650 |
-| `models/` | 602 |
-| `managers/` | 352 |
-| `domain/` | 37 |
+| `handlers/` | the writes, one per message |
+| `services/` | calculations and generators the handlers and views call into |
+| `models/`, `managers/` | what a row knows about itself, and the queries over many rows |
+| `domain/` | pure rules with no database behind them (`faction/domain/fyrd_reserve.py`) |
+| `projections/` | read models a view renders from (`skirmish/projections/skirmish_report.py`) |
+| `incidents/` | one module per month incident and what it asks of the player |
+| `buildings/` | the levels of each town building and the numbers they set |
+| `choices/` | the `TextChoices` a topic's models and messages share |
 
-Handlers call into `services/` in 10 places. Anything measured or reviewed has to cover `services/`,
-`managers/`, `models/` and `domain/` as well — see [coverage](coverage.md).
+Anything measured or reviewed has to cover all of them — see [coverage](coverage.md).
 
 Game-balance numbers are a special case and live in `apps/warband/town/buildings/`, see
 [town buildings](town-buildings.md).

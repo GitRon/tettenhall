@@ -12,7 +12,7 @@ def test_str_is_the_name():
 
 
 @pytest.mark.django_db
-def test_every_earned_trait_in_the_shipped_catalogue_is_one_a_rule_exists_for():
+def test_hook_of_every_shipped_earned_trait_has_a_rule():
     """
     Every earned row needs a rule in "TraitEarningService", which finds its row by the hook.
     """

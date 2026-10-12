@@ -121,12 +121,12 @@ def test_grown_attributes_display_reads_the_category_of_the_row():
 
 
 @pytest.mark.django_db
-def test_a_faction_trains_by_a_single_regimen():
+def test_faction_trains_by_a_single_regimen():
     """
     The standing order is one row. A second one for the same faction would leave every reader of a
     faction's training picking one of two answers, and nothing downstream could tell which.
     """
     training = TrainingFactory(category=Training.TrainingCategory.WEAPON_MASTERY)
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(IntegrityError, match=r"UNIQUE constraint failed: warband_training\.faction_id"):
         TrainingFactory(faction=training.faction, category=Training.TrainingCategory.SWIFTNESS)

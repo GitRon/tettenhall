@@ -8,7 +8,7 @@ register = template.Library()
 
 
 @register.filter
-def sell_payout(item: Item, faction: Faction) -> int:  # noqa: PBR001 - a filter is called positionally
+def sell_payout(item: Item, faction: Faction) -> int:
     """
     What the Sell button on this item's card pays, from the same function the sale itself credits.
 

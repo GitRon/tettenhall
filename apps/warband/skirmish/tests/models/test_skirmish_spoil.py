@@ -16,7 +16,7 @@ def test_str_names_the_kind_and_the_fight():
 
 
 @pytest.mark.django_db
-def test_a_spoil_outlives_its_item_and_still_names_it():
+def test_item_name_outlives_the_item():
     item = ItemFactory()
     spoil = SkirmishSpoilFactory(kind=SkirmishSpoil.KindChoices.KIND_ITEM_TAKEN, item=item)
     item_name = spoil.item_name

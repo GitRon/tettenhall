@@ -54,7 +54,7 @@
             {# are two different numbers once a fight is under way, and the sentence above already #}
             {# counts them. A button reading "to the fights" that opens one fight is the very thing #}
             {# this control was wrong about before. #}
-            <a class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center font-mono text-label uppercase tracking-label leading-normal text-ground no-underline hover:border-ink"
+            <a class="button-primary shrink-0"
                href="{% if month_standing.skirmish_to_enter %}{% url 'warband:skirmish-fight-view' month_standing.skirmish_to_enter.id %}{% else %}{% url 'warband:skirmish-list-view' %}{% endif %}">
                 {% if month_standing.skirmish_to_enter %}To the fight{% else %}To the fights{% endif %}
             </a>
@@ -66,7 +66,7 @@
         {% else %}
             {# A button rather than an anchor, because this posts the month: an "a" with no href is #}
             {# out of Tab's reach and announced as text. #}
-            <button class="box-border inline-block shrink-0 cursor-pointer border border-blood bg-blood px-[30px] py-[9px] text-center font-mono text-label uppercase tracking-label leading-normal text-ground hover:border-ink"
+            <button class="button-primary shrink-0"
                     hx-post="{% url 'warband:finish-month-view' %}"
                     hx-vals='{"month": {{ current_savegame.current_month }}}'
                     hx-disabled-elt="this"

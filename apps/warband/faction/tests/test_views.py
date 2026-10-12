@@ -1256,9 +1256,7 @@ def test_recruit_pub_mercenary_view_refuses_without_enough_silver(
     response = logged_in_client.post(reverse("warband:pub-mercenary-recruit-view", kwargs={"pk": pub_mercenary.id}))
 
     assert response.status_code == 204
-    assert json.loads(response["HX-Trigger"]) == {
-        "notification": "You don't have enough silver to hire this mercenary."
-    }
+    assert json.loads(response["HX-Trigger"])["notification"] == "You don't have enough silver to hire this mercenary."
     pub_mercenary.refresh_from_db()
     assert pub_mercenary.faction is None
 

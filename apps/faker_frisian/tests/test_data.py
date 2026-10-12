@@ -58,7 +58,7 @@ def test_bynames_obey_the_orthography():
     assert result == []
 
 
-def test_no_generic_is_also_an_element():
+def test_place_generics_share_nothing_with_the_elements():
     """
     A generic that is also a first element would compose with itself, and the place would read as two
     settlements stuck together.

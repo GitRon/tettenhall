@@ -245,7 +245,7 @@ def test_wage_once_recruited_of_a_man_who_draws_none_is_the_wage_his_price_buys(
     assert warrior.wage_once_recruited == Warrior.salary_for(recruitment_price=260)
 
 
-def test_the_two_wage_derived_prices_of_a_man_who_draws_no_wage():
+def test_hiring_price_and_severance_pay_of_a_man_who_draws_no_wage():
     """
     A leader, and the reason his generator zeroes the wage alone. Being hired and being sent away are
     both employment, and neither is a thing that happens to him - so both come out at nothing rather

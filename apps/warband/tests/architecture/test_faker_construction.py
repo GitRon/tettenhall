@@ -54,7 +54,7 @@ def _faker_constructions(*, file: Path) -> list[str]:
     ]
 
 
-def test_only_the_factory_builds_a_faker():
+def test_faker_is_built_by_the_factory_only():
     """
     Anything needing a faker asks the factory for one, so both providers are reachable from every call
     site rather than from the one that remembered them.

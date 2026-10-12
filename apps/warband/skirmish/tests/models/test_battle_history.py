@@ -26,7 +26,7 @@ def test_icon_names_the_mark_for_the_kind():
     assert battle_history.icon == "fa-person-running"
 
 
-def test_every_way_off_the_field_has_a_mark():
+def test_icon_marks_every_way_off_the_field():
     """
     The three kinds that take a man out of the fight are exactly the ones the panel marks, so a
     fourth added to the choices has to say whether it is one of them rather than pick up silence.

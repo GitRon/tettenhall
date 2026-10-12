@@ -47,7 +47,7 @@ def test_call_sites_are_discovered():
     assert {"common.svg-icon", "common.box-header", "warrior.gauge"} <= result
 
 
-def test_every_call_site_names_a_component():
+def test_call_sites_each_name_a_component():
     result = unknown_components(call_sites=call_sites(), components=components())
 
     assert result == []
@@ -61,7 +61,7 @@ def test_unknown_components_sees_a_misspelt_tag():
     assert result == ["broken.html:1: <c-warrior.guage>"]
 
 
-def test_every_passed_attribute_is_declared():
+def test_passed_attributes_are_all_declared():
     result = undeclared_attributes(call_sites=call_sites(), components=components())
 
     assert result == []
@@ -86,7 +86,7 @@ def test_undeclared_attributes_leaves_an_unknown_component_to_its_own_rule():
     assert result == []
 
 
-def test_every_required_attribute_is_passed():
+def test_required_attributes_are_all_passed():
     result = missing_required_attributes(call_sites=call_sites(), components=components())
 
     assert result == []
@@ -111,7 +111,7 @@ def test_missing_required_attributes_leaves_an_unknown_component_to_its_own_rule
     assert result == []
 
 
-def test_no_component_name_is_shipped_by_two_apps():
+def test_component_names_are_shipped_by_one_app_each():
     result = duplicate_component_names(component_files=component_files())
 
     assert result == []

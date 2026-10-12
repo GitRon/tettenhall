@@ -9,7 +9,7 @@ register = template.Library()
 
 
 @register.filter
-def gear_gain(warrior: Warrior, item: Item) -> str:  # noqa: PBR001 - a filter is called positionally
+def gear_gain(warrior: Warrior, item: Item) -> str:
     """
     What handing this item to this man would add to what he is already holding.
 
@@ -37,7 +37,7 @@ def gear_gain(warrior: Warrior, item: Item) -> str:  # noqa: PBR001 - a filter i
 
 
 @register.filter
-def improves_nobody(item: Item, roster: list[Warrior]) -> bool:  # noqa: PBR001 - a filter is called positionally
+def improves_nobody(item: Item, roster: list[Warrior]) -> bool:
     """
     Whether every man on the roster already holds something at least as good in this item's slot.
 

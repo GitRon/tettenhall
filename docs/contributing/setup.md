@@ -1,6 +1,6 @@
 # Local setup
 
-Tettenhall is a Django 5.2 application on Python 3.14 with a SQLite database.
+Tettenhall is a Django 6.1 application on Python 3.14 with a SQLite database.
 
 Dependencies are managed with [uv](https://docs.astral.sh/uv/) from `pyproject.toml`. uv installs the
 interpreter pinned in `.python-version` itself, so a matching Python does not have to be on the

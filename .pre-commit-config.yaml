@@ -20,6 +20,7 @@ repos:
     rev: 1.9.0
     hooks:
       - id: djade
+        # 6.0 is the newest target djade knows; the project runs 6.1
         args: [ --target-version, "6.0" ]
         exclude: |
           (?x)^(

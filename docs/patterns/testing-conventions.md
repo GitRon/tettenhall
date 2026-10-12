@@ -12,7 +12,8 @@ so without that reset registrations leak between tests.
 ## Layout
 
 - Each topic package's `tests/` mirrors the structure of its production code:
-  `apps/warband/item/services/generators/item.py` → `apps/warband/item/tests/services/generators/test_item.py`.
+  `apps/warband/item/services/generators/item/base.py` →
+  `apps/warband/item/tests/services/generators/item/test_base.py`.
   The tests that check the whole tree at once rather than one testee live in
   `apps/warband/tests/architecture/`, see [architecture tests](architecture-tests.md).
 - One test module per testee. If a module would have to hold tests for two testees, split it.

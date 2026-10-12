@@ -6,7 +6,7 @@ register = template.Library()
 
 
 @register.filter
-def net_of_wages(income: int, payroll: Payroll) -> str:  # noqa: PBR001 - a filter is called positionally
+def net_of_wages(income: int, payroll: Payroll) -> str:
     """
     What a month leaves the purse with, hall income less wages, signed.
 
@@ -21,7 +21,7 @@ def net_of_wages(income: int, payroll: Payroll) -> str:  # noqa: PBR001 - a filt
 
 
 @register.filter
-def signed(amount: int) -> str:  # noqa: PBR001 - a filter is called positionally
+def signed(amount: int) -> str:
     """
     A figure with the way it moves written in front of it: "+5", a true minus sign, or "±0".
 

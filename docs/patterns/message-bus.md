@@ -50,7 +50,7 @@ This keeps side effects in commands and reactions in events. One action fans out
 
 ```
 UpgradeTownBuilding (cmd)
-  └─ handle_upgrade_town_building  → mutates Town, saves, emits
+  └─ handle_upgrade_town_building  → conditional UPDATE on Town, emits
        TownBuildingUpgraded (event)
          └─ handle_pay_building_costs_for_town_buildings → emits
               CreateTransaction (cmd)

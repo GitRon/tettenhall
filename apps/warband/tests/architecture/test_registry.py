@@ -253,7 +253,7 @@ def test_autodiscovery_finds_every_handler(queuebie_registry):
     assert _decorated_handlers() == registered_handlers
 
 
-def test_every_emitted_command_has_a_handler(queuebie_registry):
+def test_emitted_commands_each_have_a_handler(queuebie_registry):
     """
     A command is an instruction to do something, so one without a handler is always a bug - which
     is why there is deliberately no allowlist here.
@@ -263,7 +263,7 @@ def test_every_emitted_command_has_a_handler(queuebie_registry):
     assert emitted_commands - set(queuebie_registry.command_dict) == set()
 
 
-def test_every_command_has_exactly_one_handler(queuebie_registry):
+def test_commands_each_have_exactly_one_handler(queuebie_registry):
     """
     A command names the one piece of work it wants done, so a second handler on it is a second
     answer to a question that has one. Events are the message type that fans out - see the handler
@@ -278,19 +278,19 @@ def test_every_command_has_exactly_one_handler(queuebie_registry):
     assert commands_with_several_handlers == {}
 
 
-def test_every_emitted_event_is_either_consumed_or_terminal(queuebie_registry):
+def test_emitted_events_are_each_consumed_or_terminal(queuebie_registry):
     emitted_events = _emitted_message_paths(message_type=Event)
 
     assert emitted_events - set(queuebie_registry.event_dict) - set(TERMINAL_MESSAGES) == set()
 
 
-def test_every_terminal_message_carries_a_reason():
+def test_terminal_messages_each_carry_a_reason():
     entries_without_a_reason = sorted(path for path, reason in TERMINAL_MESSAGES.items() if not reason.strip())
 
     assert entries_without_a_reason == []
 
 
-def test_every_terminal_message_is_still_emitted_and_still_unconsumed(queuebie_registry):
+def test_terminal_messages_are_still_emitted_and_still_unconsumed(queuebie_registry):
     """
     A stale entry is invisible otherwise. An event that gained a consumer, or stopped being raised at all,
     keeps its place on the list - and the reason beside it goes on explaining a silence that is no longer
@@ -356,7 +356,7 @@ def _command_module_mismatches(*, registry) -> list[str]:
     return mismatches
 
 
-def test_a_command_is_handled_in_the_module_named_after_the_one_defining_it(queuebie_registry):
+def test_command_handlers_sit_in_the_module_named_after_the_one_defining_the_command(queuebie_registry):
     """
     Which module a message belongs in is a judgement call about its subject, see
     "docs/patterns/app-layout.md". That a command and its handler agree on the answer is not, and
@@ -439,7 +439,7 @@ def test_event_module_mismatches_leaves_the_two_subject_fallbacks_alone():
     assert result == []
 
 
-def test_an_event_handler_module_is_named_after_the_topic_it_reacts_to(queuebie_registry):
+def test_event_handler_modules_are_named_after_the_topic_they_react_to(queuebie_registry):
     """
     The other half of the test above. Under "handlers/events/" the topic package is the reactor, so the
     module name is what carries the origin - which is what makes a cross-topic subscription findable at
@@ -640,7 +640,7 @@ def test_emitted_message_types_survives_a_helper_calling_itself():
     assert result == {HealInjuredWarrior}
 
 
-def test_a_command_handler_emits_events_and_an_event_handler_emits_commands(queuebie_registry):
+def test_handlers_emit_events_from_commands_and_commands_from_events(queuebie_registry):
     """
     The golden rule of "docs/patterns/message-bus.md", which nothing else in the project enforces.
 
@@ -658,7 +658,7 @@ def test_a_command_handler_emits_events_and_an_event_handler_emits_commands(queu
     assert violations == []
 
 
-def test_every_allowlisted_handler_still_emits_the_message_type_it_was_allowed(queuebie_registry):
+def test_direction_allowlist_handlers_still_emit_the_message_type_they_are_allowed(queuebie_registry):
     """
     A stale allowlist entry is invisible otherwise: the handler it names keeps being skipped after the
     reason for skipping it is gone, and the next handler in that module inherits the exemption by
@@ -735,7 +735,7 @@ def test_queryset_fields_names_every_way_of_spelling_a_queryset():
     ]
 
 
-def test_no_message_carries_a_queryset():
+def test_messages_carry_no_queryset():
     """
     A queryset on a message is a query waiting for whoever touches it first, and strict mode forbids
     one in every event handler. Messages carry lists - see "docs/patterns/message-bus.md".

@@ -13,6 +13,6 @@ import pytest
 from django.template import Context, Template
 
 
-def test_an_unresolved_template_variable_fails_the_test():
+def test_fail_invalid_template_vars_fails_an_unresolved_variable():
     with pytest.raises(pytest.fail.Exception, match=r"Undefined template variable 'warrior\.avatar_url'"):
         Template("{{ warrior.avatar_url }}").render(Context({"warrior": object()}))

@@ -68,7 +68,7 @@ def test_losing_the_leader_logs_the_cause_before_the_broken_war_band(queuebie_re
 
 
 @pytest.mark.django_db
-def test_a_warrior_in_two_open_fights_is_taken_prisoner_only_once(queuebie_registry):
+def test_capture_in_two_open_fights_takes_the_warrior_prisoner_only_once(queuebie_registry):
     """
     Ending the game decides every unresolved skirmish in one pass, so a warrior standing on two
     rosters is processed as a casualty twice. He still ends up in one victor's cells, not both.

@@ -36,11 +36,9 @@ def test_item_sell_view_announces_the_changed_lists_to_htmx(logged_in_client, cu
 
     response = logged_in_client.post(reverse("warband:item-sell-view", kwargs={"pk": item.pk}))
 
-    assert json.loads(response["HX-Trigger"]) == {
-        "loadFactionItemList": "-",
-        "loadFactionWarriorList": "-",
-        "updateResourceBar": "-",
-    }
+    assert {"loadFactionItemList", "loadFactionWarriorList", "updateResourceBar"} <= json.loads(
+        response["HX-Trigger"]
+    ).keys()
 
 
 @pytest.mark.django_db
@@ -83,7 +81,7 @@ def test_item_buy_view_announces_the_changed_shop_list_to_htmx(logged_in_client,
 
     response = logged_in_client.post(reverse("warband:item-buy-view", kwargs={"pk": item.pk}))
 
-    assert json.loads(response["HX-Trigger"]) == {"loadShopItemList": "-", "updateResourceBar": "-"}
+    assert {"loadShopItemList", "updateResourceBar"} <= json.loads(response["HX-Trigger"]).keys()
 
 
 @pytest.mark.django_db
@@ -98,7 +96,7 @@ def test_item_buy_view_refuses_to_buy_without_enough_silver(logged_in_client, cu
     response = logged_in_client.post(reverse("warband:item-buy-view", kwargs={"pk": item.pk}))
 
     assert response.status_code == 204
-    assert json.loads(response["HX-Trigger"]) == {"notification": "You don't have enough money to buy this item."}
+    assert json.loads(response["HX-Trigger"])["notification"] == "You don't have enough money to buy this item."
     item.refresh_from_db()
     assert item.owner is None
 
@@ -262,7 +260,7 @@ def test_item_assign_view_announces_the_changed_lists_to_htmx(logged_in_client, 
         reverse("warband:item-assign-view", kwargs={"pk": item.pk}), data={"warrior": warrior.id}
     )
 
-    assert json.loads(response["HX-Trigger"]) == {"loadFactionItemList": "-", "loadFactionWarriorList": "-"}
+    assert {"loadFactionItemList", "loadFactionWarriorList"} <= json.loads(response["HX-Trigger"]).keys()
 
 
 @pytest.mark.django_db

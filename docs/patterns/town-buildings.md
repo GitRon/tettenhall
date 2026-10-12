@@ -123,7 +123,7 @@ holding that level's numbers:
   `last_feast_at` does - asked by `get_geld_refusal` for the message, re-checked as a conditional `UPDATE`
   in `handle_call_geld`, which also re-reads the reserve so a draft in another tab cannot leave the
   village paying for a name it no longer has. Only the player calls one; a rival's purse is #405 and #416.
- (#417). A level's `CELL_PLACES`
+- **The cells are the hall's, and they are counted when the month turns** (#417). A level's `CELL_PLACES`
   (1 / 2 / 3 / 4) is how many prisoners the town still holds once the month has turned. A capture is never
   refused for want of room, so cells may stand over their places during a month; then
   `handle_let_captives_flee_overfull_cells`, off `FactionMonthPrepared`, lets exactly the excess go, picked

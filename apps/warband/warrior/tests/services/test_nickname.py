@@ -252,7 +252,7 @@ def test_resolve_nickname_wraps_a_variant_round_the_wordings_it_lands_in():
     assert result == MORALE_LOW_NICKNAMES[0]
 
 
-def test_every_state_has_a_wording():
+def test_resolve_nickname_has_a_wording_for_every_state():
     """
     A state with no entry is a man the game can stamp and then cannot name - a "KeyError" the moment
     anything renders him, and nothing before that says so.

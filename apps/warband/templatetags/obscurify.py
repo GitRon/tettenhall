@@ -8,7 +8,7 @@ LOW_SHARE = 0.8
 
 
 @register.filter
-def obscurify(value: int, avg_value: int) -> str:  # noqa: PBR001
+def obscurify(value: int, avg_value: int) -> str:
     if value > avg_value * HIGH_SHARE:
         return "High"
     if value < avg_value * LOW_SHARE:

@@ -8,15 +8,25 @@ from queuebie import message_registry
 from queuebie.messages import Command, Event
 
 @message_registry.register_command(command=UpgradeTownBuilding)
-def handle_upgrade_town_building(*, context: UpgradeTownBuilding) -> list[Event] | Event:
-    setattr(context.town, context.building_type, context.new_level)
-    context.town.save()
+def handle_upgrade_town_building(*, context: UpgradeTownBuilding) -> Event | None:
+    upgraded_rows = (
+        Town.objects.filter(pk=context.town.pk)
+        .exclude(last_constructed_building_at=context.month)
+        .update(**{context.building_type: context.new_level}, last_constructed_building_at=context.month)
+    )
+    if not upgraded_rows:
+        return None
+    ...
     return TownBuildingUpgraded(town=context.town, ...)   # command handler → Event
 
 @message_registry.register_event(event=TownBuildingUpgraded)
-def handle_pay_building_costs(*, context: TownBuildingUpgraded) -> Command | None:
+def handle_pay_building_costs_for_town_buildings(*, context: TownBuildingUpgraded) -> Command:
     return CreateTransaction(faction=context.faction, amount=-context.costs, ...)  # event handler → Command
 ```
+
+The write is a conditional `UPDATE`, not a `setattr` and `save()`: a guard the view also checks has to
+hold for two overlapping requests, and only the database can decide which of them wins (see
+[town buildings](town-buildings.md)).
 
 ## Conventions
 

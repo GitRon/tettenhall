@@ -20,7 +20,7 @@ def test_of_kind_is_the_pieces_of_that_kind():
 
 
 @pytest.mark.django_db
-def test_every_shipped_piece_has_its_image():
+def test_image_exists_for_every_shipped_piece():
     """A row pointing at a missing file renders a broken layer on every man drawn with it."""
     missing = [piece.image for piece in PortraitPiece.objects.all() if finders.find(piece.image) is None]
 
@@ -28,7 +28,7 @@ def test_every_shipped_piece_has_its_image():
 
 
 @pytest.mark.django_db
-def test_every_shipped_face_is_the_whole_canvas():
+def test_image_of_every_shipped_face_is_the_whole_canvas():
     """The hair and beard fractions are measured against the face, so a face that moved would move them all."""
     faces = PortraitPiece.objects.of_kind(kind=PortraitKindChoices.KIND_FACE)
 

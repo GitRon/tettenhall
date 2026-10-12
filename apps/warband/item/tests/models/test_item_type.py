@@ -21,7 +21,7 @@ def test_str_contains_name_and_function():
 
 
 @pytest.mark.django_db
-def test_every_shipped_item_type_has_an_icon_to_draw():
+def test_icon_exists_for_every_shipped_item_type():
     """
     A missing file is no error anywhere: the mask resolves to nothing and the card shows an empty square.
     """
@@ -35,5 +35,5 @@ def test_every_shipped_item_type_has_an_icon_to_draw():
 
 
 @pytest.mark.parametrize("icon", sorted(ICON_DIRECTORY.glob("*.svg")), ids=lambda icon: icon.stem)
-def test_no_icon_carries_a_background_that_would_mask_in_as_a_square(icon):
+def test_icon_carries_no_background_that_would_mask_in_as_a_square(icon):
     assert FULL_BLEED_BACKGROUND.search(icon.read_text(encoding="utf-8")) is None

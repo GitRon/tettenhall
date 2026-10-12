@@ -11,7 +11,7 @@ def test_str_is_the_name():
 
 
 @pytest.mark.django_db
-def test_every_shipped_colour_is_a_hex_colour():
+def test_hex_is_a_hex_colour_for_every_shipped_colour():
     """The value lands in an inline style unchecked, and a malformed one leaves the hair uncoloured grey."""
     malformed = [colour.hex for colour in HairColour.objects.all() if not re.fullmatch(r"#[0-9a-f]{6}", colour.hex)]
 

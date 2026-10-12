@@ -51,7 +51,7 @@ def write_placement(*, placement: dict) -> None:
 
 
 class Handler(SimpleHTTPRequestHandler):
-    def translate_path(self, path: str) -> str:  # noqa: PBR001 - the signature http.server calls
+    def translate_path(self, path: str) -> str:
         path = path.split("?", 1)[0]
         if path in ("/", "/index.html"):
             return str(HERE / "index.html")

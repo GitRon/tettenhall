@@ -13,7 +13,7 @@ from apps.warband.town.buildings.weaponsmith import Weaponsmith
 @pytest.mark.parametrize(
     "item_function", (ItemType.FunctionChoices.FUNCTION_WEAPON, ItemType.FunctionChoices.FUNCTION_ARMOR)
 )
-def test_every_pool_holds_something_of_both_functions(generator_class, item_function):
+def test_item_pools_hold_something_of_both_functions(generator_class, item_function):
     """
     An empty pool is only ever discovered mid-savegame, as a "No item type found." out of warrior
     generation, so the shipped reference data is asked here instead: every generator has to reach a
@@ -31,7 +31,7 @@ def test_every_pool_holds_something_of_both_functions(generator_class, item_func
 @pytest.mark.parametrize(
     "item_function", (ItemType.FunctionChoices.FUNCTION_WEAPON, ItemType.FunctionChoices.FUNCTION_ARMOR)
 )
-def test_every_shop_pool_holds_something_of_both_functions(weaponsmith, item_function):
+def test_shop_pools_hold_something_of_both_functions(weaponsmith, item_function):
     """
     The same for the town shop, whose bands the weaponsmith sets per level: an empty one would only
     show up at a month's restock.

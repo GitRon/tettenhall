@@ -59,7 +59,7 @@ def test_misnamed_record_writers_names_a_method_writing_a_row_under_another_name
     assert result == ["CasualtyManager.record_casualty"]
 
 
-def test_a_manager_writes_a_record_through_create_record():
+def test_managers_write_a_record_through_create_record():
     violations = [
         f"{file.relative_to(file.parents[3])} {violation}"
         for file in production_module_files()

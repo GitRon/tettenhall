@@ -113,7 +113,9 @@ set on `body`.
   account menu sit on a surface that is already `raised`, so the rule appears where the current
   section's `ink` rule sits, and the word still keeps its colour.
 - **Where you are is `ink`, not `blood`.** The current section's rule is `ink`; the focus ring is the one
-  place `blood` is spent without something being wrong.
+  place `blood` is spent without something being wrong. That rule, and the `rule-strong` hover in its
+  place, is 2px: it marks where you are rather than separating two things, and at 1px against the
+  `raised` bar it reads as a hairline. It is the one rule thicker than 1px.
 - **A meaning is never only in a `title`.** Touch and keyboard players never see one, so a unit, a
   roll's average or the reason behind a warning goes into words on the page - for a table column, once,
   in its head (`WAGE / MONTH`).
@@ -129,6 +131,10 @@ At most one control on a screen is filled — `bg-blood` with `text-ground` — 
 screen exists for: **Fight!** on the fight screen, the control in the month band — *Finish month*, or
 the fight holding it up while one is unresolved — on the month page. Everything
 else is outlined.
+
+It is the `button-primary` utility in `assets/css/tailwind.css` (`button-primary-small` in a form row),
+and `apps/common/form_styles.py` hands the same class to the crispy layouts. A template that draws the
+control by hand writes the class too, never the utility list behind it.
 
 ### The row action
 
@@ -149,8 +155,8 @@ hall to feast*, *Already feasted this month*, *Your leader stays*. It is quieter
 would work, but it is text the player is meant to read, so it never goes to `ink-dim` - and never
 `blood`, the colour of a control that wants you.
 
-A class written into the stylesheet is the exception here, and this is why it is one: the row action is
-on thirty templates, and the same utility list copied thirty times drifts into four controls that each
+A class written into the stylesheet is the exception here, and this is why the row action and the
+filled control are one: the row action is on thirty templates, and the same utility list copied thirty times drifts into four controls that each
 look a little different, which a player reads as four kinds of thing.
 
 ### The row menu

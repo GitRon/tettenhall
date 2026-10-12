@@ -2,8 +2,8 @@
 
 - **Never create model instances directly in a test** — no `Warrior.objects.create()`, no
   `Warrior(...).save()`. Always go through a factory.
-- Factories live in `apps/<app>/tests/factories/<model>.py`, one factory per model, subclassing
-  `factory.django.DjangoModelFactory`.
+- Factories live in `apps/warband/<topic>/tests/factories/<model>.py`, in the topic package that owns the
+  model, one factory per model, subclassing `factory.django.DjangoModelFactory`.
 - Use `build()` where the object never has to hit the database, `create()` only where it must. Per the
   [handler rules](testing-strategy.md), that is usually `create()`.
 - Create in batches (`create_batch()`) rather than in loops when you need several objects.

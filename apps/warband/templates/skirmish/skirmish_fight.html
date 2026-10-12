@@ -11,7 +11,7 @@
     {# all until somebody wins. #}
     {# The mono label rather than body copy, because a way off a screen is a control and the label is #}
     {# what every other control on this one is set in. #}
-    <a class="mb-5 inline-block font-mono text-label uppercase tracking-label text-ink-muted no-underline hover:text-ink"
+    <a class="mb-5 inline-block -mx-1 px-1 font-mono text-label uppercase tracking-label text-ink-muted no-underline hover:bg-raised"
        href="{% url 'warband:skirmish-list-view' %}">
         <i aria-hidden="true" class="fa-solid fa-arrow-left"></i> Leave the fight
     </a>
@@ -46,11 +46,11 @@
                     {# Outlined like a status tag and brightest when chosen: the Fight! button is the one #}
                     {# filled control on this screen, and a tab is a view of the log, not an action. #}
                     <div class="mb-4 flex gap-x-2" role="tablist" aria-label="Battle log">
-                        <button class="cursor-pointer border border-rule bg-transparent px-3 py-1 font-mono text-label uppercase tracking-label text-ink-muted hover:text-ink aria-selected:border-ink aria-selected:text-ink"
+                        <button class="cursor-pointer border border-rule bg-transparent px-3 py-1 font-mono text-label uppercase tracking-label text-ink-muted hover:bg-raised aria-selected:border-ink aria-selected:text-ink"
                                 type="button" role="tab" aria-selected="true" data-log-tab-button="saga">
                             Saga
                         </button>
-                        <button class="cursor-pointer border border-rule bg-transparent px-3 py-1 font-mono text-label uppercase tracking-label text-ink-muted hover:text-ink aria-selected:border-ink aria-selected:text-ink"
+                        <button class="cursor-pointer border border-rule bg-transparent px-3 py-1 font-mono text-label uppercase tracking-label text-ink-muted hover:bg-raised aria-selected:border-ink aria-selected:text-ink"
                                 type="button" role="tab" aria-selected="false" data-log-tab-button="tally">
                             Tally
                         </button>
