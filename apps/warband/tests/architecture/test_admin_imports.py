@@ -50,7 +50,7 @@ def test_imported_modules_reads_both_import_spellings():
     assert result == {"apps.warband.faction.admin", "apps.warband.item", "apps.warband.item.admin"}
 
 
-def test_every_topic_admin_is_imported_by_the_app_root():
+def test_app_root_admin_imports_every_topic_admin():
     unimported = [
         module_path
         for app_config in project_app_configs()

@@ -3,7 +3,7 @@ from django.db import connection
 
 
 @pytest.mark.django_db
-def test_the_suite_opens_its_transactions_immediate():
+def test_connection_opens_its_transactions_immediate():
     """
     A handler's re-read of the purse is only a re-check while nobody else can write between the read
     and the charge, which is what "BEGIN IMMEDIATE" holds - see docs/patterns/message-bus.md. Read off

@@ -13,7 +13,7 @@ from apps.warband.calendar.months import YEAR
 from apps.warband.incident.incidents import INCIDENTS, QUIET_MONTH_WEIGHT
 
 
-def test_every_entry_is_drawn_in_some_month():
+def test_incidents_each_drawn_in_some_month():
     """
     An entry tied to months of the year has to name at least one real month, or it is a class kept in
     the pool that nothing can ever draw.
@@ -21,14 +21,14 @@ def test_every_entry_is_drawn_in_some_month():
     assert [incident for incident in INCIDENTS if incident.get_yearly_weight() <= 0] == []
 
 
-def test_every_entry_carries_a_weight():
+def test_incidents_each_carry_a_weight():
     """
     A weight of zero is an entry nobody can ever draw, which is a class kept in the pool by mistake.
     """
     assert [incident for incident in INCIDENTS if incident.WEIGHT <= 0] == []
 
 
-def test_every_question_declares_its_default_among_its_options():
+def test_incidents_declare_their_default_among_their_options():
     """
     An unanswered question takes its default when the month ends, so a default naming no option
     would leave the question with nothing to land.
@@ -38,7 +38,7 @@ def test_every_question_declares_its_default_among_its_options():
     ] == []
 
 
-def test_no_default_costs_silver():
+def test_incident_defaults_cost_no_silver():
     """
     The default is what a player who cannot afford anything else is left with. One costing silver
     would open a hole he did not dig - the rule every cost in the pool is held to by "is_possible".
@@ -48,7 +48,7 @@ def test_no_default_costs_silver():
     ] == []
 
 
-def test_no_default_sells_gear():
+def test_incident_defaults_sell_no_gear():
     """
     A default lands without asking, and gear is the one lever that destroys something the player
     paid for - handing it over is his decision or nobody's.
@@ -58,7 +58,7 @@ def test_no_default_sells_gear():
     ] == []
 
 
-def test_a_quiet_month_is_the_likeliest_outcome():
+def test_quiet_month_weight_is_the_likeliest_outcome():
     """
     The register works because most months are silent. An incident every month is a chronicle
     nobody reads. Held in the busiest month of the year, since an entry tied to a few months carries
@@ -91,7 +91,7 @@ def test_silver_nets_out_negative():
     assert weighted_silver < 0
 
 
-def test_the_fyrd_nets_out_flat():
+def test_fyrd_nets_out_flat():
     """
     The reserve is the brake on a war band's growth, so a drift here changes the pace of the whole
     game rather than one month of it. "Flat" is a tolerance, not a zero: the entries are whole men.
@@ -109,7 +109,7 @@ def test_the_fyrd_nets_out_flat():
     assert abs(weighted_recruits) <= 2
 
 
-def test_the_morale_ceiling_nets_out_flat():
+def test_morale_ceiling_nets_out_flat():
     """
     "max_morale" is close to a one-way ratchet - it otherwise only moves on a level-up - so a drift
     either way accumulates over fifty months with nothing to correct it.

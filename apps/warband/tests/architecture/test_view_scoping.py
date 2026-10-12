@@ -248,7 +248,7 @@ def test_views_the_check_cannot_see_are_still_out_of_its_reach():
     assert UNCOLLECTED_SCOPED_VIEWS & collected == set()
 
 
-def test_every_view_the_check_cannot_see_is_listed():
+def test_unscoped_views_list_every_view_the_check_cannot_see():
     """
     Keeps the two lists above complete. A view outside the collection is checked by nothing here, so it
     has to say why: "UNCOLLECTED_SCOPED_VIEWS" names the test vouching for its scoping, "UNSCOPED_VIEWS"

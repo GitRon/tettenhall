@@ -6,7 +6,7 @@ The test asserts nothing about the output. It fails when a render raises, or whe
 component reads does not resolve - "string_if_invalid" is set to a value that raises instead of
 printing nothing, because nothing is exactly how a renamed parameter looks on the page.
 
-A component without an entry below fails "test_every_component_has_render_rows", so a new component
+A component without an entry below fails "test_render_rows_cover_every_component", so a new component
 cannot ship without being rendered here.
 
 It is also what notices a Django upgrade breaking cotton: the library patches Django's template lexer,
@@ -359,7 +359,7 @@ RENDER_ROWS = {
 }
 
 
-def test_every_component_has_render_rows():
+def test_render_rows_cover_every_component():
     result = set(RENDER_ROWS)
 
     assert result == set(components())

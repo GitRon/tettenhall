@@ -279,7 +279,7 @@ def test_fyrd_names_lost_counts_the_names_struck_off_the_faction():
 
 
 @pytest.mark.django_db
-def test_a_raid_that_took_only_the_herds_still_has_something_to_report():
+def test_has_spoils_for_a_raid_that_took_only_the_herds():
     skirmish = SkirmishFactory()
     SkirmishSpoilFactory(
         skirmish=skirmish,
@@ -294,7 +294,7 @@ def test_a_raid_that_took_only_the_herds_still_has_something_to_report():
 
 
 @pytest.mark.django_db
-def test_a_fight_that_yielded_nothing_says_so():
+def test_has_spoils_for_a_fight_that_yielded_nothing():
     skirmish = SkirmishFactory()
 
     report = SkirmishReport.for_skirmish(skirmish=skirmish, faction=skirmish.attacking_faction)
@@ -303,7 +303,7 @@ def test_a_fight_that_yielded_nothing_says_so():
 
 
 @pytest.mark.django_db
-def test_a_fight_that_yielded_only_silver_still_has_something_to_report():
+def test_has_spoils_for_a_fight_that_yielded_only_silver():
     skirmish = SkirmishFactory()
     SkirmishSpoilFactory(
         skirmish=skirmish,
@@ -404,7 +404,7 @@ def test_own_routed_is_kept_apart_from_the_casualties():
 
 
 @pytest.mark.django_db
-def test_a_won_fight_does_not_file_the_faction_s_own_dead_mans_gear_as_booty():
+def test_for_skirmish_does_not_file_the_faction_s_own_dead_mans_gear_as_booty():
     """
     His gear and purse go to the victor, who is his own faction, so they arrived as gains off a man
     on the roster. That is the stash getting its kit back - not booty, and not a loss either.
@@ -455,7 +455,7 @@ def test_prisoners_taken_names_the_enemy_and_not_the_captor_s_own_downed_men():
 
 
 @pytest.mark.django_db
-def test_the_enemy_s_dead_are_counted_and_told_apart_from_the_ones_merely_left_lying():
+def test_for_skirmish_counts_the_enemy_s_dead_apart_from_the_ones_merely_left_lying():
     """
     The overkill threshold decides which, and the report says which happened without naming eight
     men over the two of the player's own that matter.
@@ -480,7 +480,7 @@ def test_the_enemy_s_dead_are_counted_and_told_apart_from_the_ones_merely_left_l
 
 
 @pytest.mark.django_db
-def test_a_fight_the_faction_lost_nobody_in_reports_no_casualties():
+def test_for_skirmish_reports_no_casualties_for_a_fight_the_faction_lost_nobody_in():
     skirmish = SkirmishFactory()
     own_warrior = WarriorFactory(faction=skirmish.attacking_faction)
     skirmish.attacking_warriors.add(own_warrior)

@@ -19,29 +19,29 @@ def _pays_something(outcome: QuestOutcome) -> bool:
     )
 
 
-def test_every_entry_carries_a_weight():
+def test_quests_each_carry_a_weight():
     assert [quest.__name__ for quest in QUESTS if quest.WEIGHT <= 0] == []
 
 
-def test_every_entry_is_indexed_by_its_name():
+def test_quests_by_name_indexes_every_quest():
     assert set(QUESTS_BY_NAME) == {quest.__name__ for quest in QUESTS}
 
 
-def test_every_entry_takes_a_band_it_can_be_sent():
+def test_quests_each_take_a_band_they_can_be_sent():
     assert [quest.__name__ for quest in QUESTS if not 1 <= quest.MIN_MEN <= quest.MAX_MEN] == []
 
 
-def test_every_entry_leans_on_a_warrior_attribute():
+def test_quests_each_lean_on_a_warrior_attribute():
     attribute_names = {field.name for field in Warrior._meta.get_fields()}
 
     assert [quest.__name__ for quest in QUESTS if quest.LEANS_ON not in attribute_names] == []
 
 
-def test_every_title_fits_the_board():
+def test_quest_titles_fit_the_board():
     assert [quest.__name__ for quest in QUESTS if len(quest.TITLE) > TITLE_MAX_LENGTH] == []
 
 
-def test_every_entry_can_succeed_and_can_fail():
+def test_quests_each_can_succeed_and_can_fail():
     """
     A quest that can only succeed is a payment, and one that can only fail is a trap. The band's
     attribute only moves the successes, so both sides need a weight for the draw to mean anything.
@@ -56,7 +56,7 @@ def test_every_entry_can_succeed_and_can_fail():
     assert one_sided == []
 
 
-def test_every_success_brings_something_home():
+def test_quest_successes_each_bring_something_home():
     """
     The expected value of a quest is positive for a band at its yardstick: no lever is ever negative,
     so it is enough that every success pays.
@@ -71,7 +71,7 @@ def test_every_success_brings_something_home():
     assert empty_successes == []
 
 
-def test_every_item_names_its_generator():
+def test_quest_items_each_name_their_generator():
     incomplete = [
         f"{quest.__name__}.{outcome.key}"
         for quest in QUESTS
@@ -82,7 +82,7 @@ def test_every_item_names_its_generator():
     assert incomplete == []
 
 
-def test_all_steady_work_pays_silver_on_every_outcome():
+def test_steady_work_pays_silver_on_every_outcome():
     """The errand that is always on offer is the one a war band short of silver can count on."""
     unpaid = [
         f"{quest.__name__}.{outcome.key}"
@@ -95,7 +95,7 @@ def test_all_steady_work_pays_silver_on_every_outcome():
     assert unpaid == []
 
 
-def test_all_steady_work_has_a_positive_expected_silver_at_its_yardstick():
+def test_steady_work_has_a_positive_expected_silver_at_its_yardstick():
     """
     A band at its yardstick draws the outcomes as written, so the weighted mean of the silver is what
     steady work is worth to the man sent on it.
@@ -112,5 +112,5 @@ def test_all_steady_work_has_a_positive_expected_silver_at_its_yardstick():
     assert worthless == []
 
 
-def test_the_catalogue_has_steady_work_and_an_errand():
+def test_quests_hold_steady_work_and_an_errand():
     assert {quest.IS_STEADY_WORK for quest in QUESTS} == {True, False}

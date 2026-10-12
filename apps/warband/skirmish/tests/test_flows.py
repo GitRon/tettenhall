@@ -26,7 +26,7 @@ from apps.warband.warrior.services.trait import TraitEarningService
 
 
 @pytest.mark.django_db
-def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
+def test_turtling_every_round_eventually_routs_the_warrior(queuebie_registry):
     """
     The chain that makes an unwinnable fight end, run for real rather than asserted handler by handler.
 
@@ -74,7 +74,7 @@ def test_a_warrior_who_only_turtles_eventually_routs(queuebie_registry):
 
 
 @pytest.mark.django_db
-def test_a_level_up_is_logged_before_the_growth_it_caused(queuebie_registry):
+def test_levelling_up_logs_before_the_growth_it_caused(queuebie_registry):
     """
     The two lines a level-up writes, in the order a player has to read them in.
 
@@ -114,7 +114,7 @@ def test_a_level_up_is_logged_before_the_growth_it_caused(queuebie_registry):
 
 
 @pytest.mark.django_db
-def test_a_knockout_marks_the_man_without_the_bus_reading_the_database(queuebie_registry):
+def test_knocking_out_marks_the_man_without_the_bus_reading_the_database(queuebie_registry):
     """
     A beating carried all the way through the queue, which is the only level that proves it works.
 
@@ -146,7 +146,7 @@ def test_a_knockout_marks_the_man_without_the_bus_reading_the_database(queuebie_
 
 
 @pytest.mark.django_db
-def test_a_fight_that_shakes_a_man_changes_him_and_tells_the_player_so(queuebie_registry):
+def test_shaking_a_man_changes_him_and_tells_the_player_so(queuebie_registry):
     """
     A won fight carried through the queue to the trait it earned and the line the month log keeps.
 
@@ -200,7 +200,7 @@ def _first_blow(*, skirmish, attacker, defender, damage: int) -> WarriorTookDama
 
 
 @pytest.mark.django_db
-def test_the_slower_man_of_a_pair_strikes_back_once_the_first_blow_has_landed(queuebie_registry):
+def test_striking_first_lets_the_slower_man_strike_back_once_the_blow_has_landed(queuebie_registry):
     """
     The counter is raised off the first blow's result, and only a real queue run shows it is actually
     thrown - the blow record it leaves is written three hops further down.
@@ -215,7 +215,7 @@ def test_the_slower_man_of_a_pair_strikes_back_once_the_first_blow_has_landed(qu
 
 
 @pytest.mark.django_db
-def test_a_man_the_first_blow_puts_down_does_not_strike_back(queuebie_registry):
+def test_striking_first_leaves_a_man_it_puts_down_unable_to_strike_back(queuebie_registry):
     """
     What the counter's position in the queue is for. It is declared below the health handler, so it
     drains behind "ReduceHealth" and sees the man already down. Raised beside the first blow instead, it
@@ -231,7 +231,7 @@ def test_a_man_the_first_blow_puts_down_does_not_strike_back(queuebie_registry):
 
 
 @pytest.mark.django_db
-def test_a_rival_whose_whole_band_is_taken_comes_out_of_it_led_by_a_levy(queuebie_registry):
+def test_capturing_a_rival_s_whole_band_leaves_it_led_by_a_levy(queuebie_registry):
     """
     The chain from a lost defence to a rival still in the war, run for real: the win captures every man
     lying on the field, each capture asks the defeat handler for a seat, the last one finds the roster

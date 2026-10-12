@@ -71,7 +71,7 @@ def test_bynames_obey_the_orthography():
     assert result == []
 
 
-def test_no_qualifier_is_also_a_generic():
+def test_place_qualifiers_share_nothing_with_the_generics():
     """
     A generic in the adjective slot would read as two settlements standing next to each other.
     """
@@ -80,7 +80,7 @@ def test_no_qualifier_is_also_a_generic():
     assert result == set()
 
 
-def test_no_feature_is_also_a_generic():
+def test_place_features_share_nothing_with_the_generics():
     """
     And a generic in the feature slot would name the fort of the fort.
     """

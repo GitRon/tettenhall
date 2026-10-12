@@ -19,7 +19,7 @@ def test_str_contains_name_and_owner():
 
 
 @pytest.mark.django_db
-def test_a_savegame_deletes_together_with_everything_hanging_off_it():
+def test_delete_takes_everything_hanging_off_the_savegame():
     """
     Every model in the game hangs off "Savegame", and "Savegame.player_faction" points at a faction
     carrying a foreign key back, so the cascade has a cycle in it. Deleting a savegame by hand is how

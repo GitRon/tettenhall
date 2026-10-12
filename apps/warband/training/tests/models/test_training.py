@@ -121,7 +121,7 @@ def test_grown_attributes_display_reads_the_category_of_the_row():
 
 
 @pytest.mark.django_db
-def test_a_faction_trains_by_a_single_regimen():
+def test_faction_trains_by_a_single_regimen():
     """
     The standing order is one row. A second one for the same faction would leave every reader of a
     faction's training picking one of two answers, and nothing downstream could tell which.

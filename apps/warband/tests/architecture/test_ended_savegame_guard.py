@@ -46,7 +46,7 @@ def _dispatching_view_classes() -> list[type]:
     return view_classes
 
 
-def test_every_view_dispatching_a_command_refuses_a_finished_savegame():
+def test_command_views_refuse_a_finished_savegame():
     unguarded = [
         view_class.__name__
         for view_class in _dispatching_view_classes()
@@ -56,7 +56,7 @@ def test_every_view_dispatching_a_command_refuses_a_finished_savegame():
     assert unguarded == []
 
 
-def test_the_guard_covers_every_view_that_dispatches_a_command():
+def test_guard_covers_every_view_that_dispatches_a_command():
     """
     Guards the test above against quietly measuring nothing: an import mistake or a renamed helper
     would leave the list empty and the assertion green.

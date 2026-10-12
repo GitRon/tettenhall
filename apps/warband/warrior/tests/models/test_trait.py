@@ -25,7 +25,7 @@ def test_create_record_writes_the_row():
 
 
 @pytest.mark.django_db
-def test_a_man_carries_a_kind_of_trait_once():
+def test_create_record_refuses_a_kind_of_trait_a_man_already_carries():
     trait = TraitFactory()
 
     with pytest.raises(
