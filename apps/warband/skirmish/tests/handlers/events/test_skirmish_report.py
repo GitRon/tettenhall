@@ -216,18 +216,21 @@ def test_handle_record_stopped_blow_carries_which_kind_of_nothing_it_was():
     )
 
 
-def test_handle_record_killed_warrior_records_the_death():
+def test_handle_record_killed_warrior_records_the_death_with_its_killer():
     skirmish = SkirmishFactory.build()
     warrior = WarriorFactory.build()
+    killer = WarriorFactory.build()
 
     result = handle_record_killed_warrior(
-        context=WarriorWasKilled(skirmish=skirmish, warrior=warrior, by_warrior=WarriorFactory.build())
+        context=WarriorWasKilled(skirmish=skirmish, warrior=warrior, by_warrior=killer, fell_as_a_leader=True)
     )
 
     assert result == RecordSkirmishCasualty(
         skirmish=skirmish,
         warrior=warrior,
         fate=SkirmishCasualty.FateChoices.FATE_KILLED,
+        killed_by=killer,
+        fell_as_a_leader=True,
     )
 
 

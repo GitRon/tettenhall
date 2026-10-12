@@ -35,6 +35,23 @@ def test_create_record_overwrites_the_fate_of_a_man_already_recorded():
 
 
 @pytest.mark.django_db
+def test_create_record_stamps_the_killer_and_the_leader_flag():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    killer = WarriorFactory(faction=skirmish.defending_faction)
+
+    casualty = SkirmishCasualty.objects.create_record(
+        skirmish=skirmish,
+        warrior=warrior,
+        fate=SkirmishCasualty.FateChoices.FATE_KILLED,
+        killed_by=killer,
+        fell_as_a_leader=True,
+    )
+
+    assert (casualty.killed_by, casualty.fell_as_a_leader) == (killer, True)
+
+
+@pytest.mark.django_db
 def test_for_skirmish_keeps_another_fights_casualty_out():
     casualty = SkirmishCasualtyFactory()
     SkirmishCasualtyFactory()
@@ -42,3 +59,20 @@ def test_for_skirmish_keeps_another_fights_casualty_out():
     result = SkirmishCasualty.objects.for_skirmish(skirmish_id=casualty.skirmish_id)
 
     assert list(result) == [casualty]
+
+
+@pytest.mark.django_db
+def test_killed_of_faction_keeps_the_dead_of_one_faction():
+    killed = SkirmishCasualtyFactory()
+    faction = killed.warrior.faction
+    # Not killed, and killed for somebody else: neither is this faction's dead
+    SkirmishCasualtyFactory(
+        skirmish=killed.skirmish,
+        warrior__faction=faction,
+        fate=SkirmishCasualty.FateChoices.FATE_INCAPACITATED,
+    )
+    SkirmishCasualtyFactory(skirmish=killed.skirmish, warrior__faction=killed.skirmish.defending_faction)
+
+    result = SkirmishCasualty.objects.killed_of_faction(faction_id=faction.id)
+
+    assert list(result) == [killed]

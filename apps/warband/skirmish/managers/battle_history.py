@@ -21,6 +21,7 @@ class BattleHistoryManager(manager.Manager):
             message=message,
             saga=saga,
             kind=kind,
+            warrior=warrior,
             faction_id=warrior.faction_id if warrior else None,
         )
 

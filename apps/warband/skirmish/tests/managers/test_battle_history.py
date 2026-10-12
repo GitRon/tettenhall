@@ -18,7 +18,7 @@ def test_create_record_files_the_line_under_the_side_the_man_fought_for():
         warrior=warrior,
     )
 
-    assert record.kind == BattleHistory.KindChoices.KIND_WARRIOR_KILLED
+    assert record.warrior == warrior
     assert record.faction == skirmish.defending_faction
 
 

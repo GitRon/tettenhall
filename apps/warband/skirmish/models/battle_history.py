@@ -48,6 +48,17 @@ class BattleHistory(models.Model):
     faction = models.ForeignKey(
         "warband.Faction", verbose_name="Side he fought for", null=True, blank=True, on_delete=models.CASCADE
     )
+    # The man this line is about, beside the side he fought for. What lets a line be found again from
+    # him - the Roll of the Fallen reads each man's death line this way. Kept when his own row is
+    # deleted, because the line is part of the fight either way
+    warrior = models.ForeignKey(
+        "warband.Warrior",
+        verbose_name="Warrior",
+        related_name="+",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     created_at = models.DateTimeField("Created at", auto_now_add=True)
 
     objects = BattleHistoryManager()

@@ -38,6 +38,9 @@ class RecordSkirmishCasualty(Command):
     skirmish: Skirmish
     warrior: Warrior
     fate: int
+    # Both only on a man who was killed: no other fate has a hand behind it or ends a leader's seat
+    killed_by: Warrior | None = None
+    fell_as_a_leader: bool = False
 
 
 @dataclass(kw_only=True)

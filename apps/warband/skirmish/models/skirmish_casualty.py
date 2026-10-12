@@ -27,6 +27,20 @@ class SkirmishCasualty(models.Model):
     skirmish = models.ForeignKey(Skirmish, verbose_name="Skirmish", on_delete=models.CASCADE)
     warrior = models.ForeignKey(Warrior, verbose_name="Warrior", on_delete=models.CASCADE)
     fate = models.PositiveSmallIntegerField("Fate", choices=FateChoices.choices)
+    # The man who struck the blow, on a man who was killed and on nobody else - a rout, a knock-out and
+    # a capture have no single hand behind them. Kept when the killer's own row is deleted, because the
+    # death happened either way
+    killed_by = models.ForeignKey(
+        Warrior,
+        verbose_name="Killed by",
+        related_name="+",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    # Whether he led a faction still in the war when the blow landed. Stamped then, because a fallen
+    # leader is succeeded and "Faction.leader" names the man who took his seat from that moment on
+    fell_as_a_leader = models.BooleanField("Fell as a leader", default=False)
 
     objects = SkirmishCasualtyManager()
 
