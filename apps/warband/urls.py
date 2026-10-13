@@ -51,6 +51,7 @@ urlpatterns = [
     path("faction/warband/stores", faction_views.WarbandStoresView.as_view(), name="warband-stores-view"),
     path("faction/warband/fyrd", faction_views.WarbandFyrdView.as_view(), name="warband-fyrd-view"),
     path("faction/warband/captives", faction_views.WarbandCaptivesView.as_view(), name="warband-captives-view"),
+    path("faction/warband/postings", faction_views.WarbandPostingsView.as_view(), name="warband-postings-view"),
     path("faction/warband/progress", faction_views.WarbandProgressView.as_view(), name="warband-progress-view"),
     path("faction/warband/fallen", faction_views.WarbandFallenView.as_view(), name="warband-fallen-view"),
     # Above the detail route for readability only - "rivals" is not an int, so the two cannot collide
@@ -160,6 +161,8 @@ urlpatterns = [
     # The warrior pk only: which roster he is sent away from is the player's, read off the savegame
     path("warrior/warrior/<int:pk>/dismiss", warrior_views.DismissWarriorView.as_view(), name="warrior-dismiss-view"),
     path("warrior/warrior/<int:pk>/tend", warrior_views.TendWarriorWoundsView.as_view(), name="warrior-tend-view"),
+    # The warrior pk only: whose man he is, is the player's, read off the savegame. Where he goes is posted
+    path("warrior/warrior/<int:pk>/post", warrior_views.PostWarriorView.as_view(), name="warrior-post-view"),
     path(
         "warrior/warrior/<int:pk>/partial-update/<str:htmx_attribute>",
         warrior_views.WarriorWeaponUpdateView.as_view(),

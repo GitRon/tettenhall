@@ -1,16 +1,22 @@
 import pytest
 
 from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid, NewFactionCreated
-from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened, WarriorMonthPrepared
+from apps.warband.faction.messages.events.warrior import (
+    PubMercenarySlotOpened,
+    WarriorMonthPrepared,
+    WarriorPostingApproved,
+)
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.handlers.events.faction import (
     handle_create_leader_for_new_faction,
     handle_fade_an_idle_warriors_renown_for_new_month,
     handle_heal_a_wounded_warrior_for_new_month,
+    handle_post_warrior_once_approved,
     handle_pub_mercenary_slot_opened,
     handle_replenish_a_warriors_morale_for_new_month,
     handle_unpaid_warriors,
@@ -20,6 +26,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     CreateWarrior,
     FadeIdleWarriorRenown,
     HealInjuredWarrior,
+    PostWarrior,
     PunishUnpaidWarrior,
     ReplenishWarriorMorale,
 )
@@ -271,3 +278,14 @@ def test_handle_fade_an_idle_warriors_renown_for_new_month_passes_over_a_man_wit
     )
 
     assert result is None
+
+
+def test_handle_post_warrior_once_approved_sends_the_players_own_order():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(faction=faction)
+
+    result = handle_post_warrior_once_approved(
+        context=WarriorPostingApproved(faction=faction, warrior=warrior, posting=PostingChoices.HERDS, month=3)
+    )
+
+    assert result == PostWarrior(warrior=warrior, faction=faction, posting=PostingChoices.HERDS, month=3)

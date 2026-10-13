@@ -117,6 +117,10 @@ TERMINAL_MESSAGES: dict[str, str] = {
     "apps.warband.training.messages.events.training.TrainingRegimenChanged": (
         "The month's drill reads the regimen off the row when it runs, so a change needs telling to nobody."
     ),
+    "apps.warband.warrior.messages.events.warrior.WarriorPosted": (
+        "A posting lives on the warrior's row, and the raid that lands on a place reads who stands there when "
+        "it is staged. The player moved the man himself, on the page that shows where he now stands."
+    ),
 }
 
 

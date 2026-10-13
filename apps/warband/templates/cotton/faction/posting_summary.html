@@ -1,0 +1,5 @@
+<c-vars places />
+{# How many of a war band's men stand at each of its places today, the burh first - one line, for the #}
+{# player's own band on the Month page and for a rival's on its page. Who stands where is public, so #}
+{# the same line serves both: see docs/patterns/warrior-knowledge.md. "places" is "count_men_standing". #}
+<span class="font-mono text-label uppercase tracking-label text-ink-muted">{% for place in places %}{{ place.label }} <span class="tabular-nums text-ink">{{ place.standing_count }}</span>{% if not forloop.last %} &middot; {% endif %}{% endfor %}</span>

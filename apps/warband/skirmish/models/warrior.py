@@ -8,6 +8,7 @@ from apps.common.domain.dice import DiceNotation
 from apps.warband.faction.models.culture import Culture
 from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.managers.warrior import WarriorManager
@@ -256,6 +257,16 @@ class Warrior(models.Model):
         "Condition",
         choices=ConditionChoices.choices,
         default=ConditionChoices.CONDITION_HEALTHY,
+    )
+
+    # Where he stands while his war band is at home, which is who a raid on that place meets. It stands
+    # from month to month until somebody moves him, and it is the faction's to set: a man who joins or
+    # leaves one is put back at the burh, so nobody carries a posting his old banner chose. A man away
+    # on a march or a quest keeps his posting and simply is not there - see "get_raid_defenders".
+    posting = models.PositiveSmallIntegerField(
+        "Posting",
+        choices=PostingChoices.choices,
+        default=PostingChoices.BURH,
     )
 
     # A deleted item leaves the man empty-handed rather than taking him with it

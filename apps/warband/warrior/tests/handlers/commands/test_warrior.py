@@ -13,6 +13,7 @@ from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.choices.blow_outcome import BlowOutcomeChoices
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
@@ -33,6 +34,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_grant_renown,
     handle_heal_injured_warrior,
     handle_inflict_injury,
+    handle_post_warrior,
     handle_punish_unpaid_warrior,
     handle_recruit_captured_warrior,
     handle_replenish_warrior_morale,
@@ -51,6 +53,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     GrantRenown,
     HealInjuredWarrior,
     InflictInjury,
+    PostWarrior,
     PunishUnpaidWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
@@ -64,6 +67,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
+    WarriorPosted,
     WarriorRenownFaded,
     WarriorRenownGranted,
     WarriorWalkedOutOverUnpaidSalary,
@@ -1194,3 +1198,52 @@ def test_handle_create_new_leader_warrior_names_him_what_the_player_chose():
 
     assert result == NewLeaderWarriorCreated(faction=faction, warrior=Warrior.objects.get(faction=faction))
     assert result.warrior.name == "Cerdic"
+
+
+@pytest.mark.django_db
+def test_handle_post_warrior_stands_him_where_he_was_sent():
+    warrior = WarriorFactory()
+
+    result = handle_post_warrior(
+        context=PostWarrior(warrior=warrior, faction=warrior.faction, posting=PostingChoices.HERDS, month=3)
+    )
+
+    assert result == WarriorPosted(warrior=warrior, faction=warrior.faction, posting=PostingChoices.HERDS, month=3)
+    warrior.refresh_from_db()
+    assert warrior.posting == PostingChoices.HERDS
+
+
+@pytest.mark.django_db
+def test_handle_post_warrior_announces_nothing_for_a_man_already_standing_there():
+    warrior = WarriorFactory(posting=PostingChoices.VILLAGE)
+
+    result = handle_post_warrior(
+        context=PostWarrior(warrior=warrior, faction=warrior.faction, posting=PostingChoices.VILLAGE, month=3)
+    )
+
+    assert result is None
+
+
+@pytest.mark.django_db
+def test_handle_post_warrior_leaves_a_man_who_is_no_longer_the_factions_to_send():
+    """He left, or was taken, since the page was drawn: the faction on the order is not his any more."""
+    warrior = WarriorFactory()
+
+    result = handle_post_warrior(
+        context=PostWarrior(warrior=warrior, faction=FactionFactory(), posting=PostingChoices.HERDS, month=3)
+    )
+
+    assert result is None
+    warrior.refresh_from_db()
+    assert warrior.posting == PostingChoices.BURH
+
+
+@pytest.mark.django_db
+def test_handle_post_warrior_leaves_the_dead_where_they_fell():
+    warrior = WarriorFactory(condition=Warrior.ConditionChoices.CONDITION_DEAD)
+
+    result = handle_post_warrior(
+        context=PostWarrior(warrior=warrior, faction=warrior.faction, posting=PostingChoices.HERDS, month=3)
+    )
+
+    assert result is None

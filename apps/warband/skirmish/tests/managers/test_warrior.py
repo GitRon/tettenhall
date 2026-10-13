@@ -5,6 +5,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -926,17 +927,46 @@ def test_set_pub_arrival_ends_the_wait_of_a_man_somebody_hired():
 
 
 @pytest.mark.django_db
-def test_release_from_roster_clears_the_faction_and_the_gear():
+def test_release_from_roster_clears_the_faction_the_gear_and_the_posting():
     faction = FactionFactory()
     weapon = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_WEAPON), owner=faction)
     armor = ItemFactory(type=ItemTypeFactory(function=ItemType.FunctionChoices.FUNCTION_ARMOR), owner=faction)
-    warrior = WarriorFactory(faction=faction, weapon=weapon, armor=armor)
+    warrior = WarriorFactory(faction=faction, weapon=weapon, armor=armor, posting=PostingChoices.HERDS)
 
     result = Warrior.objects.release_from_roster(obj=warrior, faction=faction)
 
     assert result == 1
     warrior.refresh_from_db()
-    assert (warrior.faction, warrior.weapon, warrior.armor) == (None, None, None)
+    assert (warrior.faction, warrior.weapon, warrior.armor, warrior.posting) == (None, None, None, PostingChoices.BURH)
+
+
+@pytest.mark.django_db
+def test_set_faction_stands_the_man_at_the_burh():
+    """The place his old banner sent him to says nothing about where the new one wants him."""
+    warrior = WarriorFactory(posting=PostingChoices.VILLAGE)
+    faction = FactionFactory()
+
+    Warrior.objects.set_faction(obj=warrior, faction=faction)
+
+    warrior.refresh_from_db()
+    assert (warrior.faction, warrior.posting) == (faction, PostingChoices.BURH)
+
+
+@pytest.mark.django_db
+def test_post_stands_a_man_of_the_faction_where_he_was_sent():
+    warrior = WarriorFactory()
+
+    result = Warrior.objects.post(obj=warrior, faction=warrior.faction, posting=PostingChoices.HERDS)
+
+    assert result == 1
+    assert Warrior.objects.get(id=warrior.id).posting == PostingChoices.HERDS
+
+
+@pytest.mark.django_db
+def test_post_writes_nothing_for_a_man_already_standing_there():
+    warrior = WarriorFactory(posting=PostingChoices.HERDS)
+
+    assert Warrior.objects.post(obj=warrior, faction=warrior.faction, posting=PostingChoices.HERDS) == 0
 
 
 @pytest.mark.django_db

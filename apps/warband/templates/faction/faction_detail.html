@@ -29,6 +29,11 @@
                             {% endif %}
                         </td>
                     </tr>
+                    <tr>
+                        {# Public, like the roster's size: a neighbour sees whose cattle are guarded #}
+                        <td>Standing</td>
+                        <td><c-faction.posting-summary :places="posting_places" /></td>
+                    </tr>
                     </tbody>
                 </table>
                 {% if can_be_attacked %}

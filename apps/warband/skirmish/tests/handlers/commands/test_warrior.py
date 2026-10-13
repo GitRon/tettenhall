@@ -1,6 +1,7 @@
 import pytest
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.handlers.commands.warrior import (
     handle_increase_warrior_stats_on_level_up,
@@ -64,6 +65,22 @@ def test_handle_warrior_is_captured_hands_the_warrior_to_the_victor():
         skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.attacking_faction
     )
     assert list(skirmish.attacking_faction.captured_warriors.all()) == [captured_warrior]
+
+
+@pytest.mark.django_db
+def test_handle_warrior_is_captured_takes_him_off_his_old_postings():
+    """A prisoner stands nowhere for anybody, and is at the burh should his captor recruit him."""
+    skirmish = SkirmishFactory()
+    captured_warrior = WarriorFactory(faction=skirmish.defending_faction, posting=PostingChoices.HERDS)
+
+    handle_warrior_is_captured(
+        context=CaptureWarrior(
+            skirmish=skirmish, warrior=captured_warrior, capturing_faction=skirmish.attacking_faction
+        )
+    )
+
+    captured_warrior.refresh_from_db()
+    assert captured_warrior.posting == PostingChoices.BURH
 
 
 @pytest.mark.django_db

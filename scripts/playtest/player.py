@@ -16,11 +16,11 @@ from apps.warband.quest.messages.commands.quest import AcceptQuest
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction, FinishRound, StartDuel
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
-from apps.warband.skirmish.raids import RAID_KINDS
 from apps.warband.skirmish.raids.kinds import LiftTheHerds, StormTheBurh
 from apps.warband.skirmish.services.march import get_march_cost_refusal
 from apps.warband.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
@@ -34,6 +34,7 @@ from apps.warband.town.services.building_upgrade import get_building_upgrade_ref
 from apps.warband.town.services.geld import GELD_FYRD_NAMES, GELD_SILVER, get_geld_refusal
 from apps.warband.warrior.messages.commands.warrior import RecruitCapturedWarrior, TendWarriorWounds
 from apps.warband.warrior.services.availability import assess_roster
+from apps.warband.warrior.services.postings import count_men_standing
 from apps.warband.warrior.services.tending import get_tending_price, get_tending_refusal
 from scripts.playtest.policy import PlayerPolicy
 from scripts.playtest.report import GameReport
@@ -302,6 +303,14 @@ class PlayerTurn:
     def _healthy_men_of(self, *, faction: Faction) -> int:
         return Warrior.objects.filter_faction(faction_id=faction.id).filter_healthy().count()
 
+    def _men_standing_at_the_herds(self, *, faction: Faction) -> int:
+        # Read off the same count the attack page shows the player, since who stands where is public
+        return next(
+            place.standing_count
+            for place in count_men_standing(faction_id=faction.id, month=self.month)
+            if place.posting == PostingChoices.HERDS
+        )
+
     def march(self) -> str | None:
         """
         Marches on the rival with the fewest men on their feet, with everybody who may go.
@@ -325,9 +334,9 @@ class PlayerTurn:
         if self.policy.will_march(band_size=len(band), defenders=healthy_men + StormTheBurh.LOCALS_TURNOUT):
             raid_kind = RaidKindChoices.STORM_THE_BURH
         elif self.policy.raids_when_outnumbered and self.policy.will_march(
-            band_size=len(band), defenders=healthy_men // len(RAID_KINDS) + LiftTheHerds.LOCALS_TURNOUT
+            band_size=len(band), defenders=self._men_standing_at_the_herds(faction=target) + LiftTheHerds.LOCALS_TURNOUT
         ):
-            # Too few to storm the burh, so out to the pastures, where a share of them stands on average
+            # Too few to storm the burh, so out to the pastures, where only the men posted there stand
             raid_kind = RaidKindChoices.LIFT_THE_HERDS
         else:
             self.report.marches_held_back += 1

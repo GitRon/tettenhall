@@ -5,6 +5,7 @@ from queuebie.messages import Event
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.posting import PostingTypeHint
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGenerator
 
@@ -39,6 +40,22 @@ class FyrdDraftApproved(Event):
     """
 
     faction: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
+class WarriorPostingApproved(Event):
+    """
+    A rival has decided where one of its men stands from now on.
+
+    Settled before this was raised, the way [FyrdDraftApproved] is, so a rival stands its men through
+    the same PostWarrior the player's postings page dispatches.
+    """
+
+    faction: Faction
+    warrior: Warrior
+    # A "PostingChoices" value
+    posting: PostingTypeHint
     month: int
 
 

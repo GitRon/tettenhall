@@ -11,6 +11,7 @@ from apps.warband.faction.domain.rival_policy import (
     BuyFromShop,
     DraftFromFyrd,
     HallUpgradeOffer,
+    PostedMan,
     PubOffer,
     RivalMonthSnapshot,
     RivalPolicy,
@@ -47,6 +48,7 @@ from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubMercenaryHireApproved,
     WarriorMonthPrepared,
+    WarriorPostingApproved,
     WarriorRecruited,
 )
 from apps.warband.faction.models import Culture
@@ -261,7 +263,9 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
     the same commands rather than a second flow beside them. "FactionMonthPlanned" comes last on
     purpose: both restocks hang off it and clear their stock with a row delete, and what is approved
     here only changes hands once its "RecruitPubMercenary" or "BuyItem" drains. The approvals are
-    queued first, so their commands drain first.
+    queued first, so their commands drain first. Where the rival's men stand comes beside them, one
+    "WarriorPostingApproved" per man [RivalPolicy.decide_postings] moves, through the same
+    "PostWarrior" the player's postings page sends.
 
     The snapshot is read once, before anything is decided. The reserve comes off the row rather than
     the instance on the message, so it is the reserve as the month's replenishment left it, whoever
@@ -328,9 +332,33 @@ def handle_plan_faction_month(*, context: PlanFactionMonth) -> list[Event]:
                 )
             )
 
+    events.extend(_approve_postings(faction=context.faction, month=context.month))
     events.append(planned)
 
     return events
+
+
+def _approve_postings(*, faction: Faction, month: int) -> list[Event]:
+    """
+    Where [RivalPolicy] stands the rival's men this month, as one approval per man it moves.
+
+    Read off the roster as it stands when the month is planned, so a man hired or drafted by this same
+    plan is posted next month and stands at the burh until then - where everybody nobody posted stands.
+    """
+    warrior_by_id = {
+        warrior.id: warrior for warrior in Warrior.objects.exclude_dead().filter_faction(faction_id=faction.id)
+    }
+    roster = [
+        PostedMan(warrior_id=warrior.id, posting=warrior.posting, is_leader=warrior.id == faction.leader_id)
+        for warrior in warrior_by_id.values()
+    ]
+
+    return [
+        WarriorPostingApproved(
+            faction=faction, warrior=warrior_by_id[move.warrior_id], posting=move.posting, month=month
+        )
+        for move in RivalPolicy.decide_postings(roster=roster)
+    ]
 
 
 @message_registry.register_command(command=ChangeFyrdReserve)
