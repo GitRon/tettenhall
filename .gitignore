@@ -25,6 +25,7 @@ __pycache__/
 
 .pytest_cache/
 .ruff_cache/
+.complexipy_cache/
 .coverage
 htmlcov/
 

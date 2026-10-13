@@ -83,6 +83,6 @@ jobs:
       - name: Install pre-commit
         run: pip install pre-commit
 
-      # Same hooks as the local commit hook: ruff, django-upgrade, djade and boa-restrictor.
+      # Same hooks as the local commit hook: ruff, django-upgrade, djade, boa-restrictor and complexipy.
       - name: Run the hooks
         run: pre-commit run --all-files --show-diff-on-failure

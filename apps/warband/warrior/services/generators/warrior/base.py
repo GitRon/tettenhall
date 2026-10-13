@@ -2,6 +2,7 @@ import random
 
 from apps.warband.faction.models.culture import Culture
 from apps.warband.faction.models.faction import Faction
+from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
 from apps.warband.skirmish.models.warrior import Warrior
@@ -107,52 +108,63 @@ class BaseWarriorGenerator:
 
         return stat
 
+    @staticmethod
+    def roll_positive(*, mu: int, sigma: int) -> int:
+        """
+        One roll of a column that cannot be zero, re-rolled until it is not.
+
+        Rounded to the integer the column holds before the guard sees it. A raw "random.gauss" float of
+        0.42 would satisfy the guard and then be truncated to zero on the way into the column - a warrior
+        with no health at all, who cannot be wounded because his death threshold is zero, cannot be healed
+        because the monthly sweep asks for current below maximum, and draws a full wage regardless.
+        Rounding is what makes the guard a real retry, and it keeps the instance "process" hands back in
+        step with the row written, since Django does not re-read after a create.
+        """
+        value = 0
+        while value == 0:
+            value = max(round(random.gauss(mu, sigma)), 0)
+
+        return value
+
+    def roll_progress(self) -> int:
+        """
+        One roll of a progress column, re-rolled until it is a percentage. Rounded before the guard for
+        the reason "roll_positive" gives.
+        """
+        progress = -1
+        while progress < 0 or progress > 100:
+            progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
+
+        return progress
+
+    def roll_item(self, *, chance: float, item_function: str) -> Item | None:
+        """
+        The weapon or the armour he marches in with, if the archetype's chance hands him one.
+        """
+        if random.uniform(0, 1) > chance:
+            return None
+
+        return self.item_generator_class(
+            faction=self.faction,
+            item_function=item_function,
+            savegame_id=self.savegame_id,
+        ).process()
+
     def draw_name(self) -> str:
         return draw_warrior_name(culture=self.culture, savegame_id=self.savegame_id)
 
     def process(self) -> Warrior:
-        # Every roll is rounded to the integer its column holds, and rounded before the guard sees
-        # it. The guards compare against zero, and a raw "random.gauss" float of 0.42 satisfies them
-        # and is then truncated to zero on the way into the column - a warrior with no health at
-        # all, who cannot be wounded because his death threshold is zero, cannot be healed because
-        # the monthly sweep asks for current below maximum, and draws a full wage regardless.
-        # Rounding is what makes the guards real retries, and it keeps the instance handed back in
-        # step with the row written, since Django does not re-read after a create.
-        experience = 0
-        while experience == 0:
-            experience = max(round(random.gauss(self.XP_MU, self.XP_SIGMA)), 0)
-
-        max_health = 0
-        while max_health == 0:
-            max_health = max(round(random.gauss(self.HEALTH_MU, self.HEALTH_SIGMA)), 0)
-
-        health_progress = -1
-        while health_progress < 0 or health_progress > 100:
-            health_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
-
-        max_morale = 0
-        while max_morale == 0:
-            max_morale = max(round(random.gauss(self.MORALE_MU, self.MORALE_SIGMA)), 0)
-
-        morale_progress = -1
-        while morale_progress < 0 or morale_progress > 100:
-            morale_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
-
+        experience = self.roll_positive(mu=self.XP_MU, sigma=self.XP_SIGMA)
+        max_health = self.roll_positive(mu=self.HEALTH_MU, sigma=self.HEALTH_SIGMA)
+        health_progress = self.roll_progress()
+        max_morale = self.roll_positive(mu=self.MORALE_MU, sigma=self.MORALE_SIGMA)
+        morale_progress = self.roll_progress()
         strength = self.roll_stat()
-
-        strength_progress = -1
-        while strength_progress < 0 or strength_progress > 100:
-            strength_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
-
+        strength_progress = self.roll_progress()
         dexterity = self.roll_stat()
+        dexterity_progress = self.roll_progress()
+        base_recruitment_price = self.roll_positive(mu=self.BASE_PRICE_MU, sigma=self.BASE_PRICE_SIGMA)
 
-        dexterity_progress = -1
-        while dexterity_progress < 0 or dexterity_progress > 100:
-            dexterity_progress = max(round(random.gauss(self.PROGRESS_MU, self.PROGRESS_SIGMA)), 0)
-
-        base_recruitment_price = 0
-        while base_recruitment_price == 0:
-            base_recruitment_price = max(round(random.gauss(self.BASE_PRICE_MU, self.BASE_PRICE_SIGMA)), 0)
         # Never below one: a man rolled at the floor of every attribute and at the thin end of the
         # base price truncates to nothing, and a price of nothing is a captive who sells for nothing
         recruitment_price = max(
@@ -178,25 +190,8 @@ class BaseWarriorGenerator:
             morale=AttributeDraw(value=max_morale, baseline=self.MORALE_MU, spread=self.MORALE_SIGMA),
         )
 
-        if random.uniform(0, 1) <= self.chance_for_weapon:
-            weapon_generator = self.item_generator_class(
-                faction=self.faction,
-                item_function=ItemType.FunctionChoices.FUNCTION_WEAPON,
-                savegame_id=self.savegame_id,
-            )
-            weapon = weapon_generator.process()
-        else:
-            weapon = None
-
-        if random.uniform(0, 1) <= self.chance_for_armor:
-            armor_generator = self.item_generator_class(
-                faction=self.faction,
-                item_function=ItemType.FunctionChoices.FUNCTION_ARMOR,
-                savegame_id=self.savegame_id,
-            )
-            armor = armor_generator.process()
-        else:
-            armor = None
+        weapon = self.roll_item(chance=self.chance_for_weapon, item_function=ItemType.FunctionChoices.FUNCTION_WEAPON)
+        armor = self.roll_item(chance=self.chance_for_armor, item_function=ItemType.FunctionChoices.FUNCTION_ARMOR)
 
         warrior = Warrior.objects.create(
             name=self.draw_name(),

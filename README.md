@@ -10,7 +10,7 @@ inferring the conventions from nearby code.
 ### Getting started
 
 - [Local setup](docs/contributing/setup.md) — stack, dependencies, running the app and the suite
-- [Linting](docs/contributing/linting.md) — ruff, boa-restrictor, import-linter, pre-commit
+- [Linting](docs/contributing/linting.md) — ruff, boa-restrictor, import-linter, complexipy, pre-commit
 - [Settings](docs/contributing/settings.md) — application vs test settings, queuebie configuration
 - [Commit messages](docs/contributing/commit-messages.md)
 

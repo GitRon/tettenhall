@@ -1,18 +1,40 @@
 # Linting and formatting
 
-Three linters, all configured in `pyproject.toml`:
+Four linters, all configured in `pyproject.toml`:
 
 - **`ruff`** — formatting and lint rules, including import sorting.
 - **`boa-restrictor`** — Ambient's own linter. Its `PBR`/`DBR` codes are registered with ruff via
   `lint.external`, so ruff does not flag their `noqa` comments as unknown. It also runs this project's
   own rules, see below.
 - **`import-linter`** — the direction of dependency between the apps, see below.
+- **`complexipy`** — the cognitive complexity of every function, see below.
 
 Respect the **line length of 120**.
 
-ruff and boa-restrictor run as pre-commit hooks together with `django-upgrade` and `Djade`. A commit
-that reformats files fails the first time and passes on the retry — stage the reformatted files and
-commit again.
+ruff, boa-restrictor and complexipy run as pre-commit hooks together with `django-upgrade` and `Djade`. A
+commit that reformats files fails the first time and passes on the retry — stage the reformatted files
+and commit again.
+
+## Cognitive complexity
+
+complexipy scores every function the way [cognitive
+complexity](https://www.sonarsource.com/resources/cognitive-complexity/) does — each branch and loop
+costs a point, plus one more per level of nesting it sits at — and fails above **15**. The paths and
+the limit live under `[tool.complexipy]`; the hook checks the staged files, and CI's pre-commit job checks
+all of them. Production code, tests and scripts are held to the same limit.
+
+Over the limit, look for the step the function already takes without naming it: the walk for one item of
+a loop over several, a check that is a question of its own, a block written out twice. Pull that out
+under a name that says what it does. A split that only exists to move the number — a helper that takes
+half of a decision and hands back a flag for the other half — makes the code worse, and the score is
+not worth it.
+
+When a function is genuinely one indivisible piece of logic, mark it with `# noqa: complexipy` on the
+`def` line and a comment above saying why. That is the one inline exception this page allows: complexipy
+can only exclude whole paths, not single functions.
+
+Run it locally with `uvx complexipy@8.0.1`, which reads the paths and the limit from `pyproject.toml`.
+`--failed` lists only what is over the limit.
 
 ## Import boundaries
 

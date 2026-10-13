@@ -110,37 +110,68 @@ def plan_gear_handout(*, faction) -> list[tuple[Warrior, Item, str]]:
     stored_items = list(faction.get_all_unoccupied_items().select_related("type"))
     fallback_values = get_fallback_values()
 
+    return [
+        equip
+        for slot in SLOT_NAMES
+        for equip in plan_slot_handout(
+            roster=roster,
+            stored_items=[item for item in stored_items if item.gear_slot == slot],
+            fallback_value=fallback_values[slot],
+            leader_id=faction.leader_id,
+            slot=slot,
+        )
+    ]
+
+
+def plan_slot_handout(
+    *, roster: list[Warrior], stored_items: list[Item], fallback_value: float, leader_id: int | None, slot: str
+) -> list[tuple[Warrior, Item, str]]:
+    """
+    The walk "plan_gear_handout" makes, for one slot. The slots share nothing - a weapon never goes
+    where an armour was - so each is walked on its own.
+    """
+    holding = {warrior.id: getattr(warrior, slot) for warrior in roster}
+    holder_ids = {item.id: warrior_id for warrior_id, item in holding.items() if item}
+    pool = stored_items + [item for item in holding.values() if item]
+    settled_item_ids = set()
+
     equips = []
-    for slot in SLOT_NAMES:
-        holding = {warrior.id: getattr(warrior, slot) for warrior in roster}
-        holder_ids = {item.id: warrior_id for warrior_id, item in holding.items() if item}
-        pool = [item for item in stored_items if item.gear_slot == slot] + [item for item in holding.values() if item]
-        settled_item_ids = set()
+    for warrior in rank_for_slot(roster=roster, leader_id=leader_id, slot=slot):
+        held_item = holding[warrior.id]
+        held_value = held_item.expectancy_value if held_item else fallback_value
+        best_item = max(
+            (item for item in pool if item.id not in settled_item_ids),
+            key=lambda item: (item.expectancy_value, -item.id),
+            default=None,
+        )
 
-        for warrior in rank_for_slot(roster=roster, leader_id=faction.leader_id, slot=slot):
-            held_item = holding[warrior.id]
-            held_value = held_item.expectancy_value if held_item else fallback_values[slot]
-            best_item = max(
-                (item for item in pool if item.id not in settled_item_ids),
-                key=lambda item: (item.expectancy_value, -item.id),
-                default=None,
-            )
+        if best_item is not None and best_item.expectancy_value > held_value:
+            replay_equip(holding=holding, holder_ids=holder_ids, warrior_id=warrior.id, item=best_item)
+            equips.append((warrior, best_item, slot))
 
-            if best_item is not None and best_item.expectancy_value > held_value:
-                previous_holder_id = holder_ids.get(best_item.id)
-                holding[warrior.id] = best_item
-                holder_ids[best_item.id] = warrior.id
-                if previous_holder_id is not None:
-                    # The exchange "handle_equip_item" makes, or an empty hand when there is nothing to give back
-                    holding[previous_holder_id] = held_item
-                if held_item:
-                    holder_ids[held_item.id] = previous_holder_id
-                equips.append((warrior, best_item, slot))
-
-            if holding[warrior.id]:
-                settled_item_ids.add(holding[warrior.id].id)
+        if holding[warrior.id]:
+            settled_item_ids.add(holding[warrior.id].id)
 
     return equips
+
+
+def replay_equip(
+    *, holding: dict[int, Item | None], holder_ids: dict[int, int | None], warrior_id: int, item: Item
+) -> None:
+    """
+    Puts the item in the man's hand on paper, the way "handle_equip_item" does it in the database: whoever
+    held it takes the man's old one in exchange, or is left with an empty hand when there is nothing to give
+    back.
+    """
+    held_item = holding[warrior_id]
+    previous_holder_id = holder_ids.get(item.id)
+
+    holding[warrior_id] = item
+    holder_ids[item.id] = warrior_id
+    if previous_holder_id is not None:
+        holding[previous_holder_id] = held_item
+    if held_item:
+        holder_ids[held_item.id] = previous_holder_id
 
 
 def count_stored_upgrades(*, faction) -> int:

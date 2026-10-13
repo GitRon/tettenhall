@@ -489,27 +489,49 @@ def _emitted_message_types(
                 emitted.add(resolved)
                 continue
 
-            # A bare name defined beside the handler. Recursion guarded, so a helper calling itself
-            # does not walk for ever.
-            if isinstance(child.func, ast.Name) and child.func.id in local_nodes:
-                key = (getattr(current_module, "__name__", ""), child.func.id)
-                if key not in visited:
-                    visited.add(key)
-                    collect(current=local_nodes[child.func.id], current_module=current_module)
-                continue
-
-            # A function reached through an import, followed only as far as the handler modules go
-            if handler_nodes is None or not isinstance(resolved, types.FunctionType):
-                continue
-
-            key = (resolved.__module__, resolved.__name__)
-            if key in handler_nodes and key not in visited:
+            delegate = _delegate_of(
+                call=child,
+                resolved=resolved,
+                module=current_module,
+                local_nodes=local_nodes,
+                handler_nodes=handler_nodes,
+            )
+            # Recursion guarded, so a helper calling itself does not walk for ever
+            if delegate is not None and delegate[0] not in visited:
+                key, delegate_node, delegate_module = delegate
                 visited.add(key)
-                collect(current=handler_nodes[key], current_module=importlib.import_module(resolved.__module__))
+                collect(current=delegate_node, current_module=delegate_module)
 
     collect(current=node, current_module=module)
 
     return emitted
+
+
+def _delegate_of(
+    *,
+    call: ast.Call,
+    resolved: object | None,
+    module,
+    local_nodes: dict[str, ast.FunctionDef],
+    handler_nodes: dict[tuple[str, str], ast.FunctionDef] | None,
+) -> tuple[tuple[str, str], ast.FunctionDef, object] | None:
+    """
+    The helper a call hands the work to, if "_emitted_message_types" follows it: its key, its syntax
+    tree and the module it is resolved in.
+    """
+    # A bare name defined beside the handler
+    if isinstance(call.func, ast.Name) and call.func.id in local_nodes:
+        return (getattr(module, "__name__", ""), call.func.id), local_nodes[call.func.id], module
+
+    # A function reached through an import, followed only as far as the handler modules go
+    if handler_nodes is None or not isinstance(resolved, types.FunctionType):
+        return None
+
+    key = (resolved.__module__, resolved.__name__)
+    if key not in handler_nodes:
+        return None
+
+    return key, handler_nodes[key], importlib.import_module(resolved.__module__)
 
 
 def _wrong_direction_emissions(*, registry, allowlist: frozenset[str] = DIRECTION_ALLOWLIST) -> list[str]:
@@ -532,25 +554,27 @@ def _wrong_direction_emissions(*, registry, allowlist: frozenset[str] = DIRECTIO
                 if handler_path in allowlist:
                     continue
 
-                emitted = _emitted_message_types(
-                    node=handler_nodes[(definition["module"], definition["name"])],
-                    module=importlib.import_module(definition["module"]),
-                    local_nodes={
-                        name: node
-                        for (module_path, name), node in handler_nodes.items()
-                        if module_path == definition["module"]
-                    },
-                    handler_nodes=handler_nodes,
+                violations.update(
+                    f"{handler_path} emits {message_class.module_path()}, but a handler of this kind emits {expected}"
+                    for message_class in _emitted_by_handler(definition=definition, handler_nodes=handler_nodes)
+                    if issubclass(message_class, forbidden_type)
                 )
 
-                for message_class in emitted:
-                    if issubclass(message_class, forbidden_type):
-                        violations.add(
-                            f"{handler_path} emits {message_class.module_path()}, "
-                            f"but a handler of this kind emits {expected}"
-                        )
-
     return sorted(violations)
+
+
+def _emitted_by_handler(*, definition: dict, handler_nodes: dict[tuple[str, str], ast.FunctionDef]) -> set[type]:
+    """
+    Every message class the registered handler puts into the queue, its module's helpers included.
+    """
+    return _emitted_message_types(
+        node=handler_nodes[(definition["module"], definition["name"])],
+        module=importlib.import_module(definition["module"]),
+        local_nodes={
+            name: node for (module_path, name), node in handler_nodes.items() if module_path == definition["module"]
+        },
+        handler_nodes=handler_nodes,
+    )
 
 
 def _emitted_types_in(*, source: str, namespace: dict) -> set[type]:
