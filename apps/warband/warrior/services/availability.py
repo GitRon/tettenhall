@@ -151,10 +151,12 @@ def assess_roster(*, faction_id: int, month: int, excluded_ids: Iterable[int] = 
     Deliberately not ordered by availability: sorting the unavailable to the bottom would undo the
     one thing drawing them achieves, which is that the list reads as the war band.
     """
+    # The faction comes along because a row names its man in full, and that asks whether he holds its seat
     roster = (
         Warrior.objects.filter_faction(faction_id=faction_id)
         .exclude_dead()
         .exclude(id__in=excluded_ids)
+        .select_related("faction")
         .order_by("name", "id")
     )
 

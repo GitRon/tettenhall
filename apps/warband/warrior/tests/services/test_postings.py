@@ -56,6 +56,19 @@ def test_get_posting_columns_draws_every_living_man_at_his_place_with_the_reason
     ]
 
 
+@pytest.mark.django_db
+def test_get_posting_columns_brings_the_faction_along_for_the_names(django_assert_num_queries):
+    """The board names every man in full, which asks his faction whether he holds its seat."""
+    faction = FactionFactory()
+    WarriorFactory.create_batch(3, faction=faction)
+    columns = get_posting_columns(faction_id=faction.id, month=3)
+
+    with django_assert_num_queries(0):
+        names = [man.warrior.display_name for column in columns for man in column.men]
+
+    assert len(names) == 3
+
+
 def test_posting_column_offers_the_two_other_places():
     column = PostingColumn(
         posting=PostingChoices.VILLAGE,
