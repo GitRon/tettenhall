@@ -33,6 +33,7 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-calendar.month-effects>` | `apps.warband` | One month's name, season and the effects it has in force, with an optional `heading` before the name |
 | `<c-calendar.march-cost-row>` | `apps.warband` | The table row pricing a march in the month the form prices it with, on the attack page |
 | `<c-faction.successor-line>` | `apps.warband` | Who takes the leader's seat if he falls, on the dashboard and the attack page; silent without a leader |
+| `<c-faction.posting-summary>` | `apps.warband` | How many of a war band's men stand at each of its places today, the burh first, on the Month page and a rival's page - see [raids](raids.md) |
 | `<c-finance.wage-bill-warning>` | `apps.warband` | The alert for a purse that cannot cover next month's wages, silent while it can; `show_finance_link` adds the way to the books |
 | `<c-item.stats-meta>` | `apps.warband` | An item's roll and its average, the same in the shop, the stores and on the man; `show_price` adds the list price where it changes hands for it |
 | `<c-item.improves-nobody-tag>` | `apps.warband` | The tag on an item every man already matches or beats in its slot |

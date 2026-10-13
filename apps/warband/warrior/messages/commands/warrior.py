@@ -5,6 +5,7 @@ from queuebie.messages import Command
 from apps.warband.faction.models import Culture
 from apps.warband.faction.models.faction import Faction
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.posting import PostingTypeHint
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGenerator
@@ -237,4 +238,20 @@ class DismissWarrior(Command):
     warrior: Warrior
     faction: Faction
     savegame: Savegame
+    month: int
+
+
+@dataclass(kw_only=True)
+class PostWarrior(Command):
+    """
+    Stand one man of a faction at one of its places - the herds, the village or the burh.
+
+    The player's postings page sends it, and so does a rival's month, through [RivalPolicy]: one
+    command for both, so a rival stands its men where the player's own button would.
+    """
+
+    warrior: Warrior
+    faction: Faction
+    # A "PostingChoices" value
+    posting: PostingTypeHint
     month: int

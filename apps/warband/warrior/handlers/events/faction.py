@@ -2,12 +2,17 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid, NewFactionCreated
-from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened, WarriorMonthPrepared
+from apps.warband.faction.messages.events.warrior import (
+    PubMercenarySlotOpened,
+    WarriorMonthPrepared,
+    WarriorPostingApproved,
+)
 from apps.warband.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
     CreateWarrior,
     FadeIdleWarriorRenown,
     HealInjuredWarrior,
+    PostWarrior,
     PunishUnpaidWarrior,
     ReplenishWarriorMorale,
 )
@@ -109,3 +114,8 @@ def handle_pub_mercenary_slot_opened(*, context: PubMercenarySlotOpened) -> Comm
         generator_class=context.generator_class,
         month=context.month,
     )
+
+
+@message_registry.register_event(event=WarriorPostingApproved)
+def handle_post_warrior_once_approved(*, context: WarriorPostingApproved) -> Command:
+    return PostWarrior(warrior=context.warrior, faction=context.faction, posting=context.posting, month=context.month)

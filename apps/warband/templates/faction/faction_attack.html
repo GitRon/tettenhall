@@ -16,13 +16,16 @@
                 <td>Led by</td>
                 <td>{% if object.leader %}{{ object.leader.display_name }}{% else %}-{% endif %}</td>
             </tr>
-            {% for raid_kind, fortification_strength in raid_kinds %}
+            {% for raid_kind, fortification_strength, men_standing in raid_kinds %}
                 <tr>
                     <td>{{ raid_kind.get_label }}</td>
                     <td>
                         {# Said at zero too: an open field is worth knowing before a march as much as a wall is #}
                         <span class="font-mono text-label tracking-label uppercase text-ink-muted">Wall</span>
                         <span class="font-mono">{{ fortification_strength }}</span>
+                        {# Who stands where is public, so the raid is a judgement and not a blind bet #}
+                        <span class="font-mono text-label tracking-label uppercase text-ink-muted">&middot; Men there</span>
+                        <span class="font-mono">{{ men_standing }}</span>
                         {% for effect in raid_kind.get_effects %}
                             <span class="block text-sm leading-snug text-ink-muted">{{ effect }}</span>
                         {% endfor %}

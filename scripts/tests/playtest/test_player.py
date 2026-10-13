@@ -12,6 +12,7 @@ from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
 from apps.warband.quest.quests.harvest_hands import HarvestHands
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
@@ -348,7 +349,7 @@ def test_march_lifts_the_herds_when_the_policy_holds_it_back_from_the_burh(
 ):
     """
     Three men against two and the burh's two of the fyrd is too few for the burh, and enough for the
-    herdsman with none of the rival's own men expected at the herds.
+    herdsman with none of the rival's own men posted at the herds.
     """
     WarriorFactory.create_batch(2, faction=player_savegame.player_faction)
     rival = FactionFactory(savegame=player_savegame)
@@ -364,11 +365,12 @@ def test_march_lifts_the_herds_when_the_policy_holds_it_back_from_the_burh(
 
 @pytest.mark.django_db
 def test_march_held_back_from_the_herds_too_when_even_the_herdsmen_outnumber_the_band(player_savegame, rng, report):
-    """One man against the herdsman and the one of the rival's three men expected at the herds."""
+    """One man against the herdsman and the one of the rival's three men posted at the herds."""
     rival = FactionFactory(savegame=player_savegame)
     rival.leader = WarriorFactory(faction=rival)
     rival.save()
-    WarriorFactory.create_batch(2, faction=rival)
+    WarriorFactory(faction=rival)
+    WarriorFactory(faction=rival, posting=PostingChoices.HERDS)
 
     result = PlayerTurn(savegame=player_savegame, policy=POLICIES["raider"], rng=rng, report=report).march()
 

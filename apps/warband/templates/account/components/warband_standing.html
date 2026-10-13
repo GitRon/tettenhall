@@ -48,6 +48,13 @@
     </p>
     <c-faction.successor-line :leader="month_standing.warband.leader" :successor="month_standing.warband.successor" />
 
+    {# Where a raid would find the war band, and the way to change it. A raid lands without warning, so #}
+    {# the only answer to one is where the men already stand. #}
+    <p class="m-0 flex flex-wrap items-baseline justify-between gap-x-2.5">
+        <c-faction.posting-summary :places="month_standing.warband.places" />
+        <a href="{% url 'warband:warband-postings-view' %}">Change postings</a>
+    </p>
+
     <p class="m-0">
         <a href="{% url 'warband:warband-roster-view' %}">
             Look at the war band
