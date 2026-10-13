@@ -242,6 +242,10 @@ exclude = [
     "PBR001",
 ]
 
+[tool.complexipy]
+paths = ["apps", "scripts", "tools", "conftest.py", "manage.py"]
+max-complexity-allowed = 15
+
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "apps.config.settings_test"
 python_files = ["test_*.py"]

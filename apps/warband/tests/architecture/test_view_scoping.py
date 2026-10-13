@@ -342,25 +342,36 @@ def test_scoped_views_do_not_bypass_their_own_queryset():
         parents = _parent_map(tree=tree)
 
         for class_node in tree.body:
-            if not isinstance(class_node, ast.ClassDef) or class_node.name not in scoped_view_names:
-                continue
-
-            for node in ast.walk(class_node):
-                if not isinstance(node, ast.Attribute) or node.attr != "objects":
-                    continue
-
-                owner = _resolve(node=node.value, module=module)
-                is_own_model = ast.unparse(node.value) == "self.model"
-                if not is_own_model and not (_is_model(owner) and owner is not Savegame):
-                    continue
-
-                statement = ast.unparse(_enclosing_statement(node=node, parents=parents))
-                if any(expression in statement for expression in SCOPING_EXPRESSIONS):
-                    continue
-
-                violations.append(f"{file.name}:{node.lineno} {class_node.name} queries {ast.unparse(node)}")
+            if isinstance(class_node, ast.ClassDef) and class_node.name in scoped_view_names:
+                violations.extend(
+                    f"{file.name}:{node.lineno} {class_node.name} queries {ast.unparse(node)}"
+                    for node in _unscoped_manager_queries(class_node=class_node, module=module, parents=parents)
+                )
 
     assert violations == []
+
+
+def _unscoped_manager_queries(*, class_node: ast.ClassDef, module, parents: dict) -> list[ast.Attribute]:
+    """
+    Every "<model>.objects" in the class whose statement does not narrow the queryset itself. The
+    savegame's own manager is left alone, because a savegame is what everything else is scoped to.
+    """
+    queries = []
+
+    for node in ast.walk(class_node):
+        if not isinstance(node, ast.Attribute) or node.attr != "objects":
+            continue
+
+        owner = _resolve(node=node.value, module=module)
+        is_own_model = ast.unparse(node.value) == "self.model"
+        if not is_own_model and not (_is_model(owner) and owner is not Savegame):
+            continue
+
+        statement = ast.unparse(_enclosing_statement(node=node, parents=parents))
+        if not any(expression in statement for expression in SCOPING_EXPRESSIONS):
+            queries.append(node)
+
+    return queries
 
 
 def _get_object_bypasses(*, tree: ast.AST) -> list[str]:

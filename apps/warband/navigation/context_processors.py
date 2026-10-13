@@ -1,6 +1,6 @@
-from django.urls import reverse
+from django.urls import ResolverMatch, reverse
 
-from apps.warband.navigation.sections import SECTIONS, get_section_key
+from apps.warband.navigation.sections import SECTIONS, Section, get_section_key
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
 
 
@@ -49,30 +49,39 @@ def navigation(request) -> dict:
         (section for section in SECTIONS if section.key == current_section_key and section.key in rendered_keys),
         None,
     )
-    pages = (
-        [
-            {
-                "label": page.label,
-                "url": reverse(page.url_name),
-                "is_current": page.url_name == resolver_match.view_name,
-            }
-            for page in current_section.pages
-        ]
-        if current_section and resolver_match
-        else []
-    )
-
-    current_page = next((page for page in pages if page["is_current"]), None)
-    if current_page:
-        nav_title = current_page["label"]
-    elif current_section:
-        nav_title = current_section.label
-    else:
-        nav_title = None
+    pages = _section_pages(section=current_section, resolver_match=resolver_match)
 
     return {
         "nav_sections": sections,
         "nav_pages": pages,
         "current_nav_section": current_section_key,
-        "nav_title": nav_title,
+        "nav_title": _nav_title(section=current_section, pages=pages),
     }
+
+
+def _section_pages(*, section: Section | None, resolver_match: ResolverMatch | None) -> list[dict]:
+    """
+    The page nav of the section the player is standing in, with the page he is on marked.
+    """
+    if not section or not resolver_match:
+        return []
+
+    return [
+        {
+            "label": page.label,
+            "url": reverse(page.url_name),
+            "is_current": page.url_name == resolver_match.view_name,
+        }
+        for page in section.pages
+    ]
+
+
+def _nav_title(*, section: Section | None, pages: list[dict]) -> str | None:
+    """
+    The current page's label, or the section's where no page of it is current.
+    """
+    current_page = next((page for page in pages if page["is_current"]), None)
+    if current_page:
+        return current_page["label"]
+
+    return section.label if section else None

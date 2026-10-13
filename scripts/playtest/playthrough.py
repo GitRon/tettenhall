@@ -157,20 +157,26 @@ def _count_successions(*, savegame: Savegame, before: dict[int, Standing], repor
             after[faction_id] = standing = replace(standing, first_fall_month=report.months_played)
 
         if standing.leader_id not in (previous.leader_id, None) and not standing.is_defeated:
-            raised = standing.leader_id not in previous.roster_ids
-            if is_player and raised:
-                report.player_leaders_raised += 1
-            elif is_player:
-                report.player_successions += 1
-            elif raised:
-                report.rival_leaders_raised += 1
-            else:
-                report.rival_successions += 1
+            _count_new_leader(report=report, is_player=is_player, raised=standing.leader_id not in previous.roster_ids)
         if standing.is_defeated and not previous.is_defeated and not is_player:
             report.rival_defeat_months.append(report.months_played)
             report.rival_months_after_first_fall.append(report.months_played - standing.first_fall_month)
 
     return after
+
+
+def _count_new_leader(*, report: GameReport, is_player: bool, raised: bool) -> None:
+    """
+    Counts one new leader: the player's or a rival's, and raised by the fyrd or succeeded from the roster.
+    """
+    if is_player and raised:
+        report.player_leaders_raised += 1
+    elif is_player:
+        report.player_successions += 1
+    elif raised:
+        report.rival_leaders_raised += 1
+    else:
+        report.rival_successions += 1
 
 
 def _record_month(*, savegame: Savegame, month: int) -> MonthRecord:
