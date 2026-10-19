@@ -78,6 +78,10 @@ class FactionQuerySet(models.QuerySet):
         made by storming the burh. It is an exclusion rather than a demand for a won burh assault: a
         rival left with nobody healthy for any other reason stays occupiable, so no rival can be left
         neither attackable nor occupiable. A beaten rival drafts or hires when the next month opens.
+
+        Only the player's own raids count. The shield exists so that finishing a rival stays the
+        player's choice, made by storming the burh; a rival bled in another rival's raid was never the
+        player's to spare, and shielding it would keep a town nobody holds closed for the month.
         """
         if savegame.is_over:
             return self.none()
@@ -106,6 +110,7 @@ class FactionQuerySet(models.QuerySet):
         factions_beaten_in_a_raid_this_month = Skirmish.objects.filter(
             month=savegame.current_month,
             raid_kind__in=[raid_kind.VALUE for raid_kind in RAID_KINDS if not raid_kind.OPENS_TOWN],
+            attacking_faction=player_faction,
             victorious_faction_id=F("attacking_faction_id"),
         ).values("defending_faction_id")
 

@@ -117,6 +117,28 @@ def test_occupiable_by_excludes_a_rival_beaten_in_a_raid_on_its_herds_this_month
 
 
 @pytest.mark.django_db
+def test_occupiable_by_returns_a_rival_beaten_in_another_rivals_raid_on_its_herds_this_month(player_faction):
+    """The shield keeps finishing a rival the player's choice; a raid between rivals is not his to spare."""
+    rival = FactionFactory(savegame=player_faction.savegame)
+    rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
+    rival.save()
+    other_rival = FactionFactory(savegame=player_faction.savegame)
+    other_rival.leader = WarriorFactory(faction=other_rival)
+    other_rival.save()
+    SkirmishFactory(
+        attacking_faction=other_rival,
+        defending_faction=rival,
+        victorious_faction=other_rival,
+        raid_kind=RaidKindChoices.LIFT_THE_HERDS,
+        month=player_faction.savegame.current_month,
+    )
+
+    result = Faction.objects.occupiable_by(savegame=player_faction.savegame)
+
+    assert list(result) == [rival]
+
+
+@pytest.mark.django_db
 def test_occupiable_by_returns_a_rival_beaten_on_its_burh_this_month(player_faction):
     rival = FactionFactory(savegame=player_faction.savegame)
     rival.leader = WarriorFactory(faction=rival, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS)
