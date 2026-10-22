@@ -143,13 +143,13 @@
             <tr>
                 <td>Weapon</td>
                 <td>
-                    {% include 'warrior/components/warrior_field_display.html' with object=object attribute='weapon' field_value=object.weapon %}
+                    {% include 'warrior/components/warrior_field_display.html' with object=object attribute='weapon' field_value=object.weapon upgrade_offer=weapon_upgrade_offer %}
                 </td>
             </tr>
             <tr>
                 <td>Armor</td>
                 <td>
-                    {% include 'warrior/components/warrior_field_display.html' with object=object attribute='armor' field_value=object.armor %}
+                    {% include 'warrior/components/warrior_field_display.html' with object=object attribute='armor' field_value=object.armor upgrade_offer=armor_upgrade_offer %}
                 </td>
             </tr>
         {% endif %}

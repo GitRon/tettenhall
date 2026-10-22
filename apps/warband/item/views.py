@@ -1,17 +1,23 @@
 import json
 from http import HTTPStatus
 
+from django.contrib import messages
 from django.db.models import QuerySet
 from django.http import HttpResponse
+from django.urls import reverse
 from django.views import generic
 from django.views.generic.detail import SingleObjectMixin
 from queuebie.runner import handle_message
 
+from apps.common.http import STALE_PAGE_NOTICE, hx_redirect
+from apps.warband.finance.models import Transaction
 from apps.warband.item.forms.item import AssignItemForm
-from apps.warband.item.messages.commands.item import BuyItem, EquipItem, SellItem
+from apps.warband.item.messages.commands.item import BuyItem, EquipItem, SellItem, UpgradeItem
+from apps.warband.item.messages.events.item import ItemUpgraded
 from apps.warband.item.models.item import Item
 from apps.warband.item.services.handout import get_handout_note
 from apps.warband.item.services.purchase import get_purchase_refusal
+from apps.warband.item.services.upgrade import get_item_upgrade, get_item_upgrade_refusal
 from apps.warband.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -106,6 +112,88 @@ class ItemAssignView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMi
         response = HttpResponse(status=HTTPStatus.OK)
         response["HX-Trigger"] = json.dumps(triggers)
         return response
+
+
+class ItemUpgradeView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, SingleObjectMixin, generic.View):
+    """
+    Pays the player's weaponsmith to rework one of his items a step up the condition ladder.
+
+    Scoped to the player faction, not the savegame: the shop's stock and a rival's gear are in the
+    savegame too, and the id from the URL would otherwise be enough to sharpen a rival's sword on the
+    player's silver.
+
+    Two pages offer it - the stores card for unworn gear and the warrior page for what a man carries -
+    and the answer follows the item rather than a parameter: worn gear goes back to its wearer's page,
+    whose figures moved with it, and the stores reload their list.
+    """
+
+    model = Item
+    http_method_names = ("post",)
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        obj = self.get_object()
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+        player_faction = current_savegame.player_faction
+
+        # The same function the page asks before it offers the control, so a refusal here means the
+        # page the player clicked from was stale rather than that the two disagree
+        refusal = self._get_refusal(item=obj, current_savegame=current_savegame)
+        if refusal is not None:
+            return _notification_response(notification=refusal)
+
+        upgrade = get_item_upgrade(item=obj)
+        handled = handle_message(
+            UpgradeItem(
+                faction=player_faction,
+                town=player_faction.town,
+                item=obj,
+                condition=upgrade.condition,
+                modifier=upgrade.modifier,
+                price=upgrade.price,
+                costs=upgrade.costs,
+                month=current_savegame.current_month,
+            )
+        )
+
+        # The line claims what this request did, so it waits for the handler's event: a request whose
+        # silver or month another click took first reworked nothing and is told why
+        if not any(isinstance(message, ItemUpgraded) for message in handled):
+            obj.refresh_from_db()
+            player_faction.town.refresh_from_db()
+            return _notification_response(
+                notification=self._get_refusal(item=obj, current_savegame=current_savegame) or STALE_PAGE_NOTICE
+            )
+
+        note = f"The weaponsmith made a {obj.display_name} of it."
+        wearer = obj.worn_by
+        if wearer is not None:
+            messages.add_message(request, messages.SUCCESS, note)
+            return hx_redirect(url=reverse("warband:warrior-detail-view", args=[wearer.id]))
+
+        response = HttpResponse(status=HTTPStatus.OK)
+        response["HX-Trigger"] = json.dumps(
+            {
+                "loadFactionItemList": "-",
+                "updateResourceBar": "-",
+                "notification": note,
+            }
+        )
+        return response
+
+    @staticmethod
+    def _get_refusal(*, item: Item, current_savegame: Savegame) -> str | None:
+        return get_item_upgrade_refusal(
+            item=item,
+            faction=current_savegame.player_faction,
+            month=current_savegame.current_month,
+            balance=Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id),
+        )
+
+
+def _notification_response(*, notification: str) -> HttpResponse:
+    response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+    response["HX-Trigger"] = json.dumps({"notification": notification})
+    return response
 
 
 class ItemBuyView(RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin, SingleObjectMixin, generic.View):

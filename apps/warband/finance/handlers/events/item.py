@@ -25,3 +25,14 @@ def handle_item_bought(*, context: item.ItemBought) -> Command:
         faction=context.buying_faction,
         month=context.month,
     )
+
+
+@message_registry.register_event(event=item.ItemUpgraded)
+def handle_item_upgraded(*, context: item.ItemUpgraded) -> Command:
+    # Pay the weaponsmith
+    return CreateTransaction(
+        reason=f"{context.item_name} reforged",
+        amount=-context.costs,
+        faction=context.faction,
+        month=context.month,
+    )

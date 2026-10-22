@@ -6,6 +6,7 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.item.models.item import Item
 from apps.warband.item.services.generators.item.base import BaseItemGenerator
 from apps.warband.skirmish.models import Warrior
+from apps.warband.town.models import Town
 
 
 @dataclass(kw_only=True)
@@ -32,6 +33,25 @@ class BuyItem(Command):
     buying_faction: Faction
     price: int
     item: Item
+    month: int
+
+
+@dataclass(kw_only=True)
+class UpgradeItem(Command):
+    """
+    Have the faction's weaponsmith rework one of its items a step up the condition ladder.
+
+    The step itself rides along - condition, modifier and price as "get_item_upgrade" worked them out
+    - so the handler writes exactly what the button priced rather than working it out a second time.
+    """
+
+    faction: Faction
+    town: Town
+    item: Item
+    condition: int
+    modifier: int
+    price: int
+    costs: int
     month: int
 
 

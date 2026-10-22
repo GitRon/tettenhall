@@ -60,6 +60,24 @@ class BaseItemGenerator:
         if item_tiers is not None:
             self.item_tiers = item_tiers
 
+    @classmethod
+    def get_price(cls, *, dice_string: str, modifier: int) -> int:
+        """
+        What an item of these dice and this modifier is worth, wherever it came from.
+
+        Priced by what it does, which is the expected damage: dice and modifier together, and nothing
+        else. The number of dice is what actually decides the damage and it reaches expectancy exactly
+        once, so a formula that multiplies the modifier back in on top hands the price to the modifier
+        alone - and the shop's cheapest weapon is then often its best. A "Superior Pitchfork (1d4+5)"
+        averages 7.5 damage and a "Cheap Long sword (4d4+0)" ten, so the sword is the dearer of the two.
+
+        A classmethod because the weaponsmith reprices an item he reworks with it, long after whichever
+        generator drew it is gone - so a forged sword and a bought one are priced by the same rule.
+        """
+        dice_notation = DiceNotation(dice_string=dice_string, modifier=modifier)
+
+        return round(max(dice_notation.expectancy_value, cls.MINIMUM_EXPECTED_DAMAGE) * cls.PRICE_PER_EXPECTED_DAMAGE)
+
     @property
     def _modifier_distribution(self) -> tuple[int, int]:
         """
@@ -111,21 +129,10 @@ class BaseItemGenerator:
         best_possible_roll = DiceNotation(dice_string=item_type.base_value).best_possible_roll
         modifier = max(modifier, 1 - best_possible_roll)
 
-        # Priced by what it does, which is the expected damage: dice and modifier together, and
-        # nothing else. The number of dice is what actually decides the damage and it reaches
-        # expectancy exactly once, so a formula that multiplies the modifier back in on top hands
-        # the price to the modifier alone - and the shop's cheapest weapon is then often its best.
-        # A "Superior Pitchfork (1d4+5)" averages 7.5 damage and a "Cheap Long sword (4d4+0)" ten,
-        # so the sword is the dearer of the two.
-        dice_notation = DiceNotation(dice_string=item_type.base_value, modifier=modifier)
-        price = round(
-            max(dice_notation.expectancy_value, self.MINIMUM_EXPECTED_DAMAGE) * self.PRICE_PER_EXPECTED_DAMAGE
-        )
-
         return Item.objects.create(
             type=item_type,
             condition=self._determine_condition(modifier=modifier),
-            price=price,
+            price=self.get_price(dice_string=item_type.base_value, modifier=modifier),
             modifier=modifier,
             owner=self.faction,
             savegame_id=self.savegame_id,

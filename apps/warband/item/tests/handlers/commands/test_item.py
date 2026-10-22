@@ -9,6 +9,7 @@ from apps.warband.item.handlers.commands.item import (
     handle_equip_item,
     handle_lose_item,
     handle_sell_item,
+    handle_upgrade_item,
 )
 from apps.warband.item.messages.commands.item import (
     BuyItem,
@@ -17,12 +18,14 @@ from apps.warband.item.messages.commands.item import (
     EquipItem,
     LoseItem,
     SellItem,
+    UpgradeItem,
 )
 from apps.warband.item.messages.events.item import (
     ItemBought,
     ItemCreated,
     ItemEquipped,
     ItemSold,
+    ItemUpgraded,
     ItemWasLost,
     OwnershipChanged,
 )
@@ -384,3 +387,86 @@ def test_handle_equip_item_reads_the_holder_off_the_rows_rather_than_the_message
     leader.refresh_from_db()
     levy.refresh_from_db()
     assert (leader.weapon, levy.weapon) == (new_sword, old_sword)
+
+
+def _upgrade_item_command(*, item: Item, faction, month: int = 3) -> UpgradeItem:
+    return UpgradeItem(
+        faction=faction,
+        town=faction.town,
+        item=item,
+        condition=Item.ConditionChoices.CONDITION_CHEAP,
+        modifier=2,
+        price=110,
+        costs=40,
+        month=month,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_upgrade_item_reworks_the_item_and_spends_the_month():
+    faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=40)
+    item = ItemFactory(
+        savegame=faction.savegame, owner=faction, condition=Item.ConditionChoices.CONDITION_RUSTY, modifier=0
+    )
+    item_name = item.display_name
+
+    result = handle_upgrade_item(context=_upgrade_item_command(item=item, faction=faction))
+
+    assert result == ItemUpgraded(faction=faction, item=item, item_name=item_name, costs=40, month=3)
+    item.refresh_from_db()
+    faction.town.refresh_from_db()
+    assert (item.condition, item.modifier, item.price, faction.town.last_item_upgraded_at) == (
+        Item.ConditionChoices.CONDITION_CHEAP,
+        2,
+        110,
+        3,
+    )
+
+
+@pytest.mark.django_db
+def test_handle_upgrade_item_reworks_nothing_when_the_purse_no_longer_covers_it():
+    faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=39)
+    item = ItemFactory(savegame=faction.savegame, owner=faction, condition=Item.ConditionChoices.CONDITION_RUSTY)
+
+    result = handle_upgrade_item(context=_upgrade_item_command(item=item, faction=faction))
+
+    assert result is None
+    item.refresh_from_db()
+    assert item.condition == Item.ConditionChoices.CONDITION_RUSTY
+
+
+@pytest.mark.django_db
+def test_handle_upgrade_item_charges_nothing_for_a_second_rework_in_the_month():
+    """
+    The second of two overlapping requests: both passed the view's check before either wrote, and the
+    first has already spent the month.
+    """
+    faction = FactionFactory(town__last_item_upgraded_at=3)
+    TransactionFactory(faction=faction, amount=200)
+    item = ItemFactory(savegame=faction.savegame, owner=faction, condition=Item.ConditionChoices.CONDITION_RUSTY)
+
+    result = handle_upgrade_item(context=_upgrade_item_command(item=item, faction=faction))
+
+    assert result is None
+    item.refresh_from_db()
+    assert item.condition == Item.ConditionChoices.CONDITION_RUSTY
+
+
+@pytest.mark.django_db
+def test_handle_upgrade_item_leaves_the_month_alone_for_an_item_that_changed_since_it_was_priced():
+    """
+    Sold or reworked in another tab: the step was priced against the item the view read, and spending
+    the month on a rework that cannot happen would cost the player his one rework for nothing.
+    """
+    faction = FactionFactory()
+    TransactionFactory(faction=faction, amount=200)
+    item = ItemFactory(savegame=faction.savegame, owner=faction, condition=Item.ConditionChoices.CONDITION_RUSTY)
+    Item.objects.filter(pk=item.pk).update(owner=None)
+
+    result = handle_upgrade_item(context=_upgrade_item_command(item=item, faction=faction))
+
+    assert result is None
+    faction.town.refresh_from_db()
+    assert faction.town.last_item_upgraded_at == 0
