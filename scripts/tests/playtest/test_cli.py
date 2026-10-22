@@ -53,6 +53,15 @@ def test_main_plays_a_geld_player_when_asked(tmp_path, queuebie_registry):
 
 
 @pytest.mark.django_db
+def test_main_plays_a_reforging_player_when_asked(tmp_path, queuebie_registry):
+    output = tmp_path / "report.json"
+
+    main(argv=["--games", "1", "--months", "1", "--reforging", "--output", str(output)])
+
+    assert [game["reforging"] for game in json.loads(output.read_text(encoding="utf-8"))] == [True]
+
+
+@pytest.mark.django_db
 def test_main_refuses_a_database_without_reference_data(tmp_path):
     Culture.objects.all().delete()
 

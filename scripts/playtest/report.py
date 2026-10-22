@@ -32,6 +32,8 @@ class GameReport:
     tending: bool = False
     # Whether the player called a geld on his village when his purse ran low, see [PlayerTurn]
     geld: bool = False
+    # Whether the player had his weaponsmith rework his men's gear, see [PlayerTurn]
+    reforging: bool = False
     outcome: str = ""
     months_played: int = 0
     # Why the harness stopped a game that was neither decided nor at the month cap
@@ -54,6 +56,8 @@ class GameReport:
     warriors_tended: int = 0
     # Gelds the village paid, which only a geld game calls
     gelds_called: int = 0
+    # Pieces the weaponsmith reworked, which only a reforging game asks for
+    items_reforged: int = 0
     player_successions: int = 0
     rival_successions: int = 0
     # Seats the fyrd filled because nobody was left on the roster - counted apart from the successions

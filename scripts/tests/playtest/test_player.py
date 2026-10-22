@@ -538,3 +538,63 @@ def test_play_leaves_the_village_alone_for_a_player_who_does_not_geld(player_sav
     PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).play()
 
     assert (report.gelds_called, report.drafted) == (0, 2)
+
+
+def _reforging_faction(player_savegame: Savegame) -> Faction:
+    faction = player_savegame.player_faction
+    Town.objects.filter(faction=faction).update(weaponsmith=Town.WeaponsmithChoices.WEAPONSMITH_LARGE)
+    faction.town.refresh_from_db()
+    TransactionFactory(faction=faction, amount=1000)
+    return faction
+
+
+def _worn_piece(*, faction: Faction, condition: int) -> Item:
+    return ItemFactory(savegame=faction.savegame, owner=faction, condition=condition, modifier=0, price=70)
+
+
+@pytest.mark.django_db
+def test_reforge_gear_reworks_the_weakest_piece_on_the_strongest_man(player_savegame, rng, report, queuebie_registry):
+    faction = _reforging_faction(player_savegame)
+    rusty = _worn_piece(faction=faction, condition=Item.ConditionChoices.CONDITION_RUSTY)
+    WarriorFactory(
+        faction=faction,
+        strength=20,
+        weapon=_worn_piece(faction=faction, condition=Item.ConditionChoices.CONDITION_TRADITIONAL),
+        armor=rusty,
+    )
+    weak_mans_piece = _worn_piece(faction=faction, condition=Item.ConditionChoices.CONDITION_RUSTY)
+    WarriorFactory(faction=faction, strength=5, weapon=weak_mans_piece)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).reforge_gear()
+
+    rusty.refresh_from_db()
+    assert (rusty.condition, report.items_reforged) == (Item.ConditionChoices.CONDITION_CHEAP, 1)
+
+
+@pytest.mark.django_db
+def test_reforge_gear_passes_over_a_piece_the_forge_cannot_improve(player_savegame, rng, report, queuebie_registry):
+    faction = _reforging_faction(player_savegame)
+    WarriorFactory(
+        faction=faction,
+        strength=20,
+        weapon=_worn_piece(faction=faction, condition=Item.ConditionChoices.CONDITION_SUPERIOR),
+    )
+    weak_mans_piece = _worn_piece(faction=faction, condition=Item.ConditionChoices.CONDITION_RUSTY)
+    WarriorFactory(faction=faction, strength=5, weapon=weak_mans_piece)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).reforge_gear()
+
+    weak_mans_piece.refresh_from_db()
+    assert weak_mans_piece.condition == Item.ConditionChoices.CONDITION_CHEAP
+
+
+@pytest.mark.django_db
+def test_play_reforges_only_for_a_reforging_player(player_savegame, rng, report, queuebie_registry):
+    faction = _reforging_faction(player_savegame)
+    WarriorFactory(
+        faction=faction, weapon=_worn_piece(faction=faction, condition=Item.ConditionChoices.CONDITION_RUSTY)
+    )
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).play()
+
+    assert report.items_reforged == 0

@@ -24,7 +24,14 @@ STOP_MONTH_BLOCKED = "month blocked by an unresolved skirmish"
 
 
 def play_savegame(
-    *, seed: int, policy: PlayerPolicy, month_cap: int, user: User, tending: bool = False, geld: bool = False
+    *,
+    seed: int,
+    policy: PlayerPolicy,
+    month_cap: int,
+    user: User,
+    tending: bool = False,
+    geld: bool = False,
+    reforging: bool = False,
 ) -> GameReport:
     """
     Starts a savegame the way the new-game form does and plays it until it is decided or reaches the cap.
@@ -52,9 +59,10 @@ def play_savegame(
         policy=policy,
         rng=rng,
         month_cap=month_cap,
-        report=GameReport(seed=seed, policy=policy.name, tending=tending, geld=geld),
+        report=GameReport(seed=seed, policy=policy.name, tending=tending, geld=geld, reforging=reforging),
         tending=tending,
         geld=geld,
+        reforging=reforging,
     )
 
 
@@ -67,6 +75,7 @@ def play_months(
     report: GameReport,
     tending: bool = False,
     geld: bool = False,
+    reforging: bool = False,
 ) -> GameReport:
     """
     Plays the player's month and then finishes it, as the End Month button does, until the game stops.
@@ -78,7 +87,15 @@ def play_months(
     standings = _standings(savegame=savegame)
 
     while not savegame.is_over and report.months_played < month_cap:
-        turn = PlayerTurn(savegame=savegame, policy=policy, rng=rng, report=report, tending=tending, geld=geld)
+        turn = PlayerTurn(
+            savegame=savegame,
+            policy=policy,
+            rng=rng,
+            report=report,
+            tending=tending,
+            geld=geld,
+            reforging=reforging,
+        )
         stop_reason = turn.play()
         player_id = savegame.player_faction_id
         standings[player_id] = replace(standings[player_id], roster_ids=turn.roster_ids_at_march)

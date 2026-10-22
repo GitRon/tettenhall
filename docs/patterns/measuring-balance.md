@@ -73,6 +73,11 @@ below the 150 he keeps back. Opt-in for the reason tending is: it moves silver a
 fires, so switching it on by default would move every baseline. A question about the geld's price compares
 geld batches at different prices against each other and against a batch without it.
 
+**`--reforging`** plays a player who has his weaponsmith rework the gear his men stand in. Once the gear is
+handed out, the weakest piece on the strongest man that the forge can still improve is reworked, while the
+150 stays back - one piece a month, as the weaponsmith allows. Opt-in for the reason tending is. A question
+about the rework compares a reforging batch against the same seeds without it.
+
 **Policies** differ only in when the band marches, and on what. Every march storms the burh unless the
 policy says otherwise:
 
@@ -99,7 +104,8 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
 - how many men were drafted, hired, taken in from the cells and sent on a quest, and how many towns were
   occupied;
 - how many items the player bought, and how many equips the hand-out made;
-- how many men the sanctuary tended and how many gelds the village paid, in the batches that do either;
+- how many men the sanctuary tended, how many gelds the village paid and how many pieces the weaponsmith
+  reworked, in the batches that do any of them;
 - successions on either side, and apart from them the leaders the fyrd raised when nobody was left on the
   roster;
 - the months rivals were knocked out, and for each of them how many months it lasted after its first
