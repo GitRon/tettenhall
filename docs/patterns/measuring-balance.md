@@ -73,10 +73,12 @@ below the 150 he keeps back. Opt-in for the reason tending is: it moves silver a
 fires, so switching it on by default would move every baseline. A question about the geld's price compares
 geld batches at different prices against each other and against a batch without it.
 
-**`--reforging`** plays a player who has his weaponsmith rework the gear his men stand in. Once the gear is
+**`--reforging`** plays a player who has his weaponsmith rework the gear his men stand in. The weaponsmith
+goes first in the build order - the default player raises one in no game of twenty - and once the gear is
 handed out, the weakest piece on the strongest man that the forge can still improve is reworked, while the
-150 stays back - one piece a month, as the weaponsmith allows. Opt-in for the reason tending is. A question
-about the rework compares a reforging batch against the same seeds without it.
+150 stays back - one piece a month, as the weaponsmith allows. Opt-in for the reason tending is. With
+`--tending` as well, the sanctuary keeps the first place. A question about the rework compares a reforging
+batch against the same seeds without it, which also moves the build order.
 
 **Policies** differ only in when the band marches, and on what. Every march storms the burh unless the
 policy says otherwise:

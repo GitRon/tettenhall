@@ -207,6 +207,28 @@ def test_build_passes_over_a_refused_building(player_savegame, rng, report, queu
 
 
 @pytest.mark.django_db
+def test_build_raises_the_weaponsmith_first_for_a_reforging_player(player_savegame, rng, report, queuebie_registry):
+    TransactionFactory(faction=player_savegame.player_faction, amount=10_000)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report, reforging=True).build()
+
+    assert report.built == [(1, "weaponsmith", 1)]
+
+
+@pytest.mark.django_db
+def test_build_keeps_the_sanctuary_first_for_a_player_who_tends_and_reforges(
+    player_savegame, rng, report, queuebie_registry
+):
+    TransactionFactory(faction=player_savegame.player_faction, amount=10_000)
+
+    PlayerTurn(
+        savegame=player_savegame, policy=POLICIES["aggressive"], rng=rng, report=report, tending=True, reforging=True
+    ).build()
+
+    assert report.built == [(1, "sanctuary", 1)]
+
+
+@pytest.mark.django_db
 def test_build_keeps_silver_back(player_savegame, rng, report, queuebie_registry):
     """The marketplace, at 400 the cheapest, is affordable - but not and still leave the 150 standing."""
     TransactionFactory(faction=player_savegame.player_faction, amount=549)

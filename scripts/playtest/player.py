@@ -50,6 +50,13 @@ TENDING_BUILD_ORDER = (
     Weaponsmith.BUILDING_NAME,
     Marketplace.BUILDING_NAME,
 )
+# The same with the weaponsmith first, for a player who has his gear reworked: without it nothing is reworked
+REFORGING_BUILD_ORDER = (
+    Weaponsmith.BUILDING_NAME,
+    Hall.BUILDING_NAME,
+    Sanctuary.BUILDING_NAME,
+    Marketplace.BUILDING_NAME,
+)
 # A fight still undecided after this many rounds is one the harness cannot play out
 MAX_ROUNDS = 300
 
@@ -80,9 +87,10 @@ class PlayerTurn:
     there is still a name on the roll to strike, a geld is called whenever the purse is below the silver
     kept back. Off by default for the reason tending is.
 
-    "reforging" plays a player who has his weaponsmith rework the gear his men stand in: once the gear is
-    handed out, the weakest piece on the strongest man the forge can still improve is reworked, while the
-    silver kept back stays. Off by default for the reason tending is.
+    "reforging" plays a player who has his weaponsmith rework the gear his men stand in: the weaponsmith comes
+    first in the build order, and once the gear is handed out, the weakest piece on the strongest man the
+    forge can still improve is reworked, while the silver kept back stays. Off by default for the reason
+    tending is.
     """
 
     savegame: Savegame
@@ -271,10 +279,18 @@ class PlayerTurn:
                 self.report.items_reforged += 1
                 return
 
+    def _build_order(self) -> tuple[str, ...]:
+        # Tending wins a tie: a player paying for both needs the sanctuary before anything is wounded
+        if self.tending:
+            return TENDING_BUILD_ORDER
+        if self.reforging:
+            return REFORGING_BUILD_ORDER
+        return BUILD_ORDER
+
     def build(self) -> None:
         town = self.faction.town
         town.refresh_from_db()
-        for building_type in TENDING_BUILD_ORDER if self.tending else BUILD_ORDER:
+        for building_type in self._build_order():
             if get_building_upgrade_refusal(town=town, building_type=building_type, current_savegame=self.savegame):
                 continue
             new_level = getattr(town, building_type) + 1
