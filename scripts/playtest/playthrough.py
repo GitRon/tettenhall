@@ -32,6 +32,7 @@ def play_savegame(
     tending: bool = False,
     geld: bool = False,
     reforging: bool = False,
+    saving: bool = False,
 ) -> GameReport:
     """
     Starts a savegame the way the new-game form does and plays it until it is decided or reaches the cap.
@@ -59,10 +60,13 @@ def play_savegame(
         policy=policy,
         rng=rng,
         month_cap=month_cap,
-        report=GameReport(seed=seed, policy=policy.name, tending=tending, geld=geld, reforging=reforging),
+        report=GameReport(
+            seed=seed, policy=policy.name, tending=tending, geld=geld, reforging=reforging, saving=saving
+        ),
         tending=tending,
         geld=geld,
         reforging=reforging,
+        saving=saving,
     )
 
 
@@ -76,6 +80,7 @@ def play_months(
     tending: bool = False,
     geld: bool = False,
     reforging: bool = False,
+    saving: bool = False,
 ) -> GameReport:
     """
     Plays the player's month and then finishes it, as the End Month button does, until the game stops.
@@ -95,6 +100,7 @@ def play_months(
             tending=tending,
             geld=geld,
             reforging=reforging,
+            saving=saving,
         )
         stop_reason = turn.play()
         player_id = savegame.player_faction_id

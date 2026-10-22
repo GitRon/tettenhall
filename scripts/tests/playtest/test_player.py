@@ -17,9 +17,12 @@ from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.buildings import BUILDINGS
 from apps.warband.town.buildings.hall import Hall
+from apps.warband.town.buildings.marketplace import Marketplace
+from apps.warband.town.buildings.sanctuary import Sanctuary
 from apps.warband.town.models import Town
-from scripts.playtest.player import STOP_FIGHT_STUCK, PlayerTurn
+from scripts.playtest.player import BUILD_ORDER, STOP_FIGHT_STUCK, PlayerTurn
 from scripts.playtest.policy import POLICIES
 
 
@@ -620,3 +623,169 @@ def test_play_reforges_only_for_a_reforging_player(player_savegame, rng, report,
     PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).play()
 
     assert report.items_reforged == 0
+
+
+def _next_rung_costs(*, town: Town, building_type: str) -> int:
+    return BUILDINGS[building_type].get_building_by_type(building_type=getattr(town, building_type) + 1).BUILDING_COSTS
+
+
+def _top_out(*, town: Town, building_types: tuple[str, ...]) -> None:
+    Town.objects.filter(id=town.id).update(
+        **{building_type: BUILDINGS[building_type].get_max_level() for building_type in building_types}
+    )
+    town.refresh_from_db()
+
+
+def _mercenary_in_the_pub(*, faction: Faction) -> Warrior:
+    mercenary = WarriorFactory(faction=None, savegame=faction.savegame, culture=faction.culture)
+    faction.available_mercenaries.add(mercenary)
+    return mercenary
+
+
+def _saving_turn(*, savegame: Savegame, rng, report, policy: str = "aggressive") -> PlayerTurn:
+    return PlayerTurn(savegame=savegame, policy=POLICIES[policy], rng=rng, report=report, saving=True)
+
+
+@pytest.mark.django_db
+def test_hire_from_the_pub_keeps_the_next_building_back_for_a_saving_player(
+    player_savegame, rng, report, queuebie_registry
+):
+    """The 150 alone would let him hire the man, but not and still pay for the next rung of the hall."""
+    faction = player_savegame.player_faction
+    mercenary = _mercenary_in_the_pub(faction=faction)
+    hall_costs = _next_rung_costs(town=faction.town, building_type=Hall.BUILDING_NAME)
+    TransactionFactory(faction=faction, amount=mercenary.hiring_price + 150 + hall_costs - 1)
+    turn = _saving_turn(savegame=player_savegame, rng=rng, report=report)
+
+    turn.hire_from_the_pub()
+
+    mercenary.refresh_from_db()
+    assert (mercenary.faction, report.hired, turn.held_back_by_saving) == (None, 0, True)
+
+
+@pytest.mark.django_db
+def test_hire_from_the_pub_hires_above_the_next_building_for_a_saving_player(
+    player_savegame, rng, report, queuebie_registry
+):
+    faction = player_savegame.player_faction
+    mercenary = _mercenary_in_the_pub(faction=faction)
+    hall_costs = _next_rung_costs(town=faction.town, building_type=Hall.BUILDING_NAME)
+    TransactionFactory(faction=faction, amount=mercenary.hiring_price + 150 + hall_costs)
+    turn = _saving_turn(savegame=player_savegame, rng=rng, report=report)
+
+    turn.hire_from_the_pub()
+
+    assert (report.hired, turn.held_back_by_saving) == (1, False)
+
+
+@pytest.mark.django_db
+def test_hire_from_the_pub_is_not_held_back_by_the_saving_when_the_150_alone_stop_him(
+    player_savegame, rng, report, queuebie_registry
+):
+    faction = player_savegame.player_faction
+    mercenary = _mercenary_in_the_pub(faction=faction)
+    TransactionFactory(faction=faction, amount=mercenary.hiring_price + 149)
+    turn = _saving_turn(savegame=player_savegame, rng=rng, report=report)
+
+    turn.hire_from_the_pub()
+
+    assert (report.hired, turn.held_back_by_saving) == (0, False)
+
+
+@pytest.mark.django_db
+def test_buy_from_the_shop_keeps_the_next_building_back_for_a_saving_player(
+    player_savegame, rng, report, queuebie_registry
+):
+    faction = player_savegame.player_faction
+    sword = _sword(savegame=player_savegame)
+    faction.available_items.add(sword)
+    hall_costs = _next_rung_costs(town=faction.town, building_type=Hall.BUILDING_NAME)
+    TransactionFactory(faction=faction, amount=60 + 150 + hall_costs - 1)
+    turn = _saving_turn(savegame=player_savegame, rng=rng, report=report)
+
+    turn.buy_from_the_shop()
+
+    sword.refresh_from_db()
+    assert (sword.owner, report.items_bought, turn.held_back_by_saving) == (None, 0, True)
+
+
+@pytest.mark.django_db
+def test_buy_from_the_shop_buys_above_the_next_building_for_a_saving_player(
+    player_savegame, rng, report, queuebie_registry
+):
+    faction = player_savegame.player_faction
+    faction.available_items.add(_sword(savegame=player_savegame))
+    hall_costs = _next_rung_costs(town=faction.town, building_type=Hall.BUILDING_NAME)
+    TransactionFactory(faction=faction, amount=60 + 150 + hall_costs)
+    turn = _saving_turn(savegame=player_savegame, rng=rng, report=report)
+
+    turn.buy_from_the_shop()
+
+    assert (report.items_bought, turn.held_back_by_saving) == (1, False)
+
+
+@pytest.mark.django_db
+def test_build_raises_only_the_building_a_saving_player_saves_for(player_savegame, rng, report, queuebie_registry):
+    """The marketplace further down is affordable, and would spend what he put by for the hall."""
+    town = player_savegame.player_faction.town
+    hall_costs = _next_rung_costs(town=town, building_type=Hall.BUILDING_NAME)
+    assert _next_rung_costs(town=town, building_type=Marketplace.BUILDING_NAME) < hall_costs
+    TransactionFactory(faction=player_savegame.player_faction, amount=150 + hall_costs - 1)
+
+    _saving_turn(savegame=player_savegame, rng=rng, report=report).build()
+
+    assert report.built == []
+
+
+@pytest.mark.django_db
+def test_saving_moves_on_to_the_next_building_once_the_first_is_at_its_top(
+    player_savegame, rng, report, queuebie_registry
+):
+    """With the hall at its top level the sanctuary is next, and only its rung is kept back from the pub."""
+    faction = player_savegame.player_faction
+    _top_out(town=faction.town, building_types=(Hall.BUILDING_NAME,))
+    mercenary = _mercenary_in_the_pub(faction=faction)
+    sanctuary_costs = _next_rung_costs(town=faction.town, building_type=Sanctuary.BUILDING_NAME)
+    TransactionFactory(faction=faction, amount=mercenary.hiring_price + 150 + sanctuary_costs)
+    turn = _saving_turn(savegame=player_savegame, rng=rng, report=report)
+
+    turn.hire_from_the_pub()
+    turn.build()
+
+    assert (report.hired, report.built) == (1, [(1, Sanctuary.BUILDING_NAME, 1)])
+
+
+@pytest.mark.django_db
+def test_saving_keeps_nothing_back_at_the_top_of_the_ladder(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    _top_out(town=faction.town, building_types=BUILD_ORDER)
+    mercenary = _mercenary_in_the_pub(faction=faction)
+    TransactionFactory(faction=faction, amount=mercenary.hiring_price + 150)
+    turn = _saving_turn(savegame=player_savegame, rng=rng, report=report)
+
+    turn.hire_from_the_pub()
+    turn.build()
+
+    assert (report.hired, report.built, turn.held_back_by_saving) == (1, [], False)
+
+
+@pytest.mark.django_db
+def test_play_counts_a_month_the_saving_held_the_pub_back(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    mercenary = _mercenary_in_the_pub(faction=faction)
+    TransactionFactory(faction=faction, amount=mercenary.hiring_price + 150)
+
+    _saving_turn(savegame=player_savegame, rng=rng, report=report, policy="prudent").play()
+
+    assert (report.hired, report.months_saving) == (0, 1)
+
+
+@pytest.mark.django_db
+def test_play_keeps_nothing_back_for_a_player_who_does_not_save(player_savegame, rng, report, queuebie_registry):
+    faction = player_savegame.player_faction
+    mercenary = _mercenary_in_the_pub(faction=faction)
+    TransactionFactory(faction=faction, amount=mercenary.hiring_price + 150)
+
+    PlayerTurn(savegame=player_savegame, policy=POLICIES["prudent"], rng=rng, report=report).play()
+
+    assert (report.hired, report.months_saving) == (1, 0)
