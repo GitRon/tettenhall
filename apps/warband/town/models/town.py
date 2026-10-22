@@ -67,6 +67,12 @@ class Town(models.Model):
         default=0,
     )
 
+    last_item_upgraded_at = models.PositiveSmallIntegerField(
+        # Months count from 1, so 0 is "never reworked" - the same reading as the guards above
+        help_text="Month the weaponsmith last reworked an item the faction owns, 0 if he never has",
+        default=0,
+    )
+
     objects = TownManager()
 
     class Meta:

@@ -49,7 +49,7 @@ holding that level's numbers:
   is the archetype mean a man's strength is measured against, written by the generator that drew him: one
   constant on the attack service cannot sit on three archetype means at once.
 - **Each building owns exactly one lever**: hall → monthly income + pub mercenary slots + how much a feast mends + cell places, weaponsmith →
-  shop item quality (which bands the shop stocks + the bonus on every modifier roll), marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling + the price of tending a man, fortification →
+  gear quality (which bands the shop stocks + the bonus on every modifier roll + how far up the condition ladder it reworks owned gear), marketplace → resale ratio + shop stock size, sanctuary → monthly healing ceiling + the price of tending a man, fortification →
   the `fortification_strength` an assault on the burh opens with (0 / 20 / 35 / 50); a [raid](raids.md) out in the shire meets no wall. The
   fortification's defence bonus is not a lever: it is `SkirmishActionService.FORTIFICATION_DEFENSE_MULTIPLIER`,
   a constant of the mechanic.
@@ -113,6 +113,18 @@ holding that level's numbers:
   conditional `UPDATE` in `WarriorManager.tend_wounds` so a double-click is charged once. It is its own
   command, `TendWarriorWounds`, rather than a second `HealInjuredWarrior`: that one rolls against the
   ceiling, and `handle_heal_injured_warrior` stays one lookup for every faction.
+- **The weaponsmith reworks one piece of the player's gear a month, one step up the condition ladder**
+  (#477). A level's `MAX_UPGRADE_CONDITION` is the best condition it reworks up to - Cheap, Traditional,
+  Superior - and `NoWeaponsmith` stands at None and reworks nothing. A step raises the condition by one and
+  the modifier by `UPGRADE_MODIFIER_STEP` (2), a constant of the mechanic on
+  `apps/warband/item/services/upgrade.py`: the condition bands belong to the generator that drew an item,
+  and the item does not record which one that was, so a step is fixed rather than read off the next band.
+  The item is repriced by `BaseItemGenerator.get_price`, the rule every generator prices by, and the
+  rework costs what the step adds to the price (at least 1) - never cheaper than buying, only certain.
+  Stored and worn gear alike, but not a piece on a man standing in an open fight, the way his gear is
+  locked to him. `Town.last_item_upgraded_at` guards the month the way `Town.last_feast_at` guards the
+  feast - asked by `get_item_upgrade_refusal` for the message, re-checked in `handle_upgrade_item` as a
+  conditional `UPDATE` after the purse and the item are read again under the write lock.
 - **The village pays a geld when the player asks, once a month, for one name off the fyrd roll** (#421).
   It is the town's one source of silver besides the hall, and it is no building's lever: `GELD_SILVER`
   (80, the thegn's price in `ThegnBuysOutHisSons`) and `GELD_FYRD_NAMES` (1) are constants on

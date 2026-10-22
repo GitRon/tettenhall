@@ -51,19 +51,35 @@ def test_get_levels_matches_the_model_choices():
     assert len(Weaponsmith.get_levels()) == len(Town.WeaponsmithChoices)
 
 
-def test_get_effects_names_the_best_band_and_the_quality_bonus():
+def test_get_effects_names_the_best_band_the_quality_bonus_and_the_upgrade_cap():
     result = SmallWeaponsmith.get_effects()
 
     assert result == (
         BuildingEffect(label="Best gear in the shop", value="Fine"),
         BuildingEffect(label="Quality of the shop's wares", value="+1"),
+        BuildingEffect(label="Best a smith makes of old gear", value="Cheap"),
     )
 
 
-def test_get_effects_without_a_weaponsmith_names_the_rustic_band():
+def test_get_effects_without_a_weaponsmith_names_the_rustic_band_and_no_upgrade():
     result = NoWeaponsmith.get_effects()
 
-    assert result[0] == BuildingEffect(label="Best gear in the shop", value="Rustic")
+    assert result[0::2] == (
+        BuildingEffect(label="Best gear in the shop", value="Rustic"),
+        BuildingEffect(label="Best a smith makes of old gear", value="Nothing"),
+    )
+
+
+def test_can_upgrade_item_only_with_a_forge():
+    assert [level.can_upgrade_item() for level in Weaponsmith.get_levels()] == [False, True, True, True]
+
+
+def test_max_upgrade_condition_rises_up_the_ladder():
+    """
+    A forge that is raised and then reworks less than before would be a building the player pays to lose.
+    """
+    for lower, higher in itertools.pairwise(Weaponsmith.get_levels()[1:]):
+        assert lower.MAX_UPGRADE_CONDITION < higher.MAX_UPGRADE_CONDITION
 
 
 def test_shop_item_tiers_never_narrow_up_the_ladder():

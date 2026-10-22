@@ -10,8 +10,9 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.faction.services.hiring import get_pub_hire_refusal
 from apps.warband.faction.services.purchase_snapshot import get_held_gear_values, get_shop_offers
 from apps.warband.finance.models import Transaction
-from apps.warband.item.messages.commands.item import BuyItem, EquipItem
+from apps.warband.item.messages.commands.item import BuyItem, EquipItem, UpgradeItem
 from apps.warband.item.services.handout import plan_gear_handout
+from apps.warband.item.services.upgrade import get_item_upgrade, get_item_upgrade_refusal
 from apps.warband.quest.messages.commands.quest import AcceptQuest
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.quests import QUESTS_BY_NAME
@@ -49,6 +50,13 @@ TENDING_BUILD_ORDER = (
     Weaponsmith.BUILDING_NAME,
     Marketplace.BUILDING_NAME,
 )
+# The same with the weaponsmith first, for a player who has his gear reworked: without it nothing is reworked
+REFORGING_BUILD_ORDER = (
+    Weaponsmith.BUILDING_NAME,
+    Hall.BUILDING_NAME,
+    Sanctuary.BUILDING_NAME,
+    Marketplace.BUILDING_NAME,
+)
 # A fight still undecided after this many rounds is one the harness cannot play out
 MAX_ROUNDS = 300
 
@@ -78,6 +86,11 @@ class PlayerTurn:
     "geld" plays a player who taxes his village when the purse runs low: before the fyrd is drafted, while
     there is still a name on the roll to strike, a geld is called whenever the purse is below the silver
     kept back. Off by default for the reason tending is.
+
+    "reforging" plays a player who has his weaponsmith rework the gear his men stand in: the weaponsmith comes
+    first in the build order, and once the gear is handed out, the weakest piece on the strongest man the
+    forge can still improve is reworked, while the silver kept back stays. Off by default for the reason
+    tending is.
     """
 
     savegame: Savegame
@@ -94,6 +107,7 @@ class PlayerTurn:
         max_rounds: int = MAX_ROUNDS,
         tending: bool = False,
         geld: bool = False,
+        reforging: bool = False,
     ) -> None:
         self.savegame = savegame
         self.faction = savegame.player_faction
@@ -104,6 +118,7 @@ class PlayerTurn:
         self.max_rounds = max_rounds
         self.tending = tending
         self.geld = geld
+        self.reforging = reforging
         # Who was on the roster as the band set out - the steps before the march add men to it, so a
         # successor raised by the fight is told apart against this rather than against last month's roster
         self.roster_ids_at_march: frozenset[int] = frozenset()
@@ -119,6 +134,8 @@ class PlayerTurn:
         self.hire_from_the_pub()
         self.buy_from_the_shop()
         self.hand_out_gear()
+        if self.reforging:
+            self.reforge_gear()
         self.build()
         self.send_men_on_the_steady_work()
         self.roster_ids_at_march = frozenset(
@@ -225,10 +242,55 @@ class PlayerTurn:
             handle_message(EquipItem(warrior=warrior, item=item, slot=slot))
             self.report.items_equipped += 1
 
+    def reforge_gear(self) -> None:
+        """
+        Has the weaponsmith rework the weakest piece on the strongest man it can still improve.
+
+        After the hand-out, so the piece reworked is one a man actually fights with. Each piece is asked
+        the refusal the upgrade view asks, against the purse above SILVER_KEPT_BACK, so a piece beyond the
+        forge's reach or the purse is passed over and the next one may still be reworked.
+        """
+        self.faction.town.refresh_from_db()
+        warriors = (
+            Warrior.objects.exclude_dead()
+            .filter_faction(faction_id=self.faction.id)
+            .select_related("weapon__type", "armor__type")
+        )
+        for warrior in sorted(warriors, key=lambda man: (-man.strength, man.id)):
+            pieces = sorted((item for item in (warrior.weapon, warrior.armor) if item), key=lambda item: item.condition)
+            for item in pieces:
+                if get_item_upgrade_refusal(
+                    item=item, faction=self.faction, month=self.month, balance=self._balance() - SILVER_KEPT_BACK
+                ):
+                    continue
+                upgrade = get_item_upgrade(item=item)
+                handle_message(
+                    UpgradeItem(
+                        faction=self.faction,
+                        town=self.faction.town,
+                        item=item,
+                        condition=upgrade.condition,
+                        modifier=upgrade.modifier,
+                        price=upgrade.price,
+                        costs=upgrade.costs,
+                        month=self.month,
+                    )
+                )
+                self.report.items_reforged += 1
+                return
+
+    def _build_order(self) -> tuple[str, ...]:
+        # Tending wins a tie: a player paying for both needs the sanctuary before anything is wounded
+        if self.tending:
+            return TENDING_BUILD_ORDER
+        if self.reforging:
+            return REFORGING_BUILD_ORDER
+        return BUILD_ORDER
+
     def build(self) -> None:
         town = self.faction.town
         town.refresh_from_db()
-        for building_type in TENDING_BUILD_ORDER if self.tending else BUILD_ORDER:
+        for building_type in self._build_order():
             if get_building_upgrade_refusal(town=town, building_type=building_type, current_savegame=self.savegame):
                 continue
             new_level = getattr(town, building_type) + 1

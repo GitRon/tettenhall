@@ -14,7 +14,9 @@ from apps.warband.faction.messages.events.warrior import WarriorRecruited, Warri
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
 from apps.warband.item.messages.commands.item import EquipItem
+from apps.warband.item.models.item import Item
 from apps.warband.item.services.handout import get_handout_note
+from apps.warband.item.services.upgrade import get_item_upgrade_offer
 from apps.warband.savegame.mixins import (
     PlayerFactionScopedQuerysetMixin,
     RunningSavegameRequiredMixin,
@@ -164,6 +166,17 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         context["tending"] = (
             self._get_tending_context(current_savegame=current_savegame) if context["is_player_faction"] else None
         )
+        context["weapon_upgrade_offer"] = None
+        context["armor_upgrade_offer"] = None
+        if context["is_player_faction"]:
+            # One ledger sum for both slots: they price against the same purse
+            balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
+            context["weapon_upgrade_offer"] = self._get_upgrade_offer(
+                item=self.object.weapon, current_savegame=current_savegame, balance=balance
+            )
+            context["armor_upgrade_offer"] = self._get_upgrade_offer(
+                item=self.object.armor, current_savegame=current_savegame, balance=balance
+            )
         self._add_roster_context(context=context, player_faction=player_faction)
         return context
 
@@ -194,6 +207,20 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             "refusal": None if refusal == UNAFFORDABLE_REFUSAL else refusal,
             "can_afford": refusal != UNAFFORDABLE_REFUSAL,
         }
+
+    @staticmethod
+    def _get_upgrade_offer(*, item: Item | None, current_savegame: Savegame, balance: int) -> dict | None:
+        # The rework the stores card offers for unworn gear, here for what the man stands in. An empty
+        # slot has nothing to rework.
+        if item is None:
+            return None
+
+        return get_item_upgrade_offer(
+            item=item,
+            faction=current_savegame.player_faction,
+            month=current_savegame.current_month,
+            balance=balance,
+        )
 
 
 class WarriorWeaponUpdateView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, generic.UpdateView):

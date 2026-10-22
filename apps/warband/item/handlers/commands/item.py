@@ -8,12 +8,14 @@ from apps.warband.item.messages.events.item import (
     ItemCreated,
     ItemEquipped,
     ItemSold,
+    ItemUpgraded,
     ItemWasLost,
     OwnershipChanged,
 )
 from apps.warband.item.models.item import Item
 from apps.warband.item.services.sale import get_sell_payout
 from apps.warband.skirmish.models import Warrior
+from apps.warband.town.models import Town
 
 
 @message_registry.register_command(command=item.CreateItem)
@@ -71,6 +73,57 @@ def handle_buy_item(*, context: item.BuyItem) -> list[Event] | Event | None:
         item=context.item,
         item_name=context.item.display_name,
         price=context.price,
+        month=context.month,
+    )
+
+
+@message_registry.register_command(command=item.UpgradeItem)
+def handle_upgrade_item(*, context: item.UpgradeItem) -> list[Event] | Event | None:
+    """
+    Rework one item a step up the condition ladder, and charge for it.
+
+    Three re-checks before the first write, for the reasons "handle_buy_item" and "handle_throw_feast"
+    give: the purse, because a different spend may have taken the silver after the view asked; the item,
+    because it may have been sold or reworked in another tab and the step was priced against the item
+    as the view read it; and the month, as one conditional UPDATE, because a double-clicked button passes
+    the view's check twice and only one of the two may be charged. The first two are reads, which is a
+    re-check only because this request holds the write lock - see docs/patterns/message-bus.md.
+    """
+    if Transaction.objects.current_balance(faction_id=context.faction.id) < context.costs:
+        return None
+
+    unchanged_item = Item.objects.filter(
+        pk=context.item.pk,
+        owner=context.faction,
+        condition=context.item.condition,
+        modifier=context.item.modifier,
+    )
+    if not unchanged_item.exists():
+        return None
+
+    upgraded_rows = (
+        Town.objects.filter(pk=context.town.pk)
+        .exclude(last_item_upgraded_at=context.month)
+        .update(last_item_upgraded_at=context.month)
+    )
+    if not upgraded_rows:
+        return None
+
+    context.town.last_item_upgraded_at = context.month
+
+    # Read before the write, so the ledger names the piece the player paid to have reworked
+    item_name = context.item.display_name
+
+    unchanged_item.update(condition=context.condition, modifier=context.modifier, price=context.price)
+    context.item.condition = context.condition
+    context.item.modifier = context.modifier
+    context.item.price = context.price
+
+    return ItemUpgraded(
+        faction=context.faction,
+        item=context.item,
+        item_name=item_name,
+        costs=context.costs,
         month=context.month,
     )
 

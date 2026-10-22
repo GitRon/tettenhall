@@ -9,7 +9,9 @@ from apps.common.tests.race import passes_first_time
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
+from apps.warband.item.services.upgrade import ALREADY_UPGRADED_THIS_MONTH_REFUSAL
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.skirmish.models.warrior import Warrior
@@ -963,6 +965,69 @@ def test_warrior_detail_view_offers_no_tending_for_a_rivals_man(logged_in_client
     response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
 
     assert response.context["tending"] is None
+
+
+def _rusty_item(*, faction) -> Item:
+    # A 1d6 at +0 is priced at 70, at +2 at 110: the rework costs 40
+    return ItemFactory(
+        savegame=faction.savegame,
+        owner=faction,
+        condition=Item.ConditionChoices.CONDITION_RUSTY,
+        modifier=0,
+        price=70,
+    )
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_prices_reworking_what_he_carries(logged_in_client, current_savegame):
+    """
+    Renders both live states of the control: the weapon is affordable, the armour is not.
+    """
+    faction = current_savegame.player_faction
+    Town.objects.filter(faction=faction).update(weaponsmith=Town.WeaponsmithChoices.WEAPONSMITH_LARGE)
+    TransactionFactory(faction=faction, amount=60)
+    armor = ItemFactory(
+        savegame=faction.savegame,
+        owner=faction,
+        condition=Item.ConditionChoices.CONDITION_RUSTY,
+        price=70,
+        type__base_value="6d6",
+        type__function=ItemType.FunctionChoices.FUNCTION_ARMOR,
+    )
+    warrior = WarriorFactory(faction=faction, weapon=_rusty_item(faction=faction), armor=armor)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert (
+        response.context["weapon_upgrade_offer"]["can_afford"],
+        response.context["armor_upgrade_offer"]["can_afford"],
+    ) == (True, False)
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_names_why_his_gear_cannot_be_reworked_this_month(logged_in_client, current_savegame):
+    faction = current_savegame.player_faction
+    Town.objects.filter(faction=faction).update(
+        weaponsmith=Town.WeaponsmithChoices.WEAPONSMITH_LARGE, last_item_upgraded_at=current_savegame.current_month
+    )
+    warrior = WarriorFactory(faction=faction, weapon=_rusty_item(faction=faction), armor=None)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert (response.context["weapon_upgrade_offer"]["refusal"], response.context["armor_upgrade_offer"]) == (
+        ALREADY_UPGRADED_THIS_MONTH_REFUSAL,
+        None,
+    )
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_offers_no_rework_for_a_rivals_man(logged_in_client, current_savegame):
+    rival = FactionFactory(savegame=current_savegame, town__weaponsmith=Town.WeaponsmithChoices.WEAPONSMITH_LARGE)
+    warrior = WarriorFactory(faction=rival, savegame=current_savegame, weapon=_rusty_item(faction=rival))
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.context["weapon_upgrade_offer"] is None
 
 
 @pytest.mark.django_db

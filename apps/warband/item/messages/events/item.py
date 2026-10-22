@@ -34,6 +34,21 @@ class ItemBought(Event):
 
 
 @dataclass(kw_only=True)
+class ItemUpgraded(Event):
+    """
+    The weaponsmith reworked an item a step up the condition ladder.
+
+    "item_name" is the name it went into the forge under, the one the player knew it by when he paid.
+    """
+
+    faction: Faction
+    item: Item
+    item_name: str
+    costs: int
+    month: int
+
+
+@dataclass(kw_only=True)
 class ItemWasLost(Event):
     """
     The item is gone, which is why this carries a name and not an item.

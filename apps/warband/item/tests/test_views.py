@@ -1,17 +1,24 @@
 import json
+from unittest import mock
 
 import pytest
 from django.urls import reverse
 
+from apps.common.http import STALE_PAGE_NOTICE
+from apps.common.tests.race import passes_first_time
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
+from apps.warband.item.services.upgrade import NO_WEAPONSMITH_REFUSAL, get_item_upgrade_refusal
+from apps.warband.item.services.upgrade import UNAFFORDABLE_REFUSAL as UNAFFORDABLE_UPGRADE_REFUSAL
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.town.models import Town
 
 
 @pytest.mark.django_db
@@ -396,3 +403,107 @@ def test_item_sell_view_refuses_to_sell_the_gear_off_a_man_in_an_open_fight(logg
     assert response.status_code == 204
     item.refresh_from_db()
     assert item.owner == current_savegame.player_faction
+
+
+def _build_weaponsmith(current_savegame) -> None:
+    town = current_savegame.player_faction.town
+    town.weaponsmith = Town.WeaponsmithChoices.WEAPONSMITH_LARGE
+    town.save()
+
+
+def _rusty_item(current_savegame) -> Item:
+    # A 1d6 at +0 is priced at 70, at +2 at 110: the rework costs 40
+    return ItemFactory(
+        savegame=current_savegame,
+        owner=current_savegame.player_faction,
+        condition=Item.ConditionChoices.CONDITION_RUSTY,
+        modifier=0,
+        price=70,
+    )
+
+
+@pytest.mark.django_db
+def test_item_upgrade_view_reworks_an_unworn_item_and_charges_for_it(logged_in_client, current_savegame):
+    """
+    Flow test: no mocking inside the chain, so this runs the real queue and asserts the end state.
+    """
+    _build_weaponsmith(current_savegame)
+    TransactionFactory(faction=current_savegame.player_faction, amount=100)
+    item = _rusty_item(current_savegame)
+
+    response = logged_in_client.post(reverse("warband:item-upgrade-view", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 200
+    item.refresh_from_db()
+    assert (item.condition, Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)) == (
+        Item.ConditionChoices.CONDITION_CHEAP,
+        60,
+    )
+
+
+@pytest.mark.django_db
+def test_item_upgrade_view_sends_worn_gear_back_to_its_wearer(logged_in_client, current_savegame):
+    _build_weaponsmith(current_savegame)
+    TransactionFactory(faction=current_savegame.player_faction, amount=100)
+    item = _rusty_item(current_savegame)
+    warrior = WarriorFactory(faction=current_savegame.player_faction, weapon=item)
+
+    response = logged_in_client.post(reverse("warband:item-upgrade-view", kwargs={"pk": item.pk}))
+
+    assert response.headers["HX-Redirect"] == reverse("warband:warrior-detail-view", args=[warrior.id])
+
+
+@pytest.mark.django_db
+def test_item_upgrade_view_refuses_without_a_weaponsmith(logged_in_client, current_savegame):
+    TransactionFactory(faction=current_savegame.player_faction, amount=100)
+    item = _rusty_item(current_savegame)
+
+    response = logged_in_client.post(reverse("warband:item-upgrade-view", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 204
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == NO_WEAPONSMITH_REFUSAL
+
+
+@pytest.mark.django_db
+def test_item_upgrade_view_tells_the_loser_of_a_race_why_nothing_was_reworked(logged_in_client, current_savegame):
+    """
+    The request passed its check before another spend took the silver, so the handler reworked nothing.
+    See "passes_first_time" for the staging.
+    """
+    _build_weaponsmith(current_savegame)
+    item = _rusty_item(current_savegame)
+
+    with mock.patch(
+        "apps.warband.item.views.get_item_upgrade_refusal", side_effect=passes_first_time(get_item_upgrade_refusal)
+    ):
+        response = logged_in_client.post(reverse("warband:item-upgrade-view", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 204
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == UNAFFORDABLE_UPGRADE_REFUSAL
+
+
+@pytest.mark.django_db
+def test_item_upgrade_view_owns_up_to_a_stale_page_when_no_refusal_is_left_to_name(logged_in_client, current_savegame):
+    """
+    The handler turned the request down and, asked again, the check has nothing left to name. The view
+    says the page was stale rather than claiming a rework. Staged with the check passing every time over
+    a purse that cannot pay, for the reason "passes_first_time" gives.
+    """
+    _build_weaponsmith(current_savegame)
+    item = _rusty_item(current_savegame)
+
+    with mock.patch("apps.warband.item.views.get_item_upgrade_refusal", return_value=None):
+        response = logged_in_client.post(reverse("warband:item-upgrade-view", kwargs={"pk": item.pk}))
+
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE
+
+
+@pytest.mark.django_db
+def test_item_upgrade_view_cannot_reach_a_rival_item(logged_in_client, current_savegame):
+    _build_weaponsmith(current_savegame)
+    rival = FactionFactory(savegame=current_savegame)
+    item = ItemFactory(savegame=current_savegame, owner=rival, condition=Item.ConditionChoices.CONDITION_RUSTY)
+
+    response = logged_in_client.post(reverse("warband:item-upgrade-view", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 404

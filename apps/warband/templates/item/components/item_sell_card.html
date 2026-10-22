@@ -91,6 +91,28 @@
                     hx-target="#item-card-{{ item.id|unlocalize }}"
                     type="button">Sell for <span class="font-mono tabular-nums">{{ item|sell_payout:faction }}</span>
             </button>
+            {% comment %}
+                The weaponsmith's offer, priced on the button so the player reads the bill before he
+                clicks, and named after the condition it lands on because that is the word the card's
+                heading changes to. Left out where there is nothing to offer at all - no forge, or a
+                piece nothing makes better - and disabled with the reason where the month or the
+                forge's reach stands in the way.
+            {% endcomment %}
+            {% item_upgrade_offer item=item faction=faction month=current_savegame.current_month balance=current_balance as upgrade_offer %}
+            {% if upgrade_offer %}
+                {% if upgrade_offer.refusal %}
+                    <button class="row-action" disabled type="button">{{ upgrade_offer.refusal }}</button>
+                {% elif not upgrade_offer.can_afford %}
+                    <button class="row-action" disabled type="button">Reforging it as {{ upgrade_offer.upgrade.condition_label }} costs <span class="font-mono tabular-nums">{{ upgrade_offer.upgrade.costs }}</span></button>
+                {% else %}
+                    <button class="row-action"
+                            hx-post="{% url 'warband:item-upgrade-view' item.id %}"
+                            hx-disabled-elt="this"
+                            hx-swap="none"
+                            type="button">Reforge as {{ upgrade_offer.upgrade.condition_label }} for <span class="font-mono tabular-nums">{{ upgrade_offer.upgrade.costs }}</span>
+                    </button>
+                {% endif %}
+            {% endif %}
         {% endif %}
     </c-slot>
 </c-common.card>

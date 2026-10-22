@@ -19,6 +19,25 @@
         </button>
     {% endif %}
     {% comment %}
+        The weaponsmith's offer for the piece in this slot, the same control the stores card carries for
+        unworn gear. Inside the container, so a slot edited in place drops the offer for the item that
+        left it rather than going on pricing it. The edit view renders no offer, and a reload brings
+        the new item's back.
+    {% endcomment %}
+    {% if upgrade_offer %}
+        {% if upgrade_offer.refusal %}
+            <button class="row-action" disabled type="button">{{ upgrade_offer.refusal }}</button>
+        {% elif not upgrade_offer.can_afford %}
+            <button class="row-action" disabled type="button">Reforging it as {{ upgrade_offer.upgrade.condition_label }} costs {{ upgrade_offer.upgrade.costs }} silver</button>
+        {% else %}
+            <button class="row-action"
+                    hx-post="{% url 'warband:item-upgrade-view' field_value.id %}"
+                    hx-disabled-elt="this"
+                    hx-swap="none"
+                    type="button">Reforge as {{ upgrade_offer.upgrade.condition_label }} for {{ upgrade_offer.upgrade.costs }} silver</button>
+        {% endif %}
+    {% endif %}
+    {% comment %}
         The mean is what the choice turns on, and it is this man's rather than the item's: a blow is
         scaled by his strength before it lands, so the axe averaging 12 in the shop is not what he
         swings for. Armour carries no strength at all, hence one figure quoted a blow and the other

@@ -112,7 +112,7 @@ overlapping requests - a double click is enough - both pass the service, because
 before either writes. The handler's first write is the guard again, as a conditional `UPDATE ... WHERE`
 or a filtered delete of the row that says the thing is still there, and it returns `None` when that write
 touches nothing: `handle_upgrade_town_building`, `handle_throw_feast`, `handle_call_geld`, `handle_prepare_month`, `handle_buy_item`,
-`handle_recruit_pub_mercenary`, `handle_tend_warrior_wounds`, the captive handlers and the answers to a
+`handle_recruit_pub_mercenary`, `handle_tend_warrior_wounds`, `handle_upgrade_item`, the captive handlers and the answers to a
 pending incident all have this shape. A read of the instance the
 view passed in is not a re-check - it is the same stale read. The button carries `hx-disabled-elt` as
 well, which stops most second clicks before they are sent, and none that arrive from a second tab.
@@ -123,7 +123,7 @@ transaction.** The balance is a sum over the ledger (`Transaction.objects.curren
 different rows, so neither conditional write above stops the pair. Every handler that spends silver the
 player chose to spend therefore re-reads the balance before its first write and returns `None` when it no
 longer covers the price: `handle_buy_item`, `handle_recruit_pub_mercenary`, `handle_upgrade_town_building`,
-`handle_throw_feast` and `handle_tend_warrior_wounds`. A read is only a re-check while nobody can write between it and the charge, and
+`handle_throw_feast`, `handle_tend_warrior_wounds` and `handle_upgrade_item`. A read is only a re-check while nobody can write between it and the charge, and
 that is what `"transaction_mode": "IMMEDIATE"` on the database gives: `handle_message()` drains a whole
 chain - the ledger row included - inside one `atomic()`, and `BEGIN IMMEDIATE` takes SQLite's write lock
 when that block opens, so an overlapping request waits and then reads the ledger the first one wrote. The
@@ -137,7 +137,7 @@ hires and purchases, and `RivalPolicy` keeps those inside the purse with a runni
 
 **A view's success line describes what its own request did.** `handle_message()` returns every message it
 handled, in the order they drained, so a view whose command handler can turn a request down looks for the
-event that handler raises on success - `TownBuildingUpgraded`, `FeastThrown`, `GeldCalled`, `WarriorWoundsTended`,
+event that handler raises on success - `TownBuildingUpgraded`, `FeastThrown`, `GeldCalled`, `WarriorWoundsTended`, `ItemUpgraded`,
 `WarriorRecruited`, `WarriorWasSoldIntoSlavery` - before it claims anything. If the event is missing, the
 handler returned `None`, and the view answers the way its refusal does: the refusal asked again for the
 reason, or `STALE_PAGE_NOTICE` where none is left to name. That covers the conflicting race - two different

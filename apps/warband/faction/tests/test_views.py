@@ -14,6 +14,7 @@ from apps.warband.faction.services.hiring import get_pub_hire_refusal
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.finance.models.transaction import Transaction
 from apps.warband.finance.tests.factories.transaction import TransactionFactory
+from apps.warband.item.models.item import Item
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
@@ -416,6 +417,30 @@ def test_warband_stores_view_marks_the_war_band_as_the_players_own(logged_in_cli
     response = logged_in_client.get(reverse("warband:warband-stores-view"))
 
     assert response.context["is_player_faction"] is True
+
+
+@pytest.mark.django_db
+def test_warband_stores_view_renders_every_state_of_the_rework_control(logged_in_client, current_savegame):
+    """
+    The card asks the weaponsmith's offer through a template tag, so the page has to render with one
+    item of each state on it: affordable, priced beyond the purse, and refused by the forge's reach.
+    """
+    faction = current_savegame.player_faction
+    Town.objects.filter(faction=faction).update(weaponsmith=Town.WeaponsmithChoices.WEAPONSMITH_SMALL)
+    TransactionFactory(faction=faction, amount=60)
+    ItemFactory(savegame=current_savegame, owner=faction, condition=Item.ConditionChoices.CONDITION_RUSTY, price=70)
+    ItemFactory(
+        savegame=current_savegame,
+        owner=faction,
+        condition=Item.ConditionChoices.CONDITION_RUSTY,
+        price=70,
+        type__base_value="6d6",
+    )
+    ItemFactory(savegame=current_savegame, owner=faction, condition=Item.ConditionChoices.CONDITION_CHEAP)
+
+    response = logged_in_client.get(reverse("warband:warband-stores-view"))
+
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
