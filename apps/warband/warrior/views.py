@@ -166,16 +166,17 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         context["tending"] = (
             self._get_tending_context(current_savegame=current_savegame) if context["is_player_faction"] else None
         )
-        context["weapon_upgrade_offer"] = (
-            self._get_upgrade_offer(item=self.object.weapon, current_savegame=current_savegame)
-            if context["is_player_faction"]
-            else None
-        )
-        context["armor_upgrade_offer"] = (
-            self._get_upgrade_offer(item=self.object.armor, current_savegame=current_savegame)
-            if context["is_player_faction"]
-            else None
-        )
+        context["weapon_upgrade_offer"] = None
+        context["armor_upgrade_offer"] = None
+        if context["is_player_faction"]:
+            # One ledger sum for both slots: they price against the same purse
+            balance = Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id)
+            context["weapon_upgrade_offer"] = self._get_upgrade_offer(
+                item=self.object.weapon, current_savegame=current_savegame, balance=balance
+            )
+            context["armor_upgrade_offer"] = self._get_upgrade_offer(
+                item=self.object.armor, current_savegame=current_savegame, balance=balance
+            )
         self._add_roster_context(context=context, player_faction=player_faction)
         return context
 
@@ -208,7 +209,7 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         }
 
     @staticmethod
-    def _get_upgrade_offer(*, item: Item | None, current_savegame: Savegame) -> dict | None:
+    def _get_upgrade_offer(*, item: Item | None, current_savegame: Savegame, balance: int) -> dict | None:
         # The rework the stores card offers for unworn gear, here for what the man stands in. An empty
         # slot has nothing to rework.
         if item is None:
@@ -218,7 +219,7 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             item=item,
             faction=current_savegame.player_faction,
             month=current_savegame.current_month,
-            balance=Transaction.objects.current_balance(faction_id=current_savegame.player_faction_id),
+            balance=balance,
         )
 
 
