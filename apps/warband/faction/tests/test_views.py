@@ -24,6 +24,7 @@ from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.quest.tests.factories.quest_contract import QuestContractFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -84,6 +85,18 @@ def test_faction_detail_view_shows_a_rival(logged_in_client, current_savegame):
 
     assert response.status_code == 200
     assert list(response.context["warriors"]) == [warrior]
+
+
+@pytest.mark.django_db
+def test_faction_detail_view_says_where_a_rivals_men_stand(logged_in_client, current_savegame):
+    """Who stands where is public, so the rival's page tells the player before he picks a raid."""
+    rival_faction = FactionFactory(savegame=current_savegame)
+    WarriorFactory(faction=rival_faction, posting=PostingChoices.VILLAGE)
+
+    response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
+
+    assert response.status_code == 200
+    assert [place.standing_count for place in response.context["posting_places"]] == [0, 1, 0]
 
 
 @pytest.mark.django_db
@@ -451,6 +464,25 @@ def test_warband_fyrd_view_shows_the_players_own_war_band(logged_in_client, save
 
     assert response.status_code == 200
     assert response.context["object"] == savegame_whose_rival_is_the_older_faction.player_faction
+
+
+@pytest.mark.django_db
+def test_warband_postings_view_lays_the_players_own_war_band_out_by_place(
+    logged_in_client, savegame_whose_rival_is_the_older_faction
+):
+    """The rival was written first, so a page scoped to the savegame instead would lay out his men."""
+    player_faction = savegame_whose_rival_is_the_older_faction.player_faction
+    herdsman = WarriorFactory(faction=player_faction, posting=PostingChoices.HERDS)
+    WarriorFactory(faction=FactionFactory(savegame=savegame_whose_rival_is_the_older_faction))
+
+    response = logged_in_client.get(reverse("warband:warband-postings-view"))
+
+    assert response.status_code == 200
+    assert [[man.warrior for man in column.men] for column in response.context["posting_columns"]] == [
+        [],
+        [],
+        [herdsman],
+    ]
 
 
 @pytest.mark.django_db
@@ -1397,19 +1429,21 @@ def test_faction_attack_view_shows_the_form(logged_in_client, current_savegame, 
 
 
 @pytest.mark.django_db
-def test_faction_attack_view_names_the_wall_each_raid_meets_before_the_march(
+def test_faction_attack_view_names_the_wall_and_the_men_each_raid_meets_before_the_march(
     logged_in_client, current_savegame, player_faction_ready_to_march
 ):
+    """The burh is stormed against every man at home, so it counts the herds' man as well."""
     rival_faction = FactionFactory(savegame=current_savegame, town__fortification=NPC_STARTING_FORTIFICATION_LEVEL)
-    WarriorFactory(faction=rival_faction)
+    WarriorFactory(faction=rival_faction, posting=PostingChoices.BURH)
+    WarriorFactory(faction=rival_faction, posting=PostingChoices.HERDS)
 
     response = logged_in_client.get(reverse("warband:faction-attack-view", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
     assert response.context["raid_kinds"] == [
-        (LiftTheHerds, 0),
-        (BurnTheVillage, 0),
-        (StormTheBurh, Palisade.FORTIFICATION_STRENGTH),
+        (LiftTheHerds, 0, 1),
+        (BurnTheVillage, 0, 0),
+        (StormTheBurh, Palisade.FORTIFICATION_STRENGTH, 2),
     ]
 
 

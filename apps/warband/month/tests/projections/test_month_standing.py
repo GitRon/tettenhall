@@ -7,6 +7,7 @@ from apps.warband.month.projections.month_standing import MonthStanding, Waiting
 from apps.warband.quest.tests.factories.quest import QuestFactory
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -23,6 +24,7 @@ def test_is_intact_is_true_while_every_man_left_is_fit():
         successor=None,
         has_marched=False,
         leader_can_march=False,
+        places=[],
     )
 
     assert warband.is_intact is True
@@ -37,6 +39,7 @@ def test_is_intact_is_false_with_a_man_still_routed():
         successor=None,
         has_marched=False,
         leader_can_march=False,
+        places=[],
     )
 
     assert warband.is_intact is False
@@ -51,6 +54,7 @@ def test_is_intact_is_false_with_a_man_down():
         successor=None,
         has_marched=False,
         leader_can_march=False,
+        places=[],
     )
 
     assert warband.is_intact is False
@@ -65,6 +69,18 @@ def test_for_savegame_answers_none_without_a_player_faction():
     savegame = SavegameFactory(player_faction=None)
 
     assert MonthStanding.for_savegame(savegame=savegame) is None
+
+
+@pytest.mark.django_db
+def test_for_savegame_says_where_the_players_own_men_stand():
+    savegame = SavegameFactory()
+    player_faction = FactionFactory(savegame=savegame, is_player=True)
+    WarriorFactory(faction=player_faction, posting=PostingChoices.HERDS)
+    WarriorFactory(faction=FactionFactory(savegame=savegame), posting=PostingChoices.HERDS)
+
+    standing = MonthStanding.for_savegame(savegame=savegame)
+
+    assert [place.standing_count for place in standing.warband.places] == [0, 0, 1]
 
 
 @pytest.mark.django_db

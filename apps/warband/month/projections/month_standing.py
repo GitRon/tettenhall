@@ -7,6 +7,7 @@ from apps.warband.item.services.handout import count_stored_upgrades
 from apps.warband.quest.models import Quest
 from apps.warband.skirmish.models import Skirmish, Warrior
 from apps.warband.town.models import Town
+from apps.warband.warrior.services.postings import PlaceStanding, count_men_standing
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -39,6 +40,9 @@ class WarbandStanding:
     # whose leader is wounded, dead or away on a quest has no attack to launch at all,
     # and today the player only learns that by opening a rival's page.
     leader_can_march: bool
+    # How many men a raid on each of his places would meet today, the burh first - see
+    # "count_men_standing". Counted rather than listed, the way the rest of this is
+    places: list[PlaceStanding]
 
     @property
     def is_intact(self) -> bool:
@@ -225,5 +229,6 @@ def _build_warband_standing(*, player_faction, month: int) -> WarbandStanding:
         successor=player_faction.get_successor(),
         has_marched=player_faction.has_marched_this_month(month=month),
         leader_can_march=player_faction.get_available_leader(month=month) is not None,
+        places=count_men_standing(faction_id=player_faction.id, month=month),
         **condition_counts,
     )

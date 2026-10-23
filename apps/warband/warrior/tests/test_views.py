@@ -14,6 +14,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.services.upgrade import ALREADY_UPGRADED_THIS_MONTH_REFUSAL
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.month.models.player_month_log import PlayerMonthLog
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
@@ -1090,3 +1091,59 @@ def test_warrior_enslave_captured_view_does_not_sell_a_man_already_recruited(log
 
     assert response.status_code == 204
     assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE
+
+
+@pytest.mark.django_db
+def test_post_warrior_view_stands_him_at_the_herds_and_redraws_the_board(logged_in_client, current_savegame):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.post(
+        reverse("warband:warrior-post-view", kwargs={"pk": warrior.id}), data={"posting": PostingChoices.HERDS}
+    )
+
+    assert response.status_code == 200
+    assert [[man.warrior for man in column.men] for column in response.context["posting_columns"]] == [
+        [],
+        [],
+        [warrior],
+    ]
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == f"{warrior} now stands at the herds."
+
+
+@pytest.mark.django_db
+def test_post_warrior_view_says_the_page_was_stale_when_the_move_changed_nothing(logged_in_client, current_savegame):
+    """He already stands there - a second click, or a second tab - so nothing is claimed for this request."""
+    warrior = WarriorFactory(faction=current_savegame.player_faction, posting=PostingChoices.VILLAGE)
+
+    response = logged_in_client.post(
+        reverse("warband:warrior-post-view", kwargs={"pk": warrior.id}), data={"posting": PostingChoices.VILLAGE}
+    )
+
+    assert response.status_code == 200
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("data", [{}, {"posting": "herds"}, {"posting": "99"}])
+def test_post_warrior_view_refuses_a_place_nobody_offered(logged_in_client, current_savegame, data):
+    warrior = WarriorFactory(faction=current_savegame.player_faction)
+
+    response = logged_in_client.post(reverse("warband:warrior-post-view", kwargs={"pk": warrior.id}), data=data)
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_post_warrior_view_cannot_move_a_rivals_man(logged_in_client, current_savegame):
+    """A rival's men are in the savegame too, and the id was all it took to pull his guard off his herds."""
+    rival_warrior = WarriorFactory(
+        faction=FactionFactory(savegame=current_savegame), savegame=current_savegame, posting=PostingChoices.HERDS
+    )
+
+    response = logged_in_client.post(
+        reverse("warband:warrior-post-view", kwargs={"pk": rival_warrior.id}), data={"posting": PostingChoices.BURH}
+    )
+
+    assert response.status_code == 404
+    rival_warrior.refresh_from_db()
+    assert rival_warrior.posting == PostingChoices.HERDS

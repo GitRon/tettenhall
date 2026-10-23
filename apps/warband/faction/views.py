@@ -40,6 +40,7 @@ from apps.warband.skirmish.raids import RAID_KINDS
 from apps.warband.town.buildings.hall import Hall
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
+from apps.warband.warrior.services.postings import count_men_standing, get_posting_columns
 from apps.warband.warrior.services.unpaid_wages import get_unpaid_wages_note
 
 
@@ -251,6 +252,8 @@ class FactionDetailView(
         # the point. Not asked about the two offers above - "attackable_by" and "occupiable_by" both
         # hold the same guard, so a second one here would answer a question they have settled.
         context["savegame_is_over"] = current_savegame.is_over
+        # Who stands where is public, for every faction - docs/patterns/warrior-knowledge.md
+        context["posting_places"] = count_men_standing(faction_id=self.object.id, month=current_savegame.current_month)
 
         return context
 
@@ -279,6 +282,27 @@ class WarbandFyrdView(PlayerFactionMixin, generic.DetailView):
     """The levy the player can draft another man out of this month."""
 
     template_name = "faction/warband_fyrd.html"
+
+
+class WarbandPostingsView(PlayerFactionMixin, generic.DetailView):
+    """
+    Where each man stands while the war band is at home: the herds, the village or the burh.
+
+    A page of its own rather than a column on the roster. The question the player asks here is "are
+    there enough at the herds?", so it is laid out by place rather than by name - and the roster stays
+    the table it is on a phone.
+    """
+
+    template_name = "faction/warband_postings.html"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        current_savegame = get_current_savegame_for_request(request=self.request)
+        context["posting_columns"] = get_posting_columns(
+            faction_id=self.object.id, month=current_savegame.current_month
+        )
+
+        return context
 
 
 class WarbandCaptivesView(PlayerFactionAwareContextMixin, PlayerFactionMixin, generic.DetailView):
@@ -600,9 +624,17 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
         # Said before the march, from the same answers the march itself is staged with: the wall each
-        # raid meets and what each one takes
+        # raid meets, how many of their men stand where it lands, and what each one takes. The burh is
+        # stormed against every man at home, wherever he is posted - see "get_raid_defenders"
+        places = count_men_standing(faction_id=self.object.id, month=self.current_savegame.current_month)
+        standing_by_posting = {place.posting: place.standing_count for place in places}
         context["raid_kinds"] = [
-            (raid_kind, raid_kind.get_fortification_strength(town=self.object.town)) for raid_kind in RAID_KINDS
+            (
+                raid_kind,
+                raid_kind.get_fortification_strength(town=self.object.town),
+                sum(standing_by_posting.values()) if raid_kind.IS_FORTIFIED else standing_by_posting[raid_kind.POSTING],
+            )
+            for raid_kind in RAID_KINDS
         ]
         context["successor"] = self.current_savegame.player_faction.get_successor()
         return context

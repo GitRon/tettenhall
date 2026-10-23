@@ -23,6 +23,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     GrantRenown,
     HealInjuredWarrior,
     InflictInjury,
+    PostWarrior,
     PunishUnpaidWarrior,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
@@ -37,6 +38,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
     WarriorMoraleReplenished,
+    WarriorPosted,
     WarriorRenownFaded,
     WarriorRenownGranted,
     WarriorWalkedOutOverUnpaidSalary,
@@ -609,4 +611,23 @@ def handle_create_new_leader_warrior(*, context: CreateNewLeaderWarrior) -> list
     return NewLeaderWarriorCreated(
         faction=context.faction,
         warrior=warrior,
+    )
+
+
+@message_registry.register_command(command=PostWarrior)
+def handle_post_warrior(*, context: PostWarrior) -> Event | None:
+    """
+    Stands the man where he was sent, if he is still the faction's to send and not there already.
+
+    The guard is the write - see "WarriorManager.post" - so a man who left the roster, died or was
+    moved by an earlier click since the page was drawn is no change, and nothing is announced for him.
+    """
+    if not Warrior.objects.post(obj=context.warrior, faction=context.faction, posting=context.posting):
+        return None
+
+    return WarriorPosted(
+        warrior=context.warrior,
+        faction=context.faction,
+        posting=context.posting,
+        month=context.month,
     )

@@ -1,3 +1,4 @@
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 
 
@@ -9,7 +10,7 @@ class RaidKind:
     defenders stand behind, what a victory takes from the rival on top of the loot of the field, and
     whether a victory opens the town to be ridden into. Who stands in the way is asked of
     "get_raid_defenders", which reads [IS_FORTIFIED] to tell a raid out in the shire from an assault
-    on the burh.
+    on the burh, and [POSTING] for the place whose men a raid out in the shire meets.
 
     Classes rather than instances, like the calendar months and the town's buildings, which is why
     "do_not_call_in_templates" is set: a template would otherwise call the class and render the
@@ -20,6 +21,8 @@ class RaidKind:
     do_not_call_in_templates = True
 
     VALUE: int = 0
+    # The place this raid lands on, and so the men posted there who stand in its way
+    POSTING: int = PostingChoices.BURH
 
     # Whether the defenders fight behind the town's fortification. A raid out in the shire meets them in
     # the open, whatever the town has built

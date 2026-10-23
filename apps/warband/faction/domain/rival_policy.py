@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.town.buildings.hall import Hall
 
 
@@ -96,6 +97,21 @@ type RivalDecision = DraftFromFyrd | HireFromPub | BuyFromShop | UpgradeHall
 
 
 @dataclass(frozen=True, kw_only=True)
+class PostedMan:
+    """One man of a rival's roster as the posting rule sees him: who he is and where he stands now."""
+
+    warrior_id: int
+    posting: int
+    is_leader: bool
+
+
+@dataclass(frozen=True, kw_only=True)
+class PostMan:
+    warrior_id: int
+    posting: int
+
+
+@dataclass(frozen=True, kw_only=True)
 class _Candidate:
     decision: RivalDecision
     price: int
@@ -145,6 +161,9 @@ class RivalPolicy:
       until he is.
 
     The constants are balance numbers, measured with the harness (see "measuring-balance.md").
+
+    **Where its men stand** is decided apart from the spending, by [decide_postings]: it costs nothing,
+    so there is nothing for the purse loop to weigh it against.
     """
 
     WAGE_HORIZON_MONTHS = 6
@@ -152,6 +171,31 @@ class RivalPolicy:
     ITEM_WEIGHT = 10
     BUILDING_WEIGHT = 1
     MIN_SCORE = 0.1
+
+    # The places a rival deals its men out to, in turn. Every place gets a share, so each of a rival's
+    # three raid kinds meets about a third of its band - the spread a random draw would give on
+    # average. The burh comes first, so a rival with one man besides its leader keeps him at home, and
+    # the herds next, because a raid there drives off silver and one on the village only names
+    POSTING_ROTATION = (PostingChoices.BURH, PostingChoices.HERDS, PostingChoices.VILLAGE)
+
+    @classmethod
+    def decide_postings(cls, *, roster: list[PostedMan]) -> list[PostMan]:
+        """
+        Where a rival stands its men this month, as the moves that get them there.
+
+        One neutral rule for every rival: the leader holds the burh, and the rest are dealt out over
+        POSTING_ROTATION in id order, so the same roster stands the same way every month and a seeded
+        game replays it. Only a man who is not already where the rule puts him is moved.
+        """
+        rest = sorted((man for man in roster if not man.is_leader), key=lambda man: man.warrior_id)
+        wanted = [(man, PostingChoices.BURH) for man in roster if man.is_leader] + [
+            (man, cls.POSTING_ROTATION[index % len(cls.POSTING_ROTATION)]) for index, man in enumerate(rest)
+        ]
+
+        return sorted(
+            (PostMan(warrior_id=man.warrior_id, posting=posting) for man, posting in wanted if man.posting != posting),
+            key=lambda move: move.warrior_id,
+        )
 
     @classmethod
     def decide(cls, *, snapshot: RivalMonthSnapshot) -> list[RivalDecision]:

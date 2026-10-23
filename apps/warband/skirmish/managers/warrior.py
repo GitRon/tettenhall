@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Case, Count, F, Q, Value, When, manager
 
 from apps.warband.item.models.item import Item
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.warrior.choices.nickname import DEED_NICKNAME_STATES
 
 if typing.TYPE_CHECKING:
@@ -650,7 +651,7 @@ class WarriorManager(manager.Manager):
         return (
             self.filter(id=obj.id, faction=faction)
             .exclude(id=faction.leader_id)
-            .update(faction=None, weapon=None, armor=None)
+            .update(faction=None, weapon=None, armor=None, posting=PostingChoices.BURH)
         )
 
     def forgive_unpaid_months(self, *, obj):
@@ -726,13 +727,38 @@ class WarriorManager(manager.Manager):
 
     def set_faction(self, *, obj, faction) -> Warrior:
         """
-        Set a new faction for the given warrior.
+        Set a new faction for the given warrior, and stand him at the burh.
+
+        A posting is the faction's choice, so it does not travel with the man: whichever way he changed
+        banners, the place his old one sent him to says nothing about where the new one wants him.
         """
         obj.refresh_from_db()
         obj.faction = faction
-        obj.save(update_fields=("faction",))
+        obj.posting = PostingChoices.BURH
+        obj.save(update_fields=("faction", "posting"))
 
         return obj
+
+    def post(self, *, obj, faction, posting: int) -> int:
+        """
+        Stand a man of "faction" at "posting", and say how many rows that wrote.
+
+        One conditional statement, the guard being the write, the way [release_from_roster] is: he has
+        to still be on this roster and alive, and a man already standing there is no change - so a
+        second click, or a page showing a roster that has since moved, writes nothing and the caller
+        can tell.
+        """
+        updated = (
+            self.filter(id=obj.id, faction=faction)
+            .exclude(condition=self.model.ConditionChoices.CONDITION_DEAD)
+            .exclude(posting=posting)
+            .update(posting=posting)
+        )
+
+        if updated:
+            obj.posting = posting
+
+        return updated
 
     def put_on_payroll(self, *, obj) -> int:
         """

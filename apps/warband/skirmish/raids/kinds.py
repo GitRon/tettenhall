@@ -1,3 +1,4 @@
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.raids.base import RaidKind
 
@@ -6,6 +7,7 @@ class LiftTheHerds(RaidKind):
     """Out to the pastures for the rival's cattle, which is silver on the hoof."""
 
     VALUE = RaidKindChoices.LIFT_THE_HERDS
+    POSTING = PostingChoices.HERDS
 
     PURSE_SHARE = 0.2
     PURSE_CAP = 150
@@ -25,6 +27,7 @@ class BurnTheVillage(RaidKind):
     """
 
     VALUE = RaidKindChoices.BURN_THE_VILLAGE
+    POSTING = PostingChoices.VILLAGE
 
     FYRD_NAMES_BURNED = 2
 
@@ -40,6 +43,7 @@ class StormTheBurh(RaidKind):
     """The assault on the rival's town itself, behind its wall, and the one raid that can end it."""
 
     VALUE = RaidKindChoices.STORM_THE_BURH
+    POSTING = PostingChoices.BURH
 
     IS_FORTIFIED = True
     OPENS_TOWN = True

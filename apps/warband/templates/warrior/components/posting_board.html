@@ -1,0 +1,65 @@
+{% comment %}
+    The player's war band by place: a card per place, the burh first, every living man in the one he is
+    posted to. The swap target of every move, so a man leaves one card and arrives in the other in the
+    same answer, and the counts in the headings move with him.
+
+    A man who is down, away on a quest or already in a fight keeps his posting and is drawn where it
+    puts him, greyed, with the reason - he is not there to stand in a raid's way this month, and the
+    count says so. See docs/patterns/warrior-availability.md.
+
+    The moves sit behind three dots, like the roster's: two outlined controls on every line would be the
+    loudest column on the page and the least often pressed.
+{% endcomment %}
+<div id="posting-board" class="grid grid-cols-1 gap-5 md:grid-cols-3">
+    {% for column in posting_columns %}
+        <c-common.card>
+            <c-slot name="header">
+                <h2 class="m-0 flex items-baseline justify-between gap-x-2.5">
+                    {{ column.label }}
+                    <span class="font-mono text-label uppercase tracking-label text-ink-muted">Standing <span class="text-ink">{{ column.standing_count }}</span></span>
+                </h2>
+                {% if column.raid_kind.LOCALS_TURNOUT %}
+                    <p class="m-0 mt-1.5 text-sm leading-snug">{{ column.raid_kind.LOCALS_TURNOUT }} {{ column.raid_kind.LOCALS_NAME }} turn out beside them.</p>
+                {% endif %}
+            </c-slot>
+            {% if column.men %}
+                <ul class="m-0 list-none p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+                    {% for man in column.men %}
+                        <li class="flex items-center justify-between gap-x-2.5 py-2.5">
+                            <span class="min-w-0 leading-snug">
+                                <a class="{% if not man.is_available %}text-ink-dim{% endif %}" href="{% url 'warband:warrior-detail-view' man.warrior.id %}">{{ man.warrior.display_name }}</a>
+                                <span class="ml-1.5 font-mono text-label uppercase tracking-label text-ink-muted">Lvl <span class="text-ink">{{ man.warrior.level }}</span></span>
+                                {% if man.reason %}
+                                    <span class="block text-sm text-ink-muted">{{ man.reason }}</span>
+                                {% endif %}
+                            </span>
+                            <button type="button"
+                                    class="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-transparent p-0 text-ink-muted hover:border-rule-strong hover:bg-raised"
+                                    popovertarget="posting-menu-{{ man.warrior.id }}"
+                                    aria-label="Post {{ man.warrior.name }} elsewhere">
+                                <i aria-hidden="true" class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                            <div class="row-menu" id="posting-menu-{{ man.warrior.id }}" popover data-row-menu>
+                                <ul class="m-0 list-none p-0 [&>li+li]:border-t [&>li+li]:border-rule" data-row-menu-step="choose">
+                                    {% for posting, label in column.other_postings %}
+                                        <li>
+                                            <button type="button"
+                                                    class="row-menu-item"
+                                                    hx-post="{% url 'warband:warrior-post-view' man.warrior.id %}"
+                                                    hx-vals='{"posting": "{{ posting }}"}'
+                                                    hx-target="#posting-board"
+                                                    hx-swap="outerHTML"
+                                                    hx-disabled-elt="this">Post at the {{ label|lower }}</button>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="m-0">Nobody is posted here.</p>
+            {% endif %}
+        </c-common.card>
+    {% endfor %}
+</div>

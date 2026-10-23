@@ -4,6 +4,7 @@ from queuebie.messages import Event
 
 from apps.warband.faction.models import Faction
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.posting import PostingTypeHint
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -195,4 +196,15 @@ class WarriorCreated(Event):
     savegame: Savegame
     faction: Faction | None
     pub_owner: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
+class WarriorPosted(Event):
+    """A man of a war band stands somewhere new, and a raid on that place meets him from now on."""
+
+    warrior: Warrior
+    faction: Faction
+    # A "PostingChoices" value
+    posting: PostingTypeHint
     month: int

@@ -24,18 +24,21 @@ from apps.warband.savegame.mixins import (
 )
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.forms.warrior import WarriorForm
 from apps.warband.warrior.messages.commands.warrior import (
     DismissWarrior,
     EnslaveCapturedWarrior,
+    PostWarrior,
     RecruitCapturedWarrior,
     TendWarriorWounds,
 )
-from apps.warband.warrior.messages.events.warrior import WarriorWoundsTended
+from apps.warband.warrior.messages.events.warrior import WarriorPosted, WarriorWoundsTended
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.equipping import get_equip_refusal
+from apps.warband.warrior.services.postings import get_posting_columns
 from apps.warband.warrior.services.tending import (
     DEAD_REFUSAL,
     UNAFFORDABLE_REFUSAL,
@@ -432,6 +435,62 @@ class TendWarriorWoundsView(RunningSavegameRequiredMixin, PlayerFactionScopedQue
 
         # Back onto his own page, because the health, the condition and the purse all moved
         return hx_redirect(url=reverse("warband:warrior-detail-view", args=[obj.id]))
+
+
+class PostWarriorView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetMixin, generic.DetailView):
+    """
+    Stands one of the player's men at the herds, the village or the burh, and redraws the postings.
+
+    Only the player's own men, so the savegame is not scope enough: a rival's warriors are in it too,
+    and the id from the URL was all it would take to pull a rival's guard off his herds before a raid.
+    The dead are narrowed away for the reason "DismissWarriorView" gives.
+
+    The place arrives in the post and is checked against the choices, so a value nobody offered is bad
+    input. A move that changes nothing - a second click, a man the page showed who has since left - is
+    still answered with the board as it stands, which is the page the player should have been looking at.
+    """
+
+    model = Warrior
+    http_method_names = ("post",)
+
+    def get_queryset(self) -> QuerySet:
+        return super().get_queryset().exclude_dead()
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        obj = self.get_object()
+        try:
+            posting = PostingChoices(int(request.POST["posting"]))
+        except KeyError, ValueError:
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+        handled = handle_message(
+            PostWarrior(
+                warrior=obj,
+                faction=current_savegame.player_faction,
+                posting=posting,
+                month=current_savegame.current_month,
+            )
+        )
+
+        response = render(
+            request,
+            "warrior/components/posting_board.html",
+            {
+                "posting_columns": get_posting_columns(
+                    faction_id=current_savegame.player_faction_id, month=current_savegame.current_month
+                )
+            },
+        )
+        # The line claims what this request did, so it waits for the handler's event
+        response["HX-Trigger"] = json.dumps(
+            {
+                "notification": f"{obj} now stands at the {posting.label.lower()}."
+                if any(isinstance(message, WarriorPosted) for message in handled)
+                else STALE_PAGE_NOTICE
+            }
+        )
+        return response
 
 
 def _stale_captive_response() -> HttpResponse:

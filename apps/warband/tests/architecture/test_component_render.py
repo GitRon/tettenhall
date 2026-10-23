@@ -38,6 +38,7 @@ from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
 from apps.warband.quest.quests.fetch_a_good_warrior import FetchAGoodWarrior
 from apps.warband.quest.quests.seek_a_good_blade import SeekAGoodBlade
 from apps.warband.quest.tests.factories.quest import QuestFactory
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -48,6 +49,7 @@ from apps.warband.tests.architecture.components import components
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.models.hair_colour import HairColour
 from apps.warband.warrior.models.portrait_piece import PortraitPiece
+from apps.warband.warrior.services.postings import PlaceStanding
 
 
 class RaisingInvalidString(str):
@@ -156,6 +158,12 @@ RENDER_ROWS = {
         (
             '<c-faction.successor-line :leader="leader" :successor="successor" />',
             {"leader": WarriorFactory.build(), "successor": WarriorFactory.build()},
+        ),
+    ],
+    "faction.posting-summary": [
+        (
+            '<c-faction.posting-summary :places="places" />',
+            {"places": [PlaceStanding(posting=PostingChoices.BURH, label="Burh", standing_count=2)]},
         ),
     ],
     "finance.wage-bill-warning": [

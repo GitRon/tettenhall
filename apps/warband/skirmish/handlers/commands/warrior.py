@@ -2,6 +2,7 @@ from queuebie import message_registry
 from queuebie.messages import Event
 
 from apps.warband.faction.models.faction import Faction
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.messages.commands import warrior
 from apps.warband.skirmish.messages.commands.warrior import ReduceHealth
 from apps.warband.skirmish.messages.events.warrior import (
@@ -123,6 +124,8 @@ def handle_warrior_is_captured(*, context: warrior.CaptureWarrior) -> list[Event
 
     Faction.objects.add_captive(faction=context.capturing_faction, warrior=context.warrior)
     context.warrior.faction = None
+    # Off his roster, so off the place it posted him to - see "WarriorManager.set_faction"
+    context.warrior.posting = PostingChoices.BURH
     context.warrior.save()
 
     return WarriorWasCaptured(

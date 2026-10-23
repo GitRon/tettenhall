@@ -45,6 +45,7 @@ from apps.warband.faction.messages.events.warrior import (
     FyrdDraftApproved,
     PubMercenaryHireApproved,
     WarriorMonthPrepared,
+    WarriorPostingApproved,
     WarriorRecruited,
 )
 from apps.warband.faction.models.culture import Culture
@@ -56,6 +57,7 @@ from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
+from apps.warband.skirmish.choices.posting import PostingChoices
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
@@ -1010,6 +1012,27 @@ def test_handle_plan_faction_month_raises_no_hall_for_a_rival_of_its_leader_alon
     result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
 
     assert result == [FactionMonthPlanned(faction=rival_faction, month=3)]
+
+
+@pytest.mark.django_db
+def test_handle_plan_faction_month_posts_a_rivals_men_where_its_policy_wants_them():
+    """
+    The leader holds the burh and the first man beside him does too, so only the second man is moved,
+    to the herds. The dead are on nobody's posting. No purse, so nothing else is decided.
+    """
+    rival_faction = FactionFactory(fyrd_reserve=0)
+    rival_faction.leader = WarriorFactory(faction=rival_faction, monthly_salary=0)
+    rival_faction.save()
+    WarriorFactory(faction=rival_faction, monthly_salary=0)
+    WarriorFactory(faction=rival_faction, monthly_salary=0, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    second_man = WarriorFactory(faction=rival_faction, monthly_salary=0)
+
+    result = handle_plan_faction_month(context=PlanFactionMonth(faction=rival_faction, month=3))
+
+    assert result == [
+        WarriorPostingApproved(faction=rival_faction, warrior=second_man, posting=PostingChoices.HERDS, month=3),
+        FactionMonthPlanned(faction=rival_faction, month=3),
+    ]
 
 
 def _hold_captives(*, faction: Faction, count: int) -> list[Warrior]:

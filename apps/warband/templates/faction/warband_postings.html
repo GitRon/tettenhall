@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Postings</h1>
+
+    {# The rule the page is for, once and above the columns rather than repeated in each: a column says #}
+    {# who stands there, this says what that buys. #}
+    <p class="leading-snug text-ink-muted">
+        A raid on the herds or the village meets only the men posted there, beside the people of the place.
+        When the burh is stormed, every man at home falls back behind its wall, wherever he is posted.
+        A man nobody has posted stands at the burh.
+    </p>
+
+    {% include 'warrior/components/posting_board.html' %}
+{% endblock content %}

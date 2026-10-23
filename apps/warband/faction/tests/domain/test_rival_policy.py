@@ -3,12 +3,15 @@ from apps.warband.faction.domain.rival_policy import (
     DraftFromFyrd,
     HallUpgradeOffer,
     HireFromPub,
+    PostedMan,
+    PostMan,
     PubOffer,
     RivalMonthSnapshot,
     RivalPolicy,
     ShopOffer,
     UpgradeHall,
 )
+from apps.warband.skirmish.choices.posting import PostingChoices
 
 
 def _snapshot(
@@ -204,3 +207,29 @@ def test_decide_raises_no_hall_the_purse_cannot_keep_the_wages_after():
     snapshot = _snapshot(purse=650, wage_bill=100, warriors_on_payroll=1, hall_upgrade=_small_hall())
 
     assert RivalPolicy.decide(snapshot=snapshot) == []
+
+
+def test_decide_postings_keeps_the_leader_at_the_burh_and_deals_the_rest_out_in_id_order():
+    """Handed out of order, and the leader carries the lowest id: he is out of the rotation, not its first."""
+    roster = [
+        PostedMan(warrior_id=4, posting=PostingChoices.BURH, is_leader=False),
+        PostedMan(warrior_id=1, posting=PostingChoices.HERDS, is_leader=True),
+        PostedMan(warrior_id=3, posting=PostingChoices.BURH, is_leader=False),
+        PostedMan(warrior_id=2, posting=PostingChoices.BURH, is_leader=False),
+        PostedMan(warrior_id=5, posting=PostingChoices.BURH, is_leader=False),
+    ]
+
+    assert RivalPolicy.decide_postings(roster=roster) == [
+        PostMan(warrior_id=1, posting=PostingChoices.BURH),
+        PostMan(warrior_id=3, posting=PostingChoices.HERDS),
+        PostMan(warrior_id=4, posting=PostingChoices.VILLAGE),
+    ]
+
+
+def test_decide_postings_moves_nobody_already_where_the_rule_puts_him():
+    roster = [
+        PostedMan(warrior_id=1, posting=PostingChoices.BURH, is_leader=False),
+        PostedMan(warrior_id=2, posting=PostingChoices.HERDS, is_leader=False),
+    ]
+
+    assert RivalPolicy.decide_postings(roster=roster) == []
