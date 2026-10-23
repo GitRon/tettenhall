@@ -34,6 +34,8 @@ class GameReport:
     geld: bool = False
     # Whether the player had his weaponsmith rework his men's gear, see [PlayerTurn]
     reforging: bool = False
+    # Whether the player put silver by for his next building before the pub and the shop, see [PlayerTurn]
+    saving: bool = False
     outcome: str = ""
     months_played: int = 0
     # Why the harness stopped a game that was neither decided nor at the month cap
@@ -58,6 +60,9 @@ class GameReport:
     gelds_called: int = 0
     # Pieces the weaponsmith reworked, which only a reforging game asks for
     items_reforged: int = 0
+    # Months in which the silver put by for the next building held the pub or the shop back, which only a
+    # saving game has
+    months_saving: int = 0
     player_successions: int = 0
     rival_successions: int = 0
     # Seats the fyrd filled because nobody was left on the roster - counted apart from the successions

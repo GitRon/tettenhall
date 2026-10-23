@@ -34,6 +34,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="The player has his weaponsmith rework the gear his strongest man stands in, once a month",
     )
+    parser.add_argument(
+        "--saving",
+        action="store_true",
+        help="The player puts silver by for his next building before he hires from the pub or buys from the shop",
+    )
     parser.add_argument("--output", type=Path, required=True, help="Where the JSON report is written")
     return parser
 
@@ -71,6 +76,7 @@ def main(*, argv: list[str]) -> int:
             tending=arguments.tending,
             geld=arguments.geld,
             reforging=arguments.reforging,
+            saving=arguments.saving,
         )
         reports.append(report.as_dict())
         sys.stdout.write(summarise(report=report) + "\n")

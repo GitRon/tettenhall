@@ -80,6 +80,19 @@ handed out, the weakest piece on the strongest man that the forge can still impr
 `--tending` as well, the sanctuary keeps the first place. A question about the rework compares a reforging
 batch against the same seeds without it, which also moves the build order.
 
+**`--saving`** plays a player who puts silver by for his next building. Before the pub and the shop, he keeps
+back the 150 and the price of the next rung of the first building in his build order that is not at its
+top level, and that building is the only one he raises - a cheaper one further down the order would spend
+what he put by. Once it is built the reserve moves to its next rung, and once every building in the order
+is at its top there is nothing to save for. He saves up the whole ladder rather than for the first rung
+of each building only: on `even`, seeds 1-20, 24 months, the ladder raises the hall further for the same
+band size and the same wins, and with `--reforging` the two play out identically. Tending, reworks and the march are still weighed against the
+150 alone, so the spends a batch exists to measure are not starved by the saving. It combines with the
+other flags: `--saving --reforging` saves for the weaponsmith first, `--saving --tending` for the
+sanctuary. It exists because the opt-in spends measure nothing without it: the pub and the shop leave a
+default player too little to raise the building they need. A saving batch moves the build order, the size
+of the band and therefore every fight, so it is only ever compared with another saving batch.
+
 **Policies** differ only in when the band marches, and on what. Every march storms the burh unless the
 policy says otherwise:
 
@@ -108,6 +121,8 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
 - how many items the player bought, and how many equips the hand-out made;
 - how many men the sanctuary tended, how many gelds the village paid and how many pieces the weaponsmith
   reworked, in the batches that do any of them;
+- in a saving batch, `months_saving`: the months in which the reserve for the next building held the pub
+  or the shop back;
 - successions on either side, and apart from them the leaders the fyrd raised when nobody was left on the
   roster;
 - the months rivals were knocked out, and for each of them how many months it lasted after its first

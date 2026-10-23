@@ -1,4 +1,5 @@
 import random
+from dataclasses import replace
 
 from django.db import transaction
 from queuebie.runner import handle_message
@@ -91,6 +92,12 @@ class PlayerTurn:
     first in the build order, and once the gear is handed out, the weakest piece on the strongest man the
     forge can still improve is reworked, while the silver kept back stays. Off by default for the reason
     tending is.
+
+    "saving" plays a player who puts silver by for his next building: the pub and the shop only spend what
+    lies above the silver kept back and the price of the next rung of the first building in the build order
+    still below its top level, and that building is the only one he raises. Tending, reworks and the march
+    are still weighed against the silver kept back alone, so the spends a batch measures are not starved by
+    the saving. Off by default for the reason tending is.
     """
 
     savegame: Savegame
@@ -108,6 +115,7 @@ class PlayerTurn:
         tending: bool = False,
         geld: bool = False,
         reforging: bool = False,
+        saving: bool = False,
     ) -> None:
         self.savegame = savegame
         self.faction = savegame.player_faction
@@ -119,12 +127,21 @@ class PlayerTurn:
         self.tending = tending
         self.geld = geld
         self.reforging = reforging
+        self.saving = saving
+        # Whether the reserve held the pub or the shop back this month, which "months_saving" counts
+        self.held_back_by_saving = False
         # Who was on the roster as the band set out - the steps before the march add men to it, so a
         # successor raised by the fight is told apart against this rather than against last month's roster
         self.roster_ids_at_march: frozenset[int] = frozenset()
 
     def play(self) -> str | None:
         """Plays the month and says why the game cannot go on, if it cannot."""
+        stop_reason = self._play_steps()
+        if self.held_back_by_saving:
+            self.report.months_saving += 1
+        return stop_reason
+
+    def _play_steps(self) -> str | None:
         self.take_in_captives()
         if self.geld:
             self.call_a_geld()
@@ -152,6 +169,29 @@ class PlayerTurn:
 
     def _balance(self) -> int:
         return Transaction.objects.current_balance(faction_id=self.faction.id)
+
+    def _saving_target(self) -> str | None:
+        """The first building in the build order below its top level, which a saving player puts silver by for."""
+        if not self.saving:
+            return None
+
+        town = self.faction.town
+        for building_type in self._build_order():
+            if getattr(town, building_type) < BUILDINGS[building_type].get_max_level():
+                return building_type
+        return None
+
+    def _silver_reserved(self) -> int:
+        """
+        What the pub and the shop leave standing: the silver kept back, and for a saving player the price of
+        the next rung he saves for on top.
+        """
+        building_type = self._saving_target()
+        if building_type is None:
+            return SILVER_KEPT_BACK
+
+        next_level = getattr(self.faction.town, building_type) + 1
+        return SILVER_KEPT_BACK + BUILDINGS[building_type].get_building_by_type(building_type=next_level).BUILDING_COSTS
 
     def take_in_captives(self) -> None:
         for warrior in self.faction.captured_warriors.all():
@@ -188,13 +228,17 @@ class PlayerTurn:
             self.report.drafted += 1
 
     def hire_from_the_pub(self) -> None:
+        reserved = self._silver_reserved()
         # Cheapest first, and the first one he cannot afford ends the round: everybody after him costs more
         for mercenary in sorted(Warrior.objects.in_pub_of(faction_id=self.faction.id), key=lambda m: m.hiring_price):
             # Read once and before the message, as the view does: hiring him clears what his price is made of
             hiring_price = mercenary.hiring_price
-            if self._balance() - hiring_price < SILVER_KEPT_BACK or get_pub_hire_refusal(
-                faction=self.faction, hiring_price=hiring_price
-            ):
+            if get_pub_hire_refusal(faction=self.faction, hiring_price=hiring_price):
+                return
+            left_over = self._balance() - hiring_price
+            if left_over < reserved:
+                # The saving held him back only if the silver kept back alone would have let him hire
+                self.held_back_by_saving |= left_over >= SILVER_KEPT_BACK
                 return
             handle_message(RecruitPubMercenary(warrior=mercenary, faction=self.faction, month=self.month))
             self.report.hired += 1
@@ -211,11 +255,14 @@ class PlayerTurn:
         The view's "get_purchase_refusal" is not asked: it refuses a price above the purse, and the
         policy keeps a running purse that never lets one through. "handle_buy_item" re-reads the purse
         all the same.
+
+        A saving player's purse is what lies above his reserve instead. The policy is asked a second time
+        against the silver kept back alone, and a different answer is a month the saving held the shop back.
         """
         item_by_id = {item.id: item for item in self.faction.available_items.select_related("type")}
         snapshot = RivalMonthSnapshot(
             fyrd_reserve=0,
-            purse=self._balance() - SILVER_KEPT_BACK,
+            purse=self._balance() - self._silver_reserved(),
             wage_bill=0,
             warriors_on_payroll=0,
             draft_wage=0,
@@ -224,8 +271,13 @@ class PlayerTurn:
             held_gear_values=get_held_gear_values(faction=self.faction),
         )
 
+        decisions = RivalPolicy.decide(snapshot=snapshot)
+        if self.saving:
+            unreserved = replace(snapshot, purse=self._balance() - SILVER_KEPT_BACK)
+            self.held_back_by_saving |= RivalPolicy.decide(snapshot=unreserved) != decisions
+
         # Every decision is a purchase, since a man was never a candidate
-        for decision in RivalPolicy.decide(snapshot=snapshot):
+        for decision in decisions:
             item = item_by_id[decision.item_id]
             handle_message(BuyItem(price=item.price, item=item, buying_faction=self.faction, month=self.month))
             self.report.items_bought += 1
@@ -288,9 +340,15 @@ class PlayerTurn:
         return BUILD_ORDER
 
     def build(self) -> None:
+        """
+        Raises the first building in the build order that may be upgraded and still leaves the silver kept
+        back. A saving player raises only the one he saves for, so a cheaper building further down cannot
+        spend what he put by.
+        """
         town = self.faction.town
         town.refresh_from_db()
-        for building_type in self._build_order():
+        target = self._saving_target()
+        for building_type in self._build_order() if target is None else (target,):
             if get_building_upgrade_refusal(town=town, building_type=building_type, current_savegame=self.savegame):
                 continue
             new_level = getattr(town, building_type) + 1
