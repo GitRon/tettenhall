@@ -761,6 +761,28 @@ def test_skirmish_finish_round_view_fights_a_round_without_orders(logged_in_clie
 
 
 @pytest.mark.django_db
+def test_skirmish_finish_round_view_stops_the_fight_at_a_turning_point(logged_in_client, current_savegame):
+    """
+    Flow test: the round the page sends ends at a stop. The leader enters it at 5 of 20 and the
+    fallback weapon deals at most 3, so he is still on his feet and below half whatever the dice do.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    leader = WarriorFactory(faction=skirmish.attacking_faction, current_health=5)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+    skirmish.attacking_warriors.add(leader)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={"directive": FightDirectiveChoices.FIGHT_ON},
+    )
+
+    skirmish.refresh_from_db()
+    assert skirmish.turning_point == TurningPointChoices.LEADER_THREATENED
+
+
+@pytest.mark.django_db
 def test_skirmish_finish_round_view_answers_a_turning_point(logged_in_client, current_savegame):
     skirmish = SkirmishFactory(
         attacking_faction=current_savegame.player_faction, turning_point=TurningPointChoices.MAN_DOWN

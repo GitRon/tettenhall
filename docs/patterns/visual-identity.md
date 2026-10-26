@@ -128,7 +128,8 @@ set on `body`.
 ### One filled element per screen
 
 At most one control on a screen is filled — `bg-blood` with `text-ground` — and it is the thing the
-screen exists for: **Fight!** on the fight screen, the control in the month band — *Finish month*, or
+screen exists for: **Let them fight** on the fight screen - the answers at a turning point are row
+actions, since none of them is the one the screen is for - the control in the month band — *Finish month*, or
 the fight holding it up while one is unresolved — on the month page. Everything
 else is outlined.
 
