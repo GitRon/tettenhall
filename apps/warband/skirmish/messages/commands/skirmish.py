@@ -104,6 +104,11 @@ class WarriorAssaultsFortification(Command):
 @dataclass(kw_only=True)
 class FinishRound(Command):
     skirmish: Skirmish
+    # The men who went into the round to fight it, both sides. A man ordered off the field is not among
+    # them: leaving was his order, not something the round did to him
+    fielded_warriors: list[Warrior]
+    # Whose word the fight waits for at a turning point, or None for a fight nobody is asked about
+    player_faction: Faction | None
     month: int
 
 

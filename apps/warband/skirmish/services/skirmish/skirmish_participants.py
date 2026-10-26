@@ -1,7 +1,9 @@
+from apps.warband.skirmish.choices.fight_directive import FightDirectiveChoices
 from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError, UnofferedSkirmishActionError
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
+from apps.warband.skirmish.services.skirmish.fight_directive import get_directed_action
 
 
 class SkirmishParticipantBuilderService:
@@ -15,18 +17,28 @@ class SkirmishParticipantBuilderService:
     The roster is the authority for *who* fights, not just the AI for *what* they do. Overriding only
     the action would leave a player able to omit an enemy warrior from the post and face fewer
     attackers.
+
+    A player who gives a directive instead of orders leaves his own side to the same judgement as the
+    enemy's, apart from the men the directive names - see "get_directed_action".
     """
 
     skirmish: Skirmish
     participants: list[tuple[int, int]]
     player_faction_id: int | None
+    directive: FightDirectiveChoices | None
 
     def __init__(
-        self, *, skirmish: Skirmish, participants: list[tuple[int, int]], player_faction_id: int | None
+        self,
+        *,
+        skirmish: Skirmish,
+        participants: list[tuple[int, int]],
+        player_faction_id: int | None,
+        directive: FightDirectiveChoices | None = None,
     ) -> None:
         self.skirmish = skirmish
         self.participants = participants
         self.player_faction_id = player_faction_id
+        self.directive = directive
 
     def _decided_by_the_ai(self, *, roster: list[Warrior]) -> list[SkirmishParticipant]:
         # Only the healthy fight, which is also the only side of the card that ever rendered a control
@@ -37,6 +49,25 @@ class SkirmishParticipantBuilderService:
             for warrior in roster
             if warrior.is_healthy
         ]
+
+    def _directed_by_the_player(self, *, roster: list[Warrior]) -> list[SkirmishParticipant]:
+        # Every healthy man, as on the AI's side: a directive is not an order per man, so nobody can be
+        # left out of it
+        return [
+            SkirmishParticipant(
+                warrior=warrior,
+                skirmish_action=get_directed_action(directive=self.directive, warrior=warrior, skirmish=self.skirmish)
+                or warrior.decide_skirmish_action(skirmish=self.skirmish)[0],
+            )
+            for warrior in roster
+            if warrior.is_healthy
+        ]
+
+    def _commanded_by_the_player(self, *, roster: list[Warrior]) -> list[SkirmishParticipant]:
+        if self.directive is not None:
+            return self._directed_by_the_player(roster=roster)
+
+        return self._posted_by_the_player(roster=roster)
 
     def _posted_by_the_player(self, *, roster: list[Warrior]) -> list[SkirmishParticipant]:
         by_id = {warrior.id: warrior for warrior in roster}
@@ -84,12 +115,12 @@ class SkirmishParticipantBuilderService:
         defender_is_player = self.skirmish.defending_faction_id == self.player_faction_id
 
         attacking_participants = (
-            self._posted_by_the_player(roster=attacking_roster)
+            self._commanded_by_the_player(roster=attacking_roster)
             if attacker_is_player
             else self._decided_by_the_ai(roster=attacking_roster)
         )
         defending_participants = (
-            self._posted_by_the_player(roster=defending_roster)
+            self._commanded_by_the_player(roster=defending_roster)
             if defender_is_player
             else self._decided_by_the_ai(roster=defending_roster)
         )

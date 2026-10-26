@@ -45,6 +45,33 @@ class SkirmishManager(manager.Manager):
         skirmish.save(update_fields=("fortification_strength",))
         return lost
 
+    def set_turning_point(
+        self,
+        *,
+        skirmish,
+        turning_point: int | None,
+        warriors: list,
+        attacking_leader_in_trouble: bool,
+        defending_leader_in_trouble: bool,
+    ) -> None:
+        """
+        Writes what the round just fought left waiting for the player, replacing what the round before
+        it left.
+
+        The leader flags only ever go up: a leader seen in trouble once has had his stop.
+        """
+        skirmish.turning_point = turning_point
+        skirmish.attacking_leader_was_in_trouble = (
+            skirmish.attacking_leader_was_in_trouble or attacking_leader_in_trouble
+        )
+        skirmish.defending_leader_was_in_trouble = (
+            skirmish.defending_leader_was_in_trouble or defending_leader_in_trouble
+        )
+        skirmish.save(
+            update_fields=("turning_point", "attacking_leader_was_in_trouble", "defending_leader_was_in_trouble")
+        )
+        skirmish.turning_point_warriors.set(warriors)
+
     def set_victor(self, *, skirmish, victorious_faction) -> bool:
         """
         Writes the victor onto a skirmish that has none, and answers whether it was this call.

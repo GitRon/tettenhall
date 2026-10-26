@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 import pytest
@@ -5,7 +6,9 @@ from django.urls import reverse
 
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.item.tests.factories.item import ItemFactory
+from apps.warband.skirmish.choices.fight_directive import FightDirectiveChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.warband.skirmish.choices.turning_point import TurningPointChoices
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.skirmish_casualty import SkirmishCasualty
@@ -738,6 +741,132 @@ def test_skirmish_finish_round_view_ignores_the_action_posted_for_the_enemy(logg
 
 
 @pytest.mark.django_db
+def test_skirmish_finish_round_view_fights_a_round_without_orders(logged_in_client, current_savegame):
+    """
+    The round the page sends by itself: no man is ordered, so the player's side decides as the enemy's does.
+    Quietly, too - a toast for every round the page sends would bury the log.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={"directive": FightDirectiveChoices.FIGHT_ON},
+    )
+
+    assert "notification" not in json.loads(response.headers["HX-Trigger"])
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 2
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_stops_the_fight_at_a_turning_point(logged_in_client, current_savegame):
+    """
+    Flow test: the round the page sends ends at a stop. The leader enters it at 5 of 20 and the
+    fallback weapon deals at most 3, so he is still on his feet and below half whatever the dice do.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    leader = WarriorFactory(faction=skirmish.attacking_faction, current_health=5)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+    skirmish.attacking_warriors.add(leader)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={"directive": FightDirectiveChoices.FIGHT_ON},
+    )
+
+    skirmish.refresh_from_db()
+    assert skirmish.turning_point == TurningPointChoices.LEADER_THREATENED
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_answers_a_turning_point(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction, turning_point=TurningPointChoices.MAN_DOWN
+    )
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={"directive": FightDirectiveChoices.SOUND_THE_RETREAT},
+    )
+
+    assert response.status_code == 200
+    player_warrior.refresh_from_db()
+    assert player_warrior.is_fleeing is True
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_an_answer_to_a_turning_point_that_is_not_waiting(
+    logged_in_client, current_savegame
+):
+    """
+    Pressing the attack is the answer to an exposed enemy leader, and nothing has exposed him. A second
+    click on an answer already given finds the same: the first one cleared the stop.
+    """
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={"directive": FightDirectiveChoices.PRESS_THE_ATTACK},
+    )
+
+    assert response.status_code == 409
+    skirmish.refresh_from_db()
+    assert skirmish.current_round == 1
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_orders_and_a_directive_together(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    player_warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}),
+        data={
+            "skirmish_participant[0][warrior_id]": player_warrior.pk,
+            "skirmish_participant[0][skirmish_action]": SkirmishActionChoices.SIMPLE_ATTACK,
+            "directive": FightDirectiveChoices.FIGHT_ON,
+        },
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_round_with_nothing_said(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_skirmish_finish_round_view_refuses_a_directive_that_is_not_one(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    response = logged_in_client.post(
+        reverse("warband:skirmish-finish-round-view", kwargs={"pk": skirmish.pk}), data={"directive": 99}
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
 def test_skirmish_round_update_htmx_view_shows_the_skirmish(logged_in_client, current_savegame):
     skirmish = SkirmishFactory(attacking_faction=current_savegame.player_faction)
 
@@ -777,6 +906,59 @@ def test_skirmish_fight_button_update_htmx_view_cannot_show_a_skirmish_of_anothe
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_button_update_htmx_view_shows_the_men_a_round_put_down(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction, turning_point=TurningPointChoices.MAN_DOWN
+    )
+    first_fallen, second_fallen = WarriorFactory.create_batch(
+        2, faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_UNCONSCIOUS
+    )
+    skirmish.attacking_warriors.add(first_fallen, second_fallen)
+    skirmish.turning_point_warriors.add(first_fallen, second_fallen)
+
+    response = logged_in_client.get(reverse("warband:skirmish-fight-button-update-htmx", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["pending_turning_point"].fallen == [first_fallen, second_fallen]
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_button_update_htmx_view_shows_the_players_leader_in_trouble(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction, turning_point=TurningPointChoices.LEADER_THREATENED
+    )
+    leader = WarriorFactory(faction=skirmish.attacking_faction, current_health=5)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+    skirmish.attacking_warriors.add(leader)
+
+    response = logged_in_client.get(reverse("warband:skirmish-fight-button-update-htmx", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["pending_turning_point"].directives == [
+        FightDirectiveChoices.LEAVE_THE_FIELD,
+        FightDirectiveChoices.RALLY,
+    ]
+
+
+@pytest.mark.django_db
+def test_skirmish_fight_view_shows_the_enemy_leader_exposed(logged_in_client, current_savegame):
+    skirmish = SkirmishFactory(
+        attacking_faction=current_savegame.player_faction, turning_point=TurningPointChoices.ENEMY_LEADER_EXPOSED
+    )
+    enemy_leader = WarriorFactory(faction=skirmish.defending_faction, current_health=5)
+    skirmish.defending_faction.leader = enemy_leader
+    skirmish.defending_faction.save()
+    skirmish.defending_warriors.add(enemy_leader)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+
+    response = logged_in_client.get(reverse("warband:skirmish-fight-view", kwargs={"pk": skirmish.pk}))
+
+    assert response.status_code == 200
+    assert response.context["pending_turning_point"].leader == enemy_leader
 
 
 @pytest.mark.django_db

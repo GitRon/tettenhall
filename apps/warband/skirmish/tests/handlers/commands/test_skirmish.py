@@ -7,6 +7,7 @@ from apps.warband.finance.tests.factories.transaction import TransactionFactory
 from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.warband.skirmish.choices.turning_point import TurningPointChoices
 from apps.warband.skirmish.handlers.commands.skirmish import (
     handle_assign_fighter_pairs,
     handle_attack_faction,
@@ -1128,7 +1129,9 @@ def test_handle_finish_round_leaves_an_undecided_skirmish_without_a_victor():
     skirmish.attacking_warriors.add(attacking_warrior)
     skirmish.defending_warriors.add(enemy_warrior)
 
-    result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
+    result = handle_finish_round(
+        context=FinishRound(skirmish=skirmish, fielded_warriors=[], player_faction=None, month=3)
+    )
 
     assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=None, month=3)
     skirmish.refresh_from_db()
@@ -1145,7 +1148,9 @@ def test_handle_finish_round_declares_the_attacking_faction_the_victor():
     skirmish.attacking_warriors.add(attacking_warrior)
     skirmish.defending_warriors.add(dead_enemy_warrior)
 
-    result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
+    result = handle_finish_round(
+        context=FinishRound(skirmish=skirmish, fielded_warriors=[], player_faction=None, month=3)
+    )
 
     assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.attacking_faction, month=3)
 
@@ -1160,7 +1165,9 @@ def test_handle_finish_round_declares_the_defending_faction_the_victor():
     skirmish.attacking_warriors.add(unconscious_attacking_warrior)
     skirmish.defending_warriors.add(enemy_warrior)
 
-    result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
+    result = handle_finish_round(
+        context=FinishRound(skirmish=skirmish, fielded_warriors=[], player_faction=None, month=3)
+    )
 
     assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.defending_faction, month=3)
 
@@ -1180,9 +1187,70 @@ def test_handle_finish_round_declares_the_attacking_faction_the_victor_on_a_mutu
     skirmish.attacking_warriors.add(dead_attacking_warrior)
     skirmish.defending_warriors.add(dead_enemy_warrior)
 
-    result = handle_finish_round(context=FinishRound(skirmish=skirmish, month=3))
+    result = handle_finish_round(
+        context=FinishRound(skirmish=skirmish, fielded_warriors=[], player_faction=None, month=3)
+    )
 
     assert result == RoundFinished(skirmish=skirmish, round_number=1, victor=skirmish.attacking_faction, month=3)
+
+
+@pytest.mark.django_db
+def test_handle_finish_round_stops_the_fight_for_the_players_man_down():
+    skirmish = SkirmishFactory()
+    standing = WarriorFactory(faction=skirmish.attacking_faction)
+    fallen = WarriorFactory(faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    enemy = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(standing, fallen)
+    skirmish.defending_warriors.add(enemy)
+
+    handle_finish_round(
+        context=FinishRound(
+            skirmish=skirmish,
+            fielded_warriors=[standing, fallen, enemy],
+            player_faction=skirmish.attacking_faction,
+            month=3,
+        )
+    )
+
+    skirmish.refresh_from_db()
+    assert skirmish.turning_point == TurningPointChoices.MAN_DOWN
+    assert list(skirmish.turning_point_warriors.all()) == [fallen]
+
+
+@pytest.mark.django_db
+def test_handle_finish_round_clears_the_stop_once_the_next_round_is_quiet():
+    skirmish = SkirmishFactory(turning_point=TurningPointChoices.MAN_DOWN)
+    warrior = WarriorFactory(faction=skirmish.attacking_faction)
+    enemy = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(warrior)
+    skirmish.defending_warriors.add(enemy)
+
+    handle_finish_round(
+        context=FinishRound(
+            skirmish=skirmish, fielded_warriors=[warrior, enemy], player_faction=skirmish.attacking_faction, month=3
+        )
+    )
+
+    skirmish.refresh_from_db()
+    assert skirmish.turning_point is None
+
+
+@pytest.mark.django_db
+def test_handle_finish_round_does_not_stop_a_fight_that_is_won():
+    skirmish = SkirmishFactory()
+    fallen = WarriorFactory(faction=skirmish.attacking_faction, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    enemy = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(fallen)
+    skirmish.defending_warriors.add(enemy)
+
+    handle_finish_round(
+        context=FinishRound(
+            skirmish=skirmish, fielded_warriors=[fallen, enemy], player_faction=skirmish.attacking_faction, month=3
+        )
+    )
+
+    skirmish.refresh_from_db()
+    assert skirmish.turning_point is None
 
 
 @pytest.mark.django_db

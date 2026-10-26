@@ -1,7 +1,43 @@
 import pytest
 
+from apps.warband.skirmish.choices.turning_point import TurningPointChoices
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
+from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+
+
+@pytest.mark.django_db
+def test_set_turning_point_writes_the_stop_and_the_men_it_names():
+    skirmish = SkirmishFactory()
+    fallen = WarriorFactory(faction=skirmish.attacking_faction)
+
+    Skirmish.objects.set_turning_point(
+        skirmish=skirmish,
+        turning_point=TurningPointChoices.MAN_DOWN,
+        warriors=[fallen],
+        attacking_leader_in_trouble=False,
+        defending_leader_in_trouble=False,
+    )
+
+    skirmish.refresh_from_db()
+    assert skirmish.turning_point == TurningPointChoices.MAN_DOWN
+    assert list(skirmish.turning_point_warriors.all()) == [fallen]
+
+
+@pytest.mark.django_db
+def test_set_turning_point_never_forgets_a_leader_seen_in_trouble():
+    skirmish = SkirmishFactory(attacking_leader_was_in_trouble=True)
+
+    Skirmish.objects.set_turning_point(
+        skirmish=skirmish,
+        turning_point=None,
+        warriors=[],
+        attacking_leader_in_trouble=False,
+        defending_leader_in_trouble=True,
+    )
+
+    skirmish.refresh_from_db()
+    assert (skirmish.attacking_leader_was_in_trouble, skirmish.defending_leader_was_in_trouble) == (True, True)
 
 
 @pytest.mark.django_db
