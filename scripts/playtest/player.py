@@ -18,7 +18,9 @@ from apps.warband.quest.messages.commands.quest import AcceptQuest
 from apps.warband.quest.models.quest import Quest
 from apps.warband.quest.quests import QUESTS_BY_NAME
 from apps.warband.savegame.models.savegame import Savegame
+from apps.warband.skirmish.choices.fight_directive import FightDirectiveChoices
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
+from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.messages.commands.skirmish import AttackFaction, FinishRound, StartDuel
 from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
@@ -481,7 +483,10 @@ class PlayerTurn:
         return self.fight(skirmish=skirmish)
 
     def fight(self, *, skirmish: Skirmish) -> str | None:
-        """Plays rounds until the fight has a victor, as the Fight! button would."""
+        """
+        Plays rounds until the fight has a victor, as the fight page does for a player who lets it run and
+        fights on at every stop.
+        """
         for _round in range(self.max_rounds):
             skirmish = Skirmish.objects.prefetch_related("attacking_warriors", "defending_warriors").get(pk=skirmish.pk)
             if skirmish.victorious_faction_id:
@@ -491,18 +496,11 @@ class PlayerTurn:
                     self.report.fights_lost += 1
                 return None
 
-            own_side = (
-                skirmish.attacking_warriors.all()
-                if skirmish.attacking_faction_id == self.faction.id
-                else skirmish.defending_warriors.all()
-            )
-            posted = [
-                (warrior.id, warrior.decide_skirmish_action(skirmish=skirmish)[0])
-                for warrior in own_side
-                if warrior.is_healthy
-            ]
             attacking, defending = SkirmishParticipantBuilderService(
-                skirmish=skirmish, participants=posted, player_faction_id=self.faction.id
+                skirmish=skirmish,
+                participants=[],
+                player_faction_id=self.faction.id,
+                directive=FightDirectiveChoices.FIGHT_ON,
             ).process()
             # The view answers this with a 400: a side with nobody on it is not a fight
             if not attacking or not defending:
@@ -513,7 +511,18 @@ class PlayerTurn:
                 handle_message(
                     StartDuel(skirmish=skirmish, skirmish_participants_1=attacking, skirmish_participants_2=defending)
                 )
-                handle_message(FinishRound(skirmish=skirmish, month=self.month))
+                handle_message(
+                    FinishRound(
+                        skirmish=skirmish,
+                        fielded_warriors=[
+                            participant.warrior
+                            for participant in (*attacking, *defending)
+                            if participant.skirmish_action != SkirmishActionChoices.FLEE
+                        ],
+                        player_faction=self.faction,
+                        month=self.month,
+                    )
+                )
 
         return STOP_FIGHT_STUCK
 
