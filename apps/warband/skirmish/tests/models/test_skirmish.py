@@ -77,27 +77,27 @@ def test_can_be_rallied_by_the_leader_of_the_attacking_side():
 
 
 @pytest.mark.django_db
-def test_can_be_rallied_by_the_leader_of_the_defending_side():
+def test_is_side_led_by_the_leader_of_the_defending_side():
     skirmish = SkirmishFactory()
     leader = WarriorFactory(faction=skirmish.defending_faction)
     skirmish.defending_faction.leader = leader
     skirmish.defending_faction.save()
     skirmish.defending_warriors.add(leader)
 
-    assert skirmish.can_be_rallied_by(warrior=leader) is True
+    assert skirmish.is_side_led_by(warrior=leader) is True
 
 
 @pytest.mark.django_db
-def test_can_be_rallied_by_is_refused_to_a_man_who_leads_nobody_here():
+def test_is_side_led_by_is_false_for_a_man_who_leads_nobody_here():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(faction=skirmish.attacking_faction)
     skirmish.attacking_warriors.add(warrior)
 
-    assert skirmish.can_be_rallied_by(warrior=warrior) is False
+    assert skirmish.is_side_led_by(warrior=warrior) is False
 
 
 @pytest.mark.django_db
-def test_can_be_rallied_by_is_refused_to_a_recruited_rival_leader():
+def test_is_side_led_by_is_false_for_a_recruited_rival_leader():
     """
     A captured leader recruited into the war band that took him still stands as "leader" of the faction
     he came from, and leads nobody on the side he fights for now.
@@ -109,17 +109,17 @@ def test_can_be_rallied_by_is_refused_to_a_recruited_rival_leader():
     rival.save()
     skirmish.attacking_warriors.add(former_leader)
 
-    assert skirmish.can_be_rallied_by(warrior=former_leader) is False
+    assert skirmish.is_side_led_by(warrior=former_leader) is False
 
 
 @pytest.mark.django_db
-def test_can_be_rallied_by_is_refused_to_a_man_not_in_the_fight():
+def test_is_side_led_by_is_false_for_a_man_not_in_the_fight():
     skirmish = SkirmishFactory()
     leader = WarriorFactory(faction=skirmish.attacking_faction)
     skirmish.attacking_faction.leader = leader
     skirmish.attacking_faction.save()
 
-    assert skirmish.can_be_rallied_by(warrior=leader) is False
+    assert skirmish.is_side_led_by(warrior=leader) is False
 
 
 @pytest.mark.django_db

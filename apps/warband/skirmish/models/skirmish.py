@@ -3,6 +3,7 @@ import typing
 from django.db import models
 
 from apps.warband.skirmish.choices.raid_kind import RaidKindChoices
+from apps.warband.skirmish.choices.turning_point import TurningPointChoices
 from apps.warband.skirmish.managers.skirmish import SkirmishManager
 from apps.warband.skirmish.models.warrior import Warrior
 
@@ -82,6 +83,25 @@ class Skirmish(models.Model):
         blank=True,
     )
 
+    # The moment the last round brought that waits for the player's word, if any. Written by every
+    # round, so answering it - by posting the next one - is also what clears it. Nothing here is
+    # about a fight the player has no side in
+    turning_point = models.PositiveSmallIntegerField(
+        "Turning point", choices=TurningPointChoices.choices, null=True, blank=True
+    )
+    # The player's men a "man down" stop is about: the ones the last round put down
+    turning_point_warriors = models.ManyToManyField(
+        Warrior,
+        verbose_name="Turning point warriors",
+        related_name="turning_point_skirmishes",
+        blank=True,
+    )
+    # Whether each side's leader has been seen in trouble yet. A leader in trouble stops the fight once,
+    # not every round he stays there; one flag a side serves both the player's leader and the enemy's,
+    # since which side is the player's is the savegame's question
+    attacking_leader_was_in_trouble = models.BooleanField("Attacking leader was in trouble", default=False)
+    defending_leader_was_in_trouble = models.BooleanField("Defending leader was in trouble", default=False)
+
     objects = SkirmishManager()
 
     class Meta:
@@ -134,9 +154,13 @@ class Skirmish(models.Model):
 
     def can_be_rallied_by(self, *, warrior: Warrior) -> bool:
         """
-        Whether this man may spend his round steadying his side.
+        Whether this man may spend his round steadying his side: only if he leads it.
+        """
+        return self.is_side_led_by(warrior=warrior)
 
-        Only the leader of the faction he fights for in this skirmish. Faction-relative, like the
+    def is_side_led_by(self, *, warrior: Warrior) -> bool:
+        """
+        Whether this man leads the faction he fights for in this skirmish. Faction-relative, like the
         walk-out and the dismissal guards, rather than a flag on the man: a rival leader taken prisoner
         and recruited is nobody's leader in the war band that took him, and this answers that without
         recruitment having to clear anything. The side comes off the rosters, as in

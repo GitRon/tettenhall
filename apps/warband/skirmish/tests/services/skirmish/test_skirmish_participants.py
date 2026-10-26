@@ -1,5 +1,6 @@
 import pytest
 
+from apps.warband.skirmish.choices.fight_directive import FightDirectiveChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError, UnofferedSkirmishActionError
 from apps.warband.skirmish.models.warrior import Warrior
@@ -287,3 +288,64 @@ def test_process_refuses_a_warrior_who_is_down():
             ],
             player_faction_id=skirmish.attacking_faction_id,
         ).process()
+
+
+@pytest.mark.django_db
+def test_process_lets_the_players_men_decide_for_themselves_when_he_fights_on():
+    skirmish = SkirmishFactory()
+    player_warrior = _fast_attacker(skirmish.attacking_faction)
+    enemy = WarriorFactory(faction=skirmish.defending_faction)
+    skirmish.attacking_warriors.add(player_warrior)
+    skirmish.defending_warriors.add(enemy)
+
+    attacking, _defending = SkirmishParticipantBuilderService(
+        skirmish=skirmish,
+        participants=[],
+        player_faction_id=skirmish.attacking_faction_id,
+        directive=FightDirectiveChoices.FIGHT_ON,
+    ).process()
+
+    assert [participant.skirmish_action for participant in attacking] == [SkirmishActionChoices.FAST_ATTACK]
+
+
+@pytest.mark.django_db
+def test_process_gives_the_directive_to_the_man_it_names_and_leaves_the_rest_to_themselves():
+    skirmish = SkirmishFactory()
+    leader = WarriorFactory(faction=skirmish.attacking_faction)
+    skirmish.attacking_faction.leader = leader
+    skirmish.attacking_faction.save()
+    follower = _fast_attacker(skirmish.attacking_faction)
+    skirmish.attacking_warriors.add(leader, follower)
+    skirmish.defending_warriors.add(WarriorFactory(faction=skirmish.defending_faction))
+
+    attacking, _defending = SkirmishParticipantBuilderService(
+        skirmish=skirmish,
+        participants=[],
+        player_faction_id=skirmish.attacking_faction_id,
+        directive=FightDirectiveChoices.LEAVE_THE_FIELD,
+    ).process()
+
+    assert {participant.warrior: participant.skirmish_action for participant in attacking} == {
+        leader: SkirmishActionChoices.FLEE,
+        follower: SkirmishActionChoices.FAST_ATTACK,
+    }
+
+
+@pytest.mark.django_db
+def test_process_never_directs_a_man_into_an_action_he_is_not_offered():
+    """
+    The player defends, and a defender cannot leave the field - so the retreat leaves him to himself.
+    """
+    skirmish = SkirmishFactory()
+    defender = _fast_attacker(skirmish.defending_faction)
+    skirmish.defending_warriors.add(defender)
+    skirmish.attacking_warriors.add(WarriorFactory(faction=skirmish.attacking_faction))
+
+    _attacking, defending = SkirmishParticipantBuilderService(
+        skirmish=skirmish,
+        participants=[],
+        player_faction_id=skirmish.defending_faction_id,
+        directive=FightDirectiveChoices.SOUND_THE_RETREAT,
+    ).process()
+
+    assert [participant.skirmish_action for participant in defending] == [SkirmishActionChoices.FAST_ATTACK]

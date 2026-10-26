@@ -38,6 +38,7 @@ from apps.warband.skirmish.services.generators.skirmish.base import BaseSkirmish
 from apps.warband.skirmish.services.raid_defenders import get_raid_defenders
 from apps.warband.skirmish.services.skirmish.assign_fighter_pairs import AssignFighterPairsService
 from apps.warband.skirmish.services.skirmish.damage import SkirmishDamageService
+from apps.warband.skirmish.services.skirmish.turning_point import TurningPointService
 from apps.warband.warrior.services.generators.warrior.local import LocalWarriorGenerator
 
 
@@ -522,5 +523,21 @@ def handle_finish_round(*, context: skirmish.FinishRound) -> list[Event] | Event
         victor = context.skirmish.attacking_faction
     elif not context.skirmish.attacking_warriors.filter_healthy().exists():
         victor = context.skirmish.defending_faction
+
+    # A fight that is decided has nothing left to stop for
+    if victor is None:
+        finding = TurningPointService(
+            skirmish=context.skirmish,
+            fielded_warriors=context.fielded_warriors,
+            player_faction=context.player_faction,
+        ).process()
+        if finding is not None:
+            Skirmish.objects.set_turning_point(
+                skirmish=context.skirmish,
+                turning_point=finding.turning_point,
+                warriors=finding.warriors,
+                attacking_leader_in_trouble=finding.attacking_leader_in_trouble,
+                defending_leader_in_trouble=finding.defending_leader_in_trouble,
+            )
 
     return RoundFinished(skirmish=context.skirmish, round_number=finished_round, victor=victor, month=context.month)

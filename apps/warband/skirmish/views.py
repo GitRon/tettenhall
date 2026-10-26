@@ -15,7 +15,9 @@ from apps.warband.faction.models.faction import Faction
 from apps.warband.savegame.mixins import RunningSavegameRequiredMixin, SavegameScopedQuerysetMixin
 from apps.warband.savegame.models.savegame import Savegame
 from apps.warband.savegame.services.current_savegame import get_current_savegame_for_request
+from apps.warband.skirmish.choices.fight_directive import FightDirectiveChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.warband.skirmish.domain.turning_point import TURNING_POINT_DIRECTIVES
 from apps.warband.skirmish.exceptions import UnknownSkirmishParticipantError, UnofferedSkirmishActionError
 from apps.warband.skirmish.messages.commands.skirmish import FinishRound, StartDuel
 from apps.warband.skirmish.models.battle_history import BattleHistory
@@ -23,6 +25,7 @@ from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.projections.battle_log import BattleLog
 from apps.warband.skirmish.projections.skirmish_participant import SkirmishParticipant
 from apps.warband.skirmish.projections.skirmish_report import SkirmishReport
+from apps.warband.skirmish.projections.turning_point import PendingTurningPoint
 from apps.warband.skirmish.services.skirmish.skirmish_participants import SkirmishParticipantBuilderService
 
 
@@ -58,6 +61,26 @@ class OccupiableSideMixin:
         )
 
 
+class FightControlMixin:
+    """
+    Puts what the fight control needs beyond the skirmish on the context: the stop the fight is waiting
+    at, and the directive the page sends when nothing waits.
+
+    Shared by the fight page and the htmx partial it swaps in after every round, for the reason
+    "OccupiableSideMixin" is: the stop has to appear on the swap that follows the round that brought it.
+    """
+
+    def get_fight_control_context(self, *, skirmish: Skirmish) -> dict:
+        current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+
+        return {
+            "pending_turning_point": PendingTurningPoint.for_skirmish(
+                skirmish=skirmish, player_faction_id=current_savegame.player_faction_id
+            ),
+            "fight_on": FightDirectiveChoices.FIGHT_ON,
+        }
+
+
 class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
     model = Skirmish
     template_name = "skirmish/skirmish_list.html"
@@ -78,7 +101,7 @@ class SkirmishListView(SavegameScopedQuerysetMixin, generic.ListView):
         return context
 
 
-class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generic.DetailView):
+class SkirmishFightView(FightControlMixin, OccupiableSideMixin, SavegameScopedQuerysetMixin, generic.DetailView):
     model = Skirmish
     template_name = "skirmish/skirmish_fight.html"
     object = None
@@ -106,6 +129,7 @@ class SkirmishFightView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generi
         # On the context of the page and of the partial below, for the reason "occupiable_faction" is
         # on both: the swap that follows the winning round renders the cards on their own.
         context["skirmish_is_decided"] = self.object.victorious_faction_id is not None
+        context.update(self.get_fight_control_context(skirmish=self.object))
 
         return context
 
@@ -158,6 +182,29 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
 
         return True
 
+    @staticmethod
+    def _read_orders(*, post) -> tuple[list[tuple[int, SkirmishActionChoices]], FightDirectiveChoices | None]:
+        """
+        What the player said for this round: an order per man, or one directive for all of them.
+
+        Exactly one of the two. Orders and a directive together contradict each other, and a post with
+        neither says nothing - both raise "ValueError" like any other malformed value.
+
+        The posted "faction_id" is deliberately not read: which side a warrior fights on comes from the
+        skirmish's own rosters, since a posted one can lie and "warrior.faction" changes the moment a
+        captive is recruited.
+        """
+        participants = [
+            (int(participant_data["warrior_id"]), SkirmishActionChoices(int(participant_data["skirmish_action"])))
+            for participant_data in querydict_to_nested_dict(querydict=post, prefix="skirmish_participant").values()
+        ]
+        directive = FightDirectiveChoices(int(post["directive"])) if "directive" in post else None
+
+        if bool(participants) == (directive is not None):
+            raise ValueError("A round is either ordered man by man or given one directive.")
+
+        return participants, directive
+
     def post(self, request, *args, **kwargs):
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
 
@@ -190,21 +237,21 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
         ):
             return HttpResponse(status=HTTPStatus.CONFLICT)
 
-        skirmish_participants = querydict_to_nested_dict(querydict=request.POST, prefix="skirmish_participant")
-
         # Every value here arrives in the request body, so anything missing, non-numeric or naming an
-        # action that does not exist is bad input rather than a server error. Without the membership
-        # test an unknown number reached "get_service_by_skirmish_action" and raised there, answering 500
-        # to input this very block means to refuse. The posted "faction_id" is deliberately not read:
-        # which side a warrior fights on comes from the skirmish's own rosters, since a posted one can
-        # lie and "warrior.faction" changes the moment a captive is recruited.
+        # action or a directive that does not exist is bad input rather than a server error. Without the
+        # membership test an unknown number reached "get_service_by_skirmish_action" and raised there,
+        # answering 500 to input this very block means to refuse.
         try:
-            participants = [
-                (int(participant_data["warrior_id"]), SkirmishActionChoices(int(participant_data["skirmish_action"])))
-                for participant_data in skirmish_participants.values()
-            ]
+            participants, directive = self._read_orders(post=request.POST)
         except KeyError, ValueError:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+
+        # Fighting on is always the player's to say. Anything else answers a stop, and only the stop that
+        # is waiting: a second click on the same answer finds it already answered by the first
+        if directive not in (None, FightDirectiveChoices.FIGHT_ON) and directive not in TURNING_POINT_DIRECTIVES.get(
+            self.object.turning_point, ()
+        ):
+            return HttpResponse(status=HTTPStatus.CONFLICT)
 
         # The enemy's actions are decided here rather than read off the request, so nothing the player
         # posts can set them. The service takes the whole side, so leaving an enemy out of the post
@@ -214,6 +261,7 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
                 skirmish=self.object,
                 participants=participants,
                 player_faction_id=current_savegame.player_faction_id if current_savegame else None,
+                directive=directive,
             ).process()
         except UnknownSkirmishParticipantError, UnofferedSkirmishActionError:
             # A warrior id naming someone who is not fighting this skirmish, or an action he is not
@@ -252,21 +300,29 @@ class SkirmishFinishRoundView(RunningSavegameRequiredMixin, SavegameScopedQuerys
             handle_message(
                 FinishRound(
                     skirmish=self.object,
+                    fielded_warriors=[
+                        participant.warrior
+                        for participant in (*attacking_participants, *defending_participants)
+                        if participant.skirmish_action != SkirmishActionChoices.FLEE
+                    ],
+                    player_faction=current_savegame.player_faction,
                     month=current_savegame.current_month,
                 )
             )
 
+        triggers = {
+            "battleReportUpdate": "-",
+            "updateFactionWarriorList": "-",
+            "updateSkirmishRound": "-",
+            "updateFightButton": "-",
+            "updateResourceBar": "-",
+        }
+        # A round fought by hand is one the player sent and waits on. The rounds the page sends by
+        # itself come one after another, and a toast for each would bury the log they are written to
+        if directive is None:
+            triggers["notification"] = "Round finished"
         response = HttpResponse()
-        response["HX-Trigger"] = json.dumps(
-            {
-                "battleReportUpdate": "-",
-                "notification": "Round finished",
-                "updateFactionWarriorList": "-",
-                "updateSkirmishRound": "-",
-                "updateFightButton": "-",
-                "updateResourceBar": "-",
-            }
-        )
+        response["HX-Trigger"] = json.dumps(triggers)
         return response
 
 
@@ -275,7 +331,9 @@ class SkirmishRoundUpdateHtmxView(SavegameScopedQuerysetMixin, generic.DetailVie
     template_name = "skirmish/skirmish/htmx/_round.html"
 
 
-class SkirmishFightButtonUpdateHtmxView(OccupiableSideMixin, SavegameScopedQuerysetMixin, generic.DetailView):
+class SkirmishFightButtonUpdateHtmxView(
+    FightControlMixin, OccupiableSideMixin, SavegameScopedQuerysetMixin, generic.DetailView
+):
     model = Skirmish
     template_name = "skirmish/skirmish/htmx/_fight_button.html"
 
@@ -284,6 +342,7 @@ class SkirmishFightButtonUpdateHtmxView(OccupiableSideMixin, SavegameScopedQuery
         # The swap that follows the winning round renders this template on its own, so without this
         # the prompt would only ever appear on a reload of the page the player has just finished with
         context["occupiable_faction"] = self.get_occupiable_faction(skirmish=self.object)
+        context.update(self.get_fight_control_context(skirmish=self.object))
         return context
 
 
