@@ -5,7 +5,8 @@
 
     A man who is down, away on a quest or already in a fight keeps his posting and is drawn where it
     puts him, greyed, with the reason - he is not there to stand in a raid's way this month, and the
-    count says so. See docs/patterns/warrior-availability.md.
+    count says so. See docs/patterns/warrior-availability.md. The burh's count is every man at home,
+    the ones drawn in the other cards included, because its assault meets all of them.
 
     The moves sit behind three dots, like the roster's: two outlined controls on every line would be the
     loudest column on the page and the least often pressed.
@@ -18,6 +19,9 @@
                     {{ column.label }}
                     <span class="font-mono text-label uppercase tracking-label text-ink-muted">Standing <span class="text-ink">{{ column.standing_count }}</span></span>
                 </h2>
+                {% if column.raid_kind.IS_FORTIFIED %}
+                    <p class="m-0 mt-1.5 text-sm leading-snug">Every man at home falls back behind the wall, wherever he is posted.</p>
+                {% endif %}
                 {% if column.raid_kind.LOCALS_TURNOUT %}
                     <p class="m-0 mt-1.5 text-sm leading-snug">{{ column.raid_kind.LOCALS_TURNOUT }} {{ column.raid_kind.LOCALS_NAME }} turn out beside them.</p>
                 {% endif %}

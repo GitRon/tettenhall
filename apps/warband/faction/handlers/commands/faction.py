@@ -344,12 +344,25 @@ def _approve_postings(*, faction: Faction, month: int) -> list[Event]:
 
     Read off the roster as it stands when the month is planned, so a man hired or drafted by this same
     plan is posted next month and stands at the burh until then - where everybody nobody posted stands.
+    Who can defend is read the way a raid musters its defenders, so the rule fills a place only with
+    men a raid there would meet.
     """
     warrior_by_id = {
         warrior.id: warrior for warrior in Warrior.objects.exclude_dead().filter_faction(faction_id=faction.id)
     }
+    defending_ids = set(
+        Warrior.objects.filter_healthy()
+        .filter_faction(faction_id=faction.id)
+        .exclude_currently_busy(month=month)
+        .values_list("id", flat=True)
+    )
     roster = [
-        PostedMan(warrior_id=warrior.id, posting=warrior.posting, is_leader=warrior.id == faction.leader_id)
+        PostedMan(
+            warrior_id=warrior.id,
+            posting=warrior.posting,
+            is_leader=warrior.id == faction.leader_id,
+            can_defend=warrior.id in defending_ids,
+        )
         for warrior in warrior_by_id.values()
     ]
 

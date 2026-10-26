@@ -1,3 +1,4 @@
+from collections import Counter
 from dataclasses import dataclass
 
 from django.db.models import Count
@@ -32,7 +33,8 @@ def count_men_standing(*, faction_id: int, month: int) -> list[PlaceStanding]:
     How many men stand at each of a faction's places today, in display order, out of one aggregate.
 
     Counted the way a raid musters: a man who is down, away on a quest or already in a fight is posted
-    somewhere and is not there to stand in anybody's way.
+    somewhere and is not there to stand in anybody's way. The burh counts every man at home, because
+    an assault on it meets all of them behind the wall - see "get_raid_defenders".
     """
     counts = dict(
         Warrior.objects.filter_faction(faction_id=faction_id)
@@ -44,9 +46,19 @@ def count_men_standing(*, faction_id: int, month: int) -> list[PlaceStanding]:
     )
 
     return [
-        PlaceStanding(posting=posting, label=PostingChoices(posting).label, standing_count=counts.get(posting, 0))
+        PlaceStanding(
+            posting=posting,
+            label=PostingChoices(posting).label,
+            standing_count=_count_met_at(posting=posting, posted_counts=counts),
+        )
         for posting in POSTINGS_IN_DISPLAY_ORDER
     ]
+
+
+def _count_met_at(*, posting: int, posted_counts: dict[int, int]) -> int:
+    if RAID_KIND_BY_POSTING[posting].IS_FORTIFIED:
+        return sum(posted_counts.values())
+    return posted_counts.get(posting, 0)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -64,10 +76,9 @@ class PostingColumn:
     label: str
     raid_kind: type[RaidKind]
     men: list[WarriorAvailability]
-
-    @property
-    def standing_count(self) -> int:
-        return sum(1 for man in self.men if man.is_available)
+    # What a raid landing here meets of the war band, counted the way "count_men_standing" counts it:
+    # at the burh that is every man at home, not only the men drawn in this column
+    standing_count: int
 
     @property
     def other_postings(self) -> list[tuple[int, str]]:
@@ -85,6 +96,7 @@ def get_posting_columns(*, faction_id: int, month: int) -> list[PostingColumn]:
     at his place cannot be two answers.
     """
     roster = assess_roster(faction_id=faction_id, month=month)
+    posted_counts = Counter(man.warrior.posting for man in roster.assessed if man.is_available)
 
     return [
         PostingColumn(
@@ -92,6 +104,7 @@ def get_posting_columns(*, faction_id: int, month: int) -> list[PostingColumn]:
             label=PostingChoices(posting).label,
             raid_kind=RAID_KIND_BY_POSTING[posting],
             men=[man for man in roster.assessed if man.warrior.posting == posting],
+            standing_count=_count_met_at(posting=posting, posted_counts=posted_counts),
         )
         for posting in POSTINGS_IN_DISPLAY_ORDER
     ]

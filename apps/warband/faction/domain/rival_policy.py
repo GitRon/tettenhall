@@ -1,3 +1,4 @@
+from collections import Counter
 from dataclasses import dataclass, field
 
 from apps.warband.skirmish.choices.posting import PostingChoices
@@ -103,6 +104,8 @@ class PostedMan:
     warrior_id: int
     posting: int
     is_leader: bool
+    # Fit, and not away on a quest or in a fight: a man a raid could meet this month
+    can_defend: bool = True
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -173,9 +176,9 @@ class RivalPolicy:
     MIN_SCORE = 0.1
 
     # The places a rival deals its men out to, in turn. Every place gets a share, so each of a rival's
-    # three raid kinds meets about a third of its band - the spread a random draw would give on
-    # average. The burh comes first, so a rival with one man besides its leader keeps him at home, and
-    # the herds next, because a raid there drives off silver and one on the village only names
+    # three raid kinds meets about a third of its band and none of them is a free one. The burh comes
+    # first, so a rival with one man besides its leader keeps him at home, and the herds next, because
+    # a raid there drives off silver, while one on the village takes no silver, only names off the fyrd.
     POSTING_ROTATION = (PostingChoices.BURH, PostingChoices.HERDS, PostingChoices.VILLAGE)
 
     @classmethod
@@ -183,19 +186,43 @@ class RivalPolicy:
         """
         Where a rival stands its men this month, as the moves that get them there.
 
-        One neutral rule for every rival: the leader holds the burh, and the rest are dealt out over
-        POSTING_ROTATION in id order, so the same roster stands the same way every month and a seeded
-        game replays it. Only a man who is not already where the rule puts him is moved.
+        One neutral rule for every rival: the leader holds the burh, and the men who can defend fill
+        POSTING_ROTATION's shares - the first of them to the burh, the next to the herds, and so on.
+        Whoever already stands at a place with a share left keeps it, in id order, and only the rest
+        are moved, so a man lost or hired moves one man rather than everybody after him, and a seeded
+        game replays it. A man who cannot defend this month keeps his posting and takes no share, so
+        no place is left to men who are not there.
         """
-        rest = sorted((man for man in roster if not man.is_leader), key=lambda man: man.warrior_id)
-        wanted = [(man, PostingChoices.BURH) for man in roster if man.is_leader] + [
-            (man, cls.POSTING_ROTATION[index % len(cls.POSTING_ROTATION)]) for index, man in enumerate(rest)
-        ]
-
-        return sorted(
-            (PostMan(warrior_id=man.warrior_id, posting=posting) for man, posting in wanted if man.posting != posting),
-            key=lambda move: move.warrior_id,
+        defenders = sorted(
+            (man for man in roster if man.can_defend and not man.is_leader), key=lambda man: man.warrior_id
         )
+        wanted = [PostMan(warrior_id=man.warrior_id, posting=PostingChoices.BURH) for man in roster if man.is_leader]
+        wanted += cls._fill_shares(defenders=defenders)
+
+        current = {man.warrior_id: man.posting for man in roster}
+        return sorted(
+            (move for move in wanted if current[move.warrior_id] != move.posting), key=lambda move: move.warrior_id
+        )
+
+    @classmethod
+    def _fill_shares(cls, *, defenders: list[PostedMan]) -> list[PostMan]:
+        """Where each of "defenders" stands once every share is filled, those already at one first."""
+        shares = Counter(cls.POSTING_ROTATION[index % len(cls.POSTING_ROTATION)] for index in range(len(defenders)))
+        placed: list[PostMan] = []
+        unplaced: list[PostedMan] = []
+        for man in defenders:
+            if shares[man.posting] > 0:
+                shares[man.posting] -= 1
+                placed.append(PostMan(warrior_id=man.warrior_id, posting=man.posting))
+            else:
+                unplaced.append(man)
+
+        for man in unplaced:
+            posting = next(place for place in cls.POSTING_ROTATION if shares[place] > 0)
+            shares[posting] -= 1
+            placed.append(PostMan(warrior_id=man.warrior_id, posting=posting))
+
+        return placed
 
     @classmethod
     def decide(cls, *, snapshot: RivalMonthSnapshot) -> list[RivalDecision]:

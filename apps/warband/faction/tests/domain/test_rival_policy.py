@@ -221,9 +221,31 @@ def test_decide_postings_keeps_the_leader_at_the_burh_and_deals_the_rest_out_in_
 
     assert RivalPolicy.decide_postings(roster=roster) == [
         PostMan(warrior_id=1, posting=PostingChoices.BURH),
-        PostMan(warrior_id=3, posting=PostingChoices.HERDS),
-        PostMan(warrior_id=4, posting=PostingChoices.VILLAGE),
+        PostMan(warrior_id=4, posting=PostingChoices.HERDS),
+        PostMan(warrior_id=5, posting=PostingChoices.VILLAGE),
     ]
+
+
+def test_decide_postings_moves_one_man_when_one_is_lost():
+    """The man at the burh is gone: the next share to fill is the burh's, and only the last man is sent there."""
+    roster = [
+        PostedMan(warrior_id=3, posting=PostingChoices.HERDS, is_leader=False),
+        PostedMan(warrior_id=4, posting=PostingChoices.VILLAGE, is_leader=False),
+        PostedMan(warrior_id=5, posting=PostingChoices.BURH, is_leader=False),
+        PostedMan(warrior_id=6, posting=PostingChoices.HERDS, is_leader=False),
+    ]
+
+    assert RivalPolicy.decide_postings(roster=roster) == [PostMan(warrior_id=6, posting=PostingChoices.BURH)]
+
+
+def test_decide_postings_leaves_a_man_who_cannot_defend_where_he_is_and_gives_him_no_share():
+    roster = [
+        PostedMan(warrior_id=2, posting=PostingChoices.HERDS, is_leader=False, can_defend=False),
+        PostedMan(warrior_id=3, posting=PostingChoices.BURH, is_leader=False),
+        PostedMan(warrior_id=4, posting=PostingChoices.BURH, is_leader=False),
+    ]
+
+    assert RivalPolicy.decide_postings(roster=roster) == [PostMan(warrior_id=4, posting=PostingChoices.HERDS)]
 
 
 def test_decide_postings_moves_nobody_already_where_the_rule_puts_him():

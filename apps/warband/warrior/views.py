@@ -419,8 +419,10 @@ class PostWarriorView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetM
     The dead are narrowed away for the reason "DismissWarriorView" gives.
 
     The place arrives in the post and is checked against the choices, so a value nobody offered is bad
-    input. A move that changes nothing - a second click, a man the page showed who has since left - is
-    still answered with the board as it stands, which is the page the player should have been looking at.
+    input. A move that changes nothing - a second click, a man the page showed who has since left or
+    died - is still answered with the board as it stands, which is the page the player should have been
+    looking at. A rival's man gets the same answer: the board shows only the player's own men, so it
+    tells the request nothing it could not see anyway.
     """
 
     model = Warrior
@@ -430,13 +432,17 @@ class PostWarriorView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetM
         return super().get_queryset().exclude_dead()
 
     def post(self, request, *args, **kwargs) -> HttpResponse:
-        obj = self.get_object()
         try:
             posting = PostingChoices(int(request.POST["posting"]))
         except KeyError, ValueError:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
         current_savegame: Savegame = get_current_savegame_for_request(request=self.request)
+        # Through the scoped queryset, so a rival's man is as absent as one who has left: both get the board
+        obj = self.get_queryset().filter(pk=self.kwargs["pk"]).first()
+        if obj is None:
+            return self._board_response(savegame=current_savegame, notification=STALE_PAGE_NOTICE)
+
         handled = handle_message(
             PostWarrior(
                 warrior=obj,
@@ -446,23 +452,25 @@ class PostWarriorView(RunningSavegameRequiredMixin, PlayerFactionScopedQuerysetM
             )
         )
 
+        # The line claims what this request did, so it waits for the handler's event
+        return self._board_response(
+            savegame=current_savegame,
+            notification=f"{obj} now stands at the {posting.label.lower()}."
+            if any(isinstance(message, WarriorPosted) for message in handled)
+            else STALE_PAGE_NOTICE,
+        )
+
+    def _board_response(self, *, savegame: Savegame, notification: str) -> HttpResponse:
         response = render(
-            request,
+            self.request,
             "warrior/components/posting_board.html",
             {
                 "posting_columns": get_posting_columns(
-                    faction_id=current_savegame.player_faction_id, month=current_savegame.current_month
+                    faction_id=savegame.player_faction_id, month=savegame.current_month
                 )
             },
         )
-        # The line claims what this request did, so it waits for the handler's event
-        response["HX-Trigger"] = json.dumps(
-            {
-                "notification": f"{obj} now stands at the {posting.label.lower()}."
-                if any(isinstance(message, WarriorPosted) for message in handled)
-                else STALE_PAGE_NOTICE
-            }
-        )
+        response["HX-Trigger"] = json.dumps({"notification": notification})
         return response
 
 

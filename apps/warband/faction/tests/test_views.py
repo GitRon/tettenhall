@@ -95,7 +95,7 @@ def test_faction_detail_view_says_where_a_rivals_men_stand(logged_in_client, cur
     response = logged_in_client.get(reverse("warband:faction-detail-view", kwargs={"pk": rival_faction.id}))
 
     assert response.status_code == 200
-    assert [place.standing_count for place in response.context["posting_places"]] == [0, 1, 0]
+    assert [place.standing_count for place in response.context["posting_places"]] == [1, 1, 0]
 
 
 @pytest.mark.django_db

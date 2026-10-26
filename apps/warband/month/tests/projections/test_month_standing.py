@@ -80,7 +80,7 @@ def test_for_savegame_says_where_the_players_own_men_stand():
 
     standing = MonthStanding.for_savegame(savegame=savegame)
 
-    assert [place.standing_count for place in standing.warband.places] == [0, 0, 1]
+    assert [place.standing_count for place in standing.warband.places] == [1, 0, 1]
 
 
 @pytest.mark.django_db

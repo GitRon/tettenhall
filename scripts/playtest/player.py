@@ -303,12 +303,12 @@ class PlayerTurn:
     def _healthy_men_of(self, *, faction: Faction) -> int:
         return Warrior.objects.filter_faction(faction_id=faction.id).filter_healthy().count()
 
-    def _men_standing_at_the_herds(self, *, faction: Faction) -> int:
+    def _men_standing_at(self, *, faction: Faction, posting: int) -> int:
         # Read off the same count the attack page shows the player, since who stands where is public
         return next(
             place.standing_count
             for place in count_men_standing(faction_id=faction.id, month=self.month)
-            if place.posting == PostingChoices.HERDS
+            if place.posting == posting
         )
 
     def march(self) -> str | None:
@@ -330,11 +330,12 @@ class PlayerTurn:
 
         # Counted the way the attack page shows a raid to the player: the rival's men who would stand there,
         # and the people of the place who turn out beside them
-        healthy_men = self._healthy_men_of(faction=target)
-        if self.policy.will_march(band_size=len(band), defenders=healthy_men + StormTheBurh.LOCALS_TURNOUT):
+        men_at_the_burh = self._men_standing_at(faction=target, posting=PostingChoices.BURH)
+        if self.policy.will_march(band_size=len(band), defenders=men_at_the_burh + StormTheBurh.LOCALS_TURNOUT):
             raid_kind = RaidKindChoices.STORM_THE_BURH
         elif self.policy.raids_when_outnumbered and self.policy.will_march(
-            band_size=len(band), defenders=self._men_standing_at_the_herds(faction=target) + LiftTheHerds.LOCALS_TURNOUT
+            band_size=len(band),
+            defenders=self._men_standing_at(faction=target, posting=PostingChoices.HERDS) + LiftTheHerds.LOCALS_TURNOUT,
         ):
             # Too few to storm the burh, so out to the pastures, where only the men posted there stand
             raid_kind = RaidKindChoices.LIFT_THE_HERDS

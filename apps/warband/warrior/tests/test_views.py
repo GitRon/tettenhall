@@ -1079,6 +1079,20 @@ def test_post_warrior_view_cannot_move_a_rivals_man(logged_in_client, current_sa
         reverse("warband:warrior-post-view", kwargs={"pk": rival_warrior.id}), data={"posting": PostingChoices.BURH}
     )
 
-    assert response.status_code == 404
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE
     rival_warrior.refresh_from_db()
     assert rival_warrior.posting == PostingChoices.HERDS
+
+
+@pytest.mark.django_db
+def test_post_warrior_view_answers_a_man_who_has_left_with_the_board(logged_in_client, current_savegame):
+    """The page still showed him, so the player gets the board as it stands rather than a dead click."""
+    gone = WarriorFactory(faction=current_savegame.player_faction)
+    Warrior.objects.filter(id=gone.id).update(faction=None)
+
+    response = logged_in_client.post(
+        reverse("warband:warrior-post-view", kwargs={"pk": gone.id}), data={"posting": PostingChoices.HERDS}
+    )
+
+    assert response.status_code == 200
+    assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE

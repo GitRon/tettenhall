@@ -624,15 +624,14 @@ class FactionAttackView(RunningSavegameRequiredMixin, AttackTargetMixin, SingleO
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
         # Said before the march, from the same answers the march itself is staged with: the wall each
-        # raid meets, how many of their men stand where it lands, and what each one takes. The burh is
-        # stormed against every man at home, wherever he is posted - see "get_raid_defenders"
+        # raid meets, how many of their men stand where it lands, and what each one takes
         places = count_men_standing(faction_id=self.object.id, month=self.current_savegame.current_month)
         standing_by_posting = {place.posting: place.standing_count for place in places}
         context["raid_kinds"] = [
             (
                 raid_kind,
                 raid_kind.get_fortification_strength(town=self.object.town),
-                sum(standing_by_posting.values()) if raid_kind.IS_FORTIFIED else standing_by_posting[raid_kind.POSTING],
+                standing_by_posting[raid_kind.POSTING],
             )
             for raid_kind in RAID_KINDS
         ]

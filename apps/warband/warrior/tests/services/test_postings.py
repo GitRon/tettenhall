@@ -17,7 +17,10 @@ from apps.warband.warrior.services.postings import (
 
 @pytest.mark.django_db
 def test_count_men_standing_counts_only_the_men_a_raid_would_meet_there_today():
-    """The man who is down and the man away on a quest keep their posting, and are not there to stand."""
+    """
+    The man who is down and the man away on a quest keep their posting, and are not there to stand. The
+    burh counts every man at home, because its assault meets all of them.
+    """
     faction = FactionFactory()
     WarriorFactory(faction=faction, posting=PostingChoices.HERDS)
     WarriorFactory(
@@ -33,7 +36,7 @@ def test_count_men_standing_counts_only_the_men_a_raid_would_meet_there_today():
 
     places = count_men_standing(faction_id=faction.id, month=3)
 
-    assert [(place.label, place.standing_count) for place in places] == [("Burh", 0), ("Village", 1), ("Herds", 1)]
+    assert [(place.label, place.standing_count) for place in places] == [("Burh", 2), ("Village", 1), ("Herds", 1)]
 
 
 @pytest.mark.django_db
@@ -50,7 +53,7 @@ def test_get_posting_columns_draws_every_living_man_at_his_place_with_the_reason
         (column.raid_kind, [(man.warrior, man.reason) for man in column.men], column.standing_count)
         for column in columns
     ] == [
-        (StormTheBurh, [], 0),
+        (StormTheBurh, [], 1),
         (BurnTheVillage, [], 0),
         (LiftTheHerds, [(herdsman, None), (away, REASON_SWORN_TO_A_QUEST)], 1),
     ]
@@ -75,6 +78,7 @@ def test_posting_column_offers_the_two_other_places():
         label="Village",
         raid_kind=RAID_KIND_BY_POSTING[PostingChoices.VILLAGE],
         men=[],
+        standing_count=0,
     )
 
     assert column.other_postings == [(PostingChoices.BURH, "Burh"), (PostingChoices.HERDS, "Herds")]
