@@ -1,17 +1,87 @@
 {# The control sits at the end of its row rather than floating: a float is taken out of flow, and on a #}
 {# phone the button and the heading beside it then overlap instead of stacking. #}
 {% if not skirmish.victorious_faction %}
-    <div class="flex justify-start md:justify-end"
+    {# Three faces of one control, and which one shows is the page's mode rather than the server's: #}
+    {# the mode lives on the group around the fight - see "skirmish_fight.html" and "tettenhall.js". #}
+    {# - By hand: the orders on the cards, sent one round at a time, or the fight let loose. #}
+    {# - Running: the page sends the next round itself, and the player can hold it. #}
+    {# - At a turning point: what happened, and what he may answer. The stop is the server's, written #}
+    {# by the round that brought it, so a reload still shows it. #}
+    {# Only one filled control at a time: letting the fight run is the thing this screen is for. #}
+    <div class="flex flex-col items-start gap-y-3 md:items-end"
+         data-fight-control
          hx-get="{% url 'warband:skirmish-fight-button-update-htmx' skirmish.id %}"
          hx-trigger="updateFightButton from:body"
          hx-swap="outerHTML"
          hx-disinherit="hx-swap">
-        <button class="button-primary"
-                hx-post="{% url 'warband:skirmish-finish-round-view' skirmish.id %}"
-                hx-target="#hidden-box"
-                hx-include="select, input">
-            Fight!
-        </button>
+        <div class="flex flex-wrap items-center gap-3 md:justify-end group-data-[fight-mode=auto]/fight:hidden">
+            <button class="row-action"
+                    type="button"
+                    hx-post="{% url 'warband:skirmish-finish-round-view' skirmish.id %}"
+                    hx-target="#hidden-box"
+                    hx-include="select, input">
+                Fight this round
+            </button>
+            <button class="button-primary" type="button" data-fight-mode-switch="auto">
+                Let them fight
+            </button>
+        </div>
+
+        {% if pending_turning_point %}
+            <div class="hidden flex-col items-start gap-y-3 md:items-end group-data-[fight-mode=auto]/fight:flex">
+                <p class="m-0 inline-block border border-blood px-2 py-1 font-mono font-medium text-label uppercase tracking-label text-ink">
+                    {{ pending_turning_point.turning_point.label }}
+                </p>
+                <p class="m-0 leading-snug text-ink md:text-right">
+                    {% if pending_turning_point.is_leader_threatened %}
+                        {{ pending_turning_point.leader.display_name }} is hard pressed.
+                    {% elif pending_turning_point.is_man_down %}
+                        {% for warrior in pending_turning_point.fallen %}{{ warrior.display_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %}
+                        {% if pending_turning_point.fallen|length == 1 %}is{% else %}are{% endif %} down.
+                    {% else %}
+                        {{ pending_turning_point.leader.display_name }} is exposed.
+                    {% endif %}
+                </p>
+                <div class="flex flex-wrap gap-3 md:justify-end">
+                    {% for directive in pending_turning_point.directives %}
+                        <button class="row-action"
+                                type="button"
+                                data-fight-round
+                                hx-post="{% url 'warband:skirmish-finish-round-view' skirmish.id %}"
+                                hx-target="#hidden-box"
+                                hx-vals='{"directive": "{{ directive.value }}"}'>
+                            {{ directive.label }}
+                        </button>
+                    {% endfor %}
+                    <button class="row-action"
+                            type="button"
+                            data-fight-round
+                            hx-post="{% url 'warband:skirmish-finish-round-view' skirmish.id %}"
+                            hx-target="#hidden-box"
+                            hx-vals='{"directive": "{{ fight_on.value }}"}'>
+                        {{ fight_on.label }}
+                    </button>
+                    <button class="row-action" type="button" data-fight-mode-switch="manual">
+                        Take command
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            <div class="hidden flex-wrap items-center gap-3 md:justify-end group-data-[fight-mode=auto]/fight:flex">
+                <p class="m-0 font-mono text-label uppercase tracking-label text-ink-muted">The men fight on</p>
+                <button class="row-action" type="button" data-fight-mode-switch="manual">
+                    Hold
+                </button>
+                {# Pressed by the page, never by the player: "tettenhall.js" sends it when the run is on #}
+                <button type="button"
+                        hidden
+                        data-next-fight-round
+                        data-fight-round
+                        hx-post="{% url 'warband:skirmish-finish-round-view' skirmish.id %}"
+                        hx-target="#hidden-box"
+                        hx-vals='{"directive": "{{ fight_on.value }}"}'></button>
+            </div>
+        {% endif %}
     </div>
 {% elif occupiable_faction %}
     {# The fight is over and the loser has nobody healthy left to hold his town. This is the moment #}

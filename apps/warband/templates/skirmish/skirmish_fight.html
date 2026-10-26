@@ -18,6 +18,10 @@
 
     {% include 'skirmish/skirmish/htmx/_round.html' with skirmish=object %}
 
+    {# The fight's mode - by hand or running by itself - is written here rather than into the control #}
+    {# that changes it, because every finished round swaps that control out. It opens by hand, so a #}
+    {# reload never sends a round the player did not ask for. See "_fight_button.html". #}
+    <div class="group/fight" data-fight-mode="manual">
     {# Attacker, report, defender on a desk; the same three stacked on a phone. #}
     {#  #}
     {# Stacked puts the report between the two war bands, which is the panel read every round sitting #}
@@ -69,5 +73,6 @@
             <c-skirmish.faction-box :faction="defending_faction" :warriors="defending_warriors" :is_player="defender_is_player"
                                  :skirmish="skirmish" :skirmish_is_decided="skirmish_is_decided" />
         </div>
+    </div>
     </div>
 {% endblock content %}

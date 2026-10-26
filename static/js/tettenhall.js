@@ -262,4 +262,67 @@
             fold.open = true;
         }
     });
+
+    /*
+     * A fight that runs itself - see "skirmish/skirmish/htmx/_fight_button.html". The page sends one
+     * round at a time, and only while the fight is in the "auto" mode and nothing waits for the player.
+     * The mode is written onto the group around the fight rather than into the control, for the reason
+     * the log tab is: every round swaps the control out.
+     *
+     * A round is sent when the control a finished round swaps in arrives, and not off a clock: a round
+     * still being answered never has a second one sent behind it. A control that offers no next round -
+     * a stop is waiting, or the fight is decided - simply ends the run.
+     */
+    const FIGHT_ROUND_DELAY = 1200;
+    let nextFightRound = null;
+
+    const fightGroup = () => document.querySelector('[data-fight-mode]');
+
+    const sendNextFightRound = () => {
+        window.clearTimeout(nextFightRound);
+        if (fightGroup()?.dataset.fightMode !== 'auto') {
+            return;
+        }
+        nextFightRound = window.setTimeout(() => {
+            // Asked again when the time is up, because the player may have held in the meantime
+            const button = document.querySelector('[data-next-fight-round]');
+            if (fightGroup()?.dataset.fightMode === 'auto' && button) {
+                htmx.trigger(button, 'click');
+            }
+        }, FIGHT_ROUND_DELAY);
+    };
+
+    const setFightMode = (mode) => {
+        const group = fightGroup();
+        if (!group) {
+            return;
+        }
+        group.dataset.fightMode = mode;
+        if (mode === 'auto') {
+            sendNextFightRound();
+        } else {
+            window.clearTimeout(nextFightRound);
+        }
+    };
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-fight-mode-switch]');
+        if (button) {
+            setFightMode(button.dataset.fightModeSwitch);
+        }
+    });
+
+    htmx.onLoad((element) => {
+        if (element.matches?.('[data-fight-control]')) {
+            sendNextFightRound();
+        }
+    });
+
+    // A round the page sent that did not go through stops the run, so it does not go on posting into
+    // whatever refused it. The player is handed the orders, which is where he can see why.
+    document.body.addEventListener('htmx:afterRequest', (event) => {
+        if (event.detail.elt.matches?.('[data-fight-round]') && !event.detail.successful) {
+            setFightMode('manual');
+        }
+    });
 })();
