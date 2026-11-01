@@ -141,7 +141,9 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_an_incapacitated_w
         )
     )
 
-    assert result == IncreaseExperience(skirmish=skirmish, warrior=attacker, increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN)
+    assert result == IncreaseExperience(
+        skirmish=skirmish, warrior=attacker, increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN
+    )
 
 
 def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior():
@@ -153,7 +155,9 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior()
         context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
     )
 
-    assert result == IncreaseExperience(skirmish=skirmish, warrior=killer, increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN)
+    assert result == IncreaseExperience(
+        skirmish=skirmish, warrior=killer, increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN
+    )
 
 
 def test_handle_renown_gain_on_warrior_incapacitation_for_an_incapacitated_warrior():
