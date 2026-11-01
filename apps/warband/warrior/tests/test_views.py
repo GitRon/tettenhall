@@ -18,11 +18,14 @@ from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
+from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.services.equipping import WEARER_REFUSAL
 from apps.warband.warrior.services.portrait import draw_portrait
 from apps.warband.warrior.services.tending import NO_SANCTUARY_REFUSAL, get_tending_refusal
 from apps.warband.warrior.services.tending import UNAFFORDABLE_REFUSAL as UNAFFORDABLE_TENDING_REFUSAL
+from apps.warband.warrior.tests.factories.injury import InjuryFactory
+from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 from apps.warband.warrior.views import CapturedWarriorActionMixin
 
 
@@ -1090,3 +1093,78 @@ def test_warrior_enslave_captured_view_does_not_sell_a_man_already_recruited(log
 
     assert response.status_code == 204
     assert json.loads(response.headers["HX-Trigger"])["notification"] == STALE_PAGE_NOTICE
+
+
+def _own_man(*, savegame) -> Warrior:
+    return WarriorFactory(faction=savegame.player_faction)
+
+
+def _mercenary_in_the_pub(*, savegame) -> Warrior:
+    mercenary = WarriorFactory(faction=None, savegame=savegame, culture=savegame.player_faction.culture)
+    savegame.player_faction.available_mercenaries.add(mercenary)
+
+    return mercenary
+
+
+def _captive_of_the_player(*, savegame) -> Warrior:
+    captive = WarriorFactory(faction=None, savegame=savegame, culture=savegame.player_faction.culture)
+    savegame.player_faction.captured_warriors.add(captive)
+
+    return captive
+
+
+def _rivals_man(*, savegame) -> Warrior:
+    return WarriorFactory(faction=FactionFactory(savegame=savegame), savegame=savegame)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "make_warrior", [_own_man, _mercenary_in_the_pub, _captive_of_the_player, _rivals_man], ids=lambda f: f.__name__
+)
+def test_warrior_detail_view_lists_his_injuries_to_everybody(logged_in_client, current_savegame, make_warrior):
+    """
+    A lasting injury is public, the way the epithet is: the same list for his own man, a mercenary in the
+    pub, a prisoner and a rival's man - see docs/patterns/warrior-knowledge.md.
+    """
+    warrior = make_warrior(savegame=current_savegame)
+    first = InjuryFactory(warrior=warrior, inflicted_in_month=1)
+    second = InjuryFactory(warrior=warrior, inflicted_in_month=3)
+    InjuryFactory(warrior=_own_man(savegame=current_savegame))
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["injuries"] == [first, second]
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_brings_what_each_injury_line_names_along(
+    logged_in_client, current_savegame, django_assert_num_queries
+):
+    """Each line names the injury and dates it by his savegame's years, which are two foreign keys away."""
+    warrior = _own_man(savegame=current_savegame)
+    InjuryFactory(warrior=warrior)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    injury = response.context["injuries"][0]
+    with django_assert_num_queries(0):
+        assert injury.type.description and injury.inflicted_on.label
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_lists_the_whole_mark_on_a_man_at_the_floor(logged_in_client, current_savegame):
+    """
+    A man already at the lowest strength the fight lets him swing with loses nothing more to a new mark,
+    and the page still names what the mark costs: the listed figure is the injury's, not the effect.
+    """
+    warrior = WarriorFactory(faction=current_savegame.player_faction, strength=Warrior.MINIMUM_EFFECTIVE_ATTRIBUTE)
+    injury = InjuryFactory(
+        warrior=warrior, type=InjuryTypeFactory(attribute=ModifiedAttributeChoices.ATTRIBUTE_STRENGTH, magnitude=1)
+    )
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["injuries"] == [injury]
+    assert response.context["warrior"].effective_strength == Warrior.MINIMUM_EFFECTIVE_ATTRIBUTE

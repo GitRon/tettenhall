@@ -20,8 +20,10 @@ the screen one click away from it. Every screen derives its answer from the one 
 - **Numbers** are strength, dexterity, health and morale.
 - **Gear** is the weapon and the armor.
 - **Everything else is public**, on every screen, for everybody: name, epithet, culture, faction,
-  level, experience, renown, salary, condition, town, leader, roster size. These are what a neighbour knows
-  about a neighbour, and withholding them buys nothing.
+  level, experience, renown, salary, condition, lasting injuries, town, leader, roster size. These are what
+  a neighbour knows about a neighbour, and withholding them buys nothing. An injury is named with what it
+  costs - "Stiff ankle (-1 Dexterity)" - and that figure is the injury's, not the man's, so naming it does
+  not hand over the number the fuzz withholds.
 
 A screen asks `knowledge.numbers_are_exact` and `knowledge.gear_is_visible`. It does not ask which
 relation it is holding — asking that is how a fifth screen starts deciding for itself, which is the

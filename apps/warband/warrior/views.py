@@ -156,6 +156,11 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
             is_commanded=context["is_player_faction"],
             is_held=context["is_captive_of_player"] or context["is_mercenary_of_player"],
         )
+        # His lasting injuries, for everybody alike: a mark on a man is public the way his epithet is,
+        # so this is the one list on the page that asks nothing of "knowledge" - see
+        # docs/patterns/warrior-knowledge.md. One query, carrying what each line names: the injury's
+        # own wording, and the savegame whose opening year dates it.
+        context["injuries"] = list(self.object.injuries.select_related("type", "warrior__savegame"))
         # Where the man stands on his wages, behind the same gate for the same reason: it is read off
         # his own morale being stuck, which a rival's card does not give away either. Carried here as
         # well as on the card, because the card links to this page and a page showing less about a man
