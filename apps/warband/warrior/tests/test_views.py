@@ -1156,6 +1156,21 @@ def test_warrior_detail_view_tells_his_story_as_the_player_saw_it(logged_in_clie
 
 
 @pytest.mark.django_db
+def test_warrior_detail_view_keeps_a_change_in_a_rivals_man_from_the_player(logged_in_client, current_savegame):
+    """
+    The player is the viewer here too, and a rival's man changed under the rival's banner, where the player
+    was not there to see it - see docs/patterns/warrior-knowledge.md.
+    """
+    warrior = _rivals_man(savegame=current_savegame)
+    WarriorMilestoneFactory(warrior=warrior, kind=MilestoneKindChoices.CHANGED, month=2, joined_way=None)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["story"].entries == []
+
+
+@pytest.mark.django_db
 def test_warrior_detail_view_brings_what_each_injury_line_names_along(
     logged_in_client, current_savegame, django_assert_num_queries
 ):

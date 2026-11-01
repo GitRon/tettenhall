@@ -690,6 +690,17 @@ def test_handle_award_earned_nickname_names_a_man_who_has_just_become_exceptiona
 
 
 @pytest.mark.django_db
+def test_handle_award_earned_nickname_carries_the_fight_it_was_earned_in():
+    """A level-up naming rides on to its record with the fight that brought the level, so it is dated to it."""
+    warrior = WarriorFactory(strength=20, nickname_state=None)
+    skirmish = SkirmishFactory()
+
+    result = handle_award_earned_nickname(context=AwardEarnedNickname(warrior=warrior, month=3, skirmish=skirmish))
+
+    assert result.skirmish == skirmish
+
+
+@pytest.mark.django_db
 def test_handle_award_earned_nickname_leaves_a_man_who_already_has_one_alone():
     """
     He is named for his nerve and has since grown into an arm that reaches further. He keeps the

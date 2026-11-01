@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("warband", "0048_warrior_potential"),
+        ("warband", "0049_every_man_has_a_ceiling"),
     ]
 
     operations = [
