@@ -8,7 +8,7 @@ register = template.Library()
 
 
 @register.filter
-def potential_reading(levels_left: int | None, knowledge: WarriorKnowledge) -> str:
+def potential_reading(levels_left: int, knowledge: WarriorKnowledge) -> str:
     """
     The word for how far a man can still rise, empty where the viewer is told nothing - see
     [describe_potential].

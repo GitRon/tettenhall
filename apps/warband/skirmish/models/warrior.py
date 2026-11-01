@@ -226,9 +226,10 @@ class Warrior(models.Model):
     experience = models.PositiveIntegerField("Experience", default=0)
     # The highest level this man can ever reach, drawn once by his generator and kept, for the reason the
     # baselines are: it is a fact about who he is, and a number that differs per warrior is a column. More
-    # experience past it buys him no level, so it is what tells a promising levy from a hopeless one. Null
-    # for a man generated before it was drawn, who has no ceiling - nothing is backfilled.
-    potential = models.PositiveSmallIntegerField("Potential", null=True, blank=True, default=None)
+    # experience past it buys him no level, so it is what tells a promising levy from a hopeless one. Every
+    # man has one: those made before it existed were drawn theirs once, by the same rule, in the migration
+    # that made the column required.
+    potential = models.PositiveSmallIntegerField("Potential")
     renown = models.PositiveIntegerField("Renown", default=0)
     monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
     # Consecutive months this warrior went without his wages, reset the moment he is paid again.
@@ -586,13 +587,10 @@ class Warrior(models.Model):
         return self.level_for(experience=self.experience, potential=self.potential)
 
     @property
-    def levels_left(self) -> int | None:
+    def levels_left(self) -> int:
         """
-        How many levels he still has in him, or None for a man without a ceiling.
+        How many levels he still has in him.
         """
-        if self.potential is None:
-            return None
-
         return max(self.potential - self.level, 0)
 
     @property

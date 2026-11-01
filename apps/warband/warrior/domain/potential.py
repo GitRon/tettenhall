@@ -10,12 +10,12 @@ POTENTIAL_A_LITTLE_LEFT = "Has a little more in him"
 POTENTIAL_MUCH_LEFT = "Has much more in him"
 
 
-def describe_potential(*, levels_left: int | None, knowledge: WarriorKnowledge) -> str | None:
+def describe_potential(*, levels_left: int, knowledge: WarriorKnowledge) -> str | None:
     """
-    The word for how far a man can still rise, at what the viewer has earned, or None where nothing is
-    said: a rival's man, and a man generated before the ceiling existed, who has none.
+    The word for how far a man can still rise, at what the viewer has earned, or None for a rival's man,
+    of whom nothing is said.
     """
-    if levels_left is None or not knowledge.potential_is_visible:
+    if not knowledge.potential_is_visible:
         return None
 
     if levels_left == 0:

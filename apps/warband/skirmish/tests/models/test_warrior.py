@@ -362,12 +362,6 @@ def test_levels_left_is_zero_at_his_ceiling():
     assert warrior.levels_left == 0
 
 
-def test_levels_left_is_none_without_a_ceiling():
-    warrior = WarriorFactory.build(experience=100)
-
-    assert warrior.levels_left is None
-
-
 @pytest.mark.django_db
 def test_expected_damage_scales_the_weapon_by_the_strength_behind_it():
     """

@@ -26,6 +26,10 @@ class WarriorFactory(DjangoModelFactory):
     stats_spread = 5
     stats_minimum = 3
     dexterity = 10
+    # A ceiling no test's warrior reaches, so his level is his experience's alone unless a test asks for
+    # one. The suite writes levels as experience - "XP_LEVEL_BASE * 4" for a veteran - and a lower
+    # default would cap them without saying so
+    potential = 10
     current_health = 20
     max_health = 20
     current_morale = 20

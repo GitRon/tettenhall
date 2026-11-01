@@ -138,18 +138,22 @@ class BaseWarriorGenerator:
 
         return value
 
-    def roll_potential(self, *, experience: int) -> int:
+    @classmethod
+    def roll_potential(cls, *, experience: int) -> int:
         """
         How high he can ever climb, re-rolled while it falls below POTENTIAL_MIN, for the reason
         "roll_stat" gives, and then lifted to the level his experience already buys him.
+
+        A classmethod, because the migration that gave every man made before it a ceiling draws with it
+        too, so a man migrated and a man generated are decided the same way.
 
         Lifted rather than re-rolled at that end, and on purpose: a veteran who drew a ceiling below where
         he already stands is a man who has become all he will be, which is exactly what the lift says.
         Re-rolling would hand every veteran room he was never born with.
         """
-        potential = self.POTENTIAL_MIN - 1
-        while potential < self.POTENTIAL_MIN:
-            potential = round(random.gauss(self.POTENTIAL_MU, self.POTENTIAL_SIGMA))
+        potential = cls.POTENTIAL_MIN - 1
+        while potential < cls.POTENTIAL_MIN:
+            potential = round(random.gauss(cls.POTENTIAL_MU, cls.POTENTIAL_SIGMA))
 
         return max(potential, Warrior.level_for(experience=experience))
 

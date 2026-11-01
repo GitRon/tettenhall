@@ -63,7 +63,7 @@ word follows the **levels he has left**, not the ceiling itself (`describe_poten
 Read off the levels left, the word needs no mean to be judged against, unlike the fuzz below: "has become
 what he will be" says the same of a champion and of a levy. A man in the pub or the cells gets the coarser
 word so hiring stays a judgement. A rival's man gets nothing, because how much a stranger has in him is
-not something a neighbour sees. A man generated before men had a ceiling has none, and nothing is said.
+not something a neighbour sees.
 
 **A rival's man's experience is shown against the threshold he would have without a ceiling.** For his
 own men and a man he holds, the page drops the threshold once a man is at his ceiling - there is no next
