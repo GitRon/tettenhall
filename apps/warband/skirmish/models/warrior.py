@@ -44,10 +44,12 @@ class Warrior(models.Model):
     # the seat itself. One word for every faction and every culture.
     LEADER_TITLE = "Ealdorman"
 
-    # Reaching level N costs (N - 1) squared times XP_LEVEL_BASE - 100, 400, 900, 1600 - so every level takes
-    # longer than the one before it and a veteran does not run away with it. Quadratic rather than
-    # anything steeper because isqrt inverts it in one integer expression: no loop walking the
-    # levels, and no float to round the wrong way at a threshold.
+    # Reaching level N costs XP_LEVEL_BASE times the triangular number of N - 1 - 100, 300, 600, 1000 - so every
+    # level takes one XP_LEVEL_BASE longer than the one before it and a veteran does not run away with it.
+    # Triangular rather than quadratic so the top of the ladder is within a campaign's reach while level 2
+    # stays where every archetype's arrival experience was set against it (#491); and still inverted by
+    # isqrt in one integer expression: no loop walking the levels, and no float to round the wrong way at a
+    # threshold. See "experience_for_level" and "level_for".
     XP_LEVEL_BASE = 100
     # What every level adds to the four attributes and to the salary alike
     LEVEL_UP_GROWTH = 0.1
@@ -573,8 +575,12 @@ class Warrior(models.Model):
         experience already, and would then be free to drift out of step with the experience it is
         supposed to describe. Capped here rather than at any reader, so everything that reads the level -
         renown, the deeds, the actions, the gear hand-out - reads the capped one without being told.
+
+        The inverse of [experience_for_level]: level N - 1 = k is reached once 4k(k + 1) fits under
+        8 * experience / XP_LEVEL_BASE, which is (2k + 1) squared fitting under that plus one. Both sides
+        of that are whole once the division is floored, so isqrt reads k off without a float.
         """
-        level = isqrt(experience // Warrior.XP_LEVEL_BASE) + 1
+        level = (isqrt(8 * experience // Warrior.XP_LEVEL_BASE + 1) - 1) // 2 + 1
 
         if potential is None:
             return level
@@ -605,7 +611,16 @@ class Warrior(models.Model):
         if self.levels_left == 0:
             return None
 
-        return self.level**2 * self.XP_LEVEL_BASE
+        return self.experience_for_level(level=self.level + 1)
+
+    @staticmethod
+    def experience_for_level(*, level: int) -> int:
+        """
+        The experience a man needs to stand at "level", ignoring any ceiling: the one place the curve is
+        written forwards, so a threshold shown on a page or set up in a test is read off it rather than
+        worked out again.
+        """
+        return Warrior.XP_LEVEL_BASE * (level - 1) * level // 2
 
     @staticmethod
     def renown_for_taking_down(*, level: int, is_leader: bool) -> int:

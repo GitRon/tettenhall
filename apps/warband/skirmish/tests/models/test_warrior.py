@@ -305,11 +305,31 @@ def test_level_for_the_first_threshold():
 
 
 def test_level_for_one_point_short_of_the_second_threshold():
-    assert Warrior.level_for(experience=399) == 2
+    assert Warrior.level_for(experience=299) == 2
 
 
 def test_level_for_the_second_threshold():
-    assert Warrior.level_for(experience=400) == 3
+    assert Warrior.level_for(experience=300) == 3
+
+
+def test_level_for_one_point_short_of_the_third_threshold():
+    assert Warrior.level_for(experience=599) == 3
+
+
+def test_level_for_the_third_threshold():
+    assert Warrior.level_for(experience=600) == 4
+
+
+def test_level_for_the_fourth_threshold():
+    assert Warrior.level_for(experience=1000) == 5
+
+
+def test_experience_for_level_one_is_nothing():
+    assert Warrior.experience_for_level(level=1) == 0
+
+
+def test_experience_for_level_is_the_threshold_level_for_reads():
+    assert Warrior.experience_for_level(level=4) == 600
 
 
 def test_level_reads_the_warriors_own_experience():
@@ -321,7 +341,7 @@ def test_level_reads_the_warriors_own_experience():
 def test_experience_for_next_level_is_the_threshold_ahead():
     warrior = WarriorFactory.build(experience=100)
 
-    assert warrior.experience_for_next_level == 400
+    assert warrior.experience_for_next_level == 300
 
 
 def test_experience_for_next_level_is_none_at_his_ceiling():

@@ -3,6 +3,7 @@ import pytest
 from apps.warband.item.models.item_type import ItemType
 from apps.warband.item.tests.factories.item import ItemFactory
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
+from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.services.actions.requirements import (
     ACTION_REQUIREMENTS,
     ALWAYS_OFFERED,
@@ -64,9 +65,9 @@ def test_always_offered_actions_carry_no_requirement():
 @pytest.mark.parametrize(
     ("experience", "gained_action"),
     [
-        (100, SkirmishActionChoices.DEFENSIVE_STANCE),
-        (400, SkirmishActionChoices.FAST_ATTACK),
-        (900, SkirmishActionChoices.RISKY_ATTACK),
+        (Warrior.experience_for_level(level=2), SkirmishActionChoices.DEFENSIVE_STANCE),
+        (Warrior.experience_for_level(level=3), SkirmishActionChoices.FAST_ATTACK),
+        (Warrior.experience_for_level(level=4), SkirmishActionChoices.RISKY_ATTACK),
     ],
 )
 @pytest.mark.django_db
