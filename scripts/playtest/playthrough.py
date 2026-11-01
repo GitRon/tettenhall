@@ -127,6 +127,7 @@ def play_months(
     report.rival_items_bought = _count_rival_purchases(savegame=savegame)
     report.traits_earned = _count_earned_traits(savegame=savegame)
     report.deeds_earned = _count_deed_epithets(savegame=savegame)
+    report.player_levels, report.rival_levels = _count_levels(savegame=savegame)
     return report
 
 
@@ -256,3 +257,20 @@ def _count_deed_epithets(*, savegame: Savegame) -> dict[str, int]:
     )
 
     return dict(sorted(Counter(NicknameStateChoices(state).name.lower() for state in states).items()))
+
+
+def _count_levels(*, savegame: Savegame) -> tuple[dict[int, int], dict[int, int]]:
+    """
+    How many living men stand on the player's roster and on the rivals' at the end, by level.
+
+    On a roster only: a captive's faction is cleared when he is taken, and a man in a pub has none, so
+    neither is anybody's to field. The level read is the capped one, so a batch shows where the
+    ceilings stop men as well as how far they climb.
+    """
+    player, rivals = Counter(), Counter()
+    men = Warrior.objects.for_savegame(savegame_id=savegame.id).filter(faction__isnull=False).exclude_dead()
+
+    for man in men:
+        (player if man.faction_id == savegame.player_faction_id else rivals)[man.level] += 1
+
+    return dict(sorted(player.items())), dict(sorted(rivals.items()))

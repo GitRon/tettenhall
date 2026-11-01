@@ -75,6 +75,10 @@ class GameReport:
     # The deed epithets the savegame's men carry at its end, by deed, rivals' men and the fallen included.
     # A man keeps the first deed he did, so this is also which deed reached each man first
     deeds_earned: dict[str, int] = field(default_factory=dict)
+    # The living men on the player's roster and on the rivals' at the end, by level - the capped level, so
+    # a batch shows how far men climb in a campaign and where their ceilings stopped them
+    player_levels: dict[int, int] = field(default_factory=dict)
+    rival_levels: dict[int, int] = field(default_factory=dict)
     rival_defeat_months: list[int] = field(default_factory=list)
     # For each rival knocked out, how many months it lasted after its first leader fell
     rival_months_after_first_fall: list[int] = field(default_factory=list)
