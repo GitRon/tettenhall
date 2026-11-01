@@ -56,6 +56,26 @@ class WarriorKnowledge(Enum):
 
         Named or absent, with no bucket in between: the fuzz compares a value against the mean of
         what it was drawn with, a warrior's row carries its own means, and an item does not. So gear
-        is the one omission in the rule, and this is where that is written down.
+        is withheld rather than fuzzed, and this is where that is written down.
         """
         return self is not WarriorKnowledge.RIVAL
+
+    @property
+    def potential_is_visible(self) -> bool:
+        """
+        Whether anything is said about how far he can still rise.
+
+        Not for a rival's man: how much a stranger has in him is nothing a neighbour can see. A man the
+        player holds he has looked over, which is what hiring is.
+        """
+        return self is not WarriorKnowledge.RIVAL
+
+    @property
+    def potential_is_sharp(self) -> bool:
+        """
+        Whether the word for it tells a little room from a lot, or only room from none.
+
+        Only for the men he commands. For a man in the pub a sharp word would turn hiring from a
+        judgement into a readout, so he is told no more than whether the man has anything left in him.
+        """
+        return self is WarriorKnowledge.COMMANDED

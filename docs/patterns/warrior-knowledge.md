@@ -11,23 +11,25 @@ the screen one click away from it. Every screen derives its answer from the one 
 **What does this warrior stand in relation to the viewer?** Three answers, and `WarriorKnowledge`
 (`apps/warband/warrior/domain/knowledge.py`) is all three of them:
 
-| Relation | Who | Numbers | Gear |
-|---|---|---|---|
-| `COMMANDED` | one of the player's own men | exact | named, and editable |
-| `HELD` | a prisoner in his cells, a mercenary in his pub | **fuzzed** | named, not editable |
-| `RIVAL` | somebody else's man, and anybody held by somebody else | **fuzzed** | **absent** |
+| Relation | Who | Numbers | Gear | Potential |
+|---|---|---|---|---|
+| `COMMANDED` | one of the player's own men | exact | named, and editable | a word: much, a little or nothing left |
+| `HELD` | a prisoner in his cells, a mercenary in his pub | **fuzzed** | named, not editable | **a coarser word**: something or nothing left |
+| `RIVAL` | somebody else's man, and anybody held by somebody else | **fuzzed** | **absent** | **absent** |
 
 - **Numbers** are strength, dexterity, health and morale.
 - **Gear** is the weapon and the armor.
+- **Potential** is the highest level he can ever reach (`Warrior.potential`).
 - **Everything else is public**, on every screen, for everybody: name, epithet, culture, faction,
   level, experience, renown, salary, condition, town, leader, roster size. These are what a neighbour knows
   about a neighbour, and withholding them buys nothing.
 
-A screen asks `knowledge.numbers_are_exact` and `knowledge.gear_is_visible`. It does not ask which
+A screen asks `knowledge.numbers_are_exact` and `knowledge.gear_is_visible`, and for the potential
+`knowledge.potential_is_visible` and `knowledge.potential_is_sharp`. It does not ask which
 relation it is holding — asking that is how a fifth screen starts deciding for itself, which is the
 thing this rule exists to stop.
 
-## Why gear is the one omission
+## Why gear is absent rather than fuzzed
 
 Fuzzing is the better of the two mechanisms and the rule uses it wherever it can: "their leader looks
 strong" is information, and an empty row is not.
@@ -38,6 +40,31 @@ value against the mean of what it was drawn with. A warrior's row carries its ow
 There is no honest average to call a seax high or low against, so gear is named or it is absent.
 
 If a future change gives item types a comparable figure, gear joins the fuzz and this section goes away.
+
+The potential is absent for a rival's man as well, for a different reason: it is told as a word rather
+than a figure even for the player's own men, so there is no number to fuzz. See below.
+
+## Why the potential is a word, even for his own men
+
+The potential is the one figure the player is never shown exactly, not even for a man he commands. Every
+other number on a man is something he has done or been seen doing; how far he can still rise is not, and
+a number for it turns a man into a readout of what he is worth keeping. So it is told as a word, and the
+word follows the **levels he has left**, not the ceiling itself (`describe_potential`,
+`apps/warband/warrior/domain/potential.py`):
+
+| Levels left | `COMMANDED` | `HELD` |
+|---|---|---|
+| 2 or more | Has much more in him | Has more in him |
+| 1 | Has a little more in him | Has more in him |
+| 0 | Has become what he will be | Has become what he will be |
+
+Read off the levels left, the word needs no mean to be judged against, unlike the fuzz below: "has become
+what he will be" says the same of a champion and of a levy. A man in the pub or the cells gets the coarser
+word so hiring stays a judgement. A rival's man gets nothing, because how much a stranger has in him is
+not something a neighbour sees. A man generated before men had a ceiling has none, and nothing is said.
+
+Whether the word sharpens the longer a man serves is the "time under command" option of #313, not
+decided here.
 
 ## Fuzz against the man's own baseline, never a literal
 

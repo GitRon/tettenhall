@@ -60,3 +60,39 @@ def test_gear_is_visible_rival():
     result = WarriorKnowledge.RIVAL.gear_is_visible
 
     assert result is False
+
+
+def test_potential_is_visible_commanded():
+    result = WarriorKnowledge.COMMANDED.potential_is_visible
+
+    assert result is True
+
+
+def test_potential_is_sharp_commanded():
+    result = WarriorKnowledge.COMMANDED.potential_is_sharp
+
+    assert result is True
+
+
+def test_potential_is_visible_held():
+    result = WarriorKnowledge.HELD.potential_is_visible
+
+    assert result is True
+
+
+def test_potential_is_sharp_held():
+    result = WarriorKnowledge.HELD.potential_is_sharp
+
+    assert result is False
+
+
+def test_potential_is_visible_rival():
+    result = WarriorKnowledge.RIVAL.potential_is_visible
+
+    assert result is False
+
+
+def test_potential_is_sharp_rival():
+    result = WarriorKnowledge.RIVAL.potential_is_sharp
+
+    assert result is False
