@@ -49,6 +49,18 @@ class BaseWarriorGenerator:
     BASE_PRICE_MU = 100
     BASE_PRICE_SIGMA = 50
 
+    # The highest level a man can ever reach - see "Warrior.potential". One distribution for every
+    # archetype, and on purpose: a farmer can be born with as much in him as a champion. What tells the
+    # archetypes apart is where they start, since a man never sits below the level he arrives at - a
+    # champion comes in near the top of his and is half the time already everything he will be, a levy
+    # starts at the bottom and has a long way to climb to whatever he was born with. Low on purpose as
+    # well: men end a campaign between level 1 and 3, so a ceiling has to bite there or it changes
+    # nothing (#484, measured; #491 owns how fast men climb, and these move with it).
+    POTENTIAL_MU = 2.5
+    POTENTIAL_SIGMA = 1
+    # No man is born unable to stand where every man starts
+    POTENTIAL_MIN = 1
+
     item_generator_class: type(BaseItemGenerator)
     chance_for_weapon = 1
     chance_for_armor = 1
@@ -126,6 +138,21 @@ class BaseWarriorGenerator:
 
         return value
 
+    def roll_potential(self, *, experience: int) -> int:
+        """
+        How high he can ever climb, re-rolled while it falls below POTENTIAL_MIN, for the reason
+        "roll_stat" gives, and then lifted to the level his experience already buys him.
+
+        Lifted rather than re-rolled at that end, and on purpose: a veteran who drew a ceiling below where
+        he already stands is a man who has become all he will be, which is exactly what the lift says.
+        Re-rolling would hand every veteran room he was never born with.
+        """
+        potential = self.POTENTIAL_MIN - 1
+        while potential < self.POTENTIAL_MIN:
+            potential = round(random.gauss(self.POTENTIAL_MU, self.POTENTIAL_SIGMA))
+
+        return max(potential, Warrior.level_for(experience=experience))
+
     def roll_progress(self) -> int:
         """
         One roll of a progress column, re-rolled until it is a percentage. Rounded before the guard for
@@ -155,6 +182,7 @@ class BaseWarriorGenerator:
 
     def process(self) -> Warrior:
         experience = self.roll_positive(mu=self.XP_MU, sigma=self.XP_SIGMA)
+        potential = self.roll_potential(experience=experience)
         max_health = self.roll_positive(mu=self.HEALTH_MU, sigma=self.HEALTH_SIGMA)
         health_progress = self.roll_progress()
         max_morale = self.roll_positive(mu=self.MORALE_MU, sigma=self.MORALE_SIGMA)
@@ -199,6 +227,7 @@ class BaseWarriorGenerator:
             faction=self.faction,
             savegame_id=self.savegame_id,
             experience=experience,
+            potential=potential,
             renown=Warrior.renown_on_arrival(experience=experience),
             current_health=max_health,
             max_health=max_health,

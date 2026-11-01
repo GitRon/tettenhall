@@ -116,6 +116,54 @@ def test_roll_stat_keeps_a_roll_on_the_generator_minimum():
     assert result == 4
 
 
+def test_roll_potential_rerolls_a_roll_below_the_minimum():
+    """
+    A roll that rounds to nothing is thrown away rather than lifted, for the reason "roll_stat" gives.
+    """
+    generator = FyrdWarriorGenerator(culture=None, faction=None, savegame_id=0)
+
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", side_effect=[0.4, 3]):
+        result = generator.roll_potential(experience=0)
+
+    assert result == 3
+
+
+def test_roll_potential_keeps_a_ceiling_above_where_he_arrives():
+    generator = FyrdWarriorGenerator(culture=None, faction=None, savegame_id=0)
+
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=4.4):
+        result = generator.roll_potential(experience=100)
+
+    assert result == 4
+
+
+def test_roll_potential_lifts_a_ceiling_below_where_he_arrives_onto_his_level():
+    """
+    A veteran who drew less than he already is has become all he will be, rather than being drawn again
+    or dropping a level on the day he arrives.
+    """
+    generator = ChampionWarriorGenerator(culture=None, faction=None, savegame_id=0)
+
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=1):
+        result = generator.roll_potential(experience=400)
+
+    assert result == 3
+
+
+@pytest.mark.django_db
+def test_process_stamps_the_potential_on_the_warrior():
+    """
+    Every roll comes up at 4.4, so the experience is 4 - level 1 - and the ceiling the potential roll
+    gives him is kept.
+    """
+    generator = FyrdWarriorGenerator(culture=Culture.objects.first(), faction=None, savegame_id=SavegameFactory().id)
+
+    with mock.patch("apps.warband.warrior.services.generators.warrior.base.random.gauss", return_value=4.4):
+        result = generator.process()
+
+    assert Warrior.objects.get(pk=result.pk).potential == 4
+
+
 # Every guarded draw a generator makes, as (mean, spread, lowest value kept)
 GUARDED_DRAWS = [
     pytest.param(generator.STATS_MU, generator.STATS_SIGMA, generator.STATS_MIN, id=f"{generator.__name__}-stats")

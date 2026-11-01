@@ -574,6 +574,37 @@ def test_handle_warrior_increasing_experience_announces_both_of_two_crossed_thre
 
 
 @pytest.mark.django_db
+def test_handle_warrior_increasing_experience_announces_no_level_past_his_potential():
+    """
+    A man at his ceiling books the experience and gains no level, so nothing grows him for a level he
+    never gets.
+    """
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=90, potential=1)
+
+    result = handle_warrior_increasing_experience(
+        context=IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=25)
+    )
+
+    assert result == [WarriorGainedExperience(skirmish=skirmish, warrior=warrior, gained_experience=25)]
+
+
+@pytest.mark.django_db
+def test_handle_warrior_increasing_experience_announces_only_the_levels_up_to_his_potential():
+    skirmish = SkirmishFactory()
+    warrior = WarriorFactory(faction=skirmish.attacking_faction, experience=0, potential=2)
+
+    result = handle_warrior_increasing_experience(
+        context=IncreaseExperience(skirmish=skirmish, warrior=warrior, increased_experience=400)
+    )
+
+    assert result == [
+        WarriorGainedExperience(skirmish=skirmish, warrior=warrior, gained_experience=400),
+        WarriorGainedLevel(skirmish=skirmish, warrior=warrior, level=2),
+    ]
+
+
+@pytest.mark.django_db
 def test_handle_increase_warrior_stats_on_level_up_reports_every_gain():
     skirmish = SkirmishFactory()
     warrior = WarriorFactory(
