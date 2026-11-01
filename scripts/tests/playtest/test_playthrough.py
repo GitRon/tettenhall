@@ -36,7 +36,9 @@ def test_play_savegame_plays_games_to_their_end(user, queuebie_registry):
     fail every balance change for doing its job. The cap only keeps a stall from hanging the suite, well
     past the month an aggressive game is decided in.
     """
-    reports = [play_savegame(seed=seed, policy=POLICIES["aggressive"], month_cap=60, user=user) for seed in range(14, 19)]
+    reports = [
+        play_savegame(seed=seed, policy=POLICIES["aggressive"], month_cap=60, user=user) for seed in range(14, 19)
+    ]
 
     step_counts = {
         "drafted": sum(report.drafted for report in reports),
