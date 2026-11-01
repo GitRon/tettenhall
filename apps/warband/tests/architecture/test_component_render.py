@@ -47,8 +47,8 @@ from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.tests.architecture.components import components
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
-from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.hair_colour import HairColour
+from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.portrait_piece import PortraitPiece
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
