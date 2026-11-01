@@ -18,7 +18,9 @@
                 {% for injury in injuries %}
                     <li>
                         {{ injury.type.description }}
-                        <span class="whitespace-nowrap font-mono text-label uppercase tracking-label text-ink-muted">since {{ injury.inflicted_on.label }}</span>
+                        {# Free to wrap: a month, its season and the year in the tracked label run past a #}
+                        {# phone's value column, and held on one line they push the page sideways #}
+                        <span class="font-mono text-label uppercase tracking-label text-ink-muted">since {{ injury.inflicted_on.label }}</span>
                     </li>
                 {% endfor %}
             </ul>
