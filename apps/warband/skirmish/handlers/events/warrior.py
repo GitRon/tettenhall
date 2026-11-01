@@ -24,9 +24,11 @@ from apps.warband.skirmish.services.actions.utils import get_service_by_skirmish
 FIGHT_MORALE_SHARE = 0.1
 
 # What a man earns for taking an opponent out of the fight, and what every healthy man on the winning
-# side earns once it is over
-EXPERIENCE_FOR_TAKING_A_MAN_DOWN = 25
-EXPERIENCE_FOR_A_WON_SKIRMISH = 10
+# side earns once it is over. Set against a campaign of nine to eleven fights and the curve on
+# "Warrior.XP_LEVEL_BASE", so the man who does the most of the fighting reaches level 4 - where the
+# risky attack opens - in a good share of games, if he was born with it in him (#491, measured).
+EXPERIENCE_FOR_TAKING_A_MAN_DOWN = 50
+EXPERIENCE_FOR_A_WON_SKIRMISH = 20
 
 
 @message_registry.register_event(event=skirmish.FighterPairsMatched)

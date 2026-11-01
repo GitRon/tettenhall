@@ -6,6 +6,8 @@ from apps.warband.skirmish.choices.initiative import InitiativeChoices
 from apps.warband.skirmish.choices.skirmish_action import SkirmishActionChoices
 from apps.warband.skirmish.domain.action_roll import ActionRoll
 from apps.warband.skirmish.handlers.events.warrior import (
+    EXPERIENCE_FOR_A_WON_SKIRMISH,
+    EXPERIENCE_FOR_TAKING_A_MAN_DOWN,
     handle_capture_unconscious_warriors,
     handle_counter_blow,
     handle_experience_gain_after_battle_for_victor,
@@ -139,7 +141,7 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_an_incapacitated_w
         )
     )
 
-    assert result == IncreaseExperience(skirmish=skirmish, warrior=attacker, increased_experience=25)
+    assert result == IncreaseExperience(skirmish=skirmish, warrior=attacker, increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN)
 
 
 def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior():
@@ -151,7 +153,7 @@ def test_handle_experience_gain_on_warrior_incapacitation_for_a_killed_warrior()
         context=WarriorWasKilled(skirmish=skirmish, warrior=killed_warrior, by_warrior=killer)
     )
 
-    assert result == IncreaseExperience(skirmish=skirmish, warrior=killer, increased_experience=25)
+    assert result == IncreaseExperience(skirmish=skirmish, warrior=killer, increased_experience=EXPERIENCE_FOR_TAKING_A_MAN_DOWN)
 
 
 def test_handle_renown_gain_on_warrior_incapacitation_for_an_incapacitated_warrior():
@@ -448,7 +450,11 @@ def test_handle_experience_gain_after_battle_for_victor_rewards_every_surviving_
         )
     )
 
-    assert result == [IncreaseExperience(skirmish=skirmish, warrior=healthy_attacking_warrior, increased_experience=10)]
+    assert result == [
+        IncreaseExperience(
+            skirmish=skirmish, warrior=healthy_attacking_warrior, increased_experience=EXPERIENCE_FOR_A_WON_SKIRMISH
+        )
+    ]
 
 
 @pytest.mark.django_db
