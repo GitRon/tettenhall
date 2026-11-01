@@ -577,8 +577,9 @@ class Warrior(models.Model):
         renown, the deeds, the actions, the gear hand-out - reads the capped one without being told.
 
         The inverse of [experience_for_level]: level N - 1 = k is reached once 4k(k + 1) fits under
-        8 * experience / XP_LEVEL_BASE, which is (2k + 1) squared fitting under that plus one. Both sides
-        of that are whole once the division is floored, so isqrt reads k off without a float.
+        8 * experience / XP_LEVEL_BASE, which is (2k + 1) squared fitting under that plus one. A square is
+        whole, so flooring the division moves no comparison against it, and isqrt reads k off without a
+        float.
         """
         level = (isqrt(8 * experience // Warrior.XP_LEVEL_BASE + 1) - 1) // 2 + 1
 
