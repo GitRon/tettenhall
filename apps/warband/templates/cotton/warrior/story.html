@@ -1,0 +1,34 @@
+<c-vars story />
+{% comment %}
+    What a man has done, newest first: one entry per moment, dated, with the lines that belong to it
+    underneath - how a fight ended for him, whom he killed, the level and the name it brought him.
+
+    A list rather than table rows, because every entry is a sentence and not a column, the way the Roll of
+    the Fallen sets its lines. The same for every viewer, since the story carries nothing the knowledge
+    rule fuzzes; what the viewer did not see is already left out of it - see "WarriorStory" and
+    docs/patterns/warrior-knowledge.md.
+{% endcomment %}
+<section class="mt-8">
+    <h2>His story</h2>
+    {% if story.entries %}
+        <ul class="m-0 list-none border border-rule-strong p-0 [&>li+li]:border-t [&>li+li]:border-rule">
+            {% for entry in story.entries %}
+                <li class="flex flex-col gap-y-1 px-[15px] py-3 md:px-5">
+                    <span class="font-mono text-label uppercase tracking-label text-ink-muted">{{ entry.when.label }}</span>
+                    <span class="leading-snug">{{ entry.headline }}</span>
+                    {% if entry.details %}
+                        <ul class="m-0 list-none p-0 text-ink-muted">
+                            {% for detail in entry.details %}
+                                <li class="leading-snug">{{ detail }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        {# A man generated before his moments were written down, who has not yet fought, gone on an #}
+        {# errand or been marked since #}
+        <p class="text-sm leading-snug text-ink-muted">Nothing he has done is written down yet.</p>
+    {% endif %}
+</section>

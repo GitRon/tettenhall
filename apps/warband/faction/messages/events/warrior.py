@@ -80,9 +80,17 @@ class PubMercenaryHireApproved(Event):
 
 @dataclass(kw_only=True)
 class WarriorRecruited(Event):
+    """
+    A man came onto a faction's roster.
+
+    "way" says which road brought him, as a "JoinedWayChoices" value: every road onto a roster raises
+    this one event, and the record of his joining is the one consumer that cares which it was.
+    """
+
     warrior: Warrior
     faction: Faction
     recruitment_price: int
+    way: int
     month: int
 
 

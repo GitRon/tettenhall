@@ -94,13 +94,20 @@ class WarriorEarnedNickname(Event):
 
     The faction is on the event for the reason every warrior event carries one - whoever reacts is an
     event handler and may not go and ask.
+
+    The state rides along beside the wording for the record of the naming, which keeps the state and
+    phrases it the way his card does. The fight and the fallen man are the reason, where there is one -
+    see [AwardDeedNickname].
     """
 
     warrior: Warrior
     faction: Faction
     nickname: str
+    nickname_state: int
     previous_nickname: str | None
     month: int
+    skirmish: Skirmish | None = None
+    fallen_warrior: Warrior | None = None
 
 
 @dataclass(kw_only=True)
@@ -187,6 +194,7 @@ class WarriorRenownFaded(Event):
 class NewLeaderWarriorCreated(Event):
     warrior: Warrior
     faction: Faction
+    month: int
 
 
 @dataclass(kw_only=True)
@@ -195,4 +203,11 @@ class WarriorCreated(Event):
     savegame: Savegame
     faction: Faction | None
     pub_owner: Faction
+    month: int
+
+
+@dataclass(kw_only=True)
+class WarriorMilestoneRecorded(Event):
+    warrior: Warrior
+    kind: int
     month: int

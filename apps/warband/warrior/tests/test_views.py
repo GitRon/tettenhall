@@ -19,13 +19,16 @@ from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
 from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
+from apps.warband.warrior.choices.warrior_milestone import MilestoneKindChoices
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
+from apps.warband.warrior.projections.warrior_story import CHANGED_WORDING
 from apps.warband.warrior.services.equipping import WEARER_REFUSAL
 from apps.warband.warrior.services.portrait import draw_portrait
 from apps.warband.warrior.services.tending import NO_SANCTUARY_REFUSAL, get_tending_refusal
 from apps.warband.warrior.services.tending import UNAFFORDABLE_REFUSAL as UNAFFORDABLE_TENDING_REFUSAL
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
+from apps.warband.warrior.tests.factories.warrior_milestone import WarriorMilestoneFactory
 from apps.warband.warrior.views import CapturedWarriorActionMixin
 
 
@@ -1135,6 +1138,36 @@ def test_warrior_detail_view_lists_his_injuries_to_everybody(logged_in_client, c
 
     assert response.status_code == 200
     assert response.context["injuries"] == [first, second]
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_tells_his_story_as_the_player_saw_it(logged_in_client, current_savegame):
+    """
+    The player is the viewer: a change a fight made in his own man happened under his banner, so the
+    story tells it - see "WarriorStory".
+    """
+    warrior = _own_man(savegame=current_savegame)
+    WarriorMilestoneFactory(warrior=warrior, kind=MilestoneKindChoices.CHANGED, month=2, joined_way=None)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert [entry.headline for entry in response.context["story"].entries] == [CHANGED_WORDING]
+
+
+@pytest.mark.django_db
+def test_warrior_detail_view_keeps_a_change_in_a_rivals_man_from_the_player(logged_in_client, current_savegame):
+    """
+    The player is the viewer here too, and a rival's man changed under the rival's banner, where the player
+    was not there to see it - see docs/patterns/warrior-knowledge.md.
+    """
+    warrior = _rivals_man(savegame=current_savegame)
+    WarriorMilestoneFactory(warrior=warrior, kind=MilestoneKindChoices.CHANGED, month=2, joined_way=None)
+
+    response = logged_in_client.get(reverse("warband:warrior-detail-view", kwargs={"pk": warrior.id}))
+
+    assert response.status_code == 200
+    assert response.context["story"].entries == []
 
 
 @pytest.mark.django_db

@@ -22,6 +22,7 @@ from django.conf import settings
 from django.test import override_settings
 
 from apps.common.tests.html import render_component
+from apps.warband.calendar.date import CalendarDate
 from apps.warband.calendar.months.summer import Eosturmonath
 from apps.warband.calendar.months.winter import Blotmonath
 from apps.warband.faction.tests.factories.faction import FactionFactory
@@ -50,6 +51,7 @@ from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.models.hair_colour import HairColour
 from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.portrait_piece import PortraitPiece
+from apps.warband.warrior.projections.warrior_story import StoryEntry, WarriorStory
 from apps.warband.warrior.tests.factories.injury import InjuryFactory
 from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
@@ -302,6 +304,24 @@ RENDER_ROWS = {
                 ),
                 "knowledge": WarriorKnowledge.COMMANDED,
                 "is_player_faction": True,
+            },
+        ),
+    ],
+    "warrior.story": [
+        ('<c-warrior.story :story="story" />', {"story": WarriorStory(entries=[])}),
+        (
+            '<c-warrior.story :story="story" />',
+            {
+                "story": WarriorStory(
+                    entries=[
+                        StoryEntry(
+                            when=CalendarDate.for_month(month=3, start_year=760),
+                            headline="Fought for Mercia against Wessex, and won",
+                            details=("Killed Oswy",),
+                            order=(3, 2, 1),
+                        )
+                    ]
+                )
             },
         ),
     ],

@@ -4,3 +4,4 @@ from .injury_type import InjuryType
 from .portrait_piece import PortraitPiece
 from .trait import Trait
 from .trait_type import TraitType
+from .warrior_milestone import WarriorMilestone

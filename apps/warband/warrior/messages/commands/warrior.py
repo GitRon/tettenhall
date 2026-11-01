@@ -32,6 +32,8 @@ class CreateNewLeaderWarrior(Command):
     faction: Faction
     # What the player named him, or None to draw him a name like any other warrior
     name: str | None
+    # The month the faction was founded in, which is the month he has led it since
+    month: int
 
 
 @dataclass(kw_only=True)
@@ -79,10 +81,14 @@ class AwardEarnedNickname(Command):
     Raised wherever an attribute goes up, and a no-op for the men it does not apply to, so the two
     places that move one do not have to know the rule. The faction is not on it: the line the player
     reads needs one, and a command handler may look it up where an event handler may not.
+
+    The fight rides along where a fight is what moved the attribute - a level earned in it - so the
+    naming is dated to it on his page. Training and the hall's relic happen outside any.
     """
 
     warrior: Warrior
     month: int
+    skirmish: Skirmish | None = None
 
 
 @dataclass(kw_only=True)
@@ -94,11 +100,17 @@ class AwardDeedNickname(Command):
     numbers make of him, which a deed is not among, and the two give way to different things. The
     state is named by whoever saw the deed, and the faction is left off for the reason it is left off
     the other one.
+
+    The fight it was done in and the man it was done to ride along where there are any, so the record
+    of the naming can say why - see [WarriorMilestone]. A deed done outside a fight, the hall's relic,
+    carries neither.
     """
 
     warrior: Warrior
     nickname_state: int
     month: int
+    skirmish: Skirmish | None = None
+    fallen_warrior: Warrior | None = None
 
 
 @dataclass(kw_only=True)
@@ -238,3 +250,24 @@ class DismissWarrior(Command):
     faction: Faction
     savegame: Savegame
     month: int
+
+
+@dataclass(kw_only=True)
+class RecordWarriorMilestone(Command):
+    """
+    Keep one moment of a man's life that nothing else in the game remembers - see [WarriorMilestone].
+
+    One command for every kind rather than one per kind: they all write the same row, and which columns
+    a kind fills is the producer's to know, since it is the one holding the facts.
+    """
+
+    warrior: Warrior
+    # The war band he stood in when it happened, or None for a man under no banner
+    faction: Faction | None
+    kind: int
+    month: int
+    other_faction: Faction | None = None
+    skirmish: Skirmish | None = None
+    other_warrior: Warrior | None = None
+    nickname_state: int | None = None
+    joined_way: int | None = None

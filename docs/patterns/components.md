@@ -53,6 +53,7 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-warrior.roster-gauge>` | `apps.warband` | A gauge in the roster and captive tables: the bar against his own maximum beside `<c-warrior.gauge>` - quiet when full, `ink` below, `blood` below a third - the word alone where the numbers are fuzzed |
 | `<c-warrior.roster-gear>` | `apps.warband` | A weapon or armour cell in those tables, its roll and floored average under the name, which the column head names; a dash for an empty slot |
 | `<c-warrior.gauge>` | `apps.warband` | A current/maximum pair, exact or fuzzed - see [warrior knowledge](warrior-knowledge.md) |
+| `<c-warrior.story>` | `apps.warband` | What a man has done, newest first, from a `WarriorStory`: each moment dated, with the lines that belong to it; public, so it takes no `knowledge`, and a line saying nothing is written down yet when it is empty |
 
 ## Parameters
 

@@ -51,7 +51,7 @@ def test_handle_level_up_earns_a_nickname_takes_the_month_off_the_fight():
         )
     )
 
-    assert result == AwardEarnedNickname(warrior=warrior, month=7)
+    assert result == AwardEarnedNickname(warrior=warrior, month=7, skirmish=skirmish)
 
 
 def test_handle_beating_may_leave_a_mark_carries_the_depth_and_the_month():
@@ -108,7 +108,13 @@ def test_handle_a_killing_blow_may_name_the_killer_for_a_leader():
         context=WarriorWasKilled(skirmish=skirmish, warrior=leader, by_warrior=killer, fell_as_a_leader=True)
     )
 
-    assert result == AwardDeedNickname(warrior=killer, nickname_state=NicknameStateChoices.LORD_SLAYER, month=7)
+    assert result == AwardDeedNickname(
+        warrior=killer,
+        nickname_state=NicknameStateChoices.LORD_SLAYER,
+        month=7,
+        skirmish=skirmish,
+        fallen_warrior=leader,
+    )
 
 
 def test_handle_a_killing_blow_may_name_the_killer_for_a_leader_far_above_him():
@@ -124,7 +130,13 @@ def test_handle_a_killing_blow_may_name_the_killer_for_a_leader_far_above_him():
         context=WarriorWasKilled(skirmish=skirmish, warrior=leader, by_warrior=killer, fell_as_a_leader=True)
     )
 
-    assert result == AwardDeedNickname(warrior=killer, nickname_state=NicknameStateChoices.LORD_SLAYER, month=7)
+    assert result == AwardDeedNickname(
+        warrior=killer,
+        nickname_state=NicknameStateChoices.LORD_SLAYER,
+        month=7,
+        skirmish=skirmish,
+        fallen_warrior=leader,
+    )
 
 
 def test_handle_a_killing_blow_may_name_the_killer_for_a_giant():
@@ -136,7 +148,13 @@ def test_handle_a_killing_blow_may_name_the_killer_for_a_giant():
         context=WarriorWasKilled(skirmish=skirmish, warrior=giant, by_warrior=killer)
     )
 
-    assert result == AwardDeedNickname(warrior=killer, nickname_state=NicknameStateChoices.GIANTBANE, month=7)
+    assert result == AwardDeedNickname(
+        warrior=killer,
+        nickname_state=NicknameStateChoices.GIANTBANE,
+        month=7,
+        skirmish=skirmish,
+        fallen_warrior=giant,
+    )
 
 
 def test_handle_a_killing_blow_may_name_the_killer_for_an_ordinary_death():
@@ -163,7 +181,13 @@ def test_handle_felling_a_giant_earns_a_nickname_names_the_man_who_felled_him():
         context=WarriorWasIncapacitated(skirmish=skirmish, warrior=giant, by_warrior=striker, overkill_health=0)
     )
 
-    assert result == AwardDeedNickname(warrior=striker, nickname_state=NicknameStateChoices.GIANTBANE, month=7)
+    assert result == AwardDeedNickname(
+        warrior=striker,
+        nickname_state=NicknameStateChoices.GIANTBANE,
+        month=7,
+        skirmish=skirmish,
+        fallen_warrior=giant,
+    )
 
 
 def test_handle_felling_a_giant_earns_a_nickname_for_a_man_within_reach():
@@ -187,7 +211,9 @@ def test_handle_bringing_down_the_walls_earns_a_nickname_names_the_last_swing():
         context=FortificationFell(skirmish=skirmish, round_number=3, warrior=warrior)
     )
 
-    assert result == AwardDeedNickname(warrior=warrior, nickname_state=NicknameStateChoices.WALLBREAKER, month=7)
+    assert result == AwardDeedNickname(
+        warrior=warrior, nickname_state=NicknameStateChoices.WALLBREAKER, month=7, skirmish=skirmish
+    )
 
 
 def test_handle_fight_may_name_a_man_relays_the_fight_and_its_month():

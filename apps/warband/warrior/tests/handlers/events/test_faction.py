@@ -1,17 +1,34 @@
 import pytest
 
-from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid, NewFactionCreated
-from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened, WarriorMonthPrepared
+from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
+    FactionLeaderSucceeded,
+    FactionWasOccupied,
+    MonthlyWarriorSalariesUnpaid,
+    NewFactionCreated,
+)
+from apps.warband.faction.messages.events.warrior import (
+    PubMercenarySlotOpened,
+    WarriorMonthPrepared,
+    WarriorRecruited,
+    WarriorWasSoldIntoSlavery,
+)
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices, MilestoneKindChoices
 from apps.warband.warrior.handlers.events.faction import (
     handle_create_leader_for_new_faction,
     handle_fade_an_idle_warriors_renown_for_new_month,
     handle_heal_a_wounded_warrior_for_new_month,
     handle_pub_mercenary_slot_opened,
+    handle_record_a_captive_who_got_away,
+    handle_record_a_leader_seized,
+    handle_record_a_man_sold,
+    handle_record_a_seat_taken,
+    handle_record_how_a_warrior_joined,
     handle_replenish_a_warriors_morale_for_new_month,
     handle_unpaid_warriors,
 )
@@ -21,6 +38,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     FadeIdleWarriorRenown,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
+    RecordWarriorMilestone,
     ReplenishWarriorMorale,
 )
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
@@ -33,7 +51,7 @@ def test_handle_create_leader_for_new_faction_carries_the_players_name_for_him()
         context=NewFactionCreated(faction=faction, current_month=1, is_player=True, leader_name="Cerdic")
     )
 
-    assert result == CreateNewLeaderWarrior(faction=faction, name="Cerdic")
+    assert result == CreateNewLeaderWarrior(faction=faction, name="Cerdic", month=1)
 
 
 def test_handle_pub_mercenary_slot_opened_carries_the_pub_owner_along():
@@ -271,3 +289,91 @@ def test_handle_fade_an_idle_warriors_renown_for_new_month_passes_over_a_man_wit
     )
 
     assert result is None
+
+
+def test_handle_record_how_a_warrior_joined_keeps_the_road_he_came_by():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(faction=faction)
+
+    result = handle_record_how_a_warrior_joined(
+        context=WarriorRecruited(
+            warrior=warrior, faction=faction, recruitment_price=180, way=JoinedWayChoices.HIRED, month=3
+        )
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=warrior,
+        faction=faction,
+        kind=MilestoneKindChoices.JOINED,
+        month=3,
+        joined_way=JoinedWayChoices.HIRED,
+    )
+
+
+def test_handle_record_a_seat_taken_names_the_man_whose_seat_it_was():
+    faction = FactionFactory.build()
+    fallen_leader = WarriorFactory.build()
+    successor = WarriorFactory.build(faction=faction)
+
+    result = handle_record_a_seat_taken(
+        context=FactionLeaderSucceeded(
+            faction=faction,
+            player_faction=FactionFactory.build(),
+            fallen_leader=fallen_leader,
+            successor=successor,
+            leader_was_killed=True,
+            month=8,
+        )
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=successor,
+        faction=faction,
+        kind=MilestoneKindChoices.TOOK_SEAT,
+        month=8,
+        other_warrior=fallen_leader,
+    )
+
+
+def test_handle_record_a_man_sold_names_the_band_that_sold_him():
+    faction = FactionFactory.build()
+    captive = WarriorFactory.build()
+
+    result = handle_record_a_man_sold(
+        context=WarriorWasSoldIntoSlavery(warrior=captive, selling_faction=faction, price=40, month=4)
+    )
+
+    assert result == RecordWarriorMilestone(warrior=captive, faction=faction, kind=MilestoneKindChoices.SOLD, month=4)
+
+
+def test_handle_record_a_captive_who_got_away_names_whose_cells_they_were():
+    faction = FactionFactory.build()
+    captive = WarriorFactory.build()
+
+    result = handle_record_a_captive_who_got_away(
+        context=CaptiveFledOverfullCells(faction=faction, warrior=captive, cell_places=2, month=7)
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=captive, faction=faction, kind=MilestoneKindChoices.ESCAPED, month=7
+    )
+
+
+def test_handle_record_a_leader_seized_names_his_town_and_who_took_it():
+    faction = FactionFactory.build()
+    occupier = FactionFactory.build()
+    leader = WarriorFactory.build(faction=faction)
+
+    result = handle_record_a_leader_seized(
+        context=FactionWasOccupied(
+            faction=faction, occupying_faction=occupier, leader=leader, plundered_silver=100, month=9
+        )
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=leader,
+        faction=faction,
+        other_faction=occupier,
+        kind=MilestoneKindChoices.SEIZED,
+        month=9,
+    )

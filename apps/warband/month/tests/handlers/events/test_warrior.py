@@ -14,6 +14,7 @@ from apps.warband.month.messages.commands.month import CreatePlayerMonthLog
 from apps.warband.month.models.player_month_log import PlayerMonthLog
 from apps.warband.skirmish.tests.factories.skirmish import SkirmishFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.nickname import NicknameStateChoices
 from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
     WarriorGainedTrait,
@@ -127,7 +128,12 @@ def test_handle_warrior_earned_nickname_logs_what_he_is_called_now():
 
     result = handle_warrior_earned_nickname(
         context=WarriorEarnedNickname(
-            warrior=warrior, faction=faction, nickname="the Bold", previous_nickname=None, month=3
+            warrior=warrior,
+            faction=faction,
+            nickname="the Bold",
+            nickname_state=NicknameStateChoices.STRENGTH,
+            previous_nickname=None,
+            month=3,
         )
     )
 
@@ -149,7 +155,12 @@ def test_handle_warrior_earned_nickname_logs_a_rename_with_the_name_he_gives_up(
 
     result = handle_warrior_earned_nickname(
         context=WarriorEarnedNickname(
-            warrior=warrior, faction=faction, nickname="the Believer", previous_nickname="the Fearless", month=3
+            warrior=warrior,
+            faction=faction,
+            nickname="the Believer",
+            nickname_state=NicknameStateChoices.RELIC_BEARER,
+            previous_nickname="the Fearless",
+            month=3,
         )
     )
 

@@ -28,7 +28,7 @@ def handle_level_up_earns_a_nickname(*, context: WarriorImprovedStats) -> Comman
     and the skirmish it happened in already knows which month it belongs to. Reading it is an attribute
     access on an instance the event carries, not a query.
     """
-    return AwardEarnedNickname(warrior=context.warrior, month=context.skirmish.month)
+    return AwardEarnedNickname(warrior=context.warrior, month=context.skirmish.month, skirmish=context.skirmish)
 
 
 @message_registry.register_event(event=WarriorWasKilled)
@@ -55,7 +55,13 @@ def handle_a_killing_blow_may_name_the_killer(*, context: WarriorWasKilled) -> C
     else:
         return None
 
-    return AwardDeedNickname(warrior=context.by_warrior, nickname_state=nickname_state, month=context.skirmish.month)
+    return AwardDeedNickname(
+        warrior=context.by_warrior,
+        nickname_state=nickname_state,
+        month=context.skirmish.month,
+        skirmish=context.skirmish,
+        fallen_warrior=context.warrior,
+    )
 
 
 @message_registry.register_event(event=WarriorWasIncapacitated)
@@ -74,6 +80,8 @@ def handle_felling_a_giant_earns_a_nickname(*, context: WarriorWasIncapacitated)
         warrior=context.by_warrior,
         nickname_state=NicknameStateChoices.GIANTBANE,
         month=context.skirmish.month,
+        skirmish=context.skirmish,
+        fallen_warrior=context.warrior,
     )
 
 
@@ -89,6 +97,7 @@ def handle_bringing_down_the_walls_earns_a_nickname(*, context: FortificationFel
         warrior=context.warrior,
         nickname_state=NicknameStateChoices.WALLBREAKER,
         month=context.skirmish.month,
+        skirmish=context.skirmish,
     )
 
 

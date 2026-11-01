@@ -6,9 +6,11 @@ from queuebie.messages import Event
 from apps.warband.faction.messages.events.warrior import WarriorRecruited, WarriorWasSoldIntoSlavery
 from apps.warband.faction.models.faction import Faction
 from apps.warband.finance.models import Transaction
+from apps.warband.skirmish.models.skirmish import Skirmish
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.town.buildings.sanctuary import Sanctuary
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices
 from apps.warband.warrior.messages.commands.warrior import (
     AwardDeedNickname,
     AwardEarnedNickname,
@@ -24,6 +26,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     HealInjuredWarrior,
     InflictInjury,
     PunishUnpaidWarrior,
+    RecordWarriorMilestone,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
     TendWarriorWounds,
@@ -36,6 +39,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
+    WarriorMilestoneRecorded,
     WarriorMoraleReplenished,
     WarriorRenownFaded,
     WarriorRenownGranted,
@@ -46,6 +50,7 @@ from apps.warband.warrior.messages.events.warrior import (
 )
 from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.trait import Trait
+from apps.warband.warrior.models.warrior_milestone import WarriorMilestone
 from apps.warband.warrior.services.generators.warrior.leader import LeaderWarriorGenerator
 from apps.warband.warrior.services.injury import InjuryRollService
 from apps.warband.warrior.services.nickname import OLD_WOLF_FIGHTS, UNBROKEN_MIN_SIDE, draw_nickname_state
@@ -209,8 +214,10 @@ def handle_award_earned_nickname(*, context: AwardEarnedNickname) -> Event | Non
         warrior=context.warrior,
         faction=context.warrior.faction,
         nickname=context.warrior.nickname,
+        nickname_state=nickname_state,
         previous_nickname=None,
         month=context.month,
+        skirmish=context.skirmish,
     )
 
 
@@ -231,10 +238,23 @@ def handle_award_deed_nickname(*, context: AwardDeedNickname) -> Event | None:
     fight carries is shared by every message of the round, and a full refresh drops the relations they
     are relying on having cached.
     """
-    return _award_deed(warrior=context.warrior, nickname_state=context.nickname_state, month=context.month)
+    return _award_deed(
+        warrior=context.warrior,
+        nickname_state=context.nickname_state,
+        month=context.month,
+        skirmish=context.skirmish,
+        fallen_warrior=context.fallen_warrior,
+    )
 
 
-def _award_deed(*, warrior: Warrior, nickname_state: int, month: int) -> Event | None:
+def _award_deed(
+    *,
+    warrior: Warrior,
+    nickname_state: int,
+    month: int,
+    skirmish: Skirmish | None,
+    fallen_warrior: Warrior | None = None,
+) -> Event | None:
     """
     Write a deed epithet under the first-deed-wins rule, and say so if it took. Shared by every handler
     that names a man for a deed, so the rule is stated once - see [handle_award_deed_nickname].
@@ -249,8 +269,11 @@ def _award_deed(*, warrior: Warrior, nickname_state: int, month: int) -> Event |
         warrior=warrior,
         faction=warrior.faction,
         nickname=warrior.nickname,
+        nickname_state=nickname_state,
         previous_nickname=previous_nickname,
         month=month,
+        skirmish=skirmish,
+        fallen_warrior=fallen_warrior,
     )
 
 
@@ -310,7 +333,7 @@ def handle_earn_deeds_in_skirmish(*, context: EarnDeedsInSkirmish) -> list[Event
         else:
             continue
 
-        event = _award_deed(warrior=warrior, nickname_state=nickname_state, month=context.month)
+        event = _award_deed(warrior=warrior, nickname_state=nickname_state, month=context.month, skirmish=skirmish)
         if event is not None:
             messages.append(event)
 
@@ -535,6 +558,7 @@ def handle_recruit_captured_warrior(*, context: RecruitCapturedWarrior) -> list[
         faction=context.faction,
         # Recruiting a captured warrior is always for free
         recruitment_price=0,
+        way=JoinedWayChoices.SWORN_FROM_CELLS,
         month=context.month,
     )
 
@@ -609,4 +633,28 @@ def handle_create_new_leader_warrior(*, context: CreateNewLeaderWarrior) -> list
     return NewLeaderWarriorCreated(
         faction=context.faction,
         warrior=warrior,
+        month=context.month,
     )
+
+
+@message_registry.register_command(command=RecordWarriorMilestone)
+def handle_record_warrior_milestone(*, context: RecordWarriorMilestone) -> Event:
+    """
+    Write down one moment of a man's life, as the producer named it - see [WarriorMilestone].
+
+    Nothing to guard: each producer raises it once for a thing that has already happened, and a record
+    is never edited, so there is no state the write could race against.
+    """
+    WarriorMilestone.objects.create_record(
+        warrior=context.warrior,
+        kind=context.kind,
+        month=context.month,
+        faction=context.faction,
+        other_faction=context.other_faction,
+        skirmish=context.skirmish,
+        other_warrior=context.other_warrior,
+        nickname_state=context.nickname_state,
+        joined_way=context.joined_way,
+    )
+
+    return WarriorMilestoneRecorded(warrior=context.warrior, kind=context.kind, month=context.month)

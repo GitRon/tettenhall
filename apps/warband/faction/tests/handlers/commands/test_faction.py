@@ -59,6 +59,7 @@ from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices
 
 
 @pytest.mark.django_db
@@ -339,7 +340,13 @@ def test_handle_defeat_faction_of_lost_leader_raises_a_leader_from_the_fyrd():
             leader_was_killed=True,
             month=4,
         ),
-        WarriorRecruited(faction=faction, warrior=faction.leader, recruitment_price=0, month=4),
+        WarriorRecruited(
+            faction=faction,
+            warrior=faction.leader,
+            recruitment_price=0,
+            way=JoinedWayChoices.RAISED_TO_LEAD,
+            month=4,
+        ),
     ]
     assert (faction.leader.faction, faction.fyrd_reserve, faction.is_defeated) == (faction, 1, False)
 

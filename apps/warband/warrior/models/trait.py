@@ -14,8 +14,8 @@ class Trait(models.Model):
     a drunkard twice is not a thing - so the pair is unique.
 
     Kept for good, and never edited once written, so it goes in through "create_record" - see
-    docs/patterns/app-layout.md. No month on it: nothing reads when a man became what he is while a
-    trait is hidden, and a column nobody reads is a column somebody builds on speculatively.
+    docs/patterns/app-layout.md. No month on it: when a fight made something of him is kept on his
+    "WarriorMilestone", which his page reads, and a trait drawn with the man has no such moment.
     """
 
     warrior = models.ForeignKey(Warrior, verbose_name="Warrior", on_delete=models.CASCADE)

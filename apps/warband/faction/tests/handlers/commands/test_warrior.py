@@ -35,6 +35,7 @@ from apps.warband.item.tests.factories.item_type import ItemTypeFactory
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.town.models import Town
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices
 from apps.warband.warrior.services.generators.warrior.champion import ChampionWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
@@ -201,7 +202,9 @@ def test_handle_recruit_warrior_from_quest():
     )
 
     warrior = Warrior.objects.get(faction=faction)
-    assert result == WarriorRecruited(faction=faction, warrior=warrior, recruitment_price=0, month=3)
+    assert result == WarriorRecruited(
+        faction=faction, warrior=warrior, recruitment_price=0, way=JoinedWayChoices.ERRAND_REWARD, month=3
+    )
     assert warrior.strength_baseline == ChampionWarriorGenerator.STATS_MU
 
 
@@ -212,7 +215,11 @@ def test_handle_draft_warrior_from_fyrd_with_filled_reserve():
     result = handle_draft_warrior_from_fyrd(context=DraftWarriorFromFyrd(faction=faction, month=3))
 
     assert result == WarriorRecruited(
-        faction=faction, warrior=Warrior.objects.get(faction=faction), recruitment_price=0, month=3
+        faction=faction,
+        warrior=Warrior.objects.get(faction=faction),
+        recruitment_price=0,
+        way=JoinedWayChoices.DRAFTED,
+        month=3,
     )
     faction.refresh_from_db()
     assert faction.fyrd_reserve == 2
@@ -294,7 +301,9 @@ def test_handle_recruit_pub_mercenary_takes_him_onto_the_roster():
 
     result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
 
-    assert result == WarriorRecruited(warrior=mercenary, faction=faction, recruitment_price=180, month=3)
+    assert result == WarriorRecruited(
+        warrior=mercenary, faction=faction, recruitment_price=180, way=JoinedWayChoices.HIRED, month=3
+    )
     mercenary.refresh_from_db()
     assert mercenary.faction == faction
 
@@ -319,7 +328,9 @@ def test_handle_recruit_pub_mercenary_bills_the_wait_he_was_left_to():
 
     result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=veteran, faction=faction, month=7))
 
-    assert result == WarriorRecruited(warrior=veteran, faction=faction, recruitment_price=450, month=7)
+    assert result == WarriorRecruited(
+        warrior=veteran, faction=faction, recruitment_price=450, way=JoinedWayChoices.HIRED, month=7
+    )
 
 
 @pytest.mark.django_db
@@ -423,7 +434,9 @@ def test_handle_recruit_pub_mercenary_who_carries_nothing():
 
     result = handle_recruit_pub_mercenary(context=RecruitPubMercenary(warrior=mercenary, faction=faction, month=3))
 
-    assert result == WarriorRecruited(warrior=mercenary, faction=faction, recruitment_price=0, month=3)
+    assert result == WarriorRecruited(
+        warrior=mercenary, faction=faction, recruitment_price=0, way=JoinedWayChoices.HIRED, month=3
+    )
     mercenary.refresh_from_db()
     assert (mercenary.weapon, mercenary.armor) == (None, None)
 
