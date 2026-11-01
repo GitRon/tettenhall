@@ -34,6 +34,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     TendWarriorWounds,
 )
 from apps.warband.warrior.messages.events.warrior import WarriorWoundsTended
+from apps.warband.warrior.projections.warrior_story import WarriorStory
 from apps.warband.warrior.services.dismissal import get_dismissal_refusals
 from apps.warband.warrior.services.equipping import get_equip_refusal
 from apps.warband.warrior.services.tending import (
@@ -161,6 +162,12 @@ class WarriorDetailView(SavegameScopedQuerysetMixin, generic.DetailView):
         # docs/patterns/warrior-knowledge.md. One query, carrying what each line names: the injury's
         # own wording, and the savegame whose opening year dates it.
         context["injuries"] = list(self.object.injuries.select_related("type", "warrior__savegame"))
+        # What he has done, told alike to everybody but for the one thing a viewer has to have seen: a
+        # change a fight made in him, which shows only where it happened under the player's banner - see
+        # "WarriorStory".
+        context["story"] = WarriorStory.for_warrior(
+            warrior=self.object, viewer_faction_id=player_faction.id if player_faction else None
+        )
         # Where the man stands on his wages, behind the same gate for the same reason: it is read off
         # his own morale being stuck, which a rival's card does not give away either. Carried here as
         # well as on the card, because the card links to this page and a page showing less about a man

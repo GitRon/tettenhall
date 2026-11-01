@@ -25,6 +25,21 @@ the screen one click away from it. Every screen derives its answer from the one 
   a neighbour knows about a neighbour, and withholding them buys nothing. An injury is named with what it
   costs - "Stiff ankle (-1 Dexterity)" - and that figure is the injury's, not the man's, so naming it does
   not hand over the number the fuzz withholds.
+- **His story is public too**, with one exception below: the fights he stood in and how each ended for
+  him, the men he killed, the levels he reached, the epithets he earned and why, how he joined a war band
+  and whose seat he took, his errands and his wounds. A rival's page carries all of it. None of it is a
+  number the fuzz withholds - level and experience are public already, and the story tells no blow, no
+  damage and no attribute.
+
+## A change in a man is told only where the viewer saw it
+
+A fight can make something of a man - a trait - and while traits are hidden (#313) the story says only
+that he "came back from the fight a different man". Even that much is absent unless it happened under the
+viewer's own banner: the player watched his own men come home from the fight, and a rival's man, a
+mercenary in the pub or a prisoner in the cells changed somewhere he was not. This is "a thing he has not
+seen is absent" applied to a moment rather than a number, so it is decided by where the man stood when it
+happened - the faction stamped on his `WarriorMilestone` - and not by the relation he stands in today. One
+of his own men who changed while he served a rival shows nothing of it either.
 
 A screen asks `knowledge.numbers_are_exact` and `knowledge.gear_is_visible`, and for the potential
 `knowledge.potential_is_visible` and `knowledge.potential_is_sharp`. It does not ask which
