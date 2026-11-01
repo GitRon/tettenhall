@@ -350,6 +350,12 @@ def test_experience_for_next_level_is_none_at_his_ceiling():
     assert warrior.experience_for_next_level is None
 
 
+def test_experience_for_next_level_ignoring_potential_is_the_threshold_without_a_ceiling():
+    warrior = WarriorFactory.build(experience=100, potential=2)
+
+    assert warrior.experience_for_next_level_ignoring_potential == 400
+
+
 def test_level_for_stops_at_the_potential():
     assert Warrior.level_for(experience=900, potential=2) == 2
 
@@ -374,12 +380,6 @@ def test_levels_left_is_zero_at_his_ceiling():
     warrior = WarriorFactory.build(experience=900, potential=2)
 
     assert warrior.levels_left == 0
-
-
-def test_levels_left_is_none_without_a_ceiling():
-    warrior = WarriorFactory.build(experience=100)
-
-    assert warrior.levels_left is None
 
 
 @pytest.mark.django_db

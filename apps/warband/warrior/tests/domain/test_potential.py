@@ -43,9 +43,3 @@ def test_describe_potential_says_nothing_of_a_rivals_man():
     result = describe_potential(levels_left=2, knowledge=WarriorKnowledge.RIVAL)
 
     assert result is None
-
-
-def test_describe_potential_says_nothing_of_a_man_without_a_ceiling():
-    result = describe_potential(levels_left=None, knowledge=WarriorKnowledge.COMMANDED)
-
-    assert result is None
