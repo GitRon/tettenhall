@@ -224,6 +224,11 @@ class Warrior(models.Model):
     morale_spread = models.PositiveSmallIntegerField("Morale spread")
 
     experience = models.PositiveIntegerField("Experience", default=0)
+    # The highest level this man can ever reach, drawn once by his generator and kept, for the reason the
+    # baselines are: it is a fact about who he is, and a number that differs per warrior is a column. More
+    # experience past it buys him no level, so it is what tells a promising levy from a hopeless one. Null
+    # for a man generated before it was drawn, who has no ceiling - nothing is backfilled.
+    potential = models.PositiveSmallIntegerField("Potential", null=True, blank=True, default=None)
     renown = models.PositiveIntegerField("Renown", default=0)
     monthly_salary = models.PositiveSmallIntegerField("Monthly salary", default=0)
     # Consecutive months this warrior went without his wages, reset the moment he is paid again.
@@ -559,27 +564,47 @@ class Warrior(models.Model):
         return max(round(recruitment_price * Warrior.SALARY_SHARE_OF_PRICE), Warrior.MINIMUM_MONTHLY_SALARY)
 
     @staticmethod
-    def level_for(*, experience: int) -> int:
+    def level_for(*, experience: int, potential: int | None = None) -> int:
         """
-        The level a given amount of experience buys, as a staticmethod so a handler can ask for the
-        level of a number rather than of an instance.
+        The level a given amount of experience buys a man of a given potential, as a staticmethod so a
+        handler can ask for the level of a number rather than of an instance.
 
         Derived rather than stored: a column would need a backfill for every warrior generated with
         experience already, and would then be free to drift out of step with the experience it is
-        supposed to describe.
+        supposed to describe. Capped here rather than at any reader, so everything that reads the level -
+        renown, the deeds, the actions, the gear hand-out - reads the capped one without being told.
         """
-        return isqrt(experience // Warrior.XP_LEVEL_BASE) + 1
+        level = isqrt(experience // Warrior.XP_LEVEL_BASE) + 1
+
+        if potential is None:
+            return level
+
+        return min(level, potential)
 
     @property
     def level(self) -> int:
-        return self.level_for(experience=self.experience)
+        return self.level_for(experience=self.experience, potential=self.potential)
 
     @property
-    def experience_for_next_level(self) -> int:
+    def levels_left(self) -> int | None:
+        """
+        How many levels he still has in him, or None for a man without a ceiling.
+        """
+        if self.potential is None:
+            return None
+
+        return max(self.potential - self.level, 0)
+
+    @property
+    def experience_for_next_level(self) -> int | None:
         """
         The threshold the next level sits behind, so a level can be shown as progress towards
-        something rather than as a number that appears from nowhere on a battlefield.
+        something rather than as a number that appears from nowhere on a battlefield. None for a man
+        at his ceiling, who has no next level to work towards.
         """
+        if self.levels_left == 0:
+            return None
+
         return self.level**2 * self.XP_LEVEL_BASE
 
     @staticmethod

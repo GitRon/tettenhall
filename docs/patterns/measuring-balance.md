@@ -132,6 +132,9 @@ Each game in the JSON has its seed, its policy, its outcome and the number of mo
 - the earned traits the player's men carry at the end, by hook, as `traits_earned`;
 - the deed epithets every man of the savegame carries at the end, by deed, as `deeds_earned` - a man keeps
   the first deed he does, so this is also which deed reached each man first;
+- the living men on the player's roster and on the rivals' at the end, by level, as `player_levels` and
+  `rival_levels`. The level is the capped one, so a batch shows how far men climb in a campaign and where
+  their potential stopped them. A captive and a man in a pub are on nobody's roster and are not counted;
 - a `timeline` with one row per month: the player's living men, his silver, and each rival's living men,
   silver and hall level, each sorted on its own.
 

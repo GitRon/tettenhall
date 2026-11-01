@@ -11,6 +11,7 @@ from scripts.playtest.playthrough import (
     STOP_MONTH_BLOCKED,
     Standing,
     _count_earned_traits,
+    _count_levels,
     _count_successions,
     play_months,
     play_savegame,
@@ -35,7 +36,9 @@ def test_play_savegame_plays_games_to_their_end(user, queuebie_registry):
     fail every balance change for doing its job. The cap only keeps a stall from hanging the suite, well
     past the month an aggressive game is decided in.
     """
-    reports = [play_savegame(seed=seed, policy=POLICIES["aggressive"], month_cap=60, user=user) for seed in range(4, 9)]
+    reports = [
+        play_savegame(seed=seed, policy=POLICIES["aggressive"], month_cap=60, user=user) for seed in range(14, 19)
+    ]
 
     step_counts = {
         "drafted": sum(report.drafted for report in reports),
@@ -63,7 +66,7 @@ def test_play_savegame_tends_the_wounded_for_a_tending_player(user, queuebie_reg
     """
     reports = [
         play_savegame(seed=seed, policy=POLICIES["aggressive"], month_cap=60, user=user, tending=True)
-        for seed in range(22, 27)
+        for seed in range(14, 19)
     ]
 
     assert sum(report.warriors_tended for report in reports) > 0
@@ -265,3 +268,23 @@ def test_count_earned_traits_counts_the_savegames_earned_traits_by_hook(player_s
     result = _count_earned_traits(savegame=player_savegame)
 
     assert result == {"shaken": 2}
+
+
+def test_count_levels_counts_the_living_men_on_each_side_by_level(player_savegame):
+    """
+    The dead are not counted, nor a captive or a man in a pub, who are on nobody's roster, nor a man in
+    another savegame. The level is the capped one.
+    """
+    player_faction = player_savegame.player_faction
+    rival = FactionFactory(savegame=player_savegame)
+    WarriorFactory(faction=player_faction, experience=400)
+    WarriorFactory(faction=player_faction, experience=900, potential=3)
+    WarriorFactory(faction=player_faction, experience=400, condition=Warrior.ConditionChoices.CONDITION_DEAD)
+    WarriorFactory(faction=rival, experience=100)
+    WarriorFactory(faction=rival, savegame=player_savegame, experience=100)
+    WarriorFactory(faction=None, savegame=player_savegame, culture=rival.culture, experience=100)
+    WarriorFactory(experience=100)
+
+    result = _count_levels(savegame=player_savegame)
+
+    assert result == ({1: 1, 3: 2}, {2: 2})

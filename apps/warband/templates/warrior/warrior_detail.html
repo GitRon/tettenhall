@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load potential %}
 
 {# The url carries only the man's id, so which section his page belongs to is the view's answer and #}
 {# not the router's - his own men are the war band, a rival's are the rivals, and a mercenary #}
@@ -54,11 +55,32 @@
             <td>Level</td>
             <td>{{ object.level }}</td>
         </tr>
+        {% comment %}
+            How far he can still rise, as a word and never as the number: sharper for his own men, only
+            whether there is anything left for a man in the pub or the cells, and nothing at all for a
+            rival's man or for one generated before men had a ceiling - see
+            docs/patterns/warrior-knowledge.md.
+        {% endcomment %}
+        {% with potential_word=object.levels_left|potential_reading:knowledge %}
+            {% if potential_word %}
+                <tr>
+                    <td>Potential</td>
+                    <td>{{ potential_word }}</td>
+                </tr>
+            {% endif %}
+        {% endwith %}
         <tr>
             <td>Experience</td>
             {# Against the next threshold rather than on its own, so the level reads as progress #}
-            {# towards something instead of a number appearing from nowhere on a battlefield. #}
-            <td>{{ object.experience }} / {{ object.experience_for_next_level }} XP</td>
+            {# towards something instead of a number appearing from nowhere on a battlefield. A man at #}
+            {# his ceiling has no next threshold, so his experience stands on its own. #}
+            <td>
+                {% if object.experience_for_next_level %}
+                    {{ object.experience }} / {{ object.experience_for_next_level }} XP
+                {% else %}
+                    {{ object.experience }} XP
+                {% endif %}
+            </td>
         </tr>
         <tr>
             <td>Renown</td>

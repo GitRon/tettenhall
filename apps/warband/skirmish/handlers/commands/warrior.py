@@ -289,7 +289,12 @@ def handle_warrior_increasing_experience(*, context: warrior.IncreaseExperience)
     """
     context.warrior = Warrior.objects.increase_experience(obj=context.warrior, experience=context.increased_experience)
 
-    previous_level = Warrior.level_for(experience=context.warrior.experience - context.increased_experience)
+    # Capped by his potential as well, so a man at his ceiling announces no level he never gets - and is
+    # grown by nothing, since the growth hangs off the announcement
+    previous_level = Warrior.level_for(
+        experience=context.warrior.experience - context.increased_experience,
+        potential=context.warrior.potential,
+    )
 
     messages = [
         WarriorGainedExperience(
