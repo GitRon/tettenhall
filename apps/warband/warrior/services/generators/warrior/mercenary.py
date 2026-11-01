@@ -3,6 +3,8 @@ from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGen
 
 
 class MercenaryWarriorGenerator(BaseWarriorGenerator):
+    # On level 2's threshold with a wide spread, on purpose: the pub has green men and seasoned ones for
+    # hire, about half of each, unlike the leader, whose narrow spread says he is always the one (#493)
     XP_MU = 100
     XP_SIGMA = 75
     HEALTH_MU = 40
