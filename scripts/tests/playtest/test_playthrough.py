@@ -64,7 +64,7 @@ def test_play_savegame_tends_the_wounded_for_a_tending_player(user, queuebie_reg
     """
     reports = [
         play_savegame(seed=seed, policy=POLICIES["aggressive"], month_cap=60, user=user, tending=True)
-        for seed in range(22, 27)
+        for seed in range(14, 19)
     ]
 
     assert sum(report.warriors_tended for report in reports) > 0
