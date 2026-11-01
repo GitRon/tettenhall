@@ -1,17 +1,28 @@
 import pytest
 
-from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid, NewFactionCreated
-from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened, WarriorMonthPrepared
+from apps.warband.faction.messages.events.faction import (
+    FactionLeaderSucceeded,
+    MonthlyWarriorSalariesUnpaid,
+    NewFactionCreated,
+)
+from apps.warband.faction.messages.events.warrior import (
+    PubMercenarySlotOpened,
+    WarriorMonthPrepared,
+    WarriorRecruited,
+)
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices, MilestoneKindChoices
 from apps.warband.warrior.handlers.events.faction import (
     handle_create_leader_for_new_faction,
     handle_fade_an_idle_warriors_renown_for_new_month,
     handle_heal_a_wounded_warrior_for_new_month,
     handle_pub_mercenary_slot_opened,
+    handle_record_a_seat_taken,
+    handle_record_how_a_warrior_joined,
     handle_replenish_a_warriors_morale_for_new_month,
     handle_unpaid_warriors,
 )
@@ -21,6 +32,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     FadeIdleWarriorRenown,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
+    RecordWarriorMilestone,
     ReplenishWarriorMorale,
 )
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
@@ -33,7 +45,7 @@ def test_handle_create_leader_for_new_faction_carries_the_players_name_for_him()
         context=NewFactionCreated(faction=faction, current_month=1, is_player=True, leader_name="Cerdic")
     )
 
-    assert result == CreateNewLeaderWarrior(faction=faction, name="Cerdic")
+    assert result == CreateNewLeaderWarrior(faction=faction, name="Cerdic", month=1)
 
 
 def test_handle_pub_mercenary_slot_opened_carries_the_pub_owner_along():
@@ -271,3 +283,47 @@ def test_handle_fade_an_idle_warriors_renown_for_new_month_passes_over_a_man_wit
     )
 
     assert result is None
+
+
+def test_handle_record_how_a_warrior_joined_keeps_the_road_he_came_by():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build(faction=faction)
+
+    result = handle_record_how_a_warrior_joined(
+        context=WarriorRecruited(
+            warrior=warrior, faction=faction, recruitment_price=180, way=JoinedWayChoices.HIRED, month=3
+        )
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=warrior,
+        faction=faction,
+        kind=MilestoneKindChoices.JOINED,
+        month=3,
+        joined_way=JoinedWayChoices.HIRED,
+    )
+
+
+def test_handle_record_a_seat_taken_names_the_man_whose_seat_it_was():
+    faction = FactionFactory.build()
+    fallen_leader = WarriorFactory.build()
+    successor = WarriorFactory.build(faction=faction)
+
+    result = handle_record_a_seat_taken(
+        context=FactionLeaderSucceeded(
+            faction=faction,
+            player_faction=FactionFactory.build(),
+            fallen_leader=fallen_leader,
+            successor=successor,
+            leader_was_killed=True,
+            month=8,
+        )
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=successor,
+        faction=faction,
+        kind=MilestoneKindChoices.TOOK_SEAT,
+        month=8,
+        other_warrior=fallen_leader,
+    )

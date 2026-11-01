@@ -26,6 +26,7 @@ from apps.warband.faction.messages.events.warrior import (
 from apps.warband.faction.tests.factories.faction import FactionFactory
 from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices
 from apps.warband.warrior.messages.events.warrior import (
     WarriorCreated,
     WarriorWalkedOutOverUnpaidSalary,
@@ -153,7 +154,13 @@ def test_handle_hand_out_gear_for_recruited_warrior_maps_to_command():
     faction = FactionFactory.build()
 
     result = handle_hand_out_gear_for_recruited_warrior(
-        context=WarriorRecruited(faction=faction, warrior=WarriorFactory.build(), recruitment_price=0, month=4)
+        context=WarriorRecruited(
+            faction=faction,
+            warrior=WarriorFactory.build(),
+            recruitment_price=0,
+            way=JoinedWayChoices.DRAFTED,
+            month=4,
+        )
     )
 
     assert result == HandOutFactionGear(faction=faction)

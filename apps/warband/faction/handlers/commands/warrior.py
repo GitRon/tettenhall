@@ -25,6 +25,7 @@ from apps.warband.finance.models import Transaction
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.projections.payroll import Payroll
 from apps.warband.town.buildings.hall import Hall
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices
 from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 from apps.warband.warrior.services.generators.warrior.mercenary import MercenaryWarriorGenerator
 
@@ -104,6 +105,7 @@ def handle_draft_warrior_from_fyrd(*, context: DraftWarriorFromFyrd) -> list[Eve
         faction=context.faction,
         warrior=warrior,
         recruitment_price=0,
+        way=JoinedWayChoices.DRAFTED,
         month=context.month,
     )
 
@@ -120,6 +122,7 @@ def handle_recruit_warrior_from_quest(*, context: RecruitWarriorFromQuest) -> Ev
         faction=context.faction,
         warrior=warrior,
         recruitment_price=0,
+        way=JoinedWayChoices.ERRAND_REWARD,
         month=context.month,
     )
 
@@ -168,6 +171,7 @@ def handle_recruit_pub_mercenary(*, context: RecruitPubMercenary) -> list[Event]
         warrior=context.warrior,
         faction=context.faction,
         recruitment_price=hiring_price,
+        way=JoinedWayChoices.HIRED,
         month=context.month,
     )
 

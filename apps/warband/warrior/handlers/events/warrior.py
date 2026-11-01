@@ -1,8 +1,14 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname
-from apps.warband.warrior.messages.events.warrior import WarriorMaxMoraleChanged
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices, MilestoneKindChoices
+from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, RecordWarriorMilestone
+from apps.warband.warrior.messages.events.warrior import (
+    NewLeaderWarriorCreated,
+    WarriorEarnedNickname,
+    WarriorGainedTrait,
+    WarriorMaxMoraleChanged,
+)
 
 
 @message_registry.register_event(event=WarriorMaxMoraleChanged)
@@ -25,3 +31,51 @@ def handle_raised_ceiling_earns_a_nickname(*, context: WarriorMaxMoraleChanged) 
         return None
 
     return AwardEarnedNickname(warrior=context.warrior, month=context.month)
+
+
+@message_registry.register_event(event=NewLeaderWarriorCreated)
+def handle_record_a_founding_leader(*, context: NewLeaderWarriorCreated) -> Command:
+    """
+    The man a faction is founded around has led it from its first day, which is how he joined it.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior,
+        faction=context.faction,
+        kind=MilestoneKindChoices.JOINED,
+        month=context.month,
+        joined_way=JoinedWayChoices.FOUNDED,
+    )
+
+
+@message_registry.register_event(event=WarriorEarnedNickname)
+def handle_record_a_naming(*, context: WarriorEarnedNickname) -> Command:
+    """
+    The epithet on his card says what he is called; this keeps when he came to be called it, and for
+    which deed, which the card cannot - a second deed would overwrite the first, and the month log that
+    announced it is cleared at the turn of the month.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior,
+        faction=context.faction,
+        kind=MilestoneKindChoices.NAMED,
+        month=context.month,
+        skirmish=context.skirmish,
+        other_warrior=context.fallen_warrior,
+        nickname_state=context.nickname_state,
+    )
+
+
+@message_registry.register_event(event=WarriorGainedTrait)
+def handle_record_a_change_in_a_man(*, context: WarriorGainedTrait) -> Command:
+    """
+    The fight made something of him. Which trait it was stays off the record's face while traits are
+    hidden - see [MilestoneKindChoices.CHANGED] - and who may read even that much is the story's
+    question, see "WarriorStory".
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior,
+        faction=context.faction,
+        kind=MilestoneKindChoices.CHANGED,
+        month=context.month,
+        skirmish=context.skirmish,
+    )

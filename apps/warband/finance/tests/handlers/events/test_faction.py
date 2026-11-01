@@ -15,6 +15,7 @@ from apps.warband.finance.handlers.events.faction import (
 )
 from apps.warband.finance.messages.commands.transaction import CreateTransaction
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices
 
 
 def test_handle_warrior_recruited_debits_the_recruitment_price():
@@ -22,7 +23,9 @@ def test_handle_warrior_recruited_debits_the_recruitment_price():
     warrior = WarriorFactory.build(faction=faction)
 
     result = handle_warrior_recruited(
-        context=WarriorRecruited(faction=faction, warrior=warrior, recruitment_price=300, month=3)
+        context=WarriorRecruited(
+            faction=faction, warrior=warrior, recruitment_price=300, way=JoinedWayChoices.HIRED, month=3
+        )
     )
 
     assert result == CreateTransaction(faction=faction, amount=-300, reason=f"{warrior} recruited", month=3)
@@ -37,7 +40,11 @@ def test_handle_warrior_recruited_writes_nothing_for_a_free_draft():
 
     result = handle_warrior_recruited(
         context=WarriorRecruited(
-            faction=faction, warrior=WarriorFactory.build(faction=faction), recruitment_price=0, month=3
+            faction=faction,
+            warrior=WarriorFactory.build(faction=faction),
+            recruitment_price=0,
+            way=JoinedWayChoices.DRAFTED,
+            month=3,
         )
     )
 

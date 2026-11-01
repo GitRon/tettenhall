@@ -7,6 +7,7 @@ from apps.warband.warrior.models.injury_type import InjuryType
 from apps.warband.warrior.models.portrait_piece import PortraitPiece
 from apps.warband.warrior.models.trait import Trait
 from apps.warband.warrior.models.trait_type import TraitType
+from apps.warband.warrior.models.warrior_milestone import WarriorMilestone
 
 
 @admin.register(InjuryType)
@@ -45,3 +46,10 @@ class PortraitPieceAdmin(ReadOnlyAdmin):
 @admin.register(HairColour)
 class HairColourAdmin(ReadOnlyAdmin):
     list_display = ("name", "hex")
+
+
+@admin.register(WarriorMilestone)
+class WarriorMilestoneAdmin(ReadOnlyAdmin):
+    # Read-only because a milestone is a record: written once by the moment it keeps
+    list_display = ("warrior", "kind", "month", "faction")
+    list_filter = ("kind", "faction")

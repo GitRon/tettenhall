@@ -62,6 +62,7 @@ from apps.warband.town.buildings.hall import Hall
 from apps.warband.town.buildings.sanctuary import NPC_STARTING_SANCTUARY_LEVEL
 from apps.warband.town.models import Town
 from apps.warband.town.services.building_upgrade import get_building_upgrade_refusal
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices
 from apps.warband.warrior.services.generators.warrior.fyrd import FyrdWarriorGenerator
 
 # How many rivals a new savegame deals the player
@@ -452,7 +453,13 @@ def handle_defeat_faction_of_lost_leader(*, context: DefeatFactionOfLostLeader) 
                 leader_was_killed=leader_was_killed,
                 month=savegame.current_month,
             ),
-            WarriorRecruited(faction=faction, warrior=levy, recruitment_price=0, month=savegame.current_month),
+            WarriorRecruited(
+                faction=faction,
+                warrior=levy,
+                recruitment_price=0,
+                way=JoinedWayChoices.RAISED_TO_LEAD,
+                month=savegame.current_month,
+            ),
         ]
 
     faction.is_defeated = True

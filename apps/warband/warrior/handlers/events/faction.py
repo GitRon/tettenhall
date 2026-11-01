@@ -1,21 +1,31 @@
 from queuebie import message_registry
 from queuebie.messages import Command
 
-from apps.warband.faction.messages.events.faction import MonthlyWarriorSalariesUnpaid, NewFactionCreated
-from apps.warband.faction.messages.events.warrior import PubMercenarySlotOpened, WarriorMonthPrepared
+from apps.warband.faction.messages.events.faction import (
+    FactionLeaderSucceeded,
+    MonthlyWarriorSalariesUnpaid,
+    NewFactionCreated,
+)
+from apps.warband.faction.messages.events.warrior import (
+    PubMercenarySlotOpened,
+    WarriorMonthPrepared,
+    WarriorRecruited,
+)
+from apps.warband.warrior.choices.warrior_milestone import MilestoneKindChoices
 from apps.warband.warrior.messages.commands.warrior import (
     CreateNewLeaderWarrior,
     CreateWarrior,
     FadeIdleWarriorRenown,
     HealInjuredWarrior,
     PunishUnpaidWarrior,
+    RecordWarriorMilestone,
     ReplenishWarriorMorale,
 )
 
 
 @message_registry.register_event(event=NewFactionCreated)
 def handle_create_leader_for_new_faction(*, context: NewFactionCreated) -> Command:
-    return CreateNewLeaderWarrior(faction=context.faction, name=context.leader_name)
+    return CreateNewLeaderWarrior(faction=context.faction, name=context.leader_name, month=context.current_month)
 
 
 @message_registry.register_event(event=WarriorMonthPrepared)
@@ -108,4 +118,36 @@ def handle_pub_mercenary_slot_opened(*, context: PubMercenarySlotOpened) -> Comm
         culture=context.culture,
         generator_class=context.generator_class,
         month=context.month,
+    )
+
+
+@message_registry.register_event(event=WarriorRecruited)
+def handle_record_how_a_warrior_joined(*, context: WarriorRecruited) -> Command:
+    """
+    Every road onto a roster raises this one event, so this is where his page learns how he came to the
+    war band - the one moment of his life the row he lives on forgets as soon as it is written.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior,
+        faction=context.faction,
+        kind=MilestoneKindChoices.JOINED,
+        month=context.month,
+        joined_way=context.way,
+    )
+
+
+@message_registry.register_event(event=FactionLeaderSucceeded)
+def handle_record_a_seat_taken(*, context: FactionLeaderSucceeded) -> Command:
+    """
+    The man next in line took the seat of the leader who fell, and his page says whose.
+
+    Not raised for the levy the fyrd raises to an empty seat: his joining already says he was raised to
+    lead, see [JoinedWayChoices.RAISED_TO_LEAD].
+    """
+    return RecordWarriorMilestone(
+        warrior=context.successor,
+        faction=context.faction,
+        kind=MilestoneKindChoices.TOOK_SEAT,
+        month=context.month,
+        other_warrior=context.fallen_leader,
     )

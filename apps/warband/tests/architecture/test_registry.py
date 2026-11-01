@@ -86,6 +86,7 @@ TERMINAL_MESSAGES: dict[str, str] = {
         "left to do with them."
     ),
     "apps.warband.month.messages.events.month.PlayerMonthLogCreated": _RECORD_WRITTEN,
+    "apps.warband.warrior.messages.events.warrior.WarriorMilestoneRecorded": _RECORD_WRITTEN,
     "apps.warband.quest.messages.events.quest.QuestsOffered": (
         "This month's offers live on their rows, and the board and the month standing read them from there "
         "when they render. Nothing else holds a copy that would need telling."

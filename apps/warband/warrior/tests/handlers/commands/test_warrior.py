@@ -20,6 +20,7 @@ from apps.warband.skirmish.tests.factories.skirmish_blow import SkirmishBlowFact
 from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.warrior.choices.modified_attribute import ModifiedAttributeChoices
 from apps.warband.warrior.choices.nickname import NicknameStateChoices
+from apps.warband.warrior.choices.warrior_milestone import JoinedWayChoices, MilestoneKindChoices
 from apps.warband.warrior.handlers.commands.warrior import (
     handle_award_deed_nickname,
     handle_award_earned_nickname,
@@ -34,6 +35,7 @@ from apps.warband.warrior.handlers.commands.warrior import (
     handle_heal_injured_warrior,
     handle_inflict_injury,
     handle_punish_unpaid_warrior,
+    handle_record_warrior_milestone,
     handle_recruit_captured_warrior,
     handle_replenish_warrior_morale,
     handle_tend_warrior_wounds,
@@ -52,6 +54,7 @@ from apps.warband.warrior.messages.commands.warrior import (
     HealInjuredWarrior,
     InflictInjury,
     PunishUnpaidWarrior,
+    RecordWarriorMilestone,
     RecruitCapturedWarrior,
     ReplenishWarriorMorale,
     TendWarriorWounds,
@@ -63,6 +66,7 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorHealthHealed,
     WarriorLostMoraleOverUnpaidSalary,
     WarriorMaxMoraleChanged,
+    WarriorMilestoneRecorded,
     WarriorMoraleReplenished,
     WarriorRenownFaded,
     WarriorRenownGranted,
@@ -547,7 +551,13 @@ def test_handle_recruit_captured_warrior_gives_a_captive_his_nerve_back():
     result = handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captive, faction=faction, month=3))
 
     assert result == [
-        WarriorRecruited(warrior=captive, faction=faction, recruitment_price=0, month=3),
+        WarriorRecruited(
+            warrior=captive,
+            faction=faction,
+            recruitment_price=0,
+            way=JoinedWayChoices.SWORN_FROM_CELLS,
+            month=3,
+        ),
         WarriorMoraleReplenished(warrior=captive, faction=faction, recovered_morale=15, month=3),
     ]
     captive.refresh_from_db()
@@ -568,7 +578,9 @@ def test_handle_recruit_captured_warrior_reports_no_recovery_from_a_captive_at_f
 
     result = handle_recruit_captured_warrior(context=RecruitCapturedWarrior(warrior=captive, faction=faction, month=3))
 
-    assert result == WarriorRecruited(warrior=captive, faction=faction, recruitment_price=0, month=3)
+    assert result == WarriorRecruited(
+        warrior=captive, faction=faction, recruitment_price=0, way=JoinedWayChoices.SWORN_FROM_CELLS, month=3
+    )
     captive.refresh_from_db()
     assert captive.current_morale == 15
 
@@ -666,7 +678,12 @@ def test_handle_award_earned_nickname_names_a_man_who_has_just_become_exceptiona
     result = handle_award_earned_nickname(context=AwardEarnedNickname(warrior=warrior, month=3))
 
     assert result == WarriorEarnedNickname(
-        warrior=warrior, faction=warrior.faction, nickname=STRENGTH_NICKNAMES[0], previous_nickname=None, month=3
+        warrior=warrior,
+        faction=warrior.faction,
+        nickname=STRENGTH_NICKNAMES[0],
+        nickname_state=NicknameStateChoices.STRENGTH,
+        previous_nickname=None,
+        month=3,
     )
     warrior.refresh_from_db()
     assert warrior.nickname_state == NicknameStateChoices.STRENGTH
@@ -723,10 +740,38 @@ def test_handle_award_deed_nickname_names_a_man_who_had_no_epithet():
     )
 
     assert result == WarriorEarnedNickname(
-        warrior=warrior, faction=warrior.faction, nickname=RELIC_BEARER_NICKNAMES[0], previous_nickname=None, month=3
+        warrior=warrior,
+        faction=warrior.faction,
+        nickname=RELIC_BEARER_NICKNAMES[0],
+        nickname_state=NicknameStateChoices.RELIC_BEARER,
+        previous_nickname=None,
+        month=3,
     )
     warrior.refresh_from_db()
     assert warrior.nickname_state == NicknameStateChoices.RELIC_BEARER
+
+
+@pytest.mark.django_db
+def test_handle_award_deed_nickname_carries_the_fight_and_the_fallen_man():
+    """
+    The deed's reason rides on to the record of the naming: the fight it was done in and the man it was
+    done to.
+    """
+    warrior = WarriorFactory(nickname_state=None, nickname_variant=0)
+    giant = WarriorFactory(savegame=warrior.savegame)
+    skirmish = SkirmishFactory()
+
+    result = handle_award_deed_nickname(
+        context=AwardDeedNickname(
+            warrior=warrior,
+            nickname_state=NicknameStateChoices.GIANTBANE,
+            month=3,
+            skirmish=skirmish,
+            fallen_warrior=giant,
+        )
+    )
+
+    assert (result.skirmish, result.fallen_warrior) == (skirmish, giant)
 
 
 @pytest.mark.django_db
@@ -747,6 +792,7 @@ def test_handle_award_deed_nickname_replaces_an_epithet_he_rolled():
         warrior=warrior,
         faction=warrior.faction,
         nickname=RELIC_BEARER_NICKNAMES[0],
+        nickname_state=NicknameStateChoices.RELIC_BEARER,
         previous_nickname=MORALE_FAR_NICKNAMES[0],
         month=3,
     )
@@ -857,7 +903,13 @@ def test_handle_earn_deeds_in_skirmish_names_the_last_man_standing():
 
     assert result == [
         WarriorEarnedNickname(
-            warrior=survivor, faction=faction, nickname=UNBROKEN_NICKNAMES[0], previous_nickname=None, month=6
+            warrior=survivor,
+            faction=faction,
+            nickname=UNBROKEN_NICKNAMES[0],
+            nickname_state=NicknameStateChoices.UNBROKEN,
+            previous_nickname=None,
+            month=6,
+            skirmish=skirmish,
         )
     ]
     survivor.refresh_from_db()
@@ -924,7 +976,13 @@ def test_handle_earn_deeds_in_skirmish_names_a_veteran_at_his_numbered_fight():
 
     assert result == [
         WarriorEarnedNickname(
-            warrior=veteran, faction=faction, nickname=OLD_WOLF_NICKNAMES[0], previous_nickname=None, month=6
+            warrior=veteran,
+            faction=faction,
+            nickname=OLD_WOLF_NICKNAMES[0],
+            nickname_state=NicknameStateChoices.OLD_WOLF,
+            previous_nickname=None,
+            month=6,
+            skirmish=skirmish,
         )
     ]
 
@@ -1190,7 +1248,26 @@ def test_handle_tend_warrior_wounds_refuses_the_dead():
 def test_handle_create_new_leader_warrior_names_him_what_the_player_chose():
     faction = FactionFactory()
 
-    result = handle_create_new_leader_warrior(context=CreateNewLeaderWarrior(faction=faction, name="Cerdic"))
+    result = handle_create_new_leader_warrior(context=CreateNewLeaderWarrior(faction=faction, name="Cerdic", month=1))
 
-    assert result == NewLeaderWarriorCreated(faction=faction, warrior=Warrior.objects.get(faction=faction))
+    assert result == NewLeaderWarriorCreated(faction=faction, warrior=Warrior.objects.get(faction=faction), month=1)
     assert result.warrior.name == "Cerdic"
+
+
+@pytest.mark.django_db
+def test_handle_record_warrior_milestone_writes_the_moment():
+    warrior = WarriorFactory()
+    skirmish = SkirmishFactory()
+
+    result = handle_record_warrior_milestone(
+        context=RecordWarriorMilestone(
+            warrior=warrior,
+            faction=warrior.faction,
+            kind=MilestoneKindChoices.CHANGED,
+            month=5,
+            skirmish=skirmish,
+        )
+    )
+
+    assert result == WarriorMilestoneRecorded(warrior=warrior, kind=MilestoneKindChoices.CHANGED, month=5)
+    assert list(warrior.milestones.values_list("kind", "skirmish_id")) == [(MilestoneKindChoices.CHANGED, skirmish.id)]
