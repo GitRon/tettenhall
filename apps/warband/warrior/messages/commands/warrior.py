@@ -266,6 +266,7 @@ class RecordWarriorMilestone(Command):
     faction: Faction | None
     kind: int
     month: int
+    other_faction: Faction | None = None
     skirmish: Skirmish | None = None
     other_warrior: Warrior | None = None
     nickname_state: int | None = None

@@ -1,7 +1,9 @@
 import pytest
 
 from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
     FactionLeaderSucceeded,
+    FactionWasOccupied,
     MonthlyWarriorSalariesUnpaid,
     NewFactionCreated,
 )
@@ -9,6 +11,7 @@ from apps.warband.faction.messages.events.warrior import (
     PubMercenarySlotOpened,
     WarriorMonthPrepared,
     WarriorRecruited,
+    WarriorWasSoldIntoSlavery,
 )
 from apps.warband.faction.tests.factories.culture import CultureFactory
 from apps.warband.faction.tests.factories.faction import FactionFactory
@@ -21,6 +24,9 @@ from apps.warband.warrior.handlers.events.faction import (
     handle_fade_an_idle_warriors_renown_for_new_month,
     handle_heal_a_wounded_warrior_for_new_month,
     handle_pub_mercenary_slot_opened,
+    handle_record_a_captive_who_got_away,
+    handle_record_a_leader_seized,
+    handle_record_a_man_sold,
     handle_record_a_seat_taken,
     handle_record_how_a_warrior_joined,
     handle_replenish_a_warriors_morale_for_new_month,
@@ -326,4 +332,48 @@ def test_handle_record_a_seat_taken_names_the_man_whose_seat_it_was():
         kind=MilestoneKindChoices.TOOK_SEAT,
         month=8,
         other_warrior=fallen_leader,
+    )
+
+
+def test_handle_record_a_man_sold_names_the_band_that_sold_him():
+    faction = FactionFactory.build()
+    captive = WarriorFactory.build()
+
+    result = handle_record_a_man_sold(
+        context=WarriorWasSoldIntoSlavery(warrior=captive, selling_faction=faction, price=40, month=4)
+    )
+
+    assert result == RecordWarriorMilestone(warrior=captive, faction=faction, kind=MilestoneKindChoices.SOLD, month=4)
+
+
+def test_handle_record_a_captive_who_got_away_names_whose_cells_they_were():
+    faction = FactionFactory.build()
+    captive = WarriorFactory.build()
+
+    result = handle_record_a_captive_who_got_away(
+        context=CaptiveFledOverfullCells(faction=faction, warrior=captive, cell_places=2, month=7)
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=captive, faction=faction, kind=MilestoneKindChoices.ESCAPED, month=7
+    )
+
+
+def test_handle_record_a_leader_seized_names_his_town_and_who_took_it():
+    faction = FactionFactory.build()
+    occupier = FactionFactory.build()
+    leader = WarriorFactory.build(faction=faction)
+
+    result = handle_record_a_leader_seized(
+        context=FactionWasOccupied(
+            faction=faction, occupying_faction=occupier, leader=leader, plundered_silver=100, month=9
+        )
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=leader,
+        faction=faction,
+        other_faction=occupier,
+        kind=MilestoneKindChoices.SEIZED,
+        month=9,
     )

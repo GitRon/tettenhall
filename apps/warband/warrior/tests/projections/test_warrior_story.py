@@ -240,6 +240,29 @@ def test_describe_milestone_for_a_man_who_joined():
     assert result == "Sworn in from the cells of Mercia"
 
 
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [
+        (MilestoneKindChoices.DISMISSED, "Sent away from Mercia"),
+        (MilestoneKindChoices.WALKED_OUT, "Walked out of Mercia over unpaid wages"),
+        (MilestoneKindChoices.SOLD, "Sold into slavery by Mercia"),
+        (MilestoneKindChoices.ESCAPED, "Got away from the overfull cells of Mercia"),
+        (MilestoneKindChoices.SEIZED, "Taken prisoner by Wessex when the town of Mercia fell"),
+    ],
+)
+def test_describe_milestone_for_a_man_leaving(kind, expected):
+    milestone = WarriorMilestoneFactory.build(
+        kind=kind,
+        faction=FactionFactory.build(name="Mercia"),
+        other_faction=FactionFactory.build(name="Wessex"),
+        joined_way=None,
+    )
+
+    result = describe_milestone(milestone=milestone, nickname_variant=0)
+
+    assert result == expected
+
+
 def test_describe_milestone_for_a_seat_taken_from_a_man_on_record():
     milestone = WarriorMilestoneFactory.build(
         kind=MilestoneKindChoices.TOOK_SEAT,

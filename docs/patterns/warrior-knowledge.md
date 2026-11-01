@@ -27,7 +27,8 @@ the screen one click away from it. Every screen derives its answer from the one 
   not hand over the number the fuzz withholds.
 - **His story is public too**, with one exception below: the fights he stood in and how each ended for
   him, the men he killed, the levels he reached, the epithets he earned and why, how he joined a war band
-  and whose seat he took, his errands and his wounds. A rival's page carries all of it. None of it is a
+  and whose seat he took, how he left one - sent away, walked out, sold, got away from the cells, seized
+  in his occupied town - his errands and his wounds. A rival's page carries all of it. None of it is a
   number the fuzz withholds - level and experience are public already, and the story tells no blow, no
   damage and no attribute.
 

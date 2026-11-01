@@ -7,6 +7,8 @@ from apps.warband.warrior.handlers.events.warrior import (
     handle_raised_ceiling_earns_a_nickname,
     handle_record_a_change_in_a_man,
     handle_record_a_founding_leader,
+    handle_record_a_man_sent_away,
+    handle_record_a_man_who_walked_out,
     handle_record_a_naming,
 )
 from apps.warband.warrior.messages.commands.warrior import AwardEarnedNickname, RecordWarriorMilestone
@@ -15,6 +17,8 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
     WarriorGainedTrait,
     WarriorMaxMoraleChanged,
+    WarriorWalkedOutOverUnpaidSalary,
+    WarriorWasDismissed,
 )
 
 
@@ -116,4 +120,32 @@ def test_handle_record_a_change_in_a_man_keeps_the_fight_and_not_the_trait():
 
     assert result == RecordWarriorMilestone(
         warrior=warrior, faction=faction, kind=MilestoneKindChoices.CHANGED, month=6, skirmish=skirmish
+    )
+
+
+def test_handle_record_a_man_sent_away_names_the_band_he_left():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build()
+
+    result = handle_record_a_man_sent_away(
+        context=WarriorWasDismissed(
+            warrior=warrior, faction=faction, savegame=faction.savegame, severance_pay=20, month=5
+        )
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=warrior, faction=faction, kind=MilestoneKindChoices.DISMISSED, month=5
+    )
+
+
+def test_handle_record_a_man_who_walked_out_names_the_band_that_did_not_pay_him():
+    faction = FactionFactory.build()
+    warrior = WarriorFactory.build()
+
+    result = handle_record_a_man_who_walked_out(
+        context=WarriorWalkedOutOverUnpaidSalary(warrior=warrior, faction=faction, savegame=faction.savegame, month=6)
+    )
+
+    assert result == RecordWarriorMilestone(
+        warrior=warrior, faction=faction, kind=MilestoneKindChoices.WALKED_OUT, month=6
     )

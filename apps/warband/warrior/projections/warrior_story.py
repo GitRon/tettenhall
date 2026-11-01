@@ -45,6 +45,15 @@ _DEED_REASONS = {
 
 CHANGED_WORDING = "Came back from the fight a different man"
 
+# How he left a roster or a set of cells
+_LEFT_WORDING = {
+    MilestoneKindChoices.DISMISSED: "Sent away from {faction}",
+    MilestoneKindChoices.WALKED_OUT: "Walked out of {faction} over unpaid wages",
+    MilestoneKindChoices.SOLD: "Sold into slavery by {faction}",
+    MilestoneKindChoices.ESCAPED: "Got away from the overfull cells of {faction}",
+    MilestoneKindChoices.SEIZED: "Taken prisoner by {other_faction} when the town of {faction} fell",
+}
+
 
 @dataclass(frozen=True, kw_only=True)
 class StoryEntry:
@@ -117,7 +126,7 @@ def _milestone_entries(
     entries: list[StoryEntry] = []
     for milestone in (
         WarriorMilestone.objects.for_warrior(warrior_id=warrior.id)
-        .select_related("faction", "other_warrior")
+        .select_related("faction", "other_faction", "other_warrior")
         .order_by("-id")[:MILESTONES_READ]
     ):
         if milestone.kind == MilestoneKindChoices.CHANGED and not _was_seen(
@@ -256,6 +265,9 @@ def describe_milestone(*, milestone: WarriorMilestone, nickname_variant: int) ->
         if milestone.other_warrior is None:
             return f"Took the seat at the head of {milestone.faction}"
         return f"Took the seat of {milestone.other_warrior.name} at the head of {milestone.faction}"
+
+    if milestone.kind in _LEFT_WORDING:
+        return _LEFT_WORDING[milestone.kind].format(faction=milestone.faction, other_faction=milestone.other_faction)
 
     if milestone.kind == MilestoneKindChoices.NAMED:
         name = resolve_nickname(state=milestone.nickname_state, variant=nickname_variant)

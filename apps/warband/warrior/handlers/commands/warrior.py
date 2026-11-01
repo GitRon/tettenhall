@@ -650,6 +650,7 @@ def handle_record_warrior_milestone(*, context: RecordWarriorMilestone) -> Event
         kind=context.kind,
         month=context.month,
         faction=context.faction,
+        other_faction=context.other_faction,
         skirmish=context.skirmish,
         other_warrior=context.other_warrior,
         nickname_state=context.nickname_state,

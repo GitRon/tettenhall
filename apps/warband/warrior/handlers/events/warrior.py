@@ -8,6 +8,8 @@ from apps.warband.warrior.messages.events.warrior import (
     WarriorEarnedNickname,
     WarriorGainedTrait,
     WarriorMaxMoraleChanged,
+    WarriorWalkedOutOverUnpaidSalary,
+    WarriorWasDismissed,
 )
 
 
@@ -78,4 +80,26 @@ def handle_record_a_change_in_a_man(*, context: WarriorGainedTrait) -> Command:
         kind=MilestoneKindChoices.CHANGED,
         month=context.month,
         skirmish=context.skirmish,
+    )
+
+
+@message_registry.register_event(event=WarriorWasDismissed)
+def handle_record_a_man_sent_away(*, context: WarriorWasDismissed) -> Command:
+    """
+    The player sent him away. Without this his story jumps from one roster to the next with nothing
+    in between, and the pub card says nothing of why he is standing there.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior, faction=context.faction, kind=MilestoneKindChoices.DISMISSED, month=context.month
+    )
+
+
+@message_registry.register_event(event=WarriorWalkedOutOverUnpaidSalary)
+def handle_record_a_man_who_walked_out(*, context: WarriorWalkedOutOverUnpaidSalary) -> Command:
+    """
+    He took himself off a roster that stopped paying him, which is a thing a future master would want to
+    know about him.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior, faction=context.faction, kind=MilestoneKindChoices.WALKED_OUT, month=context.month
     )

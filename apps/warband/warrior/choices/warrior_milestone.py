@@ -16,6 +16,15 @@ class MilestoneKindChoices(models.IntegerChoices):
     # A trait, unnamed: traits stay hidden until #313, so all a milestone keeps is that the fight made
     # something of him, which is what the month log already tells the player
     CHANGED = 4, "Came back from a fight a different man"
+    # The ways a man leaves a roster or a set of cells. Each kind its own, because each is a different
+    # thing to have happened to him, and the line that tells it says which
+    DISMISSED = 5, "Was sent away"
+    WALKED_OUT = 6, "Walked out over unpaid wages"
+    SOLD = 7, "Was sold into slavery"
+    ESCAPED = 8, "Got away from overfull cells"
+    # Taken where he stood when his town was occupied: a capture with no fight behind it, so no casualty
+    # row tells it the way one tells a man taken off the field
+    SEIZED = 9, "Was seized in his occupied town"
 
 
 class JoinedWayChoices(models.IntegerChoices):

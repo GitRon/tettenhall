@@ -22,8 +22,9 @@ class WarriorMilestone(models.Model):
     warrior = models.ForeignKey(Warrior, verbose_name="Warrior", on_delete=models.CASCADE)
     kind = models.PositiveSmallIntegerField("Kind", choices=MilestoneKindChoices.choices)
     month = models.PositiveSmallIntegerField("Month")
-    # The war band he stood in when it happened, stamped here because he may serve another by the time
-    # anybody reads it - and whether the player saw it happen is read off this
+    # The war band he stood in when it happened - or, for a prisoner, the one holding him - stamped here
+    # because he may serve another by the time anybody reads it. Whether the player saw it happen is read
+    # off this
     faction = models.ForeignKey(
         "warband.Faction",
         verbose_name="Faction",
@@ -37,6 +38,15 @@ class WarriorMilestone(models.Model):
     skirmish = models.ForeignKey(
         Skirmish,
         verbose_name="Skirmish",
+        related_name="+",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    # The other war band in it: the one that seized him in his occupied town
+    other_faction = models.ForeignKey(
+        "warband.Faction",
+        verbose_name="Other faction",
         related_name="+",
         null=True,
         blank=True,

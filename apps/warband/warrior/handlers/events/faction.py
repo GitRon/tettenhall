@@ -2,7 +2,9 @@ from queuebie import message_registry
 from queuebie.messages import Command
 
 from apps.warband.faction.messages.events.faction import (
+    CaptiveFledOverfullCells,
     FactionLeaderSucceeded,
+    FactionWasOccupied,
     MonthlyWarriorSalariesUnpaid,
     NewFactionCreated,
 )
@@ -10,6 +12,7 @@ from apps.warband.faction.messages.events.warrior import (
     PubMercenarySlotOpened,
     WarriorMonthPrepared,
     WarriorRecruited,
+    WarriorWasSoldIntoSlavery,
 )
 from apps.warband.warrior.choices.warrior_milestone import MilestoneKindChoices
 from apps.warband.warrior.messages.commands.warrior import (
@@ -150,4 +153,42 @@ def handle_record_a_seat_taken(*, context: FactionLeaderSucceeded) -> Command:
         kind=MilestoneKindChoices.TOOK_SEAT,
         month=context.month,
         other_warrior=context.fallen_leader,
+    )
+
+
+@message_registry.register_event(event=WarriorWasSoldIntoSlavery)
+def handle_record_a_man_sold(*, context: WarriorWasSoldIntoSlavery) -> Command:
+    """
+    The faction holding him sold him into slavery, which is the last thing his story will ever say.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior, faction=context.selling_faction, kind=MilestoneKindChoices.SOLD, month=context.month
+    )
+
+
+@message_registry.register_event(event=CaptiveFledOverfullCells)
+def handle_record_a_captive_who_got_away(*, context: CaptiveFledOverfullCells) -> Command:
+    """
+    He got out of cells too full to hold him, and the faction whose cells they were is the one named.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.warrior, faction=context.faction, kind=MilestoneKindChoices.ESCAPED, month=context.month
+    )
+
+
+@message_registry.register_event(event=FactionWasOccupied)
+def handle_record_a_leader_seized(*, context: FactionWasOccupied) -> Command:
+    """
+    His town was ridden into and he was taken where he stood.
+
+    Off the occupation rather than off the capture it leads to: "WarriorWasCaptured" carries no month,
+    and a man taken in a fight is already told by the fight's casualty row - see "WarriorStory". This is
+    the one capture with no fight behind it.
+    """
+    return RecordWarriorMilestone(
+        warrior=context.leader,
+        faction=context.faction,
+        other_faction=context.occupying_faction,
+        kind=MilestoneKindChoices.SEIZED,
+        month=context.month,
     )
