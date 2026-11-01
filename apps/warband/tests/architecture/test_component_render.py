@@ -38,6 +38,7 @@ from apps.warband.quest.quests.drive_off_wolves import DriveOffWolves
 from apps.warband.quest.quests.fetch_a_good_warrior import FetchAGoodWarrior
 from apps.warband.quest.quests.seek_a_good_blade import SeekAGoodBlade
 from apps.warband.quest.tests.factories.quest import QuestFactory
+from apps.warband.savegame.tests.factories.savegame import SavegameFactory
 from apps.warband.skirmish.models import Warrior
 from apps.warband.skirmish.models.battle_history import BattleHistory
 from apps.warband.skirmish.models.skirmish import Skirmish
@@ -47,7 +48,10 @@ from apps.warband.skirmish.tests.factories.warrior import WarriorFactory
 from apps.warband.tests.architecture.components import components
 from apps.warband.warrior.domain.knowledge import WarriorKnowledge
 from apps.warband.warrior.models.hair_colour import HairColour
+from apps.warband.warrior.models.injury import Injury
 from apps.warband.warrior.models.portrait_piece import PortraitPiece
+from apps.warband.warrior.tests.factories.injury import InjuryFactory
+from apps.warband.warrior.tests.factories.injury_type import InjuryTypeFactory
 
 
 class RaisingInvalidString(str):
@@ -112,6 +116,12 @@ def _drawn_warrior() -> Warrior:
         beard_colour=HairColour(hex="#6b3a1f"),
         hair_colour=HairColour(hex="#2a1a10"),
     )
+
+
+def _built_injury() -> Injury:
+    warrior = WarriorFactory.build(faction=FactionFactory.build(savegame=SavegameFactory.build(start_year=768)))
+
+    return InjuryFactory.build(warrior=warrior, type=InjuryTypeFactory.build(name="Stiff ankle"))
 
 
 NAV_SECTIONS = [{"key": "month", "label": "Month", "icon": "fa-calendar", "url": "/account/dashboard/"}]
@@ -256,6 +266,10 @@ RENDER_ROWS = {
             '<c-warrior.attribute :value="value" :baseline="baseline" :knowledge="knowledge" />',
             {"value": 12, "baseline": 10, "knowledge": WarriorKnowledge.RIVAL},
         ),
+    ],
+    "warrior.injury-row": [
+        # Only the man who carries one: the whole man renders nothing, which test_injury_row.py holds
+        ('<c-warrior.injury-row :injuries="injuries" />', {"injuries": [_built_injury()]}),
     ],
     "warrior.portrait": [
         ('<c-warrior.portrait :warrior="warrior" />', {"warrior": WarriorFactory.build(portrait_face=None)}),

@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.warband.calendar.date import CalendarDate
 from apps.warband.skirmish.models.warrior import Warrior
 from apps.warband.warrior.managers.injury import InjuryManager
 from apps.warband.warrior.models.injury_type import InjuryType
@@ -40,3 +41,13 @@ class Injury(models.Model):
 
     def __str__(self) -> str:
         return f"{self.warrior}: {self.type}"
+
+    @property
+    def inflicted_on(self) -> CalendarDate:
+        """
+        The month he took it, as a date is written everywhere in the game - see docs/patterns/calendar.md.
+
+        The row keeps the savegame's month count and nothing else, because that is all a rule may read;
+        the year it falls in is display, and comes off his savegame's opening year.
+        """
+        return CalendarDate.for_month(month=self.inflicted_in_month, start_year=self.warrior.savegame.start_year)

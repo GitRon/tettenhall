@@ -44,6 +44,7 @@ word. The folder keeps the names apart, and the contract test fails on a name sh
 | `<c-skirmish.faction-box>` | `apps.warband` | One war band's panel on the fight screen, with its kit toggle and the roster that refreshes every round |
 | `<c-skirmish.skirmish-table>` | `apps.warband` | A table of fights; `show_victor` adds the Victor column, and the row's control and the empty line are the caller's words |
 | `<c-warrior.attribute>` | `apps.warband` | One attribute, exact or bucketed against his baseline - see [warrior knowledge](warrior-knowledge.md) |
+| `<c-warrior.injury-row>` | `apps.warband` | A man's lasting injuries as a row of his page's table, each with what it costs and the month he took it; public, so it takes no `knowledge`, and silent for a whole man |
 | `<c-warrior.portrait>` | `apps.warband` | A man's stacked face, `card` or `full` crop, in the caller's `frame`; the silhouette when he has none - see [portraits](portraits.md) |
 | `<c-warrior.portrait-layer>` | `apps.warband` | One beard or hair layer of the portrait, placed and tinted |
 | `<c-warrior.row>` | `apps.warband` | One man as a row on a rival's roster, a rival's cells or a pub; `is_pub` adds the recruit control |

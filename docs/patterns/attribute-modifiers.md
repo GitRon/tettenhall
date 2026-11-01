@@ -33,11 +33,12 @@ than the death he was one point short of, and reachable by no other route.
   that moves an attribute afterwards may rename a man — not a level, not a training course, and not an
   injury. *The Strong* who loses a shoulder is still *the Strong*. The one thing that renames a man is a deed —
   `handle_award_deed_nickname`, once, and never over another deed.
-- **The cards**, which print the stored figure and list what a man carries beside it. The fuzz in
-  `<c-warrior.attribute>` buckets a value against the distribution it was drawn
-  from ([warrior knowledge](warrior-knowledge.md)), and feeding it a modified value would change what
-  "High" means rather than telling the player anything. What they list beside it is the injuries only: no
-  screen renders a trait, which the player finds out through the fights it changes.
+- **The cards**, which print the stored figure. The fuzz in `<c-warrior.attribute>` buckets a value
+  against the distribution it was drawn from ([warrior knowledge](warrior-knowledge.md)), and feeding it a
+  modified value would change what "High" means rather than telling the player anything. What explains
+  the gap is the man's own page, which lists his lasting injuries under the four figures through
+  `<c-warrior.injury-row>`, alike for every viewer; the roster lines leave them to it. That list is the
+  injuries only: no screen renders a trait, which the player finds out through the fights it changes.
 
 ## The sources
 
@@ -52,8 +53,8 @@ Each source owns its own reference table; they share only the layer above.
 **Do not merge the catalogues.** An injury entry is a name, an attribute and a magnitude; a trait needs
 all of that plus an exclusive-group key, a sign, a source and the hook an incident pool selects on — so
 one table would carry a kind discriminator and a column set that is dead for half the rows. Visibility
-is the clearest case: an injury is shown on every card and a trait is hidden until the man shows you
-one, which is one column with opposite constant values per kind.
+is the clearest case: an injury is shown to everybody on the man's page and a trait is hidden until the
+man shows you one, which is one column with opposite constant values per kind.
 
 A source is one aggregation on `Warrior` — `injury_maluses`, `trait_modifiers` — summed per attribute in
 one query and cached on the instance, and `_effective_attribute` adds them up. A new source is a third

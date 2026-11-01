@@ -109,6 +109,10 @@
             <td>Morale</td>
             <td><c-warrior.gauge :current="object.current_morale" :maximum="object.max_morale" :peak="object.peak_max_morale" :baseline="object.morale_baseline" :knowledge="knowledge" /></td>
         </tr>
+        {# Under the four numbers, because the stored figures above are what a lasting injury is taken #}
+        {# off - this is where the player learns why a man hits softer than his strength says. Shown #}
+        {# alike to everybody, the way the epithet is. #}
+        <c-warrior.injury-row :injuries="injuries" />
         <tr>
             <td>Condition</td>
             {# The condition is a state, not a scale: it says whether he is still on his feet, and #}

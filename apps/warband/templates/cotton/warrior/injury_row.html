@@ -1,0 +1,29 @@
+<c-vars injuries />
+{% comment %}
+    The lasting marks a man carries, as a row of his page's table: what each is called, what it takes
+    off him, and the month he took it, in the order he took them.
+
+    Public, like his epithet: a man limping is something a neighbour sees, so the row reads the same for
+    every relation and takes no "knowledge" - see docs/patterns/warrior-knowledge.md. The attributes
+    above it print the stored figure, and this is what tells the player why the man swings softer than
+    that figure says - see docs/patterns/attribute-modifiers.md.
+
+    Silent for a whole man: an "Injuries: none" on every unhurt warrior in the game would be noise.
+{% endcomment %}
+{% if injuries %}
+    <tr>
+        <td>Injuries</td>
+        <td>
+            <ul>
+                {% for injury in injuries %}
+                    <li>
+                        {{ injury.type.description }}
+                        {# Free to wrap: a month, its season and the year in the tracked label run past a #}
+                        {# phone's value column, and held on one line they push the page sideways #}
+                        <span class="font-mono text-label uppercase tracking-label text-ink-muted">since {{ injury.inflicted_on.label }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </td>
+    </tr>
+{% endif %}
