@@ -53,10 +53,11 @@ class BaseWarriorGenerator:
     # archetype, and on purpose: a farmer can be born with as much in him as a champion. What tells the
     # archetypes apart is where they start, since a man never sits below the level he arrives at - a
     # champion comes in near the top of his and is half the time already everything he will be, a levy
-    # starts at the bottom and has a long way to climb to whatever he was born with. Low on purpose as
-    # well: men end a campaign between level 1 and 3, so a ceiling has to bite there or it changes
-    # nothing (#484, measured; #491 owns how fast men climb, and these move with it).
-    POTENTIAL_MU = 2.5
+    # starts at the bottom and has a long way to climb to whatever he was born with. Set against how far
+    # men climb in a campaign: the busiest fighters end it at level 3 or 4, so about half are born able to
+    # reach 4, and a ceiling still stops the rest where they would otherwise get to (#484 drew it, #491
+    # moved it up with the pace; both measured).
+    POTENTIAL_MU = 3.5
     POTENTIAL_SIGMA = 1
     # No man is born unable to stand where every man starts
     POTENTIAL_MIN = 1

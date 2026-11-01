@@ -27,8 +27,8 @@ from apps.warband.warrior.messages.commands.warrior import (
 from apps.warband.warrior.services.nickname import GIANTBANE_LEVEL_GAP
 
 # The experience that puts a man exactly the gap above a fresh one, and one level short of it
-GIANT_EXPERIENCE = (GIANTBANE_LEVEL_GAP**2) * Warrior.XP_LEVEL_BASE
-ONE_SHORT_EXPERIENCE = ((GIANTBANE_LEVEL_GAP - 1) ** 2) * Warrior.XP_LEVEL_BASE
+GIANT_EXPERIENCE = Warrior.experience_for_level(level=1 + GIANTBANE_LEVEL_GAP)
+ONE_SHORT_EXPERIENCE = Warrior.experience_for_level(level=GIANTBANE_LEVEL_GAP)
 
 
 def test_handle_level_up_earns_a_nickname_takes_the_month_off_the_fight():
