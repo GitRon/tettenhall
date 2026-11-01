@@ -607,6 +607,14 @@ class Warrior(models.Model):
 
         return self.level**2 * self.XP_LEVEL_BASE
 
+    @property
+    def experience_for_next_level_ignoring_potential(self) -> int:
+        """
+        The threshold the next level would sit behind if he had no ceiling - what a page shows a viewer
+        who may not know the ceiling, since a threshold that vanished at it would tell him it was reached.
+        """
+        return self.level_for(experience=self.experience) ** 2 * self.XP_LEVEL_BASE
+
     @staticmethod
     def renown_for_taking_down(*, level: int, is_leader: bool) -> int:
         """

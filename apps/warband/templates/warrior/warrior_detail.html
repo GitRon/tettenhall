@@ -73,13 +73,16 @@
             <td>Experience</td>
             {# Against the next threshold rather than on its own, so the level reads as progress #}
             {# towards something instead of a number appearing from nowhere on a battlefield. A man at #}
-            {# his ceiling has no next threshold, so his experience stands on its own. #}
+            {# his ceiling has no next threshold, so his experience stands on its own - unless he is a #}
+            {# rival's man, whose ceiling the viewer may not read off a missing threshold either. #}
             <td>
-                {% if object.experience_for_next_level %}
-                    {{ object.experience }} / {{ object.experience_for_next_level }} XP
-                {% else %}
-                    {{ object.experience }} XP
-                {% endif %}
+                {% with threshold=object|experience_threshold:knowledge %}
+                    {% if threshold %}
+                        {{ object.experience }} / {{ threshold }} XP
+                    {% else %}
+                        {{ object.experience }} XP
+                    {% endif %}
+                {% endwith %}
             </td>
         </tr>
         <tr>
