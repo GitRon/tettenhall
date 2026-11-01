@@ -3,7 +3,11 @@ from apps.warband.warrior.services.generators.warrior.base import BaseWarriorGen
 
 
 class LeaderWarriorGenerator(BaseWarriorGenerator):
-    XP_MU = 100
+    # A leader takes his seat a seasoned man, so the mean sits inside level 2's band and the narrow
+    # spread keeps every draw there: 150 is five spreads above the 100 that buys level 2 and well short
+    # of the 300 that buys level 3. A mean of 100 sat on the threshold itself and seated half of all
+    # leaders a point short of it (#493).
+    XP_MU = 150
     XP_SIGMA = 10
     HEALTH_MU = 40
     HEALTH_SIGMA = 10

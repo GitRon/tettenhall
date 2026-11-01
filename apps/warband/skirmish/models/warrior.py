@@ -57,7 +57,7 @@ class Warrior(models.Model):
     # Renown is what a man is known for rather than what he can do, so it is paid by who fell and it
     # fades when he stops fighting - the two things that keep it from being experience under another
     # name. Putting a man down is worth this much per level of the man who fell, and a faction's
-    # leader three times that: a levy is 10, a level-3 veteran or a green leader 30.
+    # leader three times that: a levy is 10, a level-3 veteran 30, a leader in his first fight 60.
     RENOWN_PER_LEVEL_OF_THE_FALLEN = 10
     RENOWN_FOR_A_LEADER_MULTIPLIER = 3
     # What a month spent in no fight costs, as a share of the renown he has, and never less than one
